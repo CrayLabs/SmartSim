@@ -1,0 +1,27 @@
+
+[parameters]
+# each parameter listed should contain each value that could be a result
+# of tuning the model. Permutations of all listed parameters will be run.
+    KH = [1000, 2000, 3000, 4000, 5000, 6000]
+    KHTH = [1000, 2000, 3000, 4000, 5000, 6000]
+
+[low]
+    X_domain = 40
+    Y_domain = 40
+    nodes = 2
+    sim_length = 100
+
+[high]
+    X_domain = 80
+    Y_domain = 80
+    nodes = 10
+    sim_length = 100
+
+
+[MPO_settings]
+# MPO should assume defaults for these values
+# but should also be customizable by the user
+launcher = "slurm"
+procs_per_node = 48
+executable_path = "./model"
+base_config_path = "./model-dir"
