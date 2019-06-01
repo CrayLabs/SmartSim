@@ -9,6 +9,7 @@ class State:
     def __init__(self):
         self.config = read_config()
         self.current_state = "Initializing"
+        print("MPO State: ", self.current_state)
 
     def get_state(self):
         return self.current_state

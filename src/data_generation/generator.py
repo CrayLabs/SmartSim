@@ -4,7 +4,7 @@ import sys
 import subprocess
 import itertools
 import toml
-
+from os import mkdir, getcwd
 from data_generation.model import NumModel
 
 
@@ -18,10 +18,10 @@ class Generator():
         self.low_models = []
         self.high_models = []
 
-
     def generate(self):
         print("MPO Stage: ", self.state.current_state)
         self.create_models()
+        self.duplicate_base_configs()
 
 
     def create_models(self):
@@ -32,21 +32,50 @@ class Generator():
                     generation
         """
 
-        param_dict = self.state.config["parameters"]
+        param_dict = self.state.get_config("parameters")
         permutations = list(itertools.product(*param_dict.values()))
         params = list(param_dict.keys())
 
         for p in permutations:
             model_params = dict(zip(params, list(p)))
-            settings = self.state.config["low"]
+            settings = self.state.get_config("low")
             m = NumModel(model_params, settings)
             self.low_models.append(m)
 
         for p in permutations:
             model_params = dict(zip(params, list(p)))
-            settings = self.state.config["high"]
+            settings = self.state.get_config("high")
             m = NumModel(model_params, settings)
             self.high_models.append(m)
+
+
+
+    def duplicate_base_configs(self):
+        # TODO catch if base config path is not found
+        base_path = self.state.get_config("MPO_settings")["base_config_path"]
+
+        # Make data directories
+        # TODO catch if data dirs exist already
+        low_dir = getcwd() + "/../low-res-models"
+        high_dir = getcwd() + "/../high-res-models"
+        mkdir(low_dir)
+        mkdir(high_dir)
+
+        # Add paths to data directories to state config
+        self.state.add_config("high-data-dir", high_dir)
+        self.state.add_config("low-data-dir", low_dir)
+
+        for low_run in self.low_models:
+            create_low_dirs = subprocess.Popen("cp -r " + base_path +
+                                                " " + low_dir + "/"+ low_run.name,
+                                               shell=True)
+            create_low_dirs.wait()
+
+        for high_run in self.high_models:
+            create_high_dirs = subprocess.Popen("cp -r " + base_path +
+                                                " " + high_dir + "/"+ high_run.name,
+                                                shell=True)
+            create_high_dirs.wait()
 
 
 

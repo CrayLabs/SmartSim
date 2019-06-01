@@ -10,3 +10,6 @@ class NumModel:
     def __init__(self, param_dict, settings):
         self.param_dict = param_dict
         self.settings = settings
+        self.name = "Model"
+        for param in param_dict.values():
+            self.name += "_" + str(param)
