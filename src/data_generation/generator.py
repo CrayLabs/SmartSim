@@ -4,9 +4,11 @@ import sys
 import subprocess
 import itertools
 import toml
+
+
 from os import mkdir, getcwd
 from data_generation.model import NumModel
-
+from data_generation.confwriter import ConfWriter
 
 class Generator():
     """Data generation phase of the MPO pipeline. Holds internal configuration
@@ -66,31 +68,41 @@ class Generator():
         self.state.add_config("low-data-dir", low_dir)
 
         for low_run in self.low_models:
+            dup_path = low_dir + "/"+ low_run.name
             create_low_dirs = subprocess.Popen("cp -r " + base_path +
-                                                " " + low_dir + "/"+ low_run.name,
+                                                " " + dup_path,
                                                shell=True)
             create_low_dirs.wait()
+            self.write_parameters(dup_path, low_run.param_dict)
+            self.write_model_configs(dup_path, low_run.settings)
+
 
         for high_run in self.high_models:
+            dup_path = high_dir + "/" + high_run.name
             create_high_dirs = subprocess.Popen("cp -r " + base_path +
-                                                " " + high_dir + "/"+ high_run.name,
+                                                " " + dup_path,
                                                 shell=True)
             create_high_dirs.wait()
+            self.write_parameters(dup_path, high_run.param_dict)
+            self.write_model_configs(dup_path, high_run.settings)
+
+    def write_parameters(self, base_conf_path, param_dict):
+        param_info = self.state.get_config("parameter_info")
+        filename = param_info["filename"]
+        filetype = param_info["filetype"]
+        full_path = base_conf_path + "/" + filename
+
+        conf_writer = ConfWriter()
+        conf_writer.write_config(param_dict, full_path, filetype)
 
 
 
-    def run_model(self, model_to_run):
-        """Runs a single configuration of a numerical model.
-
-           Args
-              model_to_run (NumModel): the model being run on slurm
-        """
-        # TODO fix this and make so that generator has all run settings
-        executable = self.state.get_config("executable")
-        num_proc = self.state.get_config("num_proc")
-        run_model = subprocess.Popen("srun -n " + str(num_cores) + " " + executable,
-                                     cwd="./" + model_config,
-                                     shell=True)
-        run_model.wait()
-
-
+    def write_model_configs(self, base_conf_path, config_dict):
+        # TODO handle errors for when this info isnt present
+        conf_writer = ConfWriter()
+        for name, config_info in config_dict.items():
+            filename = config_info["filename"]
+            filetype = config_info["filetype"]
+            value = config_info["value"]
+            full_path = base_conf_path + "/" + filename
+            conf_writer.write_config({name: value}, full_path, filetype)
