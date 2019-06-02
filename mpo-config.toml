@@ -18,7 +18,7 @@
         value = 20
         filename = "MOM_override"
         filetype = "txt"
-    [high.nk]
+    [low.nk]
         value = 1
         filename = "MOM_override"
         filetype = "txt"

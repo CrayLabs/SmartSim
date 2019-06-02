@@ -6,7 +6,7 @@ import toml
 def read_config():
     try:
         cwd = getcwd()
-        fname = cwd + "/mpo-config.toml"
+        fname = cwd + "/../mpo-config.toml"
         with open(fname, 'r', encoding='utf-8') as fp:
             parsed_toml = toml.load(fp)
             return parsed_toml

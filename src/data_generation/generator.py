@@ -67,8 +67,8 @@ class Generator():
         mkdir(high_dir)
 
         # Add paths to data directories to state config
-        self.state.add_config("high-data-dir", high_dir)
-        self.state.add_config("low-data-dir", low_dir)
+        self.state.set_model_dir("high", high_dir)
+        self.state.set_model_dir("low", low_dir)
 
         for low_run in self.low_models:
             dup_path = low_dir + "/"+ low_run.name
@@ -112,17 +112,17 @@ class Generator():
 
 
     def run_models(self):
-        exe = self.state.get_config("MPO_Settings")["executable_path"]
-        low_node_count = self.state.get_config("MPO_Settings")["low_nodes"]
-        high_node_count = self.state.get_config("MPO_Settings")["high_nodes"]
-        procs_per_node = self.state.get_config("MPO_Settings")["procs_per_node"]
+        exe = self.state.get_config("MPO_settings")["executable_path"]
+        low_node_count = self.state.get_config("MPO_settings")["low_nodes"]
+        high_node_count = self.state.get_config("MPO_settings")["high_nodes"]
+        procs_per_node = self.state.get_config("MPO_settings")["procs_per_node"]
 
         # run low resolution models
-        low_model_dir = self.state.get_config("low-data-dir")
+        low_model_dir = self.state.get_model_dir("low")
         runner = ModelRunner(exe, low_node_count, procs_per_node)
         runner.run_all_models(low_model_dir)
 
         # run high resolution models
-        high_model_dir = self.state.get_config("high-data-dir")
+        high_model_dir = self.state.get_model_dir("high")
         runner = ModelRunner(exe, high_node_count, procs_per_node)
         runner.run_all_models(high_model_dir)

@@ -49,7 +49,7 @@ class ModelRunner:
               model_to_run (NumModel): the model being run on slurm
         """
         run_model = subprocess.Popen("srun -n " + str(self.procs) + " " + self.exe,
-                                     cwd="./" + model_to_run,
+                                     cwd=model_to_run,
                                      shell=True)
         run_model.wait()
 
