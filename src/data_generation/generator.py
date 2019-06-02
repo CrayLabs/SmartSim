@@ -9,6 +9,7 @@ import toml
 from os import mkdir, getcwd
 from data_generation.model import NumModel
 from data_generation.confwriter import ConfWriter
+from data_generation.runner import ModelRunner
 
 class Generator():
     """Data generation phase of the MPO pipeline. Holds internal configuration
@@ -24,7 +25,9 @@ class Generator():
         print("MPO Stage: ", self.state.current_state)
         self.create_models()
         self.duplicate_base_configs()
-
+        print("     Writing configurations...")
+        self.run_models()
+        print("     Running simulations...")
 
     def create_models(self):
         """Populates instances of NumModel class for low and high resolution.
@@ -106,3 +109,20 @@ class Generator():
             value = config_info["value"]
             full_path = base_conf_path + "/" + filename
             conf_writer.write_config({name: value}, full_path, filetype)
+
+
+    def run_models(self):
+        exe = self.state.get_config("MPO_Settings")["executable_path"]
+        low_node_count = self.state.get_config("MPO_Settings")["low_nodes"]
+        high_node_count = self.state.get_config("MPO_Settings")["high_nodes"]
+        procs_per_node = self.state.get_config("MPO_Settings")["procs_per_node"]
+
+        # run low resolution models
+        low_model_dir = self.state.get_config("low-data-dir")
+        runner = ModelRunner(exe, low_node_count, procs_per_node)
+        runner.run_all_models(low_model_dir)
+
+        # run high resolution models
+        high_model_dir = self.state.get_config("high-data-dir")
+        runner = ModelRunner(exe, high_node_count, procs_per_node)
+        runner.run_all_models(high_model_dir)
