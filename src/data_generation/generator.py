@@ -29,7 +29,7 @@ class Generator():
             self.create_models()
             self.duplicate_base_configs()
             print("     Writing configurations...")
-            #       self.run_models()
+            self.run_models()
             print("     Running simulations...")
         except MpoError as e:
             print(e)
