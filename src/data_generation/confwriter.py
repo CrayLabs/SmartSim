@@ -1,8 +1,18 @@
 
-
+from error.mpo_error import MpoUnsupportedError
 
 class ConfWriter:
-    """TODO Error handling for finding files and writing over files"""
+    """Reads and writes configuration files of multiple types
+
+       Currently Supported Types
+         - namelist(nml)
+         - textfile(txt)     ** only append **
+
+      Textfile support is currently specific to MOM6
+      Ideally this is the baseclass the model specific
+      portions of the data-generation stage of MPO
+
+    """
 
     def __init__(self):
         self.config = None
@@ -13,7 +23,9 @@ class ConfWriter:
         elif filetype == "nml":
             self.nml(param_dict, path)
         else:
-            raise Exception("File type not supported yet!")
+            raise MpoUnsupportedError("Data Generation",
+                                      "Configuration file type not support yet: "
+                                      + filetype)
 
     def nml(self, param_dict, path):
         """Edit a namelist configuration file"""
@@ -26,7 +38,8 @@ class ConfWriter:
 
 
     def txt(self, param_dict, path):
-        """Edit a txt based configuration file"""
+        """Edit a txt based configuration file
+           TODO remove MOM6 specific override"""
 
         with open(path, "a+") as txt_config:
             for k, v in param_dict.items():

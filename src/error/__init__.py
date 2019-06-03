@@ -1,2 +1,2 @@
 
-from error.mpo_error import MpoError
+from error.mpo_error import *

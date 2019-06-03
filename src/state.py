@@ -1,6 +1,8 @@
 
 
 from helpers import read_config
+from error.mpo_error import MpoError, MpoConfigError
+
 
 class State:
     """Holds the state of the entire MPO pipeline and the configurations
@@ -41,7 +43,8 @@ class State:
                         visited.append(v)
             return self._get_config(key, visited)
         except KeyError:
-            print("Missing key in configuration file:", key)
+            raise MpoConfigError("Data Generation",
+                                 "Missing key in configuration file: " + key)
 
     def _get_config(self, key, visited):
         if len(visited) == 0:
