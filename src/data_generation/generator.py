@@ -10,6 +10,8 @@ from os import mkdir, getcwd
 from data_generation.model import NumModel
 from data_generation.confwriter import ConfWriter
 from data_generation.runner import ModelRunner
+from error.mpo_error import MpoError
+
 
 class Generator():
     """Data generation phase of the MPO pipeline. Holds internal configuration
@@ -22,12 +24,15 @@ class Generator():
         self.high_models = []
 
     def generate(self):
-        print("MPO Stage: ", self.state.current_state)
-        self.create_models()
-        self.duplicate_base_configs()
-        print("     Writing configurations...")
-#       self.run_models()
-        print("     Running simulations...")
+        try:
+            print("MPO Stage: ", self.state.current_state)
+            self.create_models()
+            self.duplicate_base_configs()
+            print("     Writing configurations...")
+            #       self.run_models()
+            print("     Running simulations...")
+        except MpoError as e:
+            print(e)
 
     def create_models(self):
         """Populates instances of NumModel class for low and high resolution.
@@ -54,20 +59,28 @@ class Generator():
             self.high_models.append(m)
 
 
+    def _create_data_dirs(self):
+        try:
+            low_dir = getcwd() + "/../low-res-models"
+            high_dir = getcwd() + "/../high-res-models"
+
+            # Add paths to data directories to state config
+            self.state.set_model_dir("high", high_dir)
+            self.state.set_model_dir("low", low_dir)
+
+            mkdir(low_dir)
+            mkdir(high_dir)
+
+            return low_dir, high_dir
+
+        except FileExistsError:
+            raise MpoError(self.state.get_state(),
+                           "Data directories already exist!")
 
     def duplicate_base_configs(self):
+
         base_path = self.state.get_config("base_config_path")
-
-        # Make data directories
-        # TODO catch if data dirs exist already
-        low_dir = getcwd() + "/../low-res-models"
-        high_dir = getcwd() + "/../high-res-models"
-        mkdir(low_dir)
-        mkdir(high_dir)
-
-        # Add paths to data directories to state config
-        self.state.set_model_dir("high", high_dir)
-        self.state.set_model_dir("low", low_dir)
+        low_dir, high_dir = self._create_data_dirs()
 
         for low_run in self.low_models:
             dup_path = low_dir + "/"+ low_run.name
