@@ -26,7 +26,7 @@ class Generator():
         self.create_models()
         self.duplicate_base_configs()
         print("     Writing configurations...")
-        self.run_models()
+#       self.run_models()
         print("     Running simulations...")
 
     def create_models(self):
@@ -56,8 +56,7 @@ class Generator():
 
 
     def duplicate_base_configs(self):
-        # TODO catch if base config path is not found
-        base_path = self.state.get_config("MPO_settings")["base_config_path"]
+        base_path = self.state.get_config("base_config_path")
 
         # Make data directories
         # TODO catch if data dirs exist already
@@ -112,10 +111,10 @@ class Generator():
 
 
     def run_models(self):
-        exe = self.state.get_config("MPO_settings")["executable_path"]
-        low_node_count = self.state.get_config("MPO_settings")["low_nodes"]
-        high_node_count = self.state.get_config("MPO_settings")["high_nodes"]
-        procs_per_node = self.state.get_config("MPO_settings")["procs_per_node"]
+        exe = self.state.get_config("executable_path")
+        low_node_count = self.state.get_config("low_nodes")
+        high_node_count = self.state.get_config("high_nodes")
+        procs_per_node = self.state.get_config("procs_per_node")
 
         # run low resolution models
         low_model_dir = self.state.get_model_dir("low")

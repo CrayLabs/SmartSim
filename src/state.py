@@ -20,8 +20,43 @@ class State:
     def update_state(self, new_state):
         self.current_state = new_state
 
-    def get_config(self, table_name):
-        return self.config[table_name]
+    def get_config(self, key):
+        """Retrieves a value from a toml file at an unspecified
+           depth. Breadth first traversal of toml dict tree.
+
+           Args
+              Key (str): key being searched for
+
+           Returns
+              Value associated with key or a KeyError if key cannot
+              be found.
+        """
+        visited = []
+        try:
+            for k, v in self.config.items():
+                if k == key:
+                    return v
+                else:
+                    if isinstance(v, dict):
+                        visited.append(v)
+            return self._get_config(key, visited)
+        except KeyError:
+            print("Missing key in configuration file:", key)
+
+    def _get_config(self, key, visited):
+        if len(visited) == 0:
+            raise KeyError
+        else:
+            cur_table = visited.pop()
+            for k, v in cur_table.items():
+                if k == key:
+                    return v
+                else:
+                    if isinstance(v, dict):
+                        visited.append(v)
+            return self._get_config(key, visited)
+
+
 
     def set_model_dir(self, res, path):
         if res == "high":
