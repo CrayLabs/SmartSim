@@ -51,7 +51,7 @@
 # MPO should assume defaults for these values
 # but should also be customizable by the user
 procs_per_node = 48
-executable_path = "./model"
+executable_path = "../../../Ocean/MOM6-examples/build/gnu/ocean_only/repro/MOM6"
 base_config_path = "../MOM6_base_config"
 low_nodes = 2
 high_nodes = 4

@@ -27,10 +27,10 @@ class ConfWriter:
 
     def txt(self, param_dict, path):
         """Edit a txt based configuration file"""
-
+        # TODO remove MOM6 specific code
         with open(path, "a+") as txt_config:
             for k, v in param_dict.items():
-                txt_config.write(k + "=" + str(v) + "\n")
+                txt_config.write("#override " + k + "=" + str(v) + "\n")
 
 
     def deep_update(self, source, key, value):

@@ -25,7 +25,8 @@ class ModelRunner:
 
     def run_all_models(self, model_dir):
         #self.allocate_slurm_job()
-        for model in glob(model_dir):
+        for model in glob(model_dir + "/*"):
+            print(model)
             self.run_model(model)
 
 
@@ -50,8 +51,11 @@ class ModelRunner:
         """
         node_count = "-N " + str(self.nodes) + " "
         time = "-t 23:00:00 "
-        run_model = subprocess.Popen("srun -n " + str(self.procs) + " " +
-                                     node_count + time + self.exe,
+        #run_model = subprocess.Popen("srun -n " + str(self.procs) + " " +
+        #                             node_count + time + self.exe,
+        #                             cwd=model_to_run,
+        #                             shell=True)
+        run_model = subprocess.Popen("srun " + self.exe,
                                      cwd=model_to_run,
                                      shell=True)
         run_model.wait()
