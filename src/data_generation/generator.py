@@ -3,16 +3,16 @@ import sys
 import subprocess
 import itertools
 import toml
-import partial
 
 from glob import glob
 from os import mkdir, getcwd
 from multiprocessing import Pool
+from functools import partial
 
 from data_generation.model import NumModel
 from data_generation.confwriter import ConfWriter
 from error.mpo_error import MpoError
-from src.launcher.Launchers import SlurmLauncher
+from launcher.Launchers import SlurmLauncher
 
 class Generator():
     """Data generation phase of the MPO pipeline. Holds internal configuration
@@ -122,32 +122,33 @@ class Generator():
             conf_writer.write_config({name: value}, full_path, filetype)
 
 
-    def _sim(self, exe, nodes, partition, model_path):
+    def _sim(self, exe, nodes, model_path, partition="iv24"):
         launcher = SlurmLauncher(def_nodes=nodes, def_partition=partition)
         launcher.validate()
         launcher.get_alloc()
-        launcher.run(exe, cwd=model_path)
+        launcher.run([exe], cwd=model_path)
         launcher.free_alloc()
 
 
 
-    def run_models(self, partition="iv24"):
+    def run_models(self):
         exe = self.state.get_config("executable_path")
         nodes_per_low_run = self.state.get_config("low_nodes")
         nodes_per_high_run = self.state.get_config("high_nodes")
 
-        print("   Running Low Resolution Models...")
-        low_nodes = len(self.low_models) * nodes_per_low_run
+        print("   Running low resolution simulations...")
         low_model_dir = self.state.get_model_dir("low")
-        low_model_paths = [model for model in glob(low_model_dir + "/*")]
-        low_pool = Pool(len(self.low_models))
-        low_pool.map(partial(self._sim, exe, low_nodes, partition), low_model_paths)
+        for low_model in glob(low_model_dir + "/*"):
+            self._sim(exe, nodes_per_low_run, low_model)
 
-        print("   Runnning High Resolution Models...")
-        high_nodes = len(self.low_models) * nodes_per_high_run
+        print(" ")
+        print("   Running high resolution simulations...")
         high_model_dir = self.state.get_model_dir("high")
-        high_model_paths = [model for model in glob(high_model_dir + "/*")]
-        high_pool = Pool(len(self.high_models))
-        high_pool.map(partial(self._sim, exe, high_nodes, partition), high_model_paths)
+        for high_model in glob(high_model_dir + "/*"):
+            self._sim(exe, nodes_per_high_run, high_model)
+        print(" ")
+        print("All simulations complete")
+        print("High resolution simulation data:", high_model_dir)
+        print("Low resolution simulation data:", low_model_dir)
 
 

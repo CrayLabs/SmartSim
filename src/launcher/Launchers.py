@@ -1,7 +1,7 @@
 from .launcher import Launcher
-from src.helpers import execute_cmd
+from helpers import execute_cmd
 import logging
-
+from os import getcwd
 
 class SlurmLauncher(Launcher):
 
@@ -30,7 +30,7 @@ class SlurmLauncher(Launcher):
     sinfo_cmd = ["sinfo", "--noheader", "--format", "%R %D %c"]
     err_mess = "Failed to validate slurm!"
 
-    out_str = execute_cmd(sinfo_cmd, err_message=err_mess)
+    out_str, err_str = execute_cmd(sinfo_cmd, err_message=err_mess)
 
     # Parse the output string to extract the available resources for the specified partition
     # Example output from sinfo --noheader --format %R %D %c:
@@ -60,7 +60,7 @@ class SlurmLauncher(Launcher):
     logging.info("Successfully Validated Slurm with sufficient resources")
 
   @staticmethod
-  def parse_salloc(output):
+  def parse_salloc(out_str):
     for line in out_str.split("\n"):
       if line.startswith("salloc: Granted job allocation"):
         return line.split()[-1]
@@ -127,7 +127,7 @@ class SlurmLauncher(Launcher):
 
     _, err = execute_cmd(scancel, err_message=err_mess)
 
-    if proc.returncode is not 0:
+    if not err is None:
       logging.debug("Unable to revoke your allocation for jobid %s" % alloc_id)
       logging.debug("The job may have already timed out, or you may need to cancel the job manually")
       logging.debug(err)
@@ -135,7 +135,7 @@ class SlurmLauncher(Launcher):
     logging.info("Successfully Freed Allocation %s" % alloc_id)
     self.alloc_id = None
 
-  def run(self, cmd=[], nodes=None, ppn=None, add_opts=[]):
+  def run(self, cmd=[], cwd=getcwd(), nodes=None, ppn=None, add_opts=[]):
     """Run a command using srun
 
     :param cmd: The command to be run in the form of a list of strings
@@ -165,10 +165,9 @@ class SlurmLauncher(Launcher):
 
     srun += cmd
 
-    out, err = execute_cmd(srun)
-
+    out, err = execute_cmd(srun, wd=cwd, progress=True)
     logging.info(out)
-    logging.error(err)
+    #logging.info(err)
 
 
 class PBSLauncher(Launcher):

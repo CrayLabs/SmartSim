@@ -1,1 +1,1 @@
-from src.launcher.Launchers import SlurmLauncher, UrikaLauncher
+from launcher.Launchers import SlurmLauncher, UrikaLauncher
