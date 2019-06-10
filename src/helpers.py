@@ -21,20 +21,11 @@ def read_config():
         raise Exception("Could not parse/find mpo-config.toml")
 
 
-
-
-def execute_cmd(cmd_list, wd=getcwd(),  err_message="", progress=False):
+def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):
     logging.info("Executing shell command: %s" % " ".join(cmd_list))
     proc = Popen(cmd_list, cwd=wd, stdout=PIPE, stderr=PIPE)
     try:
-        if progress:
-            while True:
-                nextline = proc.stdout.readline().decode("utf-8")
-                if "statistics" in nextline:
-                    break
-                parse_for_progress("Day", nextline)
         out, err = proc.communicate()
-
     except CalledProcessError as e:
         logging.error("Exception while attempting to start a shell process")
         for o in out.decode("utf-8").split("\n"):
@@ -54,32 +45,24 @@ def execute_cmd(cmd_list, wd=getcwd(),  err_message="", progress=False):
 
     return out.decode('utf-8'), err.decode('utf-8')
 
-def parse_for_progress(leader, textfile):
-    show = False
-    for t in textfile.split():
-        if show == True:
-            print_progress_bar(float(t), 31, prefix="     Day " + str(float(t)))
-            show = False
-        if t == leader:
-            show = True
-
 
 def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
     """
     Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
+
+    Args
+        iteration (int): current iteration (required)
+        total     (int): total iterations (required)
+        prefix    (str): prefix string (optional)
+        suffix    (str): suffix string (optional)
+        decimals  (int): positive number of decimals in percent complete (optional)
+        length    (int): character length of bar (optional)
+        fill      (str): bar fill character (optional)
     """
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
     print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
     # Print New Line on Complete
-    if iteration == total: 
+    if iteration == total:
         print()

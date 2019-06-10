@@ -1,7 +1,11 @@
 
+[model]
+model_name = "MOM6"
+site = "GFDL"
+
 [parameters]
-# each parameter listed should contain each value that could be a result
-# of tuning the model. Permutations of all listed parameters will be run.
+# Possible parameter values as a result of tuning are listed for
+# MPO to optimize over. 
     KH = [1000, 2000, 3000, 4000]
     KHTH = [1000, 2000, 3000, 4000]
 

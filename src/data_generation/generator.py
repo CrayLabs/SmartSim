@@ -10,9 +10,9 @@ from multiprocessing import Pool
 from functools import partial
 
 from data_generation.model import NumModel
-from data_generation.confwriter import ConfWriter
-from error.mpo_error import MpoError
+from error.mpo_error import MpoError, MpoUnsupportedError
 from launcher.Launchers import SlurmLauncher
+from data_generation.writers import *
 
 class Generator():
     """Data generation phase of the MPO pipeline. Holds internal configuration
@@ -29,7 +29,7 @@ class Generator():
             print("MPO Stage: ", self.state.current_state)
             self.create_models()
             self.duplicate_base_configs()
-            self.run_models()
+            #self.run_models()
         except MpoError as e:
             print(e)
 
@@ -100,20 +100,29 @@ class Generator():
             self.write_parameters(dup_path, high_run.param_dict)
             self.write_model_configs(dup_path, high_run.settings)
 
+
+    def get_config_writer(self):
+        model_name = self.state.get_config("model_name")
+        if model_name == "MOM6":
+            writer = mom6_writer.MOM6Writer()
+            return writer
+        else:
+            raise MpoUnsupportedError("Model not supported yet")
+
+
     def write_parameters(self, base_conf_path, param_dict):
         param_info = self.state.get_config("parameter_info")
         filename = param_info["filename"]
         filetype = param_info["filetype"]
         full_path = base_conf_path + "/" + filename
 
-        conf_writer = ConfWriter()
+        conf_writer = self.get_config_writer()
         conf_writer.write_config(param_dict, full_path, filetype)
-
 
 
     def write_model_configs(self, base_conf_path, config_dict):
         # TODO handle errors for when this info isnt present
-        conf_writer = ConfWriter()
+        conf_writer = self.get_config_writer()
         for name, config_info in config_dict.items():
             filename = config_info["filename"]
             filetype = config_info["filetype"]

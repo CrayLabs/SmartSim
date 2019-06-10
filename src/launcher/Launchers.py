@@ -165,7 +165,7 @@ class SlurmLauncher(Launcher):
 
     srun += cmd
 
-    out, err = execute_cmd(srun, wd=cwd, progress=True)
+    out, err = execute_cmd(srun, wd=cwd)
     logging.info(out)
     #logging.info(err)
 
