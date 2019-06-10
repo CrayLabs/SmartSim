@@ -1,4 +1,4 @@
-
+import logging
 
 from helpers import read_config
 from error.mpo_error import MpoError, MpoConfigError
@@ -11,9 +11,9 @@ class State:
     def __init__(self):
         self.config = read_config()
         self.current_state = "Initializing"
-        print("MPO State: ", self.current_state)
         self.high_model_dir = None
         self.low_model_dir = None
+        logging.info("MPO State: %s", self.current_state)
 
 
     def get_state(self):

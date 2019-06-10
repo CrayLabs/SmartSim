@@ -9,10 +9,8 @@ class MOM6Writer(ConfigWriter):
          - namelist(nml)
          - textfile(txt)     ** only append **
 
-      Textfile support is currently specific to MOM6
-      Ideally this is the baseclass the model specific
-      portions of the data-generation stage of MPO
-
+       MOM6 only needs two types of configuration files to
+       be written into: txt and nml
     """
 
     def __init__(self):
@@ -21,15 +19,15 @@ class MOM6Writer(ConfigWriter):
 
     def write_config(self, param_dict, path, filetype):
         if filetype == "txt":
-            self.txt(param_dict, path)
+            self._txt(param_dict, path)
         elif filetype == "nml":
-            self.nml(param_dict, path)
+            self._nml(param_dict, path)
         else:
             raise MpoUnsupportedError("Data Generation",
                                       "Configuration file type not support yet: "
                                       + filetype)
 
-    def nml(self, param_dict, path):
+    def _nml(self, param_dict, path):
         """Edit a namelist configuration file"""
 
         import f90nml
@@ -39,7 +37,7 @@ class MOM6Writer(ConfigWriter):
         self.config.write(path, force=True)
 
 
-    def txt(self, param_dict, path):
+    def _txt(self, param_dict, path):
         """Edit a txt based configuration file"""
 
         with open(path, "a+") as txt_config:

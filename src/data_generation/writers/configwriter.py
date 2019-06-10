@@ -1,17 +1,8 @@
 import abc
 
 class ConfigWriter(abc.ABC):
-    """Reads and writes configuration files of multiple types
-
-       Currently Supported Types
-         - namelist(nml)
-         - textfile(txt)     ** only append **
-
-      Textfile support is currently specific to MOM6
-      Ideally this is the baseclass the model specific
-      portions of the data-generation stage of MPO
-
-    """
+    """Base class to be overwriten for specific model configuration
+       writer instances. """
 
 
     def __init__(self):
