@@ -1,5 +1,5 @@
 from error.ss_error import SSUnsupportedError
-from data_generation.writers.configwriter import ConfigWriter
+from writers.configwriter import ConfigWriter
 
 
 class MOM6Writer(ConfigWriter):

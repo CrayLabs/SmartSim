@@ -13,12 +13,12 @@ from os import  getcwd
 def read_config():
     try:
         cwd = getcwd()
-        fname = cwd + "/../mpo-config.toml"
+        fname = cwd + "/../ss-config.toml"
         with open(fname, 'r', encoding='utf-8') as fp:
             parsed_toml = toml.load(fp)
             return parsed_toml
     except Exception as e:
-        raise Exception("Could not parse/find mpo-config.toml")
+        raise Exception("Could not parse/find ss-config.toml")
 
 
 def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):

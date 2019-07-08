@@ -1,0 +1,54 @@
+
+[model]
+name = "MOM6"
+base_config_path = "../MOM6_base_config"
+
+[execute]
+targets = ["half-deg", "quar-deg"]
+executable_path = "../../../Ocean/MOM6-examples/build/gnu/ocean_only/repro/MOM6"
+
+[half-deg]
+    [half-deg.KH]
+        value = [1000, 2000, 3000, 4000]
+        filename = "MOM_override"
+        filetype = "txt"
+    [half-deg.KHTH]
+        value = [1000, 2000, 3000, 4000]
+        filename = "MOM_override"
+        filetype = "txt"
+    [half-deg.NIGLOBAL]
+        value = 40
+        filename = "MOM_override"
+        filetype = "txt"
+    [half-deg.NJGLOBAL]
+        value = 40
+        filename = "MOM_override"
+        filetype = "txt"
+    [half-deg.nk]
+        value = 1
+        filename = "MOM_override"
+        filetype = "txt"
+    [half-deg.months]
+        value = 12
+        filename = "input.nml"
+        filetype = "nml"
+
+[quar-deg]
+    [quar-deg.NIGLOBAL]                # resolution
+        value = 40
+        filename = "MOM_override"
+        filetype = "txt"
+    [quar-deg.NJGLOBAL]                # resolution
+        value = 40
+        filename = "MOM_override"
+        filetype = "txt"
+    [quar-deg.nk]                      # layers
+        value = 1
+        filename = "MOM_override"
+        filetype = "txt"
+    [quar-deg.months]                  # simulation length
+        value = 12
+        filename = "input.nml"
+        filetype = "nml"
+
+

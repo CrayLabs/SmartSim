@@ -8,11 +8,12 @@ class State:
     """Holds the state of the entire SS pipeline and the configurations
        necessary to run each stage of the pipeline"""
 
-    def __init__(self):
-        self.config = read_config()
+    def __init__(self, config=None):
         self.current_state = "Initializing"
-        self.high_model_dir = None
-        self.low_model_dir = None
+        if config:
+            self.config = config
+        else:
+            self.config = read_config()
         logging.info("SmartSim State: %s", self.current_state)
 
 
@@ -59,16 +60,4 @@ class State:
                         visited.append(v)
             return self._get_config(key, visited)
 
-
-
-    def set_model_dir(self, res, path):
-        if res == "high":
-            self.high_model_dir = path
-        else:
-            self.low_model_dir = path
-
-    def get_model_dir(self, res):
-        if res == "high":
-            return self.high_model_dir
-        return self.low_model_dir
 
