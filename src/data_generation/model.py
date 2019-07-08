@@ -3,7 +3,7 @@
 class NumModel:
     """Hold configuration data for a numerical model. This
        class is passed around in the data-generation stage of
-       the MPO pipeline so that the configurations can be read
+       the SS pipeline so that the configurations can be read
        easily.
     """
 

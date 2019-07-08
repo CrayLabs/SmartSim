@@ -1,4 +1,4 @@
-from error.mpo_error import MpoUnsupportedError
+from error.ss_error import SSUnsupportedError
 from data_generation.writers.configwriter import ConfigWriter
 
 
@@ -23,7 +23,7 @@ class MOM6Writer(ConfigWriter):
         elif filetype == "nml":
             self._nml(param_dict, path)
         else:
-            raise MpoUnsupportedError("Data Generation",
+            raise SSUnsupportedError("Data Generation",
                                       "Configuration file type not support yet: "
                                       + filetype)
 

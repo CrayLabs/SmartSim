@@ -1,11 +1,11 @@
 import logging
 
 from helpers import read_config
-from error.mpo_error import MpoError, MpoConfigError
+from error.ss_error import SmartSimError, SSConfigError
 
 
 class State:
-    """Holds the state of the entire MPO pipeline and the configurations
+    """Holds the state of the entire SS pipeline and the configurations
        necessary to run each stage of the pipeline"""
 
     def __init__(self):
@@ -13,7 +13,7 @@ class State:
         self.current_state = "Initializing"
         self.high_model_dir = None
         self.low_model_dir = None
-        logging.info("MPO State: %s", self.current_state)
+        logging.info("SmartSim State: %s", self.current_state)
 
 
     def get_state(self):
@@ -43,7 +43,7 @@ class State:
                         visited.append(v)
             return self._get_config(key, visited)
         except KeyError:
-            raise MpoConfigError("Data Generation",
+            raise SSConfigError("Data Generation",
                                  "Missing key in configuration file: " + key)
 
     def _get_config(self, key, visited):

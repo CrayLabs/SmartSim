@@ -8,12 +8,12 @@ from multiprocessing import Pool
 from functools import partial
 
 from data_generation.model import NumModel
-from error.mpo_error import MpoError, MpoUnsupportedError
+from error.ss_error import SmartSimError, SSUnsupportedError
 from launcher.Launchers import SlurmLauncher
-from data_generation.writers import *
+from writers import *
 
 class Generator():
-    """Data generation phase of the MPO pipeline. Holds internal configuration
+    """Data generation phase of the Smart Sim pipeline. Holds internal configuration
        data that is created during the data generation stage.
 
        Args
@@ -29,11 +29,11 @@ class Generator():
     def generate(self):
         """Generate model runs according to the main configuration file"""
         try:
-            logging.info("MPO Stage: %s", self.state.current_state)
+            logging.info("Smart Sim Stage: %s", self.state.current_state)
             self._create_models()
             self._duplicate_base_configs()
             #self._run_models()
-        except MpoError as e:
+        except SmartSimError as e:
             print(e)
 
     def _create_models(self):
@@ -77,7 +77,7 @@ class Generator():
             return low_dir, high_dir
 
         except FileExistsError:
-            raise MpoError(self.state.get_state(),
+            raise SmartSimError(self.state.get_state(),
                            "Data directories already exist!")
 
     def _duplicate_base_configs(self):
@@ -114,7 +114,7 @@ class Generator():
             writer = mom6_writer.MOM6Writer()
             return writer
         else:
-            raise MpoUnsupportedError("Model not supported yet")
+            raise SSUnsupportedError("Model not supported yet")
 
 
     def _write_parameters(self, base_conf_path, param_dict):
