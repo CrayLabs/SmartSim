@@ -7,7 +7,7 @@ import toml
 import logging
 
 from subprocess import PIPE, Popen, CalledProcessError
-from os import  getcwd
+from os import getcwd, environ
 
 
 def read_config():
@@ -20,6 +20,13 @@ def read_config():
     except Exception as e:
         raise Exception("Could not parse/find ss-config.toml")
 
+def get_SSHOME():
+    """Retrieves SMARTSIMHOME env variable"""
+    try:
+        SS_HOME = environ["SMARTSIMHOME"]
+        return SS_HOME
+    except KeyError:
+        raise Exception("Smart Sim library not setup")
 
 def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):
     logging.info("Executing shell command: %s" % " ".join(cmd_list))

@@ -11,6 +11,8 @@ from data_generation.model import NumModel
 from error.ss_error import SmartSimError, SSUnsupportedError
 from launcher.Launchers import SlurmLauncher
 from writers import *
+from helpers import get_SSHOME
+
 
 class Generator():
     """Data generation phase of the Smart Sim pipeline. Holds internal configuration
@@ -80,12 +82,11 @@ class Generator():
 
     def _create_data_dirs(self):
         """Create data directories to house simulation data"""
-        # TODO Let user specify where to put data
-        # or create environment variables
+
         targets = self.state.get_config("targets")
         try:
             for target in targets:
-                target_dir = "/".join((getcwd(), "..", target))
+                target_dir = get_SSHOME() + target
                 mkdir(target_dir)
 
         except FileExistsError:
@@ -102,7 +103,7 @@ class Generator():
             for model in self.model_list:
                 name = model.name
                 if name.startswith(target):
-                    dup_path = "/".join(("..", target, name))
+                    dup_path = get_SSHOME() + "/".join([target, name])
                     create_target_dir = subprocess.Popen("cp -r " + base_path +
                                                          " " + dup_path,
                                                          shell=True)
