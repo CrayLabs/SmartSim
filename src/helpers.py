@@ -2,7 +2,7 @@
 """A number of functions used in various places throughout MPO, but belonging to
    no specific class or group."""
 
-
+import sys
 import toml
 import logging
 
@@ -10,15 +10,19 @@ from subprocess import PIPE, Popen, CalledProcessError
 from os import getcwd, environ
 
 
-def read_config():
+def read_config(config_path=None):
     try:
-        cwd = getcwd()
-        fname = cwd + "/../ss-config.toml"
+        fname = get_SSHOME() + "ss-config.toml"
+        if config_path:
+            fname = config_path
         with open(fname, 'r', encoding='utf-8') as fp:
             parsed_toml = toml.load(fp)
             return parsed_toml
     except Exception as e:
-        raise Exception("Could not parse/find ss-config.toml")
+        if config_path:
+            raise Exception("Could not parse/find configuration file: " + config_path)
+        else:
+            raise Exception("Could not parse/find ss-config.toml")
 
 def get_SSHOME():
     """Retrieves SMARTSIMHOME env variable"""
@@ -26,7 +30,8 @@ def get_SSHOME():
         SS_HOME = environ["SMARTSIMHOME"]
         return SS_HOME
     except KeyError:
-        raise Exception("Smart Sim library not setup")
+        print("SmartSim library environment not setup!")
+        sys.exit()
 
 def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):
     logging.info("Executing shell command: %s" % " ".join(cmd_list))

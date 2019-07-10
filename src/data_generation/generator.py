@@ -1,6 +1,7 @@
 import subprocess
 import itertools
 import logging
+import sys
 
 from glob import glob
 from os import mkdir, getcwd
@@ -36,6 +37,7 @@ class Generator():
             self._duplicate_and_configure()
         except SmartSimError as e:
             print(e)
+            sys.exit()
 
     def _create_models(self):
         """Populates instances of NumModel class for all target models.

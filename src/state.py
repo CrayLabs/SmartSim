@@ -23,31 +23,43 @@ class State:
     def update_state(self, new_state):
         self.current_state = new_state
 
-    def get_config(self, key):
+    def get_config(self, key, config=None):
         """Retrieves a value from a toml file at an unspecified
            depth. Breadth first traversal of toml dict tree.
 
            Args
               Key (str): key being searched for
+              Config (str): A sub-config file to search through
 
            Returns
               Value associated with key or a KeyError if key cannot
               be found.
         """
+        value = self.search_config(key, self.config)
+        if value:
+            return value
+        elif value == None and config != None:
+            value = self.search_config(key, config)
+            if value:
+                return value
+        raise SSConfigError(self.current_state,
+                            "Missing key in configuration file: " + key)
+
+
+    def search_config(self, key, config):
         visited = []
         try:
-            for k, v in self.config.items():
+            for k, v in config.items():
                 if k == key:
                     return v
                 else:
                     if isinstance(v, dict):
                         visited.append(v)
-            return self._get_config(key, visited)
+            return self._search_config(key, visited)
         except KeyError:
-            raise SSConfigError("Data Generation",
-                                 "Missing key in configuration file: " + key)
+            return None
 
-    def _get_config(self, key, visited):
+    def _search_config(self, key, visited):
         if len(visited) == 0:
             raise KeyError
         else:
@@ -58,6 +70,6 @@ class State:
                 else:
                     if isinstance(v, dict):
                         visited.append(v)
-            return self._get_config(key, visited)
+            return self._search_config(key, visited)
 
 
