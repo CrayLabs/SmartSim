@@ -1,4 +1,4 @@
-from error.ss_error import SSUnsupportedError
+from error.errors import SSUnsupportedError
 from writers.configwriter import ConfigWriter
 
 

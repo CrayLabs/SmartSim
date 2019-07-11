@@ -1,6 +1,6 @@
 
 from state import State
-from data_generation.generator import Generator
+from generation.generator import Generator
 from control.controller import Controller
 
 STATE = State()

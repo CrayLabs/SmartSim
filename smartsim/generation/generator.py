@@ -3,19 +3,16 @@ import itertools
 import logging
 import sys
 
-from glob import glob
 from os import mkdir, getcwd
-from multiprocessing import Pool
-from functools import partial
 
-from data_generation.model import NumModel
-from error.ss_error import SmartSimError, SSUnsupportedError
+from generation.model import NumModel
+from error.errors import SmartSimError, SSUnsupportedError
 from launcher.Launchers import SlurmLauncher
 from writers import *
 from helpers import get_SSHOME
+from ssModule import SSModule
 
-
-class Generator():
+class Generator(SSModule):
     """Data generation phase of the Smart Sim pipeline. Holds internal configuration
        data that is created during the data generation stage.
 
@@ -23,15 +20,15 @@ class Generator():
          state  (State instance): The state of the library
     """
 
-    def __init__(self, state):
-        self.state = state
+    def __init__(self, state, local_config="generate.toml"):
+        super().__init__(state, local_config)
         self.state.update_state("Data Generation")
         self.model_list = []
 
     def generate(self):
         """Generate model runs according to the main configuration file"""
         try:
-            logging.info("SmartSim Stage: %s", self.state.current_state)
+            logging.info("SmartSim Stage: %s", self.state.get_state())
             self._create_models()
             self._create_data_dirs()
             self._duplicate_and_configure()
@@ -49,7 +46,7 @@ class Generator():
 
         # collect all parameters, names, and settings
         def read_model_parameters(target):
-            target_params = self.state.get_config(target)
+            target_params = self.get_config([target])
             param_names = []
             parameters = []
             param_settings = {}
@@ -73,8 +70,7 @@ class Generator():
             return all_permutations
 
         # init model classes to hold parameter information
-        targets = self.state.get_config("targets")
-        for target in targets:
+        for target in self.targets:
             names, values, settings = read_model_parameters(target)
             all_configs = create_all_permutations(names, values)
             for conf in all_configs:
@@ -85,9 +81,8 @@ class Generator():
     def _create_data_dirs(self):
         """Create data directories to house simulation data"""
 
-        targets = self.state.get_config("targets")
         try:
-            for target in targets:
+            for target in self.targets:
                 target_dir = get_SSHOME() + target
                 mkdir(target_dir)
 
@@ -98,10 +93,9 @@ class Generator():
     def _duplicate_and_configure(self):
         """Duplicate the base configurations of the numerical model"""
 
-        base_path = self.state.get_config("base_config_path")
-        targets = self.state.get_config("targets")
+        base_path = self.get_config(["model","base_config_path"])
 
-        for target in targets:
+        for target in self.targets:
             for model in self.model_list:
                 name = model.name
                 if name.startswith(target):
@@ -115,7 +109,7 @@ class Generator():
     def _get_config_writer(self):
         """Find and return the configuration writer for this model"""
 
-        model_name = self.state.get_config("name")
+        model_name = self.get_config(["model","name"])
         if model_name == "MOM6":
             writer = mom6_writer.MOM6Writer()
             return writer
@@ -124,7 +118,13 @@ class Generator():
 
 
     def _write_parameters(self, base_conf_path, model):
-        """Write the model instance specifc run configurations"""
+        """Write the model instance specifc run configurations
+
+           Args
+             base_conf_path (str): filepath to duplicated model
+             model (Model): the Model instance to write parameters for
+
+        """
         conf_writer = self._get_config_writer()
         for name, param_info in model.param_settings.items():
             filename = param_info["filename"]

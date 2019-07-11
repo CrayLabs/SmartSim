@@ -10,19 +10,16 @@ from subprocess import PIPE, Popen, CalledProcessError
 from os import getcwd, environ
 
 
-def read_config(config_path=None):
+def read_config(config_name):
     try:
-        fname = get_SSHOME() + "ss-config.toml"
-        if config_path:
-            fname = config_path
+        fname = get_SSHOME() + config_name
         with open(fname, 'r', encoding='utf-8') as fp:
             parsed_toml = toml.load(fp)
             return parsed_toml
     except Exception as e:
-        if config_path:
-            raise Exception("Could not parse/find configuration file: " + config_path)
-        else:
-            raise Exception("Could not parse/find ss-config.toml")
+        print("Could not parse/find configuration file: " + config_name)
+        sys.exit()
+
 
 def get_SSHOME():
     """Retrieves SMARTSIMHOME env variable"""
@@ -32,6 +29,46 @@ def get_SSHOME():
     except KeyError:
         print("SmartSim library environment not setup!")
         sys.exit()
+
+
+def bfs(key, tree):
+    """Retrieves a value from a toml file at an unspecified
+       depth. Breadth first traversal of toml dict tree.
+
+       Args
+         Key (str): key being searched for
+         tree (str): A config file to search through
+
+       Returns
+         Value associated with key or a KeyError if key cannot
+         be found.
+        """
+    visited = []
+    try:
+        for k, v in tree.items():
+            if k == key:
+                return v
+            else:
+                if isinstance(v, dict):
+                    visited.append(v)
+            return _bfs(key, visited)
+    except KeyError:
+        return None
+
+def _bfs(key, visited):
+    if len(visited) == 0:
+        raise KeyError
+    else:
+        cur_table = visited.pop()
+        for k, v in cur_table.items():
+            if k == key:
+                return v
+            else:
+                if isinstance(v, dict):
+                    visited.append(v)
+            return _bfs(key, visited)
+
+
 
 def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):
     logging.info("Executing shell command: %s" % " ".join(cmd_list))
