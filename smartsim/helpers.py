@@ -25,6 +25,8 @@ def get_SSHOME():
     """Retrieves SMARTSIMHOME env variable"""
     try:
         SS_HOME = environ["SMARTSIMHOME"]
+        if not SS_HOME.endswith("/"):
+            SS_HOME += "/"
         return SS_HOME
     except KeyError:
         print("SmartSim library environment not setup!")
