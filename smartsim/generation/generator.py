@@ -93,7 +93,7 @@ class Generator(SSModule):
     def _duplicate_and_configure(self):
         """Duplicate the base configurations of the numerical model"""
 
-        base_path = self.get_config(["model","base_config_path"])
+        base_path = get_SSHOME() + self.get_config(["model","base_config_path"])
 
         for target in self.targets:
             for model in self.model_list:

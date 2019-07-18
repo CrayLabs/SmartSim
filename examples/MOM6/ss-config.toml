@@ -1,7 +1,7 @@
 
 [model]
 name = "MOM6"
-base_config_path = "../MOM6_base_config"
+base_config_path = "MOM6_base_config"
 
 [execute]
 targets = ["half-deg", "quar-deg"]
