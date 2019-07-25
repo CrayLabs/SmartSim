@@ -20,8 +20,8 @@ class Generator(SSModule):
          state  (State instance): The state of the library
     """
 
-    def __init__(self, state, local_config="generate.toml"):
-        super().__init__(state, local_config)
+    def __init__(self, state):
+        super().__init__(state)
         self.state.update_state("Data Generation")
         self.model_list = []
 

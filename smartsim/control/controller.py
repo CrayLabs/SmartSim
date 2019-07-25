@@ -11,8 +11,8 @@ from ssModule import SSModule
 
 class Controller(SSModule):
 
-    def __init__(self, state, local_config="control.toml"):
-        super().__init__(state, local_config)
+    def __init__(self, state):
+        super().__init__(state)
         self.state.update_state("Simulation")
 
     """
