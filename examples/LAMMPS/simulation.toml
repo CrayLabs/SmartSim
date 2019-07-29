@@ -1,0 +1,22 @@
+
+[model]
+name = "LAMMPS"
+configs = ["in.atm"]
+experiment_name = "lammps_atm"
+
+[execute]
+targets = ["atm"]
+executable_path = "lmp_mpi"
+run_command = "mpirun"
+
+
+[atm]
+    [atm.lj]
+    values = ["ls", "ld"]
+
+    
+
+
+
+
+

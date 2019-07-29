@@ -7,9 +7,8 @@ class NumModel:
        easily.
     """
 
-    def __init__(self, name, param_dict, param_settings):
+    def __init__(self, name, param_dict):
         self.name = name
         self.param_dict = param_dict
-        self.param_settings = param_settings
         for param in param_dict.values():
             self.name += "_" + str(param)

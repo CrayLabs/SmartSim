@@ -17,6 +17,7 @@ def read_config(config_name):
             parsed_toml = toml.load(fp)
             return parsed_toml
     except Exception as e:
+        print(e)
         print("Could not parse/find configuration file: " + config_name)
         sys.exit()
 

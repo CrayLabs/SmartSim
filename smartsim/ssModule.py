@@ -37,8 +37,9 @@ class SSModule:
                 return self._search_config(val_path, config[parent])
         else:
             raise SSConfigError(self.state.get_state(),
-                                "Could not find config value for key: " + ".".join(path))
+                                "Could not find config value for key: " + ".".join(value_path))
 
     def _get_targets(self):
+        # TODO adjust for "target" vs ["target1"] and ["target2"] in toml
         targets = self.get_config(["execute", "targets"])
         self.targets = targets

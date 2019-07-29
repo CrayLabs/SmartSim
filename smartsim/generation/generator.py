@@ -4,13 +4,16 @@ import logging
 import sys
 
 from os import mkdir, getcwd
+from shutil import copyfile
 
 from generation.model import NumModel
+from generation.modelwriter import ModelWriter
 from error.errors import SmartSimError, SSUnsupportedError
 from launcher.Launchers import SlurmLauncher
-from writers import *
 from helpers import get_SSHOME
 from ssModule import SSModule
+
+
 
 class Generator(SSModule):
     """Data generation phase of the Smart Sim pipeline. Holds internal configuration
@@ -23,15 +26,15 @@ class Generator(SSModule):
     def __init__(self, state):
         super().__init__(state)
         self.state.update_state("Data Generation")
-        self.model_list = []
+        self.models = {}
 
     def generate(self):
         """Generate model runs according to the main configuration file"""
         try:
             logging.info("SmartSim Stage: %s", self.state.get_state())
             self._create_models()
-            self._create_data_dirs()
-            self._duplicate_and_configure()
+            self._create_experiment()
+            self._configure_models()
         except SmartSimError as e:
             print(e)
             sys.exit()
@@ -52,84 +55,87 @@ class Generator(SSModule):
             param_settings = {}
             for name, val in target_params.items():
                 param_names.append(name)
-                param_settings[name] = val
-                if isinstance(val["value"], list):
-                    parameters.append(val["value"])
+                if isinstance(val["values"], list):
+                    parameters.append(val["values"])
                 else:
-                    parameters.append([val["value"]])
-            return param_names, parameters, param_settings
+                    parameters.append([val["values"]])
+            return param_names, parameters
 
-        # create permutations of all parameters
-        # single model if parameters only have one value
-        def create_all_permutations(param_names, param_values):
-            perms = list(itertools.product(*param_values))
-            all_permutations = []
-            for p in perms:
-                temp_model = dict(zip(param_names, p))
-                all_permutations.append(temp_model)
-            return all_permutations
 
         # init model classes to hold parameter information
         for target in self.targets:
-            names, values, settings = read_model_parameters(target)
-            all_configs = create_all_permutations(names, values)
+            names, values = read_model_parameters(target)
+            all_configs = self.create_all_permutations(names, values)
             for conf in all_configs:
-                m = NumModel(target, conf, settings)
-                self.model_list.append(m)
+                m = NumModel(target, conf)
+                if target not in self.models.keys():
+                    self.models[target] = [m]
+                else:
+                    self.models[target].append(m)
 
-
-    def _create_data_dirs(self):
-        """Create data directories to house simulation data"""
+    def _create_experiment(self):
+        """Creates the directory stucture for the simluations"""
+        base_path = "/".join((get_SSHOME(), self.get_config(["model","name"])))
+        exp_name = self.get_config(["model", "experiment_name"])
+        exp_dir_path = "/".join((base_path, exp_name))
+        self.exp_path = exp_dir_path
 
         try:
+            mkdir(exp_dir_path)
             for target in self.targets:
-                target_dir = get_SSHOME() + target
+                target_dir = "/".join((exp_dir_path, target))
                 mkdir(target_dir)
 
         except FileExistsError:
             raise SmartSimError(self.state.get_state(),
                            "Data directories already exist!")
 
-    def _duplicate_and_configure(self):
-        """Duplicate the base configurations of the numerical model"""
-
-        base_path = get_SSHOME() + self.get_config(["model","base_config_path"])
-
-        for target in self.targets:
-            for model in self.model_list:
-                name = model.name
-                if name.startswith(target):
-                    dup_path = get_SSHOME() + "/".join([target, name])
-                    create_target_dir = subprocess.Popen("cp -r " + base_path +
-                                                         " " + dup_path,
-                                                         shell=True)
-                    create_target_dir.wait()
-                    self._write_parameters(dup_path, model)
-
-    def _get_config_writer(self):
-        """Find and return the configuration writer for this model"""
-
-        model_name = self.get_config(["model","name"])
-        if model_name == "MOM6":
-            writer = mom6_writer.MOM6Writer()
-            return writer
-        else:
-            raise SSUnsupportedError("Model not supported yet")
+    def _init_model_writer(self, target_configs):
+        writer = ModelWriter(target_configs)
+        self.writer = writer
 
 
-    def _write_parameters(self, base_conf_path, model):
-        """Write the model instance specifc run configurations
+    def _configure_models(self):
+        """Duplicate the base configurations of target models"""
 
-           Args
-             base_conf_path (str): filepath to duplicated model
-             model (Model): the Model instance to write parameters for
+        # init the model writer class
+        target_configs = self.get_config(["model", "configs"])
+        self._init_model_writer(target_configs)
 
-        """
-        conf_writer = self._get_config_writer()
-        for name, param_info in model.param_settings.items():
-            filename = param_info["filename"]
-            filetype = param_info["filetype"]
-            value = model.param_dict[name]
-            full_path = "/".join((base_conf_path, filename))
-            conf_writer.write_config({name: value}, full_path, filetype)
+        # copy base configuration files to new model dir within target dir
+        base_path = get_SSHOME() + self.get_config(["model", "name"])
+        for target, target_models in self.models.items():
+            for model in target_models:
+                dst = "/".join((self.exp_path, target, model.name))
+                mkdir(dst)
+                for conf in target_configs:
+                    # TODO make this copy all files and directories
+                    copyfile("/".join((base_path, conf)), "/".join((dst, conf)))
+
+                self.writer.write(model, dst)
+
+
+
+######################
+### run strategies ###
+######################
+
+    # create permutations of all parameters
+    # single model if parameters only have one value
+    @staticmethod
+    def create_all_permutations(param_names, param_values):
+        perms = list(itertools.product(*param_values))
+        all_permutations = []
+        for p in perms:
+            temp_model = dict(zip(param_names, p))
+            all_permutations.append(temp_model)
+        return all_permutations
+
+    @staticmethod
+    def one_per_change():
+        raise NotImplementedError
+
+    @staticmethod
+    def hpo():
+        raise NotImplementedError
 
