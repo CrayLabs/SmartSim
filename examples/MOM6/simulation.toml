@@ -1,54 +1,34 @@
 
 [model]
 name = "MOM6"
-base_config_path = "MOM6_base_config"
+configs = ["MOM6_base_config"]
+experiment_name = "double_gyre"
 
 [execute]
 targets = ["half-deg", "quar-deg"]
 executable_path = "../../../Ocean/MOM6-examples/build/gnu/ocean_only/repro/MOM6"
+run_command = "srun"
 
 [half-deg]
-    [half-deg.KH]
+    [half-deg.999]
         value = [1000, 2000, 3000, 4000]
-        filename = "MOM_override"
-        filetype = "txt"
-    [half-deg.KHTH]
+    [half-deg.0]
         value = [1000, 2000, 3000, 4000]
-        filename = "MOM_override"
-        filetype = "txt"
-    [half-deg.NIGLOBAL]
+    [half-deg.80]
         value = 40
-        filename = "MOM_override"
-        filetype = "txt"
-    [half-deg.NJGLOBAL]
+    [half-deg.40]
         value = 40
-        filename = "MOM_override"
-        filetype = "txt"
-    [half-deg.nk]
-        value = 1
-        filename = "MOM_override"
-        filetype = "txt"
-    [half-deg.months]
-        value = 12
-        filename = "input.nml"
-        filetype = "nml"
+    
 
 [quar-deg]
-    [quar-deg.NIGLOBAL]                # resolution
+    [quar-deg.999]
+        value = [1000, 2000, 3000, 4000]
+    [quar-deg.0]
+        value = [1000, 2000, 3000, 4000]
+    [quar-deg.80]
+        value = 80
+    [quar-deg.40]
         value = 40
-        filename = "MOM_override"
-        filetype = "txt"
-    [quar-deg.NJGLOBAL]                # resolution
-        value = 40
-        filename = "MOM_override"
-        filetype = "txt"
-    [quar-deg.nk]                      # layers
-        value = 1
-        filename = "MOM_override"
-        filetype = "txt"
-    [quar-deg.months]                  # simulation length
-        value = 12
-        filename = "input.nml"
-        filetype = "nml"
+    
 
 

@@ -3,7 +3,6 @@ import logging
 from os import listdir
 from os.path import isdir
 
-from launcher.Launchers import SlurmLauncher
 from helpers import get_SSHOME, read_config, getcwd
 from error.errors import SmartSimError, SSConfigError
 from state import State
@@ -13,7 +12,7 @@ class Controller(SSModule):
 
     def __init__(self, state):
         super().__init__(state)
-        self.state.update_state("Simulation")
+        self.state.update_state("Simulation Control")
 
     """
     Controller Interface

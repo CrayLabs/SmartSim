@@ -8,7 +8,7 @@ variable        xx equal 10*$x
 variable        yy equal 10*$y
 variable        zz equal 10*$z
 
-units           ;lj;{"values":["ls","ld"]};atm;
+units           lj
 atom_style      atomic
 
 lattice         fcc 0.65
@@ -28,4 +28,4 @@ fix             1 all nvt temp 1.033 1.033 0.05
 timestep        0.002
 thermo          5
 
-run             25
+run             ;25;

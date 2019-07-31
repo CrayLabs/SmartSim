@@ -1,30 +1,38 @@
 
 
 import re
+import glob
+import os
 
 from helpers import get_SSHOME
 from error import SSConfigError, SmartSimError
-from os.path import isfile
+from os import path
 
 
 
 class ModelWriter:
 
-    def __init__(self, target_configs):
-        self.confs = target_configs
-        self.tag = '(;.+;{.+};.+;)'
+    def __init__(self):
+        self.tag = '(;.+;)'
 
     def write(self, model, model_path):
-        """Takes a model and writes the configuration to the target_configs"""
-        for conf in self.confs:
-            conf_path = "/".join((model_path, conf))
-            if isfile(conf_path):
-                self._set_lines(conf_path)
-                self._replace_tags(model)
-                self._write_changes(conf_path)
-            else:
-                # TODO write a better message
-                raise SmartSimError("Data-Generation", "Could not find target configuration files")
+        """Takes a model and writes the configuration to the target_configs
+           Base configurations are duplicated blindly to ensure all needed
+           files are copied.
+        """
+
+        # configurations reset each time a new model is introduced
+        for conf_path, _, files in os.walk(model_path):
+            for fn in files:
+                conf = path.join(conf_path, fn)
+                if path.isfile(conf):
+                    self._set_lines(conf)
+                    self._replace_tags(model)
+                    self._write_changes(conf)
+                elif path.isdir(conf):
+                    continue
+                else:
+                    raise SmartSimError("Data-Generation", "Could not find target configuration files")
 
     def _set_lines(self, conf_path):
         fp = open(conf_path, "r+")
@@ -48,8 +56,9 @@ class ModelWriter:
                 tagged_line = search.group(0)
                 previous_value = self._get_prev_value(tagged_line)
                 if self._is_target_spec(tagged_line, model.param_dict):
-                    new_val = model.param_dict[previous_value]
-                    edited.append(re.sub(self.tag, new_val, line))
+                    new_val = str(model.param_dict[previous_value])
+                    new_line = re.sub(self.tag, new_val, line)
+                    edited.append(new_line)
 
                 # if a tag is found but is not in this model's configurations
                 # put in placeholder value
@@ -62,6 +71,7 @@ class ModelWriter:
 
 
     def _is_target_spec(self, tagged_line, model_params):
+        # NOTE: think about how this might work with tags
         split_tag = tagged_line.split(";")
         prev_val = split_tag[1]
         if prev_val in model_params.keys():

@@ -5,14 +5,18 @@ configs = ["in.atm"]
 experiment_name = "lammps_atm"
 
 [execute]
-targets = ["atm"]
+targets = ["atm", "atm-2"]
 executable_path = "lmp_mpi"
 run_command = "mpirun"
 
 
 [atm]
-    [atm.lj]
-    values = ["ls", "ld"]
+    [atm.25]
+    value = [20, 25]
+
+[atm-2]
+    [atm-2.25]
+    value = [30, 35]
 
     
 

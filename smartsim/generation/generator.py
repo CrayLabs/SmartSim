@@ -2,14 +2,16 @@ import subprocess
 import itertools
 import logging
 import sys
+import shutil
 
 from os import mkdir, getcwd
-from shutil import copyfile
+from os.path import isdir, basename
+from distutils import dir_util
+from glob import glob
 
 from generation.model import NumModel
 from generation.modelwriter import ModelWriter
 from error.errors import SmartSimError, SSUnsupportedError
-from launcher.Launchers import SlurmLauncher
 from helpers import get_SSHOME
 from ssModule import SSModule
 
@@ -26,6 +28,7 @@ class Generator(SSModule):
     def __init__(self, state):
         super().__init__(state)
         self.state.update_state("Data Generation")
+        self.writer = ModelWriter()
         self.models = {}
 
     def generate(self):
@@ -55,10 +58,10 @@ class Generator(SSModule):
             param_settings = {}
             for name, val in target_params.items():
                 param_names.append(name)
-                if isinstance(val["values"], list):
-                    parameters.append(val["values"])
+                if isinstance(val["value"], list):
+                    parameters.append(val["value"])
                 else:
-                    parameters.append([val["values"]])
+                    parameters.append([val["value"]])
             return param_names, parameters
 
 
@@ -75,7 +78,7 @@ class Generator(SSModule):
 
     def _create_experiment(self):
         """Creates the directory stucture for the simluations"""
-        base_path = "/".join((get_SSHOME(), self.get_config(["model","name"])))
+        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
         exp_name = self.get_config(["model", "experiment_name"])
         exp_dir_path = "/".join((base_path, exp_name))
         self.exp_path = exp_dir_path
@@ -90,28 +93,31 @@ class Generator(SSModule):
             raise SmartSimError(self.state.get_state(),
                            "Data directories already exist!")
 
-    def _init_model_writer(self, target_configs):
-        writer = ModelWriter(target_configs)
-        self.writer = writer
 
 
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
-        # init the model writer class
-        target_configs = self.get_config(["model", "configs"])
-        self._init_model_writer(target_configs)
+        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
+        listed_configs = self.get_config(["model", "configs"])
 
-        # copy base configuration files to new model dir within target dir
-        base_path = get_SSHOME() + self.get_config(["model", "name"])
         for target, target_models in self.models.items():
+
+            # Make target model directories
             for model in target_models:
                 dst = "/".join((self.exp_path, target, model.name))
                 mkdir(dst)
-                for conf in target_configs:
-                    # TODO make this copy all files and directories
-                    copyfile("/".join((base_path, conf)), "/".join((dst, conf)))
 
+                # copy over model base configurations
+                for config in listed_configs:
+                    dst_path = "/".join((dst, config))
+                    config_path = "/".join((base_path, config))
+                    if isdir(config_path):
+                        dir_util.copy_tree(config_path, dst)
+                    else:
+                        shutil.copyfile(config_path, dst_path)
+
+                # write in changes to configurations
                 self.writer.write(model, dst)
 
 
