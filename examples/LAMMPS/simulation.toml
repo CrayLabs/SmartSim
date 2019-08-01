@@ -6,8 +6,10 @@ experiment_name = "lammps_atm"
 
 [execute]
 targets = ["atm", "atm-2"]
-executable_path = "lmp_mpi"
+executable = "lmp_mpi"
 run_command = "mpirun"
+run_args = "-np 6"
+exe_args = "-in in.atm"
 
 
 [atm]

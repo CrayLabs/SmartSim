@@ -77,7 +77,7 @@ class Generator(SSModule):
                     self.models[target].append(m)
 
     def _create_experiment(self):
-        """Creates the directory stucture for the simluations"""
+        """Creates the directory structure for the simluations"""
         base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
         exp_name = self.get_config(["model", "experiment_name"])
         exp_dir_path = "/".join((base_path, exp_name))

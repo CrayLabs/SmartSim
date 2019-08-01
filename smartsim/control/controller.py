@@ -1,12 +1,15 @@
 import sys
 import logging
+import subprocess
 from os import listdir
 from os.path import isdir
 
-from helpers import get_SSHOME, read_config, getcwd
+from launcher import SlurmLauncher, PBSLauncher, UrikaLauncher
+from helpers import get_SSHOME
 from error.errors import SmartSimError, SSConfigError
 from state import State
 from ssModule import SSModule
+
 
 class Controller(SSModule):
 
@@ -17,81 +20,95 @@ class Controller(SSModule):
     """
     Controller Interface
     """
-    def start_sim(self):
+    def start(self):
         try:
             logging.info("SmartSim Stage: %s", self.state.get_state())
-            self.sim()
+            self._sim()
         except SmartSimError as e:
             print(e)
             sys.exit()
 
-    def stop_sim(self):
+    def stop(self):
         raise NotImplementedError
 
-    def restart_sim(self):
+    def restart(self):
         raise NotImplementedError
 
 
-    def _get_target_dir(self, target):
-        #TODO let user specify this directory
-        ss_home = get_SSHOME()
-        target_dir = "".join((ss_home, target))
-        if not isdir(target_dir):
-            raise SmartSimError(self.state.get_state(),
-                                "Target directories not found, simulation cancelled")
-        else:
-            return target_dir
-
-    def _get_target_info(self, target):
-        """Checks for necessary run infomation
-
-           Required information
-             - nodes
-             - parition
-
-           Args
-             target (str): The target model to return info for
-
-           Returns
-             Dict of run information for the workload manager
-        """
-        target_info = self.get_config(["machine", target])
-        required = {"partition", "nodes"}
-        if not set(target_info.keys()).issuperset(required):
-            raise SSConfigError(self.state.get_state(),
-                                "One of required fields for workload manager not found in config: "
-                                + ", ".join(required))
-        else:
-            return target_info
-
-
-    def sim(self):
-        # simulate all models
-        exe = self.get_config(["execute", "executable_path"])
+    def _sim(self):
+        self._set_execute()
         for target in self.targets:
-            target_dir = self._get_target_dir(target)
-            target_info = self._get_target_info(target)
-            runs = listdir(target_dir)
-
-            for run in runs:
-                path = "/".join((target_dir, run))
-                self._sim(exe, target_info["nodes"], path, target_info["partition"])
-
+            tar_dir = self._get_target_path(target)
+            tar_info = self._get_info_by_target(target)
+            if self.launcher != None:
+                self._run_with_launcher(tar_dir, tar_info)
+            else:
+                self._run_with_command(tar_dir, tar_info)
 
 
-    def _sim(self, exe, nodes, model_path, partition="iv24"):
-        """Simulate a model that has been configured by the generator
-           Currently uses the slurm launcher
+    def _set_execute(self):
+        try:
+            self.execute = self.get_config(["execute"])
+            self.exe = self.execute["executable"]
 
-           Args
-              exe        (str): path to the compiled numerical model executable
-              nodes      (int): number of nodes to run on for this model
-              model_path (str): path to dir that houses model configurations
-              partition  (str): type of proc to run on (optional)
-        """
-        launcher = SlurmLauncher(def_nodes=nodes, def_partition=partition)
-        launcher.validate()
-        launcher.get_alloc()
-        launcher.run([exe], cwd=model_path)
-        launcher.free_alloc()
+            # set launcher or run_command
+            if "launcher" in self.execute.keys():
+                self.launcher == self.execute["launcher"]
+                self.run_command = None
+            else:
+                self.run_command = self.execute["run_command"]
+                self.launcher = None
+
+        except KeyError as e:
+            raise SSConfigError("Simulation Control",
+                                "Missing field under execute table in simulation.toml: " +
+                                e.args[0])
+
+
+    def _get_info_by_target(self, target):
+        try:
+            tar_info = self.execute[target]
+            return tar_info
+        except KeyError as e:
+            tar_info = {}
+            return tar_info
+
+    def _get_target_path(self, target):
+        """Given a target, returns the path to the folder where that targets
+           models reside"""
+        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
+        exp_name = self.get_config(["model", "experiment_name"])
+        target_dir_path = "/".join((base_path, exp_name, target))
+        return target_dir_path
+
+
+
+    def _run_with_launcher(self):
+        pass
+
+    def _run_with_command(self, tar_dir, tar_info):
+        cmd = self._build_run_command(tar_info)
+        for model in listdir(tar_dir):
+            print("Running Model: " + model)
+            model_dir = "/".join((tar_dir, model))
+            run_model = subprocess.Popen(cmd, cwd=model_dir, shell=True)
+            run_model.wait()
+
+
+
+    def _build_run_command(self, tar_info):
+        """run_command + run_args + executable + exe_args"""
+        run_args = ""
+        exe_args = ""
+        # overwrite global config with target specific config
+        if "run_args" in self.execute.keys():
+            run_args = self.execute["run_args"]
+        if "run_args" in tar_info.keys():
+            run_args = tar_info["run_args"]
+        if "exe_args" in self.execute.keys():
+            exe_args = self.execute["exe_args"]
+        if "exe_args" in tar_info.keys():
+            exe_args = tar_info["exe_args"]
+        cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
+        return cmd
 
