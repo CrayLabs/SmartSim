@@ -22,7 +22,7 @@ class Controller(SSModule):
     """
     def start(self):
         try:
-            logging.info("SmartSim Stage: %s", self.state.get_state())
+            self.log("SmartSim Stage: " + self.state.get_state())
             self._sim()
         except SmartSimError as e:
             print(e)
@@ -38,6 +38,7 @@ class Controller(SSModule):
     def _sim(self):
         self._set_execute()
         for target in self.targets:
+            self.log("Executing Target: " + target)
             tar_dir = self._get_target_path(target)
             tar_info = self._get_info_by_target(target)
             if self.launcher != None:
@@ -89,7 +90,7 @@ class Controller(SSModule):
     def _run_with_command(self, tar_dir, tar_info):
         cmd = self._build_run_command(tar_info)
         for model in listdir(tar_dir):
-            print("Running Model: " + model)
+            self.log("Running Model:  " + model)
             model_dir = "/".join((tar_dir, model))
             run_model = subprocess.Popen(cmd, cwd=model_dir, shell=True)
             run_model.wait()

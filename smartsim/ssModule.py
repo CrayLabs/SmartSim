@@ -43,3 +43,11 @@ class SSModule:
         # TODO adjust for "target" vs ["target1"] and ["target2"] in toml
         targets = self.get_config(["execute", "targets"])
         self.targets = targets
+
+    def log(self, message, level="info"):
+        if level == "info":
+            self.state.logger.info(message)
+        elif level == "error":
+            self.state.logger.error(message)
+        else:
+            self.state.logger.debug(message)

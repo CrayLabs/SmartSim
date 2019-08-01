@@ -34,7 +34,7 @@ class Generator(SSModule):
     def generate(self):
         """Generate model runs according to the main configuration file"""
         try:
-            logging.info("SmartSim Stage: %s", self.state.get_state())
+            self.log("SmartSim Stage: " + self.state.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
