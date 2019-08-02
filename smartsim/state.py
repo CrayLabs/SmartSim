@@ -1,6 +1,5 @@
 import logging
 import os
-import colorlog
 from helpers import read_config
 from error.errors import SmartSimError, SSConfigError
 

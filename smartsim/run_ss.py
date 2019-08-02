@@ -3,7 +3,7 @@ from state import State
 from generation.generator import Generator
 from control.controller import Controller
 
-STATE = State("/LAMMPS/simulation.toml")
+STATE = State("/MOM6/simulation.toml", log_level="DEBUG")
 
 # Data Generation Phase
 GEN = Generator(STATE)

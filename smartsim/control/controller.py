@@ -4,7 +4,7 @@ import subprocess
 from os import listdir
 from os.path import isdir
 
-from launcher import SlurmLauncher, PBSLauncher, UrikaLauncher
+from launcher import SlurmLauncher, PBSLauncher
 from helpers import get_SSHOME
 from error.errors import SmartSimError, SSConfigError, SSUnsupportedError
 from state import State
@@ -17,6 +17,7 @@ class Controller(SSModule):
         super().__init__(state)
         self.state.update_state("Simulation Control")
         self.init_args = kwargs
+        self.execute = self.get_config(["execute"])
 
 
     """
@@ -48,7 +49,7 @@ class Controller(SSModule):
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_dir, tar_info)
             self.log("Executing Target: " + target)
-            if run_dict["launcher"] != None:
+            if self.launcher != None:
                 self._run_with_launcher(tar_dir, run_dict)
             else:
                 self._run_with_command(tar_dir, run_dict)
@@ -61,15 +62,14 @@ class Controller(SSModule):
         run_dict = {}
         try:
             # search for required arguments
-            self.execute = self.get_config(["execute"])
-            self.exe = self._check_value("executable", none_ok=False)
-            self.run_command = self._check_value("run_command", none_ok=False)
+            self.exe = self._check_value("executable", tar_info, none_ok=False)
+            self.run_command = self._check_value("run_command", tar_info, none_ok=False)
+            self.launcher = self._check_value("launcher", tar_info)
 
-            run_dict["launcher"] = self._check_value("launcher")
-            run_dict["nodes"] = self._check_value("nodes")
-            run_dict["ppn"] = self._check_value("ppn")
-            run_dict["duration"] = self._check_value("duration")
-            run_dict["parition"] = self._check_value("partition")
+            run_dict["nodes"] = self._check_value("nodes", tar_info)
+            run_dict["ppn"] = self._check_value("ppn", tar_info)
+            run_dict["duration"] = self._check_value("duration", tar_info)
+            run_dict["partition"] = self._check_value("partition", tar_info)
             run_dict["cmd"] = self._build_run_command(tar_info)
 
             return run_dict
@@ -98,12 +98,12 @@ class Controller(SSModule):
             exe_args = self.init_args["exe_args"]
 
         cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
-        return cmd
+        return [cmd]
 
 
     def _check_value(self, arg, tar_info, none_ok=True):
         config_value = self._check_dict(self.execute, arg)
-        init_value = self._check_dict(self.init, arg)
+        init_value = self._check_dict(self.init_args, arg)
         target_value = self._check_dict(tar_info, arg)
         if init_value:
             return init_value
@@ -137,7 +137,7 @@ class Controller(SSModule):
             tar_info = self.execute[target]
             return tar_info
         except KeyError:
-            tar_info = {""}
+            tar_info = dict()
             return tar_info
 
 
@@ -155,19 +155,17 @@ class Controller(SSModule):
                                 + launcher)
 
     def _run_with_slurm(self, tar_dir, run_dict):
-        try:
-            launcher = SlurmLauncher.SlurmLauncher()
-            for model in listdir(tar_dir):
-                model_dir = "/".join((tar_dir, model))
-                run_dict["dir"] = model_dir
-                run_dict["output_file"] = "/".join((model_dir, model + ".out"))
-                run_dict["err_file"] = "/".join((model_dir, model + ".err"))
-                run_dict["clear_previous"] = True
-                launcher.make_script(**run_dict)
-                self.log("Running Model:  " + model)
-                pid = launcher.submit_and_forget()
-                self.log("Process id for " + model + " is " + str(pid))
-
+        launcher = SlurmLauncher.SlurmLauncher()
+        for model in listdir(tar_dir):
+            model_dir = "/".join((tar_dir, model))
+            run_dict["dir"] = model_dir
+            run_dict["output_file"] = "/".join((model_dir, model + ".out"))
+            run_dict["err_file"] = "/".join((model_dir, model + ".err"))
+            run_dict["clear_previous"] = True
+            launcher.make_script(**run_dict)
+            self.log("Running Model:  " + model)
+            pid = launcher.submit_and_forget()
+            self.log("Process id for " + model + " is " + str(pid))
 
     def _run_with_urika(self,tar_dir, run_dict):
         raise NotImplementedError
