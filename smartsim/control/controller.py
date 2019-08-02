@@ -6,16 +6,18 @@ from os.path import isdir
 
 from launcher import SlurmLauncher, PBSLauncher, UrikaLauncher
 from helpers import get_SSHOME
-from error.errors import SmartSimError, SSConfigError
+from error.errors import SmartSimError, SSConfigError, SSUnsupportedError
 from state import State
 from ssModule import SSModule
 
 
 class Controller(SSModule):
 
-    def __init__(self, state):
+    def __init__(self, state, **kwargs):
         super().__init__(state)
         self.state.update_state("Simulation Control")
+        self.init_args = kwargs
+
 
     """
     Controller Interface
@@ -34,45 +36,92 @@ class Controller(SSModule):
     def restart(self):
         raise NotImplementedError
 
+    def are_targets_finished():
+        raise NotImplementedError
+
+    def is_target_finished():
+        raise NotImplementedError
 
     def _sim(self):
-        self._set_execute()
         for target in self.targets:
-            self.log("Executing Target: " + target)
             tar_dir = self._get_target_path(target)
-            tar_info = self._get_info_by_target(target)
-            if self.launcher != None:
-                self._run_with_launcher(tar_dir, tar_info)
+            tar_info = self._get_target_run_settings(target)
+            run_dict = self._build_run_dict(tar_dir, tar_info)
+            self.log("Executing Target: " + target)
+            if run_dict["launcher"] != None:
+                self._run_with_launcher(tar_dir, run_dict)
             else:
-                self._run_with_command(tar_dir, tar_info)
+                self._run_with_command(tar_dir, run_dict)
 
 
-    def _set_execute(self):
+    def _build_run_dict(self, tar_dir, tar_info):
+        """Build a dictionary that will be used to run with the make_script
+           interface of the poseidon launcher."""
+
+        run_dict = {}
         try:
+            # search for required arguments
             self.execute = self.get_config(["execute"])
-            self.exe = self.execute["executable"]
+            self.exe = self._check_value("executable", none_ok=False)
+            self.run_command = self._check_value("run_command", none_ok=False)
 
-            # set launcher or run_command
-            if "launcher" in self.execute.keys():
-                self.launcher == self.execute["launcher"]
-                self.run_command = None
-            else:
-                self.run_command = self.execute["run_command"]
-                self.launcher = None
+            run_dict["launcher"] = self._check_value("launcher")
+            run_dict["nodes"] = self._check_value("nodes")
+            run_dict["ppn"] = self._check_value("ppn")
+            run_dict["duration"] = self._check_value("duration")
+            run_dict["parition"] = self._check_value("partition")
+            run_dict["cmd"] = self._build_run_command(tar_info)
 
+            return run_dict
         except KeyError as e:
             raise SSConfigError("Simulation Control",
                                 "Missing field under execute table in simulation.toml: " +
                                 e.args[0])
 
 
-    def _get_info_by_target(self, target):
+    def _build_run_command(self, tar_info):
+        """run_command + run_args + executable + exe_args"""
+        run_args = ""
+        exe_args = ""
+        # init args > target_specific_args > [execute] top level args
+        if "run_args" in self.execute.keys():
+            run_args = self.execute["run_args"]
+        if "run_args" in tar_info.keys():
+            run_args = tar_info["run_args"]
+        if "run_args" in self.init_args.keys():
+            run_args = self.init_args["run_args"]
+        if "exe_args" in self.execute.keys():
+            exe_args = self.execute["exe_args"]
+        if "exe_args" in tar_info.keys():
+            exe_args = tar_info["exe_args"]
+        if "exe_args" in self.init_args.keys():
+            exe_args = self.init_args["exe_args"]
+
+        cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
+        return cmd
+
+
+    def _check_value(self, arg, tar_info, none_ok=True):
+        config_value = self._check_dict(self.execute, arg)
+        init_value = self._check_dict(self.init, arg)
+        target_value = self._check_dict(tar_info, arg)
+        if init_value:
+            return init_value
+        elif config_value:
+            return config_value
+        elif target_value:
+            return target_value
+        elif none_ok:
+            return None
+        else:
+            raise KeyError(arg)
+
+
+    def _check_dict(self, _dict, arg):
         try:
-            tar_info = self.execute[target]
-            return tar_info
-        except KeyError as e:
-            tar_info = {}
-            return tar_info
+            return _dict[arg]
+        except KeyError:
+            return None
 
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
@@ -83,12 +132,52 @@ class Controller(SSModule):
         return target_dir_path
 
 
+    def _get_target_run_settings(self, target):
+        try:
+            tar_info = self.execute[target]
+            return tar_info
+        except KeyError:
+            tar_info = {""}
+            return tar_info
 
-    def _run_with_launcher(self):
-        pass
 
-    def _run_with_command(self, tar_dir, tar_info):
-        cmd = self._build_run_command(tar_info)
+    def _run_with_launcher(self, tar_dir, run_dict):
+        """Run with a specific type of launcher"""
+        if self.launcher == "slurm":
+            self._run_with_slurm(tar_dir, run_dict)
+        elif self.launcher == "pbs":
+            self._run_with_pbs(tar_dir, run_dict)
+        elif self.launcher == "urika":
+            self._run_with_urika(tar_dir, run_dict)
+        else:
+            raise SSUnsupportedError("Simulation Control",
+                                "Launcher type not supported: "
+                                + launcher)
+
+    def _run_with_slurm(self, tar_dir, run_dict):
+        try:
+            launcher = SlurmLauncher.SlurmLauncher()
+            for model in listdir(tar_dir):
+                model_dir = "/".join((tar_dir, model))
+                run_dict["dir"] = model_dir
+                run_dict["output_file"] = "/".join((model_dir, model + ".out"))
+                run_dict["err_file"] = "/".join((model_dir, model + ".err"))
+                run_dict["clear_previous"] = True
+                launcher.make_script(**run_dict)
+                self.log("Running Model:  " + model)
+                pid = launcher.submit_and_forget()
+                self.log("Process id for " + model + " is " + str(pid))
+
+
+    def _run_with_urika(self,tar_dir, run_dict):
+        raise NotImplementedError
+
+    def _run_with_pbs(self,tar_dir, run_dict):
+        raise NotImplementedError
+
+
+    def _run_with_command(self,tar_dir, run_dict):
+        cmd = run_dict["cmd"]
         for model in listdir(tar_dir):
             self.log("Running Model:  " + model)
             model_dir = "/".join((tar_dir, model))
@@ -97,19 +186,4 @@ class Controller(SSModule):
 
 
 
-    def _build_run_command(self, tar_info):
-        """run_command + run_args + executable + exe_args"""
-        run_args = ""
-        exe_args = ""
-        # overwrite global config with target specific config
-        if "run_args" in self.execute.keys():
-            run_args = self.execute["run_args"]
-        if "run_args" in tar_info.keys():
-            run_args = tar_info["run_args"]
-        if "exe_args" in self.execute.keys():
-            exe_args = self.execute["exe_args"]
-        if "exe_args" in tar_info.keys():
-            exe_args = tar_info["exe_args"]
-        cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
-        return cmd
 

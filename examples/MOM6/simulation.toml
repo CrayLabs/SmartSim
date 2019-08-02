@@ -5,22 +5,11 @@ configs = ["MOM6_base_config"]
 experiment_name = "double_gyre"
 
 [execute]
-targets = ["half-deg", "quar-deg"]
+targets = ["quar-deg"]
 executable_path = "../../../Ocean/MOM6-examples/build/gnu/ocean_only/repro/MOM6"
 run_command = "srun"
 launcher = "slurm"
 
-
-[half-deg]
-    [half-deg.999]
-        value = [1000, 2000, 3000, 4000]
-    [half-deg.0]
-        value = [1000, 2000, 3000, 4000]
-    [half-deg.80]
-        value = 40
-    [half-deg.40]
-        value = 40
-    
 
 [quar-deg]
     [quar-deg.999]
