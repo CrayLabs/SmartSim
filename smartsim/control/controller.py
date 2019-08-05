@@ -2,7 +2,7 @@ import sys
 import logging
 import subprocess
 from os import listdir
-from os.path import isdir
+from os.path import isdir, basename
 
 from launcher import SlurmLauncher, PBSLauncher
 from helpers import get_SSHOME
@@ -10,8 +10,58 @@ from error.errors import SmartSimError, SSConfigError, SSUnsupportedError
 from state import State
 from ssModule import SSModule
 
+"""
+there are three ways a user can specify arguments for the running
+of simulations.
+
+
+1) On the experiment level under the [execute] table
+
+```toml
+[execute]
+nodes = 5        # All targets run with 5 nodes
+```
+
+2) On the target level under the target's table
+
+```toml
+[execute]
+    [execute.some_target]
+    run_args = "-np 6"
+```
+
+3) in the initialization of the Controller class
+
+```python
+control = Controller(run_args="-np 6", nodes=5)
+```
+
+
+There is a heirarchy of specification that goes as
+follows:
+    - initialization of the controller
+    - experiment level (under [execute] table)
+    - target level (under [execute.some_target] table)
+
+the heirarchy is meant to allow for quick access without
+having to write to the simulation.toml and seperately, intense
+specification within the simulation.toml.
+
+"""
+
+
+
 
 class Controller(SSModule):
+    """The controller module provides an interface between the numerical model
+       that is the subject of Smartsim and the underlying workload manager or
+       run framework. There are currently four methods of execution:
+
+          1) Local (implemented)
+          2) Slurm (implemented)
+          3) PBS   (not implemented)
+          4) Urika (not implemented)
+    """
 
     def __init__(self, state, **kwargs):
         super().__init__(state)
@@ -20,9 +70,10 @@ class Controller(SSModule):
         self.execute = self.get_config(["execute"])
 
 
-    """
-    Controller Interface
-    """
+############################
+### Controller Interface ###
+############################
+
     def start(self):
         try:
             self.log("SmartSim Stage: " + self.state.get_state())
@@ -37,13 +88,17 @@ class Controller(SSModule):
     def restart(self):
         raise NotImplementedError
 
-    def are_targets_finished():
+    def is_target_finished(self):
         raise NotImplementedError
 
-    def is_target_finished():
-        raise NotImplementedError
+##########################
 
     def _sim(self):
+        """The entrypoint to simulation for mutliple targets. Each target
+           defines how the models wherein should be run. Each model might
+           have different parameters but configurations like node count
+           and ppn are determined by target.
+        """
         for target in self.targets:
             tar_dir = self._get_target_path(target)
             tar_info = self._get_target_run_settings(target)
@@ -61,11 +116,12 @@ class Controller(SSModule):
 
         run_dict = {}
         try:
-            # search for required arguments
+            # Experiment level values required for controller to work
             self.exe = self._check_value("executable", tar_info, none_ok=False)
             self.run_command = self._check_value("run_command", tar_info, none_ok=False)
             self.launcher = self._check_value("launcher", tar_info)
 
+            # target level values optional because there are defaults
             run_dict["nodes"] = self._check_value("nodes", tar_info)
             run_dict["ppn"] = self._check_value("ppn", tar_info)
             run_dict["duration"] = self._check_value("duration", tar_info)
@@ -84,6 +140,7 @@ class Controller(SSModule):
         run_args = ""
         exe_args = ""
         # init args > target_specific_args > [execute] top level args
+        # This heirarchy is explained at the module level.
         if "run_args" in self.execute.keys():
             run_args = self.execute["run_args"]
         if "run_args" in tar_info.keys():
@@ -102,6 +159,7 @@ class Controller(SSModule):
 
 
     def _check_value(self, arg, tar_info, none_ok=True):
+        """Defines the heirarchy of configuration"""
         config_value = self._check_dict(self.execute, arg)
         init_value = self._check_dict(self.init_args, arg)
         target_value = self._check_dict(tar_info, arg)
@@ -133,6 +191,7 @@ class Controller(SSModule):
 
 
     def _get_target_run_settings(self, target):
+        """Retrieves the [execute.<target>] table"""
         try:
             tar_info = self.execute[target]
             return tar_info
@@ -155,15 +214,21 @@ class Controller(SSModule):
                                 + launcher)
 
     def _run_with_slurm(self, tar_dir, run_dict):
+        """Launch all specified models with the slurm workload
+           manager. job_name is the target and enumerated id.
+           all output and err is logged to the directory that
+           houses the model."""
+        target = basename(tar_dir)
         launcher = SlurmLauncher.SlurmLauncher()
-        for model in listdir(tar_dir):
+        for model_id, model in enumerate(listdir(tar_dir)):
             temp_dict = run_dict.copy()
             model_dir = "/".join((tar_dir, model))
+            job_id = "_".join((target, str(model_id)))
             temp_dict["dir"] = model_dir
             temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
             temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
             temp_dict["clear_previous"] = True
-            launcher.make_script(**temp_dict)
+            launcher.make_script(**temp_dict,  job_name=job_id)
             self.log("Running Model:  " + model)
             pid = launcher.submit_and_forget(cwd=model_dir)
             self.log("Process id for " + model + " is " + str(pid))
@@ -176,6 +241,8 @@ class Controller(SSModule):
 
 
     def _run_with_command(self,tar_dir, run_dict):
+        """Run models without a workload manager using
+           some run_command specified by the user."""
         cmd = run_dict["cmd"]
         for model in listdir(tar_dir):
             self.log("Running Model:  " + model)
