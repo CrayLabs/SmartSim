@@ -157,14 +157,15 @@ class Controller(SSModule):
     def _run_with_slurm(self, tar_dir, run_dict):
         launcher = SlurmLauncher.SlurmLauncher()
         for model in listdir(tar_dir):
+            temp_dict = run_dict.copy()
             model_dir = "/".join((tar_dir, model))
-            run_dict["dir"] = model_dir
-            run_dict["output_file"] = "/".join((model_dir, model + ".out"))
-            run_dict["err_file"] = "/".join((model_dir, model + ".err"))
-            run_dict["clear_previous"] = True
-            launcher.make_script(**run_dict)
+            temp_dict["dir"] = model_dir
+            temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
+            temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
+            temp_dict["clear_previous"] = True
+            launcher.make_script(**temp_dict)
             self.log("Running Model:  " + model)
-            pid = launcher.submit_and_forget()
+            pid = launcher.submit_and_forget(cwd=model_dir)
             self.log("Process id for " + model + " is " + str(pid))
 
     def _run_with_urika(self,tar_dir, run_dict):
