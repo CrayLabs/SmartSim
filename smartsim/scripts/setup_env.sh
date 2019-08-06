@@ -1,5 +1,5 @@
 #!/bin/sh
 
 # Setup the Smart Simulation library environment variables
-export SMARTSIMHOME="$(PWD)/../../"
-echo "Set up Smart Sim"
+export SMARTSIMHOME="$(PWD)/examples/"
+echo "SmartSim Home set to: $(PWD)/examples/"

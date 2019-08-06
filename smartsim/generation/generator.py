@@ -15,6 +15,39 @@ from error.errors import SmartSimError, SSUnsupportedError
 from helpers import get_SSHOME
 from ssModule import SSModule
 
+"""
+Generation
+
+ - models are created based on the content of the simulation.toml
+   that will be populated as a result of the interface or manual
+   creation.
+ - models are created with the following tree for and example 1 target with
+   two resulting models
+   - lammps_atm/              (experiment name)
+     └── atm                  (target name)
+         ├── atm_ld           (model name)
+         │    └── in.atm
+         └── atm_ls           (model name)
+              └── in.atm
+
+A configuration file for this generation could look like the following when generated
+with the all permutations strategy.
+
+```toml
+[model]
+name = "lammps"
+experiment_name = "lammps_atm"
+configs = ["in.atm"]
+
+[execute]
+targets = ["atm"]
+
+[atm]
+  [atm.lj]              # lj is the previous value marked in "in.atm" (e.g. ;lj;)
+  value = ["ls", "ld"]
+```
+
+"""
 
 
 class Generator(SSModule):
@@ -32,7 +65,10 @@ class Generator(SSModule):
         self.models = {}
 
     def generate(self):
-        """Generate model runs according to the main configuration file"""
+        """Generate model runs according to the main configuration file
+           Note that this only generates the necessary files and structure
+           to be able to run all models in parallel, it does not actually
+           run any models."""
         try:
             self.log("SmartSim Stage: " + self.state.get_state())
             self._create_models()
@@ -44,8 +80,11 @@ class Generator(SSModule):
 
     def _create_models(self):
         """Populates instances of NumModel class for all target models.
-           Targets are retieved from state and permuted into all possible
-           model configurations.
+           NumModels are created via a strategy of which there is only
+           one implemented: all permutations.
+
+           This strategy takes all permutations of available configuration
+           values and creates a model for each one.
 
            Returns: List of models with configurations to be written
         """
