@@ -91,7 +91,6 @@ class Generator(SSModule):
             target_params = self.get_config([target])
             param_names = []
             parameters = []
-            param_settings = {}
             for name, val in target_params.items():
                 param_names.append(name)
                 if isinstance(val["value"], list):
