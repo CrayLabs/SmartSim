@@ -1,6 +1,6 @@
 from smartsim import Controller, Generator, State
 
-STATE = State("simulation.toml", log_level="DEBUG")
+STATE = State("/MOM6/simulation.toml", log_level="DEBUG")
 
 # Data Generation Phase
 GEN = Generator(STATE)
