@@ -1,4 +1,1 @@
-
-from generation.model import NumModel
-
-
+from .generator import Generator

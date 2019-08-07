@@ -1,13 +1,11 @@
-
-
 import re
 import glob
 import os
 
-from helpers import get_SSHOME
-from error import SSConfigError, SmartSimError
 from os import path
 
+from ..helpers import get_SSHOME
+from ..error import SSConfigError, SmartSimError
 
 
 class ModelWriter:

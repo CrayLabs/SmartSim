@@ -1,19 +1,16 @@
-import subprocess
-import itertools
-import logging
 import sys
 import shutil
 
+from itertools import product
 from os import mkdir, getcwd
 from os.path import isdir, basename
 from distutils import dir_util
-from glob import glob
 
-from generation.model import NumModel
-from generation.modelwriter import ModelWriter
-from error.errors import SmartSimError, SSUnsupportedError
-from helpers import get_SSHOME
-from ssModule import SSModule
+from .model import NumModel
+from .modelwriter import ModelWriter
+from ..error import SmartSimError, SSUnsupportedError
+from ..helpers import get_SSHOME
+from ..ssModule import SSModule
 
 """
 Generation
@@ -169,7 +166,7 @@ class Generator(SSModule):
     # single model if parameters only have one value
     @staticmethod
     def create_all_permutations(param_names, param_values):
-        perms = list(itertools.product(*param_values))
+        perms = list(product(*param_values))
         all_permutations = []
         for p in perms:
             temp_model = dict(zip(param_names, p))

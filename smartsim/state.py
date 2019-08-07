@@ -1,7 +1,6 @@
 import logging
-import os
-from helpers import read_config
-from error.errors import SmartSimError, SSConfigError
+from .helpers import read_config
+from .error import SmartSimError, SSConfigError
 
 
 class State:

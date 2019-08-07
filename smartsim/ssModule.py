@@ -1,7 +1,7 @@
 import sys
 
-from error.errors import SSConfigError
-from helpers import read_config
+from .error import SSConfigError
+from .helpers import read_config
 
 class SSModule:
 

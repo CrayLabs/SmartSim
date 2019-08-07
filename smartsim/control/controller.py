@@ -1,14 +1,15 @@
 import sys
 import logging
 import subprocess
+
 from os import listdir
 from os.path import isdir, basename
+from launcher import SlurmLauncher
 
-from launcher import SlurmLauncher, PBSLauncher
-from helpers import get_SSHOME
-from error.errors import SmartSimError, SSConfigError, SSUnsupportedError
-from state import State
-from ssModule import SSModule
+from ..helpers import get_SSHOME
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError
+from ..state import State
+from ..ssModule import SSModule
 
 """
 there are three ways a user can specify arguments for the running
@@ -211,7 +212,7 @@ class Controller(SSModule):
         else:
             raise SSUnsupportedError("Simulation Control",
                                 "Launcher type not supported: "
-                                + launcher)
+                                + self.launcher)
 
     def _run_with_slurm(self, tar_dir, run_dict):
         """Launch all specified models with the slurm workload
