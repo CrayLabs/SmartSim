@@ -58,8 +58,8 @@ class Generator(SSModule):
     def __init__(self, state):
         super().__init__(state)
         self.state.update_state("Data Generation")
-        self.writer = ModelWriter()
-        self.models = {}
+        self._writer = ModelWriter()
+        self._models = {}
 
     def generate(self):
         """Generate model runs according to the main configuration file
@@ -88,7 +88,7 @@ class Generator(SSModule):
 
         # collect all parameters, names, and settings
         def read_model_parameters(target):
-            target_params = self.get_config([target])
+            target_params = self._get_config([target])
             param_names = []
             parameters = []
             for name, val in target_params.items():
@@ -103,18 +103,18 @@ class Generator(SSModule):
         # init model classes to hold parameter information
         for target in self.targets:
             names, values = read_model_parameters(target)
-            all_configs = self.create_all_permutations(names, values)
+            all_configs = self._create_all_permutations(names, values)
             for conf in all_configs:
                 m = NumModel(target, conf)
-                if target not in self.models.keys():
-                    self.models[target] = [m]
+                if target not in self._models.keys():
+                    self._models[target] = [m]
                 else:
-                    self.models[target].append(m)
+                    self._models[target].append(m)
 
     def _create_experiment(self):
         """Creates the directory structure for the simluations"""
-        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
-        exp_name = self.get_config(["model", "experiment_name"])
+        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
+        exp_name = self._get_config(["model", "experiment_name"])
         exp_dir_path = "/".join((base_path, exp_name))
         self.exp_path = exp_dir_path
 
@@ -133,10 +133,10 @@ class Generator(SSModule):
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
-        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
-        listed_configs = self.get_config(["model", "configs"])
+        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
+        listed_configs = self._get_config(["model", "configs"])
 
-        for target, target_models in self.models.items():
+        for target, target_models in self._models.items():
 
             # Make target model directories
             for model in target_models:
@@ -153,7 +153,7 @@ class Generator(SSModule):
                         shutil.copyfile(config_path, dst_path)
 
                 # write in changes to configurations
-                self.writer.write(model, dst)
+                self._writer.write(model, dst)
 
 
 
@@ -164,7 +164,7 @@ class Generator(SSModule):
     # create permutations of all parameters
     # single model if parameters only have one value
     @staticmethod
-    def create_all_permutations(param_names, param_values):
+    def _create_all_permutations(param_names, param_values):
         perms = list(product(*param_values))
         all_permutations = []
         for p in perms:
@@ -173,10 +173,10 @@ class Generator(SSModule):
         return all_permutations
 
     @staticmethod
-    def one_per_change():
+    def _one_per_change():
         raise NotImplementedError
 
     @staticmethod
-    def hpo():
+    def _hpo():
         raise NotImplementedError
 

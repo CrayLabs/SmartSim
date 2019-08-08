@@ -67,8 +67,8 @@ class Controller(SSModule):
     def __init__(self, state, **kwargs):
         super().__init__(state)
         self.state.update_state("Simulation Control")
-        self.init_args = kwargs
-        self.execute = self.get_config(["execute"])
+        self._init_args = kwargs
+        self._execute = self._get_config(["execute"])
 
 
 ############################
@@ -142,18 +142,18 @@ class Controller(SSModule):
         exe_args = ""
         # init args > target_specific_args > [execute] top level args
         # This heirarchy is explained at the module level.
-        if "run_args" in self.execute.keys():
-            run_args = self.execute["run_args"]
+        if "run_args" in self._execute.keys():
+            run_args = self._execute["run_args"]
         if "run_args" in tar_info.keys():
             run_args = tar_info["run_args"]
-        if "run_args" in self.init_args.keys():
-            run_args = self.init_args["run_args"]
-        if "exe_args" in self.execute.keys():
-            exe_args = self.execute["exe_args"]
+        if "run_args" in self._init_args.keys():
+            run_args = self._init_args["run_args"]
+        if "exe_args" in self._execute.keys():
+            exe_args = self._execute["exe_args"]
         if "exe_args" in tar_info.keys():
             exe_args = tar_info["exe_args"]
-        if "exe_args" in self.init_args.keys():
-            exe_args = self.init_args["exe_args"]
+        if "exe_args" in self._init_args.keys():
+            exe_args = self._init_args["exe_args"]
 
         cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
         return [cmd]
@@ -161,8 +161,8 @@ class Controller(SSModule):
 
     def _check_value(self, arg, tar_info, none_ok=True):
         """Defines the heirarchy of configuration"""
-        config_value = self._check_dict(self.execute, arg)
-        init_value = self._check_dict(self.init_args, arg)
+        config_value = self._check_dict(self._execute, arg)
+        init_value = self._check_dict(self._init_args, arg)
         target_value = self._check_dict(tar_info, arg)
         if init_value:
             return init_value
@@ -185,8 +185,8 @@ class Controller(SSModule):
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
            models reside"""
-        base_path = "".join((get_SSHOME(), self.get_config(["model","name"])))
-        exp_name = self.get_config(["model", "experiment_name"])
+        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
+        exp_name = self._get_config(["model", "experiment_name"])
         target_dir_path = "/".join((base_path, exp_name, target))
         return target_dir_path
 
@@ -194,7 +194,7 @@ class Controller(SSModule):
     def _get_target_run_settings(self, target):
         """Retrieves the [execute.<target>] table"""
         try:
-            tar_info = self.execute[target]
+            tar_info = self._execute[target]
             return tar_info
         except KeyError:
             tar_info = dict()

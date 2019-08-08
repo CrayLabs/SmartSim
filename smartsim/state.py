@@ -10,7 +10,7 @@ class State:
     def __init__(self, config="simulation.toml", log_level="DEV"):
         self.current_state = "Initializing"
         self.config = read_config(config)
-        self.logger = self.create_logger2(log_level)
+        self.logger = self._create_logger(log_level)
 
     def get_state(self):
         return self.current_state
@@ -18,8 +18,7 @@ class State:
     def update_state(self, new_state):
         self.current_state = new_state
 
-
-    def create_logger2(self, log_level):
+    def _create_logger(self, log_level):
         import coloredlogs
         logger = logging.getLogger(__name__)
         if log_level == "DEV":

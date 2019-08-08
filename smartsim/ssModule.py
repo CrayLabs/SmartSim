@@ -9,7 +9,17 @@ class SSModule:
         self.state = state
         self._get_targets()
 
-    def get_config(self, path):
+
+    def log(self, message, level="info"):
+        if level == "info":
+            self.state.logger.info(message)
+        elif level == "error":
+            self.state.logger.error(message)
+        else:
+            self.state.logger.debug(message)
+    
+
+    def _get_config(self, path):
         """Searches for configurations in the simulation.toml
 
            Args
@@ -28,7 +38,7 @@ class SSModule:
 
     def _search_config(self, value_path, config):
         val_path = value_path.copy()
-        # Helper method of get_config
+        # Helper method of _get_config
         if val_path[0] in config.keys():
             if len(val_path) == 1:
                 return config[val_path[0]]
@@ -41,13 +51,5 @@ class SSModule:
 
     def _get_targets(self):
         # TODO adjust for "target" vs ["target1"] and ["target2"] in toml
-        targets = self.get_config(["execute", "targets"])
+        targets = self._get_config(["execute", "targets"])
         self.targets = targets
-
-    def log(self, message, level="info"):
-        if level == "info":
-            self.state.logger.info(message)
-        elif level == "error":
-            self.state.logger.error(message)
-        else:
-            self.state.logger.debug(message)

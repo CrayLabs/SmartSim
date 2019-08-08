@@ -7,7 +7,7 @@ import toml
 import logging
 
 from subprocess import PIPE, Popen, CalledProcessError
-from os import getcwd, environ
+from os import getcwd, environ, path
 
 
 def read_config(config_name):
@@ -20,7 +20,6 @@ def read_config(config_name):
         print(e)
         print("Could not parse/find configuration file: " + config_name)
         sys.exit()
-
 
 def get_SSHOME():
     """Retrieves SMARTSIMHOME env variable"""
@@ -98,23 +97,3 @@ def execute_cmd(cmd_list, wd=getcwd(),  err_message=""):
     return out.decode('utf-8'), err.decode('utf-8')
 
 
-def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-    """
-    Call in a loop to create terminal progress bar
-
-    Args
-        iteration (int): current iteration (required)
-        total     (int): total iterations (required)
-        prefix    (str): prefix string (optional)
-        suffix    (str): suffix string (optional)
-        decimals  (int): positive number of decimals in percent complete (optional)
-        length    (int): character length of bar (optional)
-        fill      (str): bar fill character (optional)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
-    # Print New Line on Complete
-    if iteration == total:
-        print()
