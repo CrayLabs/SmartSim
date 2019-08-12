@@ -5,7 +5,7 @@ configs = ["MOM6_base_config"]
 experiment_name = "double_gyre"
 
 [execute]
-targets = ["quar-deg", "half-deg"]
+targets = ["half-deg", "quar-deg", "one-deg"]
 executable = "MOM6"
 run_command = "srun"
 launcher = "slurm"
@@ -13,6 +13,8 @@ launcher = "slurm"
          nodes = 3
          [execute.half-deg]
          nodes = 2
+         [execute.one-deg]
+         nodes = 1
 
 [quar-deg]
     [quar-deg.999]
@@ -33,4 +35,14 @@ launcher = "slurm"
     [half-deg.80]
         value = 40
     [half-deg.40]
+        value = 20
+
+[one-deg]
+    [one-deg.999]
+        value = [200, 400, 700, 800, 1000]
+    [one-deg.0]
+        value = [200, 400, 700, 800, 1000]
+    [one-deg.80]
+        value = 20
+    [one-deg.40]
         value = 20

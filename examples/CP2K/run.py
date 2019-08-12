@@ -6,5 +6,6 @@ STATE = State("/CP2K/simulation.toml", log_level="DEBUG")
 GEN = Generator(STATE)
 GEN.generate()
 
-SIM = Controller(STATE, duration="10:00:00")
+SIM = Controller(STATE)
 SIM.start()
+SIM.poll()

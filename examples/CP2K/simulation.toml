@@ -15,5 +15,5 @@ launcher = "slurm"
          exe_args = "-i h2o.inp"
 
 [h2o-1]
-    [h2o-1.2]
+    [h2o-1.2]  # editing number of steps
     value = [5, 10, 15, 20]

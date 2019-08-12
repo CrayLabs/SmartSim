@@ -1,6 +1,7 @@
 import sys
 import logging
 import subprocess
+import time
 
 from os import listdir
 from os.path import isdir, basename
@@ -10,6 +11,7 @@ from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..state import State
 from ..ssModule import SSModule
+from .job import Job
 
 """
 there are three ways a user can specify arguments for the running
@@ -69,6 +71,8 @@ class Controller(SSModule):
         self.state.update_state("Simulation Control")
         self._init_args = kwargs
         self._execute = self._get_config(["execute"])
+        self._launcher = None
+        self._jobs = []
 
 
 ############################
@@ -83,14 +87,31 @@ class Controller(SSModule):
             print(e)
             sys.exit()
 
-    def stop(self):
+    def stop_all(self):
         raise NotImplementedError
 
-    def restart(self):
+    def stop(self, pid):
         raise NotImplementedError
 
-    def is_target_finished(self):
-        raise NotImplementedError
+    def poll(self, interval=20, verbose=True):
+        all_finished = False
+        while not all_finished:
+            time.sleep(interval)
+            all_finished = self.finished(verbose=verbose)
+
+    def finished(self, verbose=True):
+        statuses = []
+        for job in self._jobs:
+            self._check_job(job)
+            statuses.append(job.status)
+            if verbose:
+                self.log(job)
+        if "RUNNING" in statuses:
+            return False
+        return True
+
+
+
 
 ##########################
 
@@ -105,7 +126,7 @@ class Controller(SSModule):
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_dir, tar_info)
             self.log("Executing Target: " + target)
-            if self.launcher != None:
+            if self._launcher != None:
                 self._run_with_launcher(tar_dir, run_dict)
             else:
                 self._run_with_command(tar_dir, run_dict)
@@ -118,9 +139,9 @@ class Controller(SSModule):
         run_dict = {}
         try:
             # Experiment level values required for controller to work
-            self.exe = self._check_value("executable", tar_info, none_ok=False)
-            self.run_command = self._check_value("run_command", tar_info, none_ok=False)
-            self.launcher = self._check_value("launcher", tar_info)
+            self._exe = self._check_value("executable", tar_info, none_ok=False)
+            self._run_command = self._check_value("run_command", tar_info, none_ok=False)
+            self._launcher = self._check_value("launcher", tar_info)
 
             # target level values optional because there are defaults
             run_dict["nodes"] = self._check_value("nodes", tar_info)
@@ -131,7 +152,7 @@ class Controller(SSModule):
 
             return run_dict
         except KeyError as e:
-            raise SSConfigError("Simulation Control",
+            raise SSConfigError(self.state.get_state(),
                                 "Missing field under execute table in simulation.toml: " +
                                 e.args[0])
 
@@ -155,7 +176,7 @@ class Controller(SSModule):
         if "exe_args" in self._init_args.keys():
             exe_args = self._init_args["exe_args"]
 
-        cmd = " ".join((self.run_command, run_args, self.exe, exe_args))
+        cmd = " ".join((self._run_command, run_args, self._exe, exe_args))
         return [cmd]
 
 
@@ -203,24 +224,28 @@ class Controller(SSModule):
 
     def _run_with_launcher(self, tar_dir, run_dict):
         """Run with a specific type of launcher"""
-        if self.launcher == "slurm":
+        if self._launcher == "slurm":
+            self._launcher = SlurmLauncher.SlurmLauncher()
             self._run_with_slurm(tar_dir, run_dict)
-        elif self.launcher == "pbs":
+        elif self._launcher == "pbs":
+            # init PBS launcher
             self._run_with_pbs(tar_dir, run_dict)
-        elif self.launcher == "urika":
+        elif self._launcher == "urika":
+            # init urika launcher
             self._run_with_urika(tar_dir, run_dict)
         else:
-            raise SSUnsupportedError("Simulation Control",
+            raise SSUnsupportedError(self.state.get_state(),
                                 "Launcher type not supported: "
-                                + self.launcher)
+                                + self._launcher)
 
     def _run_with_slurm(self, tar_dir, run_dict):
         """Launch all specified models with the slurm workload
            manager. job_name is the target and enumerated id.
            all output and err is logged to the directory that
-           houses the model."""
+           houses the model.
+        TODO: Change to run_with_launcher
+        """
         target = basename(tar_dir)
-        launcher = SlurmLauncher.SlurmLauncher()
         for model_id, model in enumerate(listdir(tar_dir)):
             temp_dict = run_dict.copy()
             model_dir = "/".join((tar_dir, model))
@@ -229,10 +254,18 @@ class Controller(SSModule):
             temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
             temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
             temp_dict["clear_previous"] = True
-            launcher.make_script(**temp_dict,  job_name=job_id)
-            self.log("Running Model:  " + model)
-            pid = launcher.submit_and_forget(cwd=model_dir)
-            self.log("Process id for " + model + " is " + str(pid))
+            self._launcher.make_script(**temp_dict,  job_name=job_id)
+            pid = self._launcher.submit_and_forget(cwd=model_dir)
+            self.log("Process id for " + model + " is " + str(pid), level="debug")
+            job = Job(job_id, pid, model_dir, model)
+            self._jobs.append(job)
+
+    def _check_job(self, job):
+        """Takes in job and sets job properties"""
+        status, return_code = self._launcher.get_job_stat(job.jid)
+        job.set_status(status)
+        job.set_return_code(return_code)
+
 
     def _run_with_urika(self,tar_dir, run_dict):
         raise NotImplementedError

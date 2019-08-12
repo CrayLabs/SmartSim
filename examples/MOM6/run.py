@@ -8,3 +8,4 @@ GEN.generate()
 
 SIM = Controller(STATE, duration="10:00:00")
 SIM.start()
+SIM.poll()
