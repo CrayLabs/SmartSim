@@ -47,4 +47,3 @@ def test_gen_duplicate_configs():
         rmtree(experiment_dir)
 
 
-test_gen_duplicate_configs()

@@ -1,0 +1,48 @@
+from smartsim import Generator, State
+from os import path, environ
+from glob import glob
+from shutil import rmtree
+from smartsim.generation.model import NumModel
+from smartsim.generation.modelwriter import ModelWriter
+from distutils import dir_util
+import filecmp
+
+# will error out if not set
+SS_HOME = environ['SMARTSIMHOME']
+
+def test_write_easy_configs():
+
+    param_dict = {
+        "5": 10,                                    # MOM_input
+        "FIRST": "SECOND",                          # example_input.i
+        "17": 20,                                   # in.airebo
+        "65": "70",                                 # in.atm
+        "placeholder": "group leftupper region",    # in.crack
+        "1200": "120"                               # input.nml
+    }
+    model = NumModel("easy", param_dict)
+    conf_path = "./test_configs/easy/marked/"
+    gen_path = "./test_configs/easy/generated/"
+    correct_path = "./test_configs/easy/correct/"
+
+    # clean up from previous test
+    if path.isdir(gen_path):
+        rmtree(gen_path)
+
+    # copy confs to gen directory
+    dir_util.copy_tree(conf_path, gen_path)
+    assert(path.isdir(gen_path))
+
+    # init modelwriter
+    writer = ModelWriter()
+    writer.write(model, gen_path)
+
+    written_files = sorted(glob(gen_path + "*"))
+    correct_files = sorted(glob(correct_path + "*"))
+
+    for written, correct in zip(written_files, correct_files):
+        assert(filecmp.cmp(written, correct))
+
+    if path.isdir(gen_path):
+        rmtree(gen_path)
+

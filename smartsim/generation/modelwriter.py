@@ -14,7 +14,7 @@ class ModelWriter:
         self.tag = '(;.+;)'
 
     def write(self, model, model_path):
-        """Takes a model and writes the configuration to the tar_get_configs
+        """Takes a model and writes the configuration to the target configs
            Base configurations are duplicated blindly to ensure all needed
            files are copied.
         """
