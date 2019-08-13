@@ -2,7 +2,7 @@
 [model]
 name = "MOM6"
 configs = ["MOM6_base_config"]
-experiment_name = "double_gyre"
+experiment = "double_gyre"
 
 [execute]
 targets = ["half-deg", "quar-deg", "one-deg"]

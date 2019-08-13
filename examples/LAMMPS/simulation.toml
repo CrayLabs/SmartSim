@@ -2,7 +2,7 @@
 [model]
 name = "LAMMPS"
 configs = ["in.atm"]
-experiment_name = "lammps_atm"
+experiment = "lammps_atm"
 
 [execute]
 targets = ["atm", "atm-2"]

@@ -2,7 +2,7 @@
 [model]
 name = "CP2K"
 configs = ["h2o.inp"]
-experiment_name = "h2o"
+experiment = "h2o"
 
 [execute]
 targets = ["h2o-1"]

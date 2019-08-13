@@ -207,7 +207,7 @@ class Controller(SSModule):
         """Given a target, returns the path to the folder where that targets
            models reside"""
         base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
-        exp_name = self._get_config(["model", "experiment_name"])
+        exp_name = self._get_config(["model", "experiment"])
         target_dir_path = "/".join((base_path, exp_name, target))
         return target_dir_path
 

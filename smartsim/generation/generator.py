@@ -33,7 +33,7 @@ with the all permutations strategy.
 ```toml
 [model]
 name = "lammps"
-experiment_name = "lammps_atm"
+experiment = "lammps_atm"
 configs = ["in.atm"]
 
 [execute]
@@ -114,7 +114,7 @@ class Generator(SSModule):
     def _create_experiment(self):
         """Creates the directory structure for the simluations"""
         base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
-        exp_name = self._get_config(["model", "experiment_name"])
+        exp_name = self._get_config(["model", "experiment"])
         exp_dir_path = "/".join((base_path, exp_name))
         self.exp_path = exp_dir_path
 
