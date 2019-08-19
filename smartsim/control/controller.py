@@ -5,7 +5,7 @@ import time
 
 from os import listdir
 from os.path import isdir, basename
-from launcher import SlurmLauncher
+from launcher import SlurmLauncher, PBSLauncher
 
 from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
@@ -127,7 +127,7 @@ class Controller(SSModule):
             run_dict = self._build_run_dict(tar_dir, tar_info)
             self.log("Executing Target: " + target)
             if self._launcher != None:
-                self._run_with_launcher(tar_dir, run_dict)
+                self._init_launcher(tar_dir, run_dict)
             else:
                 self._run_with_command(tar_dir, run_dict)
 
@@ -222,28 +222,24 @@ class Controller(SSModule):
             return tar_info
 
 
-    def _run_with_launcher(self, tar_dir, run_dict):
+    def _init_launcher(self, tar_dir, run_dict):
         """Run with a specific type of launcher"""
         if self._launcher == "slurm":
             self._launcher = SlurmLauncher.SlurmLauncher()
-            self._run_with_slurm(tar_dir, run_dict)
+            self._run_with_launcher(tar_dir, run_dict)
         elif self._launcher == "pbs":
-            # init PBS launcher
-            self._run_with_pbs(tar_dir, run_dict)
-        elif self._launcher == "urika":
-            # init urika launcher
-            self._run_with_urika(tar_dir, run_dict)
+            self._launcher = PBSLauncher.PBSLauncher()
+            self._run_with_launcher(tar_dir, run_dict)
         else:
             raise SSUnsupportedError(self.state.get_state(),
                                 "Launcher type not supported: "
                                 + self._launcher)
 
-    def _run_with_slurm(self, tar_dir, run_dict):
-        """Launch all specified models with the slurm workload
+    def _run_with_launcher(self, tar_dir, run_dict):
+        """Launch all specified models with the slurm or pbs workload
            manager. job_name is the target and enumerated id.
            all output and err is logged to the directory that
            houses the model.
-        TODO: Change to run_with_launcher
         """
         target = basename(tar_dir)
         for model_id, model in enumerate(listdir(tar_dir)):
@@ -254,7 +250,7 @@ class Controller(SSModule):
             temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
             temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
             temp_dict["clear_previous"] = True
-            self._launcher.make_script(**temp_dict,  job_name=job_id)
+            self._launcher.make_script(**temp_dict, job_name=job_id)
             pid = self._launcher.submit_and_forget(cwd=model_dir)
             self.log("Process id for " + model + " is " + str(pid), level="debug")
             job = Job(job_id, pid, model_dir, model)
@@ -265,13 +261,6 @@ class Controller(SSModule):
         status, return_code = self._launcher.get_job_stat(job.jid)
         job.set_status(status)
         job.set_return_code(return_code)
-
-
-    def _run_with_urika(self,tar_dir, run_dict):
-        raise NotImplementedError
-
-    def _run_with_pbs(self,tar_dir, run_dict):
-        raise NotImplementedError
 
 
     def _run_with_command(self,tar_dir, run_dict):
