@@ -246,12 +246,12 @@ class Controller(SSModule):
             temp_dict = run_dict.copy()
             model_dir = "/".join((tar_dir, model))
             job_id = "_".join((target, str(model_id)))
-            temp_dict["dir"] = model_dir
+            temp_dict["wd"] = model_dir
             temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
             temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
             temp_dict["clear_previous"] = True
-            self._launcher.make_script(**temp_dict, job_name=job_id)
-            pid = self._launcher.submit_and_forget(cwd=model_dir)
+            self._launcher.make_script(**temp_dict, script_name=job_id)
+            pid = self._launcher.submit_and_forget(wd=model_dir)
             self.log("Process id for " + model + " is " + str(pid), level="debug")
             job = Job(job_id, pid, model_dir, model)
             self._jobs.append(job)
