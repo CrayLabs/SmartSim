@@ -79,6 +79,7 @@ class Controller(SSModule):
 ### Controller Interface ###
 ############################
 
+
     def start(self):
         try:
             self.log("SmartSim Stage: " + self.state.get_state())
@@ -209,7 +210,12 @@ class Controller(SSModule):
         base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
         exp_name = self._get_config(["model", "experiment"])
         target_dir_path = "/".join((base_path, exp_name, target))
-        return target_dir_path
+        if isdir(target_dir_path):
+            return target_dir_path
+        else:
+            raise SmartSimError(self.state.get_state(),
+                                "Simulation target directory not found: " +
+                                target)
 
 
     def _get_target_run_settings(self, target):
