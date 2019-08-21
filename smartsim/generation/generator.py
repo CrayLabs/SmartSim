@@ -52,7 +52,7 @@ class Generator(SSModule):
        data that is created during the data generation stage.
 
        Args
-         state  (State instance): The state of the library
+         state  (State): The state class that manages the library
     """
 
     def __init__(self, state):
@@ -60,6 +60,11 @@ class Generator(SSModule):
         self.state.update_state("Data Generation")
         self._writer = ModelWriter()
         self._models = {}
+
+
+###########################
+### Generator Interface ###
+###########################
 
     def generate(self):
         """Generate model runs according to the main configuration file
@@ -74,6 +79,19 @@ class Generator(SSModule):
         except SmartSimError as e:
             print(e)
             sys.exit()
+
+    def set_tag(tag, regex=None):
+        """Set the tag for the model files where configurations should
+           be replaced.
+
+           Args
+              tag    (str): a string of characters that signifiy an string to be changed
+              regex  (str): a regular expression that model files are tagged with
+        """
+        self.writer._set_tag(tag, regex)
+
+
+##########################
 
     def _create_models(self):
         """Populates instances of NumModel class for all target models.

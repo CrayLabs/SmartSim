@@ -11,7 +11,8 @@ from ..error import SSConfigError, SmartSimError
 class ModelWriter:
 
     def __init__(self):
-        self.tag = '(;.+;)'
+        self.tag = ";"
+        self.regex = "(;.+;)"
 
     def write(self, model, model_path):
         """Takes a model and writes the configuration to the target configs
@@ -32,6 +33,14 @@ class ModelWriter:
                 else:
                     raise SmartSimError("Data-Generation", "Could not find target configuration files")
 
+    def _set_tag(self, tag, regex=None):
+        if regex:
+            self.regex = regex
+        else:
+            self.tag = tag
+            self.regex = "".join(('(',tag,".+", tag, ')'))
+
+
     def _set_lines(self, conf_path):
         fp = open(conf_path, "r+")
         self.lines = fp.readlines()
@@ -49,19 +58,19 @@ class ModelWriter:
            simulation.toml"""
         edited = []
         for line in self.lines:
-            search = re.search(self.tag, line)
+            search = re.search(self.regex, line)
             if search:
                 tagged_line = search.group(0)
                 previous_value = self._get_prev_value(tagged_line)
                 if self._is_target_spec(tagged_line, model.param_dict):
                     new_val = str(model.param_dict[previous_value])
-                    new_line = re.sub(self.tag, new_val, line)
+                    new_line = re.sub(self.regex, new_val, line)
                     edited.append(new_line)
 
                 # if a tag is found but is not in this model's configurations
                 # put in placeholder value
                 else:
-                    edited.append(re.sub(self.tag, previous_value, line))
+                    edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
 
@@ -69,14 +78,13 @@ class ModelWriter:
 
 
     def _is_target_spec(self, tagged_line, model_params):
-        # NOTE: think about how this might work with tags
-        split_tag = tagged_line.split(";")
+        split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():
             return True
         return False
 
     def _get_prev_value(self, tagged_line):
-        split_tag = tagged_line.split(";")
+        split_tag = tagged_line.split(self.tag)
         return split_tag[1]
 
