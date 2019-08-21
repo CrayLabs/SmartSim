@@ -63,7 +63,6 @@ class Controller(SSModule):
           1) Local (implemented)
           2) Slurm (implemented)
           3) PBS   (not implemented)
-          4) Urika (not implemented)
     """
 
     def __init__(self, state, **kwargs):
@@ -81,6 +80,10 @@ class Controller(SSModule):
 
 
     def start(self):
+        """Start the simulations of all targets. Two methods
+           of execution are employed based on values within
+           the simulation.toml and class initialization:
+           launcher and direct call. """
         try:
             self.log("SmartSim Stage: " + self.state.get_state())
             self._sim()
@@ -95,12 +98,25 @@ class Controller(SSModule):
         raise NotImplementedError
 
     def poll(self, interval=20, verbose=True):
+        """Poll the running simulations and recieve logging
+           output with the status of the job.
+
+           Args
+             interval (int): number of seconds to wait before polling again
+             verbose  (bool): set verbosity
+        """
         all_finished = False
         while not all_finished:
             time.sleep(interval)
             all_finished = self.finished(verbose=verbose)
 
     def finished(self, verbose=True):
+        """Poll all simulations and return a boolean for
+           if all jobs are finished or not.
+
+           Args:
+              verbose (bool): set verbosity
+        """
         statuses = []
         for job in self._jobs:
             self._check_job(job)
@@ -109,10 +125,9 @@ class Controller(SSModule):
                 self.log(job)
         if "RUNNING" in statuses:
             return False
+        if "assigned" in statuses:
+            return False
         return True
-
-
-
 
 ##########################
 
