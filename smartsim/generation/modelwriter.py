@@ -14,14 +14,14 @@ class ModelWriter:
         self.tag = ";"
         self.regex = "(;.+;)"
 
-    def write(self, model, model_path):
+    def write(self, model):
         """Takes a model and writes the configuration to the target configs
            Base configurations are duplicated blindly to ensure all needed
            files are copied.
         """
 
         # configurations reset each time a new model is introduced
-        for conf_path, _, files in os.walk(model_path):
+        for conf_path, _, files in os.walk(model.get_path()):
             for fn in files:
                 conf = path.join(conf_path, fn)
                 if path.isfile(conf):

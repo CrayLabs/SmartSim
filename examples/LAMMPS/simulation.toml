@@ -1,11 +1,11 @@
 
 [model]
 name = "LAMMPS"
-configs = ["in.atm"]
+targets = ["atm", "atm-2"]
+model_files = ["LAMMPS/in.atm"]
 experiment = "lammps_atm"
 
-[execute]
-targets = ["atm", "atm-2"]
+[control]
 executable = "lmp_mpi"
 run_command = "mpirun"
 run_args = "-np 6"

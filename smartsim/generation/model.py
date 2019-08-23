@@ -7,8 +7,15 @@ class NumModel:
        easily.
     """
 
-    def __init__(self, name, param_dict):
+    def __init__(self, name, param_dict, path=None):
         self.name = name
         self.param_dict = param_dict
-        for param in param_dict.values():
-            self.name += "_" + str(param)
+        if path:
+            self.set_path(path)
+
+    def get_path(self):
+        return self.path
+
+    def set_path(self, path):
+        self.path = path
+        

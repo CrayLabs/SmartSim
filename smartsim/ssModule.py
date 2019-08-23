@@ -5,11 +5,13 @@ from .helpers import read_config
 
 class SSModule:
 
-    def __init__(self, state):
+    def __init__(self, state, **kwargs):
         self.state = state
+        self._init_args = kwargs
         self._get_targets()
 
 
+    # change this to an internal method
     def log(self, message, level="info"):
         if level == "info":
             self.state.logger.info(message)
@@ -17,39 +19,23 @@ class SSModule:
             self.state.logger.error(message)
         else:
             self.state.logger.debug(message)
-    
-
-    def _get_config(self, path):
-        """Searches for configurations in the simulation.toml
-
-           Args
-             path (list): a list of strings containing path to config
-
-           Returns
-             a configuration value or error is one is not present.
-        """
-        # Search global configuration file
-        try:
-            top_level = self._search_config(path, self.state.config)
-            return top_level
-        except SSConfigError as e:
-            print(e)
-            sys.exit()
-
-    def _search_config(self, value_path, config):
-        val_path = value_path.copy()
-        # Helper method of _get_config
-        if val_path[0] in config.keys():
-            if len(val_path) == 1:
-                return config[val_path[0]]
-            else:
-                parent = val_path.pop(0)
-                return self._search_config(val_path, config[parent])
-        else:
-            raise SSConfigError(self.state.get_state(),
-                                "Could not find config value for key: " + ".".join(value_path))
 
     def _get_targets(self):
-        # TODO adjust for "target" vs ["target1"] and ["target2"] in toml
-        targets = self._get_config(["execute", "targets"])
-        self.targets = targets
+        return self.state.targets
+
+    def _get_exp_path(self):
+        return self.state.get_experiment_path()
+
+
+    def _get_config(self, conf_param):
+        """Searches through init args and simulation.toml if the path
+           is provided"""
+        to_find = conf_param
+        if isinstance(to_find, list):
+            to_find = conf_param[-1]
+            if to_find in self._init_args.keys():
+                return self._init_args[to_find]
+        # if not in init args search simulation.toml
+        return self.state._get_toml_config(conf_param)
+
+        

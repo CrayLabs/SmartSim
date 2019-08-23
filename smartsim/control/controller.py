@@ -66,10 +66,9 @@ class Controller(SSModule):
     """
 
     def __init__(self, state, **kwargs):
-        super().__init__(state)
-        self.state.update_state("Simulation Control")
-        self._init_args = kwargs
-        self._execute = self._get_config(["execute"])
+        super().__init__(state, **kwargs)
+        self.state._set_state("Simulation Control")
+        self._settings = self._get_config(["control"])
         self._launcher = None
         self._jobs = []
 
@@ -132,23 +131,25 @@ class Controller(SSModule):
 ##########################
 
     def _sim(self):
-        """The entrypoint to simulation for mutliple targets. Each target
+        """The entrypoint to simulation for multiple targets. Each target
            defines how the models wherein should be run. Each model might
            have different parameters but configurations like node count
            and ppn are determined by target.
         """
-        for target in self.targets:
-            tar_dir = self._get_target_path(target)
+        targets = self._get_targets()
+        for target in targets:
             tar_info = self._get_target_run_settings(target)
-            run_dict = self._build_run_dict(tar_dir, tar_info)
-            self.log("Executing Target: " + target)
+            run_dict = self._build_run_dict(tar_info)
+
+            self.log("Executing Target: " + target.name)
             if self._launcher != None:
-                self._init_launcher(tar_dir, run_dict)
+                self._init_launcher()
+                self._run_with_launcher(target, run_dict)
             else:
-                self._run_with_command(tar_dir, run_dict)
+                self._run_with_command(target, run_dict)
 
 
-    def _build_run_dict(self, tar_dir, tar_info):
+    def _build_run_dict(self, tar_info):
         """Build a dictionary that will be used to run with the make_script
            interface of the poseidon launcher."""
 
@@ -165,7 +166,7 @@ class Controller(SSModule):
             run_dict["duration"] = self._check_value("duration", tar_info)
             run_dict["partition"] = self._check_value("partition", tar_info)
             run_dict["cmd"] = self._build_run_command(tar_info)
-
+            
             return run_dict
         except KeyError as e:
             raise SSConfigError(self.state.get_state(),
@@ -179,14 +180,14 @@ class Controller(SSModule):
         exe_args = ""
         # init args > target_specific_args > [execute] top level args
         # This heirarchy is explained at the module level.
-        if "run_args" in self._execute.keys():
-            run_args = self._execute["run_args"]
+        if "run_args" in self._settings.keys():
+            run_args = self._settings["run_args"]
         if "run_args" in tar_info.keys():
             run_args = tar_info["run_args"]
         if "run_args" in self._init_args.keys():
             run_args = self._init_args["run_args"]
-        if "exe_args" in self._execute.keys():
-            exe_args = self._execute["exe_args"]
+        if "exe_args" in self._settings.keys():
+            exe_args = self._settings["exe_args"]
         if "exe_args" in tar_info.keys():
             exe_args = tar_info["exe_args"]
         if "exe_args" in self._init_args.keys():
@@ -198,7 +199,7 @@ class Controller(SSModule):
 
     def _check_value(self, arg, tar_info, none_ok=True):
         """Defines the heirarchy of configuration"""
-        config_value = self._check_dict(self._execute, arg)
+        config_value = self._check_dict(self._settings, arg)
         init_value = self._check_dict(self._init_args, arg)
         target_value = self._check_dict(tar_info, arg)
         if init_value:
@@ -222,9 +223,7 @@ class Controller(SSModule):
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
            models reside"""
-        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
-        exp_name = self._get_config(["model", "experiment"])
-        target_dir_path = "/".join((base_path, exp_name, target))
+        target_dir_path = target.get_target_dir()
         if isdir(target_dir_path):
             return target_dir_path
         else:
@@ -232,49 +231,44 @@ class Controller(SSModule):
                                 "Simulation target directory not found: " +
                                 target)
 
-
     def _get_target_run_settings(self, target):
-        """Retrieves the [execute.<target>] table"""
+        """Retrieves the [control.<target>] table"""
         try:
-            tar_info = self._execute[target]
+            tar_info = self._settings[target.name]
             return tar_info
         except KeyError:
             tar_info = dict()
             return tar_info
 
 
-    def _init_launcher(self, tar_dir, run_dict):
+    def _init_launcher(self):
         """Run with a specific type of launcher"""
         if self._launcher == "slurm":
             self._launcher = SlurmLauncher.SlurmLauncher()
-            self._run_with_launcher(tar_dir, run_dict)
         elif self._launcher == "pbs":
             self._launcher = PBSLauncher.PBSLauncher()
-            self._run_with_launcher(tar_dir, run_dict)
         else:
             raise SSUnsupportedError(self.state.get_state(),
                                 "Launcher type not supported: "
                                 + self._launcher)
 
-    def _run_with_launcher(self, tar_dir, run_dict):
+    def _run_with_launcher(self, target, run_dict):
         """Launch all specified models with the slurm or pbs workload
            manager. job_name is the target and enumerated id.
            all output and err is logged to the directory that
            houses the model.
         """
-        target = basename(tar_dir)
-        for model_id, model in enumerate(listdir(tar_dir)):
+        tar_dir = target.get_target_dir()
+        for listed_model in listdir(tar_dir):
+            model = target.get_model(listed_model)
             temp_dict = run_dict.copy()
-            model_dir = "/".join((tar_dir, model))
-            job_id = "_".join((target, str(model_id)))
-            temp_dict["wd"] = model_dir
-            temp_dict["output_file"] = "/".join((model_dir, model + ".out"))
-            temp_dict["err_file"] = "/".join((model_dir, model + ".err"))
-            temp_dict["clear_previous"] = True
-            self._launcher.make_script(**temp_dict, script_name=job_id)
-            pid = self._launcher.submit_and_forget(wd=model_dir)
+            temp_dict["wd"] = model.path
+            temp_dict["output_file"] = "/".join((model.path, model.name + ".out"))
+            temp_dict["err_file"] = "/".join((model.path, model.name + ".err"))
+            self._launcher.make_script(**temp_dict, script_name=model.name, clear_previous=True)
+            pid = self._launcher.submit_and_forget(wd=model.path)
             self.log("Process id for " + model + " is " + str(pid), level="debug")
-            job = Job(job_id, pid, model_dir, model)
+            job = Job(model.name, pid, model.path, model)
             self._jobs.append(job)
 
     def _check_job(self, job):
@@ -283,15 +277,14 @@ class Controller(SSModule):
         job.set_status(status)
         job.set_return_code(return_code)
 
-
-    def _run_with_command(self,tar_dir, run_dict):
+    def _run_with_command(self, target, run_dict):
         """Run models without a workload manager using
            some run_command specified by the user."""
         cmd = run_dict["cmd"]
-        for model in listdir(tar_dir):
-            self.log("Running Model:  " + model)
-            model_dir = "/".join((tar_dir, model))
-            run_model = subprocess.Popen(cmd, cwd=model_dir, shell=True)
+        tar_dir = target.get_target_dir()
+        for listed_model in listdir(tar_dir):
+            model = target.get_model(listed_model)
+            run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
 
 
