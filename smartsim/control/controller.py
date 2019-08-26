@@ -166,7 +166,7 @@ class Controller(SSModule):
             run_dict["duration"] = self._check_value("duration", tar_info)
             run_dict["partition"] = self._check_value("partition", tar_info)
             run_dict["cmd"] = self._build_run_command(tar_info)
-            
+
             return run_dict
         except KeyError as e:
             raise SSConfigError(self.state.get_state(),
@@ -267,7 +267,7 @@ class Controller(SSModule):
             temp_dict["err_file"] = "/".join((model.path, model.name + ".err"))
             self._launcher.make_script(**temp_dict, script_name=model.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=model.path)
-            self.log("Process id for " + model + " is " + str(pid), level="debug")
+            self.log("Process id for " + model.name + " is " + str(pid), level="debug")
             job = Job(model.name, pid, model.path, model)
             self._jobs.append(job)
 
