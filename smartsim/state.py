@@ -1,7 +1,8 @@
 import logging
 import sys
+import toml
 from os import path, mkdir, listdir
-from .helpers import read_config, get_SSHOME
+from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
 from .generation.model import NumModel
@@ -13,10 +14,10 @@ class State:
 
     def __init__(self, experiment=None, config=None, log_level="DEV"):
         self.current_state = "Initializing"
-        self._config = read_config(config)
+        self.__create_logger(log_level)
+        self._config = self.read_config(config)
         self.targets = []
         self.__set_experiment(experiment)
-        self.__create_logger(log_level)
         self.__load_targets()
 
 #######################
@@ -44,7 +45,7 @@ class State:
             else:
                 raise SmartSimError(self.current_state, "Target directory could not be found!")
         except SmartSimError as e:
-            print(e)
+            self.logger.error(e)
             sys.exit()
 
 
@@ -53,15 +54,15 @@ class State:
         try:
             for target in self.targets:
                 if target.name == name:
-                    raise SmartSimError(self.current_state, "A target by this name already exists!")
+                    raise SmartSimError(self.current_state, "A target named " + target.name + " already exists!")
 
             target_path = path.join(get_SSHOME(), self.experiment, name)
             if path.isdir(target_path):
-                raise SmartSimError(self.current_state, "Target directory already exists!")
+                raise SmartSimError(self.current_state, "Target directory already exists: " + target_path)
             new_target = Target(name, params, self.experiment, target_path)
             self.targets.append(new_target)
         except SmartSimError as e:
-            print(e)
+            self.logger.error(e)
             sys.exit()
 
 
@@ -86,7 +87,7 @@ class State:
             try:
                 self.experiment = self._get_toml_config(["model", "experiment"])
             except SSConfigError:
-                print("Experiment name must be defined in either simulation.toml or in state initialization")
+                self.logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
                 sys.exit()
         else:
             self.experiment = experiment_name
@@ -102,10 +103,10 @@ class State:
                     target_path = path.join(get_SSHOME(), self.experiment, target)
                     new_target = Target(target, param_dict, self.experiment, target_path)
                     self.targets.append(new_target)
-            except SSConfigError as e:
+            except SSConfigError:
                 if model_targets: # if targets are listed with no param dict then user messed up
-                    print(e)
-                    sys.exit(1)
+                    self.logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
+                    sys.exit()
                 else:
                     self.logger.info("State created without target, target will have to be created")            
         else:
@@ -121,6 +122,30 @@ class State:
             coloredlogs.install(level=log_level, logger=logger)
         self.logger = logger
 
+    def read_config(self, sim_toml):
+        if sim_toml:
+            try:
+                file_name = get_SSHOME() + sim_toml
+                if not path.isfile(file_name):
+                    # full path
+                    if path.isfile(sim_toml):
+                        file_name = sim_toml
+                    # neither full path nor SS_HOME
+                    else:
+                        raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
+                with open(file_name, 'r', encoding='utf-8') as fp:
+                    parsed_toml = toml.load(fp)
+                    return parsed_toml
+            except SSConfigError as e:
+                self.logger.error(e)
+                sys.exit()
+            # TODO catch specific toml errors
+            except Exception as e:
+                self.logger.error(e)
+                sys.exit()
+        else:
+            return None
+
     def _get_toml_config(self, path, none_ok=False):
         """Searches for configurations in the simulation.toml
 
@@ -134,20 +159,16 @@ class State:
              None if no value/config and none_ok = True
         """
         # Search global configuration file
-        try:
-            if not self._config:
-                if none_ok:
-                    return None
-                else:
-                    raise SSConfigError(self.get_state(),
-                                       "Could not find config value for key: "
-                                        + ".".join(path))
+        if not self._config:
+            if none_ok:
+                return None
             else:
-                top_level = self.__search_config(path, self._config)
-                return top_level
-        except SSConfigError as e:
-            print(e)
-            sys.exit()
+                raise SSConfigError(self.get_state(),
+                                "Could not find required SmartSim field: "
+                                    + path[-1])
+        else:
+            top_level = self.__search_config(path, self._config)
+            return top_level
 
     def __search_config(self, value_path, config):
         val_path = value_path.copy()
@@ -160,5 +181,5 @@ class State:
                 return self.__search_config(val_path, config[parent])
         else:
             raise SSConfigError(self.get_state(),
-                                "Could not find config value for key: " + ".".join(value_path))
+                                "Could not find required SmartSim field: " + path[-1])
 

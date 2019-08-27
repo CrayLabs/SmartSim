@@ -87,7 +87,7 @@ class Controller(SSModule):
             self.log("SmartSim Stage: " + self.state.get_state())
             self._sim()
         except SmartSimError as e:
-            print(e)
+            self.log(e, level="error")
             sys.exit()
 
     def stop_all(self):
@@ -137,6 +137,8 @@ class Controller(SSModule):
            and ppn are determined by target.
         """
         targets = self._get_targets()
+        if len(targets) < 1:
+            raise SmartSimError(self.state.get_state(), "No targets to simulate!")
         for target in targets:
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_info)
@@ -170,7 +172,7 @@ class Controller(SSModule):
             return run_dict
         except KeyError as e:
             raise SSConfigError(self.state.get_state(),
-                                "Missing field under execute table in simulation.toml: " +
+                                "SmartSim could not find following required field: " +
                                 e.args[0])
 
 

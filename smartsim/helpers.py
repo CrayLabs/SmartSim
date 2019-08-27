@@ -3,27 +3,12 @@
    no specific class or group."""
 
 import sys
-import toml
 import logging
 
 from subprocess import PIPE, Popen, CalledProcessError
 from os import getcwd, environ, path
 
 
-def read_config(config_name):
-    # TODO accept full paths as well
-    if config_name:
-        try:
-            fname = get_SSHOME() + config_name
-            with open(fname, 'r', encoding='utf-8') as fp:
-                parsed_toml = toml.load(fp)
-                return parsed_toml
-        except Exception as e:
-            print(e)
-            print("Could not parse/find configuration file: " + config_name)
-            sys.exit()
-    else:
-        return None
 
 def get_SSHOME():
     """Retrieves SMARTSIMHOME env variable"""

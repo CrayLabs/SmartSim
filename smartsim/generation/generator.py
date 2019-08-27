@@ -73,7 +73,7 @@ class Generator(SSModule):
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            print(e)
+            self.log(e, level="error")
             sys.exit()
 
     def set_tag(self, tag, regex=None):
@@ -146,7 +146,7 @@ class Generator(SSModule):
 
         except FileExistsError:
             raise SmartSimError(self.state.get_state(),
-                           "Data for an experiment by this name already exists!")
+                           "Models for an experiment by this name have already been generated!")
 
 
 
