@@ -116,10 +116,13 @@ class Generator(SSModule):
                 # if the user called added a target programmatically
                 elif isinstance(val, list):
                     parameters.append(val)
+                elif isinstance(val, str) or isinstance(val, int):
+                    parameters.append([val])
                 else:
-                    raise SmartSimError(self.state.get_state,
-                     "Incorrect type for target parameters")
                     # TODO improve this error message
+                    raise SmartSimError(self.state.get_state(),
+                                        "Incorrect type for target parameters\n" +
+                                        "Must be list, int, or string.")
             return param_names, parameters
 
 
