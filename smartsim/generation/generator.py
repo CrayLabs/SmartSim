@@ -2,8 +2,7 @@ import sys
 import shutil
 
 from itertools import product
-from os import mkdir, getcwd
-from os.path import isdir, basename
+from os import mkdir, getcwd, path
 from distutils import dir_util
 
 from .model import NumModel
@@ -82,7 +81,7 @@ class Generator(SSModule):
            be replaced.
 
            Args
-              tag    (str): a string of characters that signifiy an string to be changed
+              tag    (str): a string of characters that signify an string to be changed
               regex  (str): a regular expression that model files are tagged with
         """
         self._writer._set_tag(tag, regex)
@@ -108,10 +107,19 @@ class Generator(SSModule):
             parameters = []
             for name, val in target_params.items():
                 param_names.append(name)
-                if isinstance(val["value"], list):
-                    parameters.append(val["value"])
+                # if it came from a simulation.toml
+                if isinstance(val, dict):
+                    if isinstance(val["value"], list):
+                        parameters.append(val["value"])
+                    else:
+                        parameters.append([val["value"]])
+                # if the user called added a target programmatically
+                elif isinstance(val, list):
+                    parameters.append(val)
                 else:
-                    parameters.append([val["value"]])
+                    raise SmartSimError(self.state.get_state,
+                     "Incorrect type for target parameters")
+                    # TODO improve this error message
             return param_names, parameters
 
 
@@ -133,7 +141,7 @@ class Generator(SSModule):
             mkdir(exp_path)
             targets = self._get_targets()
             for target in targets:
-                target_dir = "/".join((exp_path, target.name))
+                target_dir = path.join(exp_path, target.name)
                 mkdir(target_dir)
 
         except FileExistsError:
@@ -154,15 +162,16 @@ class Generator(SSModule):
 
             # Make target model directories
             for name, model in target_models.items():
-                dst = "/".join((exp_path, target.name, name))
+                dst = path.join(exp_path, target.name, name)
                 mkdir(dst)
                 model.set_path(dst)
 
-                # copy over model base configurations
+                if not isinstance(listed_configs, list):
+                    listed_configs = [listed_configs]
                 for config in listed_configs:
-                    dst_path = "/".join((dst, basename(config)))
-                    config_path = "/".join((get_SSHOME(), config))
-                    if isdir(config_path):
+                    dst_path = path.join(dst, path.basename(config))
+                    config_path = path.join(get_SSHOME(), config)
+                    if path.isdir(config_path):
                         dir_util.copy_tree(config_path, dst)
                     else:
                         shutil.copyfile(config_path, dst_path)

@@ -27,7 +27,7 @@ class SSModule:
         return self.state.get_experiment_path()
 
 
-    def _get_config(self, conf_param):
+    def _get_config(self, conf_param, none_ok=False):
         """Searches through init args and simulation.toml if the path
            is provided"""
         to_find = conf_param
@@ -36,6 +36,6 @@ class SSModule:
             if to_find in self._init_args.keys():
                 return self._init_args[to_find]
         # if not in init args search simulation.toml
-        return self.state._get_toml_config(conf_param)
+        return self.state._get_toml_config(conf_param, none_ok=none_ok)
 
         

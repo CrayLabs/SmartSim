@@ -43,8 +43,8 @@ control = Controller(run_args="-np 6", nodes=5)
 There is a heirarchy of specification that goes as
 follows:
     - initialization of the controller
-    - experiment level (under [execute] table)
-    - target level (under [execute.some_target] table)
+    - experiment level (under [control] table)
+    - target level (under [control.some_target] table)
 
 the heirarchy is meant to allow for quick access without
 having to write to the simulation.toml and seperately, intense
@@ -68,7 +68,7 @@ class Controller(SSModule):
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
         self.state._set_state("Simulation Control")
-        self._settings = self._get_config(["control"])
+        self.__set_settings()
         self._launcher = None
         self._jobs = []
 
@@ -287,6 +287,11 @@ class Controller(SSModule):
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
 
-
+    def __set_settings(self):
+        settings = self._get_config(["control"], none_ok=True)
+        if not settings:
+            self._settings = {}
+        else:
+            self._settings = settings
 
 
