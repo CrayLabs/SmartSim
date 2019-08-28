@@ -1,48 +1,42 @@
 
 [model]
 name = "MOM6"
-configs = ["MOM6_base_config"]
+model_files= ["MOM6/MOM6_base_config"]
 experiment = "double_gyre"
+targets = ["half-deg", "quar-deg"]
 
-[execute]
-targets = ["half-deg", "quar-deg", "one-deg"]
+[control]
 executable = "MOM6"
 run_command = "srun"
+partition = "iv24"
 launcher = "slurm"
-         [execute.quar-deg]
-         nodes = 3
-         [execute.half-deg]
+         [control.quar-deg]
          nodes = 2
-         [execute.one-deg]
+         [control.half-deg]
          nodes = 1
-
+         
 [quar-deg]
     [quar-deg.999]
-        value = [200, 400, 700, 800, 1000]
+        value = [200, 400, 700]
     [quar-deg.0]
-        value = [200, 400, 700, 800, 1000]
+        value = [200, 400, 700]
     [quar-deg.80]
         value = 80
     [quar-deg.40]
         value = 40
+    [quar-deg.120]
+        value = 1
 
 
 [half-deg]
     [half-deg.999]
-        value = [200, 400, 700, 800, 1000]
+        value = [200, 400, 700]
     [half-deg.0]
-        value = [200, 400, 700, 800, 1000]
+        value = [200, 400, 700]
     [half-deg.80]
         value = 40
     [half-deg.40]
         value = 20
+    [half-deg.120]
+        value = 1
 
-[one-deg]
-    [one-deg.999]
-        value = [200, 400, 700, 800, 1000]
-    [one-deg.0]
-        value = [200, 400, 700, 800, 1000]
-    [one-deg.80]
-        value = 20
-    [one-deg.40]
-        value = 20

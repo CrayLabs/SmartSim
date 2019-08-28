@@ -1,15 +1,15 @@
 
 [model]
 name = "CP2K"
-configs = ["h2o.inp"]
+model_files = ["CP2K/h2o.inp"]
 experiment = "h2o"
-
-[execute]
 targets = ["h2o-1"]
+
+[control]
 executable = "cp2k.psmp"
 run_command = "srun"
 launcher = "slurm"
-         [execute.h2o-1]
+         [control.h2o-1]
          nodes = 1
          partition = "gpu"
          exe_args = "-i h2o.inp"

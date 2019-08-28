@@ -10,12 +10,12 @@ def test_gen_duplicate_configs():
     """Test for the creation of the experiment directory structure"""
 
     # clean up previous run/test
-    experiment_dir = path.join(SS_HOME, "LAMMPS", "lammps_atm")
+    experiment_dir = path.join(SS_HOME, "lammps_atm")
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
     # create a state with the LAMMPS configuration file
-    STATE = State("/LAMMPS/simulation.toml")
+    STATE = State(config="/LAMMPS/simulation.toml")
 
     # init generator
     GEN = Generator(STATE)
@@ -29,10 +29,10 @@ def test_gen_duplicate_configs():
     assert(path.isdir(target_1))
     assert(path.isdir(target_2))
 
-    target_1_model_1 = path.join(target_1, "atm_20")
-    target_1_model_2 = path.join(target_1, "atm_25")
-    target_2_model_1 = path.join(target_2, "atm-2_30")
-    target_2_model_2 = path.join(target_2, "atm-2_35")
+    target_1_model_1 = path.join(target_1, "atm_0")
+    target_1_model_2 = path.join(target_1, "atm_1")
+    target_2_model_1 = path.join(target_2, "atm-2_0")
+    target_2_model_2 = path.join(target_2, "atm-2_1")
 
     model_dirs = [target_1_model_1, target_1_model_2,
                   target_2_model_1, target_2_model_2]
@@ -42,7 +42,7 @@ def test_gen_duplicate_configs():
         assert(path.isfile(path.join(model, "in.atm")))
 
     # clean up this run/test
-    experiment_dir = path.join(SS_HOME, "LAMMPS", "lammps_atm")
+    experiment_dir = path.join(SS_HOME, "lammps_atm")
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 

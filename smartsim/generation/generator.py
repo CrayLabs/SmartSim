@@ -2,8 +2,7 @@ import sys
 import shutil
 
 from itertools import product
-from os import mkdir, getcwd
-from os.path import isdir, basename
+from os import mkdir, getcwd, path
 from distutils import dir_util
 
 from .model import NumModel
@@ -33,11 +32,9 @@ with the all permutations strategy.
 ```toml
 [model]
 name = "lammps"
+targets = ["atm"]
 experiment = "lammps_atm"
 configs = ["in.atm"]
-
-[execute]
-targets = ["atm"]
 
 [atm]
   [atm.lj]              # lj is the previous value marked in "in.atm" (e.g. ;lj;)
@@ -55,11 +52,10 @@ class Generator(SSModule):
          state  (State): The state class that manages the library
     """
 
-    def __init__(self, state):
-        super().__init__(state)
-        self.state.update_state("Data Generation")
+    def __init__(self, state, **kwargs):
+        super().__init__(state, **kwargs)
+        self.state._set_state("Data Generation")
         self._writer = ModelWriter()
-        self._models = {}
 
 
 ###########################
@@ -72,23 +68,23 @@ class Generator(SSModule):
            to be able to run all models in parallel, it does not actually
            run any models."""
         try:
-            self.log("SmartSim Stage: " + self.state.get_state())
+            self.log("SmartSim State: " + self.state.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            print(e)
+            self.log(e, level="error")
             sys.exit()
 
-    def set_tag(tag, regex=None):
+    def set_tag(self, tag, regex=None):
         """Set the tag for the model files where configurations should
            be replaced.
 
            Args
-              tag    (str): a string of characters that signifiy an string to be changed
+              tag    (str): a string of characters that signify an string to be changed
               regex  (str): a regular expression that model files are tagged with
         """
-        self.writer._set_tag(tag, regex)
+        self._writer._set_tag(tag, regex)
 
 
 ##########################
@@ -106,72 +102,85 @@ class Generator(SSModule):
 
         # collect all parameters, names, and settings
         def read_model_parameters(target):
-            target_params = self._get_config([target])
+            target_params = target.get_target_params()
             param_names = []
             parameters = []
             for name, val in target_params.items():
                 param_names.append(name)
-                if isinstance(val["value"], list):
-                    parameters.append(val["value"])
+                # if it came from a simulation.toml
+                if isinstance(val, dict):
+                    if isinstance(val["value"], list):
+                        parameters.append(val["value"])
+                    else:
+                        parameters.append([val["value"]])
+                # if the user called added a target programmatically
+                elif isinstance(val, list):
+                    parameters.append(val)
+                elif isinstance(val, str) or isinstance(val, int):
+                    parameters.append([val])
                 else:
-                    parameters.append([val["value"]])
+                    # TODO improve this error message
+                    raise SmartSimError(self.state.get_state(),
+                                        "Incorrect type for target parameters\n" +
+                                        "Must be list, int, or string.")
             return param_names, parameters
 
 
         # init model classes to hold parameter information
-        for target in self.targets:
+        targets = self._get_targets()
+        for target in targets:
             names, values = read_model_parameters(target)
             all_configs = self._create_all_permutations(names, values)
-            for conf in all_configs:
-                m = NumModel(target, conf)
-                if target not in self._models.keys():
-                    self._models[target] = [m]
-                else:
-                    self._models[target].append(m)
+            for i, conf in enumerate(all_configs):
+                model_name = "_".join((target.name, str(i)))
+                m = NumModel(model_name, conf, i)
+                target.add_model(m)
 
     def _create_experiment(self):
-        """Creates the directory structure for the simluations"""
-        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
-        exp_name = self._get_config(["model", "experiment"])
-        exp_dir_path = "/".join((base_path, exp_name))
-        self.exp_path = exp_dir_path
+        """Creates the directory structure for the simulations"""
+        exp_path = self._get_exp_path()
 
         try:
-            mkdir(exp_dir_path)
-            for target in self.targets:
-                target_dir = "/".join((exp_dir_path, target))
+            mkdir(exp_path)
+            targets = self._get_targets()
+            for target in targets:
+                target_dir = path.join(exp_path, target.name)
                 mkdir(target_dir)
 
         except FileExistsError:
             raise SmartSimError(self.state.get_state(),
-                           "Data directories already exist!")
+                           "Models for an experiment by this name have already been generated!")
 
 
 
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
-        base_path = "".join((get_SSHOME(), self._get_config(["model","name"])))
-        listed_configs = self._get_config(["model", "configs"])
+        listed_configs = self._get_config(["model", "model_files"])
+        exp_path = self._get_exp_path()
+        targets = self._get_targets()
 
-        for target, target_models in self._models.items():
+        for target in targets:
+            target_models = target.get_models()
 
             # Make target model directories
-            for model in target_models:
-                dst = "/".join((self.exp_path, target, model.name))
+            for name, model in target_models.items():
+                dst = path.join(exp_path, target.name, name)
                 mkdir(dst)
+                model.set_path(dst)
 
-                # copy over model base configurations
+                if not isinstance(listed_configs, list):
+                    listed_configs = [listed_configs]
                 for config in listed_configs:
-                    dst_path = "/".join((dst, config))
-                    config_path = "/".join((base_path, config))
-                    if isdir(config_path):
+                    dst_path = path.join(dst, path.basename(config))
+                    config_path = path.join(get_SSHOME(), config)
+                    if path.isdir(config_path):
                         dir_util.copy_tree(config_path, dst)
                     else:
                         shutil.copyfile(config_path, dst_path)
 
                 # write in changes to configurations
-                self._writer.write(model, dst)
+                self._writer.write(model)
 
 
 

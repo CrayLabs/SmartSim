@@ -20,10 +20,11 @@ def test_write_easy_configs():
         "placeholder": "group leftupper region",    # in.crack
         "1200": "120"                               # input.nml
     }
-    model = NumModel("easy", param_dict)
+
     conf_path = "./test_configs/easy/marked/"
     gen_path = "./test_configs/easy/generated/"
     correct_path = "./test_configs/easy/correct/"
+    model = NumModel("easy", param_dict, path=gen_path)
 
     # clean up from previous test
     if path.isdir(gen_path):
@@ -35,7 +36,7 @@ def test_write_easy_configs():
 
     # init modelwriter
     writer = ModelWriter()
-    writer.write(model, gen_path)
+    writer.write(model)
 
     written_files = sorted(glob(gen_path + "*"))
     correct_files = sorted(glob(correct_path + "*"))
@@ -59,10 +60,10 @@ def test_write_med_configs():
     }
 
 
-    model = NumModel("med", param_dict)
     conf_path = "./test_configs/med/marked/"
     gen_path = "./test_configs/med/generated/"
     correct_path = "./test_configs/med/correct/"
+    model = NumModel("med", param_dict, path=gen_path) 
 
     # clean up from previous test
     if path.isdir(gen_path):
@@ -74,7 +75,7 @@ def test_write_med_configs():
 
     # init modelwriter
     writer = ModelWriter()
-    writer.write(model, gen_path)
+    writer.write(model)
 
     written_files = sorted(glob(gen_path + "*"))
     correct_files = sorted(glob(correct_path + "*"))
@@ -99,10 +100,10 @@ def test_write_new_tag_configs():
     }
 
 
-    model = NumModel("med", param_dict)
     conf_path = "./test_configs/new-tag/marked/"
     gen_path = "./test_configs/new-tag/generated/"
     correct_path = "./test_configs/new-tag/correct/"
+    model = NumModel("newtag", param_dict, path=gen_path)
 
     # clean up from previous test
     if path.isdir(gen_path):
@@ -115,7 +116,7 @@ def test_write_new_tag_configs():
     # init modelwriter
     writer = ModelWriter()
     writer._set_tag("@")
-    writer.write(model, gen_path)
+    writer.write(model)
 
     written_files = sorted(glob(gen_path + "*"))
     correct_files = sorted(glob(correct_path + "*"))
