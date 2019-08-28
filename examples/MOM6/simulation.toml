@@ -24,6 +24,8 @@ launcher = "slurm"
         value = 80
     [quar-deg.40]
         value = 40
+    [quar-deg.120]
+        value = 1
 
 
 [half-deg]
@@ -35,4 +37,6 @@ launcher = "slurm"
         value = 40
     [half-deg.40]
         value = 20
+    [half-deg.120]
+        value = 1
 
