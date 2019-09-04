@@ -22,10 +22,10 @@ class mom6Processor(Processor):
         self._set_arguments()
 
     def _set_arguments(self):
-        self.total_years = self._get_config(["years_simmed"])
-        self.years_per_sample = self._get_config(["years_per_sample"])
-        multi_layer = self._get_config("multilayer_features", none_ok=True)
-        one_layer = self._get_config("one_layer_features", none_ok=True)
+        self.total_years = self.get_config(["years_simmed"])
+        self.years_per_sample = self.get_config(["years_per_sample"])
+        multi_layer = self.get_config("multilayer_features", none_ok=True)
+        one_layer = self.get_config("one_layer_features", none_ok=True)
         if multi_layer:
             self.multilayer_features = multi_layer
         if one_layer:
@@ -251,6 +251,6 @@ class mom6Processor(Processor):
         features += "KH,"
         features += "KHTH"
 
-        exp_path = self._get_exp_path()
+        exp_path = self.get_experiment_path()
         f_name = path.join(exp_path, "dataset.csv")
         np.savetxt(f_name, data, delimiter=",", comments='', header=features)

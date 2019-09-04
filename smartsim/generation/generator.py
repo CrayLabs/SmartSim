@@ -9,7 +9,7 @@ from .model import NumModel
 from .modelwriter import ModelWriter
 from ..error import SmartSimError, SSUnsupportedError
 from ..helpers import get_SSHOME
-from ..ssModule import SSModule
+from ..simModule import SmartSimModule
 
 """
 Generation
@@ -44,7 +44,7 @@ configs = ["in.atm"]
 """
 
 
-class Generator(SSModule):
+class Generator(SmartSimModule):
     """Data generation phase of the Smart Sim pipeline. Holds internal configuration
        data that is created during the data generation stage.
 
@@ -54,7 +54,7 @@ class Generator(SSModule):
 
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
-        self.state._set_state("Data Generation")
+        self.set_state("Data Generation")
         self._writer = ModelWriter()
 
 
@@ -68,7 +68,7 @@ class Generator(SSModule):
            to be able to run all models in parallel, it does not actually
            run any models."""
         try:
-            self.log("SmartSim State: " + self.state.get_state())
+            self.log("SmartSim State: " + self.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
@@ -120,14 +120,14 @@ class Generator(SSModule):
                     parameters.append([val])
                 else:
                     # TODO improve this error message
-                    raise SmartSimError(self.state.get_state(),
+                    raise SmartSimError(self.get_state(),
                                         "Incorrect type for target parameters\n" +
                                         "Must be list, int, or string.")
             return param_names, parameters
 
 
         # init model classes to hold parameter information
-        targets = self._get_targets()
+        targets = self.get_targets()
         for target in targets:
             names, values = read_model_parameters(target)
             all_configs = self._create_all_permutations(names, values)
@@ -138,17 +138,17 @@ class Generator(SSModule):
 
     def _create_experiment(self):
         """Creates the directory structure for the simulations"""
-        exp_path = self._get_exp_path()
+        exp_path = self.get_experiment_path()
 
         try:
             mkdir(exp_path)
-            targets = self._get_targets()
+            targets = self.get_targets()
             for target in targets:
                 target_dir = path.join(exp_path, target.name)
                 mkdir(target_dir)
 
         except FileExistsError:
-            raise SmartSimError(self.state.get_state(),
+            raise SmartSimError(self.get_state(),
                            "Models for an experiment by this name have already been generated!")
 
 
@@ -156,9 +156,9 @@ class Generator(SSModule):
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
-        listed_configs = self._get_config(["model", "model_files"])
-        exp_path = self._get_exp_path()
-        targets = self._get_targets()
+        listed_configs = self.get_config(["model", "model_files"])
+        exp_path = self.get_experiment_path()
+        targets = self.get_targets()
 
         for target in targets:
             target_models = target.get_models()

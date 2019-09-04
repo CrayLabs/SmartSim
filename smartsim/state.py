@@ -24,13 +24,6 @@ class State:
 ### State Interface ###
 #######################
 
-    def get_state(self):
-        return self.current_state
-
-    # is this needed as an external method?
-    def get_experiment_path(self):
-        return path.join(get_SSHOME(), self.experiment)
-
     def load_target(self, name, target_path=None):
         """Load an already generated or constructed target into state"""
         try:
@@ -68,6 +61,9 @@ class State:
 
 #####################
 
+    def _get_expr_path(self):
+        return path.join(get_SSHOME(), self.experiment)
+
     def _load_models(self, target):
         """Load the model names and paths into target instance
            Return an error if there are no models in the target directory"""
@@ -79,8 +75,6 @@ class State:
                 new_model = NumModel(listed, param_dict, path=model_path)
                 target.add_model(new_model)
 
-    def _set_state(self, new_state):
-        self.current_state = new_state
 
     def __set_experiment(self, experiment_name):
         if not experiment_name:
@@ -163,7 +157,7 @@ class State:
             if none_ok:
                 return None
             else:
-                raise SSConfigError(self.get_state(),
+                raise SSConfigError(self.current_state,
                                 "Could not find required SmartSim field: "
                                     + path[-1])
         else:
@@ -180,6 +174,6 @@ class State:
                 parent = val_path.pop(0)
                 return self.__search_config(val_path, config[parent])
         else:
-            raise SSConfigError(self.get_state(),
+            raise SSConfigError(self.current_state,
                                 "Could not find required SmartSim field: " + path[-1])
 

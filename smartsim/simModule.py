@@ -2,12 +2,11 @@ import sys
 
 from .error import SSConfigError, SmartSimError
 
-class SSModule:
+class SmartSimModule:
 
     def __init__(self, state, **kwargs):
         self.state = state
         self._init_args = kwargs
-        self._get_targets()
 
 
     # change this to an internal method
@@ -19,11 +18,17 @@ class SSModule:
         else:
             self.state.logger.debug(message)
 
+    def get_state(self):
+        return self.state.current_state
+
+    def get_targets(self):
+        return self.state.targets
+
     def get_target(self, target):
         for t in self.state.targets:
             if t.name == target:
                 return t
-        raise SmartSimError(self.state.get_state(), "Target not found: " + target)
+        raise SmartSimError(self.get_state(), "Target not found: " + target)
 
     def get_model(self, model):
         for target in self.state.targets:
@@ -32,16 +37,12 @@ class SSModule:
                 return model
             except:
                 continue
-        raise SmartSimError(self.state.get_state(), "Model not found: " + model)
-        
-    def _get_targets(self):
-        return self.state.targets
+        raise SmartSimError(self.get_state(), "Model not found: " + model)
 
-    def _get_exp_path(self):
-        return self.state.get_experiment_path()
+    def get_experiment_path(self):
+        return self.state._get_expr_path()        
 
-
-    def _get_config(self, conf_param, none_ok=False):
+    def get_config(self, conf_param, none_ok=False):
         """Searches through init args and simulation.toml if the path
            is provided"""
         to_find = conf_param
@@ -51,5 +52,9 @@ class SSModule:
                 return self._init_args[to_find]
         # if not in init args search simulation.toml
         return self.state._get_toml_config(conf_param, none_ok=none_ok)
+
+
+    def set_state(self, new_state):
+        self.state.current_state = new_state
 
         

@@ -10,7 +10,7 @@ from launcher import SlurmLauncher, PBSLauncher
 from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..state import State
-from ..ssModule import SSModule
+from ..simModule import SmartSimModule
 from .job import Job
 
 """
@@ -40,13 +40,13 @@ control = Controller(run_args="-np 6", nodes=5)
 ```
 
 
-There is a heirarchy of specification that goes as
+There is a hierarchy of specification that goes as
 follows:
     - initialization of the controller
     - experiment level (under [control] table)
     - target level (under [control.some_target] table)
 
-the heirarchy is meant to allow for quick access without
+the hierarchy is meant to allow for quick access without
 having to write to the simulation.toml and seperately, intense
 specification within the simulation.toml.
 
@@ -55,7 +55,7 @@ specification within the simulation.toml.
 
 
 
-class Controller(SSModule):
+class Controller(SmartSimModule):
     """The controller module provides an interface between the numerical model
        that is the subject of Smartsim and the underlying workload manager or
        run framework. There are currently four methods of execution:
@@ -67,7 +67,7 @@ class Controller(SSModule):
 
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
-        self.state._set_state("Simulation Control")
+        self.set_state("Simulation Control")
         self.__set_settings()
         self._launcher = None
         self._jobs = []
@@ -84,7 +84,7 @@ class Controller(SSModule):
            the simulation.toml and class initialization:
            launcher and direct call. """
         try:
-            self.log("SmartSim Stage: " + self.state.get_state())
+            self.log("SmartSim Stage: " + self.get_state())
             self._sim()
         except SmartSimError as e:
             self.log(e, level="error")
@@ -136,9 +136,9 @@ class Controller(SSModule):
            have different parameters but configurations like node count
            and ppn are determined by target.
         """
-        targets = self._get_targets()
+        targets = self.get_targets()
         if len(targets) < 1:
-            raise SmartSimError(self.state.get_state(), "No targets to simulate!")
+            raise SmartSimError(self.get_state(), "No targets to simulate!")
         for target in targets:
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_info)
@@ -171,7 +171,7 @@ class Controller(SSModule):
 
             return run_dict
         except KeyError as e:
-            raise SSConfigError(self.state.get_state(),
+            raise SSConfigError(self.get_state(),
                                 "SmartSim could not find following required field: " +
                                 e.args[0])
 
@@ -229,7 +229,7 @@ class Controller(SSModule):
         if isdir(target_dir_path):
             return target_dir_path
         else:
-            raise SmartSimError(self.state.get_state(),
+            raise SmartSimError(self.get_state(),
                                 "Simulation target directory not found: " +
                                 target)
 
@@ -250,7 +250,7 @@ class Controller(SSModule):
         elif self._launcher == "pbs":
             self._launcher = PBSLauncher.PBSLauncher()
         else:
-            raise SSUnsupportedError(self.state.get_state(),
+            raise SSUnsupportedError(self.get_state(),
                                 "Launcher type not supported: "
                                 + self._launcher)
 
@@ -290,7 +290,7 @@ class Controller(SSModule):
             run_model.wait()
 
     def __set_settings(self):
-        settings = self._get_config(["control"], none_ok=True)
+        settings = self.get_config(["control"], none_ok=True)
         if not settings:
             self._settings = {}
         else:

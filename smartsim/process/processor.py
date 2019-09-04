@@ -4,12 +4,12 @@ import sys
 from os import path
 from abc import ABC, abstractmethod
 
-from ..ssModule import SSModule
+from ..simModule import SmartSimModule
 from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError
 
 
-class Processor(SSModule):
+class Processor(SmartSimModule):
     """A convenient base case for constructing processors that can handle
        the data coming out of a simulation model. 
        
@@ -19,7 +19,7 @@ class Processor(SSModule):
 
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
-        self.state._set_state("Data Processing")
+        self.set_state("Data Processing")
 
 
 ###########################
@@ -37,7 +37,7 @@ class Processor(SSModule):
         """
         data_paths = []
         target = self.get_target(target)
-        data_file = self._get_config(["process","filename"])
+        data_file = self.get_config(["process","filename"])
         if filename:
             data_file = filename
         
@@ -45,7 +45,7 @@ class Processor(SSModule):
             data_path = path.join(model.get_path(), data_file)
             data_paths.append((name, data_path))
         if len(data_paths) < 1:
-            raise SmartSimError(self.state.get_state(), "No data found for target: " + target.name)
+            raise SmartSimError(self.get_state(), "No data found for target: " + target.name)
 
         return data_paths
 
@@ -54,9 +54,9 @@ class Processor(SSModule):
            If not present, look through initialization arguments
         """
         data_paths = []
-        targets = self._get_targets()
+        targets = self.get_targets()
         if len(targets) > 0:
-            data_file = self._get_config(["process","filename"])
+            data_file = self.get_config(["process","filename"])
             if filename:
                 data_file = filename
             
@@ -68,7 +68,7 @@ class Processor(SSModule):
             return data_paths
 
         else:
-            raise SmartSimError(self.state.get_state(), "No target models found!")
+            raise SmartSimError(self.get_state(), "No target models found!")
 
 
 
