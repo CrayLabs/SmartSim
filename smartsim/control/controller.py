@@ -88,7 +88,7 @@ class Controller(SmartSimModule):
             self._sim()
         except SmartSimError as e:
             self.log(e, level="error")
-            sys.exit()
+            raise
 
     def stop_all(self):
         raise NotImplementedError
@@ -96,6 +96,8 @@ class Controller(SmartSimModule):
     def stop(self, pid):
         raise NotImplementedError
 
+
+    # TODO Make this work with jobs that dont use the launcher
     def poll(self, interval=20, verbose=True):
         """Poll the running simulations and recieve logging
            output with the status of the job.
@@ -260,9 +262,8 @@ class Controller(SmartSimModule):
            all output and err is logged to the directory that
            houses the model.
         """
-        tar_dir = target.get_target_dir()
-        for listed_model in listdir(tar_dir):
-            model = target.get_model(listed_model)
+        model_dict = target.get_models()
+        for _, model in model_dict.items():
             temp_dict = run_dict.copy()
             temp_dict["wd"] = model.path
             temp_dict["output_file"] = "/".join((model.path, model.name + ".out"))
@@ -280,12 +281,11 @@ class Controller(SmartSimModule):
         job.set_return_code(return_code)
 
     def _run_with_command(self, target, run_dict):
-        """Run models without a workload manager using
-           some run_command specified by the user."""
+        """Run models without a workload manager directly, instead
+           using some run_command specified by the user."""
         cmd = run_dict["cmd"]
-        tar_dir = target.get_target_dir()
-        for listed_model in listdir(tar_dir):
-            model = target.get_model(listed_model)
+        model_dict = target.get_models()
+        for _, model in model_dict.items():
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
 

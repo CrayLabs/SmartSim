@@ -63,7 +63,7 @@ class Generator(SmartSimModule):
 ###########################
 
     def generate(self):
-        """Generate model runs according to the main configuration file
+        """Generate model runs according to the main configuration 
            Note that this only generates the necessary files and structure
            to be able to run all models in parallel, it does not actually
            run any models."""
@@ -74,7 +74,7 @@ class Generator(SmartSimModule):
             self._configure_models()
         except SmartSimError as e:
             self.log(e, level="error")
-            sys.exit()
+            raise
 
     def set_tag(self, tag, regex=None):
         """Set the tag for the model files where configurations should
@@ -107,12 +107,14 @@ class Generator(SmartSimModule):
             parameters = []
             for name, val in target_params.items():
                 param_names.append(name)
+
                 # if it came from a simulation.toml
                 if isinstance(val, dict):
                     if isinstance(val["value"], list):
                         parameters.append(val["value"])
                     else:
                         parameters.append([val["value"]])
+
                 # if the user called added a target programmatically
                 elif isinstance(val, list):
                     parameters.append(val)
@@ -130,6 +132,7 @@ class Generator(SmartSimModule):
         targets = self.get_targets()
         for target in targets:
             names, values = read_model_parameters(target)
+            # TODO Allow for different strategies to be used
             all_configs = self._create_all_permutations(names, values)
             for i, conf in enumerate(all_configs):
                 model_name = "_".join((target.name, str(i)))

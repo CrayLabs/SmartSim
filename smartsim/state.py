@@ -1,4 +1,5 @@
 import logging
+import pickle
 import sys
 import toml
 from os import path, mkdir, listdir
@@ -18,7 +19,7 @@ class State:
         self._config = self.read_config(config)
         self.targets = []
         self.__set_experiment(experiment)
-        self.__load_targets()
+        self.__init_targets()
 
 #######################
 ### State Interface ###
@@ -31,15 +32,21 @@ class State:
             if target_path:
                 tar_dir = target_path
             if path.isdir(tar_dir):
-                params = {} # only used in data generation
-                new_target = Target(name, params, self.experiment, tar_dir)
-                self._load_models(new_target)
-                self.targets.append(new_target)
+                pickle_file = path.join(tar_dir, name + ".pickle")
+                if path.isfile(pickle_file):
+                    target = pickle.load(open(pickle_file, "rb"))
+                    if target.experiment != self.experiment:
+                        err = "Target must be loaded from same experiment \n"
+                        msg = "Target experiment: {}   Current experiment: {}".format(target.experiment, self.experiment)
+                        raise SmartSimError(self.current_state, err+msg)
+                    self.targets.append(target)
+                else:
+                    raise SmartSimError(self.current_state, "Target, {}, could not be found".format(name))
             else:
                 raise SmartSimError(self.current_state, "Target directory could not be found!")
         except SmartSimError as e:
             self.logger.error(e)
-            sys.exit()
+            raise
 
 
     def create_target(self, name, params={}):
@@ -56,24 +63,25 @@ class State:
             self.targets.append(new_target)
         except SmartSimError as e:
             self.logger.error(e)
-            sys.exit()
+            raise
 
+    def save(self):
+        """Save each target currently in state as a pickled python object.
+           All models within the target are maintained and can be reloaded
+           at any point in the experiment.
+        """
+        for target in self.targets:
+            pickle_path = path.join(target.path, target.name + ".pickle")
+            file_obj = open(pickle_path, "wb")
+            pickle.dump(target, file_obj)
+            file_obj.close()
+
+    
 
 #####################
 
     def _get_expr_path(self):
         return path.join(get_SSHOME(), self.experiment)
-
-    def _load_models(self, target):
-        """Load the model names and paths into target instance
-           Return an error if there are no models in the target directory"""
-        target_path = target.get_target_dir()
-        for listed in listdir(target_path):
-            model_path = path.join(target_path, listed)
-            if path.isdir(model_path):
-                param_dict = {} # only used in generation when this function wont be called
-                new_model = NumModel(listed, param_dict, path=model_path)
-                target.add_model(new_model)
 
 
     def __set_experiment(self, experiment_name):
@@ -82,12 +90,12 @@ class State:
                 self.experiment = self._get_toml_config(["model", "experiment"])
             except SSConfigError:
                 self.logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
-                sys.exit()
+                raise
         else:
             self.experiment = experiment_name
 
         
-    def __load_targets(self):
+    def __init_targets(self):
         """Load targets if they are present within the simulation.toml"""
         if self._config:
             try:
@@ -100,11 +108,11 @@ class State:
             except SSConfigError:
                 if model_targets: # if targets are listed with no param dict then user messed up
                     self.logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
-                    sys.exit()
+                    raise
                 else:
-                    self.logger.info("State created without target, target will have to be created")            
+                    self.logger.info("State created without target, target will have to be created or loaded")            
         else:
-            self.logger.info("State created without target, target will have to be created")            
+            self.logger.info("State created without target, target will have to be created or loaded")            
             
 
     def __create_logger(self, log_level):
@@ -132,11 +140,11 @@ class State:
                     return parsed_toml
             except SSConfigError as e:
                 self.logger.error(e)
-                sys.exit()
+                raise
             # TODO catch specific toml errors
             except Exception as e:
                 self.logger.error(e)
-                sys.exit()
+                raise
         else:
             return None
 
