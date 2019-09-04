@@ -1,63 +1,75 @@
 
+import sys
+
+from os import path
+from abc import ABC, abstractmethod
+
 from ..ssModule import SSModule
 from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError
 
 
 class Processor(SSModule):
-    """Converts multiple files of simulation data into
-       datasets convenient for machine learning experiments"""
+    """A convenient base case for constructing processors that can handle
+       the data coming out of a simulation model. 
+       
+       The Processor class aims to make it easy for users to construct
+       multiple processing stages for any type of problem/model.
+    """
 
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
-        self.data_paths = []
+        self.state._set_state("Data Processing")
 
 
 ###########################
 ### Processor Interface ###
 ###########################
 
-    def get_data_paths(self):
-        return self.
 
-    def get_datasets(self):
-        """Return a single dataset from each target"""
-        return self.datasets
+    @abstractmethod
+    def process(self):
+        raise NotImplementedError
 
-    def _set_data_paths(self):
-        """Look for generated datasets within targets and open if present
+    def get_target_data(self, target, filename=None):
+        """Look for generated datasets within a single target and return if present
            If not present, look through initialization arguments
         """
-        try:
-            targets = self._get_targets()
-            if len(targets) > 0:
-                data_file = self._get_config(["process","filename"])
-                
-                for target in targets:
-                    for model in target.get_models().values():
-                        data_path = path.join(model.get_path(), data_file)
-                        self.data_paths.append(data_path)
-            else:
-                # no targets, datasets must be provided
-                datasets = self._get_config(["datasets"])
-                # TODO catch if not a list
-                for dataset in datasets:
-                    ds_path = dataset
-                    if not path.isfile(ds_path):
-                        ds_path = path.join(get_SSHOME(), dataset)
-                        if not path.isfile(ds_path):
-                            raise SmartSimError(self.state.get_state(), "Could not find dataset: " + dataset)
-                    self.data_paths.append(ds_path)
+        data_paths = []
+        target = self.get_target(target)
+        data_file = self._get_config(["process","filename"])
+        if filename:
+            data_file = filename
+        
+        for name, model in target.get_models().items():
+            data_path = path.join(model.get_path(), data_file)
+            data_paths.append((name, data_path))
+        if len(data_paths) < 1:
+            raise SmartSimError(self.state.get_state(), "No data found for target: " + target.name)
 
-        except SSConfigError as e:
-            msg = "Datasets must either be found in target models or provided by user"
-            self.log(e, level="error")
-            self.log(msg, level="error")
-            raise SSConfigError(msg)
+        return data_paths
 
-        except SmartSimError as e:
-            self.log(e, level="error")
-            raise SmartSimError(e)
+    def get_data(self, filename=None):
+        """Look for generated datasets within targets and return if present
+           If not present, look through initialization arguments
+        """
+        data_paths = []
+        targets = self._get_targets()
+        if len(targets) > 0:
+            data_file = self._get_config(["process","filename"])
+            if filename:
+                data_file = filename
+            
+            for target in targets:
+                for name, model in target.get_models().items():
+                    data_path = path.join(model.get_path(), data_file)
+                    data_paths.append((name, data_path))
+
+            return data_paths
+
+        else:
+            raise SmartSimError(self.state.get_state(), "No target models found!")
+
 
 
 ###########################

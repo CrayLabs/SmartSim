@@ -1,17 +1,17 @@
 from smartsim import Controller, Generator, State
 
 # initialize State
-state= State(experiment="double_gyre", log_level="DEBUG")
+state = State(experiment="double_gyre", log_level="DEBUG")
 
 # Create targets
-quar_deg_params = {"999": [200, 400, 700, 1000, 1500, 2000],
-                   "0": [200, 400, 700, 1000, 1500],
-                   "120": 1}
-half_deg_params = {"999": [200, 400, 700, 1000, 1500, 2000],
-                   "0": [200, 400, 700, 1000, 1500],
-                   "80": 40,
-                   "40": 20,
-                   "120": 1}
+quar_deg_params = {"KH": [200, 400, 700, 1000, 1500, 2000],
+                   "KHTH": [200, 400, 700, 1000, 1500],
+                   "months": 1}
+half_deg_params = {"KH": [200, 400, 700, 1000, 1500, 2000],
+                   "KHTH": [200, 400, 700, 1000, 1500],
+                   "x_resolution": 40,
+                   "y_resolution": 20,
+                   "months": 1}
 state.create_target("quar-deg", params=quar_deg_params)
 state.create_target("half-deg", params=half_deg_params)
 

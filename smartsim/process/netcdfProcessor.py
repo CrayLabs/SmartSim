@@ -7,7 +7,7 @@ class NetCDFProcessor(Processor):
 
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
-        self._set_datasets()
+        self._set_data_paths()
 
 
 

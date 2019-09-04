@@ -1,6 +1,6 @@
 import sys
 
-from .error import SSConfigError
+from .error import SSConfigError, SmartSimError
 
 class SSModule:
 
@@ -19,6 +19,21 @@ class SSModule:
         else:
             self.state.logger.debug(message)
 
+    def get_target(self, target):
+        for t in self.state.targets:
+            if t.name == target:
+                return t
+        raise SmartSimError(self.state.get_state(), "Target not found: " + target)
+
+    def get_model(self, model):
+        for target in self.state.targets:
+            try:
+                model = target.get_model[model]
+                return model
+            except:
+                continue
+        raise SmartSimError(self.state.get_state(), "Model not found: " + model)
+        
     def _get_targets(self):
         return self.state.targets
 
