@@ -84,7 +84,7 @@ class Controller(SmartSimModule):
            the simulation.toml and class initialization:
            launcher and direct call. """
         try:
-            self.log("SmartSim Stage: " + self.get_state())
+            self.log("SmartSim State: " + self.get_state())
             self._sim()
         except SmartSimError as e:
             self.log(e, level="error")

@@ -143,8 +143,14 @@ class Generator(SmartSimModule):
         """Creates the directory structure for the simulations"""
         exp_path = self.get_experiment_path()
 
+        # ok to have already created an experiment
         try:
             mkdir(exp_path)
+        except FileExistsError:
+            self.log("Working in previously created experiment")
+        
+        # not ok to have already generated the target.
+        try:    
             targets = self.get_targets()
             for target in targets:
                 target_dir = path.join(exp_path, target.name)
@@ -152,7 +158,8 @@ class Generator(SmartSimModule):
 
         except FileExistsError:
             raise SmartSimError(self.get_state(),
-                           "Models for an experiment by this name have already been generated!")
+                        "Models for an experiment by this name have already been generated!")
+
 
 
 
