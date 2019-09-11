@@ -6,7 +6,7 @@ class SmartSimError(Exception):
         self.msg = message
 
     def __str__(self):
-        return "SmartSim Error: (" + self.stg + ") " + self.msg
+        return "(" + self.stg + ") " + self.msg
 
 
 class SSConfigError(SmartSimError):

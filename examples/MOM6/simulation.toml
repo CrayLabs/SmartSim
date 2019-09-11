@@ -15,28 +15,28 @@ launcher = "slurm"
          [control.half-deg]
          nodes = 1
          
-[quar-deg]
-    [quar-deg.999]
+[quar-deg]  
+    [quar-deg.KH]
         value = [200, 400, 700]
-    [quar-deg.0]
+    [quar-deg.KHTH]
         value = [200, 400, 700]
-    [quar-deg.80]
+    [quar-deg.x_resolution]
         value = 80
-    [quar-deg.40]
+    [quar-deg.y_resolution]
         value = 40
-    [quar-deg.120]
+    [quar-deg.months]
         value = 1
 
 
 [half-deg]
-    [half-deg.999]
+    [half-deg.KH]
         value = [200, 400, 700]
-    [half-deg.0]
+    [half-deg.KHTH]
         value = [200, 400, 700]
-    [half-deg.80]
+    [half-deg.x_resolution]
         value = 40
-    [half-deg.40]
+    [half-deg.y_resolution]
         value = 20
-    [half-deg.120]
+    [half-deg.months]
         value = 1
 

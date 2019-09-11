@@ -6,8 +6,8 @@ class Target:
     def __init__(self, name, params, experiment_name, target_dir_path):
         self.name = name
         self.params = params
-        self._experiment = experiment_name
-        self._path = target_dir_path
+        self.path = target_dir_path
+        self.experiment = experiment_name
         self._models = {}
 
 
@@ -15,7 +15,7 @@ class Target:
         return self.params
 
     def get_target_dir(self):
-        return self._path
+        return self.path
 
     def get_models(self):
         return self._models
@@ -32,7 +32,7 @@ class Target:
     def set_control_settings(self, settings):
         self._ctrl_settings = settings
 
-        
+
     def __str__(self):
         return self.name
     
