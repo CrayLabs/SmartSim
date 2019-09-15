@@ -3,6 +3,7 @@ import sys
 from .error import SSConfigError, SmartSimError
 
 class SmartSimModule:
+    """The base class of all the module within SmartSim"""
 
     def __init__(self, state, **kwargs):
         self.state = state
