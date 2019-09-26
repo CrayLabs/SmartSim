@@ -6,12 +6,32 @@ from os import path, mkdir, listdir
 from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
-from .generation.model import NumModel
+from .model import NumModel
 
+"""
+State
+-----
+
+"""
 
 class State:
-    """Holds the state of the entire SS pipeline and the configurations
-       necessary to run each stage of the pipeline"""
+    """The State class holds most of the configurations necessary to run an
+       experiment within SmartSim. Upon initialization, State will either
+       read and parse the simulation.toml configuration file or will wait
+       for the user to call methods to create targets and models.
+
+        Arguments:
+        :param str experiment: Name of the directory that will house all of
+                               the created files and directories. Experiment
+                               name can be set in either the simulation.toml
+                               or through the state initialization
+        :param str config: Name of the configuration file for the experiment
+                           The configuration file is optional if the user
+                           would rather construct the experiment programmatically
+                           in python.
+        :param str log_level: Control verbosity of the logger. Options include
+                              "DEV", "DEBUG", "INFO", "ERROR".
+       """
 
     def __init__(self, experiment=None, config=None, log_level="DEV"):
         self.current_state = "Initializing"
@@ -21,12 +41,18 @@ class State:
         self.__set_experiment(experiment)
         self.__init_targets()
 
-#######################
-### State Interface ###
-#######################
 
     def load_target(self, name, target_path=None):
-        """Load an already generated or constructed target into state"""
+        """Load a pickled target into State for use. The target currently must be from
+           the same experiment it originated in. This can be useful if the experiment
+           is being conducted over mutliple stages where execution does not all occur
+           within the same script.
+
+           Arguments:
+           :param str name: name of the pickled target
+           :param str target_path: Path to the pickled target. Defaults to SMARTSIMHOME
+
+        """
         try:
             tar_dir = path.join(get_SSHOME(), self.experiment, name)
             if target_path:
@@ -37,38 +63,54 @@ class State:
                     target = pickle.load(open(pickle_file, "rb"))
                     if target.experiment != self.experiment:
                         err = "Target must be loaded from same experiment \n"
-                        msg = "Target experiment: {}   Current experiment: {}".format(target.experiment, self.experiment)
+                        msg = "Target experiment: {}   Current experiment: {}".format(target.experiment,
+                                                                                       self.experiment)
                         raise SmartSimError(self.current_state, err+msg)
                     self.targets.append(target)
                 else:
-                    raise SmartSimError(self.current_state, "Target, {}, could not be found".format(name))
+                    raise SmartSimError(self.current_state,
+                                        "Target, {}, could not be found".format(name))
             else:
-                raise SmartSimError(self.current_state, "Target directory could not be found!")
+                raise SmartSimError(self.current_state,
+                                     "Target directory could not be found!")
         except SmartSimError as e:
             self.logger.error(e)
             raise
 
 
     def create_target(self, name, params={}):
-        """Create a target and load into state"""
+        """Create a target to be used within one or many of the SmartSim Modules. Targets
+           keep track of groups of models. Parameters can be given to a target as well in
+           order to generate models based on a combination of parameters and generation
+           stategies. For more on generation strategies, see the Generator Class.
+
+           Arguments:
+           :param str name: name of the new target
+           :param dict params: dictionary of model parameters to generate models from based
+                               on a run strategy.
+
+        """
         try:
             for target in self.targets:
                 if target.name == name:
-                    raise SmartSimError(self.current_state, "A target named " + target.name + " already exists!")
+                    raise SmartSimError(self.current_state,
+                                         "A target named " + target.name + " already exists!")
 
             target_path = path.join(get_SSHOME(), self.experiment, name)
             if path.isdir(target_path):
-                raise SmartSimError(self.current_state, "Target directory already exists: " + target_path)
+                raise SmartSimError(self.current_state,
+                                     "Target directory already exists: " + target_path)
             new_target = Target(name, params, self.experiment, target_path)
             self.targets.append(new_target)
         except SmartSimError as e:
             self.logger.error(e)
             raise
 
+
     def save(self):
         """Save each target currently in state as a pickled python object.
-           All models within the target are maintained and can be reloaded
-           at any point in the experiment.
+           All models within the target are maintained. Targets can be reloaded
+           into an experiment through a call to state.load_target.
         """
         for target in self.targets:
             pickle_path = path.join(target.path, target.name + ".pickle")
@@ -76,9 +118,6 @@ class State:
             pickle.dump(target, file_obj)
             file_obj.close()
 
-    
-
-#####################
 
     def _get_expr_path(self):
         return path.join(get_SSHOME(), self.experiment)
@@ -94,7 +133,7 @@ class State:
         else:
             self.experiment = experiment_name
 
-        
+
     def __init_targets(self):
         """Load targets if they are present within the simulation.toml"""
         if self._config:
@@ -106,14 +145,13 @@ class State:
                     new_target = Target(target, param_dict, self.experiment, target_path)
                     self.targets.append(new_target)
             except SSConfigError:
-                if model_targets: # if targets are listed with no param dict then user messed up
+                if model_targets:
                     self.logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
                     raise
                 else:
-                    self.logger.info("State created without target, target will have to be created or loaded")            
+                    self.logger.info("State created without target, target will have to be created or loaded")
         else:
-            self.logger.info("State created without target, target will have to be created or loaded")            
-            
+            self.logger.info("State created without target, target will have to be created or loaded")
 
     def __create_logger(self, log_level):
         import coloredlogs
