@@ -8,11 +8,6 @@ from .error import SmartSimError, SSConfigError
 from .target import Target
 from .model import NumModel
 
-"""
-State
------
-
-"""
 
 class State:
     """The State class holds most of the configurations necessary to run an
@@ -20,18 +15,19 @@ class State:
        read and parse the simulation.toml configuration file or will wait
        for the user to call methods to create targets and models.
 
-        Arguments:
-        :param str experiment: Name of the directory that will house all of
-                               the created files and directories. Experiment
-                               name can be set in either the simulation.toml
-                               or through the state initialization
-        :param str config: Name of the configuration file for the experiment
-                           The configuration file is optional if the user
-                           would rather construct the experiment programmatically
-                           in python.
-        :param str log_level: Control verbosity of the logger. Options include
-                              "DEV", "DEBUG", "INFO", "ERROR".
-       """
+
+       :param str experiment: Name of the directory that will house all of
+                              the created files and directories. Experiment
+                              name can be set in either the simulation.toml
+                              or through the state initialization
+       :param str config: Name of the configuration file for the experiment
+                          The configuration file is optional if the user
+                          would rather construct the experiment programmatically
+                          in python.
+       :param str log_level: Control verbosity of the logger. Options include
+                             "DEV", "DEBUG", "INFO", "ERROR".
+
+    """
 
     def __init__(self, experiment=None, config=None, log_level="DEV"):
         self.current_state = "Initializing"
@@ -48,7 +44,6 @@ class State:
            is being conducted over mutliple stages where execution does not all occur
            within the same script.
 
-           Arguments:
            :param str name: name of the pickled target
            :param str target_path: Path to the pickled target. Defaults to SMARTSIMHOME
 
@@ -84,7 +79,6 @@ class State:
            order to generate models based on a combination of parameters and generation
            stategies. For more on generation strategies, see the Generator Class.
 
-           Arguments:
            :param str name: name of the new target
            :param dict params: dictionary of model parameters to generate models from based
                                on a run strategy.

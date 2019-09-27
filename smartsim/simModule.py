@@ -8,11 +8,10 @@ class SmartSimModule:
          - Generator
          - Controller
 
-         Each of the SmartSimModule children have access to the State
-         information through this class.
+       Each of the SmartSimModule children have access to the State
+       information through this class.
 
-        Arguments:
-        :param State state: State Instance
+       :param State state: State Instance
     """
 
     def __init__(self, state, **kwargs):
@@ -22,7 +21,6 @@ class SmartSimModule:
     def log(self, message, level="info"):
         """Use the builtin logger to record information during the experiment
 
-           Arguments:
            :param str message: The message to be logged
            :param str level: Defaults to "info". Options are "info", "error", "debug"
         """
@@ -51,7 +49,6 @@ class SmartSimModule:
     def get_target(self, target):
         """Return a specific target from State
 
-           Arguments:
            :param str target: Name of the target to return
 
            :returns: Target instance
@@ -65,7 +62,6 @@ class SmartSimModule:
     def get_model(self, model, target):
         """Get a specific model from a target.
 
-           Arguments:
            :param str model: name of the model to return
            :param str target: name of the target where the model is located
 
