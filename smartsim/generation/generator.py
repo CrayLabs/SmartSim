@@ -5,51 +5,18 @@ from itertools import product
 from os import mkdir, getcwd, path
 from distutils import dir_util
 
-from .model import NumModel
+from ..model import NumModel
 from .modelwriter import ModelWriter
 from ..error import SmartSimError, SSUnsupportedError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
-"""
-Generation
-
- - models are created based on the content of the simulation.toml
-   that will be populated as a result of the interface or manual
-   creation.
- - models are created with the following tree for and example 1 target with
-   two resulting models
-   - lammps_atm/              (experiment name)
-     └── atm                  (target name)
-         ├── atm_ld           (model name)
-         │    └── in.atm
-         └── atm_ls           (model name)
-              └── in.atm
-
-A configuration file for this generation could look like the following when generated
-with the all permutations strategy.
-
-```toml
-[model]
-name = "lammps"
-targets = ["atm"]
-experiment = "lammps_atm"
-configs = ["in.atm"]
-
-[atm]
-  [atm.lj]              # lj is the previous value marked in "in.atm" (e.g. ;lj;)
-  value = ["ls", "ld"]
-```
-
-"""
-
 
 class Generator(SmartSimModule):
-    """Data generation phase of the Smart Sim pipeline. Holds internal configuration
-       data that is created during the data generation stage.
+    """A SmartSimModule that configures and generates instances of a model by reading
+       and writing model files that have been tagged by the user.
 
-       Args
-         state  (State): The state class that manages the library
+       :param State state: A State instance
     """
 
     def __init__(self, state, **kwargs):
@@ -58,15 +25,12 @@ class Generator(SmartSimModule):
         self._writer = ModelWriter()
 
 
-###########################
-### Generator Interface ###
-###########################
-
     def generate(self):
-        """Generate model runs according to the main configuration 
-           Note that this only generates the necessary files and structure
-           to be able to run all models in parallel, it does not actually
-           run any models."""
+        """Based on the targets and models created by the user through the python
+           or TOML interface, configure and generate the model instances.
+
+           :raises: SmartSimError
+        """
         try:
             self.log("SmartSim State: " + self.get_state())
             self._create_models()
@@ -77,17 +41,36 @@ class Generator(SmartSimModule):
             raise
 
     def set_tag(self, tag, regex=None):
-        """Set the tag for the model files where configurations should
-           be replaced.
+        """Set a tag or a regular expression for the generator to look for when
+           configuring new models.
 
-           Args
-              tag    (str): a string of characters that signify an string to be changed
-              regex  (str): a regular expression that model files are tagged with
+           For example, a tag might be ``;`` where the expression being replaced
+           in the model configuration file would look like ``;expression;``
+
+           A full regular expression might tag specific model configurations such
+           that the configuration files don't need to be tagged manually.
+
+           :param str tag: A string of characters that signify an string to be changed.
+                           Defaults to ``;``
+           :param str regex: a regular expression that model files are tagged with
+
         """
+
         self._writer._set_tag(tag, regex)
 
+    def select_strategy(self, strategy):
+        """Select the strategy for generating model configurations based on the
+           values of the target parameters.
 
-##########################
+           all_perm creates all possible permutations of the target parameters as
+           individual models. This is the default strategy for the Generator module
+
+           :param str strategy: Options are "all_perm"
+
+        """
+        raise NotImplementedError
+
+
 
     def _create_models(self):
         """Populates instances of NumModel class for all target models.
@@ -97,7 +80,7 @@ class Generator(SmartSimModule):
            This strategy takes all permutations of available configuration
            values and creates a model for each one.
 
-           Returns: List of models with configurations to be written
+           Returns list of models with configurations to be written
         """
 
         # collect all parameters, names, and settings
@@ -148,9 +131,9 @@ class Generator(SmartSimModule):
             mkdir(exp_path)
         except FileExistsError:
             self.log("Working in previously created experiment")
-        
+
         # not ok to have already generated the target.
-        try:    
+        try:
             targets = self.get_targets()
             for target in targets:
                 target_dir = path.join(exp_path, target.name)
@@ -216,4 +199,3 @@ class Generator(SmartSimModule):
     @staticmethod
     def _hpo():
         raise NotImplementedError
-
