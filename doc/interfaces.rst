@@ -1,17 +1,15 @@
 
 
 
-Using SmartSim
---------------
-
-In order to use SmartSim, one of two interfaces can be leveraged.
+Interfaces
+----------
 
 TOML Interface
 ==============
 First, the toml interface allows the user to keep all configurations within a
 single file and run end to end experiments with under 10 lines of python. The
-toml interace is recommended for users who are using the library to run multiple
-configurations of their model, and other settings quickly and in a reproducible fashion.
+toml interace is recommended for users who need greater control over the specific
+model settings or need to reproduce those settings accross multiple machines.
 
 .. code-block:: TOML
 
