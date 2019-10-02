@@ -1,4 +1,5 @@
-from ..error import SmartSimError
+from .error import SmartSimError
+
 class NumModel:
     """Hold configuration data for a numerical model. This
        class is passed around in the data-generation stage of

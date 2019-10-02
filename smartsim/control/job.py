@@ -7,13 +7,15 @@ class Job:
        the controller class.
     """
 
-    def __init__(self, job_name, job_id, model_dir, model_name):
+    def __init__(self, job_name, job_id, obj):
         self.name = job_name
         self.jid = job_id
-        self.model_dir = model_dir
-        self.model_name = model_name
+        self.obj = obj            # the model
         self.status = "NEW"
         self.return_code = None
+
+    def get_job_id(self):
+        return self.jid
 
     def set_status(self, new_status):
         self.status = new_status
