@@ -8,6 +8,21 @@ SmartSim is a library that aides in the convergence of simulation and machine le
 The goal of the library is to provide users with the ability to easily and flexibly
 conduct machine learning experiments on simulation model data.
 
+The library was built with three goals in mind. First, the process of generating
+simulation data accross various models is manual and slow. Each model has their own
+types of configuration files and not all of them are easily parsed. With SmartSim,
+any text based configuration file can be parsed and modified programmatically such
+that many different configurations of a single model can be generated efficently.
+Efficient configuration and generation creates opportunies to explore and optimize
+models through effiecent search algorithms and techniques like Model Parameter
+Optimization (MPO).
+
+The latter two goals of the library work in tandem: Online training and inference.
+Online training is the process of training a machine learning model on the
+data being produced by a simulation model as the simulation is progressing. Inference
+follows the same logic, but adds a step where data is being passed back into the
+simulation. (fill in more when this is finished)
+
 
 SmartSim utilizes a project structure called an ``experiment`` that holds all of the
 necessary files and data to run multiple simulations. Within each experiment are two
@@ -41,7 +56,9 @@ information on the state class, please see x
    :maxdepth: 2
    :caption: General
 
-   doc/overview
+   doc/interfaces
+   doc/generate
+   doc/simulate
 
 
 .. toctree::

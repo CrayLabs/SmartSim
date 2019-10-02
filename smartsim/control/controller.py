@@ -13,46 +13,6 @@ from ..state import State
 from ..simModule import SmartSimModule
 from .job import Job
 
-"""
-there are three ways a user can specify arguments for the running
-of simulations.
-
-
-1) On the experiment level under the [execute] table
-
-```toml
-[execute]
-nodes = 5        # All targets run with 5 nodes
-```
-
-2) On the target level under the target's table
-
-```toml
-[execute]
-    [execute.some_target]
-    run_args = "-np 6"
-```
-
-3) in the initialization of the Controller class
-
-```python
-control = Controller(run_args="-np 6", nodes=5)
-```
-
-
-There is a hierarchy of specification that goes as
-follows:
-    - initialization of the controller
-    - experiment level (under [control] table)
-    - target level (under [control.some_target] table)
-
-the hierarchy is meant to allow for quick access without
-having to write to the simulation.toml and seperately, intense
-specification within the simulation.toml.
-
-"""
-
-
 
 
 class Controller(SmartSimModule):
@@ -63,6 +23,9 @@ class Controller(SmartSimModule):
           1) Local (implemented)
           2) Slurm (implemented)
           3) PBS   (not implemented)
+
+       :param State state: A State instance
+
     """
 
     def __init__(self, state, **kwargs):
@@ -73,16 +36,11 @@ class Controller(SmartSimModule):
         self._jobs = []
 
 
-############################
-### Controller Interface ###
-############################
-
-
     def start(self):
-        """Start the simulations of all targets. Two methods
-           of execution are employed based on values within
-           the simulation.toml and class initialization:
-           launcher and direct call. """
+        """Start the simulations of all targets using whatever
+           controller settings have been set through the Controller
+           initialization or in the SmartSim configuration file.
+        """
         try:
             self.log("SmartSim State: " + self.get_state())
             self._sim()
@@ -102,9 +60,8 @@ class Controller(SmartSimModule):
         """Poll the running simulations and recieve logging
            output with the status of the job.
 
-           Args
-             interval (int): number of seconds to wait before polling again
-             verbose  (bool): set verbosity
+           :param int interval: number of seconds to wait before polling again
+           :param bool verbose: set verbosity
         """
         all_finished = False
         while not all_finished:
@@ -115,8 +72,8 @@ class Controller(SmartSimModule):
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
 
-           Args:
-              verbose (bool): set verbosity
+           :param bool verbose: set verbosity
+           :returns: True or False for if all models have finished
         """
         statuses = []
         for job in self._jobs:
@@ -129,8 +86,6 @@ class Controller(SmartSimModule):
         if "assigned" in statuses:
             return False
         return True
-
-##########################
 
     def _sim(self):
         """The entrypoint to simulation for multiple targets. Each target

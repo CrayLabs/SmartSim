@@ -1,0 +1,136 @@
+
+Generation
+----------
+
+For the succientness of the documentation, the examples below will all be using the
+python interface to run experiments.
+
+
+To generate new instances of a simulation model, find and tag the simulation sepcific
+configuration file. The following experiment will use a particle simulation model
+named ``LAMMPS``. The model configuration file, ``in.atm`` specifies LAMMPS to run
+a Axilrod-Teller-Muto (ATM) potential calculation.
+
+.. code-block:: text
+
+   # Axilrod-Teller-Muto potential example
+
+   variable        x index 1
+   variable        y index 1
+   variable        z index 1
+
+   variable        xx equal 10*$x
+   variable        yy equal 10*$y
+   variable        zz equal 10*$z
+
+   units           lj
+   atom_style      atomic
+
+   lattice         fcc 0.65
+   region          box block 0 ${xx} 0 ${yy} 0 ${zz}
+   create_box      1 box
+   create_atoms    1 box
+
+   pair_style      hybrid/overlay lj/cut 4.5 atm 4.5 2.5
+   pair_coeff      * * lj/cut 1.0 1.0
+   pair_coeff      * * atm * 0.072
+
+   mass            * 1.0
+   velocity        all create 1.033 12345678 loop geom
+
+   fix             1 all nvt temp 1.033 1.033 0.05
+
+   timestep        0.002
+   thermo          5
+
+   run             25
+
+The last variable listed, ``run``, tells the simulation to run for a number of steps
+before exiting. For this example, we will tag, and modify the number of steps in order
+to generate four simulation models that run for 4 different lengths of time.
+
+Tagging the configuration file lets the ``Generator`` know which of and where in
+the model files to edit given a file or folder of model files to modify.
+
+To tag the ``in.atm`` configuration file listed above, place semicolons on either
+side of the values that you wish to change, and put in a good placeholder name
+so that you can remember which values are being edited.
+
+.. code-block:: text
+
+   # Axilrod-Teller-Muto potential example
+
+   variable        x index 1
+   variable        y index 1
+   variable        z index 1
+
+   variable        xx equal 10*$x
+   variable        yy equal 10*$y
+   variable        zz equal 10*$z
+
+   units           lj
+   atom_style      atomic
+
+   lattice         fcc 0.65
+   region          box block 0 ${xx} 0 ${yy} 0 ${zz}
+   create_box      1 box
+   create_atoms    1 box
+
+   pair_style      hybrid/overlay lj/cut 4.5 atm 4.5 2.5
+   pair_coeff      * * lj/cut 1.0 1.0
+   pair_coeff      * * atm * 0.072
+
+   mass            * 1.0
+   velocity        all create 1.033 12345678 loop geom
+
+   fix             1 all nvt temp 1.033 1.033 0.05
+
+   timestep        0.002
+   thermo          5
+
+   run             ;STEPS;
+
+The tag can also be set through a call to ``Generator.set_tag()``. The tag can be
+anything that wont be already represented within the configuration file itself.
+For instance, in the example above, we wouldnt want to use dollar signs or curly
+braces for the tag.
+
+Once the configuration file(s) are tagged and ready, the experiment can be setup
+through the ``State`` initialization as follows
+
+.. code-block:: python
+
+  # import needed smartsim modules
+  from smartsim import Controller, Generator, State
+
+  # intialize state to conduct experiment
+  state = State(experiment="lammps_atm")
+
+
+For this example, we will create one target that holds the four models with
+four increasing number of steps. This is done through a call to ``state.create_target``
+as follows:
+
+.. code-blocK:: python
+
+  # Create targets
+  param_dict_1 = {"steps": [20, 25, 30, 35]}
+  state.create_target("atm", params=param_dict)
+
+The parameter dictionary above specifies the placeholder we put into the configuration
+file as the keys and the values we wish for models to be configurated and created with
+as the values.
+
+Lastly, to generate our models we need to create an instance of a generator, provide
+the tagged configuration files and make a call to ``Generator.generate()``
+
+
+.. code-block:: python
+
+  # Supply the generator with necessary files to run the simulation
+  # and generate the specified models
+  base_config = "LAMMPS/in.atm"
+  GEN = Generator(state, model_files=base_config)
+  GEN.generate()
+
+ 
