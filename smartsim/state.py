@@ -99,6 +99,19 @@ class State:
         except SmartSimError as e:
             self.logger.error(e)
             raise
+        
+    def create_model(self, name, target, params={}, path=None):
+        """Create a model instance under a specific target."""
+        model_added = False
+        for t in self.targets:
+            if t.name == target:
+                self.logger.info("Adding model to target: " + target)
+                model = NumModel(name, params, path)
+                t.add_model(model)
+                model_added = True
+        if not model_added:
+            raise SmartSimError("Could not find target by the name of: " + target)
+            
 
 
     def save(self):

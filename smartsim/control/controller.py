@@ -54,6 +54,33 @@ class Controller(SmartSimModule):
     def stop(self, pid):
         raise NotImplementedError
 
+    def get_jobs(self):
+        """Return the list of jobs that this controller has spawned"""
+        return self._jobs
+    
+    def get_job_nodes(self, job=None, wait=5):
+        """Get the hostname(s) of a job from the allocation
+           if no job listed, return a dictionary of jobs and nodelists
+        
+           :param Job job: A job instance
+           :param int wait: time for wait before checking nodelist after job has been launched
+                            defaults to 5 seconds.
+           :returns: list of hostnames given a job or dict of job_name -> nodelist
+        """
+        if not job:
+            node_dict = dict()
+            time.sleep(wait)
+            for job in self._jobs:
+                node_dict[job.name] = self._get_job_nodes(job)
+            return node_dict
+        else:
+            if not isinstance(job, Job):
+                raise("Argument must be a Job instance")
+            else:
+                time.sleep(wait)
+                nodes = self._get_job_nodes(job)
+                return nodes
+
 
     # TODO Make this work with jobs that dont use the launcher
     def poll(self, interval=20, verbose=True):
@@ -226,12 +253,15 @@ class Controller(SmartSimModule):
             self._launcher.make_script(**temp_dict, script_name=model.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=model.path)
             self.log("Process id for " + model.name + " is " + str(pid), level="debug")
-            job = Job(model.name, pid, model.path, model)
+            job = Job(model.name, pid, model)
             self._jobs.append(job)
 
     def _check_job(self, job):
         """Takes in job and sets job properties"""
-        status, return_code = self._launcher.get_job_stat(job.jid)
+        if not self._launcher:
+            raise SmartSimError("No launcher set")
+        job_id = job.get_job_id()
+        status, return_code = self._launcher.get_job_stat(job_id)
         job.set_status(status)
         job.set_return_code(return_code)
 
@@ -251,4 +281,9 @@ class Controller(SmartSimModule):
         else:
             self._settings = settings
 
-
+    def _get_job_nodes(self, job):
+        if not self._launcher:
+            raise SmartSimError("No launcher set")
+        job_id = job.get_job_id()
+        nodes = self._launcher.get_job_nodes(job_id)
+        return nodes
