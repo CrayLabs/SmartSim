@@ -1,5 +1,6 @@
 
 import redis
+from os import environ
 
 
 class Connection:
@@ -28,4 +29,3 @@ class Connection:
     
     def send(self, key, value):
         self.conn.set(key, value)
-        

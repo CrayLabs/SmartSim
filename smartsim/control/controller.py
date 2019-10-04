@@ -31,19 +31,19 @@ class Controller(SmartSimModule):
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
-        self.__set_settings()
+        self.set_settings()
         self._launcher = None
         self._jobs = []
 
 
-    def start(self):
+    def start(self, target=None):
         """Start the simulations of all targets using whatever
            controller settings have been set through the Controller
            initialization or in the SmartSim configuration file.
         """
         try:
             self.log("SmartSim State: " + self.get_state())
-            self._sim()
+            self._sim(target=target)
         except SmartSimError as e:
             self.log(e, level="error")
             raise
@@ -57,6 +57,18 @@ class Controller(SmartSimModule):
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
         return self._jobs
+    
+    def get_job(self, model_name):
+        """TODO write docs for this"""
+        found = False
+        for job in self._jobs:
+            if job.obj.name == model_name:
+                found = True
+                return job
+        if not found:
+            raise SmartSimError(self.get_state(),
+                                "Job for model " + model_name + " not found.")
+            
     
     def get_job_nodes(self, job=None, wait=5):
         """Get the hostname(s) of a job from the allocation
@@ -113,14 +125,28 @@ class Controller(SmartSimModule):
         if "assigned" in statuses:
             return False
         return True
+    
+    def set_settings(self, new_settings=None):
+        """Set the run settings for the controller
+           TODO add more docs here
+        """
+        settings = self.get_config(["control"], none_ok=True)
+        if new_settings:
+            self._settings = new_settings
+        elif not settings:
+            self._settings = {}
+        else:
+            self._settings = settings
 
-    def _sim(self):
+    def _sim(self, target=None):
         """The entrypoint to simulation for multiple targets. Each target
            defines how the models wherein should be run. Each model might
            have different parameters but configurations like node count
            and ppn are determined by target.
         """
         targets = self.get_targets()
+        if target:
+            targets = [self.get_target(target)]
         if len(targets) < 1:
             raise SmartSimError(self.get_state(), "No targets to simulate!")
         for target in targets:
@@ -180,6 +206,7 @@ class Controller(SmartSimModule):
             exe_args = self._init_args["exe_args"]
 
         cmd = " ".join((self._run_command, run_args, self._exe, exe_args))
+        print(cmd)
         return [cmd]
 
 
@@ -273,13 +300,6 @@ class Controller(SmartSimModule):
         for _, model in model_dict.items():
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
-
-    def __set_settings(self):
-        settings = self.get_config(["control"], none_ok=True)
-        if not settings:
-            self._settings = {}
-        else:
-            self._settings = settings
 
     def _get_job_nodes(self, job):
         if not self._launcher:

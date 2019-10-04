@@ -8,6 +8,9 @@ from .control import Controller
 from .generation import Generator
 from .process import Processor
 from .simModule import SmartSimModule
+from .smartSimNode import SmartSimNode
+from .orchestrator import Orchestrator
+
 
 
 
