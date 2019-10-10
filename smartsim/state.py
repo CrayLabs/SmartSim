@@ -7,6 +7,8 @@ from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
 from .model import NumModel
+from .orchestrator import Orchestrator
+from .smartSimNode import SmartSimNode
 
 
 class State:
@@ -34,8 +36,10 @@ class State:
         self.__create_logger(log_level)
         self._config = self.read_config(config)
         self.targets = []
+        self.nodes = []
         self.__set_experiment(experiment)
         self.__init_targets()
+        self.orc = None
 
 
     def load_target(self, name, target_path=None):
@@ -99,20 +103,53 @@ class State:
         except SmartSimError as e:
             self.logger.error(e)
             raise
-        
+
     def create_model(self, name, target, params={}, path=None):
         """Create a model instance under a specific target."""
         model_added = False
         for t in self.targets:
             if t.name == target:
-                self.logger.info("Adding model to target: " + target)
                 model = NumModel(name, params, path)
                 t.add_model(model)
                 model_added = True
         if not model_added:
-            raise SmartSimError("Could not find target by the name of: " + target)
-            
+            # TODO catch if model already exists
+            raise SmartSimError(self.current_state,
+                                "Could not find target by the name of: " + target)
 
+    def create_orchestrator(self, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+        """Start the orchestration of client connections and models"""
+        settings = kwargs
+        settings["nodes"] = nodes
+        settings["ppn"] = ppn
+        settings["duration"] = duration
+        self.orc = Orchestrator(port, **settings)
+
+    def create_node(self, name, script_path=None, **kwargs):
+        """Write a doc string here"""
+        # TODO get settings from config file as well
+        node = SmartSimNode(name, path=script_path, **kwargs)
+        self.nodes.append(node)
+
+    def register_connection(self, sender, reciever):
+        """Create a runtime connection in orchestrator for data to be passed between two
+           SmartSim entities
+        """
+        if not self.orc:
+            raise SmartSimError(self.current_state, "Create orchestrator to register connections")
+        else:
+            # TODO check if sender and reciever are registered entities
+            self.orc.junction.register(sender, reciever)
+
+    def delete_target(self, name):
+        target_deleted = False
+        for t in self.targets:
+            if t.name == name:
+                self.targets.remove(t)
+                target_deleted = True
+        if not target_deleted:
+            raise SmartSimError(self.current_state,
+                                "Could not delete target: " + name)
 
     def save(self):
         """Save each target currently in state as a pickled python object.

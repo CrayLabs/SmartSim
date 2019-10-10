@@ -59,6 +59,13 @@ class SmartSimModule:
                 return t
         raise SmartSimError(self.get_state(), "Target not found: " + target)
 
+    def get_nodes(self):
+        """Get a list of the nodes declared in State
+
+            :returns: list of SmartSimNode instances
+        """
+        return self.state.nodes
+
     def get_model(self, model, target):
         """Get a specific model from a target.
 
@@ -95,6 +102,13 @@ class SmartSimModule:
         # if not in init args search simulation.toml
         return self.state._get_toml_config(conf_param, none_ok=none_ok)
 
+
+    def has_orcestrator(self):
+        """Has the orchestrator been initialized by the user"""
+        if self.state.orc:
+            return True
+        else:
+            return False
 
     def set_state(self, new_state):
         self.state.current_state = new_state

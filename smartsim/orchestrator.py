@@ -1,64 +1,46 @@
 
-from smartsim import Controller
-from smartsim import SmartSimModule, SmartSimNode
 from .error import SSConfigError, SmartSimError
+from launcher import SlurmLauncher, PBSLauncher
+from .junction import Junction
 
 from os import path, getcwd, environ
 
-class Orchestrator(SmartSimModule):
+class Orchestrator:
     """The Orchestrator is responsible for launching the DataBase and connecting
-       the various user specified entities(SmartSimNodes, Models) to the correct
+       the various user specified entities(Clients, Models) to the correct
        endpoints
     """
-       
-    def __init__(self, state, **kwargs):
-        super().__init__(state, **kwargs)
-        self.control = Controller(state)
-        self.set_state("Orchestration")
-    
-        
-    def orchestrate(self):
-        """Launch the database and connect all nodes and models to their
-           proper endpoints in the database
-        """
-        self.launch_db()
-        #nodes = self.get_db_nodes() # not needed for now 
-    
-    def get_db_nodes(self):
-        orc_job = self.control.get_job("orchestrator")
-        orc_nodes = self.control.get_job_nodes(orc_job)
-        return orc_nodes
 
-    def launch_db(self, nodes=1, ppn=1, duration="1:00:00", port=6379):
-        # TODO maybe change this to use kwargs
+    def __init__(self, port=6379, **kwargs):
+        self.name = "Orchestrator" # for the Controller
+        self.port = port
+        self.junction = Junction()
+        self.settings = kwargs
+
+    def get_launch_settings(self):
         conf_path = self._get_conf_path() + "smartsimdb.conf"
-        exe_args = conf_path + " --port " + str(port)
-        path = getcwd()
+        exe_args = conf_path + " --port " + str(self.port)
+        exe = "keydb-server"
+        orc_path = getcwd()
 
-        # set run settings for the controller
-        settings = {
-            "executable": "keydb-server",
-            "exe_args": exe_args,
-            "launcher": "slurm",
-            "run_command": "srun",
-            "nodes": 1
-        }
-        
-        self.state.create_target("Orchestrator")
-        self.state.create_model("orchestrator", "Orchestrator", path=path)
-        self.control.set_settings(new_settings=settings)
-        self.control.start(target="Orchestrator")
-        
+        # run_command
+        cmd = [" ".join((exe, exe_args))]
+
+        self.settings["output_file"] = path.join(orc_path, "orchestrator.out")
+        self.settings["err_file"] = path.join(orc_path, "orchestrator.err")
+        self.settings["cmd"] = cmd
+
+        return self.settings, orc_path
+
+    def get_connection_env_vars(self, entity):
+        """gets the environment variables from the junction for which databases each entity
+           should connect to
+        """
+        return self.junction.get_connections(entity)
+
     def _get_conf_path(self):
         try:
             path = environ["ORCCONFIG"]
             return path
         except KeyError:
             raise SSConfigError(self.get_state(), "SmartSim environment not set up!")
-        
-        
-
-        
-    
-  
-            

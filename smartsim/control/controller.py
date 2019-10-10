@@ -31,8 +31,7 @@ class Controller(SmartSimModule):
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
-        self.set_settings()
-        self._launcher = None
+        self._init_launcher(kwargs)
         self._jobs = []
 
 
@@ -42,8 +41,11 @@ class Controller(SmartSimModule):
            initialization or in the SmartSim configuration file.
         """
         try:
+            if self.has_orcestrator():
+                self._launch_orchestrator()
+                self._launch_nodes()
             self.log("SmartSim State: " + self.get_state())
-            self._sim(target=target)
+            self._launch_targets(target=target)
         except SmartSimError as e:
             self.log(e, level="error")
             raise
@@ -57,23 +59,23 @@ class Controller(SmartSimModule):
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
         return self._jobs
-    
-    def get_job(self, model_name):
+
+    def get_job(self, name):
         """TODO write docs for this"""
         found = False
         for job in self._jobs:
-            if job.obj.name == model_name:
+            if job.obj.name == name:
                 found = True
                 return job
         if not found:
             raise SmartSimError(self.get_state(),
-                                "Job for model " + model_name + " not found.")
-            
-    
+                                "Job for " + name + " not found.")
+
+
     def get_job_nodes(self, job=None, wait=5):
         """Get the hostname(s) of a job from the allocation
            if no job listed, return a dictionary of jobs and nodelists
-        
+
            :param Job job: A job instance
            :param int wait: time for wait before checking nodelist after job has been launched
                             defaults to 5 seconds.
@@ -94,7 +96,6 @@ class Controller(SmartSimModule):
                 return nodes
 
 
-    # TODO Make this work with jobs that dont use the launcher
     def poll(self, interval=20, verbose=True):
         """Poll the running simulations and recieve logging
            output with the status of the job.
@@ -110,7 +111,7 @@ class Controller(SmartSimModule):
     def finished(self, verbose=True):
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
-
+            TODO: make orchestrator doesn't affect this
            :param bool verbose: set verbosity
            :returns: True or False for if all models have finished
         """
@@ -125,20 +126,50 @@ class Controller(SmartSimModule):
         if "assigned" in statuses:
             return False
         return True
-    
-    def set_settings(self, new_settings=None):
-        """Set the run settings for the controller
-           TODO add more docs here
-        """
-        settings = self.get_config(["control"], none_ok=True)
-        if new_settings:
-            self._settings = new_settings
-        elif not settings:
-            self._settings = {}
-        else:
-            self._settings = settings
 
-    def _sim(self, target=None):
+    def _launch_nodes(self):
+        """Launch all of the SmartSimNodes declared by the user"""
+        nodes = self.get_nodes()
+        for node in nodes:
+            # get env_vars for each connection registered by the user
+            env_vars = self.state.orc.get_connection_env_vars(node.name)
+
+            # collect and enter all run settings for Slurm
+            run_dict = self._build_run_dict(node.get_settings())
+            run_dict["wd"] = node.path
+            run_dict["output_file"] = "/".join((node.path, node.name + ".out"))
+            run_dict["err_file"] = "/".join((node.path, node.name + ".err"))
+
+            # launch the job and track through job class
+            self._launcher.make_script(**run_dict, env_vars=env_vars,
+                                       script_name=node.name, clear_previous=True)
+            pid = self._launcher.submit_and_forget(wd=node.path)
+            self.log("Launching Node: " + node.name)
+            job = Job(node.name, pid, node)
+            self._jobs.append(job)
+
+
+    def _launch_orchestrator(self):
+        """Launch the orchestrator for passing data between targets, models,
+           and nodes.
+        """
+        settings, orc_path = self.state.orc.get_launch_settings()
+
+        # make script and launch
+        self._launcher.make_script(**settings, script_name="orchestrator", clear_previous=True)
+        orc_job_id = self._launcher.submit_and_forget(wd=orc_path)
+
+        # add orchestrator to list of jobs
+        self.log("Launching Orchestrator with pid: " + str(orc_job_id))
+        orc_job = Job("orchestrator", orc_job_id, self.state.orc)
+        self._jobs.append(orc_job)
+        nodes = self.get_job_nodes(orc_job)[0] # only on one node for now
+
+        # get and store the address of the orchestrator database
+        self.state.orc.junction.store_db_addr(nodes, self.state.orc.port)
+
+
+    def _launch_targets(self, target=None):
         """The entrypoint to simulation for multiple targets. Each target
            defines how the models wherein should be run. Each model might
            have different parameters but configurations like node count
@@ -153,9 +184,8 @@ class Controller(SmartSimModule):
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_info)
 
-            self.log("Executing Target: " + target.name)
+            self.log("Launching Target: " + target.name)
             if self._launcher != None:
-                self._init_launcher()
                 self._run_with_launcher(target, run_dict)
             else:
                 self._run_with_command(target, run_dict)
@@ -165,19 +195,45 @@ class Controller(SmartSimModule):
         """Build a dictionary that will be used to run with the make_script
            interface of the poseidon launcher."""
 
+        def _build_run_command(tar_dict, settings):
+            """run_command + run_args + executable + exe_args"""
+            run_args = ""
+            exe_args = ""
+
+            # Experiment level values required for controller to work
+            exe = self._check_value("executable", tar_dict, settings, none_ok=False)
+            run_command = self._check_value("run_command", tar_dict, settings, none_ok=False)
+
+            # get run_args
+            if "run_args" in self._init_args.keys():
+                run_args = self._init_args["run_args"]
+            if "run_args" in settings.keys():
+                run_args = settings["run_args"]
+            if "run_args" in tar_dict.keys():
+                run_args = tar_dict["run_args"]
+
+            # get exe_args
+            if "exe_args" in self._init_args.keys():
+                exe_args = self._init_args["exe_args"]
+            if "exe_args" in settings.keys():
+                exe_args = settings["exe_args"]
+            if "exe_args" in tar_dict.keys():
+                exe_args = tar_dict["exe_args"]
+
+
+            cmd = " ".join((run_command, run_args, exe, exe_args))
+            return [cmd]
+
         run_dict = {}
         try:
-            # Experiment level values required for controller to work
-            self._exe = self._check_value("executable", tar_info, none_ok=False)
-            self._run_command = self._check_value("run_command", tar_info, none_ok=False)
-            self._launcher = self._check_value("launcher", tar_info)
+            settings = self._get_settings()
 
             # target level values optional because there are defaults
-            run_dict["nodes"] = self._check_value("nodes", tar_info)
-            run_dict["ppn"] = self._check_value("ppn", tar_info)
-            run_dict["duration"] = self._check_value("duration", tar_info)
-            run_dict["partition"] = self._check_value("partition", tar_info)
-            run_dict["cmd"] = self._build_run_command(tar_info)
+            run_dict["nodes"] = self._check_value("nodes", tar_info, settings)
+            run_dict["ppn"] = self._check_value("ppn", tar_info, settings)
+            run_dict["duration"] = self._check_value("duration", tar_info, settings)
+            run_dict["partition"] = self._check_value("partition", tar_info, settings)
+            run_dict["cmd"] = _build_run_command(tar_info, settings)
 
             return run_dict
         except KeyError as e:
@@ -186,52 +242,31 @@ class Controller(SmartSimModule):
                                 e.args[0])
 
 
-    def _build_run_command(self, tar_info):
-        """run_command + run_args + executable + exe_args"""
-        run_args = ""
-        exe_args = ""
-        # init args > target_specific_args > [execute] top level args
-        # This heirarchy is explained at the module level.
-        if "run_args" in self._settings.keys():
-            run_args = self._settings["run_args"]
-        if "run_args" in tar_info.keys():
-            run_args = tar_info["run_args"]
-        if "run_args" in self._init_args.keys():
-            run_args = self._init_args["run_args"]
-        if "exe_args" in self._settings.keys():
-            exe_args = self._settings["exe_args"]
-        if "exe_args" in tar_info.keys():
-            exe_args = tar_info["exe_args"]
-        if "exe_args" in self._init_args.keys():
-            exe_args = self._init_args["exe_args"]
-
-        cmd = " ".join((self._run_command, run_args, self._exe, exe_args))
-        print(cmd)
-        return [cmd]
-
-
-    def _check_value(self, arg, tar_info, none_ok=True):
+    def _check_value(self, arg, tar_info, user_settings, none_ok=True):
         """Defines the heirarchy of configuration"""
-        config_value = self._check_dict(self._settings, arg)
-        init_value = self._check_dict(self._init_args, arg)
-        target_value = self._check_dict(tar_info, arg)
-        if init_value:
-            return init_value
-        elif config_value:
-            return config_value
-        elif target_value:
+
+        def _check_dict(_dict, arg):
+            try:
+                return _dict[arg]
+            except KeyError:
+                return None
+
+        config_value = _check_dict(user_settings, arg)
+        init_value = _check_dict(self._init_args, arg)
+        target_value = _check_dict(tar_info, arg)
+
+        if target_value:      # under [control.target] table or node or orc
             return target_value
+        elif config_value:        # under [control] table
+            return config_value
+        elif init_value:        # controller init
+            return init_value
         elif none_ok:
             return None
         else:
             raise KeyError(arg)
 
 
-    def _check_dict(self, _dict, arg):
-        try:
-            return _dict[arg]
-        except KeyError:
-            return None
 
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
@@ -244,26 +279,16 @@ class Controller(SmartSimModule):
                                 "Simulation target directory not found: " +
                                 target)
 
+
     def _get_target_run_settings(self, target):
         """Retrieves the [control.<target>] table"""
+        settings = self._get_settings()
         try:
-            tar_info = self._settings[target.name]
+            tar_info = settings[target.name]
             return tar_info
         except KeyError:
             tar_info = dict()
             return tar_info
-
-
-    def _init_launcher(self):
-        """Run with a specific type of launcher"""
-        if self._launcher == "slurm":
-            self._launcher = SlurmLauncher.SlurmLauncher()
-        elif self._launcher == "pbs":
-            self._launcher = PBSLauncher.PBSLauncher()
-        else:
-            raise SSUnsupportedError(self.get_state(),
-                                "Launcher type not supported: "
-                                + self._launcher)
 
     def _run_with_launcher(self, target, run_dict):
         """Launch all specified models with the slurm or pbs workload
@@ -273,24 +298,20 @@ class Controller(SmartSimModule):
         """
         model_dict = target.get_models()
         for _, model in model_dict.items():
+            # get env vars for the connection of models to nodes
+            env_vars = self.state.orc.get_connection_env_vars(model.name)
+
             temp_dict = run_dict.copy()
             temp_dict["wd"] = model.path
             temp_dict["output_file"] = "/".join((model.path, model.name + ".out"))
             temp_dict["err_file"] = "/".join((model.path, model.name + ".err"))
-            self._launcher.make_script(**temp_dict, script_name=model.name, clear_previous=True)
+            self._launcher.make_script(**temp_dict, env_vars=env_vars,
+                                       script_name=model.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=model.path)
             self.log("Process id for " + model.name + " is " + str(pid), level="debug")
             job = Job(model.name, pid, model)
             self._jobs.append(job)
 
-    def _check_job(self, job):
-        """Takes in job and sets job properties"""
-        if not self._launcher:
-            raise SmartSimError("No launcher set")
-        job_id = job.get_job_id()
-        status, return_code = self._launcher.get_job_stat(job_id)
-        job.set_status(status)
-        job.set_return_code(return_code)
 
     def _run_with_command(self, target, run_dict):
         """Run models without a workload manager directly, instead
@@ -301,9 +322,43 @@ class Controller(SmartSimModule):
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
 
+
+    def _check_job(self, job):
+        """Takes in job and sets job properties"""
+        if not self._launcher:
+            raise SmartSimError("No launcher set")
+        job_id = job.get_job_id()
+        status, return_code = self._launcher.get_job_stat(job_id)
+        job.set_status(status)
+        job.set_return_code(return_code)
+
     def _get_job_nodes(self, job):
         if not self._launcher:
             raise SmartSimError("No launcher set")
         job_id = job.get_job_id()
         nodes = self._launcher.get_job_nodes(job_id)
         return nodes
+
+    def _init_launcher(self, kwargs):
+        """Run with a specific type of launcher"""
+        if "launcher" in kwargs.keys():
+            # Init Slurm Launcher wrapper
+            if kwargs["launcher"] == "slurm":
+                self._launcher = SlurmLauncher.SlurmLauncher()
+            # Run all targets locally
+            elif kwargs["launcher"] == "" or kwargs["launcher"] == "local":
+                self._launcher = None
+            else:
+                raise SSUnsupportedError(self.get_state(),
+                                        "Launcher type not supported: "
+                                        + self._launcher)
+        else:
+            raise SSConfigError(self.get_state(),
+                                "Must provide a 'launcher' argument to the Controller")
+
+    def _get_settings(self):
+        settings = self.get_config(["control"], none_ok=True)
+        if settings:
+            return settings
+        else:
+            return dict()
