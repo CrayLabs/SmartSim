@@ -111,10 +111,11 @@ class Controller(SmartSimModule):
     def finished(self, verbose=True):
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
-            TODO: make orchestrator doesn't affect this
+
            :param bool verbose: set verbosity
            :returns: True or False for if all models have finished
         """
+        # TODO make sure orchestrator doesnt effect this
         statuses = []
         for job in self._jobs:
             self._check_job(job)

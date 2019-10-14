@@ -105,7 +105,15 @@ class State:
             raise
 
     def create_model(self, name, target, params={}, path=None):
-        """Create a model instance under a specific target."""
+        """Create a model belonging to a specific target. This function is
+           useful for running a small number of models where the model files
+           are already in place for execution
+
+           :param str name: name of the model to be created
+           :param str target: name of the target to place model into
+           :param dict params: dictionary of model parameters
+           :param str path: (optional) path to model files
+        """
         model_added = False
         for t in self.targets:
             if t.name == target:
@@ -118,7 +126,17 @@ class State:
                                 "Could not find target by the name of: " + target)
 
     def create_orchestrator(self, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
-        """Start the orchestration of client connections and models"""
+        """Create an orchestrator database to faciliate the transfer of data
+           for online training and inference. After the orchestrator is created,
+           connections between models and nodes can be instantiated through a
+           call to State.register_connection().
+
+           :param int port: the port to open database communications on
+           :param int nodes: number of nodes to distribute the database over
+                             (currently only works on 1 node)
+           :param str duration: how long the orchestrator should run for.
+                                format: H:M:S  e.g. "1:00:00"
+           """
         settings = kwargs
         settings["nodes"] = nodes
         settings["ppn"] = ppn
@@ -126,22 +144,51 @@ class State:
         self.orc = Orchestrator(port, **settings)
 
     def create_node(self, name, script_path=None, **kwargs):
-        """Write a doc string here"""
+        """Create a SmartSimNode for a specific task. Examples of SmartSimNode
+           tasks include training, processing, and inference. Nodes can be used
+           to run any task written in any language. The included script/executable
+           for nodes often use the Client class to send and recieve data from
+           the SmartSim orchestrator.
+
+           :param str name: name of the node to be launched
+           :param str script_path: path to the script or executable to be launched.
+                                   (default is the current working directory of the
+                                    SmartSim run script)
+           :param dict kwargs: Extra settings for the workload manager can be set by
+                               inluding keyword arguments such as duration="1:00:00"
+                               or nodes=5
+           """
         # TODO get settings from config file as well
         node = SmartSimNode(name, path=script_path, **kwargs)
         self.nodes.append(node)
 
     def register_connection(self, sender, reciever):
         """Create a runtime connection in orchestrator for data to be passed between two
-           SmartSim entities
+           SmartSim entities. The possible types of connections right now are:
+
+                Model -> Node
+                Node  -> Node
+                Node  -> Model
+
+           :param str sender: name of the created entity with a Client instance to send
+                              data to a registered counterpart
+           :param str reciever: name of the created entity that will recieve data by
+                                making calls to a Client instance.
         """
         if not self.orc:
             raise SmartSimError(self.current_state, "Create orchestrator to register connections")
         else:
             # TODO check if sender and reciever are registered entities
+            # TODO check for illegal connection types. e.g. model to model
             self.orc.junction.register(sender, reciever)
 
     def delete_target(self, name):
+        """Delete a created target from State so that any future calls to SmartSim
+           Modules will not include this target.
+
+           :param str name: name of the target to be deleted
+           :raises SmartSimError: if target doesnt exist
+        """
         target_deleted = False
         for t in self.targets:
             if t.name == name:
