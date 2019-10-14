@@ -299,7 +299,9 @@ class Controller(SmartSimModule):
         model_dict = target.get_models()
         for _, model in model_dict.items():
             # get env vars for the connection of models to nodes
-            env_vars = self.state.orc.get_connection_env_vars(model.name)
+            env_vars = {}
+            if self.has_orcestrator():
+                env_vars = self.state.orc.get_connection_env_vars(model.name)
 
             temp_dict = run_dict.copy()
             temp_dict["wd"] = model.path

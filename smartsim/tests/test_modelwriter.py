@@ -2,7 +2,7 @@ from smartsim import Generator, State
 from os import path, environ
 from glob import glob
 from shutil import rmtree
-from smartsim.generation.model import NumModel
+from smartsim.model import NumModel
 from smartsim.generation.modelwriter import ModelWriter
 from distutils import dir_util
 import filecmp
