@@ -125,12 +125,13 @@ class State:
             raise SmartSimError(self.current_state,
                                 "Could not find target by the name of: " + target)
 
-    def create_orchestrator(self, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+    def create_orchestrator(self, name=None, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
         """Create an orchestrator database to faciliate the transfer of data
            for online training and inference. After the orchestrator is created,
            connections between models and nodes can be instantiated through a
            call to State.register_connection().
 
+           :param str name: name of orchestrator, defaults to "Orchestrator"
            :param int port: the port to open database communications on
            :param int nodes: number of nodes to distribute the database over
                              (currently only works on 1 node)
@@ -141,7 +142,7 @@ class State:
         settings["nodes"] = nodes
         settings["ppn"] = ppn
         settings["duration"] = duration
-        self.orc = Orchestrator(port, **settings)
+        self.orc = Orchestrator(name=name, port=port, **settings)
 
     def create_node(self, name, script_path=None, **kwargs):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode

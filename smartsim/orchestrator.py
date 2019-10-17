@@ -11,11 +11,13 @@ class Orchestrator:
        endpoints
     """
 
-    def __init__(self, port=6379, **kwargs):
+    def __init__(self, name=None, port=6379, **kwargs):
         self.name = "Orchestrator" # for the Controller
         self.port = port
         self.junction = Junction()
         self.settings = kwargs
+        if name:
+            self.name = name
 
     def get_launch_settings(self):
         conf_path = self._get_conf_path() + "smartsimdb.conf"
