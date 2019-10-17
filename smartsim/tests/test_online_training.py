@@ -70,8 +70,8 @@ def test_train_path_2D_huge():
 def test_train_path_2D_1GB():
     """test the latency for a small amount of 2D data of size 1gb
        in this case we are sending 20 matricies of shape (4000, 30000)
+       Average Train Path latency: 23.108077692985535
     """
-    pytest.skip()
     try:
         if os.environ["HOST"] != "cicero":
             pytest.skip()
