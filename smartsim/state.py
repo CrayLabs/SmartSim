@@ -7,6 +7,8 @@ from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
 from .model import NumModel
+from .orchestrator import Orchestrator
+from .smartSimNode import SmartSimNode
 
 
 class State:
@@ -34,8 +36,10 @@ class State:
         self.__create_logger(log_level)
         self._config = self.read_config(config)
         self.targets = []
+        self.nodes = []
         self.__set_experiment(experiment)
         self.__init_targets()
+        self.orc = None
 
 
     def load_target(self, name, target_path=None):
@@ -99,20 +103,101 @@ class State:
         except SmartSimError as e:
             self.logger.error(e)
             raise
-        
+
     def create_model(self, name, target, params={}, path=None):
-        """Create a model instance under a specific target."""
+        """Create a model belonging to a specific target. This function is
+           useful for running a small number of models where the model files
+           are already in place for execution
+
+           :param str name: name of the model to be created
+           :param str target: name of the target to place model into
+           :param dict params: dictionary of model parameters
+           :param str path: (optional) path to model files
+        """
         model_added = False
         for t in self.targets:
             if t.name == target:
-                self.logger.info("Adding model to target: " + target)
                 model = NumModel(name, params, path)
                 t.add_model(model)
                 model_added = True
         if not model_added:
-            raise SmartSimError("Could not find target by the name of: " + target)
-            
+            # TODO catch if model already exists
+            raise SmartSimError(self.current_state,
+                                "Could not find target by the name of: " + target)
 
+    def create_orchestrator(self, name=None, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+        """Create an orchestrator database to faciliate the transfer of data
+           for online training and inference. After the orchestrator is created,
+           connections between models and nodes can be instantiated through a
+           call to State.register_connection().
+
+           :param str name: name of orchestrator, defaults to "Orchestrator"
+           :param int port: the port to open database communications on
+           :param int nodes: number of nodes to distribute the database over
+                             (currently only works on 1 node)
+           :param str duration: how long the orchestrator should run for.
+                                format: H:M:S  e.g. "1:00:00"
+           """
+        settings = kwargs
+        settings["nodes"] = nodes
+        settings["ppn"] = ppn
+        settings["duration"] = duration
+        self.orc = Orchestrator(name=name, port=port, **settings)
+
+    def create_node(self, name, script_path=None, **kwargs):
+        """Create a SmartSimNode for a specific task. Examples of SmartSimNode
+           tasks include training, processing, and inference. Nodes can be used
+           to run any task written in any language. The included script/executable
+           for nodes often use the Client class to send and recieve data from
+           the SmartSim orchestrator.
+
+           :param str name: name of the node to be launched
+           :param str script_path: path to the script or executable to be launched.
+                                   (default is the current working directory of the
+                                    SmartSim run script)
+           :param dict kwargs: Extra settings for the workload manager can be set by
+                               inluding keyword arguments such as duration="1:00:00"
+                               or nodes=5
+           """
+        # TODO get settings from config file as well
+        node = SmartSimNode(name, path=script_path, **kwargs)
+        self.nodes.append(node)
+
+    def register_connection(self, sender, reciever):
+        """Create a runtime connection in orchestrator for data to be passed between two
+           SmartSim entities. The possible types of connections right now are:
+
+                Model -> Node
+                Node  -> Node
+                Node  -> Model
+
+           :param str sender: name of the created entity with a Client instance to send
+                              data to a registered counterpart
+           :param str reciever: name of the created entity that will recieve data by
+                                making calls to a Client instance.
+        """
+        if not self.orc:
+            raise SmartSimError(self.current_state, "Create orchestrator to register connections")
+        else:
+            # TODO check if sender and reciever are registered entities
+            # TODO check for illegal connection types. e.g. model to model
+            self.orc.junction.register(sender, reciever)
+
+    def delete_target(self, name):
+        """Delete a created target from State so that any future calls to SmartSim
+           Modules will not include this target.
+
+           :param str name: name of the target to be deleted
+           :raises SmartSimError: if target doesnt exist
+        """
+        target_deleted = False
+        for t in self.targets:
+            if t.name == name:
+                self.targets.remove(t)
+                target_deleted = True
+        if not target_deleted:
+            raise SmartSimError(self.current_state,
+                                "Could not delete target: " + name)
 
     def save(self):
         """Save each target currently in state as a pickled python object.

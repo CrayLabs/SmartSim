@@ -25,14 +25,16 @@ def test_controller():
             state= State(experiment="double_gyre", log_level="DEBUG")
 
             # Create targets
-            quar_deg_params = {"999": [200, 400],
-                               "0": [200, 400],
-                               "120": 1}
-            half_deg_params = {"999": [200, 400],
-                               "0": [200, 400],
-                               "80": 40,
-                               "40": 20,
-                               "120": 1}
+            quar_deg_params = {"KH": [200, 400],
+                               "KHTH": [200, 400],
+                               "x_resolution": 80,
+                               "y_resolution": 40,
+                               "months": 1}
+            half_deg_params = {"KH": [200, 400],
+                               "KHTH": [200, 400],
+                               "x_resolution": 40,
+                               "y_resolution": 20,
+                               "months": 1}
             state.create_target("quar-deg", params=quar_deg_params)
             state.create_target("half-deg", params=half_deg_params)
 
@@ -63,7 +65,7 @@ def test_controller():
 
             data_present = True
             files = ["input.nml", "ocean_mean_month.nc"]
-            experiment_path = state.get_experiment_path()
+            experiment_path = sim.get_experiment_path()
             targets = listdir(experiment_path)
             for target in targets:
                 target_path = path.join(experiment_path, target)

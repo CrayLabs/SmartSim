@@ -23,3 +23,6 @@ fi
 # Setup the Smart Simulation library environment variables
 export SMARTSIMHOME="$(pwd)/examples/"
 echo "SmartSim Home set to: $(pwd)/examples/"
+
+export ORCCONFIG="$(pwd)/smartsim/"
+echo "SmartSim orchestrator config set to $(pwd)/smartsim/smartsimdb.conf"
