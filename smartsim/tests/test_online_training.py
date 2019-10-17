@@ -71,6 +71,7 @@ def test_train_path_2D_1GB():
     """test the latency for a small amount of 2D data of size 1gb
        in this case we are sending 20 matricies of shape (4000, 30000)
        Average Train Path latency: 23.108077692985535
+       Average Train Path latency: 17.421100091934203 # 8 ppn 8 threads
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -97,7 +98,7 @@ def run_train_path(data_size, num_packets, test_id):
     state.create_node(node_name, script_path=os.getcwd() + "/training/", **train_settings)
     state.create_target("simulation")
     state.create_model(sim_name, "simulation", path=os.getcwd() + "/training/")
-    state.create_orchestrator(orc_name)
+    state.create_orchestrator(orc_name, ppn="4")
     state.register_connection(sim_name, node_name)
 
     sim_dict = {
