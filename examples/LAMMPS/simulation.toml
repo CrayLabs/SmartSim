@@ -10,6 +10,7 @@ executable = "lmp_mpi"
 run_command = "mpirun"
 run_args = "-np 6"
 exe_args = "-in in.atm"
+launcher = "local"
 
 
 [atm]
