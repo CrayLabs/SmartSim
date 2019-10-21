@@ -7,7 +7,7 @@ from smartsim import State, Controller
 def test_train_path_small_data():
     """test the latency for a small amount of data
        in this case we are sending 20 vectors of length 20
-       Average Train Path latency: 0.6775458931922913
+       Average Train Path latency: 0.6775458931922913 (same for both)
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -24,7 +24,8 @@ def test_train_path_small_data():
 def test_train_path_med_data():
     """test the latency for a small amount of data
        in this case we are sending 20 vectors of length 200000
-       Average Train Path latency: 0.766495943069458
+       Average Train Path latency: 0.766495943069458   (send_data)
+       Average Train Path latency: 0.44906623363494874 (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -39,7 +40,8 @@ def test_train_path_med_data():
 def test_train_path_2D_small():
     """test the latency for a small amount of 2D data
        in this case we are sending 20 matricies of shape (200, 200)
-       Average Train Path latency: 0.6400160551071167
+       Average Train Path latency: 0.6400160551071167 (send_data)
+       Average Train Path latency: 0.6733983516693115 (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -54,7 +56,8 @@ def test_train_path_2D_small():
 def test_train_path_2D_huge():
     """test the latency for a small amount of 2D data
        in this case we are sending 20 matricies of shape (2000, 200000)
-       Average Train Path latency: 8.110368180274964
+       Average Train Path latency: 8.110368180274964  (send_data)
+       Average Train Path latency: 2.597576916217804  (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -70,8 +73,8 @@ def test_train_path_2D_huge():
 def test_train_path_2D_1GB():
     """test the latency for a small amount of 2D data of size 1gb
        in this case we are sending 20 matricies of shape (4000, 30000)
-       Average Train Path latency: 23.108077692985535
-       Average Train Path latency: 17.421100091934203 # 8 ppn 8 threads
+       Average Train Path latency: 17.421100091934203 (send_data)
+       Average Train Path latency: 5.991141140460968  (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":

@@ -22,7 +22,7 @@ def run_simulations(data_size, num_packets, client):
         start_time = time.time()
         obj = pickle.dumps((data, start_time))
         print("sending data for key", str(i), flush=True)
-        client.send_data(str(i), obj)
+        client.send_big_data(str(i), obj)
         send_time = time.time()
         print("Data sent at: ", str(send_time), flush=True)
         prep_time = (send_time - start_time)
