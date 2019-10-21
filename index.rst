@@ -59,6 +59,16 @@ information on the state class, please see x
    doc/interfaces
    doc/generate
    doc/simulate
+   doc/developers
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   doc/examples/mom6
+   doc/examples/cp2k
+   doc/examples/mpo
+   doc/examples/online-training
 
 
 .. toctree::
@@ -69,12 +79,6 @@ information on the state class, please see x
    doc/api/simModule
    doc/api/generator
    doc/api/controller
-   
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples
-
    
    
 
