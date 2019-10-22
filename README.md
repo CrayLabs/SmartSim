@@ -7,8 +7,10 @@
 
    - Rapid generation of model instances with custom configurations.
    - Model agnostic in regards to configuration file format.
-   - multiple hierarchies of configuration allowing for extensive experimentation
-   - Parallel model execution compatible with Slurm, PBS, Urika workload managers
+   - Multiple hierarchies of configuration allowing for extensive experimentation
+   - Parallel model execution compatible with Slurm workload manager
+   - Online training and Inference
+   - Model Parameter Optimization(MPO)
    
 ## Setup
 
@@ -22,6 +24,9 @@
       > cd && git clone https://stash.us.cray.com/scm/ard/poseidon-launcher.git
    - Go in poseidon-launcher and setup
       > cd poseidon-launcher && source setenv.sh   # currently requires a patch as well
+   - Install KeyDB
+      > git clone https://github.com/JohnSully/KeyDB && cd KeyDB && make
+      > cd src && export PATH=$PATH:$(pwd) # or add to .bashrc/.zshrc
 
 ## Run LAMMPS example
 
