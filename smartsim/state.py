@@ -302,11 +302,11 @@ class State:
             try:
                 top_level = self.__search_config(path, self._config)
                 return top_level
-            except SSConfigError as err:
+            except SSConfigError:
                 if none_ok:
                     return None
                 else:
-                    raise err
+                    raise
 
     def __search_config(self, value_path, config):
         val_path = value_path.copy()
