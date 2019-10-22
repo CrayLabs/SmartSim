@@ -299,8 +299,14 @@ class State:
                                 "Could not find required SmartSim field: "
                                     + path[-1])
         else:
-            top_level = self.__search_config(path, self._config)
-            return top_level
+            try:
+                top_level = self.__search_config(path, self._config)
+                return top_level
+            except SSConfigError:
+                if none_ok:
+                    return None
+                else:
+                    raise
 
     def __search_config(self, value_path, config):
         val_path = value_path.copy()
@@ -313,5 +319,5 @@ class State:
                 return self.__search_config(val_path, config[parent])
         else:
             raise SSConfigError(self.current_state,
-                                "Could not find required SmartSim field: " + path[-1])
+                                "Could not find required SmartSim field: " + value_path[-1])
 

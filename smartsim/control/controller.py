@@ -31,7 +31,7 @@ class Controller(SmartSimModule):
     def __init__(self, state, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
-        self._init_launcher(kwargs)
+        self._init_launcher()
         self._jobs = []
 
 
@@ -342,19 +342,20 @@ class Controller(SmartSimModule):
         nodes = self._launcher.get_job_nodes(job_id)
         return nodes
 
-    def _init_launcher(self, kwargs):
+    def _init_launcher(self):
         """Run with a specific type of launcher"""
-        if "launcher" in kwargs.keys():
+        launcher = self.get_config(["control", "launcher"], none_ok=True)
+        if launcher is not None:
             # Init Slurm Launcher wrapper
-            if kwargs["launcher"] == "slurm":
+            if launcher == "slurm":
                 self._launcher = SlurmLauncher.SlurmLauncher()
             # Run all targets locally
-            elif kwargs["launcher"] == "" or kwargs["launcher"] == "local":
+            elif launcher == "" or launcher == "local":
                 self._launcher = None
             else:
                 raise SSUnsupportedError(self.get_state(),
                                         "Launcher type not supported: "
-                                        + self._launcher)
+                                        + launcher)
         else:
             raise SSConfigError(self.get_state(),
                                 "Must provide a 'launcher' argument to the Controller")
