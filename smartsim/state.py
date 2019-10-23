@@ -2,7 +2,7 @@ import logging
 import pickle
 import sys
 import toml
-from os import path, mkdir, listdir
+from os import path, mkdir, listdir, sep
 from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
@@ -257,14 +257,10 @@ class State:
     def read_config(self, sim_toml):
         if sim_toml:
             try:
-                file_name = get_SSHOME() + sim_toml
+                file_name = path.join(get_SSHOME(), sim_toml)
                 if not path.isfile(file_name):
-                    # full path
-                    if path.isfile(sim_toml):
-                        file_name = sim_toml
-                    # neither full path nor SS_HOME
-                    else:
-                        raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
+                    # path.join returns the joined path, unless sim_toml is an absolute path.
+                    raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
                 with open(file_name, 'r', encoding='utf-8') as fp:
                     parsed_toml = toml.load(fp)
                     return parsed_toml
