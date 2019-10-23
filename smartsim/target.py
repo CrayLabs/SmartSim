@@ -24,7 +24,11 @@ class Target:
         return self._models[model_name]
 
     def add_model(self, model):
-        self._models[model.name] = model
+        if model.name in self._models:
+            raise SmartSimError("Adding model to target",
+                                "Model name: " + model.name + " already exists in target: " + self)
+        else:
+            self._models[model.name] = model
 
     def __str__(self):
         return self.name
