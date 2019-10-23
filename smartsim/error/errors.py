@@ -21,3 +21,8 @@ class SSUnsupportedError(SmartSimError):
         super().__init__(stage, message)
 
 
+class SSModelExistsError(SmartSimError):
+
+    def __init__(self, stage, message):
+        super().__init__(stage, message)
+

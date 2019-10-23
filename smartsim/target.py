@@ -1,5 +1,6 @@
 
 from os import path, mkdir
+from .error import SSModelExistsError
 
 class Target:
 
@@ -25,8 +26,8 @@ class Target:
 
     def add_model(self, model):
         if model.name in self._models:
-            raise SmartSimError("Adding model to target",
-                                "Model name: " + model.name + " already exists in target: " + self)
+            raise SSModelExistsError("Adding model to target",
+                                "Model name: " + model.name + " already exists in target: " + self.__repr__())
         else:
             self._models[model.name] = model
 
