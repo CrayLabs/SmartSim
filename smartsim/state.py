@@ -2,7 +2,7 @@ import logging
 import pickle
 import sys
 import toml
-from os import path, mkdir, listdir, sep
+from os import path, mkdir, listdir
 from .helpers import get_SSHOME
 from .error import SmartSimError, SSConfigError
 from .target import Target
@@ -274,11 +274,11 @@ class State:
         else:
             return None
 
-    def _get_toml_config(self, path, none_ok=False):
+    def _get_toml_config(self, toml_path, none_ok=False):
         """Searches for configurations in the simulation.toml
 
            Args
-             path (list): a list of strings containing path to config
+             toml_path (list): a list of strings containing path to config
              none_ok (bool): ok for value not to be present
 
            Returns
@@ -293,10 +293,10 @@ class State:
             else:
                 raise SSConfigError(self.current_state,
                                 "Could not find required SmartSim field: "
-                                    + path[-1])
+                                    + toml_path[-1])
         else:
             try:
-                top_level = self.__search_config(path, self._config)
+                top_level = self.__search_config(toml_path, self._config)
                 return top_level
             except SSConfigError:
                 if none_ok:
