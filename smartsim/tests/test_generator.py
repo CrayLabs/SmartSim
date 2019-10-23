@@ -16,7 +16,7 @@ def test_gen_duplicate_configs():
         rmtree(experiment_dir)
 
     # create a state with the LAMMPS configuration file
-    STATE = State(config="/LAMMPS/simulation.toml")
+    STATE = State(config="LAMMPS/simulation.toml")
 
     # init generator
     GEN = Generator(STATE)

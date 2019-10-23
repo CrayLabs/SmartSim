@@ -266,14 +266,10 @@ class State:
     def read_config(self, sim_toml):
         if sim_toml:
             try:
-                file_name = get_SSHOME() + sim_toml
+                file_name = path.join(get_SSHOME(), sim_toml)
                 if not path.isfile(file_name):
-                    # full path
-                    if path.isfile(sim_toml):
-                        file_name = sim_toml
-                    # neither full path nor SS_HOME
-                    else:
-                        raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
+                    # path.join returns the joined path, unless sim_toml is an absolute path.
+                    raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
                 with open(file_name, 'r', encoding='utf-8') as fp:
                     parsed_toml = toml.load(fp)
                     return parsed_toml
@@ -287,11 +283,11 @@ class State:
         else:
             return None
 
-    def _get_toml_config(self, path, none_ok=False):
+    def _get_toml_config(self, toml_path, none_ok=False):
         """Searches for configurations in the simulation.toml
 
            Args
-             path (list): a list of strings containing path to config
+             toml_path (list): a list of strings containing path to config
              none_ok (bool): ok for value not to be present
 
            Returns
@@ -306,10 +302,10 @@ class State:
             else:
                 raise SSConfigError(self.current_state,
                                 "Could not find required SmartSim field: "
-                                    + path[-1])
+                                    + toml_path[-1])
         else:
             try:
-                top_level = self.__search_config(path, self._config)
+                top_level = self.__search_config(toml_path, self._config)
                 return top_level
             except SSConfigError:
                 if none_ok:

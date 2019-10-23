@@ -4,7 +4,7 @@ import subprocess
 import time
 
 from os import listdir
-from os.path import isdir, basename
+from os.path import isdir, basename, join
 from launcher import SlurmLauncher, PBSLauncher
 
 from ..helpers import get_SSHOME
@@ -138,8 +138,8 @@ class Controller(SmartSimModule):
             # collect and enter all run settings for Slurm
             run_dict = self._build_run_dict(node.get_settings())
             run_dict["wd"] = node.path
-            run_dict["output_file"] = "/".join((node.path, node.name + ".out"))
-            run_dict["err_file"] = "/".join((node.path, node.name + ".err"))
+            run_dict["output_file"] = join(node.path, node.name + ".out")
+            run_dict["err_file"] = join(node.path, node.name + ".err")
 
             # launch the job and track through job class
             self._launcher.make_script(**run_dict, env_vars=env_vars,
@@ -306,8 +306,8 @@ class Controller(SmartSimModule):
 
             temp_dict = run_dict.copy()
             temp_dict["wd"] = model.path
-            temp_dict["output_file"] = "/".join((model.path, model.name + ".out"))
-            temp_dict["err_file"] = "/".join((model.path, model.name + ".err"))
+            temp_dict["output_file"] = join(model.path, model.name + ".out")
+            temp_dict["err_file"] = join(model.path, model.name + ".err")
             self._launcher.make_script(**temp_dict, env_vars=env_vars,
                                        script_name=model.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=model.path)
