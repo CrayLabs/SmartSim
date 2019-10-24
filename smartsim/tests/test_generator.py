@@ -65,15 +65,6 @@ def test_gen_with_create_target_create_model():
     STATE.create_target("atm", params=param_dict)
     STATE.create_model("add_1", "atm", {"25": 90})
 
-    # attempt to replace an existing model.  We should error out when we try to add it.
-    # if we don't, THAT'S when we want to error out.
-    try:
-        STATE.create_model("add_1", "atm", {"25": 90})
-        raise SmartSimError("Generator testing",
-                            "Model name: add_1 has been incorrectly replaced")
-    except SSModelExistsError:
-        pass
-
     # Supply the generator with necessary files to run the simulation
     # and generate the specified models
     base_config = "LAMMPS/in.atm"
@@ -135,22 +126,6 @@ def test_gen_with_user_created_models():
     # init generator
     GEN.generate()
 
-    print(STATE.targets[0])
-    print(STATE.targets[0]._models)
-    print(STATE.targets[1])
-    print(STATE.targets[1]._models)
-    print(STATE.targets[2])
-    print(STATE.targets[2]._models)
-
-    # attempt to replace an existing model.  We should error out when we try to add it.
-    # if we don't, THAT'S when we want to error out.
-    try:
-        STATE.create_model("add_1", params={"25": 90})
-        raise SmartSimError("Generator testing",
-                            "Model name: add_1 has been incorrectly replaced")
-    except SSModelExistsError:
-        pass
-
     # assert that experiment directory was created
     assert(path.isdir(experiment_dir))
 
@@ -172,6 +147,72 @@ def test_gen_with_user_created_models():
     model_dirs = [target_model_1, target_model_2,
                   target_model_3, target_model_4,
                   target_model_5, target_model_6]
+    # check for model dir and listed configuration file
+    for model in model_dirs:
+        assert(path.isdir(model))
+        assert(path.isfile(path.join(model, "in.atm")))
+
+    # clean up this run/test
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def test_overwrite_create_model():
+    """Test for the creation of the experiment directory structure when only
+    create_model is used (programmatic interface); we should create a new, empty target."""
+
+    # clean up previous run/test
+    EXPERIMENT = "lammps_atm"
+    experiment_dir = path.join(SS_HOME, EXPERIMENT)
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    # create a state with the LAMMPS configuration file
+    STATE = State(experiment=EXPERIMENT)
+
+    # We should be able to create 2 new targets.
+    STATE.create_model("add_1", "atm_1", {"25": 10})
+    STATE.create_model("add_1", params={"25": 50})
+
+    # attempt to replace an existing model.
+
+    # Supply the generator with necessary files to run the simulation
+    # and generate the specified models
+    base_config = "LAMMPS/in.atm"
+    GEN = Generator(STATE, model_files=base_config)
+
+    # init generator
+    GEN.generate()
+
+    # attempt to replace an existing model.  We should error out when we try to add it.
+    # if we don't, THAT'S when we want to error out.
+    try:
+        STATE.create_model("add_1", params={"25": 90})
+        raise SmartSimError("Generator testing",
+                            "Model name: add_1 has been incorrectly replaced")
+    except SSModelExistsError:
+        pass
+
+    try:
+        STATE.create_model("add_1", "atm_1", params={"25": 90})
+        raise SmartSimError("Generator testing",
+                            "Model name: add_1 has been incorrectly replaced")
+    except SSModelExistsError:
+        pass
+
+    # assert that experiment directory was created
+    assert(path.isdir(experiment_dir))
+
+    target_1 = path.join(experiment_dir, "atm_1")
+    target_2 = path.join(experiment_dir, "default_target")
+    assert(path.isdir(target_1))
+    assert(path.isdir(target_2))
+
+    target_model_1 = path.join(target_1, "add_1")
+    target_model_2 = path.join(target_2, "add_1")
+    
+
+    model_dirs = [target_model_1, target_model_2]
+    
     # check for model dir and listed configuration file
     for model in model_dirs:
         assert(path.isdir(model))
