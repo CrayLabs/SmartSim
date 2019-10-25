@@ -107,7 +107,13 @@ class State:
     def create_model(self, name, target="default_target", params={}, path=None):
         """Create a model belonging to a specific target. This function is
            useful for running a small number of models where the model files
-           are already in place for execution
+           are already in place for execution.
+
+           If the target specified by the argument `target` doesn't exist,
+           a new target is created and added to the state before the model
+           is added to the target.  Calls to this function without specifying
+           the `target` argument result in the creation/usage a target named
+           "default_target", the default argument for `target`.
 
            :param str name: name of the model to be created
            :param str target: name of the target to place model into
