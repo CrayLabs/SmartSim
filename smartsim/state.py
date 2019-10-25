@@ -104,10 +104,16 @@ class State:
             self.logger.error(e)
             raise
 
-    def create_model(self, name, target, params={}, path=None):
+    def create_model(self, name, target="default_target", params={}, path=None):
         """Create a model belonging to a specific target. This function is
            useful for running a small number of models where the model files
-           are already in place for execution
+           are already in place for execution.
+
+           If the target specified by the argument `target` doesn't exist,
+           a new target is created and added to the state before the model
+           is added to the target.  Calls to this function without specifying
+           the `target` argument result in the creation/usage a target named
+           "default_target", the default argument for `target`.
 
            :param str name: name of the model to be created
            :param str target: name of the target to place model into
@@ -115,13 +121,21 @@ class State:
            :param str path: (optional) path to model files
         """
         model_added = False
+        target_exists = False
         for t in self.targets:
             if t.name == target:
+                target_exists = True
                 model = NumModel(name, params, path)
                 t.add_model(model)
                 model_added = True
+        if not target_exists:
+            # create a new target with name target.  Since create_target appends, we
+            # pull the final target in self.targets
+            self.create_target(name=target)
+            model = NumModel(name, params, path)
+            self.targets[-1].add_model(model)
+            model_added = True
         if not model_added:
-            # TODO catch if model already exists
             raise SmartSimError(self.current_state,
                                 "Could not find target by the name of: " + target)
 

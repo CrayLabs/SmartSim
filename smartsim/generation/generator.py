@@ -114,13 +114,16 @@ class Generator(SmartSimModule):
         # init model classes to hold parameter information
         targets = self.get_targets()
         for target in targets:
+            # if this call returns empty lists, we shouldn't continue.
+            # This is useful for empty targets where the user makes models.
             names, values = read_model_parameters(target)
-            # TODO Allow for different strategies to be used
-            all_configs = self._create_all_permutations(names, values)
-            for i, conf in enumerate(all_configs):
-                model_name = "_".join((target.name, str(i)))
-                m = NumModel(model_name, conf, i)
-                target.add_model(m)
+            if (len(names) != 0 and len(values) != 0):
+                # TODO Allow for different strategies to be used
+                all_configs = self._create_all_permutations(names, values)
+                for i, conf in enumerate(all_configs):
+                    model_name = "_".join((target.name, str(i)))
+                    m = NumModel(model_name, conf, i)
+                    target.add_model(m)
 
     def _create_experiment(self):
         """Creates the directory structure for the simulations"""
