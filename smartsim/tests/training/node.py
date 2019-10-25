@@ -13,7 +13,7 @@ class TrainingNode():
         data_shape = (0, 0)
         avg_train_path_time = 0
         while True:
-            while self.client.get_data(str(i)) == None:
+            while not self.client.peek(str(i)):
                     time.sleep(.01)
             data = pickle.loads(self.client.get_data(str(i)))
             recieve_time = time.time()
