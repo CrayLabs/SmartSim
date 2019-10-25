@@ -13,7 +13,6 @@ from ..simModule import SmartSimModule
 from .job import Job
 
 
-
 class Controller(SmartSimModule):
     """The controller module provides an interface between the numerical model
        that is the subject of Smartsim and the underlying workload manager or
