@@ -19,8 +19,8 @@ class Generator(SmartSimModule):
        :param State state: A State instance
     """
 
-    def __init__(self, state, **kwargs):
-        super().__init__(state, **kwargs)
+    def __init__(self, state, log_level="DEV", **kwargs):
+        super().__init__(state, __name__, log_level=log_level, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
 
@@ -32,12 +32,12 @@ class Generator(SmartSimModule):
            :raises: SmartSimError
         """
         try:
-            self.log("SmartSim State: " + self.get_state())
+            self.logger.info("SmartSim State: " + self.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            self.log(e, level="error")
+            self.logger.error(e)
             raise
 
     def set_tag(self, tag, regex=None):
@@ -130,7 +130,7 @@ class Generator(SmartSimModule):
         try:
             mkdir(exp_path)
         except FileExistsError:
-            self.log("Working in previously created experiment")
+            self.logger.error("Working in previously created experiment")
 
         # not ok to have already generated the target.
         try:

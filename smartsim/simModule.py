@@ -1,6 +1,7 @@
 import sys
 
 from .error import SSConfigError, SmartSimError
+from .coloredLogger import _get_logger
 
 class SmartSimModule:
     """The base class of all the modules within SmartSim. The SmartSim
@@ -14,22 +15,10 @@ class SmartSimModule:
        :param State state: State Instance
     """
 
-    def __init__(self, state, **kwargs):
+    def __init__(self, state, name=__name__, log_level="DEV", **kwargs):
         self.state = state
         self._init_args = kwargs
-
-    def log(self, message, level="info"):
-        """Use the builtin logger to record information during the experiment
-
-           :param str message: The message to be logged
-           :param str level: Defaults to "info". Options are "info", "error", "debug"
-        """
-        if level == "info":
-            self.state.logger.info(message)
-        elif level == "error":
-            self.state.logger.error(message)
-        else:
-            self.state.logger.debug(message)
+        self.logger = _get_logger(name, log_level)
 
     def get_state(self):
         """Return the current state of the experiment

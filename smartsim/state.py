@@ -1,4 +1,3 @@
-import logging
 import pickle
 import sys
 import toml
@@ -9,6 +8,7 @@ from .target import Target
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
+from .coloredLogger import _get_logger
 
 
 class State:
@@ -33,7 +33,7 @@ class State:
 
     def __init__(self, experiment=None, config=None, log_level="DEV"):
         self.current_state = "Initializing"
-        self.__create_logger(log_level)
+        self.logger = _get_logger(__name__, log_level)
         self._config = self.read_config(config)
         self.targets = []
         self.nodes = []
@@ -244,15 +244,6 @@ class State:
                     self.logger.info("State created without target, target will have to be created or loaded")
         else:
             self.logger.info("State created without target, target will have to be created or loaded")
-
-    def __create_logger(self, log_level):
-        import coloredlogs
-        logger = logging.getLogger(__name__)
-        if log_level == "DEV":
-            coloredlogs.install(level=log_level)
-        else:
-            coloredlogs.install(level=log_level, logger=logger)
-        self.logger = logger
 
     def read_config(self, sim_toml):
         if sim_toml:
