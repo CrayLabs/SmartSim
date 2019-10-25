@@ -47,7 +47,6 @@ def test_gen_duplicate_configs():
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
-
 def test_gen_with_create_target_create_model():
     """Test for the creation of the experiment directory structure when both create_target
     and create_model are used (programmatic interface)."""
@@ -81,7 +80,6 @@ def test_gen_with_create_target_create_model():
     target_model_2 = path.join(target, "atm_1")
     target_model_3 = path.join(target, "add_1")
     
-
     model_dirs = [target_model_1, target_model_2,
                   target_model_3]
     # check for model dir and listed configuration file
@@ -116,8 +114,6 @@ def test_gen_with_user_created_models():
     STATE.create_model("add_1", params={"25": 50})
     STATE.create_model("add_2", params={"25": 60})
 
-    # attempt to replace an existing model.
-
     # Supply the generator with necessary files to run the simulation
     # and generate the specified models
     base_config = "LAMMPS/in.atm"
@@ -143,7 +139,6 @@ def test_gen_with_user_created_models():
     target_model_5 = path.join(target_3, "add_1")
     target_model_6 = path.join(target_3, "add_2")
     
-
     model_dirs = [target_model_1, target_model_2,
                   target_model_3, target_model_4,
                   target_model_5, target_model_6]
@@ -172,8 +167,6 @@ def test_overwrite_create_model():
     # We should be able to create 2 new targets.
     STATE.create_model("add_1", "atm_1", {"25": 10})
     STATE.create_model("add_1", params={"25": 50})
-
-    # attempt to replace an existing model.
 
     # Supply the generator with necessary files to run the simulation
     # and generate the specified models
@@ -210,7 +203,6 @@ def test_overwrite_create_model():
     target_model_1 = path.join(target_1, "add_1")
     target_model_2 = path.join(target_2, "add_1")
     
-
     model_dirs = [target_model_1, target_model_2]
     
     # check for model dir and listed configuration file

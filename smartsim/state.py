@@ -130,7 +130,6 @@ class State:
             self.targets[-1].add_model(model)
             model_added = True
         if not model_added:
-            # TODO catch if model already exists
             raise SmartSimError(self.current_state,
                                 "Could not find target by the name of: " + target)
 

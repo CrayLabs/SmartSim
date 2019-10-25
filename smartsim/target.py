@@ -27,7 +27,7 @@ class Target:
     def add_model(self, model):
         if model.name in self._models:
             raise SSModelExistsError("Adding model to target",
-                                "Model name: " + model.name + " already exists in target: " + self.__repr__())
+                                "Model name: " + model.name + " already exists in target: " + self.__str__())
         else:
             self._models[model.name] = model
 
