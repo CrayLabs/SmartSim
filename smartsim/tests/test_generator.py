@@ -214,17 +214,10 @@ def test_overwrite_create_model():
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
-def test_gen_select_strategy():
+def test_gen_select_strategy_user_function():
+    """A test of the generator using a user supplied function.
+    """
 
-    def create_all_permutations(param_names, param_values):
-        from itertools import product
-        perms = list(product(*param_values))
-        all_permutations = []
-        for p in perms:
-            temp_model = dict(zip(param_names, p))
-            all_permutations.append(temp_model)
-        return all_permutations
-    
     def raise_error(param_names, param_values):
         raise NotImplementedError
 
@@ -250,23 +243,36 @@ def test_gen_select_strategy():
         GEN.generate()
     except NotImplementedError:
         #  We should have successfully failed out.
-        GEN.set_strategy("all_perm")
+        pass
+
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def test_gen_select_strategy_user_string():
+
+    # clean up previous run/test
+    EXPERIMENT = "lammps_atm"
+    experiment_dir = path.join(SS_HOME, EXPERIMENT)
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    # create a state with the LAMMPS configuration file
+    STATE = State(experiment=EXPERIMENT)
+
+    param_dict = {"25": [20, 25]}
+    STATE.create_target("atm", params=param_dict)
+
+    # Supply the generator with necessary files to run the simulation
+    # and generate the specified models
+    base_config = "LAMMPS/in.atm"
+    GEN = Generator(STATE, model_files=base_config)
+    #GEN.set_strategy(create_all_permutations)
+    GEN.set_strategy("generation_strategies.raise_error")
+    try:
         GEN.generate()
-
-    # assert that experiment directory was created
-    assert(path.isdir(experiment_dir))
-
-    target = path.join(experiment_dir, "atm")
-    assert(path.isdir(target))
-
-    target_model_1 = path.join(target, "atm_0")
-    target_model_2 = path.join(target, "atm_1")
-    
-    model_dirs = [target_model_1, target_model_2]
-    # check for model dir and listed configuration file
-    for model in model_dirs:
-        assert(path.isdir(model))
-        assert(path.isfile(path.join(model, "in.atm")))
+    except NotImplementedError:
+        #  We should have successfully failed out.
+        pass
 
     # clean up this run/test
     if path.isdir(experiment_dir):
