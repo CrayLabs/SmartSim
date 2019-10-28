@@ -7,7 +7,7 @@ from distutils import dir_util
 
 from ..model import NumModel
 from .modelwriter import ModelWriter
-from ..error import SmartSimError, SSUnsupportedError
+from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
@@ -23,6 +23,7 @@ class Generator(SmartSimModule):
         super().__init__(state, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
+        self._permutation_strategy = self._create_all_permutations
 
 
     def generate(self):
@@ -35,6 +36,7 @@ class Generator(SmartSimModule):
             self.log("SmartSim State: " + self.get_state())
             self._create_models()
             self._create_experiment()
+            self._set_strategy_from_config()
             self._configure_models()
         except SmartSimError as e:
             self.log(e, level="error")
@@ -58,17 +60,61 @@ class Generator(SmartSimModule):
 
         self._writer._set_tag(tag, regex)
 
-    def select_strategy(self, strategy):
-        """Select the strategy for generating model configurations based on the
-           values of the target parameters.
-
-           all_perm creates all possible permutations of the target parameters as
-           individual models. This is the default strategy for the Generator module
-
-           :param str strategy: Options are "all_perm"
+    def set_strategy(self, permutation_strategy):
+        """Load the strategy for generating model configurations based on the
+           values of the target parameters.  Note that this pulls from the
+           configuration in the State object.
 
         """
-        raise NotImplementedError
+        if callable(permutation_strategy):
+            self._permutation_strategy = permutation_strategy
+        else:
+            self._set_strategy_from_string(permutation_strategy)
+
+    def _set_strategy_from_config(self):
+        """Load the strategy for generating model configurations based on the
+           values of the target parameters.  Note that this pulls from the
+           configuration in the State object.
+        """
+        # first, check to see what strategy we've selected in the config, if we've
+        # bothered to select one.
+        permutation_strategy = ""
+        try:
+            permutation_strategy = self.get_config(["model", "permutation"])
+            self._set_strategy(permutation_strategy)
+        except SSConfigError:
+            # if we couldn't find the field, choose a reasonable default (all)
+            self._set_strategy()       
+
+    def _set_strategy_from_string(self, permutation_strategy="all_perm"):
+        """Load the strategy for generating model configurations based on the
+           values of the target parameters.  Note that this pulls from the
+           configuration in the State object.
+
+        """
+        if permutation_strategy == "all_perm":
+            self._permutation_strategy = self._create_all_permutations
+        else:
+            # return a function that the user thinks is appropriate.  Assume blah.blah
+            import importlib
+            try:
+                mod_string, func_string = permutation_strategy.split(".")
+            except:
+                raise SmartSimError(self.current_state,
+                                    "Following string cannot be evaluated to a module.function: ", permutation_strategy)
+            try:
+                mod = importlib.import_module(mod_string)
+            except:
+                raise
+            try:
+                func = getattr(mod, func_string)
+            except:
+                raise
+            if callable(func):
+                self._permutation_strategy = func
+            else:
+                raise SmartSimError(self.current_state,
+                                    "Supplied attribute is not a function: ", func)
 
 
 
