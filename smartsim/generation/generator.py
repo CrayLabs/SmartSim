@@ -23,7 +23,7 @@ class Generator(SmartSimModule):
         super().__init__(state, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
-        self._permutation_strategy = self._create_all_permutations
+        self._permutation_strategy = None
 
 
     def generate(self):
@@ -34,9 +34,10 @@ class Generator(SmartSimModule):
         """
         try:
             self.log("SmartSim State: " + self.get_state())
+            if self._permutation_strategy == None:
+                self._set_strategy_from_config()
             self._create_models()
             self._create_experiment()
-            self._set_strategy_from_config()
             self._configure_models()
         except SmartSimError as e:
             self.log(e, level="error")
@@ -62,8 +63,9 @@ class Generator(SmartSimModule):
 
     def set_strategy(self, permutation_strategy):
         """Load the strategy for generating model configurations based on the
-           values of the target parameters.  Note that this pulls from the
-           configuration in the State object.
+           values of the target parameters.
+
+           :param permutation_strategy: blah
 
         """
         if callable(permutation_strategy):
@@ -81,10 +83,10 @@ class Generator(SmartSimModule):
         permutation_strategy = ""
         try:
             permutation_strategy = self.get_config(["model", "permutation"])
-            self._set_strategy(permutation_strategy)
+            self._set_strategy_from_string(permutation_strategy)
         except SSConfigError:
             # if we couldn't find the field, choose a reasonable default (all)
-            self._set_strategy()       
+            self._set_strategy_from_string()       
 
     def _set_strategy_from_string(self, permutation_strategy="all_perm"):
         """Load the strategy for generating model configurations based on the
@@ -165,7 +167,7 @@ class Generator(SmartSimModule):
             names, values = read_model_parameters(target)
             if (len(names) != 0 and len(values) != 0):
                 # TODO Allow for different strategies to be used
-                all_configs = self._create_all_permutations(names, values)
+                all_configs = self._permutation_strategy(names, values)
                 for i, conf in enumerate(all_configs):
                     model_name = "_".join((target.name, str(i)))
                     m = NumModel(model_name, conf, i)
