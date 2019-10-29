@@ -1,7 +1,6 @@
 import sys
 
 from .error import SSConfigError, SmartSimError
-from .coloredLogger import _get_logger
 
 class SmartSimModule:
     """The base class of all the modules within SmartSim. The SmartSim
@@ -15,10 +14,9 @@ class SmartSimModule:
        :param State state: State Instance
     """
 
-    def __init__(self, state, name=__name__, log_level="DEV", **kwargs):
+    def __init__(self, state, **kwargs):
         self.state = state
         self._init_args = kwargs
-        self.logger = _get_logger(name, log_level)
 
     def get_state(self):
         """Return the current state of the experiment

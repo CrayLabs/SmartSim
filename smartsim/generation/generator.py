@@ -10,6 +10,8 @@ from .modelwriter import ModelWriter
 from ..error import SmartSimError, SSUnsupportedError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
+from ..utils import _get_logger
+logger = _get_logger(__name__)
 
 
 class Generator(SmartSimModule):
@@ -19,8 +21,8 @@ class Generator(SmartSimModule):
        :param State state: A State instance
     """
 
-    def __init__(self, state, log_level="DEV", **kwargs):
-        super().__init__(state, __name__, log_level=log_level, **kwargs)
+    def __init__(self, state, **kwargs):
+        super().__init__(state, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
 
@@ -32,12 +34,12 @@ class Generator(SmartSimModule):
            :raises: SmartSimError
         """
         try:
-            self.logger.info("SmartSim State: " + self.get_state())
+            logger.info("SmartSim State: " + self.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            self.logger.error(e)
+            logger.error(e)
             raise
 
     def set_tag(self, tag, regex=None):
@@ -130,7 +132,7 @@ class Generator(SmartSimModule):
         try:
             mkdir(exp_path)
         except FileExistsError:
-            self.logger.error("Working in previously created experiment")
+            logger.error("Working in previously created experiment")
 
         # not ok to have already generated the target.
         try:

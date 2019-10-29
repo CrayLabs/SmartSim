@@ -8,7 +8,9 @@ from .target import Target
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
-from .coloredLogger import _get_logger
+from .utils import _get_logger
+
+logger = _get_logger(__name__)
 
 
 class State:
@@ -31,9 +33,8 @@ class State:
 
     """
 
-    def __init__(self, experiment=None, config=None, log_level="DEV"):
+    def __init__(self, experiment=None, config=None):
         self.current_state = "Initializing"
-        self.logger = _get_logger(__name__, log_level)
         self._config = self.read_config(config)
         self.targets = []
         self.nodes = []
@@ -73,7 +74,7 @@ class State:
                 raise SmartSimError(self.current_state,
                                      "Target directory could not be found!")
         except SmartSimError as e:
-            self.logger.error(e)
+            logger.error(e)
             raise
 
 
@@ -101,7 +102,7 @@ class State:
             new_target = Target(name, params, self.experiment, target_path)
             self.targets.append(new_target)
         except SmartSimError as e:
-            self.logger.error(e)
+            logger.error(e)
             raise
 
     def create_model(self, name, target, params={}, path=None):
@@ -220,7 +221,7 @@ class State:
             try:
                 self.experiment = self._get_toml_config(["model", "experiment"])
             except SSConfigError:
-                self.logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
+                logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
                 raise
         else:
             self.experiment = experiment_name
@@ -238,12 +239,12 @@ class State:
                     self.targets.append(new_target)
             except SSConfigError:
                 if model_targets:
-                    self.logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
+                    logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
                     raise
                 else:
-                    self.logger.info("State created without target, target will have to be created or loaded")
+                    logger.info("State created without target, target will have to be created or loaded")
         else:
-            self.logger.info("State created without target, target will have to be created or loaded")
+            logger.info("State created without target, target will have to be created or loaded")
 
     def read_config(self, sim_toml):
         if sim_toml:
@@ -256,11 +257,11 @@ class State:
                     parsed_toml = toml.load(fp)
                     return parsed_toml
             except SSConfigError as e:
-                self.logger.error(e)
+                logger.error(e)
                 raise
             # TODO catch specific toml errors
             except Exception as e:
-                self.logger.error(e)
+                logger.error(e)
                 raise
         else:
             return None
