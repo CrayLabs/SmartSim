@@ -12,8 +12,8 @@ from ..state import State
 from ..simModule import SmartSimModule
 from .job import Job
 
-from ..utils import _get_logger
-logger = _get_logger(__name__)
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class Controller(SmartSimModule):

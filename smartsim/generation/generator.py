@@ -10,8 +10,9 @@ from .modelwriter import ModelWriter
 from ..error import SmartSimError, SSUnsupportedError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
-from ..utils import _get_logger
-logger = _get_logger(__name__)
+
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class Generator(SmartSimModule):

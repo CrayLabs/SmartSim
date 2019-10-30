@@ -8,9 +8,9 @@ from .target import Target
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
-from .utils import _get_logger
 
-logger = _get_logger(__name__)
+from .utils import get_logger
+logger = get_logger(__name__)
 
 
 class State:
