@@ -50,10 +50,10 @@ def set_debug_mode():
         # the root logger is not in this dictionary
         get_logger(name).setLevel(logging.NOTSET)
 
-def log_to_file(filename):
+def log_to_file(filename, log_level=None):
     """Installs a second filestream handler to the root logger, 
     allowing subsequent logging calls to be sent to filename.
 
     :param str filename: the name of the desired log file.
     """
-    coloredlogs.install(stream=open(filename, "w+"))
+    coloredlogs.install(stream=open(filename, "w+"), log_level=log_level)
