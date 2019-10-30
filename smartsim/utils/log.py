@@ -57,13 +57,3 @@ def log_to_file(filename):
     :param str filename: the name of the desired log file.
     """
     coloredlogs.install(stream=open(filename, "w+"))
-
-log_to_file("YO")
-l = get_logger(__name__)
-set_logging_level(l, logging.DEBUG)
-l.info("TEST LINE 1")
-l.critical("TEST LINE 2")
-set_logging_level(l, logging.CRITICAL)
-l.info("TEST LINE 3")
-l.critical("TEST LINE 4")
-l.critical("TEST LINE 5")
