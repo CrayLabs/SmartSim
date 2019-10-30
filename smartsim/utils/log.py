@@ -51,9 +51,19 @@ def set_debug_mode():
         get_logger(name).setLevel(logging.NOTSET)
 
 def log_to_file(filename):
-    """Adds a second filestream handler, allowing subsequent logging calls
-    to be sent to filename.
+    """Installs a second filestream handler to the root logger, 
+    allowing subsequent logging calls to be sent to filename.
 
     :param str filename: the name of the desired log file.
     """
-    logging.basicConfig(filename=filename)
+    coloredlogs.install(stream=open(filename, "w+"))
+
+log_to_file("YO")
+l = get_logger(__name__)
+set_logging_level(l, logging.DEBUG)
+l.info("TEST LINE 1")
+l.critical("TEST LINE 2")
+set_logging_level(l, logging.CRITICAL)
+l.info("TEST LINE 3")
+l.critical("TEST LINE 4")
+l.critical("TEST LINE 5")
