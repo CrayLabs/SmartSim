@@ -239,11 +239,14 @@ def test_gen_select_strategy_user_function():
     GEN = Generator(STATE, model_files=base_config)
     #GEN.set_strategy(create_all_permutations)
     GEN.set_strategy(raise_error)
+    strategy_failed_out = False
     try:
         GEN.generate()
     except NotImplementedError:
         #  We should have successfully failed out.
-        pass
+        strategy_failed_out = True
+    
+    assert(strategy_failed_out)
 
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
@@ -268,12 +271,14 @@ def test_gen_select_strategy_user_string():
     GEN = Generator(STATE, model_files=base_config)
     #GEN.set_strategy(create_all_permutations)
     GEN.set_strategy("generation_strategies.raise_error")
+    strategy_failed_out = False
     try:
         GEN.generate()
     except NotImplementedError:
         #  We should have successfully failed out.
-        pass
+        strategy_failed_out = True
 
+    assert(strategy_failed_out)
     # clean up this run/test
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)

@@ -16,10 +16,14 @@ launcher = "local"
 [atm]
     [atm.25]
     value = [20, 25]
+    [atm.5]
+    value = [10, 20]
 
 [atm-2]
     [atm-2.25]
     value = [30, 35]
+    [atm-2.5]
+    value = [30, 40]
 
     
 
