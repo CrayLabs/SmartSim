@@ -79,8 +79,8 @@ information on the state class, please see x
    doc/api/simModule
    doc/api/generator
    doc/api/controller
+   doc/api/client
    doc/api/utilities
-   
    
 
 Indices and tables
