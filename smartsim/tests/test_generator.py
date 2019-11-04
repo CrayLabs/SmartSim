@@ -282,3 +282,29 @@ def test_gen_select_strategy_user_string():
     # clean up this run/test
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
+
+def test_gen_select_strategy_built_in():
+
+    # clean up previous run/test
+    EXPERIMENT = "lammps_atm"
+    experiment_dir = path.join(SS_HOME, EXPERIMENT)
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    # create a state with the LAMMPS configuration file
+    STATE = State(experiment=EXPERIMENT)
+
+    param_dict = {"25": [20, 25]}
+    STATE.create_target("atm", params=param_dict)
+
+    # Supply the generator with necessary files to run the simulation
+    # and generate the specified models
+    base_config = "LAMMPS/in.atm"
+    GEN = Generator(STATE, model_files=base_config)
+    #GEN.set_strategy(create_all_permutations)
+    GEN.set_strategy("all_perm")
+    GEN.generate()
+
+    # clean up this run/test
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)

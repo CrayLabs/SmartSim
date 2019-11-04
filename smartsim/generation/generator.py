@@ -98,10 +98,15 @@ class Generator(SmartSimModule):
             # if we couldn't find the field, choose a reasonable default (all)
             self._set_strategy_from_string()       
 
-    def _set_strategy_from_string(self, permutation_strategy="random"):
-        """Load the strategy for generating model configurations based on the
-           values of the target parameters.  Note that this pulls from the
-           configuration in the State object.
+    def _set_strategy_from_string(self, permutation_strategy="all_perm"):
+        """Sets the strategy for generating model configurations based on the
+           supplied string, `permutation_strategy`.  `permutation_strategy` can
+           be a string corresponding to an internal function name (for the built-in
+           strategies), or of the form `module.function`, where module is importable
+           and has the function `function` available on it.
+
+           :param str permutation_strategy: can be `all_perm`, `step`, or `random` for
+           the built-in functions, or `module.function`.
 
         """
         if permutation_strategy == "all_perm":
@@ -136,9 +141,12 @@ class Generator(SmartSimModule):
 
     def _create_models(self, **kwargs):
         """Populates instances of NumModel class for all target models.
-           NumModels are created via a strategy of which there is only
-           one implemented: all permutations.
+           NumModels are created via the function that is set as the
+           `_permutation_strategy` attribute.  Users may supply their own
+           function (or choose from the available set) via the `set_strategy`
+           function.
 
+           By default, the all permutation function ("all_parm") is used.
            This strategy takes all permutations of available configuration
            values and creates a model for each one.
 
