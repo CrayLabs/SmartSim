@@ -55,5 +55,9 @@ def log_to_file(filename, log_level=None):
     allowing subsequent logging calls to be sent to filename.
 
     :param str filename: the name of the desired log file.
+
+    :param int log_level: as defiend in get_logger.  Can be specified
+                          to allow the file to store more or less verbose
+                          logging information.
     """
     coloredlogs.install(stream=open(filename, "w+"), log_level=log_level)

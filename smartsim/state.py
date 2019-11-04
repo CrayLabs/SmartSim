@@ -28,8 +28,6 @@ class State:
                           The configuration file is optional if the user
                           would rather construct the experiment programmatically
                           in python.
-       :param str log_level: Control verbosity of the logger. Options include
-                             "DEV", "DEBUG", "INFO", "ERROR".
 
     """
 
