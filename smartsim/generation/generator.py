@@ -278,15 +278,23 @@ class Generator(SmartSimModule):
         # a basic, random example.  Unknown performance.
         import random
         # first, check if we've requested more values than possible.
-        # TODO: just check the product of the lengths.
-        if n_models >= len(list(product(*param_values))):
-            # TODO: log a warning, then call _create_all_permutations
-            pass
-        permutations = []
-        for n in range(0, n_models):
-            model_dict = dict(zip(param_names, map(lambda x: x[random.randint(0,len(x)-1)], param_values)))
-            permutations.append(model_dict)
-        return permutations
+        perms = list(product(*param_values))
+        if n_models >= len(perms):
+            # This is literally just _create_all_permutations
+                all_permutations = []
+                for p in perms:
+                    temp_model = dict(zip(param_names, p))
+                    all_permutations.append(temp_model)
+                return all_permutations
+        else:
+            permutations = []
+            permutation_strings = set()
+            while len(permutations) < n_models:
+                model_dict = dict(zip(param_names, map(lambda x: x[random.randint(0,len(x)-1)], param_values)))
+                if str(model_dict) not in permutation_strings:
+                    permutation_strings.add(str(model_dict))
+                    permutations.append(model_dict)
+            return permutations
 
     @staticmethod
     def _one_per_change():
