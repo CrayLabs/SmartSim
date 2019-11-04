@@ -74,8 +74,8 @@ class Generator(SmartSimModule):
            Calling with a callable function results in that function being used as 
            the permutation strategy.
 
-           :param str permutation_strategy: Options are "all_perm", "module.function",
-                                            or a callable function.
+           :param str permutation_strategy: Options are "all_perm", "step", "random",
+                                            "module.function", or a callable function.
 
 
         """
@@ -85,9 +85,10 @@ class Generator(SmartSimModule):
             self._set_strategy_from_string(permutation_strategy)
 
     def _set_strategy_from_config(self):
-        """Load the strategy for generating model configurations based on the
-           values of the target parameters.  Note that this pulls from the
-           configuration in the State object.
+        """Load the strategy for generating model configurations from the supplied
+        configuration; if a user has specified anything, it's passed on to
+        the _set_strategy_from_string function for parsing.  Otherwise,
+        _set_strategy_from_string uses a default value ("all_perm")
         """
         # first, check to see what strategy we've selected in the config, if we've
         # bothered to select one.
@@ -105,8 +106,8 @@ class Generator(SmartSimModule):
            strategies), or of the form `module.function`, where module is importable
            and has the function `function` available on it.
 
-           :param str permutation_strategy: can be `all_perm`, `step`, or `random` for
-           the built-in functions, or `module.function`.
+           :param str permutation_strategy: can be "all_perm", "step", or "random" for
+           the built-in functions, or "module.function".
 
         """
         if permutation_strategy == "all_perm":
@@ -146,7 +147,7 @@ class Generator(SmartSimModule):
            function (or choose from the available set) via the `set_strategy`
            function.
 
-           By default, the all permutation function ("all_parm") is used.
+           By default, the all permutation function ("all_perm") is used.
            This strategy takes all permutations of available configuration
            values and creates a model for each one.
 
