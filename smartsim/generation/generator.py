@@ -11,6 +11,9 @@ from ..error import SmartSimError, SSUnsupportedError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
+from ..utils import get_logger
+logger = get_logger(__name__)
+
 
 class Generator(SmartSimModule):
     """A SmartSimModule that configures and generates instances of a model by reading
@@ -32,12 +35,12 @@ class Generator(SmartSimModule):
            :raises: SmartSimError
         """
         try:
-            self.log("SmartSim State: " + self.get_state())
+            logger.info("SmartSim State: " + self.get_state())
             self._create_models()
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            self.log(e, level="error")
+            logger.error(e)
             raise
 
     def set_tag(self, tag, regex=None):
@@ -133,7 +136,7 @@ class Generator(SmartSimModule):
         try:
             mkdir(exp_path)
         except FileExistsError:
-            self.log("Working in previously created experiment")
+            logger.error("Working in previously created experiment")
 
         # not ok to have already generated the target.
         try:
