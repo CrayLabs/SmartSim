@@ -60,7 +60,7 @@ class ModelWriter:
            simulation.toml"""
         edited = []
         unused_tags = {}
-        for iline, line in enumerate(self.lines):
+        for i, line in enumerate(self.lines):
             search = re.search(self.regex, line)
             if search:
                 tagged_line = search.group(0)
@@ -76,7 +76,7 @@ class ModelWriter:
                     tag = tagged_line.split(self.tag)[1]
                     if tag not in unused_tags:
                         unused_tags[tag] = []
-                    unused_tags[tag].append(iline+1)
+                    unused_tags[tag].append(i+1)
                     edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
