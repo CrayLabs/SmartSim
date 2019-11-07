@@ -283,7 +283,7 @@ def test_gen_select_strategy_user_string():
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
-def test_gen_select_strategy_built_in():
+def test_gen_select_strategy_default():
 
     # clean up previous run/test
     EXPERIMENT = "lammps_atm"

@@ -11,6 +11,8 @@ from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
+from .strategies import _create_all_permutations, _random_permutations, _step_values
+
 
 class Generator(SmartSimModule):
     """A SmartSimModule that configures and generates instances of a model by reading
@@ -90,8 +92,7 @@ class Generator(SmartSimModule):
         the _set_strategy_from_string function for parsing.  Otherwise,
         _set_strategy_from_string uses a default value ("all_perm")
         """
-        # first, check to see what strategy we've selected in the config, if we've
-        # bothered to select one.
+        # check whether the user has selected a function in the config file.
         try:
             permutation_strategy = self.get_config(["model", "permutation"])
             self._set_strategy_from_string(permutation_strategy)
@@ -111,11 +112,11 @@ class Generator(SmartSimModule):
 
         """
         if permutation_strategy == "all_perm":
-            self._permutation_strategy = self._create_all_permutations
+            self._permutation_strategy = _create_all_permutations
         elif permutation_strategy == "step":
-            self._permutation_strategy = self._step_values
+            self._permutation_strategy = _step_values
         elif permutation_strategy == "random":
-            self._permutation_strategy = self._random_permutations
+            self._permutation_strategy = _random_permutations
         else:
             # return a function that the user thinks is appropriate.  Assume module.function
             import importlib
@@ -248,58 +249,3 @@ class Generator(SmartSimModule):
 
                 # write in changes to configurations
                 self._writer.write(model)
-
-
-
-######################
-### run strategies ###
-######################
-
-    # create permutations of all parameters
-    # single model if parameters only have one value
-    @staticmethod
-    def _create_all_permutations(param_names, param_values):
-        perms = list(product(*param_values))
-        all_permutations = []
-        for p in perms:
-            temp_model = dict(zip(param_names, p))
-            all_permutations.append(temp_model)
-        return all_permutations
-
-    @staticmethod
-    def _step_values(param_names, param_values):
-        permutations = []
-        for p in zip(*param_values):
-            permutations.append(dict(zip(param_names, p)))
-        return permutations
-
-    @staticmethod
-    def _random_permutations(param_names, param_values, n_models):
-        # a basic, random example.  Unknown performance.
-        import random
-        # first, check if we've requested more values than possible.
-        perms = list(product(*param_values))
-        if n_models >= len(perms):
-            # This is literally just _create_all_permutations
-                all_permutations = []
-                for p in perms:
-                    temp_model = dict(zip(param_names, p))
-                    all_permutations.append(temp_model)
-                return all_permutations
-        else:
-            permutations = []
-            permutation_strings = set()
-            while len(permutations) < n_models:
-                model_dict = dict(zip(param_names, map(lambda x: x[random.randint(0,len(x)-1)], param_values)))
-                if str(model_dict) not in permutation_strings:
-                    permutation_strings.add(str(model_dict))
-                    permutations.append(model_dict)
-            return permutations
-
-    @staticmethod
-    def _one_per_change():
-        raise NotImplementedError
-
-    @staticmethod
-    def _hpo():
-        raise NotImplementedError
