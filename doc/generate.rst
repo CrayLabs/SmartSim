@@ -122,7 +122,18 @@ file as the keys and the values we wish for models to be configurated and create
 as the values.
 
 Lastly, to generate our models we need to create an instance of a generator, provide
-the tagged configuration files and make a call to ``Generator.generate()``
+the tagged configuration files and make a call to ``Generator.generate()``.  The 
+``generate`` function creates models according to the specified permutation strategy,
+which, by default, is "all permutations": it creates every model possible, given the
+input parameters.  In order to select the strategy, the user may call the
+``Generator.set_strategy()`` function with the following argument types: a string
+corresponding to one of the internal strategies, a string formatted as "module.function"
+that the Generator will then load, or an actual function.
+
+There are three built in permutation strategies: "all_perm", "random", and "step". 
+"all_perm" returns all possible combinations of the input parameters; "random" returns
+``n_models`` models; this can be seen as a random subset of all possible combinations.
+The argument ``n_models`` must be passed to the ``generate`` function
 
 
 .. code-block:: python
