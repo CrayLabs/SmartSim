@@ -125,7 +125,7 @@ Lastly, to generate our models we need to create an instance of a generator, pro
 the tagged configuration files and make a call to ``Generator.generate()``.  The 
 ``generate`` function creates models according to the specified permutation strategy,
 which, by default, is "all permutations": it creates every model possible, given the
-input parameters.  In order to select the strategy, the user may call the
+input parameters.  In order to select the strategy, we may call the
 ``Generator.set_strategy()`` function with the following argument types: a string
 corresponding to one of the internal strategies, a string formatted as "module.function"
 that the Generator will then load, or an actual function.
@@ -153,6 +153,7 @@ The functions must return a list of dictionaries, where each element in the list
 is the dictionary for a model.  For example:
 
 .. code-block:: python
+
   def my_function(param_names, param_values):
     # flagrantly ignore all other parameters.
     return [{ param_names[0] : param_values[0] }]
