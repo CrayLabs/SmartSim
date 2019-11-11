@@ -32,16 +32,21 @@ class Client:
                 return False
         return True
 
-    def get_data(self, key):
+    def get_data(self, key, wait=False, wait_interval=.5):
         """Get the value associated with some key from all the connections registered
            in the orchestrator
 
+           Will return None if the key does not exist. Wait implies that the request
+           should be made until a key by that name is stored in the connection.
+
            :param str key: key of the value being retrieved
+           :param bool wait: flag for polling connection until value appears
+           :param float wait_interval: seconds to wait between polling requests
            :returns bytes: bytes string of the data stored at key
            """
         all_data = []
         for conn in self.connections_in:
-            data = conn.get(key)
+            data = conn.get(key, wait=wait, wait_interval=wait_interval)
             if self._is_multipart(data):
                 multipart_data = self._get_multipart(key, data, conn)
                 all_data.append(multipart_data)
