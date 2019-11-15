@@ -1,5 +1,4 @@
 import sys
-import logging
 import subprocess
 import time
 
@@ -13,6 +12,8 @@ from ..state import State
 from ..simModule import SmartSimModule
 from .job import Job
 
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class Controller(SmartSimModule):
@@ -44,10 +45,10 @@ class Controller(SmartSimModule):
             if self.has_orcestrator():
                 self._launch_orchestrator()
                 self._launch_nodes()
-            self.log("SmartSim State: " + self.get_state())
+            logger.info("SmartSim State: " + self.get_state())
             self._launch_targets(target=target)
         except SmartSimError as e:
-            self.log(e, level="error")
+            logger.error(e)
             raise
 
     def stop_all(self):
@@ -121,7 +122,7 @@ class Controller(SmartSimModule):
             self._check_job(job)
             statuses.append(job.status)
             if verbose:
-                self.log(job)
+                logger.info(job)
         if "RUNNING" in statuses:
             return False
         if "assigned" in statuses:
@@ -145,7 +146,7 @@ class Controller(SmartSimModule):
             self._launcher.make_script(**run_dict, env_vars=env_vars,
                                        script_name=node.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=node.path)
-            self.log("Launching Node: " + node.name)
+            logger.info("Launching Node: " + node.name)
             job = Job(node.name, pid, node)
             self._jobs.append(job)
 
@@ -161,7 +162,7 @@ class Controller(SmartSimModule):
         orc_job_id = self._launcher.submit_and_forget(wd=orc_path)
 
         # add orchestrator to list of jobs
-        self.log("Launching Orchestrator with pid: " + str(orc_job_id))
+        logger.info("Launching Orchestrator with pid: " + str(orc_job_id))
         orc_job = Job("orchestrator", orc_job_id, self.state.orc)
         self._jobs.append(orc_job)
         nodes = self.get_job_nodes(orc_job)[0] # only on one node for now
@@ -185,7 +186,7 @@ class Controller(SmartSimModule):
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_info)
 
-            self.log("Launching Target: " + target.name)
+            logger.info("Launching Target: " + target.name)
             if self._launcher != None:
                 self._run_with_launcher(target, run_dict)
             else:
@@ -311,7 +312,7 @@ class Controller(SmartSimModule):
             self._launcher.make_script(**temp_dict, env_vars=env_vars,
                                        script_name=model.name, clear_previous=True)
             pid = self._launcher.submit_and_forget(wd=model.path)
-            self.log("Process id for " + model.name + " is " + str(pid), level="debug")
+            logger.debug("Process id for " + model.name + " is " + str(pid))
             job = Job(model.name, pid, model)
             self._jobs.append(job)
 

@@ -7,7 +7,7 @@ from smartsim import State, Controller
 def test_train_path_small_data():
     """test the latency for a small amount of data
        in this case we are sending 20 vectors of length 20
-       Average Train Path latency: 0.6775458931922913 (same for both)
+       Average Train Path latency: 0.4821321487426758
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -57,7 +57,7 @@ def test_train_path_2D_huge():
     """test the latency for a small amount of 2D data
        in this case we are sending 20 matricies of shape (2000, 200000)
        Average Train Path latency: 8.110368180274964  (send_data)
-       Average Train Path latency: 2.597576916217804  (send_big_data)
+      Average Train Path latency: 1.9081373810768127  (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":
@@ -74,7 +74,7 @@ def test_train_path_2D_1GB():
     """test the latency for a small amount of 2D data of size 1gb
        in this case we are sending 20 matricies of shape (4000, 30000)
        Average Train Path latency: 17.421100091934203 (send_data)
-       Average Train Path latency: 5.991141140460968  (send_big_data)
+       Average Train Path latency: 5.336440539360046  (send_big_data)
     """
     try:
         if os.environ["HOST"] != "cicero":

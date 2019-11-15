@@ -12,6 +12,8 @@ from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
 from .strategies import _create_all_permutations, _random_permutations, _step_values
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class Generator(SmartSimModule):
@@ -35,14 +37,14 @@ class Generator(SmartSimModule):
            :raises: SmartSimError
         """
         try:
-            self.log("SmartSim State: " + self.get_state())
+            logger.info("SmartSim State: " + self.get_state())
             if self._permutation_strategy == None:
                 self._set_strategy_from_config()
             self._create_models(**kwargs)
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
-            self.log(e, level="error")
+            logger.error(e)
             raise
 
     def set_tag(self, tag, regex=None):
@@ -205,7 +207,7 @@ class Generator(SmartSimModule):
         try:
             mkdir(exp_path)
         except FileExistsError:
-            self.log("Working in previously created experiment")
+            logger.error("Working in previously created experiment")
 
         # not ok to have already generated the target.
         try:

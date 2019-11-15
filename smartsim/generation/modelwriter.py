@@ -6,6 +6,8 @@ from os import path
 
 from ..helpers import get_SSHOME
 from ..error import SSConfigError, SmartSimError
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class ModelWriter:
@@ -57,7 +59,8 @@ class ModelWriter:
         """Adds the configurations specified in the regex syntax or the
            simulation.toml"""
         edited = []
-        for line in self.lines:
+        unused_tags = {}
+        for i, line in enumerate(self.lines):
             search = re.search(self.regex, line)
             if search:
                 tagged_line = search.group(0)
@@ -70,10 +73,15 @@ class ModelWriter:
                 # if a tag is found but is not in this model's configurations
                 # put in placeholder value
                 else:
+                    tag = tagged_line.split(self.tag)[1]
+                    if tag not in unused_tags:
+                        unused_tags[tag] = []
+                    unused_tags[tag].append(i+1)
                     edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
-
+        for tag in unused_tags.keys():
+            logger.warning("TAG: " + tag + " unused on line(s): " + str(unused_tags[tag]))
         self.lines = edited
 
 

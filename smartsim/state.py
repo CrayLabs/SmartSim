@@ -1,4 +1,3 @@
-import logging
 import pickle
 import sys
 import toml
@@ -9,6 +8,9 @@ from .target import Target
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
+
+from .utils import get_logger
+logger = get_logger(__name__)
 
 
 class State:
@@ -26,14 +28,11 @@ class State:
                           The configuration file is optional if the user
                           would rather construct the experiment programmatically
                           in python.
-       :param str log_level: Control verbosity of the logger. Options include
-                             "DEV", "DEBUG", "INFO", "ERROR".
 
     """
 
-    def __init__(self, experiment=None, config=None, log_level="DEV"):
+    def __init__(self, experiment=None, config=None):
         self.current_state = "Initializing"
-        self.__create_logger(log_level)
         self._config = self.read_config(config)
         self.targets = []
         self.nodes = []
@@ -73,7 +72,7 @@ class State:
                 raise SmartSimError(self.current_state,
                                      "Target directory could not be found!")
         except SmartSimError as e:
-            self.logger.error(e)
+            logger.error(e)
             raise
 
 
@@ -101,7 +100,7 @@ class State:
             new_target = Target(name, params, self.experiment, target_path)
             self.targets.append(new_target)
         except SmartSimError as e:
-            self.logger.error(e)
+            logger.error(e)
             raise
 
     def create_model(self, name, target="default_target", params={}, path=None):
@@ -234,7 +233,7 @@ class State:
             try:
                 self.experiment = self._get_toml_config(["model", "experiment"])
             except SSConfigError:
-                self.logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
+                logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
                 raise
         else:
             self.experiment = experiment_name
@@ -252,21 +251,12 @@ class State:
                     self.targets.append(new_target)
             except SSConfigError:
                 if model_targets:
-                    self.logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
+                    logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
                     raise
                 else:
-                    self.logger.info("State created without target, target will have to be created or loaded")
+                    logger.info("State created without target, target will have to be created or loaded")
         else:
-            self.logger.info("State created without target, target will have to be created or loaded")
-
-    def __create_logger(self, log_level):
-        import coloredlogs
-        logger = logging.getLogger(__name__)
-        if log_level == "DEV":
-            coloredlogs.install(level=log_level)
-        else:
-            coloredlogs.install(level=log_level, logger=logger)
-        self.logger = logger
+            logger.info("State created without target, target will have to be created or loaded")
 
     def read_config(self, sim_toml):
         if sim_toml:
@@ -279,11 +269,11 @@ class State:
                     parsed_toml = toml.load(fp)
                     return parsed_toml
             except SSConfigError as e:
-                self.logger.error(e)
+                logger.error(e)
                 raise
             # TODO catch specific toml errors
             except Exception as e:
-                self.logger.error(e)
+                logger.error(e)
                 raise
         else:
             return None

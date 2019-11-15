@@ -18,19 +18,6 @@ class SmartSimModule:
         self.state = state
         self._init_args = kwargs
 
-    def log(self, message, level="info"):
-        """Use the builtin logger to record information during the experiment
-
-           :param str message: The message to be logged
-           :param str level: Defaults to "info". Options are "info", "error", "debug"
-        """
-        if level == "info":
-            self.state.logger.info(message)
-        elif level == "error":
-            self.state.logger.error(message)
-        else:
-            self.state.logger.debug(message)
-
     def get_state(self):
         """Return the current state of the experiment
 
