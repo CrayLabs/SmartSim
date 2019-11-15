@@ -155,7 +155,7 @@ is the dictionary for a model.  For example:
 .. code-block:: python
 
   def my_function(param_names, param_values):
-    # flagrantly ignore all other parameters.
+    # only return the single parameter/value
     return [{ param_names[0] : param_values[0] }]
 
   base_config = "LAMMPS/in.atm"
