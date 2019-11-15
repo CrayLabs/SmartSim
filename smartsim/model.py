@@ -9,6 +9,8 @@ class NumModel:
 
     def __init__(self, name, param_dict, path=None):
         self.name = name
+        if type(param_dict) != dict:
+            raise SmartSimError("Model must be initialized with parameter dictionary!  param_dict is: " + str(param_dict))
         self.param_dict = param_dict
         if path:
             self.set_path(path)

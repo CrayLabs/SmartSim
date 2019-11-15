@@ -7,10 +7,11 @@ from distutils import dir_util
 
 from ..model import NumModel
 from .modelwriter import ModelWriter
-from ..error import SmartSimError, SSUnsupportedError
+from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
+from .strategies import _create_all_permutations, _random_permutations, _step_values
 from ..utils import get_logger
 logger = get_logger(__name__)
 
@@ -26,9 +27,10 @@ class Generator(SmartSimModule):
         super().__init__(state, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
+        self._permutation_strategy = None
 
 
-    def generate(self):
+    def generate(self, **kwargs):
         """Based on the targets and models created by the user through the python
            or TOML interface, configure and generate the model instances.
 
@@ -36,7 +38,9 @@ class Generator(SmartSimModule):
         """
         try:
             logger.info("SmartSim State: " + self.get_state())
-            self._create_models()
+            if self._permutation_strategy == None:
+                self._set_strategy_from_config()
+            self._create_models(**kwargs)
             self._create_experiment()
             self._configure_models()
         except SmartSimError as e:
@@ -61,25 +65,92 @@ class Generator(SmartSimModule):
 
         self._writer._set_tag(tag, regex)
 
-    def select_strategy(self, strategy):
-        """Select the strategy for generating model configurations based on the
+    def set_strategy(self, permutation_strategy):
+        """Load the strategy for generating model configurations based on the
            values of the target parameters.
 
            all_perm creates all possible permutations of the target parameters as
-           individual models. This is the default strategy for the Generator module
+           individual models. This is the default strategy for the Generator module.
 
-           :param str strategy: Options are "all_perm"
+           Calling with a string formatted as "module.function" attempts to use the
+           function, `function`, from the module, `module`.  
+
+           Calling with a callable function results in that function being used as 
+           the permutation strategy.
+
+           :param str permutation_strategy: Options are "all_perm", "step", "random",
+                                            "module.function", or a callable function.
+
 
         """
-        raise NotImplementedError
+        if callable(permutation_strategy):
+            self._permutation_strategy = permutation_strategy
+        else:
+            self._set_strategy_from_string(permutation_strategy)
+
+    def _set_strategy_from_config(self):
+        """Load the strategy for generating model configurations from the supplied
+        configuration; if a user has specified anything, it's passed on to
+        the _set_strategy_from_string function for parsing.  Otherwise,
+        _set_strategy_from_string uses a default value ("all_perm")
+        """
+        # check whether the user has selected a function in the config file.
+        try:
+            permutation_strategy = self.get_config(["model", "permutation"])
+            self._set_strategy_from_string(permutation_strategy)
+        except SSConfigError:
+            # if we couldn't find the field, choose a reasonable default (all)
+            self._set_strategy_from_string()       
+
+    def _set_strategy_from_string(self, permutation_strategy="all_perm"):
+        """Sets the strategy for generating model configurations based on the
+           supplied string, `permutation_strategy`.  `permutation_strategy` can
+           be a string corresponding to an internal function name (for the built-in
+           strategies), or of the form `module.function`, where module is importable
+           and has the function `function` available on it.
+
+           :param str permutation_strategy: can be "all_perm", "step", or "random" for
+           the built-in functions, or "module.function".
+
+        """
+        if permutation_strategy == "all_perm":
+            self._permutation_strategy = _create_all_permutations
+        elif permutation_strategy == "step":
+            self._permutation_strategy = _step_values
+        elif permutation_strategy == "random":
+            self._permutation_strategy = _random_permutations
+        else:
+            # return a function that the user thinks is appropriate.  Assume module.function
+            import importlib
+            try:
+                mod_string, func_string = permutation_strategy.split(".")
+            except:
+                raise SmartSimError(self.current_state,
+                                    "Following string cannot be evaluated to a module.function: ", permutation_strategy)
+            try:
+                mod = importlib.import_module(mod_string)
+            except:
+                raise
+            try:
+                func = getattr(mod, func_string)
+            except:
+                raise
+            if callable(func):
+                self._permutation_strategy = func
+            else:
+                raise SmartSimError(self.current_state,
+                                    "Supplied attribute is not a function: ", func)
 
 
 
-    def _create_models(self):
+    def _create_models(self, **kwargs):
         """Populates instances of NumModel class for all target models.
-           NumModels are created via a strategy of which there is only
-           one implemented: all permutations.
+           NumModels are created via the function that is set as the
+           `_permutation_strategy` attribute.  Users may supply their own
+           function (or choose from the available set) via the `set_strategy`
+           function.
 
+           By default, the all permutation function ("all_perm") is used.
            This strategy takes all permutations of available configuration
            values and creates a model for each one.
 
@@ -122,7 +193,7 @@ class Generator(SmartSimModule):
             names, values = read_model_parameters(target)
             if (len(names) != 0 and len(values) != 0):
                 # TODO Allow for different strategies to be used
-                all_configs = self._create_all_permutations(names, values)
+                all_configs = self._permutation_strategy(names, values, **kwargs)
                 for i, conf in enumerate(all_configs):
                     model_name = "_".join((target.name, str(i)))
                     m = NumModel(model_name, conf, i)
@@ -180,28 +251,3 @@ class Generator(SmartSimModule):
 
                 # write in changes to configurations
                 self._writer.write(model)
-
-
-
-######################
-### run strategies ###
-######################
-
-    # create permutations of all parameters
-    # single model if parameters only have one value
-    @staticmethod
-    def _create_all_permutations(param_names, param_values):
-        perms = list(product(*param_values))
-        all_permutations = []
-        for p in perms:
-            temp_model = dict(zip(param_names, p))
-            all_permutations.append(temp_model)
-        return all_permutations
-
-    @staticmethod
-    def _one_per_change():
-        raise NotImplementedError
-
-    @staticmethod
-    def _hpo():
-        raise NotImplementedError
