@@ -5,12 +5,11 @@
     
 ## Current Features
 
-   - Rapid generation of model instances with custom configurations.
-   - Model agnostic in regards to configuration file format.
-   - Multiple hierarchies of configuration allowing for extensive experimentation
-   - Parallel model execution compatible with Slurm workload manager
-   - Online training and Inference
-   - Model Parameter Optimization(MPO)
+   - Online simulation interaction (Analysis, Visualization, Training, and Inference)
+   - Model Parameter Optimization (MPO)
+   - Compatiable with most simulation models
+   - Rapid, programmatic generation and execution of model instances
+   - User supplied model configuration generation strategies
    
 ## Setup
 
