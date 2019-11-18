@@ -1,0 +1,308 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Client &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Utilities" href="utilities.html" />
+    <link rel="prev" title="Controller" href="controller.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../interfaces.html">Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/online-training.html">Use Machine Learning In Simulation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>Client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/doc/api/client.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-smartsim.client">
+<span id="client"></span><h1>Client<a class="headerlink" href="#module-smartsim.client" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="smartsim.client.Client">
+<em class="property">class </em><code class="sig-prename descclassname">smartsim.client.</code><code class="sig-name descname">Client</code><a class="reference internal" href="../../_modules/smartsim/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>The client class is used to communicate with various SmartSim entities that
+the user defines. Clients can hold multiple connection objects and therefore
+can send and recieve from multiple locations.</p>
+<p>SmartSim creates a distributed global dictionary for each Connection instance.
+The user can store and retrieve data from this global dictionary however they
+please.</p>
+<p>If multiple connections are registered to this specific client, each call to
+get_data(key) will retrieve all data that has been stored under that key for
+each connection.</p>
+<dl class="method">
+<dt id="smartsim.client.Client.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">wait=False</em>, <em class="sig-param">wait_interval=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/client.html#Client.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value associated with some key from all the connections registered
+in the orchestrator</p>
+<p>Will return None if the key does not exist. Wait implies that the request
+should be made until a key by that name is stored in the connection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – key of the value being retrieved</p></li>
+<li><p><strong>wait</strong> (<em>bool</em>) – flag for polling connection until value appears</p></li>
+<li><p><strong>wait_interval</strong> (<em>float</em>) – seconds to wait between polling requests</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns bytes</dt>
+<dd class="field-even"><p>bytes string of the data stored at key</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.client.Client.peek">
+<code class="sig-name descname">peek</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/client.html#Client.peek"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client.peek" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the data has made it to the orchestrator yet</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – key of the value being retrieved</p>
+</dd>
+<dt class="field-even">Returns bool</dt>
+<dd class="field-even"><p>True if data exists within orchestrator for all connections</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.client.Client.send_big_data">
+<code class="sig-name descname">send_big_data</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em>, <em class="sig-param">num_split=4</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/client.html#Client.send_big_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client.send_big_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a big piece of data over the network in many small byte packets.
+The orchestrator currently uses 4 threads so a num_split of 4 is optimal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – key to store data at for retrieval</p></li>
+<li><p><strong>value</strong> (<em>bytes</em>) – bytes to store</p></li>
+<li><p><strong>num_split</strong> (<em>int</em>) – number of splits in byte string</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.client.Client.send_data">
+<code class="sig-name descname">send_data</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/client.html#Client.send_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client.send_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send bytes to be stored at some key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>) – string to store value at</p></li>
+<li><p><strong>value</strong> (<em>bytes</em>) – bytes to store in orchestrator at key</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.client.Client.setup_connections">
+<code class="sig-name descname">setup_connections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/client.html#Client.setup_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.client.Client.setup_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the environment variables specific to this Client instance that have
+been registered by the user in the Orchestrator.
+Setup a connection for each of the registered Clients and leave all connections
+open for sending and recieving data</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="controller.html" class="btn btn-neutral float-left" title="Controller" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

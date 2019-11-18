@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SmartSim &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Interfaces" href="doc/interfaces.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/interfaces.html">Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/online-training.html">Use Machine Learning In Simulation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>SmartSim</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="smartsim">
+<h1>SmartSim<a class="headerlink" href="#smartsim" title="Permalink to this headline">¶</a></h1>
+<p>SmartSim is a library that aides in the convergence of simulation and machine learning.
+The goal of the library is to provide users with the ability to easily and flexibly
+conduct machine learning experiments on simulation model data.</p>
+<p>The library was built with three goals in mind. First, the process of generating
+simulation data accross various models is manual and slow. Each model has their own
+types of configuration files and not all of them are easily parsed. With SmartSim,
+any text based configuration file can be parsed and modified programmatically such
+that many different configurations of a single model can be generated efficently.
+Efficient configuration and generation creates opportunies to explore and optimize
+models through effiecent search algorithms and techniques like Model Parameter
+Optimization (MPO).</p>
+<p>The latter two goals of the library work in tandem: Online training and inference.
+Online training is the process of training a machine learning model on the
+data being produced by a simulation model as the simulation is progressing. Inference
+follows the same logic, but adds a step where data is being passed back into the
+simulation. (fill in more when this is finished)</p>
+<p>SmartSim utilizes a project structure called an <code class="docutils literal notranslate"><span class="pre">experiment</span></code> that holds all of the
+necessary files and data to run multiple simulations. Within each experiment are two
+types of objects that allow a user complete control over how the simulation data is
+generated and/or used. The first is called a <code class="docutils literal notranslate"><span class="pre">target</span></code>. Targets are groups of models
+with similar configurations. Within each target are the actual models. The models
+correspond to directories that house everything from configuration files to simulation
+output.</p>
+<p>A basic project structure with one target and one model looks as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>lammps_atm           # experiment
+└── atm              # target
+    ├── atm_0        # model
+    │   └── in.atm   # model files
+    └── atm_1        # model
+        └── in.atm   # model files
+</pre></div>
+</div>
+<p>SmartSim is broken down into multiple modules that each have a specific purpose, and
+can be combined in many different ways to form unique workflows for specific use cases.</p>
+<p>Each module must be given an instance of the State class. The state class allows for
+each module to know where each part of the experiment are located, retrieve user
+configurations, log to a cental logging system and other functionality. For more
+information on the state class, please see x</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/interfaces.html">Interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/interfaces.html#toml-interface">TOML Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/interfaces.html#python-interface">Python Interface</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Generation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#tagging-and-creation">Tagging and Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#generation-strategies">Generation Strategies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/simulate.html">Simulation Control</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/simulate.html#slurm">Slurm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/simulate.html#local">Local</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/developers.html">Developer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/developers.html#development-setup">Development Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/developers.html#pull-requests">Pull Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/developers.html#installation-instructions">Installation Instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/developers.html#coding-conventions">Coding Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/developers.html#documentation">Documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/online-training.html">Use Machine Learning In Simulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/examples/online-training.html#online-training">Online Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/examples/online-training.html#online-inference">Online Inference</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/utilities.html">Utilities</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="doc/interfaces.html" class="btn btn-neutral float-right" title="Interfaces" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

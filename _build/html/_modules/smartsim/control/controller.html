@@ -1,0 +1,574 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>smartsim.control.controller &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/interfaces.html">Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/online-training.html">Use Machine Learning In Simulation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.control.controller</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.control.controller</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">listdir</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="k">import</span> <span class="n">isdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">join</span>
+<span class="kn">from</span> <span class="nn">launcher</span> <span class="k">import</span> <span class="n">SlurmLauncher</span><span class="p">,</span> <span class="n">PBSLauncher</span>
+
+<span class="kn">from</span> <span class="nn">..helpers</span> <span class="k">import</span> <span class="n">get_SSHOME</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="k">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSConfigError</span><span class="p">,</span> <span class="n">SSUnsupportedError</span>
+<span class="kn">from</span> <span class="nn">..state</span> <span class="k">import</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">..simModule</span> <span class="k">import</span> <span class="n">SmartSimModule</span>
+<span class="kn">from</span> <span class="nn">.job</span> <span class="k">import</span> <span class="n">Job</span>
+
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">get_logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Controller"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller">[docs]</a><span class="k">class</span> <span class="nc">Controller</span><span class="p">(</span><span class="n">SmartSimModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The controller module provides an interface between the numerical model</span>
+<span class="sd">       that is the subject of Smartsim and the underlying workload manager or</span>
+<span class="sd">       run framework. There are currently four methods of execution:</span>
+
+<span class="sd">          1) Local (implemented)</span>
+<span class="sd">          2) Slurm (implemented)</span>
+<span class="sd">          3) PBS   (not implemented)</span>
+
+<span class="sd">       :param State state: A State instance</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="s2">&quot;Simulation Control&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_launcher</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<div class="viewcode-block" id="Controller.start"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start the simulations of all targets using whatever</span>
+<span class="sd">           controller settings have been set through the Controller</span>
+<span class="sd">           initialization or in the SmartSim configuration file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_orcestrator</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_orchestrator</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_nodes</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;SmartSim State: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_launch_targets</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+    <span class="k">def</span> <span class="nf">stop_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pid</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="Controller.get_jobs"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.get_jobs">[docs]</a>    <span class="k">def</span> <span class="nf">get_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the list of jobs that this controller has spawned&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span></div>
+
+<div class="viewcode-block" id="Controller.get_job"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.get_job">[docs]</a>    <span class="k">def</span> <span class="nf">get_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TODO write docs for this&quot;&quot;&quot;</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="n">job</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                <span class="s2">&quot;Job for &quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; not found.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Controller.get_job_nodes"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.get_job_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_job_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the hostname(s) of a job from the allocation</span>
+<span class="sd">           if no job listed, return a dictionary of jobs and nodelists</span>
+
+<span class="sd">           :param Job job: A job instance</span>
+<span class="sd">           :param int wait: time for wait before checking nodelist after job has been launched</span>
+<span class="sd">                            defaults to 5 seconds.</span>
+<span class="sd">           :returns: list of hostnames given a job or dict of job_name -&gt; nodelist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+            <span class="n">node_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">:</span>
+                <span class="n">node_dict</span><span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_job_nodes</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">node_dict</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">Job</span><span class="p">):</span>
+                <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;Argument must be a Job instance&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait</span><span class="p">)</span>
+                <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_job_nodes</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="Controller.poll"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Poll the running simulations and recieve logging</span>
+<span class="sd">           output with the status of the job.</span>
+
+<span class="sd">           :param int interval: number of seconds to wait before polling again</span>
+<span class="sd">           :param bool verbose: set verbosity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_finished</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">all_finished</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+            <span class="n">all_finished</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Controller.finished"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Poll all simulations and return a boolean for</span>
+<span class="sd">           if all jobs are finished or not.</span>
+
+<span class="sd">           :param bool verbose: set verbosity</span>
+<span class="sd">           :returns: True or False for if all models have finished</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO make sure orchestrator doesnt effect this</span>
+        <span class="n">statuses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;RUNNING&quot;</span> <span class="ow">in</span> <span class="n">statuses</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="s2">&quot;assigned&quot;</span> <span class="ow">in</span> <span class="n">statuses</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_launch_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch all of the SmartSimNodes declared by the user&quot;&quot;&quot;</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="c1"># get env_vars for each connection registered by the user</span>
+            <span class="n">env_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">get_connection_env_vars</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="c1"># collect and enter all run settings for Slurm</span>
+            <span class="n">run_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;wd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">path</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;output_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.out&quot;</span><span class="p">)</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;err_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.err&quot;</span><span class="p">)</span>
+
+            <span class="c1"># launch the job and track through job class</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">make_script</span><span class="p">(</span><span class="o">**</span><span class="n">run_dict</span><span class="p">,</span> <span class="n">env_vars</span><span class="o">=</span><span class="n">env_vars</span><span class="p">,</span>
+                                       <span class="n">script_name</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">clear_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">pid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">submit_and_forget</span><span class="p">(</span><span class="n">wd</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Launching Node: &quot;</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pid</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_launch_orchestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch the orchestrator for passing data between targets, models,</span>
+<span class="sd">           and nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">settings</span><span class="p">,</span> <span class="n">orc_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">get_launch_settings</span><span class="p">()</span>
+
+        <span class="c1"># make script and launch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">make_script</span><span class="p">(</span><span class="o">**</span><span class="n">settings</span><span class="p">,</span> <span class="n">script_name</span><span class="o">=</span><span class="s2">&quot;orchestrator&quot;</span><span class="p">,</span> <span class="n">clear_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">orc_job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">submit_and_forget</span><span class="p">(</span><span class="n">wd</span><span class="o">=</span><span class="n">orc_path</span><span class="p">)</span>
+
+        <span class="c1"># add orchestrator to list of jobs</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Launching Orchestrator with pid: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">orc_job_id</span><span class="p">))</span>
+        <span class="n">orc_job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="s2">&quot;orchestrator&quot;</span><span class="p">,</span> <span class="n">orc_job_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orc_job</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job_nodes</span><span class="p">(</span><span class="n">orc_job</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># only on one node for now</span>
+
+        <span class="c1"># get and store the address of the orchestrator database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">junction</span><span class="o">.</span><span class="n">store_db_addr</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_launch_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The entrypoint to simulation for multiple targets. Each target</span>
+<span class="sd">           defines how the models wherein should be run. Each model might</span>
+<span class="sd">           have different parameters but configurations like node count</span>
+<span class="sd">           and ppn are determined by target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_targets</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="s2">&quot;No targets to simulate!&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="n">tar_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_target_run_settings</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="n">run_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_dict</span><span class="p">(</span><span class="n">tar_info</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Launching Target: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_run_with_launcher</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">run_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_run_with_command</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">run_dict</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_build_run_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build a dictionary that will be used to run with the make_script</span>
+<span class="sd">           interface of the poseidon launcher.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_build_run_command</span><span class="p">(</span><span class="n">tar_dict</span><span class="p">,</span> <span class="n">settings</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;run_command + run_args + executable + exe_args&quot;&quot;&quot;</span>
+            <span class="n">run_args</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">exe_args</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="c1"># Experiment level values required for controller to work</span>
+            <span class="n">exe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;executable&quot;</span><span class="p">,</span> <span class="n">tar_dict</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">run_command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;run_command&quot;</span><span class="p">,</span> <span class="n">tar_dict</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="c1"># get run_args</span>
+            <span class="k">if</span> <span class="s2">&quot;run_args&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">run_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="p">[</span><span class="s2">&quot;run_args&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;run_args&quot;</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">run_args</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;run_args&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;run_args&quot;</span> <span class="ow">in</span> <span class="n">tar_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">run_args</span> <span class="o">=</span> <span class="n">tar_dict</span><span class="p">[</span><span class="s2">&quot;run_args&quot;</span><span class="p">]</span>
+
+            <span class="c1"># get exe_args</span>
+            <span class="k">if</span> <span class="s2">&quot;exe_args&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">exe_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="p">[</span><span class="s2">&quot;exe_args&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;exe_args&quot;</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">exe_args</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;exe_args&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;exe_args&quot;</span> <span class="ow">in</span> <span class="n">tar_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">exe_args</span> <span class="o">=</span> <span class="n">tar_dict</span><span class="p">[</span><span class="s2">&quot;exe_args&quot;</span><span class="p">]</span>
+
+
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">run_command</span><span class="p">,</span> <span class="n">run_args</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">exe_args</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
+
+        <span class="n">run_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_settings</span><span class="p">()</span>
+
+            <span class="c1"># target level values optional because there are defaults</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;nodes&quot;</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;ppn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;ppn&quot;</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;partition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="s2">&quot;partition&quot;</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+            <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;cmd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_build_run_command</span><span class="p">(</span><span class="n">tar_info</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">run_dict</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                <span class="s2">&quot;SmartSim could not find following required field: &quot;</span> <span class="o">+</span>
+                                <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">_check_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">tar_info</span><span class="p">,</span> <span class="n">user_settings</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Defines the heirarchy of configuration&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_check_dict</span><span class="p">(</span><span class="n">_dict</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_dict</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">config_value</span> <span class="o">=</span> <span class="n">_check_dict</span><span class="p">(</span><span class="n">user_settings</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="n">init_value</span> <span class="o">=</span> <span class="n">_check_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="n">target_value</span> <span class="o">=</span> <span class="n">_check_dict</span><span class="p">(</span><span class="n">tar_info</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">target_value</span><span class="p">:</span>      <span class="c1"># under [control.target] table or node or orc</span>
+            <span class="k">return</span> <span class="n">target_value</span>
+        <span class="k">elif</span> <span class="n">config_value</span><span class="p">:</span>        <span class="c1"># under [control] table</span>
+            <span class="k">return</span> <span class="n">config_value</span>
+        <span class="k">elif</span> <span class="n">init_value</span><span class="p">:</span>        <span class="c1"># controller init</span>
+            <span class="k">return</span> <span class="n">init_value</span>
+        <span class="k">elif</span> <span class="n">none_ok</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+
+
+    <span class="k">def</span> <span class="nf">_get_target_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a target, returns the path to the folder where that targets</span>
+<span class="sd">           models reside&quot;&quot;&quot;</span>
+        <span class="n">target_dir_path</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_target_dir</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">isdir</span><span class="p">(</span><span class="n">target_dir_path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">target_dir_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                <span class="s2">&quot;Simulation target directory not found: &quot;</span> <span class="o">+</span>
+                                <span class="n">target</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_target_run_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves the [control.&lt;target&gt;] table&quot;&quot;&quot;</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_settings</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tar_info</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">tar_info</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">tar_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">tar_info</span>
+
+    <span class="k">def</span> <span class="nf">_run_with_launcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">run_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch all specified models with the slurm or pbs workload</span>
+<span class="sd">           manager. job_name is the target and enumerated id.</span>
+<span class="sd">           all output and err is logged to the directory that</span>
+<span class="sd">           houses the model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_models</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># get env vars for the connection of models to nodes</span>
+            <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_orcestrator</span><span class="p">():</span>
+                <span class="n">env_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">get_connection_env_vars</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="n">temp_dict</span> <span class="o">=</span> <span class="n">run_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">temp_dict</span><span class="p">[</span><span class="s2">&quot;wd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">path</span>
+            <span class="n">temp_dict</span><span class="p">[</span><span class="s2">&quot;output_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.out&quot;</span><span class="p">)</span>
+            <span class="n">temp_dict</span><span class="p">[</span><span class="s2">&quot;err_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.err&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">make_script</span><span class="p">(</span><span class="o">**</span><span class="n">temp_dict</span><span class="p">,</span> <span class="n">env_vars</span><span class="o">=</span><span class="n">env_vars</span><span class="p">,</span>
+                                       <span class="n">script_name</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">clear_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">pid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">submit_and_forget</span><span class="p">(</span><span class="n">wd</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Process id for &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; is &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">pid</span><span class="p">))</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pid</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_run_with_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">run_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run models without a workload manager directly, instead</span>
+<span class="sd">           using some run_command specified by the user.&quot;&quot;&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;cmd&quot;</span><span class="p">]</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_models</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">run_model</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">run_model</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_check_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Takes in job and sets job properties&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No launcher set&quot;</span><span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_job_id</span><span class="p">()</span>
+        <span class="n">status</span><span class="p">,</span> <span class="n">return_code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">get_job_stat</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">set_return_code</span><span class="p">(</span><span class="n">return_code</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_job_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No launcher set&quot;</span><span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_job_id</span><span class="p">()</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span><span class="o">.</span><span class="n">get_job_nodes</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="k">def</span> <span class="nf">_init_launcher</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run with a specific type of launcher&quot;&quot;&quot;</span>
+        <span class="n">launcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">([</span><span class="s2">&quot;control&quot;</span><span class="p">,</span> <span class="s2">&quot;launcher&quot;</span><span class="p">],</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">launcher</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Init Slurm Launcher wrapper</span>
+            <span class="k">if</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;slurm&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span> <span class="o">=</span> <span class="n">SlurmLauncher</span><span class="o">.</span><span class="n">SlurmLauncher</span><span class="p">()</span>
+            <span class="c1"># Run all targets locally</span>
+            <span class="k">elif</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="ow">or</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                        <span class="s2">&quot;Launcher type not supported: &quot;</span>
+                                        <span class="o">+</span> <span class="n">launcher</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                <span class="s2">&quot;Must provide a &#39;launcher&#39; argument to the Controller&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">([</span><span class="s2">&quot;control&quot;</span><span class="p">],</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">settings</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

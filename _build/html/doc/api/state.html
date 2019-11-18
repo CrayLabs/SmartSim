@@ -1,0 +1,393 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>State &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="SmartSimModule" href="simModule.html" />
+    <link rel="prev" title="Use Machine Learning In Simulation" href="../examples/online-training.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../interfaces.html">Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/online-training.html">Use Machine Learning In Simulation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>State</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/doc/api/state.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-smartsim.state">
+<span id="state"></span><h1>State<a class="headerlink" href="#module-smartsim.state" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="smartsim.state.State">
+<em class="property">class </em><code class="sig-prename descclassname">smartsim.state.</code><code class="sig-name descname">State</code><span class="sig-paren">(</span><em class="sig-param">experiment=None</em>, <em class="sig-param">config=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>The State class holds most of the configurations necessary to run an
+experiment within SmartSim. Upon initialization, State will either
+read and parse the simulation.toml configuration file or will wait
+for the user to call methods to create targets and models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>experiment</strong> (<em>str</em>) – Name of the directory that will house all of
+the created files and directories. Experiment
+name can be set in either the simulation.toml
+or through the state initialization</p></li>
+<li><p><strong>config</strong> (<em>str</em>) – Name of the configuration file for the experiment
+The configuration file is optional if the user
+would rather construct the experiment programmatically
+in python.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="smartsim.state.State.create_model">
+<code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">target='default_target'</em>, <em class="sig-param">params={}</em>, <em class="sig-param">path=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model belonging to a specific target. This function is
+useful for running a small number of models where the model files
+are already in place for execution.</p>
+<p>If the target specified by the argument <cite>target</cite> doesn’t exist,
+a new target is created and added to the state before the model
+is added to the target.  Calls to this function without specifying
+the <cite>target</cite> argument result in the creation/usage a target named
+“default_target”, the default argument for <cite>target</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – name of the model to be created</p></li>
+<li><p><strong>target</strong> (<em>str</em>) – name of the target to place model into</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – dictionary of model parameters</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – (optional) path to model files</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.create_node">
+<code class="sig-name descname">create_node</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">script_path=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SmartSimNode for a specific task. Examples of SmartSimNode
+tasks include training, processing, and inference. Nodes can be used
+to run any task written in any language. The included script/executable
+for nodes often use the Client class to send and recieve data from
+the SmartSim orchestrator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – name of the node to be launched</p></li>
+<li><p><strong>script_path</strong> (<em>str</em>) – <p>path to the script or executable to be launched.
+(default is the current working directory of the</p>
+<blockquote>
+<div><p>SmartSim run script)</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Extra settings for the workload manager can be set by
+inluding keyword arguments such as duration=”1:00:00”
+or nodes=5</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.create_orchestrator">
+<code class="sig-name descname">create_orchestrator</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">port=6379</em>, <em class="sig-param">nodes=1</em>, <em class="sig-param">ppn=1</em>, <em class="sig-param">duration='1:00:00'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_orchestrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_orchestrator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an orchestrator database to faciliate the transfer of data
+for online training and inference. After the orchestrator is created,
+connections between models and nodes can be instantiated through a
+call to State.register_connection().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – name of orchestrator, defaults to “Orchestrator”</p></li>
+<li><p><strong>port</strong> (<em>int</em>) – the port to open database communications on</p></li>
+<li><p><strong>nodes</strong> (<em>int</em>) – number of nodes to distribute the database over
+(currently only works on 1 node)</p></li>
+<li><p><strong>duration</strong> (<em>str</em>) – how long the orchestrator should run for.
+format: H:M:S  e.g. “1:00:00”</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.create_target">
+<code class="sig-name descname">create_target</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a target to be used within one or many of the SmartSim Modules. Targets
+keep track of groups of models. Parameters can be given to a target as well in
+order to generate models based on a combination of parameters and generation
+stategies. For more on generation strategies, see the Generator Class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – name of the new target</p></li>
+<li><p><strong>params</strong> (<em>dict</em>) – dictionary of model parameters to generate models from based
+on a run strategy.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.delete_target">
+<code class="sig-name descname">delete_target</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.delete_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.delete_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a created target from State so that any future calls to SmartSim
+Modules will not include this target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – name of the target to be deleted</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if target doesnt exist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.load_target">
+<code class="sig-name descname">load_target</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">target_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.load_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.load_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pickled target into State for use. The target currently must be from
+the same experiment it originated in. This can be useful if the experiment
+is being conducted over mutliple stages where execution does not all occur
+within the same script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – name of the pickled target</p></li>
+<li><p><strong>target_path</strong> (<em>str</em>) – Path to the pickled target. Defaults to SMARTSIMHOME</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.register_connection">
+<code class="sig-name descname">register_connection</code><span class="sig-paren">(</span><em class="sig-param">sender</em>, <em class="sig-param">reciever</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.register_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.register_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a runtime connection in orchestrator for data to be passed between two
+SmartSim entities. The possible types of connections right now are:</p>
+<blockquote>
+<div><p>Model -&gt; Node
+Node  -&gt; Node
+Node  -&gt; Model</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sender</strong> (<em>str</em>) – name of the created entity with a Client instance to send
+data to a registered counterpart</p></li>
+<li><p><strong>reciever</strong> (<em>str</em>) – name of the created entity that will recieve data by
+making calls to a Client instance.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save each target currently in state as a pickled python object.
+All models within the target are maintained. Targets can be reloaded
+into an experiment through a call to state.load_target.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="simModule.html" class="btn btn-neutral float-right" title="SmartSimModule" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../examples/online-training.html" class="btn btn-neutral float-left" title="Use Machine Learning In Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

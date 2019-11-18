@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Utilities &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="Client" href="client.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../interfaces.html">Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/cp2k.html">Ensembling CP2K Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/online-training.html">Use Machine Learning In Simulation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="state.html">State</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simModule.html">SmartSimModule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generator.html">Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+      <li>Utilities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/doc/api/utilities.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
+<p>A set of utilities designed to make creating, using, and debugging Smart Sim experiments.</p>
+<span class="target" id="module-smartsim.utils.log"></span><dl class="function">
+<dt id="smartsim.utils.log.get_logger">
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">get_logger</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">log_level=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a log handle that has had the appropriate style
+set to ensure logging practices are consistent and clean across the
+code base.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – the name of the desired logger.</p></li>
+<li><p><strong>log_level</strong> (<em>int</em>) – what level to set the logger at.  Valid values are
+defined in the python logging module.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="smartsim.utils.log.log_to_file">
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">log_to_file</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">log_level=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#log_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.log_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Installs a second filestream handler to the root logger,
+allowing subsequent logging calls to be sent to filename.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>str</em>) – the name of the desired log file.</p></li>
+<li><p><strong>log_level</strong> (<em>int</em>) – as defiend in get_logger.  Can be specified
+to allow the file to store more or less verbose
+logging information.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="smartsim.utils.log.set_debug_mode">
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_debug_mode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_debug_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_debug_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the root logger to debug mode, and clears the logging level set
+on other loggers such that they log at the debug level.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="smartsim.utils.log.set_global_logging_level">
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_global_logging_level</code><span class="sig-paren">(</span><em class="sig-param">log_level</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_global_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_global_logging_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the root logging level, which subsequent loggers
+inherit from unless setLevel has been called on them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_level</strong> (<em>int</em>) – as defined in <cite>get_logger</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="smartsim.utils.log.set_logging_level">
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_logging_level</code><span class="sig-paren">(</span><em class="sig-param">logger</em>, <em class="sig-param">log_level</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_logging_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the logging level for an individual logger.  Typically,
+a logger inherits the log_level from root (and is NOTSET).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logger</strong> – the handle to the logger.</p></li>
+<li><p><strong>log_level</strong> (<em>int</em>) – as defined in <cite>get_logger</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="client.html" class="btn btn-neutral float-left" title="Client" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
