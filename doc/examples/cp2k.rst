@@ -1,6 +1,5 @@
 
+Ensembling CP2K Models
+----------------------
 
-Simulation on GPUs
-------------------
-
- - (fill in with docs on using CP2K to generate H20 experiments)
+ - (Show how SmartSim can be used to generate and run ensembles of CP2K experiments)

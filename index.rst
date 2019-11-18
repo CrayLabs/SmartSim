@@ -1,8 +1,8 @@
 .. SmartSim documentation master file, created by
    sphinx-quickstart on Sat Sep 14 15:07:14 2019.
    
-SmartSim Documentation
-======================
+SmartSim
+========
 
 SmartSim is a library that aides in the convergence of simulation and machine learning.
 The goal of the library is to provide users with the ability to easily and flexibly
@@ -65,15 +65,13 @@ information on the state class, please see x
    :maxdepth: 2
    :caption: Examples
 
-   doc/examples/mom6
    doc/examples/cp2k
-   doc/examples/mpo
    doc/examples/online-training
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Modules
+   :caption: API
 
    doc/api/state
    doc/api/simModule

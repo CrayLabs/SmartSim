@@ -6,6 +6,9 @@ For the succientness of the documentation, the examples below will all be using 
 python interface to run experiments.
 
 
+Tagging and Creation
+====================
+
 To generate new instances of a simulation model, find and tag the simulation sepcific
 configuration file. The following experiment will use a particle simulation model
 named ``LAMMPS``. The model configuration file, ``in.atm`` specifies LAMMPS to run
@@ -121,7 +124,10 @@ The parameter dictionary above specifies the placeholder we put into the configu
 file as the keys and the values we wish for models to be configurated and created with
 as the values.
 
-Lastly, to generate our models we need to create an instance of a generator, provide
+Generation Strategies
+=====================
+
+To generate our models we need to create an instance of a generator, provide
 the tagged configuration files and make a call to ``Generator.generate()``.  The 
 ``generate`` function creates models according to the specified permutation strategy,
 which, by default, is "all permutations": it creates every model possible, given the
