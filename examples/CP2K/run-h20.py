@@ -1,7 +1,7 @@
 from smartsim import Controller, Generator, State
 
 # init state
-state= State(experiment="h2o", log_level="DEBUG")
+state= State(experiment="h2o")
 
 # create targets
 target_params = {"2": [10, 15, 20, 25]}
