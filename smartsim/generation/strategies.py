@@ -1,6 +1,7 @@
-######################
-### run strategies ###
-######################
+
+# Generation Strategies
+
+from itertools import product
 
 # create permutations of all parameters
 # single model if parameters only have one value
