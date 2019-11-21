@@ -26,6 +26,13 @@ class Target:
         target_str += "\n"
         return target_str
 
+    def __eq__(self, other):
+        for model_1, model_2 in zip(self.models.values(),
+                                    other.models.values()):
+            if model_1 != model_2:
+                return False
+        return True
+
     def __getitem__(self, model_name):
         return self.models[model_name]
 
