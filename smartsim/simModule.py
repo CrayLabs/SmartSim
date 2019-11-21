@@ -63,7 +63,7 @@ class SmartSimModule:
         """
         try:
             target = self.get_target(target)
-            model = target.get_model[model]
+            model = target[model]
             return model
         # if the target is not found
         except SmartSimError:

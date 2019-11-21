@@ -73,9 +73,9 @@ class Generator(SmartSimModule):
            individual models. This is the default strategy for the Generator module.
 
            Calling with a string formatted as "module.function" attempts to use the
-           function, `function`, from the module, `module`.  
+           function, `function`, from the module, `module`.
 
-           Calling with a callable function results in that function being used as 
+           Calling with a callable function results in that function being used as
            the permutation strategy.
 
            :param str permutation_strategy: Options are "all_perm", "step", "random",
@@ -100,7 +100,7 @@ class Generator(SmartSimModule):
             self._set_strategy_from_string(permutation_strategy)
         except SSConfigError:
             # if we couldn't find the field, choose a reasonable default (all)
-            self._set_strategy_from_string()       
+            self._set_strategy_from_string()
 
     def _set_strategy_from_string(self, permutation_strategy="all_perm"):
         """Sets the strategy for generating model configurations based on the
@@ -125,8 +125,8 @@ class Generator(SmartSimModule):
             try:
                 mod_string, func_string = permutation_strategy.split(".")
             except:
-                raise SmartSimError(self.current_state,
-                                    "Following string cannot be evaluated to a module.function: ", permutation_strategy)
+                raise SmartSimError(self.get_state(),
+                                    "Following string cannot be evaluated to a module.function: " + permutation_strategy)
             try:
                 mod = importlib.import_module(mod_string)
             except:
@@ -138,8 +138,8 @@ class Generator(SmartSimModule):
             if callable(func):
                 self._permutation_strategy = func
             else:
-                raise SmartSimError(self.current_state,
-                                    "Supplied attribute is not a function: ", func)
+                raise SmartSimError(self.get_state(),
+                                    "Supplied attribute is not a function: " + func)
 
 
 
@@ -159,10 +159,9 @@ class Generator(SmartSimModule):
 
         # collect all parameters, names, and settings
         def read_model_parameters(target):
-            target_params = target.get_target_params()
             param_names = []
             parameters = []
-            for name, val in target_params.items():
+            for name, val in target.params.items():
                 param_names.append(name)
 
                 # if it came from a simulation.toml
@@ -220,9 +219,6 @@ class Generator(SmartSimModule):
             raise SmartSimError(self.get_state(),
                         "Models for an experiment by this name have already been generated!")
 
-
-
-
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
@@ -231,13 +227,13 @@ class Generator(SmartSimModule):
         targets = self.get_targets()
 
         for target in targets:
-            target_models = target.get_models()
+            target_models = target.models
 
             # Make target model directories
             for name, model in target_models.items():
                 dst = path.join(exp_path, target.name, name)
                 mkdir(dst)
-                model.set_path(dst)
+                model.path = (dst)
 
                 if not isinstance(listed_configs, list):
                     listed_configs = [listed_configs]

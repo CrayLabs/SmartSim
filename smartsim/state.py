@@ -41,6 +41,21 @@ class State:
         self.orc = None
 
 
+    def __str__(self):
+        state_str = "\n-- State Summary --\n"
+        if len(self.targets) > 0:
+            state_str += "\n-- Targets --"
+            for target in self.targets:
+                state_str += str(target)
+        if len(self.nodes) > 0:
+            state_str += "\n-- Nodes --"
+            for node in self.nodes:
+                state_str += str(node)
+        if self.orc:
+            state_str += str(self.orc)
+        return state_str
+
+
     def load_target(self, name, target_path=None):
         """Load a pickled target into State for use. The target currently must be from
            the same experiment it originated in. This can be useful if the experiment
@@ -203,6 +218,7 @@ class State:
            :param str name: name of the target to be deleted
            :raises SmartSimError: if target doesnt exist
         """
+        # TODO delete the files as well if generated
         target_deleted = False
         for t in self.targets:
             if t.name == name:
@@ -222,6 +238,37 @@ class State:
             file_obj = open(pickle_path, "wb")
             pickle.dump(target, file_obj)
             file_obj.close()
+
+    def get_model(self, model, target):
+        """Get a specific model from a target.
+
+           :param str model: name of the model to return
+           :param str target: name of the target where the model is located
+
+           :returns: NumModel instance
+        """
+        try:
+            target = self.get_target(target)
+            model = target[model]
+            return model
+        # if the target is not found
+        except SmartSimError:
+            raise
+        except KeyError:
+            raise SmartSimError(self.current_state, "Model not found: " + model)
+
+    def get_target(self, target):
+        """Return a specific target from State
+
+           :param str target: Name of the target to return
+
+           :returns: Target instance
+           :raises: SmartSimError
+        """
+        for t in self.targets:
+            if t.name == target:
+                return t
+        raise SmartSimError(self.current_state, "Target not found: " + target)
 
 
     def _get_expr_path(self):

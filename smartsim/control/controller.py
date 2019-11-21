@@ -137,7 +137,7 @@ class Controller(SmartSimModule):
             env_vars = self.state.orc.get_connection_env_vars(node.name)
 
             # collect and enter all run settings for Slurm
-            run_dict = self._build_run_dict(node.get_settings())
+            run_dict = self._build_run_dict(node.settings)
             run_dict["wd"] = node.path
             run_dict["output_file"] = join(node.path, node.name + ".out")
             run_dict["err_file"] = join(node.path, node.name + ".err")
@@ -273,7 +273,7 @@ class Controller(SmartSimModule):
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
            models reside"""
-        target_dir_path = target.get_target_dir()
+        target_dir_path = target.path
         if isdir(target_dir_path):
             return target_dir_path
         else:
@@ -298,7 +298,7 @@ class Controller(SmartSimModule):
            all output and err is logged to the directory that
            houses the model.
         """
-        model_dict = target.get_models()
+        model_dict = target.models
         for _, model in model_dict.items():
             # get env vars for the connection of models to nodes
             env_vars = {}
@@ -321,7 +321,7 @@ class Controller(SmartSimModule):
         """Run models without a workload manager directly, instead
            using some run_command specified by the user."""
         cmd = run_dict["cmd"]
-        model_dict = target.get_models()
+        model_dict = target.models
         for _, model in model_dict.items():
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()

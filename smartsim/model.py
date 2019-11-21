@@ -7,19 +7,24 @@ class NumModel:
        easily.
     """
 
-    def __init__(self, name, param_dict, path=None):
+    def __init__(self, name, params, path=None):
         self.name = name
-        if type(param_dict) != dict:
-            raise SmartSimError("Model must be initialized with parameter dictionary!  param_dict is: " + str(param_dict))
-        self.param_dict = param_dict
+        if type(params) != dict:
+            raise SmartSimError("Model must be initialized with parameter dictionary!  params are: " + str(params))
+        self.params = params
         if path:
-            self.set_path(path)
+            self.path = path
 
-    def get_path(self):
-        return self.path
-
-    def set_path(self, path):
-        self.path = path
-        
     def get_param_value(self, param):
-        return self.param_dict[param]
+        return self.params[param]
+
+    def __eq__(self, other):
+        if self.params == other.params:
+            return True
+        return False
+
+    def __str__(self):
+        model_str = "     " + self.name + "\n"
+        for param, value in self.params.items():
+            model_str += "       " + str(param) + " = " + str(value)  + "\n"
+        return model_str

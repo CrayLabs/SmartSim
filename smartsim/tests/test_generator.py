@@ -16,14 +16,10 @@ def test_gen_duplicate_configs():
 
     # create a state with the LAMMPS configuration file
     STATE = State(config="LAMMPS/simulation.toml")
-
-    # init generator
     GEN = Generator(STATE)
     GEN.generate()
 
-    # assert that experiment directory was created
     assert(path.isdir(experiment_dir))
-
     target_1 = path.join(experiment_dir, "atm")
     target_2 = path.join(experiment_dir, "atm-2")
     assert(path.isdir(target_1))
@@ -191,9 +187,7 @@ def test_overwrite_create_model():
     except SSModelExistsError:
         pass
 
-    # assert that experiment directory was created
     assert(path.isdir(experiment_dir))
-
     target_1 = path.join(experiment_dir, "atm_1")
     target_2 = path.join(experiment_dir, "default_target")
     assert(path.isdir(target_1))
@@ -201,7 +195,6 @@ def test_overwrite_create_model():
 
     target_model_1 = path.join(target_1, "add_1")
     target_model_2 = path.join(target_2, "add_1")
-
     model_dirs = [target_model_1, target_model_2]
 
     # check for model dir and listed configuration file
@@ -303,7 +296,7 @@ def test_gen_select_strategy_default():
     #GEN.set_strategy(create_all_permutations)
     GEN.set_strategy("all_perm")
     GEN.generate()
-    assert(len(STATE.targets[0].get_models()) == 2)
+    assert(len(STATE.targets[0]) == 2)
 
     # clean up this run/test
     if path.isdir(experiment_dir):
@@ -330,7 +323,7 @@ def test_gen_random_strategy():
     #GEN.set_strategy(create_all_permutations)
     GEN.set_strategy("random")
     GEN.generate(n_models=10)
-    assert(len(STATE.targets[0].get_models()) == 2)
+    assert(len(STATE.targets[0]) == 2)
 
     # clean up this run/test
     if path.isdir(experiment_dir):
@@ -354,10 +347,9 @@ def test_gen_step_strategy():
     # and generate the specified models
     base_config = "LAMMPS/in.atm"
     GEN = Generator(STATE, model_files=base_config)
-    #GEN.set_strategy(create_all_permutations)
     GEN.set_strategy("step")
     GEN.generate()
-    assert(len(STATE.targets[0].get_models()) == 3)
+    assert(len(STATE.targets[0]) == 3)
 
     # clean up this run/test
     if path.isdir(experiment_dir):

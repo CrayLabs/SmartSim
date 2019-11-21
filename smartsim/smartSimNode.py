@@ -11,5 +11,8 @@ class SmartSimNode:
         else:
             self.path = os.getcwd()
 
-    def get_settings(self):
-        return self.settings
+    def __str__(self):
+        node_str = "\n   " + self.name + "\n"
+        for param, value in self.settings.items():
+            node_str += " ".join(("    ", str(param), "=" , str(value), "\n"))
+        return node_str
