@@ -9,8 +9,9 @@ class Junction:
 
     def __init__(self):
         self._database_id = 0
-        self.senders = {}  # senders[entity_name] = entity_name
-        self.recievers = {} # recievers[entity_name] = entity_name
+        self.senders = {}  # senders[entity_name] = database_ids
+        self.recievers = {} # recievers[entity_name] = database_ids
+        self.records = {} # records[sender] = reciever
 
     def increment_db_id(self):
         self._database_id += 1
@@ -20,6 +21,8 @@ class Junction:
         self.db_port = str(port)
 
     def register(self, sender, reciever):
+        """register a connection from on entity to another"""
+        self.records[sender] = reciever
         if reciever in self.recievers:
             self.recievers[reciever].append(self._database_id)
         else:
@@ -68,3 +71,10 @@ class Junction:
         data_out = get_connection(entity, self.senders)
         return data_in, data_out
 
+
+    def __str__(self):
+        junction_str = "\n   Connections \n"
+        for sender, reciever in self.records.items():
+            junction_str += " ".join(("    ", sender, " => ", reciever, "\n"))
+        junction_str += "\n"
+        return junction_str

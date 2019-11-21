@@ -41,6 +41,21 @@ class State:
         self.orc = None
 
 
+    def __str__(self):
+        state_str = "\n-- State Summary --\n"
+        if len(self.targets) > 0:
+            state_str += "\n-- Targets --"
+            for target in self.targets:
+                state_str += str(target)
+        if len(self.nodes) > 0:
+            state_str += "\n-- Nodes --"
+            for node in self.nodes:
+                state_str += str(node)
+        if self.orc:
+            state_str += str(self.orc)
+        return state_str
+
+
     def load_target(self, name, target_path=None):
         """Load a pickled target into State for use. The target currently must be from
            the same experiment it originated in. This can be useful if the experiment

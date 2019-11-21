@@ -14,15 +14,15 @@ launcher = "local"
 
 
 [atm]
-    [atm.25]
+    [atm.STEPS]
     value = [20, 25]
-    [atm.5]
+    [atm.THERMO]
     value = [10, 20]
 
 [atm-2]
-    [atm-2.25]
+    [atm-2.STEPS]
     value = [30, 35]
-    [atm-2.5]
+    [atm-2.THERMO]
     value = [30, 40]
 
     

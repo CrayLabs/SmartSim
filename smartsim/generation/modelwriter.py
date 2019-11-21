@@ -23,7 +23,7 @@ class ModelWriter:
         """
 
         # configurations reset each time a new model is introduced
-        for conf_path, _, files in os.walk(model.get_path()):
+        for conf_path, _, files in os.walk(model.path):
             for fn in files:
                 conf = path.join(conf_path, fn)
                 if path.isfile(conf):
@@ -65,8 +65,8 @@ class ModelWriter:
             if search:
                 tagged_line = search.group(0)
                 previous_value = self._get_prev_value(tagged_line)
-                if self._is_target_spec(tagged_line, model.param_dict):
-                    new_val = str(model.param_dict[previous_value])
+                if self._is_target_spec(tagged_line, model.params):
+                    new_val = str(model.params[previous_value])
                     new_line = re.sub(self.regex, new_val, line)
                     edited.append(new_line)
 
