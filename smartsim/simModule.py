@@ -44,7 +44,7 @@ class SmartSimModule:
         for t in self.state.targets:
             if t.name == target:
                 return t
-        raise SmartSimError(self.get_state(), "Target not found: " + target)
+        raise SmartSimError("Target not found: " + target)
 
     def get_nodes(self):
         """Get a list of the nodes declared in State
@@ -69,7 +69,7 @@ class SmartSimModule:
         except SmartSimError:
             raise
         except KeyError:
-            raise SmartSimError(self.get_state(), "Model not found: " + model)
+            raise SmartSimError("Model not found: " + model)
 
     def get_experiment_path(self):
         """Get the path to the experiment where all the targets and models are

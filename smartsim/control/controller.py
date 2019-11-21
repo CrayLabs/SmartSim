@@ -69,8 +69,7 @@ class Controller(SmartSimModule):
                 found = True
                 return job
         if not found:
-            raise SmartSimError(self.get_state(),
-                                "Job for " + name + " not found.")
+            raise SmartSimError("Job for " + name + " not found.")
 
 
     def get_job_nodes(self, job=None, wait=5):
@@ -181,7 +180,7 @@ class Controller(SmartSimModule):
         if target:
             targets = [self.get_target(target)]
         if len(targets) < 1:
-            raise SmartSimError(self.get_state(), "No targets to simulate!")
+            raise SmartSimError("No targets to simulate!")
         for target in targets:
             tar_info = self._get_target_run_settings(target)
             run_dict = self._build_run_dict(tar_info)
@@ -239,8 +238,7 @@ class Controller(SmartSimModule):
 
             return run_dict
         except KeyError as e:
-            raise SSConfigError(self.get_state(),
-                                "SmartSim could not find following required field: " +
+            raise SSConfigError("SmartSim could not find following required field: " +
                                 e.args[0])
 
 
@@ -277,8 +275,7 @@ class Controller(SmartSimModule):
         if isdir(target_dir_path):
             return target_dir_path
         else:
-            raise SmartSimError(self.get_state(),
-                                "Simulation target directory not found: " +
+            raise SmartSimError("Simulation target directory not found: " +
                                 target)
 
 
@@ -354,12 +351,10 @@ class Controller(SmartSimModule):
             elif launcher == "" or launcher == "local":
                 self._launcher = None
             else:
-                raise SSUnsupportedError(self.get_state(),
-                                        "Launcher type not supported: "
+                raise SSUnsupportedError("Launcher type not supported: "
                                         + launcher)
         else:
-            raise SSConfigError(self.get_state(),
-                                "Must provide a 'launcher' argument to the Controller")
+            raise SSConfigError("Must provide a 'launcher' argument to the Controller")
 
     def _get_settings(self):
         settings = self.get_config(["control"], none_ok=True)

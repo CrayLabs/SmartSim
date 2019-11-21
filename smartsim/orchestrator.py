@@ -45,7 +45,7 @@ class Orchestrator:
             path = environ["ORCCONFIG"]
             return path
         except KeyError:
-            raise SSConfigError(self.get_state(), "SmartSim environment not set up!")
+            raise SSConfigError("SmartSim environment not set up!")
 
     def __str__(self):
         orc_str = "\n-- Orchestrator --"

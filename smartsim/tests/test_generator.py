@@ -175,15 +175,13 @@ def test_overwrite_create_model():
     # if we don't, THAT'S when we want to error out.
     try:
         STATE.create_model("add_1", params={"25": 90})
-        raise SmartSimError("Generator testing",
-                            "Model name: add_1 has been incorrectly replaced")
+        raise SmartSimError("Model name: add_1 has been incorrectly replaced")
     except SSModelExistsError:
         pass
 
     try:
         STATE.create_model("add_1", "atm_1", params={"25": 90})
-        raise SmartSimError("Generator testing",
-                            "Model name: add_1 has been incorrectly replaced")
+        raise SmartSimError("Model name: add_1 has been incorrectly replaced")
     except SSModelExistsError:
         pass
 

@@ -125,8 +125,8 @@ class Generator(SmartSimModule):
             try:
                 mod_string, func_string = permutation_strategy.split(".")
             except:
-                raise SmartSimError(self.get_state(),
-                                    "Following string cannot be evaluated to a module.function: " + permutation_strategy)
+                raise SmartSimError("Following string cannot be evaluated to a module.function: "
+                                     + permutation_strategy)
             try:
                 mod = importlib.import_module(mod_string)
             except:
@@ -138,8 +138,7 @@ class Generator(SmartSimModule):
             if callable(func):
                 self._permutation_strategy = func
             else:
-                raise SmartSimError(self.get_state(),
-                                    "Supplied attribute is not a function: " + func)
+                raise SmartSimError("Supplied attribute is not a function: " + func)
 
 
 
@@ -178,8 +177,7 @@ class Generator(SmartSimModule):
                     parameters.append([val])
                 else:
                     # TODO improve this error message
-                    raise SmartSimError(self.get_state(),
-                                        "Incorrect type for target parameters\n" +
+                    raise SmartSimError("Incorrect type for target parameters\n" +
                                         "Must be list, int, or string.")
             return param_names, parameters
 
@@ -216,8 +214,7 @@ class Generator(SmartSimModule):
                 mkdir(target_dir)
 
         except FileExistsError:
-            raise SmartSimError(self.get_state(),
-                        "Models for an experiment by this name have already been generated!")
+            raise SmartSimError("Models for an experiment by this name have already been generated!")
 
     def _configure_models(self):
         """Duplicate the base configurations of target models"""

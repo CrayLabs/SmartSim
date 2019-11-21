@@ -17,5 +17,5 @@ def get_SSHOME():
             SS_HOME += "/"
         return SS_HOME
     except KeyError:
-        raise SmartSimError("Setup", "SmartSim library environment not setup!")
+        raise SmartSimError("SmartSim library environment not setup!")
 

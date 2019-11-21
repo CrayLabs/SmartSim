@@ -78,14 +78,12 @@ class State:
                         err = "Target must be loaded from same experiment \n"
                         msg = "Target experiment: {}   Current experiment: {}".format(target.experiment,
                                                                                        self.experiment)
-                        raise SmartSimError(self.current_state, err+msg)
+                        raise SmartSimError(err+msg)
                     self.targets.append(target)
                 else:
-                    raise SmartSimError(self.current_state,
-                                        "Target, {}, could not be found".format(name))
+                    raise SmartSimError("Target, {}, could not be found".format(name))
             else:
-                raise SmartSimError(self.current_state,
-                                     "Target directory could not be found!")
+                raise SmartSimError("Target directory could not be found!")
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -105,13 +103,11 @@ class State:
         try:
             for target in self.targets:
                 if target.name == name:
-                    raise SmartSimError(self.current_state,
-                                         "A target named " + target.name + " already exists!")
+                    raise SmartSimError("A target named " + target.name + " already exists!")
 
             target_path = path.join(get_SSHOME(), self.experiment, name)
             if path.isdir(target_path):
-                raise SmartSimError(self.current_state,
-                                     "Target directory already exists: " + target_path)
+                raise SmartSimError("Target directory already exists: " + target_path)
             new_target = Target(name, params, self.experiment, target_path)
             self.targets.append(new_target)
         except SmartSimError as e:
@@ -150,8 +146,7 @@ class State:
             self.targets[-1].add_model(model)
             model_added = True
         if not model_added:
-            raise SmartSimError(self.current_state,
-                                "Could not find target by the name of: " + target)
+            raise SmartSimError("Could not find target by the name of: " + target)
 
     def create_orchestrator(self, name=None, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
         """Create an orchestrator database to faciliate the transfer of data
@@ -205,7 +200,7 @@ class State:
                                 making calls to a Client instance.
         """
         if not self.orc:
-            raise SmartSimError(self.current_state, "Create orchestrator to register connections")
+            raise SmartSimError("Create orchestrator to register connections")
         else:
             # TODO check if sender and reciever are registered entities
             # TODO check for illegal connection types. e.g. model to model
@@ -225,8 +220,7 @@ class State:
                 self.targets.remove(t)
                 target_deleted = True
         if not target_deleted:
-            raise SmartSimError(self.current_state,
-                                "Could not delete target: " + name)
+            raise SmartSimError("Could not delete target: " + name)
 
     def save(self):
         """Save each target currently in state as a pickled python object.
@@ -255,7 +249,7 @@ class State:
         except SmartSimError:
             raise
         except KeyError:
-            raise SmartSimError(self.current_state, "Model not found: " + model)
+            raise SmartSimError("Model not found: " + model)
 
     def get_target(self, target):
         """Return a specific target from State
@@ -268,7 +262,7 @@ class State:
         for t in self.targets:
             if t.name == target:
                 return t
-        raise SmartSimError(self.current_state, "Target not found: " + target)
+        raise SmartSimError("Target not found: " + target)
 
 
     def _get_expr_path(self):
@@ -301,9 +295,9 @@ class State:
                     logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
                     raise
                 else:
-                    logger.info("State created without target, target will have to be created or loaded")
+                    logger.debug("State created without target")
         else:
-            logger.info("State created without target, target will have to be created or loaded")
+            logger.debug("State created without target")
 
     def read_config(self, sim_toml):
         if sim_toml:
@@ -311,7 +305,7 @@ class State:
                 file_name = path.join(get_SSHOME(), sim_toml)
                 if not path.isfile(file_name):
                     # path.join returns the joined path, unless sim_toml is an absolute path.
-                    raise SSConfigError(self.current_state, "Could not find configuration file: " + sim_toml)
+                    raise SSConfigError("Could not find configuration file: " + sim_toml)
                 with open(file_name, 'r', encoding='utf-8') as fp:
                     parsed_toml = toml.load(fp)
                     return parsed_toml
@@ -342,8 +336,7 @@ class State:
             if none_ok:
                 return None
             else:
-                raise SSConfigError(self.current_state,
-                                "Could not find required SmartSim field: "
+                raise SSConfigError("Could not find required SmartSim field: "
                                     + toml_path[-1])
         else:
             try:
@@ -365,6 +358,5 @@ class State:
                 parent = val_path.pop(0)
                 return self.__search_config(val_path, config[parent])
         else:
-            raise SSConfigError(self.current_state,
-                                "Could not find required SmartSim field: " + value_path[-1])
+            raise SSConfigError("Could not find required SmartSim field: " + value_path[-1])
 

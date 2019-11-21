@@ -65,9 +65,9 @@ class Client:
         :param bytes value: bytes to store in orchestrator at key
         """
         if type(value) != bytes:
-            raise SmartSimError("Client", "Value sent must be in bytes")
+            raise SmartSimError("Value sent must be in bytes")
         if type(key) != str:
-            raise SmartSimError("Client", "Key must be of string type")
+            raise SmartSimError("Key must be of string type")
         else:
             for conn in self.connections_out:
                 conn.send(key, value)
@@ -81,7 +81,7 @@ class Client:
            :param int num_split: number of splits in byte string
         """
         if type(value) != bytes:
-            raise SmartSimError("Client", "Value sent must be in bytes")
+            raise SmartSimError("Value sent must be in bytes")
         else:
             # send header to be stored
             multipart_header = pickle.dumps("multipart:" + str(num_split))
@@ -123,7 +123,7 @@ class Client:
                     conn.connect(address, port, db)
                     self.connections_out.append(conn)
             except KeyError:
-                raise SmartSimError("Orchestration", "No connections found for client!")
+                raise SmartSimError("No connections found for client!")
             try:
                 # export SSDATAIN="1 2 3 4"
                 data_in = [db for db in os.environ["SSDATAIN"].split()]
@@ -133,9 +133,9 @@ class Client:
                     self.connections_in.append(conn)
             except KeyError:
                 # TODO improve this error message
-                raise SmartSimError("Orchestration", "No connections found for client!")
+                raise SmartSimError("No connections found for client!")
         except KeyError:
-            raise SmartSimError("Orchestration", "No Orchestrator found in setup!")
+            raise SmartSimError("No Orchestrator found in setup!")
 
 
     def _is_multipart(self, data):
