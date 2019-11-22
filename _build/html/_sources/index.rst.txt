@@ -1,28 +1,25 @@
 .. SmartSim documentation master file, created by
    sphinx-quickstart on Sat Sep 14 15:07:14 2019.
-   
+
 SmartSim
 ========
 
-SmartSim is a library that aides in the convergence of simulation and machine learning.
-The goal of the library is to provide users with the ability to easily and flexibly
-conduct machine learning experiments on simulation model data.
+SmartSim is a library that aides in the convergence of simulation and data science.
+The goal of the library is to provide users with the ability to
+conduct data science and machine learning experiments on simulation
+model data in a flexible, online fashion.
 
-The library was built with three goals in mind. First, the process of generating
-simulation data accross various models is manual and slow. Each model has their own
-types of configuration files and not all of them are easily parsed. With SmartSim,
-any text based configuration file can be parsed and modified programmatically such
-that many different configurations of a single model can be generated efficently.
-Efficient configuration and generation creates opportunies to explore and optimize
-models through effiecent search algorithms and techniques like Model Parameter
-Optimization (MPO).
+Prior to SmartSim, operating on simulation model data was a slow and iterative
+process. Users were often required to write large simulation outputs to file
+and perform operations like analysis and visualization after the simulation
+was finished. This manual process has been replaced in SmartSim with a
+data pipeline that allows users to conduct analysis, visualization, ML
+training and much more, while the simulation is running.
 
-The latter two goals of the library work in tandem: Online training and inference.
-Online training is the process of training a machine learning model on the
-data being produced by a simulation model as the simulation is progressing. Inference
-follows the same logic, but adds a step where data is being passed back into the
-simulation. (fill in more when this is finished)
-
+With SmartSim, users can stream data out of their models and operate
+directly on the data at discrete time intervals decided by the user. The
+framework is extremely flexible and can handle largely any process from
+distributed machine learning to more tpyical data anaylsis and visualization.
 
 SmartSim utilizes a project structure called an ``experiment`` that holds all of the
 necessary files and data to run multiple simulations. Within each experiment are two
@@ -43,20 +40,17 @@ A basic project structure with one target and one model looks as follows:
       └── atm_1        # model 
           └── in.atm   # model files
 
-SmartSim is broken down into multiple modules that each have a specific purpose, and
-can be combined in many different ways to form unique workflows for specific use cases.
 
-Each module must be given an instance of the State class. The state class allows for
-each module to know where each part of the experiment are located, retrieve user
-configurations, log to a cental logging system and other functionality. For more
-information on the state class, please see x
+TODO
+ - explain pipeline
+ - KeyDB
+ - nodes
 
 
 .. toctree::
    :maxdepth: 2
    :caption: General
 
-   doc/interfaces
    doc/generate
    doc/simulate
    doc/developers
@@ -79,7 +73,7 @@ information on the state class, please see x
    doc/api/controller
    doc/api/client
    doc/api/utilities
-   
+
 
 Indices and tables
 ==================

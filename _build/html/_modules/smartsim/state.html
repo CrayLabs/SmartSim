@@ -80,7 +80,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../doc/interfaces.html">Interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/generate.html">Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/developers.html">Developer</a></li>
@@ -164,8 +163,7 @@
 <span></span><span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">toml</span>
-<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">mkdir</span><span class="p">,</span> <span class="n">listdir</span>
-<span class="kn">from</span> <span class="nn">.helpers</span> <span class="k">import</span> <span class="n">get_SSHOME</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">mkdir</span><span class="p">,</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">getcwd</span>
 <span class="kn">from</span> <span class="nn">.error</span> <span class="k">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSConfigError</span>
 <span class="kn">from</span> <span class="nn">.target</span> <span class="k">import</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">NumModel</span>
@@ -204,6 +202,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">orc</span> <span class="o">=</span> <span class="kc">None</span>
 
 
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">state_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- State Summary --</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">state_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- Targets --&quot;</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="n">state_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">state_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- Nodes --&quot;</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="n">state_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
+            <span class="n">state_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state_str</span>
+
+
 <div class="viewcode-block" id="State.load_target"><a class="viewcode-back" href="../../doc/api/state.html#smartsim.state.State.load_target">[docs]</a>    <span class="k">def</span> <span class="nf">load_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">target_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Load a pickled target into State for use. The target currently must be from</span>
 <span class="sd">           the same experiment it originated in. This can be useful if the experiment</span>
@@ -211,11 +224,11 @@
 <span class="sd">           within the same script.</span>
 
 <span class="sd">           :param str name: name of the pickled target</span>
-<span class="sd">           :param str target_path: Path to the pickled target. Defaults to SMARTSIMHOME</span>
+<span class="sd">           :param str target_path: Path to the pickled target. Defaults to os.getcwd()</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">tar_dir</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_SSHOME</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">tar_dir</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">target_path</span><span class="p">:</span>
                 <span class="n">tar_dir</span> <span class="o">=</span> <span class="n">target_path</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">tar_dir</span><span class="p">):</span>
@@ -226,14 +239,12 @@
                         <span class="n">err</span> <span class="o">=</span> <span class="s2">&quot;Target must be loaded from same experiment </span><span class="se">\n</span><span class="s2">&quot;</span>
                         <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Target experiment: </span><span class="si">{}</span><span class="s2">   Current experiment: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span>
                                                                                        <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
-                        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span> <span class="n">err</span><span class="o">+</span><span class="n">msg</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="n">err</span><span class="o">+</span><span class="n">msg</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                        <span class="s2">&quot;Target, </span><span class="si">{}</span><span class="s2">, could not be found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target, </span><span class="si">{}</span><span class="s2">, could not be found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                     <span class="s2">&quot;Target directory could not be found!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target directory could not be found!&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">raise</span></div>
@@ -253,13 +264,11 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                         <span class="s2">&quot;A target named &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; already exists!&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;A target named &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; already exists!&quot;</span><span class="p">)</span>
 
-            <span class="n">target_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_SSHOME</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">target_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">target_path</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                     <span class="s2">&quot;Target directory already exists: &quot;</span> <span class="o">+</span> <span class="n">target_path</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target directory already exists: &quot;</span> <span class="o">+</span> <span class="n">target_path</span><span class="p">)</span>
             <span class="n">new_target</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">target_path</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_target</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -298,8 +307,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
             <span class="n">model_added</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">model_added</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                <span class="s2">&quot;Could not find target by the name of: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not find target by the name of: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="State.create_orchestrator"><a class="viewcode-back" href="../../doc/api/state.html#smartsim.state.State.create_orchestrator">[docs]</a>    <span class="k">def</span> <span class="nf">create_orchestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppn</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="s2">&quot;1:00:00&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create an orchestrator database to faciliate the transfer of data</span>
@@ -353,7 +361,7 @@
 <span class="sd">                                making calls to a Client instance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span> <span class="s2">&quot;Create orchestrator to register connections&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Create orchestrator to register connections&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># TODO check if sender and reciever are registered entities</span>
             <span class="c1"># TODO check for illegal connection types. e.g. model to model</span>
@@ -366,14 +374,14 @@
 <span class="sd">           :param str name: name of the target to be deleted</span>
 <span class="sd">           :raises SmartSimError: if target doesnt exist</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO delete the files as well if generated</span>
         <span class="n">target_deleted</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
                 <span class="n">target_deleted</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">target_deleted</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                <span class="s2">&quot;Could not delete target: &quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not delete target: &quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="State.save"><a class="viewcode-back" href="../../doc/api/state.html#smartsim.state.State.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Save each target currently in state as a pickled python object.</span>
@@ -386,9 +394,41 @@
             <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">file_obj</span><span class="p">)</span>
             <span class="n">file_obj</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
+<div class="viewcode-block" id="State.get_model"><a class="viewcode-back" href="../../doc/api/state.html#smartsim.state.State.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a specific model from a target.</span>
 
-    <span class="k">def</span> <span class="nf">_get_expr_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_SSHOME</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+<span class="sd">           :param str model: name of the model to return</span>
+<span class="sd">           :param str target: name of the target where the model is located</span>
+
+<span class="sd">           :returns: NumModel instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">model</span>
+        <span class="c1"># if the target is not found</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Model not found: &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="State.get_target"><a class="viewcode-back" href="../../doc/api/state.html#smartsim.state.State.get_target">[docs]</a>    <span class="k">def</span> <span class="nf">get_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a specific target from State</span>
+
+<span class="sd">           :param str target: Name of the target to return</span>
+
+<span class="sd">           :returns: Target instance</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">t</span>
+        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target not found: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">get_expr_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">expr_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">expr_path</span>
 
 
     <span class="k">def</span> <span class="nf">__set_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">):</span>
@@ -409,7 +449,7 @@
                 <span class="n">model_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_toml_config</span><span class="p">([</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;targets&quot;</span><span class="p">])</span>
                 <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">model_targets</span><span class="p">:</span>
                     <span class="n">param_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_toml_config</span><span class="p">([</span><span class="n">target</span><span class="p">])</span>
-                    <span class="n">target_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_SSHOME</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                    <span class="n">target_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
                     <span class="n">new_target</span> <span class="o">=</span> <span class="n">Target</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">param_dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="n">target_path</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_target</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">SSConfigError</span><span class="p">:</span>
@@ -417,17 +457,17 @@
                     <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No parameter table found for  &quot;</span><span class="o">+</span> <span class="n">target</span><span class="o">+</span> <span class="s2">&quot;e.g. [&quot;</span> <span class="o">+</span> <span class="n">target</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
                     <span class="k">raise</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;State created without target, target will have to be created or loaded&quot;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;State created without target&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;State created without target, target will have to be created or loaded&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;State created without target&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">read_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sim_toml</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sim_toml</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">file_name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_SSHOME</span><span class="p">(),</span> <span class="n">sim_toml</span><span class="p">)</span>
+                <span class="n">file_name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">sim_toml</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
                     <span class="c1"># path.join returns the joined path, unless sim_toml is an absolute path.</span>
-                    <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span> <span class="s2">&quot;Could not find configuration file: &quot;</span> <span class="o">+</span> <span class="n">sim_toml</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;Could not find configuration file: &quot;</span> <span class="o">+</span> <span class="n">sim_toml</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                     <span class="n">parsed_toml</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">parsed_toml</span>
@@ -458,8 +498,7 @@
             <span class="k">if</span> <span class="n">none_ok</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                <span class="s2">&quot;Could not find required SmartSim field: &quot;</span>
+                <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;Could not find required SmartSim field: &quot;</span>
                                     <span class="o">+</span> <span class="n">toml_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -481,8 +520,7 @@
                 <span class="n">parent</span> <span class="o">=</span> <span class="n">val_path</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__search_config</span><span class="p">(</span><span class="n">val_path</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="n">parent</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span>
-                                <span class="s2">&quot;Could not find required SmartSim field: &quot;</span> <span class="o">+</span> <span class="n">value_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;Could not find required SmartSim field: &quot;</span> <span class="o">+</span> <span class="n">value_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
 
 </pre></div>
 

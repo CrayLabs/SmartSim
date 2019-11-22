@@ -82,7 +82,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../interfaces.html">Interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../generate.html">Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
@@ -291,6 +290,40 @@ Modules will not include this target.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="smartsim.state.State.get_model">
+<code class="sig-name descname">get_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.get_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a specific model from a target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>str</em>) – name of the model to return</p></li>
+<li><p><strong>target</strong> (<em>str</em>) – name of the target where the model is located</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NumModel instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="smartsim.state.State.get_target">
+<code class="sig-name descname">get_target</code><span class="sig-paren">(</span><em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.get_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.get_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a specific target from State</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>target</strong> (<em>str</em>) – Name of the target to return</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Target instance</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p>SmartSimError</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="smartsim.state.State.load_target">
 <code class="sig-name descname">load_target</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">target_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.load_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.load_target" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a pickled target into State for use. The target currently must be from
@@ -301,7 +334,7 @@ within the same script.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – name of the pickled target</p></li>
-<li><p><strong>target_path</strong> (<em>str</em>) – Path to the pickled target. Defaults to SMARTSIMHOME</p></li>
+<li><p><strong>target_path</strong> (<em>str</em>) – Path to the pickled target. Defaults to os.getcwd()</p></li>
 </ul>
 </dd>
 </dl>

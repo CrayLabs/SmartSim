@@ -80,7 +80,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../doc/interfaces.html">Interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/generate.html">Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/developers.html">Developer</a></li>
@@ -207,7 +206,7 @@
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">t</span>
-        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="s2">&quot;Target not found: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target not found: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SmartSimModule.get_nodes"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a list of the nodes declared in State</span>
@@ -226,13 +225,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_model</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">model</span>
         <span class="c1"># if the target is not found</span>
         <span class="k">except</span> <span class="n">SmartSimError</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="s2">&quot;Model not found: &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Model not found: &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SmartSimModule.get_experiment_path"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_experiment_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_experiment_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the path to the experiment where all the targets and models are</span>
@@ -240,7 +239,7 @@
 
 <span class="sd">           :returns: Path to experiment</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">_get_expr_path</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_expr_path</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_param</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>

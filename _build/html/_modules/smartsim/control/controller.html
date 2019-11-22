@@ -80,7 +80,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/interfaces.html">Interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
@@ -232,8 +231,7 @@
                 <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">return</span> <span class="n">job</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
-                                <span class="s2">&quot;Job for &quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; not found.&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Job for &quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; not found.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Controller.get_job_nodes"><a class="viewcode-back" href="../../../doc/api/controller.html#smartsim.control.controller.Controller.get_job_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_job_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
@@ -300,7 +298,7 @@
             <span class="n">env_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">get_connection_env_vars</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
             <span class="c1"># collect and enter all run settings for Slurm</span>
-            <span class="n">run_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_settings</span><span class="p">())</span>
+            <span class="n">run_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
             <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;wd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">path</span>
             <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;output_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.out&quot;</span><span class="p">)</span>
             <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;err_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.err&quot;</span><span class="p">)</span>
@@ -344,7 +342,7 @@
         <span class="k">if</span> <span class="n">target</span><span class="p">:</span>
             <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span> <span class="s2">&quot;No targets to simulate!&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No targets to simulate!&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
             <span class="n">tar_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_target_run_settings</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
             <span class="n">run_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_run_dict</span><span class="p">(</span><span class="n">tar_info</span><span class="p">)</span>
@@ -402,8 +400,7 @@
 
             <span class="k">return</span> <span class="n">run_dict</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
-                                <span class="s2">&quot;SmartSim could not find following required field: &quot;</span> <span class="o">+</span>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;SmartSim could not find following required field: &quot;</span> <span class="o">+</span>
                                 <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 
@@ -436,12 +433,11 @@
     <span class="k">def</span> <span class="nf">_get_target_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Given a target, returns the path to the folder where that targets</span>
 <span class="sd">           models reside&quot;&quot;&quot;</span>
-        <span class="n">target_dir_path</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_target_dir</span><span class="p">()</span>
+        <span class="n">target_dir_path</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">path</span>
         <span class="k">if</span> <span class="n">isdir</span><span class="p">(</span><span class="n">target_dir_path</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">target_dir_path</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
-                                <span class="s2">&quot;Simulation target directory not found: &quot;</span> <span class="o">+</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Simulation target directory not found: &quot;</span> <span class="o">+</span>
                                 <span class="n">target</span><span class="p">)</span>
 
 
@@ -461,7 +457,7 @@
 <span class="sd">           all output and err is logged to the directory that</span>
 <span class="sd">           houses the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_models</span><span class="p">()</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">models</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># get env vars for the connection of models to nodes</span>
             <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
@@ -484,7 +480,7 @@
         <span class="sd">&quot;&quot;&quot;Run models without a workload manager directly, instead</span>
 <span class="sd">           using some run_command specified by the user.&quot;&quot;&quot;</span>
         <span class="n">cmd</span> <span class="o">=</span> <span class="n">run_dict</span><span class="p">[</span><span class="s2">&quot;cmd&quot;</span><span class="p">]</span>
-        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get_models</span><span class="p">()</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">models</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">run_model</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">run_model</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
@@ -517,12 +513,10 @@
             <span class="k">elif</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="ow">or</span> <span class="n">launcher</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_launcher</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
-                                        <span class="s2">&quot;Launcher type not supported: &quot;</span>
+                <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span><span class="s2">&quot;Launcher type not supported: &quot;</span>
                                         <span class="o">+</span> <span class="n">launcher</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
-                                <span class="s2">&quot;Must provide a &#39;launcher&#39; argument to the Controller&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;Must provide a &#39;launcher&#39; argument to the Controller&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">([</span><span class="s2">&quot;control&quot;</span><span class="p">],</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

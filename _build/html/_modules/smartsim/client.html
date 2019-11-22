@@ -80,7 +80,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../doc/interfaces.html">Interfaces</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/generate.html">Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../doc/developers.html">Developer</a></li>
@@ -228,9 +227,9 @@
 <span class="sd">        :param bytes value: bytes to store in orchestrator at key</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">bytes</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Client&quot;</span><span class="p">,</span> <span class="s2">&quot;Value sent must be in bytes&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Value sent must be in bytes&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Client&quot;</span><span class="p">,</span> <span class="s2">&quot;Key must be of string type&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Key must be of string type&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">connections_out</span><span class="p">:</span>
                 <span class="n">conn</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
@@ -244,7 +243,7 @@
 <span class="sd">           :param int num_split: number of splits in byte string</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">bytes</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Client&quot;</span><span class="p">,</span> <span class="s2">&quot;Value sent must be in bytes&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Value sent must be in bytes&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># send header to be stored</span>
             <span class="n">multipart_header</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="s2">&quot;multipart:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_split</span><span class="p">))</span>
@@ -286,7 +285,7 @@
                     <span class="n">conn</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connections_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Orchestration&quot;</span><span class="p">,</span> <span class="s2">&quot;No connections found for client!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No connections found for client!&quot;</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># export SSDATAIN=&quot;1 2 3 4&quot;</span>
                 <span class="n">data_in</span> <span class="o">=</span> <span class="p">[</span><span class="n">db</span> <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SSDATAIN&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
@@ -296,9 +295,9 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">connections_in</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                 <span class="c1"># TODO improve this error message</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Orchestration&quot;</span><span class="p">,</span> <span class="s2">&quot;No connections found for client!&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No connections found for client!&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Orchestration&quot;</span><span class="p">,</span> <span class="s2">&quot;No Orchestrator found in setup!&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;No Orchestrator found in setup!&quot;</span><span class="p">)</span></div>
 
 
     <span class="k">def</span> <span class="nf">_is_multipart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
