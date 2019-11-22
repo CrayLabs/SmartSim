@@ -20,7 +20,7 @@ state.create_target("half-deg", params=half_deg_params)
 
 
 # Generate Models
-gen = Generator(state, model_files="MOM6/MOM6_base_config")
+gen = Generator(state, model_files="./MOM6_base_config")
 gen.generate()
 
 control_dict = {"nodes":2,
