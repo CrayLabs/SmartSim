@@ -15,16 +15,11 @@ def test_controller():
             pytest.skip()
         else:
 
-            smartsim_home = environ["SMARTSIMHOME"]
-            experiment_dir = path.join(smartsim_home, "double_gyre")
-            # Cleanup from previous test
+            experiment_dir = "./double_gyre"
             if path.isdir(experiment_dir):
                 rmtree(experiment_dir)
 
-            # initialize State
             state= State(experiment="double_gyre")
-
-            # Create targets
             quar_deg_params = {"KH": [200, 400],
                                "KHTH": [200, 400],
                                "x_resolution": 80,
@@ -38,10 +33,7 @@ def test_controller():
             state.create_target("quar-deg", params=quar_deg_params)
             state.create_target("half-deg", params=half_deg_params)
 
-
-
-            # Generate Models
-            gen = Generator(state, model_files="MOM6/MOM6_base_config")
+            gen = Generator(state, model_files="../../examples/MOM6/MOM6_base_config")
             gen.generate()
 
             control_dict = {"nodes":2,
