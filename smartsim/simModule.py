@@ -77,7 +77,7 @@ class SmartSimModule:
 
            :returns: Path to experiment
         """
-        return self.state._get_expr_path()
+        return self.state.get_expr_path()
 
 
     def get_config(self, conf_param, none_ok=False):

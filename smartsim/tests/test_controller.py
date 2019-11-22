@@ -22,7 +22,7 @@ def test_controller():
                 rmtree(experiment_dir)
 
             # initialize State
-            state= State(experiment="double_gyre", log_level="DEBUG")
+            state= State(experiment="double_gyre")
 
             # Create targets
             quar_deg_params = {"KH": [200, 400],

@@ -198,23 +198,23 @@ class Generator(SmartSimModule):
 
     def _create_experiment(self):
         """Creates the directory structure for the simulations"""
+        #TODO: add argument to override target creation
         exp_path = self.get_experiment_path()
 
         # ok to have already created an experiment
-        try:
+        if not path.isdir(exp_path):
             mkdir(exp_path)
-        except FileExistsError:
+        else:
             logger.error("Working in previously created experiment")
 
         # not ok to have already generated the target.
-        try:
-            targets = self.get_targets()
-            for target in targets:
-                target_dir = path.join(exp_path, target.name)
+        targets = self.get_targets()
+        for target in targets:
+            target_dir = path.join(exp_path, target.name)
+            if not path.isdir(target_dir):
                 mkdir(target_dir)
-
-        except FileExistsError:
-            raise SmartSimError("Models for an experiment by this name have already been generated!")
+            else:
+                raise SmartSimError("Models for an experiment by this name have already been generated!")
 
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
@@ -236,7 +236,7 @@ class Generator(SmartSimModule):
                     listed_configs = [listed_configs]
                 for config in listed_configs:
                     dst_path = path.join(dst, path.basename(config))
-                    config_path = path.join(get_SSHOME(), config)
+                    config_path = path.join(getcwd(), config)
                     if path.isdir(config_path):
                         dir_util.copy_tree(config_path, dst)
                     else:

@@ -1,6 +1,6 @@
 from smartsim import Controller, Generator, State
 
-STATE = State(config="LAMMPS/simulation.toml")
+STATE = State(config="./simulation.toml")
 
 # Data Generation Phase
 GEN = Generator(STATE)

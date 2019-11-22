@@ -2,7 +2,7 @@
 [model]
 name = "LAMMPS"
 targets = ["atm", "atm-2"]
-model_files = ["LAMMPS/in.atm"]
+model_files = ["./in.atm"]
 experiment = "lammps_atm"
 
 [control]
@@ -24,8 +24,6 @@ launcher = "local"
     value = [30, 35]
     [atm-2.THERMO]
     value = [30, 40]
-
-    
 
 
 

@@ -1,8 +1,7 @@
 import pickle
 import sys
 import toml
-from os import path, mkdir, listdir
-from .helpers import get_SSHOME
+from os import path, mkdir, listdir, getcwd
 from .error import SmartSimError, SSConfigError
 from .target import Target
 from .model import NumModel
@@ -63,11 +62,11 @@ class State:
            within the same script.
 
            :param str name: name of the pickled target
-           :param str target_path: Path to the pickled target. Defaults to SMARTSIMHOME
+           :param str target_path: Path to the pickled target. Defaults to os.getcwd()
 
         """
         try:
-            tar_dir = path.join(get_SSHOME(), self.experiment, name)
+            tar_dir = path.join(getcwd(), self.experiment, name)
             if target_path:
                 tar_dir = target_path
             if path.isdir(tar_dir):
@@ -105,7 +104,7 @@ class State:
                 if target.name == name:
                     raise SmartSimError("A target named " + target.name + " already exists!")
 
-            target_path = path.join(get_SSHOME(), self.experiment, name)
+            target_path = path.join(getcwd(), self.experiment, name)
             if path.isdir(target_path):
                 raise SmartSimError("Target directory already exists: " + target_path)
             new_target = Target(name, params, self.experiment, target_path)
@@ -265,8 +264,9 @@ class State:
         raise SmartSimError("Target not found: " + target)
 
 
-    def _get_expr_path(self):
-        return path.join(get_SSHOME(), self.experiment)
+    def get_expr_path(self):
+        expr_path = path.join(getcwd(), self.experiment)
+        return expr_path
 
 
     def __set_experiment(self, experiment_name):
@@ -287,7 +287,7 @@ class State:
                 model_targets = self._get_toml_config(["model", "targets"])
                 for target in model_targets:
                     param_dict = self._get_toml_config([target])
-                    target_path = path.join(get_SSHOME(), self.experiment, target)
+                    target_path = path.join(getcwd(), self.experiment, target)
                     new_target = Target(target, param_dict, self.experiment, target_path)
                     self.targets.append(new_target)
             except SSConfigError:
@@ -302,7 +302,7 @@ class State:
     def read_config(self, sim_toml):
         if sim_toml:
             try:
-                file_name = path.join(get_SSHOME(), sim_toml)
+                file_name = path.join(getcwd(), sim_toml)
                 if not path.isfile(file_name):
                     # path.join returns the joined path, unless sim_toml is an absolute path.
                     raise SSConfigError("Could not find configuration file: " + sim_toml)
