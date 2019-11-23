@@ -5,7 +5,7 @@ from ..error import SmartSimError, SSModelExistsError
 import pytest
 
 
-def test_generator_python_interface():
+def test_generator_basic():
     """Test for the creation of the experiment directory structure when both create_target
     and create_model are used (programmatic interface)."""
 

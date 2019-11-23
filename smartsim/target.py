@@ -4,13 +4,16 @@ from .error import SSModelExistsError
 
 class Target:
 
-    def __init__(self, name, params, experiment_name, target_dir_path):
+    def __init__(self, name, params, experiment, path, run_settings=None):
         self.name = name
         self.params = params
-        self.path = target_dir_path
-        self.experiment = experiment_name
+        self.path = path
+        self.experiment = experiment
         self.models = {}
-
+        if run_settings:
+            self.run_settings = run_settings
+        else:
+            self.run_settings = dict()
 
     def add_model(self, model):
         if model.name in self.models:

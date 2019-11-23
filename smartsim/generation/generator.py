@@ -39,7 +39,7 @@ class Generator(SmartSimModule):
         try:
             logger.info("SmartSim State: " + self.get_state())
             if self._permutation_strategy == None:
-                self._set_strategy_from_config()
+                self._set_strategy_from_string()
             self._create_models(**kwargs)
             self._create_experiment()
             self._configure_models()
@@ -88,19 +88,6 @@ class Generator(SmartSimModule):
         else:
             self._set_strategy_from_string(permutation_strategy)
 
-    def _set_strategy_from_config(self):
-        """Load the strategy for generating model configurations from the supplied
-        configuration; if a user has specified anything, it's passed on to
-        the _set_strategy_from_string function for parsing.  Otherwise,
-        _set_strategy_from_string uses a default value ("all_perm")
-        """
-        # check whether the user has selected a function in the config file.
-        try:
-            permutation_strategy = self.get_config(["model", "permutation"])
-            self._set_strategy_from_string(permutation_strategy)
-        except SSConfigError:
-            # if we couldn't find the field, choose a reasonable default (all)
-            self._set_strategy_from_string()
 
     def _set_strategy_from_string(self, permutation_strategy="all_perm"):
         """Sets the strategy for generating model configurations based on the
@@ -219,7 +206,7 @@ class Generator(SmartSimModule):
     def _configure_models(self):
         """Duplicate the base configurations of target models"""
 
-        listed_configs = self.get_config(["model", "model_files"])
+        listed_configs = self.get_config("model_files")
         exp_path = self.get_experiment_path()
         targets = self.get_targets()
 
