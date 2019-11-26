@@ -19,9 +19,7 @@ class State:
        construct data pipelines.
 
        :param str experiment: Name of the directory that will house all of
-                              the created files and directories. Experiment
-                              name can be set in either the simulation.toml
-                              or through the state initialization
+                              the created files and directories.
     """
 
     def __init__(self, experiment):
@@ -80,7 +78,7 @@ class State:
             raise
 
 
-    def create_target(self, name, params={}):
+    def create_target(self, name, params={}, run_settings=None):
         """Create a target to be used within one or many of the SmartSim Modules. Targets
            keep track of groups of models. Parameters can be given to a target as well in
            order to generate models based on a combination of parameters and generation
@@ -99,7 +97,7 @@ class State:
             target_path = path.join(getcwd(), self.experiment, name)
             if path.isdir(target_path):
                 raise SmartSimError("Target directory already exists: " + target_path)
-            new_target = Target(name, params, self.experiment, target_path)
+            new_target = Target(name, params, self.experiment, target_path, run_settings)
             self.targets.append(new_target)
         except SmartSimError as e:
             logger.error(e)
@@ -119,10 +117,12 @@ class State:
            :param str name: name of the model to be created
            :param str target: name of the target to place model into
            :param dict params: dictionary of model parameters
-           :param str path: (optional) path to model files
+           :param str path: (optional) path to model files, defaults to os.getcwd()
         """
         model_added = False
         target_exists = False
+        if not path:
+            path = getcwd()
         for t in self.targets:
             if t.name == target:
                 target_exists = True

@@ -31,8 +31,8 @@ class Generator(SmartSimModule):
 
 
     def generate(self, **kwargs):
-        """Based on the targets and models created by the user through the python
-           or TOML interface, configure and generate the model instances.
+        """Based on the targets and models created by the user,
+           configure and generate the model and target instances.
 
            :raises: SmartSimError
         """

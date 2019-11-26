@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class Controller(SmartSimModule):
     """The controller module provides an interface between the numerical model
        that is the subject of Smartsim and the underlying workload manager or
-       run framework. There are currently four methods of execution:
+       run framework. There are currently three methods of execution:
 
           1) Local (implemented)
           2) Slurm (implemented)
@@ -116,15 +116,18 @@ class Controller(SmartSimModule):
            :returns: True or False for if all models have finished
         """
         # TODO make sure orchestrator doesnt effect this
+        # TODO make sure NOTFOUND doesnt cause infinite loop
         statuses = []
         for job in self._jobs:
             self._check_job(job)
-            statuses.append(job.status)
+            statuses.append(job.status.strip())
             if verbose:
                 logger.info(job)
         if "RUNNING" in statuses:
             return False
         if "assigned" in statuses:
+            return False
+        if "NOTFOUND" in statuses:
             return False
         return True
 
@@ -224,7 +227,7 @@ class Controller(SmartSimModule):
             return run_dict
         except KeyError as e:
             raise SSConfigError("SmartSim could not find following required field: " +
-                                e.args[0])
+                                e.args[0]) from e
 
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets

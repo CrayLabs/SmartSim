@@ -91,7 +91,7 @@ class SmartSimModule:
             if none_ok:
                 return None
             else:
-                raise KeyError
+                raise KeyError(param)
 
 
     def has_orchestrator(self):
