@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class Controller(SmartSimModule):
     """The controller module provides an interface between the numerical model
        that is the subject of Smartsim and the underlying workload manager or
-       run framework. There are currently four methods of execution:
+       run framework. There are currently three methods of execution:
 
           1) Local (implemented)
           2) Slurm (implemented)
@@ -42,7 +42,7 @@ class Controller(SmartSimModule):
            initialization or in the SmartSim configuration file.
         """
         try:
-            if self.has_orcestrator():
+            if self.has_orchestrator():
                 self._launch_orchestrator()
                 self._launch_nodes()
             logger.info("SmartSim State: " + self.get_state())
@@ -116,15 +116,18 @@ class Controller(SmartSimModule):
            :returns: True or False for if all models have finished
         """
         # TODO make sure orchestrator doesnt effect this
+        # TODO make sure NOTFOUND doesnt cause infinite loop
         statuses = []
         for job in self._jobs:
             self._check_job(job)
-            statuses.append(job.status)
+            statuses.append(job.status.strip())
             if verbose:
                 logger.info(job)
         if "RUNNING" in statuses:
             return False
         if "assigned" in statuses:
+            return False
+        if "NOTFOUND" in statuses:
             return False
         return True
 
@@ -182,8 +185,7 @@ class Controller(SmartSimModule):
         if len(targets) < 1:
             raise SmartSimError("No targets to simulate!")
         for target in targets:
-            tar_info = self._get_target_run_settings(target)
-            run_dict = self._build_run_dict(tar_info)
+            run_dict = self._build_run_dict(target.run_settings)
 
             logger.info("Launching Target: " + target.name)
             if self._launcher != None:
@@ -196,77 +198,36 @@ class Controller(SmartSimModule):
         """Build a dictionary that will be used to run with the make_script
            interface of the poseidon launcher."""
 
-        def _build_run_command(tar_dict, settings):
+        def _build_run_command(tar_dict):
             """run_command + run_args + executable + exe_args"""
-            run_args = ""
-            exe_args = ""
 
             # Experiment level values required for controller to work
-            exe = self._check_value("executable", tar_dict, settings, none_ok=False)
-            run_command = self._check_value("run_command", tar_dict, settings, none_ok=False)
+            exe = self.get_config("executable", aux=tar_dict, none_ok=False)
+            run_command = self.get_config("run_command", aux=tar_dict, none_ok=False)
 
-            # get run_args
-            if "run_args" in self._init_args.keys():
-                run_args = self._init_args["run_args"]
-            if "run_args" in settings.keys():
-                run_args = settings["run_args"]
-            if "run_args" in tar_dict.keys():
-                run_args = tar_dict["run_args"]
-
-            # get exe_args
-            if "exe_args" in self._init_args.keys():
-                exe_args = self._init_args["exe_args"]
-            if "exe_args" in settings.keys():
-                exe_args = settings["exe_args"]
-            if "exe_args" in tar_dict.keys():
-                exe_args = tar_dict["exe_args"]
-
+            run_args = self.get_config("run_args", aux=tar_dict, none_ok=True)
+            exe_args = self.get_config("exe_args", aux=tar_dict, none_ok=True)
+            if not exe_args:
+                exe_args = ""
+            if not run_args:
+                run_args = ""
 
             cmd = " ".join((run_command, run_args, exe, exe_args))
             return [cmd]
 
         run_dict = {}
         try:
-            settings = self._get_settings()
-
             # target level values optional because there are defaults
-            run_dict["nodes"] = self._check_value("nodes", tar_info, settings)
-            run_dict["ppn"] = self._check_value("ppn", tar_info, settings)
-            run_dict["duration"] = self._check_value("duration", tar_info, settings)
-            run_dict["partition"] = self._check_value("partition", tar_info, settings)
-            run_dict["cmd"] = _build_run_command(tar_info, settings)
+            run_dict["nodes"] = self.get_config("nodes", aux=tar_info, none_ok=True)
+            run_dict["ppn"] = self.get_config("ppn", aux=tar_info, none_ok=True)
+            run_dict["duration"] = self.get_config("duration", aux=tar_info, none_ok=True)
+            run_dict["partition"] = self.get_config("partition", aux=tar_info, none_ok=True)
+            run_dict["cmd"] = _build_run_command(tar_info)
 
             return run_dict
         except KeyError as e:
             raise SSConfigError("SmartSim could not find following required field: " +
-                                e.args[0])
-
-
-    def _check_value(self, arg, tar_info, user_settings, none_ok=True):
-        """Defines the heirarchy of configuration"""
-
-        def _check_dict(_dict, arg):
-            try:
-                return _dict[arg]
-            except KeyError:
-                return None
-
-        config_value = _check_dict(user_settings, arg)
-        init_value = _check_dict(self._init_args, arg)
-        target_value = _check_dict(tar_info, arg)
-
-        if target_value:      # under [control.target] table or node or orc
-            return target_value
-        elif config_value:        # under [control] table
-            return config_value
-        elif init_value:        # controller init
-            return init_value
-        elif none_ok:
-            return None
-        else:
-            raise KeyError(arg)
-
-
+                                e.args[0]) from e
 
     def _get_target_path(self, target):
         """Given a target, returns the path to the folder where that targets
@@ -278,17 +239,6 @@ class Controller(SmartSimModule):
             raise SmartSimError("Simulation target directory not found: " +
                                 target)
 
-
-    def _get_target_run_settings(self, target):
-        """Retrieves the [control.<target>] table"""
-        settings = self._get_settings()
-        try:
-            tar_info = settings[target.name]
-            return tar_info
-        except KeyError:
-            tar_info = dict()
-            return tar_info
-
     def _run_with_launcher(self, target, run_dict):
         """Launch all specified models with the slurm or pbs workload
            manager. job_name is the target and enumerated id.
@@ -299,7 +249,7 @@ class Controller(SmartSimModule):
         for _, model in model_dict.items():
             # get env vars for the connection of models to nodes
             env_vars = {}
-            if self.has_orcestrator():
+            if self.has_orchestrator():
                 env_vars = self.state.orc.get_connection_env_vars(model.name)
 
             temp_dict = run_dict.copy()
@@ -342,7 +292,7 @@ class Controller(SmartSimModule):
 
     def _init_launcher(self):
         """Run with a specific type of launcher"""
-        launcher = self.get_config(["control", "launcher"], none_ok=True)
+        launcher = self.get_config("launcher", none_ok=True)
         if launcher is not None:
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
@@ -355,10 +305,3 @@ class Controller(SmartSimModule):
                                         + launcher)
         else:
             raise SSConfigError("Must provide a 'launcher' argument to the Controller")
-
-    def _get_settings(self):
-        settings = self.get_config(["control"], none_ok=True)
-        if settings:
-            return settings
-        else:
-            return dict()

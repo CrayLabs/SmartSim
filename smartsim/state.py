@@ -14,29 +14,19 @@ logger = get_logger(__name__)
 
 class State:
     """The State class holds most of the configurations necessary to run an
-       experiment within SmartSim. Upon initialization, State will either
-       read and parse the simulation.toml configuration file or will wait
-       for the user to call methods to create targets and models.
-
+       experiment within SmartSim. State is responsible for the creation
+       and storage of SmartSim entities such as models that are used to
+       construct data pipelines.
 
        :param str experiment: Name of the directory that will house all of
-                              the created files and directories. Experiment
-                              name can be set in either the simulation.toml
-                              or through the state initialization
-       :param str config: Name of the configuration file for the experiment
-                          The configuration file is optional if the user
-                          would rather construct the experiment programmatically
-                          in python.
-
+                              the created files and directories.
     """
 
-    def __init__(self, experiment=None, config=None):
+    def __init__(self, experiment):
         self.current_state = "Initializing"
-        self._config = self.read_config(config)
+        self.experiment = experiment
         self.targets = []
         self.nodes = []
-        self.__set_experiment(experiment)
-        self.__init_targets()
         self.orc = None
 
 
@@ -88,7 +78,7 @@ class State:
             raise
 
 
-    def create_target(self, name, params={}):
+    def create_target(self, name, params={}, run_settings=None):
         """Create a target to be used within one or many of the SmartSim Modules. Targets
            keep track of groups of models. Parameters can be given to a target as well in
            order to generate models based on a combination of parameters and generation
@@ -107,7 +97,7 @@ class State:
             target_path = path.join(getcwd(), self.experiment, name)
             if path.isdir(target_path):
                 raise SmartSimError("Target directory already exists: " + target_path)
-            new_target = Target(name, params, self.experiment, target_path)
+            new_target = Target(name, params, self.experiment, target_path, run_settings)
             self.targets.append(new_target)
         except SmartSimError as e:
             logger.error(e)
@@ -127,10 +117,12 @@ class State:
            :param str name: name of the model to be created
            :param str target: name of the target to place model into
            :param dict params: dictionary of model parameters
-           :param str path: (optional) path to model files
+           :param str path: (optional) path to model files, defaults to os.getcwd()
         """
         model_added = False
         target_exists = False
+        if not path:
+            path = getcwd()
         for t in self.targets:
             if t.name == target:
                 target_exists = True
@@ -228,6 +220,8 @@ class State:
         """
         for target in self.targets:
             pickle_path = path.join(target.path, target.name + ".pickle")
+            if not path.isdir(path.join(target.path, target.name)):
+                raise SmartSimError("Targets must be generated in order to save them")
             file_obj = open(pickle_path, "wb")
             pickle.dump(target, file_obj)
             file_obj.close()
@@ -267,96 +261,3 @@ class State:
     def get_expr_path(self):
         expr_path = path.join(getcwd(), self.experiment)
         return expr_path
-
-
-    def __set_experiment(self, experiment_name):
-        if not experiment_name:
-            try:
-                self.experiment = self._get_toml_config(["model", "experiment"])
-            except SSConfigError:
-                logger.error("Experiment name must be defined in either simulation.toml or in state initialization")
-                raise
-        else:
-            self.experiment = experiment_name
-
-
-    def __init_targets(self):
-        """Load targets if they are present within the simulation.toml"""
-        if self._config:
-            try:
-                model_targets = self._get_toml_config(["model", "targets"])
-                for target in model_targets:
-                    param_dict = self._get_toml_config([target])
-                    target_path = path.join(getcwd(), self.experiment, target)
-                    new_target = Target(target, param_dict, self.experiment, target_path)
-                    self.targets.append(new_target)
-            except SSConfigError:
-                if model_targets:
-                    logger.error("No parameter table found for  "+ target+ "e.g. [" + target + "]")
-                    raise
-                else:
-                    logger.debug("State created without target")
-        else:
-            logger.debug("State created without target")
-
-    def read_config(self, sim_toml):
-        if sim_toml:
-            try:
-                file_name = path.join(getcwd(), sim_toml)
-                if not path.isfile(file_name):
-                    # path.join returns the joined path, unless sim_toml is an absolute path.
-                    raise SSConfigError("Could not find configuration file: " + sim_toml)
-                with open(file_name, 'r', encoding='utf-8') as fp:
-                    parsed_toml = toml.load(fp)
-                    return parsed_toml
-            except SSConfigError as e:
-                logger.error(e)
-                raise
-            # TODO catch specific toml errors
-            except Exception as e:
-                logger.error(e)
-                raise
-        else:
-            return None
-
-    def _get_toml_config(self, toml_path, none_ok=False):
-        """Searches for configurations in the simulation.toml
-
-           Args
-             toml_path (list): a list of strings containing path to config
-             none_ok (bool): ok for value not to be present
-
-           Returns
-             a configuration value if present
-             an error if no value/config and none_ok = False
-             None if no value/config and none_ok = True
-        """
-        # Search global configuration file
-        if not self._config:
-            if none_ok:
-                return None
-            else:
-                raise SSConfigError("Could not find required SmartSim field: "
-                                    + toml_path[-1])
-        else:
-            try:
-                top_level = self.__search_config(toml_path, self._config)
-                return top_level
-            except SSConfigError:
-                if none_ok:
-                    return None
-                else:
-                    raise
-
-    def __search_config(self, value_path, config):
-        val_path = value_path.copy()
-        # Helper method of _get_config
-        if val_path[0] in config.keys():
-            if len(val_path) == 1:
-                return config[val_path[0]]
-            else:
-                parent = val_path.pop(0)
-                return self.__search_config(val_path, config[parent])
-        else:
-            raise SSConfigError("Could not find required SmartSim field: " + value_path[-1])
-

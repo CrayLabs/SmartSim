@@ -5,44 +5,7 @@ from ..error import SmartSimError, SSModelExistsError
 import pytest
 
 
-def test_generator_toml():
-    """Test for the creation of the experiment directory structure"""
-
-    # Skip due to the fact that we dont want to support toml moving forward
-    pytest.skip()
-
-    # clean up previous run/test
-    experiment_dir = path.join("./lammps_atm")
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-    # create a state with the LAMMPS configuration file
-    STATE = State(config="../../examples/LAMMPS/simulation.toml")
-    GEN = Generator(STATE)
-    GEN.generate()
-
-    assert(path.isdir(experiment_dir))
-    target_1 = path.join(experiment_dir, "atm")
-    target_2 = path.join(experiment_dir, "atm-2")
-    assert(path.isdir(target_1))
-    assert(path.isdir(target_2))
-
-    target_1_model_1 = path.join(target_1, "atm_0")
-    target_1_model_2 = path.join(target_1, "atm_1")
-    target_2_model_1 = path.join(target_2, "atm-2_0")
-    target_2_model_2 = path.join(target_2, "atm-2_1")
-
-    model_dirs = [target_1_model_1, target_1_model_2,
-                  target_2_model_1, target_2_model_2]
-    # check for model dir and listed configuration file
-    for model in model_dirs:
-        assert(path.isdir(model))
-        assert(path.isfile(path.join(model, "in.atm")))
-
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-def test_generator_python_interface():
+def test_generator_basic():
     """Test for the creation of the experiment directory structure when both create_target
     and create_model are used (programmatic interface)."""
 

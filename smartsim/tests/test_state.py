@@ -55,14 +55,6 @@ def test_delete_target():
     state.delete_target("test-target")
     assert(len(state.targets) == 0)
 
-def test_save_target():
-    # wait for path refactor to include this
-    assert(True)
-
-def test_load_target():
-    # wait for path refactor to include this
-    assert(True)
-
 def test_create_node():
     state = State(experiment="test")
     state.create_node("test-node", getcwd())

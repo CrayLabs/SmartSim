@@ -26,6 +26,9 @@ class SmartSimModule:
         """
         return self.state.current_state
 
+    def set_state(self, new_state):
+        self.state.current_state = new_state
+
     def get_targets(self):
         """Get a list of the targets created by the user.
 
@@ -41,10 +44,7 @@ class SmartSimModule:
            :returns: Target instance
            :raises: SmartSimError
         """
-        for t in self.state.targets:
-            if t.name == target:
-                return t
-        raise SmartSimError("Target not found: " + target)
+        return self.state.get_target(target)
 
     def get_nodes(self):
         """Get a list of the nodes declared in State
@@ -61,15 +61,7 @@ class SmartSimModule:
 
            :returns: NumModel instance
         """
-        try:
-            target = self.get_target(target)
-            model = target[model]
-            return model
-        # if the target is not found
-        except SmartSimError:
-            raise
-        except KeyError:
-            raise SmartSimError("Model not found: " + model)
+        return self.state.get_model(model, target)
 
     def get_experiment_path(self):
         """Get the path to the experiment where all the targets and models are
@@ -80,22 +72,31 @@ class SmartSimModule:
         return self.state.get_expr_path()
 
 
-    def get_config(self, conf_param, none_ok=False):
-        to_find = conf_param
-        if isinstance(to_find, list):
-            to_find = conf_param[-1]
-            if to_find in self._init_args.keys():
-                return self._init_args[to_find]
-        # if not in init args search simulation.toml
-        return self.state._get_toml_config(conf_param, none_ok=none_ok)
+    def get_config(self, param, aux=None, none_ok=False):
+        """Search for a configuration parameter in the initialization
+           of a SmartSimModule. Also search through an auxiliry dictionary
+           in some cases.
+
+           :param str param: parameter to search for
+           :param dict aux: auxiliry dictionary to search through (default=None)
+           :param bool none_ok: ok to return none if param is not present (default=False)
+           :raises KeyError:
+           :returns: param if present
+        """
+        if aux and param in aux.keys():
+            return aux[param]
+        elif param in self._init_args.keys():
+            return self._init_args[param]
+        else:
+            if none_ok:
+                return None
+            else:
+                raise KeyError(param)
 
 
-    def has_orcestrator(self):
+    def has_orchestrator(self):
         """Has the orchestrator been initialized by the user"""
         if self.state.orc:
             return True
         else:
             return False
-
-    def set_state(self, new_state):
-        self.state.current_state = new_state
