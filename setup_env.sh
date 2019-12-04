@@ -13,16 +13,27 @@ fi
 if [[ ":$PYTHONPATH:" != *"$(pwd)"* ]]; then
     echo "Adding current directory to the python path"
     export PYTHONPATH="$(pwd):${PYTHONPATH}"
-    echo "New PYTHONPATH:"
-    echo $PYTHONPATH
 else
-    echo "$(pwd) already found in PYTHONPATH:"
-    echo "$PYTHONPATH"
+    echo "SmartSim found in PYTHONPATH"
 fi
 
-# Setup the Smart Simulation library environment variables
-export SMARTSIMHOME="$(pwd)/examples/"
-echo "SmartSim Home set to: $(pwd)/examples/"
+found_keydb=$(which keydb-server > /dev/null 2<&1)
+if [[ -x "$found_keydb" ]] ; then
+    echo "KeyDB is installed"
+else
+    if [[ -d "./KeyDB" ]] ; then
+        echo "KeyDB has already been downloaded"
+        export PATH="$(pwd)/KeyDB/src:${PATH}"
+        echo "Added KeyDB to PATH"
+    else
+        echo "Installing KeyDB"
+        git clone https://github.com/JohnSully/KeyDB.git --branch v5.1.1 --depth=1
+        cd KeyDB/ && make
+        cd ..
+        echo "Finished installing KeyDB"
+    fi
+fi
+
 
 export ORCCONFIG="$(pwd)/smartsim/"
 echo "SmartSim orchestrator config set to $(pwd)/smartsim/smartsimdb.conf"

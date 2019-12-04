@@ -1,8 +1,7 @@
 # Smart-Sim Library
 
     A library of tools dedicated to accelerating the convergence of AI and numerical simulation models.
-    
-    
+
 ## Current Features
 
    - Online simulation interaction (Analysis, Visualization, Training, and Inference)
@@ -10,7 +9,7 @@
    - Compatiable with most simulation models
    - Rapid, programmatic generation and execution of model instances
    - User supplied model configuration generation strategies
-   
+
 ## Setup
 
    - Clone the git repository
@@ -19,13 +18,6 @@
       > cd Smart-Sim && source setup_env.sh
    - Install Dependencies
       > pip install -r requirements.txt
-   - Install Launcher
-      > cd && git clone https://stash.us.cray.com/scm/ard/poseidon-launcher.git
-   - Go in poseidon-launcher and setup
-      > cd poseidon-launcher && source setenv.sh   # currently requires a patch as well
-   - Install KeyDB
-      > git clone https://github.com/JohnSully/KeyDB && cd KeyDB && make
-      > cd src && export PATH=$PATH:$(pwd) # or add to .bashrc/.zshrc
 
 ## Run LAMMPS example
 
@@ -33,6 +25,3 @@
       > cd /examples/LAMMPS/
    - Run the LAMMPS example script
       > python run.py
-
-
-   

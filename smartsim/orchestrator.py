@@ -1,6 +1,5 @@
 
 from .error import SSConfigError, SmartSimError
-from launcher import SlurmLauncher, PBSLauncher
 from .junction import Junction
 
 from os import path, getcwd, environ
