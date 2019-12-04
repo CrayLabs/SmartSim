@@ -20,9 +20,5 @@ WORKDIR ~/.ss
 ADD dist/SmartSim-0.1.0.tar.gz .
 RUN cd SmartSim-0.1.0 && pip3 install -r requirements.txt && /bin/bash setup_env.sh
 
-#Get and Setup launcher
-RUN git clone https://stash.us.cray.com/scm/ard/poseidon-launcher.git launcher
-RUN cd launcher && /bin/bash setenv.sh
-
 # Start the bash
 RUN chmod a+rwx /etc/bash.bashrc

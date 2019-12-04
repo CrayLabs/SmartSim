@@ -18,9 +18,6 @@
       > cd Smart-Sim && source setup_env.sh
    - Install Dependencies
       > pip install -r requirements.txt
-   - Install KeyDB
-      > git clone https://github.com/JohnSully/KeyDB && cd KeyDB && make
-      > cd src && export PATH=$PATH:$(pwd) # or add to .bashrc/.zshrc
 
 ## Run LAMMPS example
 
