@@ -26,13 +26,15 @@ class Controller(SmartSimModule):
           3) PBS   (not implemented)
 
        :param State state: A State instance
+       :param str launcher: The launcher type.  Accepted
+                            options are 'local', and 'slurm'
 
     """
 
-    def __init__(self, state, **kwargs):
+    def __init__(self, state, launcher=None, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
-        self._init_launcher()
+        self._init_launcher(launcher)
         self._jobs = []
 
 
@@ -290,15 +292,14 @@ class Controller(SmartSimModule):
         nodes = self._launcher.get_job_nodes(job_id)
         return nodes
 
-    def _init_launcher(self):
+    def _init_launcher(self, launcher):
         """Run with a specific type of launcher"""
-        launcher = self.get_config("launcher", none_ok=True)
         if launcher is not None:
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
                 self._launcher = SlurmLauncher.SlurmLauncher()
             # Run all targets locally
-            elif launcher == "" or launcher == "local":
+            elif launcher == "local":
                 self._launcher = None
             else:
                 raise SSUnsupportedError("Launcher type not supported: "

@@ -7,9 +7,6 @@ from smartsim.generation.modelwriter import ModelWriter
 from distutils import dir_util
 import filecmp
 
-# will error out if not set
-SS_HOME = environ['SMARTSIMHOME']
-
 def test_write_easy_configs():
 
     param_dict = {

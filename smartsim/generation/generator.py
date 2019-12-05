@@ -21,19 +21,26 @@ class Generator(SmartSimModule):
        and writing model files that have been tagged by the user.
 
        :param State state: A State instance
+       :param list model_files: The model files for the experiment.  Optional
+                               if model files are not needed for execution. Argument
+                               can be a file, directory, or a list of files
+       :param str strategy: The permutation strategy for generating models within targets.
+                            Options are "all_perm", "random", "step", or a callable function.
+                            defaults to "all_perm"
     """
 
-    def __init__(self, state, **kwargs):
-        super().__init__(state, **kwargs)
+    def __init__(self, state, model_files=None, strategy="all_perm", **kwargs):
+        super().__init__(state, model_files=model_files, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
-        self._permutation_strategy = None
+        self._permutation_strategy = strategy
 
 
     def generate(self, **kwargs):
         """Based on the targets and models created by the user,
            configure and generate the model and target instances.
 
+           :param dict kwargs: optional key word arguments passed to permutation strategy.
            :raises: SmartSimError
         """
         try:
@@ -82,9 +89,7 @@ class Generator(SmartSimModule):
            :raises SSUnsupportedError: if strategy is not supported by SmartSim
 
         """
-        if not permutation_strategy:
-            self._permutation_strategy = create_all_permutations
-        elif permutation_strategy == "all_perm":
+        if permutation_strategy == "all_perm":
             self._permutation_strategy = create_all_permutations
         elif permutation_strategy == "step":
             self._permutation_strategy = step_values
@@ -135,15 +140,12 @@ class Generator(SmartSimModule):
                                         "Must be list, int, or string.")
             return param_names, parameters
 
-
-        # init model classes to hold parameter information
         targets = self.get_targets()
         for target in targets:
             # if this call returns empty lists, we shouldn't continue.
             # This is useful for empty targets where the user makes models.
             names, values = read_model_parameters(target)
             if (len(names) != 0 and len(values) != 0):
-                # TODO Allow for different strategies to be used
                 all_configs = self._permutation_strategy(names, values, **kwargs)
                 for i, conf in enumerate(all_configs):
                     model_name = "_".join((target.name, str(i)))
@@ -186,15 +188,16 @@ class Generator(SmartSimModule):
                 mkdir(dst)
                 model.path = (dst)
 
-                if not isinstance(listed_configs, list):
-                    listed_configs = [listed_configs]
-                for config in listed_configs:
-                    dst_path = path.join(dst, path.basename(config))
-                    config_path = path.join(getcwd(), config)
-                    if path.isdir(config_path):
-                        dir_util.copy_tree(config_path, dst)
-                    else:
-                        shutil.copyfile(config_path, dst_path)
+                if listed_configs:
+                    if not isinstance(listed_configs, list):
+                        listed_configs = [listed_configs]
+                    for config in listed_configs:
+                        dst_path = path.join(dst, path.basename(config))
+                        config_path = path.join(getcwd(), config)
+                        if path.isdir(config_path):
+                            dir_util.copy_tree(config_path, dst)
+                        else:
+                            shutil.copyfile(config_path, dst_path)
 
-                # write in changes to configurations
-                self._writer.write(model)
+                    # write in changes to configurations
+                    self._writer.write(model)
