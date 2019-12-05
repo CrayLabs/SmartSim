@@ -1,6 +1,5 @@
 import pickle
 import sys
-import toml
 from os import path, mkdir, listdir, getcwd
 from .error import SmartSimError, SSConfigError
 from .target import Target
