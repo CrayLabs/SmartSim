@@ -11,7 +11,7 @@ from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
-from .strategies import _create_all_permutations, _random_permutations, _step_values
+from .strategies import create_all_permutations, random_permutations, step_values
 from ..utils import get_logger
 logger = get_logger(__name__)
 
@@ -38,8 +38,7 @@ class Generator(SmartSimModule):
         """
         try:
             logger.info("SmartSim State: " + self.get_state())
-            if self._permutation_strategy == None:
-                self._set_strategy_from_string()
+            self.set_strategy(self._permutation_strategy)
             self._create_models(**kwargs)
             self._create_experiment()
             self._configure_models()
@@ -79,54 +78,22 @@ class Generator(SmartSimModule):
            the permutation strategy.
 
            :param str permutation_strategy: Options are "all_perm", "step", "random",
-                                            "module.function", or a callable function.
-
+                                            or a callable function.
+           :raises SSUnsupportedError: if strategy is not supported by SmartSim
 
         """
-        if callable(permutation_strategy):
+        if not permutation_strategy:
+            self._permutation_strategy = create_all_permutations
+        elif permutation_strategy == "all_perm":
+            self._permutation_strategy = create_all_permutations
+        elif permutation_strategy == "step":
+            self._permutation_strategy = step_values
+        elif permutation_strategy == "random":
+            self._permutation_strategy = random_permutations
+        elif callable(permutation_strategy):
             self._permutation_strategy = permutation_strategy
         else:
-            self._set_strategy_from_string(permutation_strategy)
-
-
-    def _set_strategy_from_string(self, permutation_strategy="all_perm"):
-        """Sets the strategy for generating model configurations based on the
-           supplied string, `permutation_strategy`.  `permutation_strategy` can
-           be a string corresponding to an internal function name (for the built-in
-           strategies), or of the form `module.function`, where module is importable
-           and has the function `function` available on it.
-
-           :param str permutation_strategy: can be "all_perm", "step", or "random" for
-           the built-in functions, or "module.function".
-
-        """
-        if permutation_strategy == "all_perm":
-            self._permutation_strategy = _create_all_permutations
-        elif permutation_strategy == "step":
-            self._permutation_strategy = _step_values
-        elif permutation_strategy == "random":
-            self._permutation_strategy = _random_permutations
-        else:
-            # return a function that the user thinks is appropriate.  Assume module.function
-            import importlib
-            try:
-                mod_string, func_string = permutation_strategy.split(".")
-            except:
-                raise SmartSimError("Following string cannot be evaluated to a module.function: "
-                                     + permutation_strategy)
-            try:
-                mod = importlib.import_module(mod_string)
-            except:
-                raise
-            try:
-                func = getattr(mod, func_string)
-            except:
-                raise
-            if callable(func):
-                self._permutation_strategy = func
-            else:
-                raise SmartSimError("Supplied attribute is not a function: " + func)
-
+            raise SSUnsupportedError("Permutation Strategy given is not supported: " + str(permutation_strategy))
 
 
     def _create_models(self, **kwargs):

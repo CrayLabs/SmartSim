@@ -176,30 +176,6 @@ def test_gen_select_strategy_user_function():
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
-def test_gen_select_strategy_user_string():
-
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-    STATE = State(experiment="lammps_atm")
-
-    param_dict = {"25": [20, 25]}
-    STATE.create_target("atm", params=param_dict)
-
-    base_config = "../../examples/LAMMPS/in.atm"
-    GEN = Generator(STATE, model_files=base_config)
-    GEN.set_strategy("generation_strategies.raise_error")
-    strategy_failed_out = False
-    try:
-        GEN.generate()
-    except NotImplementedError:
-        #  We should have successfully failed out.
-        strategy_failed_out = True
-
-    assert(strategy_failed_out)
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
 
 def test_gen_select_strategy_default():
 
