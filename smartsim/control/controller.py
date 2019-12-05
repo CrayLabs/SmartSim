@@ -4,7 +4,7 @@ import time
 
 from os import listdir
 from os.path import isdir, basename, join
-from ..launcher import SlurmLauncher, PBSLauncher
+from ..launcher import SlurmLauncher
 
 from ..helpers import get_SSHOME
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
