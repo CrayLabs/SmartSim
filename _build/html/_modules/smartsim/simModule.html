@@ -188,6 +188,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">current_state</span></div>
 
+    <span class="k">def</span> <span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">new_state</span>
+
 <div class="viewcode-block" id="SmartSimModule.get_targets"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_targets">[docs]</a>    <span class="k">def</span> <span class="nf">get_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a list of the targets created by the user.</span>
 
@@ -203,10 +206,7 @@
 <span class="sd">           :returns: Target instance</span>
 <span class="sd">           :raises: SmartSimError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">target</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">t</span>
-        <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Target not found: &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SmartSimModule.get_nodes"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">get_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get a list of the nodes declared in State</span>
@@ -223,15 +223,7 @@
 
 <span class="sd">           :returns: NumModel instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">model</span>
-        <span class="c1"># if the target is not found</span>
-        <span class="k">except</span> <span class="n">SmartSimError</span><span class="p">:</span>
-            <span class="k">raise</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Model not found: &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SmartSimModule.get_experiment_path"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_experiment_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_experiment_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the path to the experiment where all the targets and models are</span>
@@ -242,25 +234,34 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_expr_path</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_param</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="n">to_find</span> <span class="o">=</span> <span class="n">conf_param</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">to_find</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">to_find</span> <span class="o">=</span> <span class="n">conf_param</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">to_find</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="p">[</span><span class="n">to_find</span><span class="p">]</span>
-        <span class="c1"># if not in init args search simulation.toml</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">_get_toml_config</span><span class="p">(</span><span class="n">conf_param</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="n">none_ok</span><span class="p">)</span>
+<div class="viewcode-block" id="SmartSimModule.get_config"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.get_config">[docs]</a>    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">aux</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">none_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Search for a configuration parameter in the initialization</span>
+<span class="sd">           of a SmartSimModule. Also search through an auxiliry dictionary</span>
+<span class="sd">           in some cases.</span>
+
+<span class="sd">           :param str param: parameter to search for</span>
+<span class="sd">           :param dict aux: auxiliry dictionary to search through (default=None)</span>
+<span class="sd">           :param bool none_ok: ok to return none if param is not present (default=False)</span>
+<span class="sd">           :raises KeyError:</span>
+<span class="sd">           :returns: param if present</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aux</span> <span class="ow">and</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">aux</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">none_ok</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">param</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SmartSimModule.has_orcestrator"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.has_orcestrator">[docs]</a>    <span class="k">def</span> <span class="nf">has_orcestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SmartSimModule.has_orchestrator"><a class="viewcode-back" href="../../doc/api/simModule.html#smartsim.simModule.SmartSimModule.has_orchestrator">[docs]</a>    <span class="k">def</span> <span class="nf">has_orchestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Has the orchestrator been initialized by the user&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span></div>
-
-    <span class="k">def</span> <span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">new_state</span></div>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
 </pre></div>
 
            </div>

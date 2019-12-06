@@ -167,23 +167,15 @@
 <span id="state"></span><h1>State<a class="headerlink" href="#module-smartsim.state" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="smartsim.state.State">
-<em class="property">class </em><code class="sig-prename descclassname">smartsim.state.</code><code class="sig-name descname">State</code><span class="sig-paren">(</span><em class="sig-param">experiment=None</em>, <em class="sig-param">config=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">smartsim.state.</code><code class="sig-name descname">State</code><span class="sig-paren">(</span><em class="sig-param">experiment</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State" title="Permalink to this definition">¶</a></dt>
 <dd><p>The State class holds most of the configurations necessary to run an
-experiment within SmartSim. Upon initialization, State will either
-read and parse the simulation.toml configuration file or will wait
-for the user to call methods to create targets and models.</p>
+experiment within SmartSim. State is responsible for the creation
+and storage of SmartSim entities such as models that are used to
+construct data pipelines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>experiment</strong> (<em>str</em>) – Name of the directory that will house all of
-the created files and directories. Experiment
-name can be set in either the simulation.toml
-or through the state initialization</p></li>
-<li><p><strong>config</strong> (<em>str</em>) – Name of the configuration file for the experiment
-The configuration file is optional if the user
-would rather construct the experiment programmatically
-in python.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>experiment</strong> (<em>str</em>) – Name of the directory that will house all of
+the created files and directories.</p>
 </dd>
 </dl>
 <dl class="method">
@@ -203,7 +195,7 @@ the <cite>target</cite> argument result in the creation/usage a target named
 <li><p><strong>name</strong> (<em>str</em>) – name of the model to be created</p></li>
 <li><p><strong>target</strong> (<em>str</em>) – name of the target to place model into</p></li>
 <li><p><strong>params</strong> (<em>dict</em>) – dictionary of model parameters</p></li>
-<li><p><strong>path</strong> (<em>str</em>) – (optional) path to model files</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – (optional) path to model files, defaults to os.getcwd()</p></li>
 </ul>
 </dd>
 </dl>
@@ -258,7 +250,7 @@ format: H:M:S  e.g. “1:00:00”</p></li>
 
 <dl class="method">
 <dt id="smartsim.state.State.create_target">
-<code class="sig-name descname">create_target</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_target" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_target</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params={}</em>, <em class="sig-param">run_settings=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/state.html#State.create_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.state.State.create_target" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a target to be used within one or many of the SmartSim Modules. Targets
 keep track of groups of models. Parameters can be given to a target as well in
 order to generate models based on a combination of parameters and generation

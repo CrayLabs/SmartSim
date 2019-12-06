@@ -184,6 +184,29 @@ information through this class.</p>
 </dd>
 </dl>
 <dl class="method">
+<dt id="smartsim.simModule.SmartSimModule.get_config">
+<code class="sig-name descname">get_config</code><span class="sig-paren">(</span><em class="sig-param">param</em>, <em class="sig-param">aux=None</em>, <em class="sig-param">none_ok=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/simModule.html#SmartSimModule.get_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.simModule.SmartSimModule.get_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for a configuration parameter in the initialization
+of a SmartSimModule. Also search through an auxiliry dictionary
+in some cases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param</strong> (<em>str</em>) – parameter to search for</p></li>
+<li><p><strong>aux</strong> (<em>dict</em>) – auxiliry dictionary to search through (default=None)</p></li>
+<li><p><strong>none_ok</strong> (<em>bool</em>) – ok to return none if param is not present (default=False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – </p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>param if present</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="smartsim.simModule.SmartSimModule.get_experiment_path">
 <code class="sig-name descname">get_experiment_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/simModule.html#SmartSimModule.get_experiment_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.simModule.SmartSimModule.get_experiment_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the path to the experiment where all the targets and models are
@@ -263,8 +286,8 @@ held.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="smartsim.simModule.SmartSimModule.has_orcestrator">
-<code class="sig-name descname">has_orcestrator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/simModule.html#SmartSimModule.has_orcestrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.simModule.SmartSimModule.has_orcestrator" title="Permalink to this definition">¶</a></dt>
+<dt id="smartsim.simModule.SmartSimModule.has_orchestrator">
+<code class="sig-name descname">has_orchestrator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/simModule.html#SmartSimModule.has_orchestrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.simModule.SmartSimModule.has_orchestrator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Has the orchestrator been initialized by the user</p>
 </dd></dl>
 
