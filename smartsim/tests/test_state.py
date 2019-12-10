@@ -5,7 +5,7 @@ from shutil import rmtree
 from ..error import SmartSimError, SSModelExistsError
 from ..model import NumModel
 from ..target import Target
-
+import pytest
 
 def test_create_model():
     state = State(experiment="test")
@@ -65,3 +65,10 @@ def test_target_get_model():
     target = state.get_target("test-target")
     model = state.get_model("test-model", "test-target")
     assert(model == target["test-model"])
+
+def test_duplicate_orchestrator_error():
+    state = State(experiment="test")
+    state.create_orchestrator(name='first_orc')
+
+    with pytest.raises(SmartSimError):
+        state.create_orchestrator(name="double_orc")

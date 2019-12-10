@@ -151,6 +151,8 @@ class State:
            :param str duration: how long the orchestrator should run for.
                                 format: H:M:S  e.g. "1:00:00"
            """
+        if not self.orc == None:
+            raise SmartSimError("Only one orchestrator can exist within a state.")
         settings = kwargs
         settings["nodes"] = nodes
         settings["ppn"] = ppn
