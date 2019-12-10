@@ -173,7 +173,7 @@
 <span class="kn">from</span> <span class="nn">..helpers</span> <span class="k">import</span> <span class="n">get_SSHOME</span>
 <span class="kn">from</span> <span class="nn">..simModule</span> <span class="k">import</span> <span class="n">SmartSimModule</span>
 
-<span class="kn">from</span> <span class="nn">.strategies</span> <span class="k">import</span> <span class="n">_create_all_permutations</span><span class="p">,</span> <span class="n">_random_permutations</span><span class="p">,</span> <span class="n">_step_values</span>
+<span class="kn">from</span> <span class="nn">.strategies</span> <span class="k">import</span> <span class="n">create_all_permutations</span><span class="p">,</span> <span class="n">random_permutations</span><span class="p">,</span> <span class="n">step_values</span>
 <span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">get_logger</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -183,25 +183,31 @@
 <span class="sd">       and writing model files that have been tagged by the user.</span>
 
 <span class="sd">       :param State state: A State instance</span>
+<span class="sd">       :param list model_files: The model files for the experiment.  Optional</span>
+<span class="sd">                               if model files are not needed for execution. Argument</span>
+<span class="sd">                               can be a file, directory, or a list of files</span>
+<span class="sd">       :param str strategy: The permutation strategy for generating models within targets.</span>
+<span class="sd">                            Options are &quot;all_perm&quot;, &quot;random&quot;, &quot;step&quot;, or a callable function.</span>
+<span class="sd">                            defaults to &quot;all_perm&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">model_files</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_state</span><span class="p">(</span><span class="s2">&quot;Data Generation&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_writer</span> <span class="o">=</span> <span class="n">ModelWriter</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">strategy</span>
 
 
 <div class="viewcode-block" id="Generator.generate"><a class="viewcode-back" href="../../../doc/api/generator.html#smartsim.generation.generator.Generator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Based on the targets and models created by the user through the python</span>
-<span class="sd">           or TOML interface, configure and generate the model instances.</span>
+        <span class="sd">&quot;&quot;&quot;Based on the targets and models created by the user,</span>
+<span class="sd">           configure and generate the model and target instances.</span>
 
+<span class="sd">           :param dict kwargs: optional key word arguments passed to permutation strategy.</span>
 <span class="sd">           :raises: SmartSimError</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;SmartSim State: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">())</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_set_strategy_from_config</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_create_models</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_create_experiment</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_configure_models</span><span class="p">()</span>
@@ -241,67 +247,20 @@
 <span class="sd">           the permutation strategy.</span>
 
 <span class="sd">           :param str permutation_strategy: Options are &quot;all_perm&quot;, &quot;step&quot;, &quot;random&quot;,</span>
-<span class="sd">                                            &quot;module.function&quot;, or a callable function.</span>
-
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">permutation_strategy</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">permutation_strategy</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_strategy_from_string</span><span class="p">(</span><span class="n">permutation_strategy</span><span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">_set_strategy_from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Load the strategy for generating model configurations from the supplied</span>
-<span class="sd">        configuration; if a user has specified anything, it&#39;s passed on to</span>
-<span class="sd">        the _set_strategy_from_string function for parsing.  Otherwise,</span>
-<span class="sd">        _set_strategy_from_string uses a default value (&quot;all_perm&quot;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># check whether the user has selected a function in the config file.</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">permutation_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">([</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;permutation&quot;</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_strategy_from_string</span><span class="p">(</span><span class="n">permutation_strategy</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">SSConfigError</span><span class="p">:</span>
-            <span class="c1"># if we couldn&#39;t find the field, choose a reasonable default (all)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_strategy_from_string</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_set_strategy_from_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">permutation_strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sets the strategy for generating model configurations based on the</span>
-<span class="sd">           supplied string, `permutation_strategy`.  `permutation_strategy` can</span>
-<span class="sd">           be a string corresponding to an internal function name (for the built-in</span>
-<span class="sd">           strategies), or of the form `module.function`, where module is importable</span>
-<span class="sd">           and has the function `function` available on it.</span>
-
-<span class="sd">           :param str permutation_strategy: can be &quot;all_perm&quot;, &quot;step&quot;, or &quot;random&quot; for</span>
-<span class="sd">           the built-in functions, or &quot;module.function&quot;.</span>
+<span class="sd">                                            or a callable function.</span>
+<span class="sd">           :raises SSUnsupportedError: if strategy is not supported by SmartSim</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">permutation_strategy</span> <span class="o">==</span> <span class="s2">&quot;all_perm&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">_create_all_permutations</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">create_all_permutations</span>
         <span class="k">elif</span> <span class="n">permutation_strategy</span> <span class="o">==</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">_step_values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">step_values</span>
         <span class="k">elif</span> <span class="n">permutation_strategy</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">_random_permutations</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">random_permutations</span>
+        <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">permutation_strategy</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">permutation_strategy</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># return a function that the user thinks is appropriate.  Assume module.function</span>
-            <span class="kn">import</span> <span class="nn">importlib</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">mod_string</span><span class="p">,</span> <span class="n">func_string</span> <span class="o">=</span> <span class="n">permutation_strategy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
-            <span class="k">except</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Following string cannot be evaluated to a module.function: &quot;</span>
-                                     <span class="o">+</span> <span class="n">permutation_strategy</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_string</span><span class="p">)</span>
-            <span class="k">except</span><span class="p">:</span>
-                <span class="k">raise</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">func_string</span><span class="p">)</span>
-            <span class="k">except</span><span class="p">:</span>
-                <span class="k">raise</span>
-            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span> <span class="o">=</span> <span class="n">func</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Supplied attribute is not a function: &quot;</span> <span class="o">+</span> <span class="n">func</span><span class="p">)</span>
-
+            <span class="k">raise</span> <span class="n">SSUnsupportedError</span><span class="p">(</span><span class="s2">&quot;Permutation Strategy given is not supported: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">permutation_strategy</span><span class="p">))</span></div>
 
 
     <span class="k">def</span> <span class="nf">_create_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -343,15 +302,12 @@
                                         <span class="s2">&quot;Must be list, int, or string.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">parameters</span>
 
-
-        <span class="c1"># init model classes to hold parameter information</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_targets</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
             <span class="c1"># if this call returns empty lists, we shouldn&#39;t continue.</span>
             <span class="c1"># This is useful for empty targets where the user makes models.</span>
             <span class="n">names</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">read_model_parameters</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-                <span class="c1"># TODO Allow for different strategies to be used</span>
                 <span class="n">all_configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_permutation_strategy</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">conf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_configs</span><span class="p">):</span>
                     <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
@@ -381,7 +337,7 @@
     <span class="k">def</span> <span class="nf">_configure_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Duplicate the base configurations of target models&quot;&quot;&quot;</span>
 
-        <span class="n">listed_configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">([</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;model_files&quot;</span><span class="p">])</span>
+        <span class="n">listed_configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s2">&quot;model_files&quot;</span><span class="p">)</span>
         <span class="n">exp_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_experiment_path</span><span class="p">()</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_targets</span><span class="p">()</span>
 
@@ -394,18 +350,19 @@
                 <span class="n">mkdir</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
                 <span class="n">model</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="n">dst</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listed_configs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="n">listed_configs</span> <span class="o">=</span> <span class="p">[</span><span class="n">listed_configs</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">listed_configs</span><span class="p">:</span>
-                    <span class="n">dst_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
-                    <span class="n">config_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">config</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
-                        <span class="n">dir_util</span><span class="o">.</span><span class="n">copy_tree</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">dst_path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">listed_configs</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listed_configs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">listed_configs</span> <span class="o">=</span> <span class="p">[</span><span class="n">listed_configs</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">listed_configs</span><span class="p">:</span>
+                        <span class="n">dst_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+                        <span class="n">config_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">config</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+                            <span class="n">dir_util</span><span class="o">.</span><span class="n">copy_tree</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="n">dst_path</span><span class="p">)</span>
 
-                <span class="c1"># write in changes to configurations</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
+                    <span class="c1"># write in changes to configurations</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
 </pre></div>
 
            </div>

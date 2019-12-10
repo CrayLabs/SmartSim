@@ -169,16 +169,6 @@ is the dictionary for a model.  For example:
   GEN.set_strategy(my_function)
   GEN.generate()
 
-If the above function is saved in another module (say, my_module.py), it may
-be loaded as follows:
-
-.. code-block:: python
-
-  base_config = "LAMMPS/in.atm"
-  GEN = Generator(state, model_files=base_config)
-  GEN.set_strategy("my_module.my_function")
-  GEN.generate()
-
 User written functions are not limited to only receiving the above arguments.
 Extra arguments may be added to the function as necessary; at runtime, these are 
 passed through to the selection strategy via the ``generate`` function (as above,

@@ -5,7 +5,7 @@ from itertools import product
 
 # create permutations of all parameters
 # single model if parameters only have one value
-def _create_all_permutations(param_names, param_values):
+def create_all_permutations(param_names, param_values):
     perms = list(product(*param_values))
     all_permutations = []
     for p in perms:
@@ -13,18 +13,18 @@ def _create_all_permutations(param_names, param_values):
         all_permutations.append(temp_model)
     return all_permutations
 
-def _step_values(param_names, param_values):
+def step_values(param_names, param_values):
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
     return permutations
 
-def _random_permutations(param_names, param_values, n_models):
+def random_permutations(param_names, param_values, n_models):
     import random
     # first, check if we've requested more values than possible.
     perms = list(product(*param_values))
     if n_models >= len(perms):
-        return _create_all_permutations(param_names, param_values)
+        return create_all_permutations(param_names, param_values)
     else:
         permutations = []
         permutation_strings = set()

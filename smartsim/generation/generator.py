@@ -11,7 +11,7 @@ from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..helpers import get_SSHOME
 from ..simModule import SmartSimModule
 
-from .strategies import _create_all_permutations, _random_permutations, _step_values
+from .strategies import create_all_permutations, random_permutations, step_values
 from ..utils import get_logger
 logger = get_logger(__name__)
 
@@ -21,25 +21,31 @@ class Generator(SmartSimModule):
        and writing model files that have been tagged by the user.
 
        :param State state: A State instance
+       :param list model_files: The model files for the experiment.  Optional
+                               if model files are not needed for execution. Argument
+                               can be a file, directory, or a list of files
+       :param str strategy: The permutation strategy for generating models within targets.
+                            Options are "all_perm", "random", "step", or a callable function.
+                            defaults to "all_perm"
     """
 
-    def __init__(self, state, **kwargs):
-        super().__init__(state, **kwargs)
+    def __init__(self, state, model_files=None, strategy="all_perm", **kwargs):
+        super().__init__(state, model_files=model_files, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
-        self._permutation_strategy = None
+        self._permutation_strategy = strategy
 
 
     def generate(self, **kwargs):
         """Based on the targets and models created by the user,
            configure and generate the model and target instances.
 
+           :param dict kwargs: optional key word arguments passed to permutation strategy.
            :raises: SmartSimError
         """
         try:
             logger.info("SmartSim State: " + self.get_state())
-            if self._permutation_strategy == None:
-                self._set_strategy_from_string()
+            self.set_strategy(self._permutation_strategy)
             self._create_models(**kwargs)
             self._create_experiment()
             self._configure_models()
@@ -79,54 +85,20 @@ class Generator(SmartSimModule):
            the permutation strategy.
 
            :param str permutation_strategy: Options are "all_perm", "step", "random",
-                                            "module.function", or a callable function.
-
-
-        """
-        if callable(permutation_strategy):
-            self._permutation_strategy = permutation_strategy
-        else:
-            self._set_strategy_from_string(permutation_strategy)
-
-
-    def _set_strategy_from_string(self, permutation_strategy="all_perm"):
-        """Sets the strategy for generating model configurations based on the
-           supplied string, `permutation_strategy`.  `permutation_strategy` can
-           be a string corresponding to an internal function name (for the built-in
-           strategies), or of the form `module.function`, where module is importable
-           and has the function `function` available on it.
-
-           :param str permutation_strategy: can be "all_perm", "step", or "random" for
-           the built-in functions, or "module.function".
+                                            or a callable function.
+           :raises SSUnsupportedError: if strategy is not supported by SmartSim
 
         """
         if permutation_strategy == "all_perm":
-            self._permutation_strategy = _create_all_permutations
+            self._permutation_strategy = create_all_permutations
         elif permutation_strategy == "step":
-            self._permutation_strategy = _step_values
+            self._permutation_strategy = step_values
         elif permutation_strategy == "random":
-            self._permutation_strategy = _random_permutations
+            self._permutation_strategy = random_permutations
+        elif callable(permutation_strategy):
+            self._permutation_strategy = permutation_strategy
         else:
-            # return a function that the user thinks is appropriate.  Assume module.function
-            import importlib
-            try:
-                mod_string, func_string = permutation_strategy.split(".")
-            except:
-                raise SmartSimError("Following string cannot be evaluated to a module.function: "
-                                     + permutation_strategy)
-            try:
-                mod = importlib.import_module(mod_string)
-            except:
-                raise
-            try:
-                func = getattr(mod, func_string)
-            except:
-                raise
-            if callable(func):
-                self._permutation_strategy = func
-            else:
-                raise SmartSimError("Supplied attribute is not a function: " + func)
-
+            raise SSUnsupportedError("Permutation Strategy given is not supported: " + str(permutation_strategy))
 
 
     def _create_models(self, **kwargs):
@@ -168,15 +140,12 @@ class Generator(SmartSimModule):
                                         "Must be list, int, or string.")
             return param_names, parameters
 
-
-        # init model classes to hold parameter information
         targets = self.get_targets()
         for target in targets:
             # if this call returns empty lists, we shouldn't continue.
             # This is useful for empty targets where the user makes models.
             names, values = read_model_parameters(target)
             if (len(names) != 0 and len(values) != 0):
-                # TODO Allow for different strategies to be used
                 all_configs = self._permutation_strategy(names, values, **kwargs)
                 for i, conf in enumerate(all_configs):
                     model_name = "_".join((target.name, str(i)))
@@ -219,15 +188,16 @@ class Generator(SmartSimModule):
                 mkdir(dst)
                 model.path = (dst)
 
-                if not isinstance(listed_configs, list):
-                    listed_configs = [listed_configs]
-                for config in listed_configs:
-                    dst_path = path.join(dst, path.basename(config))
-                    config_path = path.join(getcwd(), config)
-                    if path.isdir(config_path):
-                        dir_util.copy_tree(config_path, dst)
-                    else:
-                        shutil.copyfile(config_path, dst_path)
+                if listed_configs:
+                    if not isinstance(listed_configs, list):
+                        listed_configs = [listed_configs]
+                    for config in listed_configs:
+                        dst_path = path.join(dst, path.basename(config))
+                        config_path = path.join(getcwd(), config)
+                        if path.isdir(config_path):
+                            dir_util.copy_tree(config_path, dst)
+                        else:
+                            shutil.copyfile(config_path, dst_path)
 
-                # write in changes to configurations
-                self._writer.write(model)
+                    # write in changes to configurations
+                    self._writer.write(model)

@@ -314,14 +314,6 @@ is the dictionary for a model.  For example:</p>
 <span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>If the above function is saved in another module (say, my_module.py), it may
-be loaded as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="s2">&quot;my_module.my_function&quot;</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
-</pre></div>
-</div>
 <p>User written functions are not limited to only receiving the above arguments.
 Extra arguments may be added to the function as necessary; at runtime, these are
 passed through to the selection strategy via the <code class="docutils literal notranslate"><span class="pre">generate</span></code> function (as above,

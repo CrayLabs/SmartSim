@@ -6,8 +6,6 @@ from ..error import SmartSimError, SSModelExistsError
 from ..model import NumModel
 from ..target import Target
 
-# will error out if not set
-SS_HOME = environ['SMARTSIMHOME']
 
 def test_create_model():
     state = State(experiment="test")
