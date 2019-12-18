@@ -8,14 +8,20 @@ from ...launcher import SlurmLauncher
 if not which("srun"):
     pytestmark = pytest.mark.skip()
 
-def test_run():
-    pass
-
 def test_run_on_alloc():
     pass
 
-def test_run_script():
+def test_get_alloc():
     pass
 
-def test_submit_and_forget():
+def test_get_job_status():
+    pass
+
+def test_validate():
+    pass
+
+def test_validate_fails():
+    pass
+
+def test_free_alloc():
     pass
