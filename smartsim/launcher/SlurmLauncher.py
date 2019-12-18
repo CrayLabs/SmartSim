@@ -6,7 +6,7 @@ import sys
 
 from .launcher import Launcher
 from subprocess import PIPE, Popen, CalledProcessError
-from .launcherUtil import seq_to_str, execute_cmd, write_to_bash, prepend_cd
+from .launcherUtil import seq_to_str, execute_cmd, write_to_bash
 from ..error import LauncherError
 
 from ..utils import get_logger
@@ -149,8 +149,8 @@ class SlurmLauncher(Launcher):
 
 
 
-	def run_on_alloc(self, cmd, job_name, nodes=None, ppn=None, duration="", add_opts=None,
-					partition=None, cwd=""):
+	def run_on_alloc(self, cmd, nodes=None, ppn=None, duration="", add_opts=None,
+					partition=None, cwd="", env_vars=None, out_file=None, err_file=None):
 		if not self.alloc_id:
 			raise LauncherError("No allocation has been created to run on. Call launcher.get_alloc()")
 		if isinstance(cmd, list):
@@ -166,25 +166,31 @@ class SlurmLauncher(Launcher):
 		ntasks = ppn * nodes
 		if not cwd:
 			cwd = os.getcwd()
-		filename = os.path.join(cwd, job_name)
-		out_file = ".".join((job_name, "out"))
-		err_file = ".".join((job_name, "err"))
+		if not out_file:
+			out_file = "-".join((str(self.alloc_id), str(self.subjob_counter) + ".out"))
+			out_file = os.path.join(cwd, out_file)
+		if not err_file:
+			err_file = "-".join((str(self.alloc_id), str(self.subjob_counter) + ".err"))
+			err_file = os.path.join(cwd, err_file)
 
 		srun = ["srun", "--jobid", self.alloc_id,
 						"--nodes", str(nodes),
 						"--ntasks", str(ntasks),
-						"--output", os.path.join(cwd, out_file),
-						"--error", os.path.join(cwd, err_file),
-						cmd]
+						"--output", out_file,
+						"--error", err_file]
 
 		if duration:
 			srun += ["-t", duration]
 		if partition:
 			srun += ["--partition", partition]
+		if env_vars:
+			env_var_str = self._format_env_vars(env_vars)
+			srun += ["--export", env_var_str]
 
 		if len(add_opts) > 0:
 			for opt in add_opts:
 				srun.append(opt)
+		srun += [cmd]
 
 		status = self._run_asynch_command(seq_to_str(srun), cwd)
 		if status == -1:
@@ -227,3 +233,12 @@ class SlurmLauncher(Launcher):
 			logger.debug(err)
 			return -1
 		return 1
+
+	def _format_env_vars(self, env_vars):
+		"""Slurm takes exports in comma seperated lists
+		   the list starts with all as to not disturb the rest of the environment
+           for more information on this, see the slurm documentation for srun"""
+		format_str = "ALL"
+		for k, v in env_vars.items():
+			format_str += "," + "=".join((k,v))
+		return format_str
