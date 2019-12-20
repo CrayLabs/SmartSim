@@ -1,37 +1,34 @@
 
 from .error import SSConfigError, SmartSimError
 from .junction import Junction
+from .entity import SmartSimEntity
 
 from os import path, getcwd, environ
 
-class Orchestrator:
+class Orchestrator(SmartSimEntity):
     """The Orchestrator is responsible for launching the DataBase and connecting
        the various user specified entities(Clients, Models) to the correct
        endpoints
     """
 
-    def __init__(self, name=None, port=6379, **kwargs):
-        self.name = "Orchestrator" # for the Controller
+    def __init__(self, name=None, port=6379, run_settings=dict()):
+        super().__init__("orchestrator", None, run_settings)
         self.port = port
         self.junction = Junction()
-        self.settings = kwargs
-        if name:
-            self.name = name
 
-    def get_launch_settings(self):
+    def get_run_settings(self):
         conf_path = self._get_conf_path() + "smartsimdb.conf"
         exe_args = conf_path + " --port " + str(self.port)
         exe = "keydb-server"
-        orc_path = getcwd()
 
         # run_command
         cmd = [" ".join((exe, exe_args))]
 
-        self.settings["output_file"] = path.join(orc_path, "orchestrator.out")
-        self.settings["err_file"] = path.join(orc_path, "orchestrator.err")
-        self.settings["cmd"] = cmd
+        self.run_settings["output_file"] = path.join(self.path, "orchestrator.out")
+        self.run_settings["err_file"] = path.join(self.path, "orchestrator.err")
+        self.run_settings["cmd"] = cmd
 
-        return self.settings, orc_path
+        return self.run_settings
 
     def get_connection_env_vars(self, entity):
         """gets the environment variables from the junction for which databases each entity

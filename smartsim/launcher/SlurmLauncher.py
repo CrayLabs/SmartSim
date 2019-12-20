@@ -18,7 +18,6 @@ class SlurmLauncher(Launcher):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.alloc_partition = None
-		self.subjob_counter = 0
 
 	def validate(self, nodes=None, ppn=None, partition=None):
 		"""Validate slurm on the system and check for sufficient resources using 'sinfo'
@@ -56,7 +55,7 @@ class SlurmLauncher(Launcher):
 		logger.debug("Found %d nodes that match the constraints provided" % total_nodes)
 
 		if total_nodes < nodes:
-			raise SystemError("Could not find enough nodes with the specified constraints: \n"
+			raise LauncherError("Could not find enough nodes with the specified constraints: \n"
 												"Nodes Requested: %i\n"
 												"Nodes Detected: %i" % (nodes, total_nodes))
 
@@ -84,7 +83,7 @@ class SlurmLauncher(Launcher):
 				result = ("NOTFOUND","NAN")
 		return result
 
-	def get_sjob_status(self, sub_job_id):
+	def get_sjob_stat(self, sub_job_id):
 		"""Use the get_job_nodes function to determine the status of a job. If an error is not
 		   raised when attempting to retrive the nodes, then the job is still running.
 		   :param str sub_job_id: job id of the sub job of self.alloc
@@ -140,19 +139,21 @@ class SlurmLauncher(Launcher):
 		logger.debug("allocting %d nodes %d tasks/node, partition %s" %(nodes, ppn, partition))
 
 		_, err = execute_cmd(salloc)
-		self.alloc_id = self._parse_salloc(err)
-		if self.alloc_id:
-			logger.info("Allocation Successful with Job ID: %s" % self.alloc_id)
+		alloc_id = self._parse_salloc(err)
+		if alloc_id:
+			logger.info("Allocation Successful with Job ID: %s" % alloc_id)
+			# start sub_jobid counter
+			self.alloc_ids[alloc_id] = 0
 		else:
 			raise LauncherError("Failed to get requested allocation")
-		return int(self.alloc_id)
+		return str(alloc_id)
 
 
 
-	def run_on_alloc(self, cmd, nodes=None, ppn=None, duration="", add_opts=None,
+	def run_on_alloc(self, cmd, alloc_id, nodes=None, ppn=None, duration="", add_opts=None,
 					partition=None, cwd="", env_vars=None, out_file=None, err_file=None):
-		if not self.alloc_id:
-			raise LauncherError("No allocation has been created to run on. Call launcher.get_alloc()")
+		if str(alloc_id) not in self.alloc_ids.keys():
+			raise LauncherError("Could not find allocation with id: " + str(alloc_id))
 		if isinstance(cmd, list):
 			cmd = " ".join(cmd)
 		if not add_opts:
@@ -162,18 +163,18 @@ class SlurmLauncher(Launcher):
 		if not ppn:
 			ppn = self.def_ppn
 		if not partition:
-			partition = self.alloc_partition
+			partition = self.def_partition
 		ntasks = ppn * nodes
 		if not cwd:
 			cwd = os.getcwd()
 		if not out_file:
-			out_file = "-".join((str(self.alloc_id), str(self.subjob_counter) + ".out"))
+			out_file = "-".join((str(alloc_id), str(self.alloc_ids[alloc_id]) + ".out"))
 			out_file = os.path.join(cwd, out_file)
 		if not err_file:
-			err_file = "-".join((str(self.alloc_id), str(self.subjob_counter) + ".err"))
+			err_file = "-".join((str(alloc_id), str(self.alloc_ids[alloc_id]) + ".err"))
 			err_file = os.path.join(cwd, err_file)
 
-		srun = ["srun", "--jobid", self.alloc_id,
+		srun = ["srun", "--jobid", str(alloc_id),
 						"--nodes", str(nodes),
 						"--ntasks", str(ntasks),
 						"--output", out_file,
@@ -196,8 +197,8 @@ class SlurmLauncher(Launcher):
 		if status == -1:
 			raise LauncherError("Failed to run on allocation")
 		else:
-			subjob_id = ".".join((self.alloc_id, str(self.subjob_counter)))
-			self.subjob_counter += 1
+			subjob_id = ".".join((alloc_id, str(self.alloc_ids[alloc_id])))
+			self.alloc_ids[alloc_id] += 1
 			return subjob_id
 
 	def _get_free_cmd(self, alloc_id):
@@ -228,7 +229,7 @@ class SlurmLauncher(Launcher):
 
 	def _run_asynch_command(self, cmd, cwd):
 		try:
-			popen_obj = Popen(cmd, stdout=PIPE, stderr=PIPE, cwd=cwd, shell=True)
+			popen_obj = Popen(cmd, cwd=cwd, shell=True)
 		except OSError as err:
 			logger.debug(err)
 			return -1

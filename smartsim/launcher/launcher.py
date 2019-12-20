@@ -29,7 +29,7 @@ class Launcher(abc.ABC):
 	cancel_err_mess = "Unable to revoke your allocation for jobid %s\n"
 	run_err_mess = "An error occurred while trying to run the command:\n"
 
-	def __init__(self, def_nodes=2, def_ppn=1, def_partition=None, def_queue=None, def_duration="30:00"):
+	def __init__(self, def_nodes=1, def_ppn=1, def_partition=None, def_queue=None, def_duration="1:00:00"):
 		""" :param def_nodes: Default number of nodes to allocation
 			:param def_ppn: Default processes per node
 			:param def_partition: Default partition to select
@@ -40,7 +40,7 @@ class Launcher(abc.ABC):
 		self.def_ppn = def_ppn
 		self.def_partition = def_partition
 		self.def_queue = def_queue
-		self.alloc_id = None
+		self.alloc_ids = dict()
 		self.def_duration = def_duration
 		super().__init__()
 
@@ -97,22 +97,12 @@ class Launcher(abc.ABC):
 		"""
 		pass
 
-	#--------------------------- General methods with implementations -------------------
-
-	def set_alloc_id(self, alloc_id):
-		self.alloc_id = str(alloc_id)
-
-
-	def free_alloc(self, alloc_id=None):
+	def free_alloc(self, alloc_id):
 		"""
 		if there is an active researvation, or if alloc_id is specified it gets cancelled
 		"""
-		if alloc_id is None:
-			if self.alloc_id is None:
-				logger.info("No allocation found, safe to exit")
-				return
-			else:
-				alloc_id = self.alloc_id
+		if alloc_id not in self.alloc_ids.keys():
+			logger.info("Allocation id, " + str(alloc_id + " not found."))
 
 		(cancel_cmd, cancel_err_mess) = self._get_free_cmd(alloc_id)
 		try:
@@ -125,4 +115,4 @@ class Launcher(abc.ABC):
 			return
 
 		logger.info("Successfully Freed Allocation %s" % alloc_id)
-		self.alloc_id = None
+		self.alloc_ids.pop(alloc_id)

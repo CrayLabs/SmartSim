@@ -77,7 +77,7 @@ class State:
             raise
 
 
-    def create_target(self, name, params={}, run_settings=None):
+    def create_target(self, name, params={}, run_settings={}):
         """Create a target to be used within one or many of the SmartSim Modules. Targets
            keep track of groups of models. Parameters can be given to a target as well in
            order to generate models based on a combination of parameters and generation
@@ -96,7 +96,7 @@ class State:
             target_path = path.join(getcwd(), self.experiment, name)
             if path.isdir(target_path):
                 raise SmartSimError("Target directory already exists: " + target_path)
-            new_target = Target(name, params, self.experiment, target_path, run_settings)
+            new_target = Target(name, params, self.experiment, target_path, run_settings=run_settings)
             self.targets.append(new_target)
         except SmartSimError as e:
             logger.error(e)
@@ -138,7 +138,7 @@ class State:
         if not model_added:
             raise SmartSimError("Could not find target by the name of: " + target)
 
-    def create_orchestrator(self, name=None, port=6379, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+    def create_orchestrator(self, name=None, port=6379, run_settings={}):
         """Create an orchestrator database to faciliate the transfer of data
            for online training and inference. After the orchestrator is created,
            connections between models and nodes can be instantiated through a
@@ -146,18 +146,11 @@ class State:
 
            :param str name: name of orchestrator, defaults to "Orchestrator"
            :param int port: the port to open database communications on
-           :param int nodes: number of nodes to distribute the database over
-                             (currently only works on 1 node)
-           :param str duration: how long the orchestrator should run for.
-                                format: H:M:S  e.g. "1:00:00"
+           :param dict run_settings: workload manager settings for the orchestrator
            """
         if not self.orc == None:
             raise SmartSimError("Only one orchestrator can exist within a state.")
-        settings = kwargs
-        settings["nodes"] = nodes
-        settings["ppn"] = ppn
-        settings["duration"] = duration
-        self.orc = Orchestrator(name=name, port=port, **settings)
+        self.orc = Orchestrator(name=name, port=port, run_settings=run_settings)
 
     def create_node(self, name, script_path=None, **kwargs):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode
