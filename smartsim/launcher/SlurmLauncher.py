@@ -103,7 +103,7 @@ class SlurmLauncher(Launcher):
 		jid = str(job_id)
 		output, error = execute_cmd(["sstat", jid, "-i", "-n", "-p", "-a"])
 		nodes = []
-		if "error:" in output.split(" "):
+		if "error:" in error.split(" "):
 			raise LauncherError("Could not find allocation for job: " + job_id)
 		else:
 			for line in output.split("\n"):

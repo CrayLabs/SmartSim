@@ -210,7 +210,7 @@ class Controller(SmartSimModule):
             if not run_args:
                 run_args = ""
 
-            cmd = " ".join((run_command, run_args, exe, exe_args))
+            cmd = " ".join((run_args, exe, exe_args))
             return [cmd]
 
         run_dict = {}
@@ -314,8 +314,7 @@ class Controller(SmartSimModule):
             raise SmartSimError("No launcher set")
         job_id = job.get_job_id()
         status = self._launcher.get_sjob_stat(job_id)
-        #job.set_status(status)
-        #job.set_return_code(return_code)
+        job.set_status(status)
 
     def _get_job_nodes(self, job):
         if not self._launcher:

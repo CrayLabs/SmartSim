@@ -10,18 +10,19 @@ class Job:
     def __init__(self, job_name, job_id, obj):
         self.name = job_name
         self.jid = job_id
-        self.obj = obj            # the model
+        self.obj = obj
         self.status = "NEW"
-        self.return_code = None
 
     def get_job_id(self):
         return self.jid
 
     def set_status(self, new_status):
-        self.status = new_status
-
-    def set_return_code(self, code):
-        self.return_code = code
+        if new_status == 1:
+            self.status = "RUNNING"
+        elif new_status == -1:
+            self.status = "COMPLETE"
+        else:
+            self.status = new_status
 
     def __str__(self):
         job = ("{}({}): {}")
