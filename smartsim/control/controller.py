@@ -25,24 +25,34 @@ class AllocHandler:
         """Add an entities run_settings to an allocation
            Add up the total number of nodes or each partition and
            take the highest ppn value present in any of the run settings
+
+           :param dict run_settings: dictionary of settings that include
+                                     number of nodes, ppn and partition
+                                     requested by the user.
         """
-        try:
-            part = run_settings["partition"]
-            nodes = int(run_settings["nodes"])
-            ppn = int(run_settings["ppn"])
-            if part in self.partitions.keys():
-                self.partitions[part][0] += nodes
-                if self.partitions[part][1] < ppn:
-                    self.partitions[part][1] == ppn
-            else:
-                self.partitions[part] = [nodes, ppn]
-        except KeyError:
-            if "default" in self.partitions:
-                self.partitions["default"][0] += nodes
-                if self.partitions[part][1] < ppn:
-                    self.partitions[part][1] == ppn
-            else:
-                self.partitions["default"] = [nodes, ppn]
+        # partition will be None if one is not listed
+        part = run_settings["partition"]
+        if not part:
+            part = "default" # use default partition
+        nodes = int(run_settings["nodes"])
+        ppn = int(run_settings["ppn"])
+        if part in self.partitions.keys():
+            self.partitions[part][0] += nodes
+            if self.partitions[part][1] < ppn:
+                self.partitions[part][1] == ppn
+        else:
+            self.partitions[part] = [nodes, ppn]
+        print("this time", self.partitions)
+
+    def _remove_alloc(self, partition):
+        """Remove a partition from both the active allocations and the
+           partitions dictionary. This is called when an allocation is
+           released by the user.
+
+           :param str partition: supplied by free_alloc. partition to be freed
+        """
+        self.partitions.pop(partition)
+        self.allocs.pop(partition)
 
 
 class Controller(SmartSimModule):
@@ -57,12 +67,12 @@ class Controller(SmartSimModule):
                             options are 'local', and 'slurm'
 
     """
-    alloc_handler = AllocHandler()
 
     def __init__(self, state, launcher=None, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
         self._init_launcher(launcher)
+        self._alloc_handler = AllocHandler()
         self._jobs = []
 
     def start(self):
@@ -73,6 +83,7 @@ class Controller(SmartSimModule):
 
            :param str target: target to launch
            :param str nodes: nodes to launch
+           TODO: single target/model/node launch control
         """
         try:
             if self.has_orchestrator():
@@ -85,6 +96,31 @@ class Controller(SmartSimModule):
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def release(self, partition=None):
+        """Release the allocation(s) stopping all jobs that are currently running
+           and freeing up resources. To free all resources on all partitions, invoke
+           without passing a partition argument.
+
+           :param str partition: name of the partition where the allocation is running
+        """
+        try:
+            if partition:
+                try:
+                    alloc_id = self._alloc_handler.allocs[partition]
+                    self._launcher.free_alloc(alloc_id)
+                    self._alloc_handler._remove_alloc(partition)
+                except KeyError:
+                    raise SmartSimError("Could not find allocation on partition: " + partition)
+            else:
+                allocs = self._alloc_handler.allocs.copy()
+                print(allocs)
+                print(self._alloc_handler.partitions)
+                for partition, alloc_id in allocs.items():
+                    self._launcher.free_alloc(alloc_id)
+                    self._alloc_handler._remove_alloc(partition)
+        except SmartSimError as e:
+            logger.error(e)
 
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
@@ -168,11 +204,11 @@ class Controller(SmartSimModule):
             run_dict["env_vars"] = env_vars
 
             node.update_run_settings(run_dict)
-            self.alloc_handler._add_to_allocs(run_dict)
+            self._alloc_handler._add_to_allocs(run_dict)
 
     def _prep_orchestrator(self):
         orc_settings = self.state.orc.get_run_settings()
-        self.alloc_handler._add_to_allocs(orc_settings)
+        self._alloc_handler._add_to_allocs(orc_settings)
 
     def _prep_targets(self):
         targets = self.get_targets()
@@ -183,7 +219,7 @@ class Controller(SmartSimModule):
             target.update_run_settings(run_dict)
             # add nodes to allocation for every model within the target
             for model in target.models.values():
-                self.alloc_handler._add_to_allocs(run_dict)
+                self._alloc_handler._add_to_allocs(run_dict)
 
     def _remove_smartsim_args(self, arg_dict):
         ss_args = ["exe_args", "run_args", "executable", "run_command"]
@@ -230,16 +266,16 @@ class Controller(SmartSimModule):
     def _get_allocations(self):
         duration = self.get_config("duration", none_ok=True)
         try:
-            for partition, nodes in self.alloc_handler.partitions.items():
+            for partition, nodes in self._alloc_handler.partitions.items():
                 if partition == "default":
                     partition = None
                 self._launcher.validate(nodes=nodes[0], ppn=nodes[1], partition=partition)
                 alloc_id = self._launcher.get_alloc(nodes=nodes[0], ppn=nodes[1],
                                                     partition=partition, duration=duration)
                 if partition:
-                    self.alloc_handler.allocs[partition] = alloc_id
+                    self._alloc_handler.allocs[partition] = alloc_id
                 else:
-                    self.alloc_handler.allocs["default"] = alloc_id
+                    self._alloc_handler.allocs["default"] = alloc_id
         except LauncherError as e:
             logger.error(e)
             raise
@@ -254,7 +290,7 @@ class Controller(SmartSimModule):
             cmd = orc_settings.pop("cmd")
             orc_settings = self._remove_smartsim_args(orc_settings)
             orc_job_id = self._launcher.run_on_alloc(cmd,
-                                                     self.alloc_handler.allocs[orc_partition],
+                                                     self._alloc_handler.allocs[orc_partition],
                                                      **orc_settings)
             job = Job("orchestrator", orc_job_id, self.state.orc)
             self._jobs.append(job)
@@ -271,7 +307,7 @@ class Controller(SmartSimModule):
             cmd = node_settings.pop("cmd")
             node_settings = self._remove_smartsim_args(node_settings)
             node_job_id = self._launcher.run_on_alloc(cmd,
-                                                      self.alloc_handler.allocs[node_partition],
+                                                      self._alloc_handler.allocs[node_partition],
                                                       **node_settings)
             job = Job(node.name, node_job_id, node)
             self._jobs.append(job)
@@ -288,12 +324,12 @@ class Controller(SmartSimModule):
                 if self.has_orchestrator():
                     env_vars = self.state.orc.get_connection_env_vars(model.name)
                 target_settings["env_vars"] = env_vars
-                target_settings["cwd"] = join(target.path, model.name)
-                target_settings["out_file"] = join(target.path, model.name, model.name + ".out")
-                target_settings["err_file"] = join(target.path, model.name, model.name + ".err")
+                target_settings["cwd"] = join(model.path)
+                target_settings["out_file"] = join(model.path, model.name + ".out")
+                target_settings["err_file"] = join(model.path, model.name + ".err")
                 target_settings = self._remove_smartsim_args(target_settings)
                 model_job_id = self._launcher.run_on_alloc(cmd,
-                                                           self.alloc_handler.allocs[target_partition],
+                                                           self._alloc_handler.allocs[target_partition],
                                                            **target_settings)
                 logger.debug("Process id for " + model.name + " is " + str(model_job_id))
                 job = Job(model.name, model_job_id, model)

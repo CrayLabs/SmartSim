@@ -16,10 +16,11 @@ except for submit_and_forget.
 
 import abc
 from subprocess import PIPE, Popen, CalledProcessError
-from .launcherUtil import seq_to_str
+from .launcherUtil import seq_to_str, execute_cmd
 import os
 import time
 import atexit
+from ..error import LauncherError
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -92,7 +93,7 @@ class Launcher(abc.ABC):
 		"""
 		returns the workload manager dependant command to release the allocation
 		This is used in the free_alloc function which is implemented below.
-		This method is meant to be used privately
+
 		:param alloc_id (string): The allocation id to be released.
 		"""
 		pass
@@ -102,17 +103,16 @@ class Launcher(abc.ABC):
 		if there is an active researvation, or if alloc_id is specified it gets cancelled
 		"""
 		if alloc_id not in self.alloc_ids.keys():
-			logger.info("Allocation id, " + str(alloc_id + " not found."))
+			raise LauncherError("Allocation id, " + str(alloc_id) + " not found.")
 
 		(cancel_cmd, cancel_err_mess) = self._get_free_cmd(alloc_id)
 		try:
-			_, err = Launcher.execute_cmd(cancel_cmd, err_message=cancel_err_mess)
+			_, err = execute_cmd(cancel_cmd, err_message=cancel_err_mess)
 
 		except CalledProcessError:
-			logger.debug("Unable to revoke your allocation for jobid %s" % alloc_id)
-			logger.debug("The job may have already timed out, or you may need to cancel the job manually")
-			logger.debug(err)
-			return
+			logger.info("Unable to revoke your allocation for jobid %s" % alloc_id)
+			logger.info("The job may have already timed out, or you may need to cancel the job manually")
+			raise LauncherError(cancel_err_mess)
 
 		logger.info("Successfully Freed Allocation %s" % alloc_id)
 		self.alloc_ids.pop(alloc_id)

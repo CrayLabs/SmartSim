@@ -38,6 +38,8 @@ def test_controller():
         gen = Generator(state, model_files="../../examples/MOM6/MOM6_base_config")
         gen.generate()
 
+        # because it is running in the default partition
+        # this works with current allocation strategy.
         control_dict = {"nodes":2,
                         "executable":"MOM6",
                         "run_command":"srun",
@@ -65,7 +67,6 @@ def test_controller():
             target_path = path.join(experiment_path, target)
             for model in listdir(target_path):
                 model_files = files.copy()
-                model_files.append(model)
                 model_files.append(".".join((model, "err")))
                 model_files.append(".".join((model, "out")))
                 model_path = path.join(target_path, model)
@@ -81,12 +82,13 @@ def test_controller():
 
         assert(data_present)
 
-        # Cleanup from previous test
+        # Cleanup
+        sim.release()
         if path.isdir(experiment_path):
             rmtree(experiment_path)
 
 
-def test_no_Generator():
+def test_no_generator():
     """Test the controller when the model files have not been created by
        a generation strategy"""
 
@@ -103,26 +105,27 @@ def test_no_Generator():
     mkdir(output_file_dir)
 
     state = State(experiment="test_output")
-    state.create_model("test", path=output_file_dir)
 
-    sim_params = {"launcher": "slurm",
-                  "executable": "cp2k.psmp",
-                  "run_command": "srun",
-                  "partition": "gpu",
-                  "exe_args": "-i ../test_configs/h2o.inp",
-                  "nodes": 1}
-    control = Controller(state, **sim_params)
+    target_run_settings = {"executable": "cp2k.psmp",
+                           "run_command": "srun",
+                           "partition": "gpu",
+                           "exe_args": "-i ../test_configs/h2o.inp",
+                           "nodes": 1}
+    state.create_target("test-target", run_settings=target_run_settings)
+    state.create_model("test", target="test-target", path=output_file_dir)
+
+    control = Controller(state, launcher="slurm")
     control.start()
 
     while(control.poll(verbose=False)):
         continue
 
-    file_list = ["h2o-1.ener", "test", "test.err", "test.out", "h2o-pos-1.xyz"]
-    file_path = path.join(getcwd(), output_file_dir)
-    file_list = [path.join(file_path, f) for f in file_list]
+    file_list = ["h2o-1.ener", "test.err", "test.out", "h2o-pos-1.xyz"]
+    file_list = [path.join(output_file_dir, f) for f in file_list]
     for f in file_list:
         assert(path.isfile(f))
 
+    control.release()
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)
 
@@ -161,5 +164,6 @@ def test_target_configs():
     while(control.poll(verbose=False)):
         continue
 
+    control.release()
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)
