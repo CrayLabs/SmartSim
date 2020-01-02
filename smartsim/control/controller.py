@@ -42,14 +42,13 @@ class AllocHandler:
                 self.partitions[part][1] == ppn
         else:
             self.partitions[part] = [nodes, ppn]
-        print("this time", self.partitions)
 
     def _remove_alloc(self, partition):
         """Remove a partition from both the active allocations and the
            partitions dictionary. This is called when an allocation is
            released by the user.
 
-           :param str partition: supplied by free_alloc. partition to be freed
+           :param str partition: supplied by release. partition to be freed
         """
         self.partitions.pop(partition)
         self.allocs.pop(partition)
@@ -65,7 +64,6 @@ class Controller(SmartSimModule):
        :param State state: A State instance
        :param str launcher: The launcher type.  Accepted
                             options are 'local', and 'slurm'
-
     """
 
     def __init__(self, state, launcher=None, **kwargs):
@@ -114,8 +112,6 @@ class Controller(SmartSimModule):
                     raise SmartSimError("Could not find allocation on partition: " + partition)
             else:
                 allocs = self._alloc_handler.allocs.copy()
-                print(allocs)
-                print(self._alloc_handler.partitions)
                 for partition, alloc_id in allocs.items():
                     self._launcher.free_alloc(alloc_id)
                     self._alloc_handler._remove_alloc(partition)
@@ -235,18 +231,20 @@ class Controller(SmartSimModule):
         def _build_run_command(tar_dict):
             """run_command + run_args + executable + exe_args"""
 
-            # Experiment level values required for controller to work
             exe = self.get_config("executable", aux=tar_dict, none_ok=False)
-            run_command = self.get_config("run_command", aux=tar_dict, none_ok=False)
-
-            run_args = self.get_config("run_args", aux=tar_dict, none_ok=True)
             exe_args = self.get_config("exe_args", aux=tar_dict, none_ok=True)
             if not exe_args:
                 exe_args = ""
-            if not run_args:
-                run_args = ""
+            cmd = " ".join((exe, exe_args))
 
-            cmd = " ".join((run_args, exe, exe_args))
+            # if using local launcher
+            if not self._launcher:
+                run_command = self.get_config("run_command", aux=tar_dict, none_ok=False)
+                run_args = self.get_config("run_args", aux=tar_dict, none_ok=True)
+                if not run_args:
+                    run_args = ""
+                cmd = " ".join((run_command, run_args, exe, exe_args))
+
             return [cmd]
 
         run_dict = {}
