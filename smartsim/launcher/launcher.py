@@ -98,6 +98,15 @@ class Launcher(abc.ABC):
 		"""
 		pass
 
+	@abc.abstractmethod
+	def stop(self, job_id):
+		"""
+		Stops the job with specified job_id.
+
+		:param str job_id: The job indentifier
+		"""
+		pass
+
 	def free_alloc(self, alloc_id):
 		"""
 		if there is an active researvation, or if alloc_id is specified it gets cancelled

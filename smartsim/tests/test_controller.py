@@ -1,11 +1,113 @@
 import pytest
 
-from os import getcwd, listdir, path, environ, mkdir
+from os import getcwd, listdir, path, environ, mkdir, remove
+
 from glob import glob
-from shutil import rmtree, which
+from shutil import rmtree, which, copyfile
 
 from smartsim import Generator, Controller, State
+import time
 
+def test_stop_targets():
+    """This test verifies that controller.stop()
+       is able to stop multiple targets and models.
+    """
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = "./controller_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    state= State(experiment="controller_test")
+
+    target_dict = {"executable":"python sleep.py"}
+
+    state.create_target("target_1", run_settings=target_dict)
+    t1 = state.get_target("target_1")
+    state.create_model(name="model_1", target="target_1")
+    state.create_model(name="model_2", target="target_1")
+    m1 = state.get_model("model_1", "target_1")
+    m2 = state.get_model("model_2", "target_1")
+    state.create_target("target_2", run_settings=target_dict)
+    t2 = state.get_target("target_2")
+    state.create_model(name="model_3", target="target_2")
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+
+    control_dict = {"run_command":"srun",
+                    "launcher": "slurm",
+                    "ppn": 1}
+    
+    control = Controller(state, **control_dict)
+    control.start()
+    time.sleep(10)
+    control.stop(targets=[t2], models = [m1,m2])
+    time.sleep(10)
+    assert(control.finished())
+    control.release()
+    # Cleanup from previous test
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def test_stop_targets_nodes_orchestrator():
+    """This test verifies that controller.stop()
+       is able to stop multiple nodes.
+    """
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = getcwd()+"/controller_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    state=State(experiment="controller_test")
+
+    target_dict = {"executable":"python sleep.py"}
+
+    state.create_target("target_1", run_settings=target_dict)
+    t1 = state.get_target("target_1")
+    state.create_model(name="model_1", target="target_1")
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+
+    state.create_orchestrator()
+
+    script = experiment_dir+'/sleep.py'
+    copyfile('./test_configs/sleep.py',script)
+    node_1_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_1.err'}
+    node_2_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_2.err'}
+    state.create_node("node_1", script_path=experiment_dir,run_settings=node_1_dict)
+    state.create_node("node_2", script_path=experiment_dir,run_settings=node_2_dict)
+
+    node_1 = state.get_node("node_1")
+    node_2 = state.get_node("node_2")
+
+    control_dict = {"launcher": "slurm",
+                    "ppn": 1}
+    
+    control = Controller(state, **control_dict)
+    control.start()
+    time.sleep(10)
+    control.stop(targets=[t1], nodes=[node_1, node_2], stop_orchestrator=True)
+    time.sleep(10)
+    assert(control.finished())
+    control.release()
+
+    if path.isfile('orchestrator'):
+        remove('orchestrator')
+    if path.isfile('orchestrator.out'):
+        remove('orchestrator.out')
+    if path.isfile('orchestrator.err'):
+        remove('orchestrator.err')
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
 
 def test_controller():
 
@@ -89,6 +191,7 @@ def test_controller():
 
 
 def test_no_generator():
+
     """Test the controller when the model files have not been created by
        a generation strategy"""
 

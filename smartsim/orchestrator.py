@@ -24,7 +24,7 @@ class Orchestrator(SmartSimEntity):
         # run_command
         cmd = [" ".join((exe, exe_args))]
 
-        self.run_settings["output_file"] = path.join(self.path, "orchestrator.out")
+        self.run_settings["out_file"] = path.join(self.path, "orchestrator.out")
         self.run_settings["err_file"] = path.join(self.path, "orchestrator.err")
         self.run_settings["cmd"] = cmd
 

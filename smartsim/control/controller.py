@@ -6,10 +6,13 @@ from os import listdir
 from os.path import isdir, basename, join
 from ..launcher import SlurmLauncher
 
+from ..smartSimNode import SmartSimNode
+from ..target import Target
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
 from ..state import State
 from ..simModule import SmartSimModule
 from .job import Job
+from ..model import NumModel
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -95,6 +98,35 @@ class Controller(SmartSimModule):
             logger.error(e)
             raise
 
+    def stop(self, targets=None, models=None, nodes=None, stop_orchestrator=False):
+        """Stops specified targets, nodes, and orchestrator.
+           If stop_orchestrator is set to true and all targets and 
+           nodes are stopped, the orchestrato will be stopped.
+
+           :param targets: List of targets to be stopped
+           :type targets: list of Target, optional Target
+           :param models: List of models to be stopped
+           :type models: list of NumModel, option NumModel
+           :param smartSimNode nodes: List of nodes to be stopped
+           :type nodes: list of smartSimNode, optional smartSimNode
+           :param bool stop_orchestrator: Boolean indicating if 
+                the ochestrator should be stopped.
+        """
+
+        if self._launcher == None:
+            logger.warning("Controller.stop() is not actionable for local launchers.")
+        else:
+            self._stop_targets(targets)
+            self._stop_models(models)
+            self._stop_nodes(nodes)    
+            if stop_orchestrator:
+                self._stop_orchestrator()
+    
+    def stop_all(self):
+        """Stops all  targets, nodes, and orchestrator."""
+        self.stop(targets=self.state.targets, nodes=self.state.nodes, 
+                    stop_orchestrator=True)
+
     def release(self, partition=None):
         """Release the allocation(s) stopping all jobs that are currently running
            and freeing up resources. To free all resources on all partitions, invoke
@@ -121,6 +153,92 @@ class Controller(SmartSimModule):
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
         return self._jobs
+
+    def _stop_targets(self, targets):
+        """Stops specified targets.  If targets is None,
+           the function returns without performning any action.
+           :param targets: List of targets to be stopped
+           :type targets: list of Target, optional Target
+           :raises: SmartSimError
+        """
+        if targets == None or self._launcher == None:
+            return
+
+        if isinstance(targets, Target):
+            targets = [targets]
+
+        if not all(isinstance(x, Target) for x in targets):
+            raise SmartSimError("Only objects of type Target expected for variable targets")
+
+        for target in targets:
+            models = list(target.models.values())
+            self._stop_models(models)
+
+    def _stop_models(self, models):
+        """Stops the specified models.  If the models is None,
+           the function returns without performing any action.
+
+           :param models: List of models to be stopped
+           :type models: list of MOdel, option Model
+           :raises: SmartSimError
+        """
+
+        if models == None or self._launcher == None:
+            return
+
+        if isinstance(models, NumModel):
+            models = [models]
+
+        if not all(isinstance(x, NumModel) for x in models):
+            raise SmartSimError("Only objects of type NumModel expected for variable models")
+
+        for model in models:
+            job = self.get_job(model.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping model " + model.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+
+    def _stop_nodes(self, nodes):
+        """Stops specified nodes.  If nodes is None,
+           the function returns without performning any action.
+
+           :param nodes: List of nodes to be stopped
+           :type nodes: list of SmartSimNode, optional SmartSimNode
+           :raises: SmartSimError
+        """
+        if nodes == None or self._launcher == None:
+            return
+
+        if isinstance(nodes, SmartSimNode):
+            nodes = [nodes]
+
+        if not all(isinstance(x, SmartSimNode) for x in nodes):
+            raise SmartSimError("Only objects of type SmartSimNode expected for variable nodes")
+
+        for node in nodes:
+            job = self.get_job(node.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping node " + node.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+
+    def _stop_orchestrator(self):
+        """Stops the orchestrator only if all
+           :raises: SmartSimError
+        """
+        job = self.get_job('orchestrator')
+        self._check_job(job)
+        if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+            logger.info("Stopping orchestrator on job " + job.get_job_id())
+            self._launcher.stop(job.get_job_id())
+        else:
+            raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+
 
     def get_job(self, name):
         """TODO write docs for this"""
@@ -194,11 +312,7 @@ class Controller(SmartSimModule):
     def _prep_nodes(self):
         nodes = self.get_nodes()
         for node in nodes:
-            # get env_vars for each connection registered by the user
-            env_vars = self.state.orc.get_connection_env_vars(node.name)
-            run_dict = self._build_run_dict(node.settings)
-            run_dict["env_vars"] = env_vars
-
+            run_dict = self._build_run_dict(node.run_settings)
             node.update_run_settings(run_dict)
             self._alloc_handler._add_to_allocs(run_dict)
 
@@ -292,11 +406,10 @@ class Controller(SmartSimModule):
                                                      **orc_settings)
             job = Job("orchestrator", orc_job_id, self.state.orc)
             self._jobs.append(job)
-            nodes = self.get_job_nodes(orc_job_id)[0] # only on one node for now
+            nodes = self.get_job_nodes(job)[0] # only on one node for now
 
             # get and store the address of the orchestrator database
             self.state.orc.junction.store_db_addr(nodes, self.state.orc.port)
-
         for node in self.get_nodes():
             node_settings = node.get_run_settings()
             node_partition = node_settings["partition"]
@@ -304,6 +417,8 @@ class Controller(SmartSimModule):
                 node_partition = "default"
             cmd = node_settings.pop("cmd")
             node_settings = self._remove_smartsim_args(node_settings)
+            env_vars = self.state.orc.get_connection_env_vars(node.name)
+            node_settings["env_vars"] = env_vars
             node_job_id = self._launcher.run_on_alloc(cmd,
                                                       self._alloc_handler.allocs[node_partition],
                                                       **node_settings)

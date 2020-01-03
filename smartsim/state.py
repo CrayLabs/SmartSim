@@ -251,6 +251,18 @@ class State:
                 return t
         raise SmartSimError("Target not found: " + target)
 
+    def get_node(self, node):
+        """Return a specific node from State
+
+           :param str node: Name of the node to return
+
+           :returns: node instance
+           :raises: SmartSimError
+        """
+        for n in self.nodes:
+            if n.name == node:
+                return n
+        raise SmartSimError("Node not found: " + node)
 
     def get_expr_path(self):
         expr_path = path.join(getcwd(), self.experiment)

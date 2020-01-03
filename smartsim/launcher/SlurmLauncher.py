@@ -17,6 +17,7 @@ class SlurmLauncher(Launcher):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
+		self.subjob_ids = list()
 		self.alloc_partition = None
 
 	def validate(self, nodes=None, ppn=None, partition=None):
@@ -199,7 +200,24 @@ class SlurmLauncher(Launcher):
 		else:
 			subjob_id = ".".join((alloc_id, str(self.alloc_ids[alloc_id])))
 			self.alloc_ids[alloc_id] += 1
+			self.subjob_ids.append(subjob_id)
 			return subjob_id
+
+	def stop(self, job_id):
+		
+		if job_id not in self.subjob_ids:
+			raise LauncherError("Job id, " + str(job_id) + " not found.")
+
+		(cancel_cmd, cancel_err_mess) = self._get_free_cmd(job_id)
+		try:
+			_, err = execute_cmd(cancel_cmd, err_message=cancel_err_mess)
+
+		except CalledProcessError:
+			logger.info("Unable to cancel jobid %s" % job_id)
+			raise LauncherError(cancel_err_mess)
+
+		logger.info("Successfully canceled job %s" % job_id)
+		self.subjob_ids.remove(job_id)
 
 	def _get_free_cmd(self, alloc_id):
 		scancel = ["scancel", alloc_id]

@@ -71,10 +71,24 @@ def write_to_bash(cmd, name):
 		for line in cmd:
 			destFile.write("%s\n" % line)
 
-def execute_cmd(cmd_list, err_message="", debug=False, shell=False, cwd=None, verbose=False):
+def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
 	"""
 		This is the function that runs a shell command and returns the output
 		It will raise exceptions if the commands did not run successfully
+		:param cmd_list: The command to be excuted
+		:type cmd_list: List of str, optional str
+		:param str err_message: Error message for logger in event of
+				non-zero process return code
+		:param shell: The shell argument (which defaults to False)
+				specifies whether to use the shell as the program to execute.
+				If shell is True, it is recommended to pass args
+				as a string rather than as a sequence.
+		:param cwd: The current working directory
+		:type cwd: str
+		:param verbose: Boolean for verbose output
+		:type verbose: bool
+		:raises: CalledProcessError
+		:returns: tuple of str for output and error messages
 	"""
 	if verbose:
 		print("Executing shell command: %s" % " ".join(cmd_list))
