@@ -100,7 +100,7 @@ class Controller(SmartSimModule):
 
     def stop(self, targets=None, models=None, nodes=None, stop_orchestrator=False):
         """Stops specified targets, nodes, and orchestrator.
-           If stop_orchestrator is set to true and all targets and 
+           If stop_orchestrator is set to true and all targets and
            nodes are stopped, the orchestrato will be stopped.
 
            :param targets: List of targets to be stopped
@@ -109,7 +109,7 @@ class Controller(SmartSimModule):
            :type models: list of NumModel, option NumModel
            :param smartSimNode nodes: List of nodes to be stopped
            :type nodes: list of smartSimNode, optional smartSimNode
-           :param bool stop_orchestrator: Boolean indicating if 
+           :param bool stop_orchestrator: Boolean indicating if
                 the ochestrator should be stopped.
         """
 
@@ -118,14 +118,15 @@ class Controller(SmartSimModule):
         else:
             self._stop_targets(targets)
             self._stop_models(models)
-            self._stop_nodes(nodes)    
+            self._stop_nodes(nodes)
             if stop_orchestrator:
                 self._stop_orchestrator()
-    
+
     def stop_all(self):
         """Stops all  targets, nodes, and orchestrator."""
-        self.stop(targets=self.state.targets, nodes=self.state.nodes, 
-                    stop_orchestrator=True)
+        self.stop(targets=self.state.targets,
+                  nodes=self.state.nodes,
+                  stop_orchestrator=True)
 
     def release(self, partition=None):
         """Release the allocation(s) stopping all jobs that are currently running
@@ -199,7 +200,8 @@ class Controller(SmartSimModule):
                 logger.info("Stopping model " + model.name + " job " + job.get_job_id())
                 self._launcher.stop(job.get_job_id())
             else:
-                raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+                raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                    " because its status is " + job.status)
 
     def _stop_nodes(self, nodes):
         """Stops specified nodes.  If nodes is None,
@@ -225,7 +227,8 @@ class Controller(SmartSimModule):
                 logger.info("Stopping node " + node.name + " job " + job.get_job_id())
                 self._launcher.stop(job.get_job_id())
             else:
-                raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+                raise SmartSimError("Unable to stop job " + job.get_job_id()
+                                    + " because its status is " + job.status)
 
     def _stop_orchestrator(self):
         """Stops the orchestrator only if all
@@ -237,11 +240,16 @@ class Controller(SmartSimModule):
             logger.info("Stopping orchestrator on job " + job.get_job_id())
             self._launcher.stop(job.get_job_id())
         else:
-            raise SmartSimError("Unable to stop job " + job_id + " because its status is " + job.status)
+            raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                " because its status is " + job.status)
 
 
     def get_job(self, name):
-        """TODO write docs for this"""
+        """Retrieve a Job instance by name. The Job object carries information about the
+           job launched by the controller and it's current status.
+
+           :param str name: name of the entity launched by the Controller
+        """
         found = False
         for job in self._jobs:
             if job.obj.name == name:

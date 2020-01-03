@@ -41,7 +41,7 @@ def test_stop_targets():
     control_dict = {"run_command":"srun",
                     "launcher": "slurm",
                     "ppn": 1}
-    
+
     control = Controller(state, **control_dict)
     control.start()
     time.sleep(10)
@@ -91,7 +91,7 @@ def test_stop_targets_nodes_orchestrator():
 
     control_dict = {"launcher": "slurm",
                     "ppn": 1}
-    
+
     control = Controller(state, **control_dict)
     control.start()
     time.sleep(10)
