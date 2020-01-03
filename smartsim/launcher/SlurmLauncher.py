@@ -20,47 +20,150 @@ class SlurmLauncher(Launcher):
 		self.subjob_ids = list()
 		self.alloc_partition = None
 
-	def validate(self, nodes=None, ppn=None, partition=None):
-		"""Validate slurm on the system and check for sufficient resources using 'sinfo'
-			:param nodes: Override the default node count to validate
-			:param ppn: Override the default processes per node to validate
-			:param partition: Override the default partition to validate
-			:return:
+	class Partition():
+
+		def __init__(self):
+			self.name = None
+			self.min_ppn = None
+			self.nodes = set()
+
+		def _is_valid_partition(self):
+
+			if self.name is None:
+				return False
+			if self.min_ppn is None:
+				return False
+			if self.min_ppn<=0:
+				return False
+			if len(self.nodes)<=0:
+				return False
+
+			return True
+
+	def sstat(self, args):
+		"""Calls sstat sstat with args
+		   :params args: List of command and command arguments
+		   :type args: List of str
+		   :returns: Output str of sstat command with args
 		"""
-		if not nodes:
-			nodes = self.def_nodes
-		if not ppn:
-			ppn = self.def_ppn
-		if not partition:
-			partition = self.def_partition
 
-		sinfo_cmd = ["sinfo", "--noheader", "--format", "%R %D %c"]
-		err_mess = "Failed to validate slurm!"
+		cmd = ["sstat"] + args
+		cmd_err_mess = "Could not execute sstat!"
 
-		out_str, _ = execute_cmd(sinfo_cmd, err_message=err_mess)
+		cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
 
-		total_nodes = 0
-		for line in out_str.split("\n"):
+		return cmd_output_str
+
+	def salloc(self, args):
+		"""Calls slurm salloc with args
+		   :params args: List of command and command arguments
+		   :type args: List of str
+		   :returns: Output str of salloc command with args
+		"""
+
+		cmd = ["salloc"] + args
+		cmd_err_mess = "Could not execute salloc!"
+
+		cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
+
+		return cmd_output_str
+
+	def sinfo(self, args):
+		"""Calls slurm sinfo with args
+		   :params args: List of command and command arguments
+		   :type args: List of str
+		   :returns: Output str of sinfo command with args
+		"""
+
+		cmd = ["sinfo"] + args
+		cmd_err_mess = "Could not execute sinfo!"
+
+		cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
+
+		return cmd_output_str
+
+	def _get_system_partition_info(self):
+		"""Build a dictionary of slurm partitions filled with
+		   Partition objects.
+		   :returns: dict of Partition objects
+		"""
+
+		sinfo_output = self.sinfo(["--noheader", "--format", "%R %n %c"])
+
+		partitions = {}
+		for line in sinfo_output.split("\n"):
 			line  = line.strip()
 			if line == "":
 				continue
 
-			partition_details = line.split(" ")
-			if partition is None or partition_details[0] == partition:
-				# Strip + character from core count if detected
-				if not partition_details[2][-1].isnumeric():
-					partition_details[2] = partition_details[2][:-1]
-				if int(partition_details[2]) >= ppn:
-					total_nodes += int(partition_details[1])
+			p_info = line.split(" ")
 
-		logger.debug("Found %d nodes that match the constraints provided" % total_nodes)
+			p_name = p_info[0]
+			p_node = p_info[1]
+			p_ppn = int(p_info[2])
 
-		if total_nodes < nodes:
-			raise LauncherError("Could not find enough nodes with the specified constraints: \n"
-												"Nodes Requested: %i\n"
-												"Nodes Detected: %i" % (nodes, total_nodes))
+			if not p_name in partitions:
+				partitions.update({p_name:self.Partition()})
+			partitions[p_name].name = p_name
+			partitions[p_name].nodes.add(p_node)
+			if not partitions[p_name].min_ppn:
+				partitions[p_name].min_ppn = p_ppn
+			partitions[p_name].min_ppn = min(p_ppn, partitions[p_name].min_ppn)
 
-		logger.info("Successfully Validated Slurm with sufficient resources")
+		return partitions
+
+	def _get_default_partition(self):
+		"""Returns the default partition from slurm which is the partition with
+           a star following its partition name in sinfo output
+        """
+		sinfo_output = self.sinfo(["--noheader", "--format", "%P"])
+
+		default = None
+		for line in sinfo_output.split("\n"):
+			if line.endswith("*"):
+				default = line.strip("*")
+
+		if not default:
+			raise LauncherError("Could not find default partition!")
+		return default
+
+	def validate(self, nodes=None, ppn=None, partition=None):
+		"""Check that there are sufficient resources in the provided Slurm partitions.
+			:param str partition: partition to validate
+			:param nodes: Override the default node count to validate
+			:type nodes: int
+			:param ppn: Override the default processes per node to validate
+			:type ppn: int
+			:raises: LauncerError
+		"""
+
+		sys_partitions = self._get_system_partition_info()
+
+		n_avail_nodes = 0
+		avail_nodes = set()
+		min_ppn = None
+
+		p = partition
+		if not partition:
+			p = self._get_default_partition()
+
+		if not p in sys_partitions:
+			raise LauncherError("Partition {0} is not found on this system".format(p))
+		avail_nodes = avail_nodes.union(sys_partitions[p].nodes)
+		if not min_ppn:
+			min_ppn = sys_partitions[p].min_ppn
+		else:
+			min_ppn = min(sys_partitions[p].min_ppn, min_ppn)
+
+		n_avail_nodes = len(avail_nodes)
+		logger.debug("Found {0} nodes that match the constraints provided".format(n_avail_nodes))
+		if n_avail_nodes<nodes:
+			raise LauncherError("{0} nodes are not available on the specified partitions.  Only "\
+								"{1} nodes available.".format(nodes,n_avail_nodes))
+		if min_ppn < ppn:
+			raise LauncherError("{0} ppn is not available on each node.".format(min_ppn))
+
+		logger.info("Successfully validated Slurm with sufficient resources")
 
 	def get_job_stat(self, job_id):
 		"""
@@ -122,8 +225,7 @@ class SlurmLauncher(Launcher):
 	def get_alloc(self, nodes=None, ppn=None, partition=None, start_time=None, duration="",
 		add_opts=None):
 		""" Get the allocation using salloc and specified constraints.
-			The reason we override the fields below is that it becomes the default for submitting jobs
-			against this allocation!
+
 			:param nodes: Override the default node count to allocate
 			:param ppn: Override the default processes per node to allocate
 			:param partition: Override the default partition to allocate from
@@ -153,6 +255,25 @@ class SlurmLauncher(Launcher):
 
 	def run_on_alloc(self, cmd, alloc_id, nodes=None, ppn=None, duration="", add_opts=None,
 					partition=None, cwd="", env_vars=None, out_file=None, err_file=None):
+		"""Build and call "srun" on a user provided command within an allocation.
+
+		   :param cmd: command to run with "srun"
+           :type cmd: list of strings
+           :param int alloc_id: allocation id to run command on
+           :param int nodes: number of nodes
+           :param int ppn: number of processes per node
+           :param str duration: time of job in hour:min:second format e.g. 10:00:00
+           :param add_opts: additional options for the "srun" command
+           :type add_opts: list of strings
+           :param str partition: partition to run job on
+           :param str cwd: current working directory to launch srun in
+           :param env_vars: environment variables to pass to the srun command
+           :type env_vars: dict of environment variables
+           :param str out_file: file to capture output of srun command
+           :param str err_file: file to capture error of srun command
+           :return: subjob id
+           :raises: LauncherError
+        """
 		if str(alloc_id) not in self.alloc_ids.keys():
 			raise LauncherError("Could not find allocation with id: " + str(alloc_id))
 		if isinstance(cmd, list):
@@ -189,7 +310,7 @@ class SlurmLauncher(Launcher):
 			env_var_str = self._format_env_vars(env_vars)
 			srun += ["--export", env_var_str]
 
-		if len(add_opts) > 0:
+		if len(add_opts) > 0 and isinstance(add_opts, list):
 			for opt in add_opts:
 				srun.append(opt)
 		srun += [cmd]
@@ -204,7 +325,10 @@ class SlurmLauncher(Launcher):
 			return subjob_id
 
 	def stop(self, job_id):
-		
+		"""Stop is used to stop a subjob that is currently running within an allocation.
+
+			:param str job_id: sub job id with decimal increment to stop e.g. 64253.1
+        """
 		if job_id not in self.subjob_ids:
 			raise LauncherError("Job id, " + str(job_id) + " not found.")
 

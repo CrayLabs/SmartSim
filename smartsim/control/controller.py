@@ -1,60 +1,22 @@
 import sys
-import subprocess
 import time
-
+import subprocess
 from os import listdir
 from os.path import isdir, basename, join
-from ..launcher import SlurmLauncher
 
-from ..smartSimNode import SmartSimNode
-from ..target import Target
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
 from ..state import State
-from ..simModule import SmartSimModule
-from .job import Job
+from ..target import Target
 from ..model import NumModel
+from ..launcher import SlurmLauncher
+from ..simModule import SmartSimModule
+from ..smartSimNode import SmartSimNode
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
+
+from .job import Job
+from .allochandler import AllocHandler
 
 from ..utils import get_logger
 logger = get_logger(__name__)
-
-
-class AllocHandler:
-
-    def __init__(self):
-        self.partitions = {}  # partition : (node count: ppn)
-        self.allocs = {} # partition : allocation_id
-
-    def _add_to_allocs(self, run_settings):
-        """Add an entities run_settings to an allocation
-           Add up the total number of nodes or each partition and
-           take the highest ppn value present in any of the run settings
-
-           :param dict run_settings: dictionary of settings that include
-                                     number of nodes, ppn and partition
-                                     requested by the user.
-        """
-        # partition will be None if one is not listed
-        part = run_settings["partition"]
-        if not part:
-            part = "default" # use default partition
-        nodes = int(run_settings["nodes"])
-        ppn = int(run_settings["ppn"])
-        if part in self.partitions.keys():
-            self.partitions[part][0] += nodes
-            if self.partitions[part][1] < ppn:
-                self.partitions[part][1] == ppn
-        else:
-            self.partitions[part] = [nodes, ppn]
-
-    def _remove_alloc(self, partition):
-        """Remove a partition from both the active allocations and the
-           partitions dictionary. This is called when an allocation is
-           released by the user.
-
-           :param str partition: supplied by release. partition to be freed
-        """
-        self.partitions.pop(partition)
-        self.allocs.pop(partition)
 
 
 class Controller(SmartSimModule):
@@ -249,6 +211,7 @@ class Controller(SmartSimModule):
            job launched by the controller and it's current status.
 
            :param str name: name of the entity launched by the Controller
+           :raises: SmartSimError
         """
         found = False
         for job in self._jobs:
@@ -275,7 +238,7 @@ class Controller(SmartSimModule):
             return node_dict
         else:
             if not isinstance(job, Job):
-                raise("Argument must be a Job instance")
+                raise SmartSimError("Argument must be a Job instance")
             else:
                 time.sleep(wait)
                 nodes = self._get_job_nodes(job)
@@ -318,6 +281,7 @@ class Controller(SmartSimModule):
         return True
 
     def _prep_nodes(self):
+        """Add the nodes to the list of requirement for all the entities to be launched."""
         nodes = self.get_nodes()
         for node in nodes:
             run_dict = self._build_run_dict(node.run_settings)
@@ -325,10 +289,15 @@ class Controller(SmartSimModule):
             self._alloc_handler._add_to_allocs(run_dict)
 
     def _prep_orchestrator(self):
+        """Add the orchestrator to the allocations requested"""
         orc_settings = self.state.orc.get_run_settings()
         self._alloc_handler._add_to_allocs(orc_settings)
 
     def _prep_targets(self):
+        """Add the models of each target to the allocations requested
+
+           :raises: SmartSimError
+        """
         targets = self.get_targets()
         if len(targets) < 1:
             raise SmartSimError("No targets to simulate!")
@@ -348,7 +317,12 @@ class Controller(SmartSimModule):
                 continue
         return arg_dict
 
-    def _build_run_dict(self, tar_info):
+    def _build_run_dict(self, entity_info):
+        """Build up the run settings by retrieving the settings of the Controller
+           as well as the run_settings for each entity.
+
+           :param dict entity_info: dictionary of settings for an entity
+        """
 
         def _build_run_command(tar_dict):
             """run_command + run_args + executable + exe_args"""
@@ -372,33 +346,40 @@ class Controller(SmartSimModule):
         run_dict = {}
         try:
             # target level values optional because there are defaults
-            run_dict["nodes"] = self.get_config("nodes", aux=tar_info, none_ok=True)
-            run_dict["ppn"] = self.get_config("ppn", aux=tar_info, none_ok=True)
-            run_dict["duration"] = self.get_config("duration", aux=tar_info, none_ok=True)
-            run_dict["partition"] = self.get_config("partition", aux=tar_info, none_ok=True)
-            run_dict["cmd"] = _build_run_command(tar_info)
+            run_dict["nodes"] = self.get_config("nodes", aux=entity_info, none_ok=True)
+            run_dict["ppn"] = self.get_config("ppn", aux=entity_info, none_ok=True)
+            run_dict["duration"] = self.get_config("duration", aux=entity_info, none_ok=True)
+            run_dict["partition"] = self.get_config("partition", aux=entity_info, none_ok=True)
+            run_dict["cmd"] = _build_run_command(entity_info)
 
             return run_dict
         except KeyError as e:
             raise SSConfigError("SmartSim could not find following required field: " +
                                 e.args[0]) from e
 
-    def _get_allocations(self):
-        duration = self.get_config("duration", none_ok=True)
-        try:
-            for partition, nodes in self._alloc_handler.partitions.items():
-                if partition == "default":
+    def _validate_allocations(self):
+        """Validate the allocations with specific requirements provided by the user."""
+        for partition, nodes in self._alloc_handler.partitions.items():
+            if partition == "default":
                     partition = None
-                self._launcher.validate(nodes=nodes[0], ppn=nodes[1], partition=partition)
-                alloc_id = self._launcher.get_alloc(nodes=nodes[0], ppn=nodes[1],
-                                                    partition=partition, duration=duration)
-                if partition:
-                    self._alloc_handler.allocs[partition] = alloc_id
-                else:
-                    self._alloc_handler.allocs["default"] = alloc_id
-        except LauncherError as e:
-            logger.error(e)
-            raise
+            self._launcher.validate(nodes=nodes[0], ppn=nodes[1], partition=partition)
+
+    def _get_allocations(self):
+        """Validate and retrive n allocations where n is the number of partitions
+           needed by the user.
+        """
+        self._validate_allocations()
+
+        duration = self.get_config("duration", none_ok=True)
+        for partition, nodes in self._alloc_handler.partitions.items():
+            if partition == "default":
+                partition = None
+            alloc_id = self._launcher.get_alloc(nodes=nodes[0], ppn=nodes[1],
+                                                partition=partition, duration=duration)
+            if partition:
+                self._alloc_handler.allocs[partition] = alloc_id
+            else:
+                self._alloc_handler.allocs["default"] = alloc_id
 
     def _launch(self):
         # launch orchestrator and add to job ID list
