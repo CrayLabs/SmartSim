@@ -32,8 +32,7 @@ def test_create_target():
 
 def test_get_target():
     state = State(experiment="test")
-    state.create_target("test-target")
-    target = state.get_target("test-target")
+    target = state.create_target("test-target")
     assert(target == state.targets[0])
 
 def test_get_target_error():
@@ -60,10 +59,8 @@ def test_create_node():
 
 def test_target_get_model():
     state = State(experiment="test")
-    state.create_target("test-target")
-    state.create_model("test-model", "test-target")
-    target = state.get_target("test-target")
-    model = state.get_model("test-model", "test-target")
+    target = state.create_target("test-target")
+    model = state.create_model("test-model", "test-target")
     assert(model == target["test-model"])
 
 def test_duplicate_orchestrator_error():

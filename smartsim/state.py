@@ -88,6 +88,7 @@ class State:
                                on a run strategy.
 
         """
+        new_target=None
         try:
             for target in self.targets:
                 if target.name == name:
@@ -101,6 +102,7 @@ class State:
         except SmartSimError as e:
             logger.error(e)
             raise
+        return new_target
 
     def create_model(self, name, target="default_target", params={}, path=None):
         """Create a model belonging to a specific target. This function is
@@ -120,6 +122,7 @@ class State:
         """
         model_added = False
         target_exists = False
+        model = None
         if not path:
             path = getcwd()
         for t in self.targets:
@@ -137,6 +140,7 @@ class State:
             model_added = True
         if not model_added:
             raise SmartSimError("Could not find target by the name of: " + target)
+        return model
 
     def create_orchestrator(self, name=None, port=6379, run_settings={}):
         """Create an orchestrator database to faciliate the transfer of data
@@ -169,6 +173,7 @@ class State:
            """
         node = SmartSimNode(name, path=script_path, run_settings=run_settings)
         self.nodes.append(node)
+        return node
 
     def register_connection(self, sender, reciever):
         """Create a runtime connection in orchestrator for data to be passed between two

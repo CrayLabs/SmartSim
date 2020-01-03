@@ -92,7 +92,6 @@ def test_stop_targets():
     """This test verifies that controller.stop()
        is able to stop multiple targets and models.
     """
-    pytest.skip()
 
     # see if we are on slurm machine
     if not which("srun"):
@@ -103,18 +102,12 @@ def test_stop_targets():
         rmtree(experiment_dir)
 
     state= State(experiment="controller_test")
-
     target_dict = {"executable":"python sleep.py"}
-
-    state.create_target("target_1", run_settings=target_dict)
-    t1 = state.get_target("target_1")
-    state.create_model(name="model_1", target="target_1")
-    state.create_model(name="model_2", target="target_1")
-    m1 = state.get_model("model_1", "target_1")
-    m2 = state.get_model("model_2", "target_1")
-    state.create_target("target_2", run_settings=target_dict)
-    t2 = state.get_target("target_2")
-    state.create_model(name="model_3", target="target_2")
+    target_1 = state.create_target("target_1", run_settings=target_dict)
+    model_1 = state.create_model(name="model_1", target="target_1")
+    model_2 = state.create_model(name="model_2", target="target_1")
+    target_2 = state.create_target("target_2", run_settings=target_dict)
+    model_3 = state.create_model(name="model_3", target="target_2")
 
     gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
     gen.generate()
@@ -122,15 +115,15 @@ def test_stop_targets():
     control_dict = {"run_command":"srun",
                     "launcher": "slurm",
                     "ppn": 1}
-
     control = Controller(state, **control_dict)
+
     control.start()
     time.sleep(10)
-    control.stop(targets=[t2], models = [m1,m2])
+    control.stop(targets=[target_2], models = [model_1,model_2])
     time.sleep(10)
     assert(control.finished())
     control.release()
-    # Cleanup from previous test
+
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
@@ -138,7 +131,6 @@ def test_stop_targets_nodes_orchestrator():
     """This test verifies that controller.stop()
        is able to stop multiple nodes.
     """
-    pytest.skip()
 
     # see if we are on slurm machine
     if not which("srun"):
@@ -151,10 +143,8 @@ def test_stop_targets_nodes_orchestrator():
     state=State(experiment="controller_test")
 
     target_dict = {"executable":"python sleep.py"}
-
-    state.create_target("target_1", run_settings=target_dict)
-    t1 = state.get_target("target_1")
-    state.create_model(name="model_1", target="target_1")
+    target_1 = state.create_target("target_1", run_settings=target_dict)
+    model_1 = state.create_model(name="model_1", target="target_1")
 
     gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
     gen.generate()
@@ -165,11 +155,8 @@ def test_stop_targets_nodes_orchestrator():
     copyfile('./test_configs/sleep.py',script)
     node_1_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_1.err'}
     node_2_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_2.err'}
-    state.create_node("node_1", script_path=experiment_dir,run_settings=node_1_dict)
-    state.create_node("node_2", script_path=experiment_dir,run_settings=node_2_dict)
-
-    node_1 = state.get_node("node_1")
-    node_2 = state.get_node("node_2")
+    node_1 = state.create_node("node_1", script_path=experiment_dir,run_settings=node_1_dict)
+    node_2 = state.create_node("node_2", script_path=experiment_dir,run_settings=node_2_dict)
 
     control_dict = {"launcher": "slurm",
                     "ppn": 1}
@@ -177,7 +164,7 @@ def test_stop_targets_nodes_orchestrator():
     control = Controller(state, **control_dict)
     control.start()
     time.sleep(10)
-    control.stop(targets=[t1], nodes=[node_1, node_2], stop_orchestrator=True)
+    control.stop(targets=[target_1], nodes=[node_1, node_2], stop_orchestrator=True)
     time.sleep(10)
     assert(control.finished())
     control.release()
@@ -271,7 +258,7 @@ def test_controller():
 def test_no_generator():
     """Test the controller when the model files have not been created by
        a generation strategy"""
-    pytest.skip()
+
     # see if we are on slurm machine
     if not which("srun"):
         pytest.skip()
@@ -313,7 +300,7 @@ def test_no_generator():
 
 def test_target_configs():
     """Test the controller for when targets are provided their own run configurations"""
-    pytest.skip()
+
     # see if we are on slurm machine
     if not which("srun"):
         pytest.skip()
