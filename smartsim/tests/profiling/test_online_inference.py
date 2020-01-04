@@ -4,7 +4,7 @@ import pytest
 from smartsim import State, Controller
 
 # Comment to run profiling tests
-pytestmark = pytest.mark.skip()
+#pytestmark = pytest.mark.skip()
 
 def test_inference_path():
     """test the latency for a small amount of data for the inference
@@ -52,32 +52,25 @@ def test_inference_path_2D_1GB():
 def run_inference_path(data_size, num_packets, test_id):
     state = State(experiment="online-training")
     train_settings = {
-        "launcher": "slurm",
         "nodes": 1,
-        "executable": "node.py",
-        "run_command": "srun python"
+        "executable": "python node.py",
+    }
+    sim_dict = {
+        "executable": "python simulation.py",
+        "nodes": 1,
+        "exe_args": create_exe_args(data_size, num_packets)
     }
     node_name = "training_node" + test_id
     sim_name = "sim-model" + test_id
     orc_name = "orchestrator" + test_id
-    state.create_node(node_name, script_path=os.getcwd() + "/inference/", **train_settings)
-    state.create_target("simulation")
+    state.create_node(node_name, script_path=os.getcwd() + "/inference/", run_settings=train_settings)
+    state.create_target("simulation", run_settings=sim_dict)
     state.create_model(sim_name, "simulation", path=os.getcwd() + "/inference/")
-
-    # initialize orchestrator with connection from simulation
-    # to training node and back to simulation.
-    state.create_orchestrator(orc_name, ppn="4")
+    state.create_orchestrator(orc_name)
     state.register_connection(sim_name, node_name)
     state.register_connection(node_name, sim_name)
 
-    sim_dict = {
-        "launcher": "slurm",
-        "executable": "simulation.py",
-        "nodes": 1,
-        "exe_args": create_exe_args(data_size, num_packets),
-        "run_command": "srun python"
-    }
-    sim_control = Controller(state, **sim_dict)
+    sim_control = Controller(state, launcher="slurm")
     sim_control.start()
 
 def create_exe_args(data_size, num_packets):

@@ -49,7 +49,7 @@ class Junction:
                 env_str = ""
                 for conn in database_list:
                     env_str += str(conn) + " "
-                return env_str
+                return env_str.strip()
             else:
                 return ""
         connections["SSDATAIN"] = get_env_str(data_in)

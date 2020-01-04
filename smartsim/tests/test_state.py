@@ -55,7 +55,7 @@ def test_delete_target():
 
 def test_create_node():
     state = State(experiment="test")
-    state.create_node("test-node", getcwd())
+    state.create_node("test-node", script_path=getcwd())
     assert(len(state.nodes) > 0)
 
 def test_target_get_model():

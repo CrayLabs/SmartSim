@@ -152,7 +152,7 @@ class State:
             raise SmartSimError("Only one orchestrator can exist within a state.")
         self.orc = Orchestrator(name=name, port=port, run_settings=run_settings)
 
-    def create_node(self, name, script_path=None, **kwargs):
+    def create_node(self, name, script_path=None, run_settings={}):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode
            tasks include training, processing, and inference. Nodes can be used
            to run any task written in any language. The included script/executable
@@ -163,12 +163,11 @@ class State:
            :param str script_path: path to the script or executable to be launched.
                                    (default is the current working directory of the
                                     SmartSim run script)
-           :param dict kwargs: Extra settings for the workload manager can be set by
-                               inluding keyword arguments such as duration="1:00:00"
-                               or nodes=5
+           :param dict run_settings: Settings for the workload manager can be set by
+                                     including keyword arguments such as duration="1:00:00"
+                                     or nodes=5
            """
-        # TODO get settings from config file as well
-        node = SmartSimNode(name, path=script_path, **kwargs)
+        node = SmartSimNode(name, path=script_path, run_settings=run_settings)
         self.nodes.append(node)
 
     def register_connection(self, sender, reciever):

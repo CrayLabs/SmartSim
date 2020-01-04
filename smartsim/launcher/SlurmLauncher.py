@@ -314,6 +314,7 @@ class SlurmLauncher(Launcher):
 			for opt in add_opts:
 				srun.append(opt)
 		srun += [cmd]
+		logger.debug(seq_to_str(srun))
 
 		status = self._run_asynch_command(seq_to_str(srun), cwd)
 		if status == -1:
