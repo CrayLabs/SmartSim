@@ -361,7 +361,7 @@ class Controller(SmartSimModule):
         """Validate the allocations with specific requirements provided by the user."""
         for partition, nodes in self._alloc_handler.partitions.items():
             if partition == "default":
-                    partition = None
+                partition = None
             self._launcher.validate(nodes=nodes[0], ppn=nodes[1], partition=partition)
 
     def _get_allocations(self):

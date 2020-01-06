@@ -83,10 +83,10 @@ class SmartSimModule:
            :raises KeyError:
            :returns: param if present
         """
-        if aux and param in aux.keys():
-            return aux[param]
-        elif param in self._init_args.keys():
+        if param in self._init_args.keys():
             return self._init_args[param]
+        elif aux and param in aux.keys():
+            return aux[param]
         else:
             if none_ok:
                 return None

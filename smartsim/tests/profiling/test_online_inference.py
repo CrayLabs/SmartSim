@@ -4,7 +4,7 @@ import pytest
 from smartsim import State, Controller
 
 # Comment to run profiling tests
-#pytestmark = pytest.mark.skip()
+pytestmark = pytest.mark.skip()
 
 def test_inference_path():
     """test the latency for a small amount of data for the inference

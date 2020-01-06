@@ -213,8 +213,8 @@ class State:
         """
         for target in self.targets:
             pickle_path = path.join(target.path, target.name + ".pickle")
-            if not path.isdir(path.join(target.path, target.name)):
-                raise SmartSimError("Targets must be generated in order to save them")
+            if not path.isdir(target.path):
+                raise SmartSimError("Targets must be generated in order to save them.  {0} does not exist.".format(target.path))
             file_obj = open(pickle_path, "wb")
             pickle.dump(target, file_obj)
             file_obj.close()
