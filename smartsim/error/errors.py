@@ -25,3 +25,8 @@ class SSModelExistsError(SmartSimError):
     def __init__(self, message):
         super().__init__(message)
 
+class LauncherError(SmartSimError):
+    def __init__(self, message):
+        super().__init__(message)
+
+

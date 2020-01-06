@@ -1,11 +1,182 @@
 import pytest
 
-from os import getcwd, listdir, path, environ, mkdir
+from os import getcwd, listdir, path, environ, mkdir, remove
+
 from glob import glob
-from shutil import rmtree, which
+from shutil import rmtree, which, copyfile
 
 from smartsim import Generator, Controller, State
+import time
 
+def test_inherit_complete_controller_args():
+    """Test the output of Controller._build_run_dict()
+       method for a target and node inherting all controller
+       arguments (i.e. no unique arguments in the target or node
+       run settings).
+    """
+    state = State(experiment="unit_test")
+
+    control_settings = {"nodes":2,
+                        "executable":"MOM6",
+                        "run_command":"srun",
+                        "launcher": "slurm",
+                        "ppn": 16,
+                        "partition": "iv24"}
+
+    target_settings = {"nodes":1,
+                       "executable":"OTHER_EXE"}
+
+    node_settings = {"nodes": 1,
+                     "executable": "OTHER.py",
+                     "run_command": "srun python"}
+
+    control = Controller(state, **control_settings)
+
+    state.create_target("target_1", run_settings=target_settings)
+    target = state.get_target("target_1")
+    run_dict = control._build_run_dict(target.get_run_settings())
+
+    assert(run_dict["nodes"] == 2)
+    assert(run_dict["ppn"] == 16)
+    assert(run_dict["partition"] == "iv24")
+    assert(run_dict["cmd"] == ['MOM6 '])
+
+    state.create_node("node_1", run_settings=node_settings)
+    node = state.get_node("node_1")
+    run_dict = control._build_run_dict(node.get_run_settings())
+
+    assert(run_dict["nodes"] == 2)
+    assert(run_dict["ppn"] == 16)
+    assert(run_dict["partition"] == "iv24")
+    assert(run_dict["cmd"] == ['MOM6 '])
+
+def test_inherit_incomplete_controller_args():
+    """Test the output of Controller._build_run_dict()
+       method for a target and node inherting all controller
+       arguments but retaining the unique run setting values.
+    """
+    state = State(experiment="unit_test")
+
+    control_settings = {"run_command":"srun",
+                        "launcher": "slurm",
+                        "ppn": 16,
+                        "partition": "iv24"}
+
+    target_settings = {"nodes":1,
+                       "executable":"OTHER_EXE"}
+
+    node_settings = {"nodes": 1,
+                     "executable": "OTHER.py"}
+
+    control = Controller(state, **control_settings)
+
+    state.create_target("target_1", run_settings=target_settings)
+    target = state.get_target("target_1")
+    run_dict = control._build_run_dict(target.get_run_settings())
+
+    assert(run_dict["nodes"] == 1)
+    assert(run_dict["ppn"] == 16)
+    assert(run_dict["partition"] == "iv24")
+    assert(run_dict["cmd"] == ['OTHER_EXE '])
+
+    state.create_node("node_1", run_settings=node_settings)
+    node = state.get_node("node_1")
+    run_dict = control._build_run_dict(node.get_run_settings())
+
+    assert(run_dict["nodes"] == 1)
+    assert(run_dict["ppn"] == 16)
+    assert(run_dict["partition"] == "iv24")
+    assert(run_dict["cmd"] == ['OTHER.py '])
+
+def test_stop_targets():
+    """This test verifies that controller.stop()
+       is able to stop multiple targets and models.
+    """
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = "./controller_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    state= State(experiment="controller_test")
+    target_dict = {"executable":"python sleep.py"}
+    target_1 = state.create_target("target_1", run_settings=target_dict)
+    model_1 = state.create_model(name="model_1", target="target_1")
+    model_2 = state.create_model(name="model_2", target="target_1")
+    target_2 = state.create_target("target_2", run_settings=target_dict)
+    model_3 = state.create_model(name="model_3", target="target_2")
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+
+    control_dict = {"run_command":"srun",
+                    "launcher": "slurm",
+                    "ppn": 1}
+    control = Controller(state, **control_dict)
+
+    control.start()
+    time.sleep(10)
+    control.stop(targets=[target_2], models = [model_1,model_2])
+    time.sleep(10)
+    assert(control.finished())
+    control.release()
+
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def test_stop_targets_nodes_orchestrator():
+    """This test verifies that controller.stop()
+       is able to stop multiple nodes.
+    """
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = getcwd()+"/controller_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    state=State(experiment="controller_test")
+
+    target_dict = {"executable":"python sleep.py"}
+    target_1 = state.create_target("target_1", run_settings=target_dict)
+    model_1 = state.create_model(name="model_1", target="target_1")
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+
+    state.create_orchestrator()
+
+    script = experiment_dir+'/sleep.py'
+    copyfile('./test_configs/sleep.py',script)
+    node_1_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_1.err'}
+    node_2_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_2.err'}
+    node_1 = state.create_node("node_1", script_path=experiment_dir,run_settings=node_1_dict)
+    node_2 = state.create_node("node_2", script_path=experiment_dir,run_settings=node_2_dict)
+
+    control_dict = {"launcher": "slurm",
+                    "ppn": 1}
+
+    control = Controller(state, **control_dict)
+    control.start()
+    time.sleep(10)
+    control.stop(targets=[target_1], nodes=[node_1, node_2], stop_orchestrator=True)
+    time.sleep(10)
+    assert(control.finished())
+    control.release()
+
+    if path.isfile('orchestrator'):
+        remove('orchestrator')
+    if path.isfile('orchestrator.out'):
+        remove('orchestrator.out')
+    if path.isfile('orchestrator.err'):
+        remove('orchestrator.err')
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
 
 def test_controller():
 
@@ -40,10 +211,8 @@ def test_controller():
 
         control_dict = {"nodes":2,
                         "executable":"MOM6",
-                        "run_command":"srun",
-                        "launcher": "slurm",
                         "partition": "iv24"}
-        sim = Controller(state, **control_dict)
+        sim = Controller(state, launcher="slurm", **control_dict)
         sim.start()
 
         while(sim.poll(verbose=False)):
@@ -65,7 +234,6 @@ def test_controller():
             target_path = path.join(experiment_path, target)
             for model in listdir(target_path):
                 model_files = files.copy()
-                model_files.append(model)
                 model_files.append(".".join((model, "err")))
                 model_files.append(".".join((model, "out")))
                 model_path = path.join(target_path, model)
@@ -81,12 +249,13 @@ def test_controller():
 
         assert(data_present)
 
-        # Cleanup from previous test
+        # Cleanup
+        sim.release()
         if path.isdir(experiment_path):
             rmtree(experiment_path)
 
 
-def test_no_Generator():
+def test_no_generator():
     """Test the controller when the model files have not been created by
        a generation strategy"""
 
@@ -103,26 +272,27 @@ def test_no_Generator():
     mkdir(output_file_dir)
 
     state = State(experiment="test_output")
-    state.create_model("test", path=output_file_dir)
 
-    sim_params = {"launcher": "slurm",
-                  "executable": "cp2k.psmp",
-                  "run_command": "srun",
-                  "partition": "gpu",
-                  "exe_args": "-i ../test_configs/h2o.inp",
-                  "nodes": 1}
-    control = Controller(state, **sim_params)
+    target_run_settings = {"executable": "cp2k.psmp",
+                           "run_command": "srun",
+                           "partition": "gpu",
+                           "exe_args": "-i ../test_configs/h2o.inp",
+                           "nodes": 1}
+    state.create_target("test-target", run_settings=target_run_settings)
+    state.create_model("test", target="test-target", path=output_file_dir)
+
+    control = Controller(state, launcher="slurm")
     control.start()
 
     while(control.poll(verbose=False)):
         continue
 
-    file_list = ["h2o-1.ener", "test", "test.err", "test.out", "h2o-pos-1.xyz"]
-    file_path = path.join(getcwd(), output_file_dir)
-    file_list = [path.join(file_path, f) for f in file_list]
+    file_list = ["h2o-1.ener", "test.err", "test.out", "h2o-pos-1.xyz"]
+    file_list = [path.join(output_file_dir, f) for f in file_list]
     for f in file_list:
         assert(path.isfile(f))
 
+    control.release()
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)
 
@@ -161,5 +331,6 @@ def test_target_configs():
     while(control.poll(verbose=False)):
         continue
 
+    control.release()
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)

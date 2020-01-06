@@ -1,16 +1,19 @@
 import sys
-import subprocess
 import time
-
+import subprocess
 from os import listdir
 from os.path import isdir, basename, join
-from ..launcher import SlurmLauncher
 
-from ..helpers import get_SSHOME
-from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..state import State
+from ..target import Target
+from ..model import NumModel
+from ..launcher import SlurmLauncher
 from ..simModule import SmartSimModule
+from ..smartSimNode import SmartSimNode
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
+
 from .job import Job
+from .allochandler import AllocHandler
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -21,50 +24,195 @@ class Controller(SmartSimModule):
        that is the subject of Smartsim and the underlying workload manager or
        run framework. There are currently three methods of execution:
 
-          1) Local (implemented)
-          2) Slurm (implemented)
-          3) PBS   (not implemented)
+          1) Slurm (implemented)
 
        :param State state: A State instance
        :param str launcher: The launcher type.  Accepted
                             options are 'local', and 'slurm'
-
     """
 
     def __init__(self, state, launcher=None, **kwargs):
         super().__init__(state, **kwargs)
         self.set_state("Simulation Control")
         self._init_launcher(launcher)
+        self._alloc_handler = AllocHandler()
         self._jobs = []
 
+    def start(self):
+        """Start the computation of a target, nodes, and optionally
+           facilitate communication between entities via an orchestrator.
+           The fields above can be a list of strings or a list of strings
+           that refer to the names of entities to be launched.
 
-    def start(self, target=None):
-        """Start the simulations of all targets using whatever
-           controller settings have been set through the Controller
-           initialization or in the SmartSim configuration file.
+           :param str target: target to launch
+           :param str nodes: nodes to launch
+           TODO: single target/model/node launch control
         """
         try:
             if self.has_orchestrator():
-                self._launch_orchestrator()
-                self._launch_nodes()
+                self._prep_orchestrator()
+                self._prep_nodes()
             logger.info("SmartSim State: " + self.get_state())
-            self._launch_targets(target=target)
+            self._prep_targets()
+            self._get_allocations()
+            self._launch()
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def stop_all(self):
-        raise NotImplementedError
+    def stop(self, targets=None, models=None, nodes=None, stop_orchestrator=False):
+        """Stops specified targets, nodes, and orchestrator.
+           If stop_orchestrator is set to true and all targets and
+           nodes are stopped, the orchestrato will be stopped.
 
-    def stop(self, pid):
-        raise NotImplementedError
+           :param targets: List of targets to be stopped
+           :type targets: list of Target, optional Target
+           :param models: List of models to be stopped
+           :type models: list of NumModel, option NumModel
+           :param smartSimNode nodes: List of nodes to be stopped
+           :type nodes: list of smartSimNode, optional smartSimNode
+           :param bool stop_orchestrator: Boolean indicating if
+                the ochestrator should be stopped.
+        """
+
+        if self._launcher == None:
+            logger.warning("Controller.stop() is not actionable for local launchers.")
+        else:
+            self._stop_targets(targets)
+            self._stop_models(models)
+            self._stop_nodes(nodes)
+            if stop_orchestrator:
+                self._stop_orchestrator()
+
+    def stop_all(self):
+        """Stops all  targets, nodes, and orchestrator."""
+        self.stop(targets=self.state.targets,
+                  nodes=self.state.nodes,
+                  stop_orchestrator=True)
+
+    def release(self, partition=None):
+        """Release the allocation(s) stopping all jobs that are currently running
+           and freeing up resources. To free all resources on all partitions, invoke
+           without passing a partition argument.
+
+           :param str partition: name of the partition where the allocation is running
+        """
+        try:
+            if partition:
+                try:
+                    alloc_id = self._alloc_handler.allocs[partition]
+                    self._launcher.free_alloc(alloc_id)
+                    self._alloc_handler._remove_alloc(partition)
+                except KeyError:
+                    raise SmartSimError("Could not find allocation on partition: " + partition)
+            else:
+                allocs = self._alloc_handler.allocs.copy()
+                for partition, alloc_id in allocs.items():
+                    self._launcher.free_alloc(alloc_id)
+                    self._alloc_handler._remove_alloc(partition)
+        except SmartSimError as e:
+            logger.error(e)
 
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
         return self._jobs
 
+    def _stop_targets(self, targets):
+        """Stops specified targets.  If targets is None,
+           the function returns without performning any action.
+           :param targets: List of targets to be stopped
+           :type targets: list of Target, optional Target
+           :raises: SmartSimError
+        """
+        if targets == None or self._launcher == None:
+            return
+
+        if isinstance(targets, Target):
+            targets = [targets]
+
+        if not all(isinstance(x, Target) for x in targets):
+            raise SmartSimError("Only objects of type Target expected for variable targets")
+
+        for target in targets:
+            models = list(target.models.values())
+            self._stop_models(models)
+
+    def _stop_models(self, models):
+        """Stops the specified models.  If the models is None,
+           the function returns without performing any action.
+
+           :param models: List of models to be stopped
+           :type models: list of MOdel, option Model
+           :raises: SmartSimError
+        """
+
+        if models == None or self._launcher == None:
+            return
+
+        if isinstance(models, NumModel):
+            models = [models]
+
+        if not all(isinstance(x, NumModel) for x in models):
+            raise SmartSimError("Only objects of type NumModel expected for variable models")
+
+        for model in models:
+            job = self.get_job(model.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping model " + model.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                    " because its status is " + job.status)
+
+    def _stop_nodes(self, nodes):
+        """Stops specified nodes.  If nodes is None,
+           the function returns without performning any action.
+
+           :param nodes: List of nodes to be stopped
+           :type nodes: list of SmartSimNode, optional SmartSimNode
+           :raises: SmartSimError
+        """
+        if nodes == None or self._launcher == None:
+            return
+
+        if isinstance(nodes, SmartSimNode):
+            nodes = [nodes]
+
+        if not all(isinstance(x, SmartSimNode) for x in nodes):
+            raise SmartSimError("Only objects of type SmartSimNode expected for variable nodes")
+
+        for node in nodes:
+            job = self.get_job(node.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping node " + node.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job.get_job_id()
+                                    + " because its status is " + job.status)
+
+    def _stop_orchestrator(self):
+        """Stops the orchestrator only if all
+           :raises: SmartSimError
+        """
+        job = self.get_job('orchestrator')
+        self._check_job(job)
+        if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+            logger.info("Stopping orchestrator on job " + job.get_job_id())
+            self._launcher.stop(job.get_job_id())
+        else:
+            raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                " because its status is " + job.status)
+
+
     def get_job(self, name):
-        """TODO write docs for this"""
+        """Retrieve a Job instance by name. The Job object carries information about the
+           job launched by the controller and it's current status.
+
+           :param str name: name of the entity launched by the Controller
+           :raises: SmartSimError
+        """
         found = False
         for job in self._jobs:
             if job.obj.name == name:
@@ -72,7 +220,6 @@ class Controller(SmartSimModule):
                 return job
         if not found:
             raise SmartSimError("Job for " + name + " not found.")
-
 
     def get_job_nodes(self, job=None, wait=5):
         """Get the hostname(s) of a job from the allocation
@@ -91,7 +238,7 @@ class Controller(SmartSimModule):
             return node_dict
         else:
             if not isinstance(job, Job):
-                raise("Argument must be a Job instance")
+                raise SmartSimError("Argument must be a Job instance")
             else:
                 time.sleep(wait)
                 nodes = self._get_job_nodes(job)
@@ -133,138 +280,162 @@ class Controller(SmartSimModule):
             return False
         return True
 
-    def _launch_nodes(self):
-        """Launch all of the SmartSimNodes declared by the user"""
+    def _prep_nodes(self):
+        """Add the nodes to the list of requirement for all the entities to be launched."""
         nodes = self.get_nodes()
         for node in nodes:
-            # get env_vars for each connection registered by the user
-            env_vars = self.state.orc.get_connection_env_vars(node.name)
+            run_dict = self._build_run_dict(node.run_settings)
+            node.update_run_settings(run_dict)
+            self._alloc_handler._add_to_allocs(run_dict)
 
-            # collect and enter all run settings for Slurm
-            run_dict = self._build_run_dict(node.settings)
-            run_dict["wd"] = node.path
-            run_dict["output_file"] = join(node.path, node.name + ".out")
-            run_dict["err_file"] = join(node.path, node.name + ".err")
+    def _prep_orchestrator(self):
+        """Add the orchestrator to the allocations requested"""
+        orc_settings = self.state.orc.get_run_settings()
+        self._alloc_handler._add_to_allocs(orc_settings)
 
-            # launch the job and track through job class
-            self._launcher.make_script(**run_dict, env_vars=env_vars,
-                                       script_name=node.name, clear_previous=True)
-            pid = self._launcher.submit_and_forget(wd=node.path)
-            logger.info("Launching Node: " + node.name)
-            job = Job(node.name, pid, node)
-            self._jobs.append(job)
+    def _prep_targets(self):
+        """Add the models of each target to the allocations requested
 
-
-    def _launch_orchestrator(self):
-        """Launch the orchestrator for passing data between targets, models,
-           and nodes.
-        """
-        settings, orc_path = self.state.orc.get_launch_settings()
-
-        # make script and launch
-        self._launcher.make_script(**settings, script_name="orchestrator", clear_previous=True)
-        orc_job_id = self._launcher.submit_and_forget(wd=orc_path)
-
-        # add orchestrator to list of jobs
-        logger.info("Launching Orchestrator with pid: " + str(orc_job_id))
-        orc_job = Job("orchestrator", orc_job_id, self.state.orc)
-        self._jobs.append(orc_job)
-        nodes = self.get_job_nodes(orc_job)[0] # only on one node for now
-
-        # get and store the address of the orchestrator database
-        self.state.orc.junction.store_db_addr(nodes, self.state.orc.port)
-
-
-    def _launch_targets(self, target=None):
-        """The entrypoint to simulation for multiple targets. Each target
-           defines how the models wherein should be run. Each model might
-           have different parameters but configurations like node count
-           and ppn are determined by target.
+           :raises: SmartSimError
         """
         targets = self.get_targets()
-        if target:
-            targets = [self.get_target(target)]
         if len(targets) < 1:
             raise SmartSimError("No targets to simulate!")
         for target in targets:
-            run_dict = self._build_run_dict(target.run_settings)
+            run_dict = self._build_run_dict(target.get_run_settings())
+            target.update_run_settings(run_dict)
+            # add nodes to allocation for every model within the target
+            for model in target.models.values():
+                self._alloc_handler._add_to_allocs(run_dict)
 
-            logger.info("Launching Target: " + target.name)
-            if self._launcher != None:
-                self._run_with_launcher(target, run_dict)
-            else:
-                self._run_with_command(target, run_dict)
+    def _remove_smartsim_args(self, arg_dict):
+        ss_args = ["exe_args", "run_args", "executable", "run_command"]
+        for arg in ss_args:
+            try:
+                del arg_dict[arg]
+            except KeyError:
+                continue
+        return arg_dict
 
+    def _build_run_dict(self, entity_info):
+        """Build up the run settings by retrieving the settings of the Controller
+           as well as the run_settings for each entity.
 
-    def _build_run_dict(self, tar_info):
-        """Build a dictionary that will be used to run with the make_script
-           interface of the poseidon launcher."""
+           :param dict entity_info: dictionary of settings for an entity
+        """
 
         def _build_run_command(tar_dict):
             """run_command + run_args + executable + exe_args"""
 
-            # Experiment level values required for controller to work
             exe = self.get_config("executable", aux=tar_dict, none_ok=False)
-            run_command = self.get_config("run_command", aux=tar_dict, none_ok=False)
-
-            run_args = self.get_config("run_args", aux=tar_dict, none_ok=True)
             exe_args = self.get_config("exe_args", aux=tar_dict, none_ok=True)
             if not exe_args:
                 exe_args = ""
-            if not run_args:
-                run_args = ""
+            cmd = " ".join((exe, exe_args))
 
-            cmd = " ".join((run_command, run_args, exe, exe_args))
+            # if using local launcher
+            if not self._launcher:
+                run_command = self.get_config("run_command", aux=tar_dict, none_ok=False)
+                run_args = self.get_config("run_args", aux=tar_dict, none_ok=True)
+                if not run_args:
+                    run_args = ""
+                cmd = " ".join((run_command, run_args, exe, exe_args))
+
             return [cmd]
 
         run_dict = {}
         try:
             # target level values optional because there are defaults
-            run_dict["nodes"] = self.get_config("nodes", aux=tar_info, none_ok=True)
-            run_dict["ppn"] = self.get_config("ppn", aux=tar_info, none_ok=True)
-            run_dict["duration"] = self.get_config("duration", aux=tar_info, none_ok=True)
-            run_dict["partition"] = self.get_config("partition", aux=tar_info, none_ok=True)
-            run_dict["cmd"] = _build_run_command(tar_info)
+            run_dict["nodes"] = self.get_config("nodes", aux=entity_info, none_ok=True)
+            run_dict["ppn"] = self.get_config("ppn", aux=entity_info, none_ok=True)
+            run_dict["duration"] = self.get_config("duration", aux=entity_info, none_ok=True)
+            run_dict["partition"] = self.get_config("partition", aux=entity_info, none_ok=True)
+            run_dict["cmd"] = _build_run_command(entity_info)
 
             return run_dict
         except KeyError as e:
             raise SSConfigError("SmartSim could not find following required field: " +
                                 e.args[0]) from e
 
-    def _get_target_path(self, target):
-        """Given a target, returns the path to the folder where that targets
-           models reside"""
-        target_dir_path = target.path
-        if isdir(target_dir_path):
-            return target_dir_path
-        else:
-            raise SmartSimError("Simulation target directory not found: " +
-                                target)
+    def _validate_allocations(self):
+        """Validate the allocations with specific requirements provided by the user."""
+        for partition, nodes in self._alloc_handler.partitions.items():
+            if partition == "default":
+                partition = None
+            self._launcher.validate(nodes=nodes[0], ppn=nodes[1], partition=partition)
 
-    def _run_with_launcher(self, target, run_dict):
-        """Launch all specified models with the slurm or pbs workload
-           manager. job_name is the target and enumerated id.
-           all output and err is logged to the directory that
-           houses the model.
+    def _get_allocations(self):
+        """Validate and retrive n allocations where n is the number of partitions
+           needed by the user.
         """
-        model_dict = target.models
-        for _, model in model_dict.items():
-            # get env vars for the connection of models to nodes
-            env_vars = {}
-            if self.has_orchestrator():
-                env_vars = self.state.orc.get_connection_env_vars(model.name)
+        self._validate_allocations()
 
-            temp_dict = run_dict.copy()
-            temp_dict["wd"] = model.path
-            temp_dict["output_file"] = join(model.path, model.name + ".out")
-            temp_dict["err_file"] = join(model.path, model.name + ".err")
-            self._launcher.make_script(**temp_dict, env_vars=env_vars,
-                                       script_name=model.name, clear_previous=True)
-            pid = self._launcher.submit_and_forget(wd=model.path)
-            logger.debug("Process id for " + model.name + " is " + str(pid))
-            job = Job(model.name, pid, model)
+        duration = self.get_config("duration", none_ok=True)
+        for partition, nodes in self._alloc_handler.partitions.items():
+            if partition == "default":
+                partition = None
+            alloc_id = self._launcher.get_alloc(nodes=nodes[0], ppn=nodes[1],
+                                                partition=partition, duration=duration)
+            if partition:
+                self._alloc_handler.allocs[partition] = alloc_id
+            else:
+                self._alloc_handler.allocs["default"] = alloc_id
+
+    def _launch(self):
+        # launch orchestrator and add to job ID list
+        if self.has_orchestrator():
+            orc_settings = self.state.orc.get_run_settings()
+            orc_partition = orc_settings["partition"]
+            if not orc_partition:
+                orc_partition = "default"
+            cmd = orc_settings.pop("cmd")
+            orc_settings = self._remove_smartsim_args(orc_settings)
+            orc_job_id = self._launcher.run_on_alloc(cmd,
+                                                     self._alloc_handler.allocs[orc_partition],
+                                                     **orc_settings)
+            job = Job("orchestrator", orc_job_id, self.state.orc)
+            self._jobs.append(job)
+            nodes = self.get_job_nodes(job)[0] # only on one node for now
+
+            # get and store the address of the orchestrator database
+            self.state.orc.junction.store_db_addr(nodes, self.state.orc.port)
+        for node in self.get_nodes():
+            node_settings = node.get_run_settings()
+            node_partition = node_settings["partition"]
+            if not node_partition:
+                node_partition = "default"
+            cmd = node_settings.pop("cmd")
+            node_settings = self._remove_smartsim_args(node_settings)
+            env_vars = self.state.orc.get_connection_env_vars(node.name)
+            node_settings["env_vars"] = env_vars
+            node_job_id = self._launcher.run_on_alloc(cmd,
+                                                      self._alloc_handler.allocs[node_partition],
+                                                      **node_settings)
+            job = Job(node.name, node_job_id, node)
             self._jobs.append(job)
 
+        targets = self.get_targets()
+        for target in targets:
+            target_settings = target.get_run_settings()
+            target_partition = target_settings["partition"]
+            cmd = target_settings.pop("cmd")
+            if not target_partition:
+                target_partition = "default"
+            for model in target.models.values():
+                env_vars = {}
+                if self.has_orchestrator():
+                    env_vars = self.state.orc.get_connection_env_vars(model.name)
+                target_settings["env_vars"] = env_vars
+                target_settings["cwd"] = join(model.path)
+                target_settings["out_file"] = join(model.path, model.name + ".out")
+                target_settings["err_file"] = join(model.path, model.name + ".err")
+                target_settings = self._remove_smartsim_args(target_settings)
+                model_job_id = self._launcher.run_on_alloc(cmd,
+                                                           self._alloc_handler.allocs[target_partition],
+                                                           **target_settings)
+                logger.debug("Process id for " + model.name + " is " + str(model_job_id))
+                job = Job(model.name, model_job_id, model)
+                self._jobs.append(job)
 
     def _run_with_command(self, target, run_dict):
         """Run models without a workload manager directly, instead
@@ -275,15 +446,13 @@ class Controller(SmartSimModule):
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
 
-
     def _check_job(self, job):
         """Takes in job and sets job properties"""
         if not self._launcher:
             raise SmartSimError("No launcher set")
         job_id = job.get_job_id()
-        status, return_code = self._launcher.get_job_stat(job_id)
+        status = self._launcher.get_sjob_stat(job_id)
         job.set_status(status)
-        job.set_return_code(return_code)
 
     def _get_job_nodes(self, job):
         if not self._launcher:
@@ -306,3 +475,4 @@ class Controller(SmartSimModule):
                                         + launcher)
         else:
             raise SSConfigError("Must provide a 'launcher' argument to the Controller")
+
