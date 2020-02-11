@@ -3,7 +3,7 @@ from smartsim import Controller, Generator, State
 # initialize State
 state = State(experiment="double_gyre")
 
-# Create targets
+# Create ensembles
 quar_deg_params = {"KH": [200, 400],
                    "KHTH": [200, 400],
                    "x_resolution": 40,
@@ -17,8 +17,8 @@ half_deg_params = {"KH": [200, 400],
 run_params = {"nodes":2,
               "executable":"MOM6",
               "partition": "iv24"}
-state.create_target("quar-deg", params=quar_deg_params, run_settings=run_params)
-state.create_target("half-deg", params=half_deg_params, run_settings=run_params)
+state.create_ensemble("quar-deg", params=quar_deg_params, run_settings=run_params)
+state.create_ensemble("half-deg", params=half_deg_params, run_settings=run_params)
 
 # Generate Models
 gen = Generator(state, model_files="./MOM6_base_config")

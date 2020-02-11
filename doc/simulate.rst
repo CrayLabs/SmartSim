@@ -47,9 +47,9 @@ the ``Controller.poll()`` method to check on the status of the four models.
    # init state
    state= State(experiment="h2o", log_level="DEBUG")
 
-   # create targets
-   target_params = {"STEPS": [10, 15, 20, 25]}
-   state.create_target("h2o-1", params=target_params)
+   # create ensembles
+   ensemble_params = {"STEPS": [10, 15, 20, 25]}
+   state.create_ensemble("h2o-1", params=ensemble_params)
 
 
    # Data Generation Phase
@@ -76,4 +76,4 @@ Slurm integration except that some of the configurations("duration", "ppn", "nod
 
 .. note::
 
-   The local method of launching models will run each model serially. 
+   The local method of launching models will run each model serially.

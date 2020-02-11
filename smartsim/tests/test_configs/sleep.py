@@ -1,5 +1,5 @@
 import time
 
 print("Starting sleep.py")
-time.sleep(100)
+time.sleep(10)
 print("done")

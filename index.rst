@@ -24,20 +24,20 @@ distributed machine learning to more tpyical data anaylsis and visualization.
 SmartSim utilizes a project structure called an ``experiment`` that holds all of the
 necessary files and data to run multiple simulations. Within each experiment are two
 types of objects that allow a user complete control over how the simulation data is
-generated and/or used. The first is called a ``target``. Targets are groups of models
-with similar configurations. Within each target are the actual models. The models
+generated and/or used. The first is called a ``ensemble``. ensembles are groups of models
+with similar configurations. Within each ensemble are the actual models. The models
 correspond to directories that house everything from configuration files to simulation
 output.
 
-A basic project structure with one target and one model looks as follows:
+A basic project structure with one ensemble and one model looks as follows:
 
 .. code-block:: text
 
   lammps_atm           # experiment
-  └── atm              # target
+  └── atm              # ensemble
       ├── atm_0        # model
       │   └── in.atm   # model files
-      └── atm_1        # model 
+      └── atm_1        # model
           └── in.atm   # model files
 
 

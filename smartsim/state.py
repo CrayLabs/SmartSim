@@ -2,7 +2,7 @@ import pickle
 import sys
 from os import path, mkdir, listdir, getcwd
 from .error import SmartSimError, SSConfigError
-from .target import Target
+from .ensemble import Ensemble
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
@@ -24,17 +24,17 @@ class State:
     def __init__(self, experiment):
         self.current_state = "Initializing"
         self.experiment = experiment
-        self.targets = []
+        self.ensembles = []
         self.nodes = []
         self.orc = None
 
 
     def __str__(self):
         state_str = "\n-- State Summary --\n"
-        if len(self.targets) > 0:
-            state_str += "\n-- Targets --"
-            for target in self.targets:
-                state_str += str(target)
+        if len(self.ensembles) > 0:
+            state_str += "\n-- ensembles --"
+            for ensemble in self.ensembles:
+                state_str += str(ensemble)
         if len(self.nodes) > 0:
             state_str += "\n-- Nodes --"
             for node in self.nodes:
@@ -44,102 +44,95 @@ class State:
         return state_str
 
 
-    def load_target(self, name, target_path=None):
-        """Load a pickled target into State for use. The target currently must be from
+    def load_ensemble(self, name, ensemble_path=None):
+        """Load a pickled ensemble into State for use. The ensemble currently must be from
            the same experiment it originated in. This can be useful if the experiment
            is being conducted over mutliple stages where execution does not all occur
            within the same script.
 
-           :param str name: name of the pickled target
-           :param str target_path: Path to the pickled target. Defaults to os.getcwd()
+           :param str name: name of the pickled ensemble
+           :param str ensemble_path: Path to the pickled ensemble. Defaults to os.getcwd()
 
         """
         try:
             tar_dir = path.join(getcwd(), self.experiment, name)
-            if target_path:
-                tar_dir = target_path
+            if ensemble_path:
+                tar_dir = ensemble_path
             if path.isdir(tar_dir):
                 pickle_file = path.join(tar_dir, name + ".pickle")
                 if path.isfile(pickle_file):
-                    target = pickle.load(open(pickle_file, "rb"))
-                    if target.experiment != self.experiment:
-                        err = "Target must be loaded from same experiment \n"
-                        msg = "Target experiment: {}   Current experiment: {}".format(target.experiment,
+                    ensemble = pickle.load(open(pickle_file, "rb"))
+                    if ensemble.experiment != self.experiment:
+                        err = "ensemble must be loaded from same experiment \n"
+                        msg = "ensemble experiment: {}   Current experiment: {}".format(ensemble.experiment,
                                                                                        self.experiment)
                         raise SmartSimError(err+msg)
-                    self.targets.append(target)
+                    self.ensembles.append(ensemble)
                 else:
-                    raise SmartSimError("Target, {}, could not be found".format(name))
+                    raise SmartSimError("ensemble, {}, could not be found".format(name))
             else:
-                raise SmartSimError("Target directory could not be found!")
+                raise SmartSimError("ensemble directory could not be found!")
         except SmartSimError as e:
             logger.error(e)
             raise
 
 
-    def create_target(self, name, params={}, run_settings={}):
-        """Create a target to be used within one or many of the SmartSim Modules. Targets
-           keep track of groups of models. Parameters can be given to a target as well in
+    def create_ensemble(self, name, params={}, run_settings={}):
+        """Create a ensemble to be used within one or many of the SmartSim Modules. ensembles
+           keep track of groups of models. Parameters can be given to a ensemble as well in
            order to generate models based on a combination of parameters and generation
            stategies. For more on generation strategies, see the Generator Class.
 
-           :param str name: name of the new target
+           :param str name: name of the new ensemble
            :param dict params: dictionary of model parameters to generate models from based
                                on a run strategy.
 
         """
-        new_target=None
+        new_ensemble=None
         try:
-            for target in self.targets:
-                if target.name == name:
-                    raise SmartSimError("A target named " + target.name + " already exists!")
+            for ensemble in self.ensembles:
+                if ensemble.name == name:
+                    raise SmartSimError("A ensemble named " + ensemble.name + " already exists!")
 
-            target_path = path.join(getcwd(), self.experiment, name)
-            if path.isdir(target_path):
-                raise SmartSimError("Target directory already exists: " + target_path)
-            new_target = Target(name, params, self.experiment, target_path, run_settings=run_settings)
-            self.targets.append(new_target)
+            ensemble_path = path.join(getcwd(), self.experiment, name)
+            if path.isdir(ensemble_path):
+                raise SmartSimError("ensemble directory already exists: " + ensemble_path)
+            new_ensemble = Ensemble(name, params, self.experiment, ensemble_path, run_settings=run_settings)
+            self.ensembles.append(new_ensemble)
         except SmartSimError as e:
             logger.error(e)
             raise
-        return new_target
+        return new_ensemble
 
-    def create_model(self, name, target="default_target", params={}, path=None):
-        """Create a model belonging to a specific target. This function is
+    def create_model(self, name, ensemble="default", params={}, path=None, run_settings={}):
+        """Create a model belonging to a specific ensemble. This function is
            useful for running a small number of models where the model files
            are already in place for execution.
 
-           If the target specified by the argument `target` doesn't exist,
-           a new target is created and added to the state before the model
-           is added to the target.  Calls to this function without specifying
-           the `target` argument result in the creation/usage a target named
-           "default_target", the default argument for `target`.
+           Calls to this function without specifying the `ensemble` argument
+           result in the creation/usage a ensemble named "default", the default
+           argument for `ensemble`.
 
            :param str name: name of the model to be created
-           :param str target: name of the target to place model into
+           :param str ensemble: name of the ensemble to place model into
            :param dict params: dictionary of model parameters
            :param str path: (optional) path to model files, defaults to os.getcwd()
+           :param dict run_settings: launcher settings for workload manager or local call
+                                   e.g. {"ppn": 1, "nodes": 10, "partition":"default_queue"}
         """
         model_added = False
-        target_exists = False
-        model = None
+        model = NumModel(name, params, path, run_settings)
         if not path:
             path = getcwd()
-        for t in self.targets:
-            if t.name == target:
-                target_exists = True
-                model = NumModel(name, params, path)
+        if ensemble == "default" and "default" not in [ensemble.name for ensemble in self.ensembles]:
+            # create empty ensemble
+            self.create_ensemble(ensemble, params={}, run_settings={})
+        for t in self.ensembles:
+            if t.name == ensemble:
                 t.add_model(model)
                 model_added = True
-        if not target_exists:
-            # create a new target with name target.  Since create_target appends, we
-            # pull the final target in self.targets
-            self.create_target(name=target)
-            model = NumModel(name, params, path)
-            self.targets[-1].add_model(model)
-            model_added = True
         if not model_added:
-            raise SmartSimError("Could not find target by the name of: " + target)
+            raise SmartSimError("Could not find ensemble by the name of: " + ensemble)
         return model
 
     def create_orchestrator(self, name=None, port=6379, run_settings={}):
@@ -195,65 +188,65 @@ class State:
             # TODO check for illegal connection types. e.g. model to model
             self.orc.junction.register(sender, reciever)
 
-    def delete_target(self, name):
-        """Delete a created target from State so that any future calls to SmartSim
-           Modules will not include this target.
+    def delete_ensemble(self, name):
+        """Delete a created ensemble from State so that any future calls to SmartSim
+           Modules will not include this ensemble.
 
-           :param str name: name of the target to be deleted
-           :raises SmartSimError: if target doesnt exist
+           :param str name: name of the ensemble to be deleted
+           :raises SmartSimError: if ensemble doesnt exist
         """
         # TODO delete the files as well if generated
-        target_deleted = False
-        for t in self.targets:
+        ensemble_deleted = False
+        for t in self.ensembles:
             if t.name == name:
-                self.targets.remove(t)
-                target_deleted = True
-        if not target_deleted:
-            raise SmartSimError("Could not delete target: " + name)
+                self.ensembles.remove(t)
+                ensemble_deleted = True
+        if not ensemble_deleted:
+            raise SmartSimError("Could not delete ensemble: " + name)
 
     def save(self):
-        """Save each target currently in state as a pickled python object.
-           All models within the target are maintained. Targets can be reloaded
-           into an experiment through a call to state.load_target.
+        """Save each ensemble currently in state as a pickled python object.
+           All models within the ensemble are maintained. ensembles can be reloaded
+           into an experiment through a call to state.load_ensemble.
         """
-        for target in self.targets:
-            pickle_path = path.join(target.path, target.name + ".pickle")
-            if not path.isdir(target.path):
-                raise SmartSimError("Targets must be generated in order to save them.  {0} does not exist.".format(target.path))
+        for ensemble in self.ensembles:
+            pickle_path = path.join(ensemble.path, ensemble.name + ".pickle")
+            if not path.isdir(ensemble.path):
+                raise SmartSimError("ensembles must be generated in order to save them.  {0} does not exist.".format(ensemble.path))
             file_obj = open(pickle_path, "wb")
-            pickle.dump(target, file_obj)
+            pickle.dump(ensemble, file_obj)
             file_obj.close()
 
-    def get_model(self, model, target):
-        """Get a specific model from a target.
+    def get_model(self, model, ensemble):
+        """Get a specific model from a ensemble.
 
            :param str model: name of the model to return
-           :param str target: name of the target where the model is located
+           :param str ensemble: name of the ensemble where the model is located
 
            :returns: NumModel instance
         """
         try:
-            target = self.get_target(target)
-            model = target[model]
+            ensemble = self.get_ensemble(ensemble)
+            model = ensemble[model]
             return model
-        # if the target is not found
+        # if the ensemble is not found
         except SmartSimError:
             raise
         except KeyError:
             raise SmartSimError("Model not found: " + model)
 
-    def get_target(self, target):
-        """Return a specific target from State
+    def get_ensemble(self, ensemble):
+        """Return a specific ensemble from State
 
-           :param str target: Name of the target to return
+           :param str ensemble: Name of the ensemble to return
 
-           :returns: Target instance
+           :returns: ensemble instance
            :raises: SmartSimError
         """
-        for t in self.targets:
-            if t.name == target:
+        for t in self.ensembles:
+            if t.name == ensemble:
                 return t
-        raise SmartSimError("Target not found: " + target)
+        raise SmartSimError("ensemble not found: " + ensemble)
 
     def get_node(self, node):
         """Return a specific node from State

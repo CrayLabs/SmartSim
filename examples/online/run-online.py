@@ -13,8 +13,8 @@ sim_settings = {
 }
 # Make state aware of ML model and simulation model
 state.create_node("training-node", run_settings=train_settings)
-state.create_target("sim-target", run_settings=sim_settings)
-state.create_model("sim-model", "sim-target")
+state.create_ensemble("sim-ensemble", run_settings=sim_settings)
+state.create_model("sim-model", "sim-ensemble")
 
 # Orchestrate the connection between the ML model and simulation
 state.create_orchestrator()

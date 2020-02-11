@@ -5,13 +5,13 @@ from smartsim import Controller, Generator, State
 # intialize state to conduct experiment
 state = State(experiment="lammps_atm")
 
-# Create targets
+# Create ensembles
 param_dict_1 = {"STEPS": [20, 25],
                 "THERMO": 5}
 param_dict_2 = {"STEPS": [30, 40],
                 "THERMO": 5}
-state.create_target("atm", params=param_dict_1)
-state.create_target("atm-2", params=param_dict_2)
+state.create_ensemble("atm", params=param_dict_1)
+state.create_ensemble("atm-2", params=param_dict_2)
 
 # Supply the generator with necessary files to run the simulation
 # and generate the specified models

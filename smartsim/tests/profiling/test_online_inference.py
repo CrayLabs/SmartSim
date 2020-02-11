@@ -64,7 +64,7 @@ def run_inference_path(data_size, num_packets, test_id):
     sim_name = "sim-model" + test_id
     orc_name = "orchestrator" + test_id
     state.create_node(node_name, script_path=os.getcwd() + "/inference/", run_settings=train_settings)
-    state.create_target("simulation", run_settings=sim_dict)
+    state.create_ensemble("simulation", run_settings=sim_dict)
     state.create_model(sim_name, "simulation", path=os.getcwd() + "/inference/")
     state.create_orchestrator(orc_name)
     state.register_connection(sim_name, node_name)

@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isdir, basename, join
 
 from ..state import State
-from ..target import Target
+from ..ensemble import Ensemble
 from ..model import NumModel
 from ..launcher import SlurmLauncher
 from ..simModule import SmartSimModule
@@ -39,34 +39,34 @@ class Controller(SmartSimModule):
         self._jobs = []
 
     def start(self):
-        """Start the computation of a target, nodes, and optionally
+        """Start the computation of a ensemble, nodes, and optionally
            facilitate communication between entities via an orchestrator.
            The fields above can be a list of strings or a list of strings
            that refer to the names of entities to be launched.
 
-           :param str target: target to launch
+           :param str ensemble: ensemble to launch
            :param str nodes: nodes to launch
-           TODO: single target/model/node launch control
+           TODO: single ensemble/model/node launch control
         """
         try:
             if self.has_orchestrator():
                 self._prep_orchestrator()
                 self._prep_nodes()
             logger.info("SmartSim State: " + self.get_state())
-            self._prep_targets()
+            self._prep_ensembles()
             self._get_allocations()
             self._launch()
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def stop(self, targets=None, models=None, nodes=None, stop_orchestrator=False):
-        """Stops specified targets, nodes, and orchestrator.
-           If stop_orchestrator is set to true and all targets and
+    def stop(self, ensembles=None, models=None, nodes=None, stop_orchestrator=False):
+        """Stops specified ensembles, nodes, and orchestrator.
+           If stop_orchestrator is set to true and all ensembles and
            nodes are stopped, the orchestrato will be stopped.
 
-           :param targets: List of targets to be stopped
-           :type targets: list of Target, optional Target
+           :param ensembles: List of ensembles to be stopped
+           :type ensembles: list of ensemble, optional ensemble
            :param models: List of models to be stopped
            :type models: list of NumModel, option NumModel
            :param smartSimNode nodes: List of nodes to be stopped
@@ -78,15 +78,15 @@ class Controller(SmartSimModule):
         if self._launcher == None:
             logger.warning("Controller.stop() is not actionable for local launchers.")
         else:
-            self._stop_targets(targets)
+            self._stop_ensembles(ensembles)
             self._stop_models(models)
             self._stop_nodes(nodes)
             if stop_orchestrator:
                 self._stop_orchestrator()
 
     def stop_all(self):
-        """Stops all  targets, nodes, and orchestrator."""
-        self.stop(targets=self.state.targets,
+        """Stops all  ensembles, nodes, and orchestrator."""
+        self.stop(ensembles=self.state.ensembles,
                   nodes=self.state.nodes,
                   stop_orchestrator=True)
 
@@ -116,95 +116,6 @@ class Controller(SmartSimModule):
     def get_jobs(self):
         """Return the list of jobs that this controller has spawned"""
         return self._jobs
-
-    def _stop_targets(self, targets):
-        """Stops specified targets.  If targets is None,
-           the function returns without performning any action.
-           :param targets: List of targets to be stopped
-           :type targets: list of Target, optional Target
-           :raises: SmartSimError
-        """
-        if targets == None or self._launcher == None:
-            return
-
-        if isinstance(targets, Target):
-            targets = [targets]
-
-        if not all(isinstance(x, Target) for x in targets):
-            raise SmartSimError("Only objects of type Target expected for variable targets")
-
-        for target in targets:
-            models = list(target.models.values())
-            self._stop_models(models)
-
-    def _stop_models(self, models):
-        """Stops the specified models.  If the models is None,
-           the function returns without performing any action.
-
-           :param models: List of models to be stopped
-           :type models: list of MOdel, option Model
-           :raises: SmartSimError
-        """
-
-        if models == None or self._launcher == None:
-            return
-
-        if isinstance(models, NumModel):
-            models = [models]
-
-        if not all(isinstance(x, NumModel) for x in models):
-            raise SmartSimError("Only objects of type NumModel expected for variable models")
-
-        for model in models:
-            job = self.get_job(model.name)
-            self._check_job(job)
-            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-                logger.info("Stopping model " + model.name + " job " + job.get_job_id())
-                self._launcher.stop(job.get_job_id())
-            else:
-                raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                    " because its status is " + job.status)
-
-    def _stop_nodes(self, nodes):
-        """Stops specified nodes.  If nodes is None,
-           the function returns without performning any action.
-
-           :param nodes: List of nodes to be stopped
-           :type nodes: list of SmartSimNode, optional SmartSimNode
-           :raises: SmartSimError
-        """
-        if nodes == None or self._launcher == None:
-            return
-
-        if isinstance(nodes, SmartSimNode):
-            nodes = [nodes]
-
-        if not all(isinstance(x, SmartSimNode) for x in nodes):
-            raise SmartSimError("Only objects of type SmartSimNode expected for variable nodes")
-
-        for node in nodes:
-            job = self.get_job(node.name)
-            self._check_job(job)
-            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-                logger.info("Stopping node " + node.name + " job " + job.get_job_id())
-                self._launcher.stop(job.get_job_id())
-            else:
-                raise SmartSimError("Unable to stop job " + job.get_job_id()
-                                    + " because its status is " + job.status)
-
-    def _stop_orchestrator(self):
-        """Stops the orchestrator only if all
-           :raises: SmartSimError
-        """
-        job = self.get_job('orchestrator')
-        self._check_job(job)
-        if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-            logger.info("Stopping orchestrator on job " + job.get_job_id())
-            self._launcher.stop(job.get_job_id())
-        else:
-            raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                " because its status is " + job.status)
-
 
     def get_job(self, name):
         """Retrieve a Job instance by name. The Job object carries information about the
@@ -280,6 +191,94 @@ class Controller(SmartSimModule):
             return False
         return True
 
+    def _stop_ensembles(self, ensembles):
+        """Stops specified ensembles.  If ensembles is None,
+           the function returns without performning any action.
+           :param ensembles: List of ensembles to be stopped
+           :type ensembles: list of ensemble, optional ensemble
+           :raises: SmartSimError
+        """
+        if ensembles == None or self._launcher == None:
+            return
+
+        if isinstance(ensembles, Ensemble):
+            ensembles = [ensembles]
+
+        if not all(isinstance(x, Ensemble) for x in ensembles):
+            raise SmartSimError("Only objects of type ensemble expected for variable ensembles")
+
+        for ensemble in ensembles:
+            models = list(ensemble.models.values())
+            self._stop_models(models)
+
+    def _stop_models(self, models):
+        """Stops the specified models.  If the models is None,
+           the function returns without performing any action.
+
+           :param models: List of models to be stopped
+           :type models: list of Model, option Model
+           :raises: SmartSimError
+        """
+
+        if models == None or self._launcher == None:
+            return
+
+        if isinstance(models, NumModel):
+            models = [models]
+
+        if not all(isinstance(x, NumModel) for x in models):
+            raise SmartSimError("Only objects of type NumModel expected for variable models")
+
+        for model in models:
+            job = self.get_job(model.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping model " + model.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                    " because its status is " + job.status)
+
+    def _stop_nodes(self, nodes):
+        """Stops specified nodes.  If nodes is None,
+           the function returns without performning any action.
+
+           :param nodes: List of nodes to be stopped
+           :type nodes: list of SmartSimNode, optional SmartSimNode
+           :raises: SmartSimError
+        """
+        if nodes == None or self._launcher == None:
+            return
+
+        if isinstance(nodes, SmartSimNode):
+            nodes = [nodes]
+
+        if not all(isinstance(x, SmartSimNode) for x in nodes):
+            raise SmartSimError("Only objects of type SmartSimNode expected for variable nodes")
+
+        for node in nodes:
+            job = self.get_job(node.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping node " + node.name + " job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job.get_job_id()
+                                    + " because its status is " + job.status)
+
+    def _stop_orchestrator(self):
+        """Stops the orchestrator only if all
+           :raises: SmartSimError
+        """
+        job = self.get_job('orchestrator')
+        self._check_job(job)
+        if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+            logger.info("Stopping orchestrator on job " + job.get_job_id())
+            self._launcher.stop(job.get_job_id())
+        else:
+            raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                " because its status is " + job.status)
+
     def _prep_nodes(self):
         """Add the nodes to the list of requirement for all the entities to be launched."""
         nodes = self.get_nodes()
@@ -293,29 +292,36 @@ class Controller(SmartSimModule):
         orc_settings = self.state.orc.get_run_settings()
         self._alloc_handler._add_to_allocs(orc_settings)
 
-    def _prep_targets(self):
-        """Add the models of each target to the allocations requested
+    def _prep_ensembles(self):
+        """Add the models of each ensemble to the allocations requested
 
            :raises: SmartSimError
         """
-        targets = self.get_targets()
-        if len(targets) < 1:
-            raise SmartSimError("No targets to simulate!")
-        for target in targets:
-            run_dict = self._build_run_dict(target.get_run_settings())
-            target.update_run_settings(run_dict)
-            # add nodes to allocation for every model within the target
-            for model in target.models.values():
-                self._alloc_handler._add_to_allocs(run_dict)
+        ensembles = self.get_ensembles()
+        if len(ensembles) < 1:
+            raise SmartSimError("No ensembles to simulate!")
+        for ensemble in ensembles:
+            if ensemble.name != "default":
+                run_dict = self._build_run_dict(ensemble.get_run_settings())
+                ensemble.update_run_settings(run_dict)
+                # add nodes to allocation for every model within the ensemble
+                for model in ensemble.models.values():
+                    self._alloc_handler._add_to_allocs(run_dict)
+            else:
+                # use model run_settings for launch instead of ensemble
+                # because these models were created without a ensemble
+                for model in ensemble.models.values():
+                    run_dict = self._build_run_dict(model.get_run_settings())
+                    model.update_run_settings(run_dict)
+                    self._alloc_handler._add_to_allocs(run_dict)
 
     def _remove_smartsim_args(self, arg_dict):
-        ss_args = ["exe_args", "run_args", "executable", "run_command"]
-        for arg in ss_args:
-            try:
-                del arg_dict[arg]
-            except KeyError:
-                continue
-        return arg_dict
+        ss_args = ["exe_args", "run_args", "executable", "run_command", "cmd"]
+        new_dict = dict()
+        for k, v in arg_dict.items():
+            if not k in ss_args:
+                new_dict[k] = v
+        return new_dict
 
     def _build_run_dict(self, entity_info):
         """Build up the run settings by retrieving the settings of the Controller
@@ -345,7 +351,7 @@ class Controller(SmartSimModule):
 
         run_dict = {}
         try:
-            # target level values optional because there are defaults
+            # ensemble level values optional because there are defaults
             run_dict["nodes"] = self.get_config("nodes", aux=entity_info, none_ok=True)
             run_dict["ppn"] = self.get_config("ppn", aux=entity_info, none_ok=True)
             run_dict["duration"] = self.get_config("duration", aux=entity_info, none_ok=True)
@@ -390,15 +396,13 @@ class Controller(SmartSimModule):
                 orc_partition = "default"
             cmd = orc_settings.pop("cmd")
             orc_settings = self._remove_smartsim_args(orc_settings)
-            orc_job_id = self._launcher.run_on_alloc(cmd,
-                                                     self._alloc_handler.allocs[orc_partition],
-                                                     **orc_settings)
-            job = Job("orchestrator", orc_job_id, self.state.orc)
-            self._jobs.append(job)
-            nodes = self.get_job_nodes(job)[0] # only on one node for now
+            self._launch_on_alloc(self.state.orc, cmd, orc_settings, orc_partition)
+            nodes = self.get_job_nodes(self.get_job(self.state.orc.name))
 
             # get and store the address of the orchestrator database
-            self.state.orc.junction.store_db_addr(nodes, self.state.orc.port)
+            self.state.orc.junction.store_db_addr(nodes[0], self.state.orc.port)
+
+        # launch the SmartSimNodes
         for node in self.get_nodes():
             node_settings = node.get_run_settings()
             node_partition = node_settings["partition"]
@@ -406,42 +410,47 @@ class Controller(SmartSimModule):
                 node_partition = "default"
             cmd = node_settings.pop("cmd")
             node_settings = self._remove_smartsim_args(node_settings)
-            env_vars = self.state.orc.get_connection_env_vars(node.name)
-            node_settings["env_vars"] = env_vars
-            node_job_id = self._launcher.run_on_alloc(cmd,
-                                                      self._alloc_handler.allocs[node_partition],
-                                                      **node_settings)
-            job = Job(node.name, node_job_id, node)
-            self._jobs.append(job)
+            if self.has_orchestrator():
+                env_vars = self.state.orc.get_connection_env_vars(node.name)
+                node_settings["env_vars"] = env_vars
+            self._launch_on_alloc(node, cmd, node_settings, node_partition)
 
-        targets = self.get_targets()
-        for target in targets:
-            target_settings = target.get_run_settings()
-            target_partition = target_settings["partition"]
-            cmd = target_settings.pop("cmd")
-            if not target_partition:
-                target_partition = "default"
-            for model in target.models.values():
-                env_vars = {}
+        # Launch ensembles and their respective models
+        ensembles = self.get_ensembles()
+        for ensemble in ensembles:
+            run_settings = ensemble.get_run_settings()
+            for model in ensemble.models.values():
+                # if default ensemble, override with model specific run_settings
+                if ensemble.name == "default":
+                    run_settings = model.get_run_settings()
+                cmd = run_settings["cmd"]
+                partition = "default"
+                if run_settings["partition"]:
+                    partition = run_settings["partition"]
                 if self.has_orchestrator():
                     env_vars = self.state.orc.get_connection_env_vars(model.name)
-                target_settings["env_vars"] = env_vars
-                target_settings["cwd"] = join(model.path)
-                target_settings["out_file"] = join(model.path, model.name + ".out")
-                target_settings["err_file"] = join(model.path, model.name + ".err")
-                target_settings = self._remove_smartsim_args(target_settings)
-                model_job_id = self._launcher.run_on_alloc(cmd,
-                                                           self._alloc_handler.allocs[target_partition],
-                                                           **target_settings)
-                logger.debug("Process id for " + model.name + " is " + str(model_job_id))
-                job = Job(model.name, model_job_id, model)
-                self._jobs.append(job)
+                    run_settings["env_vars"] = env_vars
+                run_settings["cwd"] = join(model.path)
+                run_settings["out_file"] = join(model.path, model.name + ".out")
+                run_settings["err_file"] = join(model.path, model.name + ".err")
+                model_run_settings = self._remove_smartsim_args(run_settings)
+                self._launch_on_alloc(model, cmd, model_run_settings, partition)
 
-    def _run_with_command(self, target, run_dict):
+    def _launch_on_alloc(self, entity, cmd, run_settings, partition):
+        """launch a SmartSimEntity on an allocation provided by a workload manager."""
+        entity_job_id = self._launcher.run_on_alloc(cmd,
+                                                    self._alloc_handler.allocs[partition],
+                                                    **run_settings)
+        logger.debug("Process id for " + entity.name + " is " + str(entity_job_id))
+        job = Job(entity.name, entity_job_id, entity)
+        self._jobs.append(job)
+
+
+    def _run_with_command(self, ensemble, run_dict):
         """Run models without a workload manager directly, instead
            using some run_command specified by the user."""
         cmd = run_dict["cmd"]
-        model_dict = target.models
+        model_dict = ensemble.models
         for _, model in model_dict.items():
             run_model = subprocess.Popen(cmd, cwd=model.path, shell=True)
             run_model.wait()
@@ -467,7 +476,7 @@ class Controller(SmartSimModule):
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
                 self._launcher = SlurmLauncher.SlurmLauncher()
-            # Run all targets locally
+            # Run all ensembles locally
             elif launcher == "local":
                 self._launcher = None
             else:

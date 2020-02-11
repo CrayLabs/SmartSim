@@ -1,19 +1,26 @@
 from .error import SmartSimError
+from .entity import SmartSimEntity
 
-class NumModel:
-    """Hold configuration data for a numerical model. This
-       class is passed around in the data-generation stage of
-       the SS pipeline so that the configurations can be read
-       easily.
-    """
+class NumModel(SmartSimEntity):
+    """One instance of a model. This class holds the various information to configure
+       and run the model. A model can be created through state.create_model()."""
 
-    def __init__(self, name, params, path=None):
-        self.name = name
+    def __init__(self, name, params, path, run_settings):
+        """
+        NumModel initializer
+
+        :param str name: name of the model instance
+        :param dict params: parameters of the model to be written into model configuration
+                            files
+        :param str path: desired path to the model files/data created at runtime
+        :param dict run_settings: launcher settings for workload manager or local call
+                                   e.g. {"ppn": 1, "nodes": 10, "partition":"default_queue"}
+        """
+        super().__init__(name, path, run_settings)
         if type(params) != dict:
             raise SmartSimError("Model must be initialized with parameter dictionary!  params are: " + str(params))
         self.params = params
-        if path:
-            self.path = path
+
 
     def get_param_value(self, param):
         return self.params[param]

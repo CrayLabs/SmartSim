@@ -9,7 +9,7 @@ models.
 
 The Controller currently interfaces with the Slurm Workload manager,
 but can also be run "locally" where the run command will be relayed
-directly to a shell process. 
+directly to a shell process.
 
 There are three ways a user can specify arguments for the running
 of simulations.
@@ -20,14 +20,14 @@ of simulations.
 .. code-block:: toml
 
    [execute]
-   nodes = 5        # All targets run with 5 nodes
+   nodes = 5        # All ensembles run with 5 nodes
 
-2) On the target level under the target's table
+2) On the ensemble level under the ensemble's table
 
 .. code-block:: toml
 
     [execute]
-       [execute.some_target]
+       [execute.some_ensemble]
        run_args = "-np 6"
 
 3) in the initialization of the Controller class
@@ -38,18 +38,18 @@ of simulations.
 
 
 As it stands today, the TOML interface allows users more flexibility
-with the Controller as targets can have different settings.
+with the Controller as ensembles can have different settings.
 
 There is a hierarchy of specification that goes as
 follows:
     - initialization of the controller
     - experiment level (under ``[control]`` table)
-    - target level (under ``[control.some_target]`` table)
+    - ensemble level (under ``[control.some_ensemble]`` table)
 
 This means that the arguments in the initialization
 of the Controller will override any settings under the control table.
 Likewise, the settings under the ``[control]`` table will override
-any settings under target specific tables. 
+any settings under ensemble specific tables.
 
 
 

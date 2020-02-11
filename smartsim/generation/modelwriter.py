@@ -17,7 +17,7 @@ class ModelWriter:
         self.regex = "(;.+;)"
 
     def write(self, model):
-        """Takes a model and writes the configuration to the target configs
+        """Takes a model and writes the configuration to the ensemble configs
            Base configurations are duplicated blindly to ensure all needed
            files are copied.
         """
@@ -33,7 +33,7 @@ class ModelWriter:
                 elif path.isdir(conf):
                     continue
                 else:
-                    raise SmartSimError("Data-Generation", "Could not find target configuration files")
+                    raise SmartSimError("Data-Generation", "Could not find ensemble configuration files")
 
     def _set_tag(self, tag, regex=None):
         if regex:
@@ -49,7 +49,7 @@ class ModelWriter:
         fp.close()
 
     def _write_changes(self, conf_path):
-        """Write the target-specific changes"""
+        """Write the ensemble-specific changes"""
         fp = open(conf_path, "w+")
         for line in self.lines:
             fp.write(line)
@@ -65,7 +65,7 @@ class ModelWriter:
             if search:
                 tagged_line = search.group(0)
                 previous_value = self._get_prev_value(tagged_line)
-                if self._is_target_spec(tagged_line, model.params):
+                if self._is_ensemble_spec(tagged_line, model.params):
                     new_val = str(model.params[previous_value])
                     new_line = re.sub(self.regex, new_val, line)
                     edited.append(new_line)
@@ -85,7 +85,7 @@ class ModelWriter:
         self.lines = edited
 
 
-    def _is_target_spec(self, tagged_line, model_params):
+    def _is_ensemble_spec(self, tagged_line, model_params):
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():

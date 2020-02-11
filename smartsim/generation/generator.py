@@ -24,7 +24,7 @@ class Generator(SmartSimModule):
        :param list model_files: The model files for the experiment.  Optional
                                if model files are not needed for execution. Argument
                                can be a file, directory, or a list of files
-       :param str strategy: The permutation strategy for generating models within targets.
+       :param str strategy: The permutation strategy for generating models within ensembles.
                             Options are "all_perm", "random", "step", or a callable function.
                             defaults to "all_perm"
     """
@@ -37,8 +37,8 @@ class Generator(SmartSimModule):
 
 
     def generate(self, **kwargs):
-        """Based on the targets and models created by the user,
-           configure and generate the model and target instances.
+        """Based on the ensembles and models created by the user,
+           configure and generate the model and ensemble instances.
 
            :param dict kwargs: optional key word arguments passed to permutation strategy.
            :raises: SmartSimError
@@ -73,9 +73,9 @@ class Generator(SmartSimModule):
 
     def set_strategy(self, permutation_strategy):
         """Load the strategy for generating model configurations based on the
-           values of the target parameters.
+           values of the ensemble parameters.
 
-           all_perm creates all possible permutations of the target parameters as
+           all_perm creates all possible permutations of the ensemble parameters as
            individual models. This is the default strategy for the Generator module.
 
            Calling with a string formatted as "module.function" attempts to use the
@@ -102,7 +102,7 @@ class Generator(SmartSimModule):
 
 
     def _create_models(self, **kwargs):
-        """Populates instances of NumModel class for all target models.
+        """Populates instances of NumModel class for all ensemble models.
            NumModels are created via the function that is set as the
            `_permutation_strategy` attribute.  Users may supply their own
            function (or choose from the available set) via the `set_strategy`
@@ -116,10 +116,10 @@ class Generator(SmartSimModule):
         """
 
         # collect all parameters, names, and settings
-        def read_model_parameters(target):
+        def read_model_parameters(ensemble):
             param_names = []
             parameters = []
-            for name, val in target.params.items():
+            for name, val in ensemble.params.items():
                 param_names.append(name)
 
                 # if it came from a simulation.toml
@@ -129,64 +129,67 @@ class Generator(SmartSimModule):
                     else:
                         parameters.append([val["value"]])
 
-                # if the user called added a target programmatically
+                # if the user called added a ensemble programmatically
                 elif isinstance(val, list):
                     parameters.append(val)
                 elif isinstance(val, str) or isinstance(val, int):
                     parameters.append([val])
                 else:
                     # TODO improve this error message
-                    raise SmartSimError("Incorrect type for target parameters\n" +
+                    raise SmartSimError("Incorrect type for ensemble parameters\n" +
                                         "Must be list, int, or string.")
             return param_names, parameters
 
-        targets = self.get_targets()
-        for target in targets:
-            # if this call returns empty lists, we shouldn't continue.
-            # This is useful for empty targets where the user makes models.
-            names, values = read_model_parameters(target)
+        ensembles = self.get_ensembles()
+        for ensemble in ensembles:
+            # if read_model_parameters returns empty lists, we shouldn't continue.
+            # This is useful for empty ensembles where the user makes models.
+            names, values = read_model_parameters(ensemble)
             if (len(names) != 0 and len(values) != 0):
                 all_configs = self._permutation_strategy(names, values, **kwargs)
+
+                # run_settings can be ignored in this case as all models
+                # will run with ensemble run_settings
                 for i, conf in enumerate(all_configs):
-                    model_name = "_".join((target.name, str(i)))
-                    m = NumModel(model_name, conf, i)
-                    target.add_model(m)
+                    model_name = "_".join((ensemble.name, str(i)))
+                    m = NumModel(model_name, conf, None, run_settings={})
+                    ensemble.add_model(m)
 
     def _create_experiment(self):
         """Creates the directory structure for the simulations"""
-        #TODO: add argument to override target creation
+        #TODO: add argument to override ensemble creation
         exp_path = self.get_experiment_path()
 
         # ok to have already created an experiment
         if not path.isdir(exp_path):
             mkdir(exp_path)
         else:
-            logger.error("Working in previously created experiment")
+            logger.info("Working in previously created experiment")
 
-        # not ok to have already generated the target.
-        targets = self.get_targets()
-        for target in targets:
-            target_dir = path.join(exp_path, target.name)
-            if not path.isdir(target_dir):
-                mkdir(target_dir)
+        # not ok to have already generated the ensemble.
+        ensembles = self.get_ensembles()
+        for ensemble in ensembles:
+            ensemble_dir = path.join(exp_path, ensemble.name)
+            if not path.isdir(ensemble_dir):
+                mkdir(ensemble_dir)
             else:
                 raise SmartSimError("Models for an experiment by this name have already been generated!")
 
     def _configure_models(self):
-        """Duplicate the base configurations of target models"""
+        """Duplicate the base configurations of ensemble models"""
 
         listed_configs = self.get_config("model_files")
         exp_path = self.get_experiment_path()
-        targets = self.get_targets()
+        ensembles = self.get_ensembles()
 
-        for target in targets:
-            target_models = target.models
+        for ensemble in ensembles:
+            ensemble_models = ensemble.models
 
-            # Make target model directories
-            for name, model in target_models.items():
-                dst = path.join(exp_path, target.name, name)
+            # Make ensemble model directories
+            for name, model in ensemble_models.items():
+                dst = path.join(exp_path, ensemble.name, name)
                 mkdir(dst)
-                model.path = (dst)
+                model.path = dst
 
                 if listed_configs:
                     if not isinstance(listed_configs, list):

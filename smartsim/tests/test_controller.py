@@ -10,8 +10,8 @@ import time
 
 def test_inherit_complete_controller_args():
     """Test the output of Controller._build_run_dict()
-       method for a target and node inherting all controller
-       arguments (i.e. no unique arguments in the target or node
+       method for a ensemble and node inherting all controller
+       arguments (i.e. no unique arguments in the ensemble or node
        run settings).
     """
     state = State(experiment="unit_test")
@@ -23,7 +23,7 @@ def test_inherit_complete_controller_args():
                         "ppn": 16,
                         "partition": "iv24"}
 
-    target_settings = {"nodes":1,
+    ensemble_settings = {"nodes":1,
                        "executable":"OTHER_EXE"}
 
     node_settings = {"nodes": 1,
@@ -32,9 +32,9 @@ def test_inherit_complete_controller_args():
 
     control = Controller(state, **control_settings)
 
-    state.create_target("target_1", run_settings=target_settings)
-    target = state.get_target("target_1")
-    run_dict = control._build_run_dict(target.get_run_settings())
+    state.create_ensemble("ensemble_1", run_settings=ensemble_settings)
+    ensemble = state.get_ensemble("ensemble_1")
+    run_dict = control._build_run_dict(ensemble.get_run_settings())
 
     assert(run_dict["nodes"] == 2)
     assert(run_dict["ppn"] == 16)
@@ -52,7 +52,7 @@ def test_inherit_complete_controller_args():
 
 def test_inherit_incomplete_controller_args():
     """Test the output of Controller._build_run_dict()
-       method for a target and node inherting all controller
+       method for a ensemble and node inherting all controller
        arguments but retaining the unique run setting values.
     """
     state = State(experiment="unit_test")
@@ -62,7 +62,7 @@ def test_inherit_incomplete_controller_args():
                         "ppn": 16,
                         "partition": "iv24"}
 
-    target_settings = {"nodes":1,
+    ensemble_settings = {"nodes":1,
                        "executable":"OTHER_EXE"}
 
     node_settings = {"nodes": 1,
@@ -70,9 +70,9 @@ def test_inherit_incomplete_controller_args():
 
     control = Controller(state, **control_settings)
 
-    state.create_target("target_1", run_settings=target_settings)
-    target = state.get_target("target_1")
-    run_dict = control._build_run_dict(target.get_run_settings())
+    state.create_ensemble("ensemble_1", run_settings=ensemble_settings)
+    ensemble = state.get_ensemble("ensemble_1")
+    run_dict = control._build_run_dict(ensemble.get_run_settings())
 
     assert(run_dict["nodes"] == 1)
     assert(run_dict["ppn"] == 16)
@@ -88,9 +88,9 @@ def test_inherit_incomplete_controller_args():
     assert(run_dict["partition"] == "iv24")
     assert(run_dict["cmd"] == ['OTHER.py '])
 
-def test_stop_targets():
+def test_stop_ensembles():
     """This test verifies that controller.stop()
-       is able to stop multiple targets and models.
+       is able to stop multiple ensembles and models.
     """
 
     # see if we are on slurm machine
@@ -102,12 +102,12 @@ def test_stop_targets():
         rmtree(experiment_dir)
 
     state= State(experiment="controller_test")
-    target_dict = {"executable":"python sleep.py"}
-    target_1 = state.create_target("target_1", run_settings=target_dict)
-    model_1 = state.create_model(name="model_1", target="target_1")
-    model_2 = state.create_model(name="model_2", target="target_1")
-    target_2 = state.create_target("target_2", run_settings=target_dict)
-    model_3 = state.create_model(name="model_3", target="target_2")
+    ensemble_dict = {"executable":"python sleep.py"}
+    ensemble_1 = state.create_ensemble("ensemble_1", run_settings=ensemble_dict)
+    model_1 = state.create_model(name="model_1", ensemble="ensemble_1")
+    model_2 = state.create_model(name="model_2", ensemble="ensemble_1")
+    ensemble_2 = state.create_ensemble("ensemble_2", run_settings=ensemble_dict)
+    model_3 = state.create_model(name="model_3", ensemble="ensemble_2")
 
     gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
     gen.generate()
@@ -119,7 +119,7 @@ def test_stop_targets():
 
     control.start()
     time.sleep(10)
-    control.stop(targets=[target_2], models = [model_1,model_2])
+    control.stop(ensembles=[ensemble_2], models = [model_1,model_2])
     time.sleep(10)
     assert(control.finished())
     control.release()
@@ -127,7 +127,7 @@ def test_stop_targets():
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
-def test_stop_targets_nodes_orchestrator():
+def test_stop_ensembles_nodes_orchestrator():
     """This test verifies that controller.stop()
        is able to stop multiple nodes.
     """
@@ -142,9 +142,9 @@ def test_stop_targets_nodes_orchestrator():
 
     state=State(experiment="controller_test")
 
-    target_dict = {"executable":"python sleep.py"}
-    target_1 = state.create_target("target_1", run_settings=target_dict)
-    model_1 = state.create_model(name="model_1", target="target_1")
+    ensemble_dict = {"executable":"python sleep.py"}
+    ensemble_1 = state.create_ensemble("ensemble_1", run_settings=ensemble_dict)
+    model_1 = state.create_model(name="model_1", ensemble="ensemble_1")
 
     gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
     gen.generate()
@@ -164,7 +164,7 @@ def test_stop_targets_nodes_orchestrator():
     control = Controller(state, **control_dict)
     control.start()
     time.sleep(10)
-    control.stop(targets=[target_1], nodes=[node_1, node_2], stop_orchestrator=True)
+    control.stop(ensembles=[ensemble_1], nodes=[node_1, node_2], stop_orchestrator=True)
     time.sleep(10)
     assert(control.finished())
     control.release()
@@ -177,6 +177,7 @@ def test_stop_targets_nodes_orchestrator():
         remove('orchestrator.err')
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
+
 
 def test_controller():
 
@@ -203,8 +204,8 @@ def test_controller():
                             "x_resolution": 40,
                             "y_resolution": 20,
                             "months": 1}
-        state.create_target("quar-deg", params=quar_deg_params)
-        state.create_target("half-deg", params=half_deg_params)
+        state.create_ensemble("quar-deg", params=quar_deg_params)
+        state.create_ensemble("half-deg", params=half_deg_params)
 
         gen = Generator(state, model_files="../../examples/MOM6/MOM6_base_config")
         gen.generate()
@@ -221,22 +222,22 @@ def test_controller():
         # check if all the data is there
         # files to check for
         #     input.nml            (model config, make sure generator is copying)
-        #     <target_name>        (for script from launcher)
-        #     <target_name>.err    (for err files)
-        #     <target_name>.out    (for output)
+        #     <ensemble_name>        (for script from launcher)
+        #     <ensemble_name>.err    (for err files)
+        #     <ensemble_name>.out    (for output)
         #     ocean_mean_month.nc  (make sure data is captured)
 
         data_present = True
         files = ["input.nml", "ocean_mean_month.nc"]
         experiment_path = sim.get_experiment_path()
-        targets = listdir(experiment_path)
-        for target in targets:
-            target_path = path.join(experiment_path, target)
-            for model in listdir(target_path):
+        ensembles = listdir(experiment_path)
+        for ensemble in ensembles:
+            ensemble_path = path.join(experiment_path, ensemble)
+            for model in listdir(ensemble_path):
                 model_files = files.copy()
                 model_files.append(".".join((model, "err")))
                 model_files.append(".".join((model, "out")))
-                model_path = path.join(target_path, model)
+                model_path = path.join(ensemble_path, model)
                 print(model_path)
                 all_files = [path.basename(x) for x in glob(model_path + "/*")]
                 print(all_files)
@@ -273,13 +274,13 @@ def test_no_generator():
 
     state = State(experiment="test_output")
 
-    target_run_settings = {"executable": "cp2k.psmp",
+    ensemble_run_settings = {"executable": "cp2k.psmp",
                            "run_command": "srun",
                            "partition": "gpu",
                            "exe_args": "-i ../test_configs/h2o.inp",
                            "nodes": 1}
-    state.create_target("test-target", run_settings=target_run_settings)
-    state.create_model("test", target="test-target", path=output_file_dir)
+    state.create_ensemble("test-ensemble", run_settings=ensemble_run_settings)
+    state.create_model("test", ensemble="test-ensemble", path=output_file_dir)
 
     control = Controller(state, launcher="slurm")
     control.start()
@@ -298,8 +299,8 @@ def test_no_generator():
 
 
 
-def test_target_configs():
-    """Test the controller for when targets are provided their own run configurations"""
+def test_ensemble_configs():
+    """Test the controller for when ensembles are provided their own run configurations"""
 
     # see if we are on slurm machine
     if not which("srun"):
@@ -308,18 +309,18 @@ def test_target_configs():
     if not which("cp2k.psmp"):
         pytest.skip()
 
-    output_file_dir = getcwd() + "/target-test"
+    output_file_dir = getcwd() + "/ensemble-test"
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)
 
-    state = State(experiment="target-test")
-    target_params = {"executable": "cp2k.psmp",
+    state = State(experiment="ensemble-test")
+    ensemble_params = {"executable": "cp2k.psmp",
                      "run_command": "srun",
                      "partition": "gpu",
                      "exe_args": "-i h2o.inp",
                      "nodes": 1}
-    state.create_target("test-target", run_settings=target_params)
-    state.create_model("test", "test-target")
+    state.create_ensemble("test-ensemble", run_settings=ensemble_params)
+    state.create_model("test", "test-ensemble")
 
     gen = Generator(state, model_files="test_configs/h2o.inp")
     gen.generate()
@@ -334,3 +335,32 @@ def test_target_configs():
     control.release()
     if path.isdir(output_file_dir):
         rmtree(output_file_dir)
+
+
+def test_model_with_run_settings():
+    """test when models are supplied their own run_settings and the default ensemble is used"""
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = getcwd()+"/model_run_settings_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+    state=State(experiment="model_run_settings_test")
+
+    run_settings = {"executable":"python sleep.py"}
+    model_1 = state.create_model(name="model_1", run_settings=run_settings)
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+
+    control = Controller(state, launcher="slurm", ppn=1)
+    control.start()
+    control.poll()
+    assert(control.finished())
+    control.release()
+
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)

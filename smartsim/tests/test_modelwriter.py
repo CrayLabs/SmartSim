@@ -21,7 +21,7 @@ def test_write_easy_configs():
     conf_path = "./test_configs/easy/marked/"
     gen_path = "./test_configs/easy/generated/"
     correct_path = "./test_configs/easy/correct/"
-    model = NumModel("easy", param_dict, path=gen_path)
+    model = NumModel("easy", param_dict, gen_path, run_settings={})
 
     # clean up from previous test
     if path.isdir(gen_path):
@@ -60,7 +60,7 @@ def test_write_med_configs():
     conf_path = "./test_configs/med/marked/"
     gen_path = "./test_configs/med/generated/"
     correct_path = "./test_configs/med/correct/"
-    model = NumModel("med", param_dict, path=gen_path) 
+    model = NumModel("med", param_dict, gen_path, run_settings={})
 
     # clean up from previous test
     if path.isdir(gen_path):
@@ -100,7 +100,7 @@ def test_write_new_tag_configs():
     conf_path = "./test_configs/new-tag/marked/"
     gen_path = "./test_configs/new-tag/generated/"
     correct_path = "./test_configs/new-tag/correct/"
-    model = NumModel("newtag", param_dict, path=gen_path)
+    model = NumModel("newtag", param_dict, gen_path, run_settings={})
 
     # clean up from previous test
     if path.isdir(gen_path):

@@ -29,22 +29,22 @@ class SmartSimModule:
     def set_state(self, new_state):
         self.state.current_state = new_state
 
-    def get_targets(self):
-        """Get a list of the targets created by the user.
+    def get_ensembles(self):
+        """Get a list of the ensembles created by the user.
 
-           :returns: List of targets in the State instance
+           :returns: List of ensembles in the State instance
         """
-        return self.state.targets
+        return self.state.ensembles
 
-    def get_target(self, target):
-        """Return a specific target from State
+    def get_ensemble(self, ensemble):
+        """Return a specific ensemble from State
 
-           :param str target: Name of the target to return
+           :param str ensemble: Name of the ensemble to return
 
-           :returns: Target instance
+           :returns: ensemble instance
            :raises: SmartSimError
         """
-        return self.state.get_target(target)
+        return self.state.get_ensemble(ensemble)
 
     def get_nodes(self):
         """Get a list of the nodes declared in State
@@ -53,18 +53,18 @@ class SmartSimModule:
         """
         return self.state.nodes
 
-    def get_model(self, model, target):
-        """Get a specific model from a target.
+    def get_model(self, model, ensemble):
+        """Get a specific model from a ensemble.
 
            :param str model: name of the model to return
-           :param str target: name of the target where the model is located
+           :param str ensemble: name of the ensemble where the model is located
 
            :returns: NumModel instance
         """
-        return self.state.get_model(model, target)
+        return self.state.get_model(model, ensemble)
 
     def get_experiment_path(self):
-        """Get the path to the experiment where all the targets and models are
+        """Get the path to the experiment where all the ensembles and models are
            held.
 
            :returns: Path to experiment

@@ -110,15 +110,15 @@ through the ``State`` initialization as follows
   state = State(experiment="lammps_atm")
 
 
-For this example, we will create one target that holds the four models with
-four increasing number of steps. This is done through a call to ``state.create_target``
+For this example, we will create one ensemble that holds the four models with
+four increasing number of steps. This is done through a call to ``state.create_ensemble``
 as follows:
 
 .. code-blocK:: python
 
-  # Create targets
+  # Create ensembles
   param_dict_1 = {"steps": [20, 25, 30, 35]}
-  state.create_target("atm", params=param_dict)
+  state.create_ensemble("atm", params=param_dict)
 
 The parameter dictionary above specifies the placeholder we put into the configuration
 file as the keys and the values we wish for models to be configurated and created with
@@ -128,7 +128,7 @@ Generation Strategies
 =====================
 
 To generate our models we need to create an instance of a generator, provide
-the tagged configuration files and make a call to ``Generator.generate()``.  The 
+the tagged configuration files and make a call to ``Generator.generate()``.  The
 ``generate`` function creates models according to the specified permutation strategy,
 which, by default, is "all permutations": it creates every model possible, given the
 input parameters.  In order to select the strategy, we may call the
@@ -136,7 +136,7 @@ input parameters.  In order to select the strategy, we may call the
 corresponding to one of the internal strategies, a string formatted as "module.function"
 that the Generator will then load, or an actual function.
 
-There are three built in permutation strategies: "all_perm", "random", and "step". 
+There are three built in permutation strategies: "all_perm", "random", and "step".
 "all_perm" returns all possible combinations of the input parameters; "random" returns
 ``n_models`` models; this can be seen as a random subset of all possible combinations.
 The argument ``n_models`` must be passed to the ``generate`` function.
@@ -151,7 +151,7 @@ The argument ``n_models`` must be passed to the ``generate`` function.
   GEN.generate(n_models=2)
 
 User supplied functions must accept at _least_ ``param_names`` and ``param_values``,
-where param_names is a list of the supplied parameter names, and param_values is a 
+where param_names is a list of the supplied parameter names, and param_values is a
 list of the corresponding parameter names.  In the following example, ``param_names``
 is equal to ``[steps]``, and param_values is ``[20, 25, 30, 35]``.
 
@@ -170,7 +170,7 @@ is the dictionary for a model.  For example:
   GEN.generate()
 
 User written functions are not limited to only receiving the above arguments.
-Extra arguments may be added to the function as necessary; at runtime, these are 
+Extra arguments may be added to the function as necessary; at runtime, these are
 passed through to the selection strategy via the ``generate`` function (as above,
 as in for "random" and ``n_models``).
 
@@ -185,4 +185,4 @@ is also valid:
   GEN = Generator(state, model_files=base_config)
   GEN.generate()
 
- 
+
