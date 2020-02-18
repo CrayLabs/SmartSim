@@ -20,14 +20,12 @@ class State:
        :param str experiment: Name of the directory that will house all of
                               the created files and directories.
     """
-
     def __init__(self, experiment):
         self.current_state = "Initializing"
         self.experiment = experiment
         self.ensembles = []
         self.nodes = []
         self.orc = None
-
 
     def __str__(self):
         state_str = "\n-- State Summary --\n"
@@ -42,7 +40,6 @@ class State:
         if self.orc:
             state_str += str(self.orc)
         return state_str
-
 
     def load_ensemble(self, name, ensemble_path=None):
         """Load a pickled ensemble into State for use. The ensemble currently must be from
@@ -64,18 +61,18 @@ class State:
                     ensemble = pickle.load(open(pickle_file, "rb"))
                     if ensemble.experiment != self.experiment:
                         err = "ensemble must be loaded from same experiment \n"
-                        msg = "ensemble experiment: {}   Current experiment: {}".format(ensemble.experiment,
-                                                                                       self.experiment)
-                        raise SmartSimError(err+msg)
+                        msg = "ensemble experiment: {}   Current experiment: {}".format(
+                            ensemble.experiment, self.experiment)
+                        raise SmartSimError(err + msg)
                     self.ensembles.append(ensemble)
                 else:
-                    raise SmartSimError("ensemble, {}, could not be found".format(name))
+                    raise SmartSimError(
+                        "ensemble, {}, could not be found".format(name))
             else:
                 raise SmartSimError("ensemble directory could not be found!")
         except SmartSimError as e:
             logger.error(e)
             raise
-
 
     def create_ensemble(self, name, params={}, run_settings={}):
         """Create a ensemble to be used within one or many of the SmartSim Modules. ensembles
@@ -88,23 +85,34 @@ class State:
                                on a run strategy.
 
         """
-        new_ensemble=None
+        new_ensemble = None
         try:
             for ensemble in self.ensembles:
                 if ensemble.name == name:
-                    raise SmartSimError("A ensemble named " + ensemble.name + " already exists!")
+                    raise SmartSimError("A ensemble named " + ensemble.name +
+                                        " already exists!")
 
             ensemble_path = path.join(getcwd(), self.experiment, name)
             if path.isdir(ensemble_path):
-                raise SmartSimError("ensemble directory already exists: " + ensemble_path)
-            new_ensemble = Ensemble(name, params, self.experiment, ensemble_path, run_settings=run_settings)
+                raise SmartSimError("ensemble directory already exists: " +
+                                    ensemble_path)
+            new_ensemble = Ensemble(name,
+                                    params,
+                                    self.experiment,
+                                    ensemble_path,
+                                    run_settings=run_settings)
             self.ensembles.append(new_ensemble)
         except SmartSimError as e:
             logger.error(e)
             raise
         return new_ensemble
 
-    def create_model(self, name, ensemble="default", params={}, path=None, run_settings={}):
+    def create_model(self,
+                     name,
+                     ensemble="default",
+                     params={},
+                     path=None,
+                     run_settings={}):
         """Create a model belonging to a specific ensemble. This function is
            useful for running a small number of models where the model files
            are already in place for execution.
@@ -124,7 +132,9 @@ class State:
         model = NumModel(name, params, path, run_settings)
         if not path:
             path = getcwd()
-        if ensemble == "default" and "default" not in [ensemble.name for ensemble in self.ensembles]:
+        if ensemble == "default" and "default" not in [
+                ensemble.name for ensemble in self.ensembles
+        ]:
             # create empty ensemble
             self.create_ensemble(ensemble, params={}, run_settings={})
         for t in self.ensembles:
@@ -132,22 +142,37 @@ class State:
                 t.add_model(model)
                 model_added = True
         if not model_added:
-            raise SmartSimError("Could not find ensemble by the name of: " + ensemble)
+            raise SmartSimError("Could not find ensemble by the name of: " +
+                                ensemble)
         return model
 
-    def create_orchestrator(self, name=None, port=6379, run_settings={}):
+    def create_orchestrator(self,
+                            path=None,
+                            port=6379,
+                            cluster_size=3,
+                            partition=None):
         """Create an orchestrator database to faciliate the transfer of data
            for online training and inference. After the orchestrator is created,
            connections between models and nodes can be instantiated through a
            call to State.register_connection().
 
-           :param str name: name of orchestrator, defaults to "Orchestrator"
-           :param int port: the port to open database communications on
-           :param dict run_settings: workload manager settings for the orchestrator
+            #TODO change path if files are generated
+           :param str path: desired path to output files of db cluster (defaults to
+                            os.getcwd())
+           :param int port: port for each database node for tcp communication
+           :param int cluster_size: number of database nodes in cluster
+           :param str partition: partition to launch db nodes o
            """
-        if not self.orc == None:
-            raise SmartSimError("Only one orchestrator can exist within a state.")
-        self.orc = Orchestrator(name=name, port=port, run_settings=run_settings)
+        if self.orc:
+            raise SmartSimError(
+                "Only one orchestrator can exist within a state.")
+        if not path:
+            orcpath = getcwd()
+
+        self.orc = Orchestrator(orcpath,
+                                port=port,
+                                cluster_size=cluster_size,
+                                partition=partition)
 
     def create_node(self, name, script_path=None, run_settings={}):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode
@@ -164,7 +189,7 @@ class State:
                                      including keyword arguments such as duration="1:00:00"
                                      or nodes=5
            """
-        node = SmartSimNode(name, path=script_path, run_settings=run_settings)
+        node = SmartSimNode(name, script_path, run_settings=run_settings)
         self.nodes.append(node)
         return node
 
@@ -212,7 +237,9 @@ class State:
         for ensemble in self.ensembles:
             pickle_path = path.join(ensemble.path, ensemble.name + ".pickle")
             if not path.isdir(ensemble.path):
-                raise SmartSimError("ensembles must be generated in order to save them.  {0} does not exist.".format(ensemble.path))
+                raise SmartSimError(
+                    "ensembles must be generated in order to save them.  {0} does not exist."
+                    .format(ensemble.path))
             file_obj = open(pickle_path, "wb")
             pickle.dump(ensemble, file_obj)
             file_obj.close()

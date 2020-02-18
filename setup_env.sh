@@ -30,6 +30,7 @@ else
         git clone https://github.com/JohnSully/KeyDB.git --branch v5.1.1 --depth=1
         cd KeyDB/ && make
         cd ..
+        export PATH="$(pwd)/KeyDB/src:${PATH}"
         echo "Finished installing KeyDB"
     fi
 fi

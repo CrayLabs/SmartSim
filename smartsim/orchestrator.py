@@ -1,34 +1,34 @@
-
 from .error import SSConfigError, SmartSimError
 from .junction import Junction
-from .entity import SmartSimEntity
+from .dbnode import DBNode
 
 from os import path, getcwd, environ
 
-class Orchestrator(SmartSimEntity):
+
+class Orchestrator:
     """The Orchestrator is responsible for launching the DataBase and connecting
        the various user specified entities(Clients, Models) to the correct
        endpoints
     """
-
-    def __init__(self, name=None, port=6379, run_settings=dict()):
-        super().__init__("orchestrator", None, run_settings)
+    def __init__(self, orc_path, port=6379, cluster_size=3, partition=None):
         self.port = port
+        self.path = orc_path
         self.junction = Junction()
+        self.dbnodes = []
+        self._init_db_nodes(cluster_size, partition)
 
-    def get_run_settings(self):
-        conf_path = self._get_conf_path() + "smartsimdb.conf"
-        exe_args = conf_path + " --port " + str(self.port)
-        exe = "keydb-server"
-
-        # run_command
-        cmd = [" ".join((exe, exe_args))]
-
-        self.run_settings["out_file"] = path.join(self.path, "orchestrator.out")
-        self.run_settings["err_file"] = path.join(self.path, "orchestrator.err")
-        self.run_settings["cmd"] = cmd
-
-        return self.run_settings
+    def _init_db_nodes(self, cluster_size, partition):
+        cluster = True
+        if cluster_size < 3:
+            cluster = False
+        run_settings = {"nodes": 1, "ppn": 1, "partition": partition}
+        for node_id in range(cluster_size):
+            node = DBNode(node_id,
+                          self.path,
+                          run_settings,
+                          port=self.port,
+                          cluster=cluster)
+            self.dbnodes.append(node)
 
     def get_connection_env_vars(self, entity):
         """gets the environment variables from the junction for which databases each entity
@@ -36,14 +36,15 @@ class Orchestrator(SmartSimEntity):
         """
         return self.junction.get_connections(entity)
 
-    def _get_conf_path(self):
-        try:
-            path = environ["ORCCONFIG"]
-            return path
-        except KeyError:
-            raise SSConfigError("SmartSim environment not set up!")
-
     def __str__(self):
         orc_str = "\n-- Orchestrator --"
         orc_str += str(self.junction)
         return orc_str
+
+    def set_path(self, new_path):
+        """Set the path for logging outputs for the database when user calls
+           the generator.
+        """
+        self.path = new_path
+        for dbnode in self.dbnodes:
+            dbnode.set_path(new_path)
