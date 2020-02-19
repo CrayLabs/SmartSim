@@ -1,5 +1,8 @@
-import asyncio
-from asyncio.subprocess import PIPE
+from subprocess import PIPE, Popen, CalledProcessError
+from ..error.errors import LauncherError
+
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 
 class LocalLauncher:
@@ -8,12 +11,16 @@ class LocalLauncher:
        doesn't have the same capability as the launchers that inheirt from
        the SmartSim launcher base class as those launcher interact with the
        workload manager.
+
+       All jobs will be launched serially and will not be able to be queried
+       through the controller interface like jobs submitted to a workload
+       manager like Slurm.
     """
     def __init__(self):
-        self.processes = dict()
+        pass
 
     def run(self, cmd, run_settings):
-        """Launch a process using asyncio
+        """Launch a process using Popen
 
            :param str cmd: the command to run
            :param dict run_settings: a dictionary of settings for the subprocess
@@ -22,8 +29,15 @@ class LocalLauncher:
         out = run_settings["out_file"]
         err = run_settings["err_file"]
         cwd = run_settings["cwd"]
-        pid = asyncio.run(async_run(cmd, out, err, cwd))
-        return pid
+        process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, cwd=cwd)
+        try:
+            # waiting for the process to terminate and capture its output
+            output, error = process.communicate()
+            self.write_output(out, err, output, error)
+
+        except CalledProcessError as e:
+            raise LauncherError("Exception caught when running %s" %
+                                (cmd)) from e
 
     def get_job_nodes(self, job_id):
         return ["127.0.0.1"]
@@ -36,17 +50,9 @@ class LocalLauncher:
         """Get the status of a job currenlty running"""
         raise NotImplementedError
 
-
-async def async_run(cmd, out, err, cwd):
-    proc = await asyncio.create_subprocess_shell(cmd,
-                                                 cwd=cwd,
-                                                 stderr=PIPE,
-                                                 stdout=PIPE)
-    stdout, stderr = await proc.communicate()
-    if stdout:
-        with open(out, mode="wb") as f:
-            f.write(stdout)
-    if stderr:
-        with open(err, mode="wb") as g:
-            g.write(stdout)
-    return proc.pid
+    def write_output(self, out_file, err_file, output, error):
+        """Write the output of a Popen subprocess"""
+        with open(out_file, "wb+") as of:
+            of.write(output)
+        with open(err_file, "wb+") as ef:
+            ef.write(error)

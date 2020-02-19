@@ -12,7 +12,7 @@ run_settings = {
     "exe_args": "-in in.atm"
 }
 
-param_dict_1 = {"STEPS": [40, 45], "THERMO": 5}
+param_dict_1 = {"STEPS": [5, 10], "THERMO": 5}
 state.create_ensemble("atm", params=param_dict_1, run_settings=run_settings)
 
 # Supply the generator with necessary files to run the simulation

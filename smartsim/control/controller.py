@@ -49,6 +49,11 @@ class Controller(SmartSimModule):
         """
         try:
             if self.has_orchestrator():
+                if isinstance(self._launcher, LocalLauncher):
+                    raise SSConfigError(
+                        "Orchestrators are not supported when launching locally"
+                    )
+
                 self._prep_orchestrator()
                 self._prep_nodes()
             logger.info("SmartSim State: " + self.get_state())
@@ -77,6 +82,9 @@ class Controller(SmartSimModule):
            :param bool stop_orchestrator: Boolean indicating if
                 the ochestrator should be stopped.
         """
+        if isinstance(self._launcher, LocalLauncher):
+            raise SSConfigError(
+                "Controller.stop() is not supported when launching locally")
         self._stop_ensembles(ensembles)
         self._stop_models(models)
         self._stop_nodes(nodes)
@@ -96,7 +104,6 @@ class Controller(SmartSimModule):
 
            :param str partition: name of the partition where the allocation is running
         """
-        # TODO warn for local launcher
         if isinstance(self._launcher, LocalLauncher):
             raise SSConfigError(
                 "Controller.release() is not supported when launching locally")
@@ -145,6 +152,11 @@ class Controller(SmartSimModule):
                             defaults to 5 seconds.
            :returns: list of hostnames given a job or dict of job_name -> nodelist
         """
+        if isinstance(self._launcher, LocalLauncher):
+            raise SSConfigError(
+                "Controller.get_job_nodes() is not supported when launching locally"
+            )
+
         if not job:
             node_dict = dict()
             time.sleep(wait)
@@ -166,6 +178,10 @@ class Controller(SmartSimModule):
            :param int interval: number of seconds to wait before polling again
            :param bool verbose: set verbosity
         """
+        if isinstance(self._launcher, LocalLauncher):
+            raise SSConfigError(
+                "Controller.poll() is not supported when launching locally")
+
         all_finished = False
         while not all_finished:
             time.sleep(interval)
@@ -180,6 +196,11 @@ class Controller(SmartSimModule):
         """
         # TODO make sure orchestrator doesnt effect this
         # TODO make sure NOTFOUND doesnt cause infinite loop
+        if isinstance(self._launcher, LocalLauncher):
+            raise SSConfigError(
+                "Controller.finished() is not supported when launching locally"
+            )
+
         statuses = []
         for job in self._jobs:
             self._check_job(job)
@@ -387,8 +408,8 @@ class Controller(SmartSimModule):
 
         except KeyError as e:
             raise SSConfigError(
-                "SmartSim could not find following required field: " +
-                e.args[0]) from e
+                "SmartSim could not find following required field: %s" %
+                (e.args[0])) from e
 
     def _validate_allocations(self):
         """Validate the allocations with specific requirements provided by the user."""
