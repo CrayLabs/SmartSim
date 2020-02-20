@@ -301,14 +301,15 @@ class Controller(SmartSimModule):
         """Stops the orchestrator only if all
            :raises: SmartSimError
         """
-        job = self.get_job('orchestrator')
-        self._check_job(job)
-        if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-            logger.info("Stopping orchestrator on job " + job.get_job_id())
-            self._launcher.stop(job.get_job_id())
-        else:
-            raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                " because its status is " + job.status)
+        for dbnode in self.state.orc.dbnodes:
+            job = self.get_job(dbnode.name)
+            self._check_job(job)
+            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
+                logger.info("Stopping orchestrator on job " + job.get_job_id())
+                self._launcher.stop(job.get_job_id())
+            else:
+                raise SmartSimError("Unable to stop job " + job.get_job_id() +
+                                    " because its status is " + job.status)
 
     def _prep_nodes(self):
         """Add the nodes to the list of requirement for all the entities
@@ -324,7 +325,9 @@ class Controller(SmartSimModule):
     def _prep_orchestrator(self):
         """Add the orchestrator to the allocations requested"""
         for dbnode in self.state.orc.dbnodes:
-            dbnode_settings = dbnode.get_run_settings()
+            dbnode_settings, cmd = self._build_run_dict(dbnode.get_run_settings())
+            dbnode.update_run_settings(dbnode_settings)
+            dbnode.set_cmd(cmd)
             self._alloc_handler._add_to_allocs(dbnode_settings)
 
     def _prep_ensembles(self):
@@ -368,7 +371,7 @@ class Controller(SmartSimModule):
                 exe_args = ""
             cmd = " ".join((exe, exe_args))
 
-            if not isinstance(self._launcher, LocalLauncher):
+            if isinstance(self._launcher, LocalLauncher):
                 run_command = self.get_config("run_command",
                                               aux=tar_dict,
                                               none_ok=False)
@@ -402,8 +405,6 @@ class Controller(SmartSimModule):
             if not run_dict["partition"]:
                 run_dict["partition"] = "default"
 
-            # remove smartsim arguments
-            run_dict = self._remove_smartsim_args(run_dict)
             return run_dict, cmd
 
         except KeyError as e:
@@ -429,16 +430,16 @@ class Controller(SmartSimModule):
 
             duration = self.get_config("duration", none_ok=True)
             for partition, nodes in self._alloc_handler.partitions.items():
+                launch_partition = partition
                 if partition == "default":
-                    partition = None
-                    alloc_id = self._launcher.get_alloc(nodes=nodes[0],
-                                                        ppn=nodes[1],
-                                                        partition=partition,
-                                                        duration=duration)
-                if partition:
-                    self._alloc_handler.allocs[partition] = alloc_id
-                else:
-                    self._alloc_handler.allocs["default"] = alloc_id
+                    launch_partition = None
+                alloc_id = self._launcher.get_alloc(
+                    nodes=nodes[0],
+                    ppn=nodes[1],
+                    partition=launch_partition,
+                    duration=duration)
+
+                self._alloc_handler.allocs[partition] = alloc_id
 
     def _launch(self):
         """Launch all entities within state with the configured launcher"""
@@ -452,7 +453,7 @@ class Controller(SmartSimModule):
                                                       self.state.orc.port)
         # launch the SmartSimNodes
         for node in self.get_nodes():
-            self._launch_on_alloc(node, node_settings)
+            self._launch_on_alloc(node)
 
         # Launch ensembles and their respective models
         ensembles = self.get_ensembles()
@@ -467,7 +468,7 @@ class Controller(SmartSimModule):
 
         pid = None
         cmd = entity.get_cmd()
-        run_settings = entity.get_run_settings()
+        run_settings = self._remove_smartsim_args(entity.get_run_settings())
         if isinstance(self._launcher, LocalLauncher):
             pid = self._launcher.run(cmd, run_settings)
         else:

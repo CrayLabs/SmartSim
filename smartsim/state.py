@@ -156,7 +156,6 @@ class State:
            connections between models and nodes can be instantiated through a
            call to State.register_connection().
 
-            #TODO change path if files are generated
            :param str path: desired path to output files of db cluster (defaults to
                             os.getcwd())
            :param int port: port for each database node for tcp communication
