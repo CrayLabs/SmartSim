@@ -6,7 +6,7 @@ from .entity import SmartSimEntity
 class Ensemble(SmartSimEntity):
 
     def __init__(self, name, params, experiment, path, run_settings={}):
-        super().__init__(name, path, run_settings)
+        super().__init__(name, path, "ensemble", run_settings)
         self.params = params
         self.experiment = experiment
         self.models = {}

@@ -5,7 +5,7 @@ from .entity import SmartSimEntity
 
 class SmartSimNode(SmartSimEntity):
     def __init__(self, name, path, run_settings=dict()):
-        super().__init__(name, path, run_settings)
+        super().__init__(name, path, "node", run_settings)
 
     def __str__(self):
         node_str = "\n   " + self.name + "\n"

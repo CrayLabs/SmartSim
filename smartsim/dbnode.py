@@ -6,7 +6,7 @@ import os
 class DBNode(SmartSimEntity):
     def __init__(self, dbnodenum, path, run_settings, port=6379, cluster=True):
         name = "orchestrator_" + str(dbnodenum)
-        super().__init__(name, path, run_settings)
+        super().__init__(name, path, "db", run_settings)
         self.setup_dbnode(cluster, port)
 
     def setup_dbnode(self, cluster, port):
@@ -17,8 +17,7 @@ class DBNode(SmartSimEntity):
             conf_path += "--cluster-enabled yes "
             cluster_conf = "nodes-" + self.name + "-" + str(
                 port) + ".conf"
-            cluster_file = "--cluster-config-file " + os.path.join(
-                self.path, cluster_conf)
+            cluster_file = " ".join(("--cluster-config-file ", cluster_conf))
         exe_args = " ".join((conf_path, "--port", str(port), cluster_file))
 
         new_settings = {

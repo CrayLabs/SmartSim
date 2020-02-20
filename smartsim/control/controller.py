@@ -14,6 +14,7 @@ from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherEr
 
 from .job import Job
 from .allochandler import AllocHandler
+from .jobmanager import JobManager
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -35,7 +36,7 @@ class Controller(SmartSimModule):
         self.set_state("Simulation Control")
         self._init_launcher(launcher)
         self._alloc_handler = AllocHandler()
-        self._jobs = []
+        self._jobs = JobManager()
 
     def start(self):
         """Start the computation of a ensemble, nodes, and optionally
@@ -124,9 +125,6 @@ class Controller(SmartSimModule):
         except SmartSimError as e:
             logger.error(e)
 
-    def get_jobs(self):
-        """Return the list of jobs that this controller has spawned"""
-        return self._jobs
 
     def get_job(self, name):
         """Retrieve a Job instance by name. The Job object carries information about the
@@ -135,17 +133,15 @@ class Controller(SmartSimModule):
            :param str name: name of the entity launched by the Controller
            :raises: SmartSimError
         """
-        found = False
-        for job in self._jobs:
-            if job.obj.name == name:
-                found = True
-                return job
-        if not found:
+        try:
+            return self._jobs[name]
+        except KeyError:
             raise SmartSimError("Job for " + name + " not found.")
 
-    def get_job_nodes(self, job=None, wait=5):
+    def get_job_nodes(self, job, wait=3):
         """Get the hostname(s) of a job from the allocation
-           if no job listed, return a dictionary of jobs and nodelists
+           Wait time is necessary because Slurm take about 3 seconds to
+           register that a job has been submitted.
 
            :param Job job: A job instance
            :param int wait: time for wait before checking nodelist after job has been launched
@@ -155,21 +151,15 @@ class Controller(SmartSimModule):
         if isinstance(self._launcher, LocalLauncher):
             raise SSConfigError(
                 "Controller.get_job_nodes() is not supported when launching locally"
-            )
-
-        if not job:
-            node_dict = dict()
-            time.sleep(wait)
-            for job in self._jobs:
-                node_dict[job.name] = self._get_job_nodes(job)
-            return node_dict
+                )
+        if not isinstance(job, Job):
+            raise SmartSimError(
+                "Argument must be a Job instance"
+                )
         else:
-            if not isinstance(job, Job):
-                raise SmartSimError("Argument must be a Job instance")
-            else:
-                time.sleep(wait)
-                nodes = self._get_job_nodes(job)
-                return nodes
+            time.sleep(wait)
+            nodes = self._get_job_nodes(job)
+            return nodes
 
     def poll(self, interval=20, verbose=True):
         """Poll the running simulations and recieve logging
@@ -202,7 +192,7 @@ class Controller(SmartSimModule):
             )
 
         statuses = []
-        for job in self._jobs:
+        for job in self._jobs().values():
             self._check_job(job)
             statuses.append(job.status.strip())
             if verbose:
@@ -257,7 +247,7 @@ class Controller(SmartSimModule):
                 "Only objects of type NumModel expected for variable models")
 
         for model in models:
-            job = self.get_job(model.name)
+            job = self._jobs[model.name]
             self._check_job(job)
             if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
                 logger.info("Stopping model " + model.name + " job " +
@@ -287,7 +277,7 @@ class Controller(SmartSimModule):
             )
 
         for node in nodes:
-            job = self.get_job(node.name)
+            job = self._jobs[node.name]
             self._check_job(job)
             if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
                 logger.info("Stopping node " + node.name + " job " +
@@ -302,7 +292,7 @@ class Controller(SmartSimModule):
            :raises: SmartSimError
         """
         for dbnode in self.state.orc.dbnodes:
-            job = self.get_job(dbnode.name)
+            job = self._jobs[dbnode.name]
             self._check_job(job)
             if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
                 logger.info("Stopping orchestrator on job " + job.get_job_id())
@@ -448,19 +438,21 @@ class Controller(SmartSimModule):
         if self.has_orchestrator():
             for dbnode in self.state.orc.dbnodes:
                 self._launch_on_alloc(dbnode)
-                nodes = self.get_job_nodes(self.get_job(dbnode.name))
+                nodes = self.get_job_nodes(self._jobs[dbnode.name])
                 self.state.orc.junction.store_db_addr(nodes[0],
                                                       self.state.orc.port)
-        # launch the SmartSimNodes
+        # launch the SmartSimNodes and update job nodes
         for node in self.get_nodes():
             self._launch_on_alloc(node)
+            self.get_job_nodes(self._jobs[node.name])
 
-        # Launch ensembles and their respective models
+        # Launch ensembles and their respective models and update job nodes
         ensembles = self.get_ensembles()
         for ensemble in ensembles:
             for model in ensemble.models.values():
                 run_settings = model.get_run_settings()
                 self._launch_on_alloc(model)
+                self.get_job_nodes(self._jobs[model.name])
 
     def _launch_on_alloc(self, entity):
         """launch a SmartSimEntity on an allocation provided by a workload manager."""
@@ -477,8 +469,7 @@ class Controller(SmartSimModule):
                 cmd, self._alloc_handler.allocs[partition], **run_settings)
 
         logger.debug("Process id for " + entity.name + " is " + str(pid))
-        job = Job(entity.name, pid, entity)
-        self._jobs.append(job)
+        self._jobs.add_job(entity.name, pid, entity)
 
     def _check_job(self, job):
         """Takes in job and sets job properties"""
@@ -489,9 +480,13 @@ class Controller(SmartSimModule):
         job.set_status(status)
 
     def _get_job_nodes(self, job):
-        job_id = job.get_job_id()
-        nodes = self._launcher.get_job_nodes(job_id)
-        return nodes
+        if job.nodes:
+            return job.nodes
+        else:
+            job_id = job.get_job_id()
+            nodes = self._launcher.get_job_nodes(job_id)
+            job.nodes = nodes
+            return nodes
 
     def _init_launcher(self, launcher):
         """Run with a specific type of launcher"""

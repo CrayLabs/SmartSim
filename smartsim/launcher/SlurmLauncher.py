@@ -366,6 +366,7 @@ class SlurmLauncher(Launcher):
 			salloc += ["--begin", start_time]
 		if duration:
 			salloc += ["--time", duration]
+		salloc += ["-J SmartSim"]
 		if to_string:
 			return seq_to_str(salloc, add_equal=True)
 		return salloc

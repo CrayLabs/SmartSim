@@ -5,12 +5,13 @@ from smartsim.error.errors import SSConfigError
 
 
 class SmartSimEntity:
-    def __init__(self, name, path, run_settings):
+    def __init__(self, name, path, entity_type, run_settings):
         self.name = name
         if path:
             self.path = path
         else:
             self.path = os.getcwd()
+        self.type = entity_type
         self.run_settings = run_settings
         self._init_run_settings()
         self.cmd = ""
