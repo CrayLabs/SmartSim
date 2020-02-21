@@ -375,7 +375,7 @@ class SlurmLauncher(Launcher):
 		try:
 			popen_obj = Popen(cmd, cwd=cwd, shell=True)
 		except OSError as err:
-			logger.debug(err)
+			logger.error(err)
 			return -1
 		return 1
 

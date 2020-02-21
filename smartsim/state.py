@@ -165,8 +165,9 @@ class State:
         if self.orc:
             raise SmartSimError(
                 "Only one orchestrator can exist within a state.")
-        if not path:
-            orcpath = getcwd()
+        orcpath = getcwd()
+        if path:
+            orcpath = path
 
         self.orc = Orchestrator(orcpath,
                                 port=port,
