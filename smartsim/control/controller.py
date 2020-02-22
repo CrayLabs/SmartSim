@@ -466,12 +466,17 @@ class Controller(SmartSimModule):
         """launch a SmartSimEntity on an allocation provided by a workload manager."""
         #TODO rename this
 
-        pid = None
         cmd = entity.get_cmd()
         run_settings = self._remove_smartsim_args(entity.get_run_settings())
+
         if isinstance(self._launcher, LocalLauncher):
             pid = self._launcher.run(cmd, run_settings)
         else:
+            # if orchestrator init and not a db node, setup connections to db
+            if self.has_orchestrator() and entity.type != "db":
+                env_vars = self.state.orc.get_connection_env_vars(entity.name)
+                run_settings["env_vars"] = env_vars
+
             partition = run_settings["partition"]
             pid = self._launcher.run_on_alloc(
                 cmd, self._alloc_handler.allocs[partition], **run_settings)
