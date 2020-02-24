@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package SmartSimPBArray;
+
+message ArrayDouble {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated double data = 2 [packed=true];
+
+}
+
+message ArrayFloat {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated float data = 2 [packed=true];
+
+}
