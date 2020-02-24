@@ -1,7 +1,6 @@
 
 import time
 import numpy as np
-import zmq
 import pickle
 
 from smartsim import Client

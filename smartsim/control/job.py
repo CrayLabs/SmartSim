@@ -7,10 +7,10 @@ class Job:
        the controller class.
     """
 
-    def __init__(self, job_name, job_id, obj):
+    def __init__(self, job_name, job_id, entity):
         self.name = job_name
         self.jid = job_id
-        self.obj = obj
+        self.entity = entity
         self.status = "NEW"
         self.nodes = None
 

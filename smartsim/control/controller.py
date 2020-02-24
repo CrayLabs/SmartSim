@@ -139,7 +139,7 @@ class Controller(SmartSimModule):
         except KeyError:
             raise SmartSimError("Job for " + name + " not found.")
 
-    def get_job_nodes(self, job, wait=3):
+    def get_job_nodes(self, job, wait=2):
         """Get the hostname(s) of a job from the allocation
            Wait time is necessary because Slurm take about 3 seconds to
            register that a job has been submitted.
@@ -162,11 +162,13 @@ class Controller(SmartSimModule):
             nodes = self._get_job_nodes(job)
             return nodes
 
-    def poll(self, interval=20, verbose=True):
+    def poll(self, interval=20, poll_db=False, verbose=True):
         """Poll the running simulations and recieve logging
            output with the status of the job.
 
            :param int interval: number of seconds to wait before polling again
+           :param bool poll_db: poll dbnodes for status as well and see
+                                it in the logging output
            :param bool verbose: set verbosity
         """
         if isinstance(self._launcher, LocalLauncher):
@@ -176,13 +178,15 @@ class Controller(SmartSimModule):
         all_finished = False
         while not all_finished:
             time.sleep(interval)
-            all_finished = self.finished(verbose=verbose)
+            ignore_db = not poll_db
+            all_finished = self.finished(ignore_db=ignore_db, verbose=verbose)
 
-    def finished(self, verbose=True):
+    def finished(self, ignore_db=True, verbose=True):
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
 
            :param bool verbose: set verbosity
+           :param bool ignore_db: return true even if the orchestrator nodes are still running
            :returns: True or False for if all models have finished
         """
         # TODO make sure orchestrator doesnt effect this
@@ -194,10 +198,13 @@ class Controller(SmartSimModule):
 
         statuses = []
         for job in self._jobs().values():
-            self._check_job(job)
-            statuses.append(job.status.strip())
-            if verbose:
-                logger.info(job)
+            if ignore_db and job.entity.type == "db":
+                continue
+            else:
+                self._check_job(job)
+                statuses.append(job.status.strip())
+                if verbose:
+                    logger.info(job)
         if "RUNNING" in statuses:
             return False
         if "assigned" in statuses:
@@ -413,7 +420,7 @@ class Controller(SmartSimModule):
                                     partition=partition)
 
     def _get_allocations(self):
-        """Validate and retrive n allocations where n is the number of partitions
+        """Validate and retrieve n allocations where n is the number of partitions
            needed by the user.
         """
         if not isinstance(self._launcher, LocalLauncher):
@@ -438,29 +445,54 @@ class Controller(SmartSimModule):
         # launch orchestrator and all dbnodes
         if self.has_orchestrator():
             for dbnode in self.state.orc.dbnodes:
-                self._launch_on_alloc(dbnode)
-                nodes = self.get_job_nodes(self._jobs[dbnode.name])
-                self.state.orc.junction.store_db_addr(nodes[0],
-                                                      self.state.orc.port)
+                try:
+                    self._launch_on_alloc(dbnode)
+                    nodes = self.get_job_nodes(self._jobs[dbnode.name])
+                    self.state.orc.junction.store_db_addr(nodes[0],
+                                                          self.state.orc.port)
+                except LauncherError as e:
+                    logger.error(
+                        "An error occured when launching the KeyDB nodes\n" +
+                        "Check database node output files for details.")
+                    raise SmartSimError(
+                        "Database node %s failed to launch" % dbnode.name
+                        ) from e
 
             # Create KeyDB cluster, min nodes for cluster = 3
             if len(self.state.orc.dbnodes) > 2:
                 nodes = self._jobs.get_db_nodes()
                 port = self.state.orc.port
                 create_cluster(nodes, port)
+                time.sleep(2)
 
         # launch the SmartSimNodes and update job nodes
         for node in self.get_nodes():
-            self._launch_on_alloc(node)
-            self.get_job_nodes(self._jobs[node.name])
+            try:
+                self._launch_on_alloc(node)
+                self.get_job_nodes(self._jobs[node.name])
+            except LauncherError as e:
+                logger.error(
+                    "An error occured when launching SmartSimNodes\n" +
+                    "Check node output files for details.")
+                raise SmartSimError(
+                    "SmartSimNode %s failed to launch" % node.name
+                    ) from e
+
 
         # Launch ensembles and their respective models and update job nodes
         ensembles = self.get_ensembles()
         for ensemble in ensembles:
             for model in ensemble.models.values():
-                run_settings = model.get_run_settings()
-                self._launch_on_alloc(model)
-                self.get_job_nodes(self._jobs[model.name])
+                try:
+                    run_settings = model.get_run_settings()
+                    self._launch_on_alloc(model)
+                    self.get_job_nodes(self._jobs[model.name])
+                except LauncherError as e:
+                    logger.error(
+                        "An error occured when launching model ensembles.\n" +
+                        "Check model output files for details.")
+                    raise SmartSimError(
+                        "Model %s failed to launch" % model.name) from e
 
     def _launch_on_alloc(self, entity):
         """launch a SmartSimEntity on an allocation provided by a workload manager."""

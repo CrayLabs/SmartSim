@@ -6,7 +6,7 @@ from smartsim import Client
 class TrainingNode():
 
     def __init__(self):
-        self.client = Client()
+        self.client = Client(cluster=True)
 
     def train_loop(self):
         i = 0

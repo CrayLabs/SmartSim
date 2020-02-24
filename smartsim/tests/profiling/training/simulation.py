@@ -22,7 +22,7 @@ def run_simulations(data_size, num_packets, client):
         start_time = time.time()
         obj = pickle.dumps((data, start_time))
         print("sending data for key", str(i), flush=True)
-        client.send_big_data(str(i), obj)
+        client.send_data(str(i), obj)
         send_time = time.time()
         print("Data sent at: ", str(send_time), flush=True)
         prep_time = (send_time - start_time)
@@ -38,7 +38,10 @@ if __name__ == "__main__":
     argparser.add_argument("--num_packets", type=int, default=20)
     args = argparser.parse_args()
 
+    # this test is so fast it sometimes throws a slurm error without this
+    time.sleep(10)
+
     # setup client and begin sending data
-    client = Client()
+    client = Client(cluster=True)
     client.setup_connections()
     run_simulations(args.size, args.num_packets, client)
