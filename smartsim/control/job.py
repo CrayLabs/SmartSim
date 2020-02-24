@@ -12,6 +12,7 @@ class Job:
         self.jid = job_id
         self.obj = obj
         self.status = "NEW"
+        self.nodes = None
 
     def get_job_id(self):
         return self.jid

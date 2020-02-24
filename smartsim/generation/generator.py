@@ -28,13 +28,11 @@ class Generator(SmartSimModule):
                             Options are "all_perm", "random", "step", or a callable function.
                             defaults to "all_perm"
     """
-
     def __init__(self, state, model_files=None, strategy="all_perm", **kwargs):
         super().__init__(state, model_files=model_files, **kwargs)
         self.set_state("Data Generation")
         self._writer = ModelWriter()
         self._permutation_strategy = strategy
-
 
     def generate(self, **kwargs):
         """Based on the ensembles and models created by the user,
@@ -98,8 +96,9 @@ class Generator(SmartSimModule):
         elif callable(permutation_strategy):
             self._permutation_strategy = permutation_strategy
         else:
-            raise SSUnsupportedError("Permutation Strategy given is not supported: " + str(permutation_strategy))
-
+            raise SSUnsupportedError(
+                "Permutation Strategy given is not supported: " +
+                str(permutation_strategy))
 
     def _create_models(self, **kwargs):
         """Populates instances of NumModel class for all ensemble models.
@@ -136,8 +135,9 @@ class Generator(SmartSimModule):
                     parameters.append([val])
                 else:
                     # TODO improve this error message
-                    raise SmartSimError("Incorrect type for ensemble parameters\n" +
-                                        "Must be list, int, or string.")
+                    raise SmartSimError(
+                        "Incorrect type for ensemble parameters\n" +
+                        "Must be list, int, or string.")
             return param_names, parameters
 
         ensembles = self.get_ensembles()
@@ -146,7 +146,8 @@ class Generator(SmartSimModule):
             # This is useful for empty ensembles where the user makes models.
             names, values = read_model_parameters(ensemble)
             if (len(names) != 0 and len(values) != 0):
-                all_configs = self._permutation_strategy(names, values, **kwargs)
+                all_configs = self._permutation_strategy(
+                    names, values, **kwargs)
 
                 # run_settings can be ignored in this case as all models
                 # will run with ensemble run_settings
@@ -166,6 +167,16 @@ class Generator(SmartSimModule):
         else:
             logger.info("Working in previously created experiment")
 
+        if self.has_orchestrator():
+            orc_path = path.join(exp_path, "orchestrator")
+            self.state.orc.set_path(orc_path)
+            if not path.isdir(orc_path):
+                mkdir(orc_path)
+
+        for node in self.get_nodes():
+            # output from nodes will live in the experiment directory
+            node.set_path(exp_path)
+
         # not ok to have already generated the ensemble.
         ensembles = self.get_ensembles()
         for ensemble in ensembles:
@@ -173,7 +184,9 @@ class Generator(SmartSimModule):
             if not path.isdir(ensemble_dir):
                 mkdir(ensemble_dir)
             else:
-                raise SmartSimError("Models for an experiment by this name have already been generated!")
+                raise SmartSimError(
+                    "Models for an experiment by this name have already been generated!"
+                )
 
     def _configure_models(self):
         """Duplicate the base configurations of ensemble models"""
@@ -189,7 +202,7 @@ class Generator(SmartSimModule):
             for name, model in ensemble_models.items():
                 dst = path.join(exp_path, ensemble.name, name)
                 mkdir(dst)
-                model.path = dst
+                model.set_path(dst)
 
                 if listed_configs:
                     if not isinstance(listed_configs, list):

@@ -366,6 +366,7 @@ class SlurmLauncher(Launcher):
 			salloc += ["--begin", start_time]
 		if duration:
 			salloc += ["--time", duration]
+		salloc += ["-J SmartSim"]
 		if to_string:
 			return seq_to_str(salloc, add_equal=True)
 		return salloc
@@ -374,7 +375,7 @@ class SlurmLauncher(Launcher):
 		try:
 			popen_obj = Popen(cmd, cwd=cwd, shell=True)
 		except OSError as err:
-			logger.debug(err)
+			logger.error(err)
 			return -1
 		return 1
 

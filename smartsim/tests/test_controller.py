@@ -18,7 +18,6 @@ def test_inherit_complete_controller_args():
 
     control_settings = {"nodes":2,
                         "executable":"MOM6",
-                        "run_command":"srun",
                         "launcher": "slurm",
                         "ppn": 16,
                         "partition": "iv24"}
@@ -34,21 +33,19 @@ def test_inherit_complete_controller_args():
 
     state.create_ensemble("ensemble_1", run_settings=ensemble_settings)
     ensemble = state.get_ensemble("ensemble_1")
-    run_dict = control._build_run_dict(ensemble.get_run_settings())
+    run_dict = control._build_run_dict(ensemble.get_run_settings())[0]
 
     assert(run_dict["nodes"] == 2)
     assert(run_dict["ppn"] == 16)
     assert(run_dict["partition"] == "iv24")
-    assert(run_dict["cmd"] == ['MOM6 '])
 
     state.create_node("node_1", run_settings=node_settings)
     node = state.get_node("node_1")
-    run_dict = control._build_run_dict(node.get_run_settings())
+    run_dict = control._build_run_dict(node.get_run_settings())[0]
 
     assert(run_dict["nodes"] == 2)
     assert(run_dict["ppn"] == 16)
     assert(run_dict["partition"] == "iv24")
-    assert(run_dict["cmd"] == ['MOM6 '])
 
 def test_inherit_incomplete_controller_args():
     """Test the output of Controller._build_run_dict()
@@ -57,10 +54,11 @@ def test_inherit_incomplete_controller_args():
     """
     state = State(experiment="unit_test")
 
-    control_settings = {"run_command":"srun",
-                        "launcher": "slurm",
-                        "ppn": 16,
-                        "partition": "iv24"}
+    control_settings = {
+            "launcher": "slurm",
+            "ppn": 16,
+            "partition": "iv24"
+            }
 
     ensemble_settings = {"nodes":1,
                        "executable":"OTHER_EXE"}
@@ -72,21 +70,19 @@ def test_inherit_incomplete_controller_args():
 
     state.create_ensemble("ensemble_1", run_settings=ensemble_settings)
     ensemble = state.get_ensemble("ensemble_1")
-    run_dict = control._build_run_dict(ensemble.get_run_settings())
+    run_dict = control._build_run_dict(ensemble.get_run_settings())[0]
 
     assert(run_dict["nodes"] == 1)
     assert(run_dict["ppn"] == 16)
     assert(run_dict["partition"] == "iv24")
-    assert(run_dict["cmd"] == ['OTHER_EXE '])
 
     state.create_node("node_1", run_settings=node_settings)
     node = state.get_node("node_1")
-    run_dict = control._build_run_dict(node.get_run_settings())
+    run_dict = control._build_run_dict(node.get_run_settings())[0]
 
     assert(run_dict["nodes"] == 1)
     assert(run_dict["ppn"] == 16)
     assert(run_dict["partition"] == "iv24")
-    assert(run_dict["cmd"] == ['OTHER.py '])
 
 def test_stop_ensembles():
     """This test verifies that controller.stop()
@@ -112,9 +108,10 @@ def test_stop_ensembles():
     gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
     gen.generate()
 
-    control_dict = {"run_command":"srun",
-                    "launcher": "slurm",
-                    "ppn": 1}
+    control_dict = {
+        "launcher": "slurm",
+        "ppn": 1
+        }
     control = Controller(state, **control_dict)
 
     control.start()
@@ -146,17 +143,18 @@ def test_stop_ensembles_nodes_orchestrator():
     ensemble_1 = state.create_ensemble("ensemble_1", run_settings=ensemble_dict)
     model_1 = state.create_model(name="model_1", ensemble="ensemble_1")
 
-    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
-    gen.generate()
+    state.create_orchestrator(cluster_size=1)
 
-    state.create_orchestrator()
-
-    script = experiment_dir+'/sleep.py'
-    copyfile('./test_configs/sleep.py',script)
-    node_1_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_1.err'}
-    node_2_dict = {"executable":"python "+script, "err_file":experiment_dir+'/node_2.err'}
+    script = experiment_dir + '/sleep.py'
+    node_1_dict = {"executable": "python " + script, "err_file": experiment_dir + '/node_1.err'}
+    node_2_dict = {"executable": "python " + script, "err_file": experiment_dir + '/node_2.err'}
     node_1 = state.create_node("node_1", script_path=experiment_dir,run_settings=node_1_dict)
     node_2 = state.create_node("node_2", script_path=experiment_dir,run_settings=node_2_dict)
+
+
+    gen = Generator(state, model_files=getcwd()+"/test_configs/sleep.py")
+    gen.generate()
+    copyfile('./test_configs/sleep.py', script)
 
     control_dict = {"launcher": "slurm",
                     "ppn": 1}
@@ -169,12 +167,6 @@ def test_stop_ensembles_nodes_orchestrator():
     assert(control.finished())
     control.release()
 
-    if path.isfile('orchestrator'):
-        remove('orchestrator')
-    if path.isfile('orchestrator.out'):
-        remove('orchestrator.out')
-    if path.isfile('orchestrator.err'):
-        remove('orchestrator.err')
     if path.isdir(experiment_dir):
         rmtree(experiment_dir)
 
@@ -274,11 +266,11 @@ def test_no_generator():
 
     state = State(experiment="test_output")
 
-    ensemble_run_settings = {"executable": "cp2k.psmp",
-                           "run_command": "srun",
-                           "partition": "gpu",
-                           "exe_args": "-i ../test_configs/h2o.inp",
-                           "nodes": 1}
+    ensemble_run_settings = {
+        "executable": "cp2k.psmp",
+        "partition": "gpu",
+        "exe_args": "-i ../test_configs/h2o.inp",
+        "nodes": 1}
     state.create_ensemble("test-ensemble", run_settings=ensemble_run_settings)
     state.create_model("test", ensemble="test-ensemble", path=output_file_dir)
 
@@ -315,10 +307,9 @@ def test_ensemble_configs():
 
     state = State(experiment="ensemble-test")
     ensemble_params = {"executable": "cp2k.psmp",
-                     "run_command": "srun",
-                     "partition": "gpu",
-                     "exe_args": "-i h2o.inp",
-                     "nodes": 1}
+                       "partition": "gpu",
+                       "exe_args": "-i h2o.inp",
+                       "nodes": 1}
     state.create_ensemble("test-ensemble", run_settings=ensemble_params)
     state.create_model("test", "test-ensemble")
 
@@ -359,6 +350,40 @@ def test_model_with_run_settings():
     control = Controller(state, launcher="slurm", ppn=1)
     control.start()
     control.poll()
+    assert(control.finished())
+    control.release()
+
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+
+def test_orchestrator_cluster():
+    """This test verifies that a 5 node orchestrator cluster can be created"""
+
+    # see if we are on slurm machine
+    if not which("srun"):
+        pytest.skip()
+
+    experiment_dir = "./orchestrator_test"
+    if path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+    mkdir(experiment_dir)
+
+    full_experiment_path = path.join(getcwd(), experiment_dir)
+    state = State(experiment="orchestrator_test")
+    state.create_orchestrator(cluster_size=5,
+                              path=full_experiment_path)
+
+    control_dict = {
+        "launcher": "slurm",
+        "ppn": 1
+        }
+    control = Controller(state, **control_dict)
+
+    control.start()
+    time.sleep(10)
+    control.stop(stop_orchestrator=True)
+    time.sleep(10)
     assert(control.finished())
     control.release()
 

@@ -16,7 +16,7 @@ class NumModel(SmartSimEntity):
         :param dict run_settings: launcher settings for workload manager or local call
                                    e.g. {"ppn": 1, "nodes": 10, "partition":"default_queue"}
         """
-        super().__init__(name, path, run_settings)
+        super().__init__(name, path, "model", run_settings)
         if type(params) != dict:
             raise SmartSimError("Model must be initialized with parameter dictionary!  params are: " + str(params))
         self.params = params

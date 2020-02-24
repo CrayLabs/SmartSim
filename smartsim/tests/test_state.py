@@ -65,7 +65,7 @@ def test_ensemble_get_model():
 
 def test_duplicate_orchestrator_error():
     state = State(experiment="test")
-    state.create_orchestrator(name='first_orc')
+    state.create_orchestrator()
 
     with pytest.raises(SmartSimError):
-        state.create_orchestrator(name="double_orc")
+        state.create_orchestrator()
