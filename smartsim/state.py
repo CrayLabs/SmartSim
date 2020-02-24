@@ -173,6 +173,7 @@ class State:
                                 port=port,
                                 cluster_size=cluster_size,
                                 partition=partition)
+        return self.orc
 
     def create_node(self, name, script_path=None, run_settings={}):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode

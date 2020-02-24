@@ -6,7 +6,7 @@ from sklearn.neural_network import MLPRegressor
 from smartsim import Client # The smartsim user client library
 
 class TrainingNode():
-    
+
     def __init__(self):
         self.client = Client()
 
@@ -25,7 +25,7 @@ class TrainingNode():
             print("-------------------------------")
             time.sleep(1)
             model.fit(X, y)
-            
+
             i+=1
             if i == 20:
                 break # end the training session

@@ -1,24 +1,31 @@
 
 import time
-from os import environ
-from redis import Redis, ConnectionError
+from rediscluster import RedisCluster
+from rediscluster.exceptions import RedisClusterException
 from smartsim.error import SmartSimConnectionError
 
-class Connection:
-    """The class for SmartSimNodes to communicate with the central Redis(KeyDB)
-       database to retrieve and send data from clients and other nodes"""
+
+class ClusterConnection:
+    """
+        The ClusterConnection class is the same implementation as the Connection
+        class save for the fact that the ClusterConnection class uses redis-py-cluster
+        instead of redis-py for connection to clusters of KeyDB nodes.
+
+        This class is used as the default connection for the Python client.
+    """
 
     def __init__(self, db_id):
         self.conn = None
-        self.db_id = str(db_id)
+        self.db_id = db_id
 
     def connect(self, host, port):
         try:
-            self.conn = Redis(host, port)
+            startup_nodes = [{"host": host, "port": port}]
+            self.conn = RedisCluster(startup_nodes=startup_nodes)
             if not self.connected():
                 raise SmartSimConnectionError(
                     "Could not reach orchestrator at " + host)
-        except ConnectionError as e:
+        except RedisClusterException as e:
             raise SmartSimConnectionError(
                 "Could not reach orchestrator at " + host) from e
 
@@ -40,3 +47,4 @@ class Connection:
     def send(self, key, value):
         key = "_".join((self.db_id, key))
         self.conn.set(key, value)
+
