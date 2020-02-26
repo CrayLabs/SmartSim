@@ -14,9 +14,8 @@ class ClusterConnection:
         This class is used as the default connection for the Python client.
     """
 
-    def __init__(self, db_id):
+    def __init__(self):
         self.conn = None
-        self.db_id = db_id
 
     def connect(self, host, port):
         try:
@@ -35,9 +34,7 @@ class ClusterConnection:
         return response
 
     def get(self, key, wait=False, wait_interval=.5):
-        # TODO put in a timeout limit
-        prefixed_key = "_".join((self.db_id, key))
-        data = self.conn.get(prefixed_key)
+        data = self.conn.get(key)
         if not data and wait:
             time.sleep(wait_interval)
             return self.get(key, wait=wait)
@@ -45,6 +42,5 @@ class ClusterConnection:
             return data
 
     def send(self, key, value):
-        key = "_".join((self.db_id, key))
         self.conn.set(key, value)
 

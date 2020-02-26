@@ -8,13 +8,8 @@ class Junction:
     """
 
     def __init__(self):
-        self._database_id = 0
-        self.senders = {}  # senders[entity_name] = database_ids
-        self.recievers = {} # recievers[entity_name] = database_ids
-        self.records = {} # records[sender] = reciever
-
-    def increment_db_id(self):
-        self._database_id += 1
+        self.senders = {}  # senders[entity_name] = receivers
+        self.recievers = {} # recievers[entity_name] = senders
 
     def store_db_addr(self, addr, port):
         self.db_addr = addr
@@ -22,39 +17,42 @@ class Junction:
 
     def register(self, sender, reciever):
         """register a connection from on entity to another"""
-        self.records[sender] = reciever
+
         if reciever in self.recievers:
-            self.recievers[reciever].append(self._database_id)
+            self.recievers[reciever].append(sender)
         else:
-            self.recievers[reciever] = [self._database_id]
+            self.recievers[reciever] = [sender]
+
         if sender in self.senders:
-            self.senders[sender].append(self._database_id)
+            self.senders[sender].append(reciever)
         else:
-            self.senders[sender] = [self._database_id]
-        self.increment_db_id()
+            self.senders[sender] = [reciever]
 
 
     def get_connections(self, entity):
         """Collects all the connections and formats them into a dictionary of
            {'SSDB' : '127.0.0.1:6379',
-            'SSDATAIN' : 1 2 3,
-            'SSDATAOUT : 4 5 6
+            'SSDATAIN' : sim_one;sim_two
+            'SSDATAOUT : node_one
            }
-            where the number indicates with database partition to communicate over
         """
         data_in, data_out = self._get_connections(entity)
         connections = {}
         def get_env_str(database_list):
             if database_list:
                 env_str = ""
-                for conn in database_list:
-                    env_str += str(conn) + " "
+                for i, conn in enumerate(database_list):
+                    if i == len(database_list)-1:
+                        env_str += str(conn)
+                    else:
+                        env_str += str(conn) + ":"
                 return env_str.strip()
             else:
                 return ""
         connections["SSDATAIN"] = get_env_str(data_in)
         connections["SSDATAOUT"] = get_env_str(data_out)
         connections["SSDB"] = ":".join((self.db_addr, self.db_port))
+        connections["SSNAME"] = entity
         return connections
 
     def _get_connections(self, entity):
@@ -74,7 +72,8 @@ class Junction:
 
     def __str__(self):
         junction_str = "\n   Connections \n"
-        for sender, reciever in self.records.items():
-            junction_str += " ".join(("    ", sender, " => ", reciever, "\n"))
+        for sender, recievers in self.senders.items():
+            recieve_str = ", ".join(recievers)
+            junction_str += " ".join(("    ", sender, " => ", recieve_str, "\n"))
         junction_str += "\n"
         return junction_str
