@@ -1,8 +1,10 @@
-from .connection import Connection
-from .clusterConnection import ClusterConnection
-from .error import SmartSimError, SSConfigError, SmartSimConnectionError
+from ..connection import Connection
+from ..clusterConnection import ClusterConnection
+from ..error import SmartSimError, SSConfigError, SmartSimConnectionError
+from ..utils.protobuf.ss_protob_array_pb2 import ArrayDouble, ArrayFloat
 import pickle
 import os
+import numpy as np
 
 class Client:
     """The client class is used to communicate with various SmartSim entities that
@@ -19,7 +21,7 @@ class Client:
         self.cluster = cluster
         self.name = None
 
-    def get_data(self, key, wait=False, wait_interval=.5):
+    def get_data(self, key, dtype, wait=False, wait_interval=.5):
         """Get the value associated with some key from all the connections registered
            in the orchestrator
 
@@ -27,6 +29,7 @@ class Client:
            should be made until a key by that name is stored in the connection.
 
            :param str key: key of the value being retrieved
+           :param str dtype: the numpy data type of the serialized data (e.g. float64)
            :param bool wait: flag for polling connection until value appears
            :param float wait_interval: seconds to wait between polling requests
            :returns bytes: bytes string of the data stored at key
@@ -34,7 +37,8 @@ class Client:
         all_data = {}
         for name, conn in self.connections_in.items():
             prefixed_key = "_".join((name, key))
-            data = conn.get(prefixed_key, wait=wait, wait_interval=wait_interval)
+            data_bytes = conn.get(prefixed_key, wait=wait, wait_interval=wait_interval)
+            data = self.deserialize(data_bytes, dtype)
             all_data[name] = data
         if len(all_data.keys()) == 1:
             return list(all_data.values())[0]
@@ -47,15 +51,63 @@ class Client:
             :param str key: string to store value at
             :param bytes value: bytes to store in orchestrator at key
         """
-        if type(value) != bytes:
-            raise SmartSimError("Value sent must be in bytes")
         if type(key) != str:
             raise SmartSimError("Key must be of string type")
         else:
             for conn in self.connections_out.values():
+                value_bytes = self.serialize(value)
                 prefixed_key = "_".join((self.name, key))
-                conn.send(prefixed_key, value)
+                conn.send(prefixed_key, value_bytes)
                 break
+
+    def serialize(self, value):
+        """Serializes value using protocol buffer
+
+            :param value: numpy array to serialize
+            :type value: numpy.ndarray
+            TODO let user specify row vs column major
+        """
+
+        if not isinstance(value, np.ndarray):
+            raise SmartSimError("Value to serialize must be of type numpy.ndarray")
+        dimensions = list(value.shape)
+        if not len(dimensions):
+            raise SmartSimError("User passed an empty array")
+
+        if value.dtype == np.float64:
+            pb_value = ArrayDouble()
+        elif value.dtype == np.float32:
+            pb_value = ArrayFloat()
+        else:
+            raise SmartSimError("Could not infer numpy data type from value passed in")
+
+        for dim in dimensions:
+            pb_value.dimension.append(dim)
+        for d in value.ravel():
+            pb_value.data.append(d)
+
+        return pb_value.SerializeToString()
+
+    def deserialize(self, value, dtype):
+        """Unpacks the serialized protocol buffer into a numpy.ndarray
+            :param value: the serialized numpy.ndarray
+            :type value: string
+            :param dtype: string of the data type expected in protocol buffer
+            :type dtype: string
+            :returns: numpy.ndarray of the protocol buffer
+            :rtype: numpy.ndarray
+        """
+
+        if dtype.lower() == "float64":
+            pb_value = ArrayDouble()
+        elif dtype.lower() == "float32":
+            pb_value = ArrayFloat()
+
+        pb_value.ParseFromString(value)
+        dimensions = pb_value.dimension
+        data = np.reshape(pb_value.data, dimensions)
+
+        return data
 
     def setup_connections(self):
         """Retrieve the environment variables specific to this Client instance that have

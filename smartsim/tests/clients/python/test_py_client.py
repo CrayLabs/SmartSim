@@ -79,7 +79,7 @@ def run_one_way(data_size, num_packets, test_id, cluster_size):
     control.start()
     while not control.finished():
         time.sleep(2)
-    #control.release()
+    control.release()
 
     if os.path.isdir(experiment_dir):
         rmtree(experiment_dir)

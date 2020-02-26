@@ -8,4 +8,4 @@ from .control import Controller
 from .generation import Generator
 from .simModule import SmartSimModule
 from .smartSimNode import SmartSimNode
-from .client import Client
+from .clients import Client

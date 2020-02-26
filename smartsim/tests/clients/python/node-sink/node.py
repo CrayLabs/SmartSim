@@ -11,12 +11,10 @@ class Node():
     def train_loop(self):
         i = 0
         while i <= 19:
-            data = self.client.get_data(str(i), wait=True)
+            data = self.client.get_data(str(i), "float64", wait=True)
             sim_1_data = data["sim_1"]
             sim_2_data = data["sim_2"]
             receive_time = time.time()
-            sim_1_data = pickle.loads(sim_1_data)
-            sim_2_data = pickle.loads(sim_2_data)
             print("Receiving data for key", str(i),
                    "\n Data recieved from %s clients" % str(len(data.values())))
             i+=1
