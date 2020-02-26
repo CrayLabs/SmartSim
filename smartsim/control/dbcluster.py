@@ -1,5 +1,7 @@
-
+import time
 from subprocess import Popen, TimeoutExpired, run, SubprocessError, PIPE
+from rediscluster import RedisCluster
+from rediscluster.exceptions import ClusterDownError
 
 from ..error import SmartSimError
 from ..utils import get_logger
@@ -68,3 +70,26 @@ def create_cluster(nodes, port):
     else:
         logger.debug(out)
         logger.info("KeyDB Cluster has been created with %s nodes" % str(len(nodes)))
+
+def check_cluster_status(nodes, port):
+    """Check the status of the cluster and ensure that all nodes are up and running"""
+    node_list = []
+    for node in nodes:
+        node_dict = dict()
+        node_dict["host"] = node
+        node_dict["port"] = port
+        node_list.append(node_dict)
+
+    trials = 10
+    while trials > 0:
+        try:
+            redis_tester = RedisCluster(startup_nodes=node_list)
+            redis_tester.set("__test__", "__test__")
+            redis_tester.delete("__test__")
+            break
+        except ClusterDownError:
+            logger.debug("Caught a cluster down error")
+            time.sleep(5)
+            trials -= 1
+    if trials == 0:
+        raise SmartSimError("Cluster setup could not be verified")

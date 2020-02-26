@@ -4,7 +4,7 @@ import time
 
 from smartsim import State, Controller, Generator
 from distutils import dir_util
-from shutil import which, copyfile
+from shutil import which, copyfile, rmtree
 
 # Comment to run profiling tests
 #pytestmark = pytest.mark.skip()
@@ -12,9 +12,22 @@ from shutil import which, copyfile
 # control wether the test runs with a database cluster or not
 CLUSTER=True
 
-def test_train_path():
-    """test the latency for a sending a vector, a matrix, and a 3D tensor"""
+def test_one_way():
+    """test the latency for a sending a vector, a matrix, and a 3D tensor
+       from a simulation model to a SmartSimNode"""
+    run_test("one-way")
 
+def test_full_loop():
+    """test the latency for a sending a vector, a matrix, and a 3D tensor
+       from a simulation model to a SmartSimNode and then back to a model"""
+    run_test("full-loop")
+
+def test_node_sink():
+    """test the latency for a sending a vector, a matrix, and a 3D tensor
+       from two simulation models to a single SmartSimNode"""
+    run_test("node-sink")
+
+def run_test(test):
     # test data sizes, and ID
     # literal eval is used to create sizes
     data = ["'(200,)'", "'(200,200)'", "'(200, 200, 200)'"]
@@ -28,17 +41,18 @@ def test_train_path():
         cluster_size = 3
     for data_size, test_id in zip(data, test_ids):
         num_packets = 20
-        run_train_path(data_size, num_packets, test_id, cluster_size)
+        if test == "one-way":
+            run_one_way(data_size, num_packets, test_id, cluster_size)
+        elif test == "full-loop":
+            run_full_loop(data_size, num_packets, test_id, cluster_size)
+        else:
+            run_node_sink(data_size, num_packets, test_id, cluster_size)
 
-def run_train_path(data_size, num_packets, test_id, cluster_size):
-    experiment_dir = "".join(("online-training", test_id, "/"))
+def run_one_way(data_size, num_packets, test_id, cluster_size):
+    experiment_dir = "".join(("one-way", test_id, "/"))
     state = State(experiment=experiment_dir)
-    node_name = "training_node" + test_id
-    sim_name = "sim-model" + test_id
 
-    # Setup training loop with one model, one cluster db, and
-    # on node for training
-    train_settings = {
+    node_settings = {
         "nodes": 1,
         "executable": "python node.py",
     }
@@ -47,28 +61,105 @@ def run_train_path(data_size, num_packets, test_id, cluster_size):
         "nodes": 1,
         "exe_args": create_exe_args(data_size, num_packets)
     }
-    state.create_node(node_name,
-                      run_settings=train_settings)
-    state.create_model(sim_name,
+    state.create_node("node",
+                      run_settings=node_settings)
+    state.create_model("sim",
                        run_settings=sim_dict)
     state.create_orchestrator(cluster_size=cluster_size)
-    state.register_connection(sim_name, node_name)
+    state.register_connection("sim", "node")
 
     # generate experiment directory
     generator = Generator(state,
-                          model_files="./training/simulation.py")
+                          model_files="./one-way/simulation.py")
     generator.generate()
-
-    # TODO generator should copy files over
-    # for now, copy over node script
-    copyfile(os.getcwd() + "/training/node.py",
+    copyfile(os.getcwd() + "/one-way/node.py",
              experiment_dir + "node.py")
 
     control = Controller(state, launcher="slurm")
     control.start()
     while not control.finished():
-        time.sleep(3)
+        time.sleep(2)
+    #control.release()
+
+    if os.path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def run_full_loop(data_size, num_packets, test_id, cluster_size):
+    experiment_dir = "".join(("full-loop", test_id, "/"))
+    state = State(experiment=experiment_dir)
+
+    node_settings = {
+        "nodes": 1,
+        "executable": "python node.py",
+    }
+    sim_dict = {
+        "executable": "python simulation.py",
+        "nodes": 1,
+        "exe_args": create_exe_args(data_size, num_packets)
+    }
+    state.create_node("node",
+                      run_settings=node_settings)
+    state.create_model("sim",
+                       run_settings=sim_dict)
+    state.create_orchestrator(cluster_size=cluster_size)
+    state.register_connection("sim", "node")
+    state.register_connection("node", "sim")
+
+    # generate experiment directory
+    generator = Generator(state,
+                          model_files="./full-loop/simulation.py")
+    generator.generate()
+    copyfile(os.getcwd() + "/full-loop/node.py",
+             experiment_dir + "node.py")
+
+    control = Controller(state, launcher="slurm")
+    control.start()
+    while not control.finished():
+        time.sleep(2)
     control.release()
+
+    if os.path.isdir(experiment_dir):
+        rmtree(experiment_dir)
+
+def run_node_sink(data_size, num_packets, test_id, cluster_size):
+    experiment_dir = "".join(("node-sink", test_id, "/"))
+    state = State(experiment=experiment_dir)
+
+    node_settings = {
+        "nodes": 1,
+        "executable": "python node.py",
+    }
+    sim_dict = {
+        "executable": "python simulation.py",
+        "nodes": 1,
+        "exe_args": create_exe_args(data_size, num_packets)
+    }
+    state.create_node("node",
+                      run_settings=node_settings)
+    state.create_model("sim_1",
+                       run_settings=sim_dict)
+    state.create_model("sim_2",
+                       run_settings=sim_dict)
+    state.create_orchestrator(cluster_size=cluster_size)
+    state.register_connection("sim_1", "node")
+    state.register_connection("sim_2", "node")
+
+    # generate experiment directory
+    generator = Generator(state,
+                          model_files="./node-sink/simulation.py")
+    generator.generate()
+
+    copyfile(os.getcwd() + "/node-sink/node.py",
+             experiment_dir + "node.py")
+
+    control = Controller(state, launcher="slurm")
+    control.start()
+    while not control.finished():
+        time.sleep(2)
+    control.release()
+
+    if os.path.isdir(experiment_dir):
+        rmtree(experiment_dir)
 
 
 def create_exe_args(data_size, num_packets):

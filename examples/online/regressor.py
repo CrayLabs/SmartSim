@@ -17,7 +17,7 @@ class TrainingNode():
                              max_iter=5000, activation='logistic',
                              verbose='True', learning_rate='adaptive',
                              warm_start=True, tol=-4000)
-        while True:
+        while i <= 19:
             data = self.client.get_data(str(i), wait=True)
             X, y = pickle.loads(data)
             print("-------------------------------")
@@ -25,10 +25,7 @@ class TrainingNode():
             print("-------------------------------")
             time.sleep(1)
             model.fit(X, y)
-
-            i+=1
-            if i == 20:
-                break # end the training session
+            i += 1
 
 if __name__ == "__main__":
 

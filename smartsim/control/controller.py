@@ -15,7 +15,7 @@ from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherEr
 from .job import Job
 from .allochandler import AllocHandler
 from .jobmanager import JobManager
-from .dbcluster import create_cluster
+from .dbcluster import create_cluster, check_cluster_status
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -463,7 +463,7 @@ class Controller(SmartSimModule):
                 nodes = self._jobs.get_db_nodes()
                 port = self.state.orc.port
                 create_cluster(nodes, port)
-                time.sleep(2)
+                check_cluster_status(nodes, port)
 
         # launch the SmartSimNodes and update job nodes
         for node in self.get_nodes():
