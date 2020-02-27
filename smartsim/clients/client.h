@@ -31,10 +31,10 @@ private:
   void _put_keydb_value_into_protobuff_double(const char* key, int n_values);
   void _clear_protobuff_double();
   void _clear_protobuff_float();
-  void _put_to_keydb(const char*& key, std::string& value);
-  std::string _get_from_keydb(const char*& key);
-  std::string _get_hostname();
-  std::string _get_ssdb_port();
+  void _put_to_keydb(const char* key, std::string& value);
+  std::string _build_get_key(const char* key);
+  std::string _build_put_key(const char* key);
+  std::string _get_from_keydb(const char* key);
   std::string _get_ssdb();
 };
 
