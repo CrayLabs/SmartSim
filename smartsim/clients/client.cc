@@ -63,7 +63,7 @@ void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dim
   int n_values = 1;
   for(int i = 0; i < n_dims; i++)
     n_values *= dims[i];
-  
+
   _put_keydb_value_into_protobuff_double(key, n_values);
 
   int proto_position = 0;
@@ -76,11 +76,12 @@ void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dim
 
 void SmartSimClient::put_1d_array_double(const char* key, double* value, const int nx, const int x_start)
 {
+
   protob_double.add_dimension(nx);
 
   for(int i = 0; i < nx; i++)
     protob_double.add_data(value[i]);
-
+  
   std::string output = _serialize_protobuff_double();
   
   _clear_protobuff_double();
@@ -174,31 +175,11 @@ void SmartSimClient::_place_nd_array_double_values(void* value, int* dims, int n
   return;
 }
 
-std::string SmartSimClient::_get_hostname()
-{
-  char* hostname = std::getenv("SSDB");
-  if (hostname) {
-    return std::string(hostname);
-  }
-  else {
-    throw std::runtime_error("Database not found!");
-      }
-}
-
-std::string SmartSimClient::_get_ssdb_port()
-{
-  char* port = std::getenv("SSDBPORT");
-  if (port) {
-    return std::string(port);
-  }
-  else {
-    throw std::runtime_error("Database port not found!");
-  }
-}
-
 void SmartSimClient::_put_to_keydb(const char*& key, std::string& value)
 {
-  bool success = redis_cluster.set(key, value);
+  char* prefixed_key = std::getenv("SSNAME");
+  strcat(prefixed_key, key);
+  bool success = redis_cluster.set(prefixed_key, value);
 
   if(!success)
     throw std::runtime_error("KeyDB failed to receive key: " + std::string(key));
@@ -206,7 +187,10 @@ void SmartSimClient::_put_to_keydb(const char*& key, std::string& value)
 
 std::string SmartSimClient::_get_from_keydb(const char*& key)
 {
-  sw::redis::OptionalString value = redis_cluster.get(key);
+  char* prefixed_key = std::getenv("SSDATAIN");
+  strcat(prefixed_key, key);
+
+  sw::redis::OptionalString value = redis_cluster.get(prefixed_key);
   
   if(!value)
     throw std::runtime_error("The key " + std::string(key) + "could not be retrieved from the database");
@@ -216,9 +200,8 @@ std::string SmartSimClient::_get_from_keydb(const char*& key)
 
 std::string SmartSimClient::_get_ssdb()
 {
-  std::string hostname = _get_hostname();
-  std::string port = _get_ssdb_port();
-  std::string ssdb = "tcp://" + hostname +":"+ port;
+  std::string ssdb("tcp://");
+  ssdb.append(getenv("SSDB"));
   return ssdb;
 }
 

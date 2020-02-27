@@ -10,8 +10,8 @@ find_package(MPI)
 
 include_directories(SYSTEM
     ${MPI_INCLUDE_PATH}
-    ../../clients/
-    ../../utils/protobuf/
+    ../../../clients/
+    ../../../utils/protobuf/
     ${BASE_DIR}/redis-plus-plus/install/include/
     ${BASE_DIR}/hiredis/install/include/
     ${BASE_DIR}/protobuf/install/include/
@@ -22,8 +22,8 @@ SET(CMAKE_CXX_STANDARD 11)
 
 add_executable(client_tester
   client_test.cpp
-  ../../clients/client.cc
-  ../../utils/protobuf/ss_protob_array.pb.cc
+  ../../../clients/client.cc
+  ../../../utils/protobuf/ss_protob_array.pb.cc
 )
 
 

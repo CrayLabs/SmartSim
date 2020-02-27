@@ -33,8 +33,6 @@ private:
   void _clear_protobuff_float();
   void _put_to_keydb(const char*& key, std::string& value);
   std::string _get_from_keydb(const char*& key);
-  std::string _get_hostname();
-  std::string _get_ssdb_port();
   std::string _get_ssdb();
 };
 
