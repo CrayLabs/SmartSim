@@ -175,20 +175,45 @@ void SmartSimClient::_place_nd_array_double_values(void* value, int* dims, int n
   return;
 }
 
-void SmartSimClient::_put_to_keydb(const char*& key, std::string& value)
+void SmartSimClient::_put_to_keydb(const char* key, std::string& value)
 {
-  char* prefixed_key = std::getenv("SSNAME");
-  strcat(prefixed_key, key);
-  bool success = redis_cluster.set(prefixed_key, value);
+  std::string prefixed_key = _build_put_key(key);
+  
+  bool success = redis_cluster.set(prefixed_key.c_str(), value);
 
   if(!success)
     throw std::runtime_error("KeyDB failed to receive key: " + std::string(key));
+
+  return;
 }
 
-std::string SmartSimClient::_get_from_keydb(const char*& key)
+std::string SmartSimClient::_build_put_key(const char* key)
 {
-  char* prefixed_key = std::getenv("SSDATAIN");
-  strcat(prefixed_key, key);
+  //This function builds the key that it will be used
+  //for the put value.  The key is SSNAME + _ + key
+
+  std::string prefix(std::getenv("SSNAME"));
+  std::string suffix(key);
+  std::string prefixed_key = prefix + '_' + suffix;
+
+  return prefixed_key;
+}
+
+std::string SmartSimClient::_build_get_key(const char* key)
+{
+  //This function builds the key that it will be used
+  //for the put value.  The key is SSDATAIN + _ + key
+
+  std::string prefix(std::getenv("SSDATAIN"));
+  std::string suffix(key);
+  std::string prefixed_key = prefix + '_' + suffix;
+
+  return prefixed_key;
+}
+
+std::string SmartSimClient::_get_from_keydb(const char* key)
+{
+  std::string  prefixed_key = _build_get_key(key);
 
   sw::redis::OptionalString value = redis_cluster.get(prefixed_key);
   
