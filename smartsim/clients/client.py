@@ -16,8 +16,8 @@ class Client:
        each connection.
     """
     def __init__(self, cluster=True):
-        self.connections_out = dict()
         self.connections_in = dict()
+        self.connection_out = None
         self.cluster = cluster
         self.name = None
 
@@ -53,12 +53,12 @@ class Client:
         """
         if type(key) != str:
             raise SmartSimError("Key must be of string type")
+        if not self.connection_out:
+            raise SmartSimError("Connection to database was not setup at runtime")
         else:
-            for conn in self.connections_out.values():
-                value_bytes = self.serialize(value)
-                prefixed_key = "_".join((self.name, key))
-                conn.send(prefixed_key, value_bytes)
-                break
+            value_bytes = self.serialize(value)
+            prefixed_key = "_".join((self.name, key))
+            self.connection_out.send(prefixed_key, value_bytes)
 
     def serialize(self, value):
         """Serializes value using protocol buffer
@@ -122,18 +122,14 @@ class Client:
             db_location = os.environ["SSDB"].split(":")
             address = db_location[0]
             port = db_location[1]
-            try:
-                # export SSDATAOUT="node_one:node_two"
-                data_out = [connect for connect in os.environ["SSDATAOUT"].split(":")]
-                for connection in data_out:
-                    if self.cluster:
-                        conn = ClusterConnection()
-                    else:
-                        conn = Connection()
-                    conn.connect(address, port)
-                    self.connections_out[connection] = conn
-            except KeyError:
-                raise SmartSimConnectionError("No connections found for client!")
+
+            # setup data out connection to orchestrator
+            if self.cluster:
+                self.connection_out = ClusterConnection()
+            else:
+                self.connection_out = Connection()
+            self.connection_out.connect(address, port)
+
             try:
                 # export SSDATAIN="sim_one:sim_two"
                 data_in = [connect for connect in os.environ["SSDATAIN"].split(":")]

@@ -91,7 +91,7 @@ def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
 		:returns: tuple of str for output and error messages
 	"""
 	if verbose:
-		print("Executing shell command: %s" % " ".join(cmd_list))
+		logger.info("Executing shell command: %s" % " ".join(cmd_list))
 	# spawning the subprocess and connecting to its output
 	proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE, shell=shell, cwd=cwd)
 	try:
@@ -103,7 +103,7 @@ def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
 
 	if proc.returncode is not 0:
 		logger.error("Command \"%s\" returned non-zero" % " ".join(cmd_list))
-		logger.error(err)
+		logger.error(err.decode('utf-8'))
 		logger.error(err_message)
 		# raise exception removed: no need to throw an exception here!
 

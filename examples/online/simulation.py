@@ -14,21 +14,21 @@ def simulate(seed):
     # f(x) = x**2
     np.random.seed(seed)
     n = 20
-    x = np.random.uniform(-15, 15, size = n)
+    x = np.random.uniform(-15.0, 15.0, size = n)
     y = x**2 + 2*np.random.randn(n, )
     X = np.reshape(x ,[n, 1])
     y = np.reshape(y ,[n ,])
 
-    return(X, y)
+    return X, y
 
 def run_simulations(steps, client):
 
     i = 0
     while i < int(steps):
-        data = simulate(i)
-        obj = pickle.dumps(data)
+        X, y = simulate(i)
         print("sending data for key", str(i), flush=True)
-        client.send_data(str(i), obj)
+        client.send_data(str(i) + "_X", X)
+        client.send_data(str(i) + "_y", y)
         i+=1
 
 

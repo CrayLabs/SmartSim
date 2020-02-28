@@ -7,7 +7,7 @@ from distutils import dir_util
 from shutil import which, copyfile, rmtree
 
 # Comment to run profiling tests
-#pytestmark = pytest.mark.skip()
+pytestmark = pytest.mark.skip()
 
 # control wether the test runs with a database cluster or not
 CLUSTER=True

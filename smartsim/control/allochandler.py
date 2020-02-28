@@ -23,7 +23,7 @@ class AllocHandler:
         if part in self.partitions.keys():
             self.partitions[part][0] += nodes
             if self.partitions[part][1] < ppn:
-                self.partitions[part][1] == ppn
+                self.partitions[part][1] = ppn
         else:
             self.partitions[part] = [nodes, ppn]
 

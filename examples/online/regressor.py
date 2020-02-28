@@ -18,12 +18,11 @@ class TrainingNode():
                              verbose='True', learning_rate='adaptive',
                              warm_start=True, tol=-4000)
         while i <= 19:
-            data = self.client.get_data(str(i), wait=True)
-            X, y = pickle.loads(data)
+            X = self.client.get_data(str(i) + "_X", "float64", wait=True)
+            y = self.client.get_data(str(i) + "_y", "float64", wait=True)
             print("-------------------------------")
             print("Training on time step ", str(i))
             print("-------------------------------")
-            time.sleep(1)
             model.fit(X, y)
             i += 1
 

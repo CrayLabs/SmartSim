@@ -9,7 +9,7 @@ from subprocess import PIPE, Popen, CalledProcessError
 from .launcherUtil import seq_to_str, execute_cmd, write_to_bash
 from ..error import LauncherError
 
-from ..utils import get_logger
+from ..utils import get_logger, get_env
 logger = get_logger(__name__)
 
 
@@ -114,8 +114,8 @@ class SlurmLauncher(Launcher):
 
 	def _get_default_partition(self):
 		"""Returns the default partition from slurm which is the partition with
-           a star following its partition name in sinfo output
-        """
+		   a star following its partition name in sinfo output
+		"""
 		sinfo_output = self.sinfo(["--noheader", "--format", "%P"])
 
 		default = None
@@ -134,7 +134,7 @@ class SlurmLauncher(Launcher):
 			:type nodes: int
 			:param ppn: Override the default processes per node to validate
 			:type ppn: int
-			:raises: LauncerError
+			:raises: LauncherError
 		"""
 
 		sys_partitions = self._get_system_partition_info()
@@ -160,8 +160,8 @@ class SlurmLauncher(Launcher):
 		if n_avail_nodes<nodes:
 			raise LauncherError("{0} nodes are not available on the specified partitions.  Only "\
 								"{1} nodes available.".format(nodes,n_avail_nodes))
-		if min_ppn < ppn:
-			raise LauncherError("{0} ppn is not available on each node.".format(min_ppn))
+		#if min_ppn < ppn:
+		#	raise LauncherError("{0} ppn is not available on each node.".format(min_ppn))
 
 		logger.info("Successfully validated Slurm with sufficient resources")
 
@@ -239,6 +239,7 @@ class SlurmLauncher(Launcher):
 
 		salloc = self._get_alloc_cmd(nodes, ppn, partition, start_time,
 									duration, add_opts, to_string=False)
+		logger.debug(salloc)
 		logger.debug("allocting %d nodes %d tasks/node, partition %s" %(nodes, ppn, partition))
 
 		_, err = execute_cmd(salloc)
@@ -258,22 +259,22 @@ class SlurmLauncher(Launcher):
 		"""Build and call "srun" on a user provided command within an allocation.
 
 		   :param cmd: command to run with "srun"
-           :type cmd: list of strings
-           :param int alloc_id: allocation id to run command on
-           :param int nodes: number of nodes
-           :param int ppn: number of processes per node
-           :param str duration: time of job in hour:min:second format e.g. 10:00:00
-           :param add_opts: additional options for the "srun" command
-           :type add_opts: list of strings
-           :param str partition: partition to run job on
-           :param str cwd: current working directory to launch srun in
-           :param env_vars: environment variables to pass to the srun command
-           :type env_vars: dict of environment variables
-           :param str out_file: file to capture output of srun command
-           :param str err_file: file to capture error of srun command
-           :return: subjob id
-           :raises: LauncherError
-        """
+		   :type cmd: list of strings
+		   :param int alloc_id: allocation id to run command on
+		   :param int nodes: number of nodes
+		   :param int ppn: number of processes per node
+		   :param str duration: time of job in hour:min:second format e.g. 10:00:00
+		   :param add_opts: additional options for the "srun" command
+		   :type add_opts: list of strings
+		   :param str partition: partition to run job on
+		   :param str cwd: current working directory to launch srun in
+		   :param env_vars: environment variables to pass to the srun command
+		   :type env_vars: dict of environment variables
+		   :param str out_file: file to capture output of srun command
+		   :param str err_file: file to capture error of srun command
+		   :return: subjob id
+		   :raises: LauncherError
+		"""
 		if str(alloc_id) not in self.alloc_ids.keys():
 			raise LauncherError("Could not find allocation with id: " + str(alloc_id))
 		if isinstance(cmd, list):
@@ -329,7 +330,7 @@ class SlurmLauncher(Launcher):
 		"""Stop is used to stop a subjob that is currently running within an allocation.
 
 			:param str job_id: sub job id with decimal increment to stop e.g. 64253.1
-        """
+		"""
 		if job_id not in self.subjob_ids:
 			raise LauncherError("Job id, " + str(job_id) + " not found.")
 
@@ -382,8 +383,11 @@ class SlurmLauncher(Launcher):
 	def _format_env_vars(self, env_vars):
 		"""Slurm takes exports in comma seperated lists
 		   the list starts with all as to not disturb the rest of the environment
-           for more information on this, see the slurm documentation for srun"""
-		format_str = "ALL"
+		   for more information on this, see the slurm documentation for srun"""
+		path = get_env("PATH")
+		python_path = get_env("PYTHONPATH")
+		format_str = "".join(("PATH=", path, ",", "PYTHONPATH=", python_path))
+
 		for k, v in env_vars.items():
 			format_str += "," + "=".join((k,v))
 		return format_str

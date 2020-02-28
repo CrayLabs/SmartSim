@@ -36,7 +36,7 @@ class Junction:
             'SSDATAOUT : node_one
            }
         """
-        data_in, data_out = self._get_connections(entity)
+        data_in = self._get_connections(entity)
         connections = {}
         def get_env_str(database_list):
             if database_list:
@@ -50,7 +50,6 @@ class Junction:
             else:
                 return ""
         connections["SSDATAIN"] = get_env_str(data_in)
-        connections["SSDATAOUT"] = get_env_str(data_out)
         connections["SSDB"] = ":".join((self.db_addr, self.db_port))
         connections["SSNAME"] = entity
         return connections
@@ -66,8 +65,7 @@ class Junction:
                 return None
 
         data_in = get_connection(entity, self.recievers)
-        data_out = get_connection(entity, self.senders)
-        return data_in, data_out
+        return data_in
 
 
     def __str__(self):
