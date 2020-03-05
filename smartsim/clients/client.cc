@@ -11,50 +11,7 @@ SmartSimClient::~SmartSimClient()
 {
 }
 
-void SmartSimClient::get_1d_array_double(const char* key, double* result, const int nx, const int x_start)
-{
-  _put_keydb_value_into_protobuff_double(key, nx);
-
-  for (int i = x_start; i < nx + x_start; i++)
-    result[i] = protob_double.data(i);
-
-  _clear_protobuff_double();
-
-  return;
-}
-
-void SmartSimClient::get_2d_array_double(const char* key, double** result, const int nx, const int ny, const int x_start, const int y_start)
-{
-
-  _put_keydb_value_into_protobuff_double(key, nx*ny);
-
-  int m = 0;
-  for (int i = x_start; i < x_start + nx; i++)
-    for(int j = y_start; j < y_start + ny; j++)
-      result[i][j] = protob_double.data(m++);
-
-  _clear_protobuff_double();
-
-  return;
-}
-
-void SmartSimClient::get_3d_array_double(const char* key, double*** result, const int nx, const int ny, const int nz, const int x_start, const int y_start, const int z_start)
-{
-
-  _put_keydb_value_into_protobuff_double(key, nx*ny*nz);
-
-  int m = 0;
-  for (int i = x_start; i < x_start + nx; i++)
-    for(int j = y_start; j < y_start + ny; j++)
-      for(int k = z_start; k < z_start + nz; k++)
-	result[i][j][k] = protob_double.data(m++);
-
-  _clear_protobuff_double();
-
-  return;
-}
-
-void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dims, int n_dims)
+void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
 
   if(n_dims<=0)
@@ -66,72 +23,55 @@ void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dim
 
   _put_keydb_value_into_protobuff_double(key, n_values);
 
+  // If it is a fortran array, reset dims to
+  // point to dynamically allocated dimension of 1
+  // so that _place_nd_array can be used.
+  if (fortran_array) {
+    n_dims = 1;
+    dims = new int[1];
+    dims[0] = n_values;
+  }
+
   int proto_position = 0;
   _place_nd_array_double_values(result, dims, n_dims, proto_position);
 
+  if(fortran_array)
+    delete[] dims;
+
   _clear_protobuff_double();
 
   return;
 }
 
-void SmartSimClient::put_1d_array_double(const char* key, double* value, const int nx, const int x_start)
+void SmartSimClient::put_nd_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
+  /*
+  const google::protobuf::Descriptor* descriptor = protob_double.GetDescriptor();
+  const google::protobuf::FieldDescriptor* data_field = descriptor->FindFieldByName("data");
+  const google::protobuf::Reflection* message_reflection = protob_double.GetReflection();
+  */
 
-  protob_double.add_dimension(nx);
-
-  for(int i = 0; i < nx; i++)
-    protob_double.add_data(value[i]);
-  
-  std::string output = _serialize_protobuff_double();
-  
-  _clear_protobuff_double();
-
-  _put_to_keydb(key, output);
-  
-  return;
-}
-
-void SmartSimClient::put_2d_array_double(const char* key, double** value, const int nx, const int ny, const int x_start, const int y_start)
-{
-  protob_double.add_dimension(nx);
-  protob_double.add_dimension(ny);
-
-  for(int i = x_start; i < x_start + nx; i++)
-    for(int j = y_start; j < y_start + ny; j++)
-      protob_double.add_data(value[i][j]);
-
-  std::string output = _serialize_protobuff_double();
-
-  _clear_protobuff_double();
-
-  _put_to_keydb(key, output);
-}
-
-void SmartSimClient::put_3d_array_double(const char* key, double*** value, const int nx, const int ny, const int nz, const int x_start, const int y_start, const int z_start)
-{
-  protob_double.add_dimension(nx);
-  protob_double.add_dimension(ny);
-  protob_double.add_dimension(nz);
-
-  for(int i = x_start; i < x_start + nx; i++)
-    for(int j = y_start; j < y_start + ny; j++)
-      for(int k = z_start; k < z_start + nz; k++)
-	protob_double.add_data(value[i][j][k]);
-
-  std::string output = _serialize_protobuff_double();
-
-  _clear_protobuff_double();
-
-  _put_to_keydb(key, output);
-}
-
-void SmartSimClient::put_nd_array_double(const char* key, void* value, int* dims, int n_dims)
-{
   for(int i = 0; i < n_dims; i++)
     protob_double.add_dimension(dims[i]);
 
+  if(fortran_array) {
+    
+      int n_values = 1;
+      for(int i = 0; i < n_dims; i++)
+	n_values *= dims[i];
+
+      dims = new int[1];
+      dims[0] = n_values;
+      
+      n_dims = 1;
+  }
+  
   _add_nd_array_double_values(value, dims, n_dims);
 
+  if(fortran_array) {
+    delete[] dims;
+  }
+  
   std::string output = _serialize_protobuff_double();
 
   _clear_protobuff_double();
@@ -152,8 +92,9 @@ void SmartSimClient::_add_nd_array_double_values(void* value, int* dims, int n_d
   }
   else {
     double* dbl_array = (double*)value;
-    for(int i = 0; i < dims[0]; i++)
+    for(int i = 0; i < dims[0]; i++){
       protob_double.add_data(dbl_array[i]);
+    }
   }
   return;
 }
@@ -178,7 +119,6 @@ void SmartSimClient::_place_nd_array_double_values(void* value, int* dims, int n
 void SmartSimClient::_put_to_keydb(const char* key, std::string& value)
 {
   std::string prefixed_key = _build_put_key(key);
-  
   bool success = redis_cluster.set(prefixed_key.c_str(), value);
 
   if(!success)
@@ -213,9 +153,8 @@ std::string SmartSimClient::_build_get_key(const char* key)
 
 std::string SmartSimClient::_get_from_keydb(const char* key)
 {
-  std::string  prefixed_key = _build_get_key(key);
-
-  sw::redis::OptionalString value = redis_cluster.get(prefixed_key);
+  std::string prefixed_key = _build_get_key(key);
+  sw::redis::OptionalString value = redis_cluster.get(prefixed_key.c_str());
   
   if(!value)
     throw std::runtime_error("The key " + std::string(key) + "could not be retrieved from the database");
@@ -225,8 +164,12 @@ std::string SmartSimClient::_get_from_keydb(const char* key)
 
 std::string SmartSimClient::_get_ssdb()
 {
-  std::string ssdb("tcp://");
-  ssdb.append(getenv("SSDB"));
+  char* host_and_port = getenv("SSDB");
+  if(host_and_port == NULL)
+    throw std::runtime_error("The environment variable SSDB must be set to use the client.");
+  
+  std::string ssdb("tcp://");  
+  ssdb.append(host_and_port);
   return ssdb;
 }
 
@@ -244,7 +187,7 @@ std::string SmartSimClient::_serialize_protobuff_double()
 void SmartSimClient::_put_keydb_value_into_protobuff_double(const char* key, int n_values)
 {
   std::string value = _get_from_keydb(key);
-  
+
   protob_double.ParseFromString(value);
 
   if(!(protob_double.data_size()==n_values))
@@ -262,13 +205,10 @@ void SmartSimClient::_clear_protobuff_float()
   protob_float.clear_data();
   protob_double.clear_dimension();
 }
-  
 
 extern "C" void* GetObject() {
   SmartSimClient *s = new SmartSimClient();
-  std::cout<<"Smart sim client address is "<<s<<std::endl;
   void* c_ptr = (void*)s;
-  std::cout<<"C ptr address after construction"<<c_ptr<<std::endl;
   return c_ptr;
 }
 
@@ -277,13 +217,14 @@ extern "C" void* ssc_constructor()
   return new SmartSimClient;
 }
 
-
-extern "C" void ssc_put_3d_array_double(void* SmartSimClient_proto, int* keylen, const char* key, double* value, int *x_start, int *y_start, int *z_start, int *x_end, int *y_end, int *z_end,  bool *f_arrays)
+extern "C" void put_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  int dims[3];
-  dims[0] = *x_end - *x_start;
-  dims[1] = *y_end - *y_start;
-  dims[2] = *z_end - *z_start;
-  s->put_nd_array_double(key, value, dims, 3);
+  s->put_nd_array_double(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void get_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->get_nd_array_double(key, value, *dimensions, *ndims, true);
 }

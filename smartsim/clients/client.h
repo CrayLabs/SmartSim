@@ -5,6 +5,7 @@
 #include <sstream>
 #include "ss_protob_array.pb.h"
 #include <mpi.h>
+#include <google/protobuf/reflection.h>
 
 class SmartSimClient;
 
@@ -14,14 +15,8 @@ public:
   SmartSimClient();
   ~SmartSimClient();
   sw::redis::RedisCluster redis_cluster;
-  void put_1d_array_double(const char* key, double* value, const int nx, const int x_start=0);
-  void put_2d_array_double(const char* key, double** value, const int nx, const int ny, const int x_start=0, const int y_start=0);
-  void put_3d_array_double(const char* key, double*** value, const int nx, const int ny, const int nz, const int x_Start=0, const int y_start=0, const int z_start=0);
-  void put_nd_array_double(const char* key, void* value, int* dims, int n_dims);
-  void get_1d_array_double(const char* key, double* result, const int nx, const int x_start=0);
-  void get_2d_array_double(const char* key, double** result, const int nx, const int ny, const int x_start=0, const int y_start=0);
-  void get_3d_array_double(const char* key, double*** result, const int nx, const int ny, const int nz, const int x_start=0, const int y_start=0, const int z_start=0);
-  void get_nd_array_double(const char* key, void* result, int* dims, int n_dims);
+  void put_nd_array_double(const char* key, void* value, int* dims, int n_dims, bool fotran_array=false);
+  void get_nd_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
 private:
   SmartSimPBArray::ArrayDouble protob_double;
   SmartSimPBArray::ArrayFloat protob_float;
@@ -40,8 +35,7 @@ private:
 
 
 // C-wrapped functions
-
 typedef void *OpaqueObject;
 extern "C" void *ssc_constructor();
-extern "C" void ssc_put_3d_array_double(OpaqueObject SmartSimClient_proto, int* keylen, const char* key, double* value, int *x_start,
-                                         int *y_start, int *z_start, int *x_end, int *y_end, int *z_end,  bool *f_arrays);
+extern "C" void put_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims);
+extern "C" void get_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims);
