@@ -3,7 +3,7 @@ from .entity import SmartSimEntity
 
 class NumModel(SmartSimEntity):
     """One instance of a model. This class holds the various information to configure
-       and run the model. A model can be created through state.create_model()."""
+       and run the model. A model can be created through experiment.create_model()."""
 
     def __init__(self, name, params, path, run_settings):
         """

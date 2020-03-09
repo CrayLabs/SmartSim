@@ -1,11 +1,9 @@
 import re
 import glob
 import os
-
 from os import path
-
-from ..helpers import get_SSHOME
 from ..error import SSConfigError, SmartSimError
+
 from ..utils import get_logger
 logger = get_logger(__name__)
 

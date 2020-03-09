@@ -42,18 +42,18 @@ the ``Controller.poll()`` method to check on the status of the four models.
 
 .. code-block:: python
 
-   from smartsim import Controller, Generator, State
+   from smartsim import Controller, Generator, Experiment
 
-   # init state
-   state= State(experiment="h2o", log_level="DEBUG")
+   # init experiment
+   experiment= Experiment(experiment="h2o", log_level="DEBUG")
 
    # create targets
    target_params = {"STEPS": [10, 15, 20, 25]}
-   state.create_target("h2o-1", params=target_params)
+   experiment.create_target("h2o-1", params=target_params)
 
 
    # Data Generation Phase
-   gen = Generator(state, model_files="CP2K/h2o.inp")
+   gen = Generator(experiment, model_files="CP2K/h2o.inp")
    gen.generate()
 
    sim_params = {"launcher": "slurm",       # setup slurm
@@ -62,7 +62,7 @@ the ``Controller.poll()`` method to check on the status of the four models.
                 "partition": "gpu",
                 "exe_args": "-i h2o.inp",
                 "nodes": 1}
-   sim = Controller(state, **sim_params)
+   sim = Controller(experiment, **sim_params)
    sim.start()                              # run all the models in parallel
    sim.poll()                               # immediately poll the models
 
@@ -76,4 +76,4 @@ Slurm integration except that some of the configurations("duration", "ppn", "nod
 
 .. note::
 
-   The local method of launching models will run each model serially. 
+   The local method of launching models will run each model serially.

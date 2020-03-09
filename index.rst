@@ -67,7 +67,7 @@ TODO
    :maxdepth: 2
    :caption: API
 
-   doc/api/state
+   doc/api/experiment
    doc/api/simModule
    doc/api/generator
    doc/api/controller

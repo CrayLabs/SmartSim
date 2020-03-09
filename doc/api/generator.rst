@@ -42,12 +42,12 @@ To generate the same experiment in python, the following code could be used.
 
 .. code-block:: python
 
-   from smartsim import State, Generator
-   state = State(experiment="lammps_atm")
+   from smartsim import Experiment, Generator
+   experiment = Experiment(experiment="lammps_atm")
    ensemble_params = {"lj": ["ls", "ld"]}
-   state.create_ensemble("atm", params=ensemble_params}
+   experiment.create_ensemble("atm", params=ensemble_params}
 
-   gen = Generator(state, model_files="in.atm")
+   gen = Generator(experiment, model_files="in.atm")
    gen.generate()
 
 

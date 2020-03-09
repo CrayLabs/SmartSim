@@ -37,7 +37,7 @@ A basic project structure with one target and one model looks as follows:
   └── atm              # target
       ├── atm_0        # model
       │   └── in.atm   # model files
-      └── atm_1        # model 
+      └── atm_1        # model
           └── in.atm   # model files
 
 
@@ -67,7 +67,7 @@ TODO
    :maxdepth: 2
    :caption: API
 
-   doc/api/state
+   doc/api/experiment
    doc/api/simModule
    doc/api/generator
    doc/api/controller

@@ -1,7 +1,7 @@
 
 
-State
+Experiment
 =====
 
-.. automodule:: smartsim.state
+.. automodule:: smartsim.experiment
    :members:

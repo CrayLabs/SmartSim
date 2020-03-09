@@ -99,26 +99,26 @@ For instance, in the example above, we wouldnt want to use dollar signs or curly
 braces for the tag.
 
 Once the configuration file(s) are tagged and ready, the experiment can be setup
-through the ``State`` initialization as follows
+through the ``Experiment`` initialization as follows
 
 .. code-block:: python
 
   # import needed smartsim modules
-  from smartsim import Controller, Generator, State
+  from smartsim import Controller, Generator, Experiment
 
-  # intialize state to conduct experiment
-  state = State(experiment="lammps_atm")
+  # intialize experiment to conduct experiment
+  experiment = Experiment(experiment="lammps_atm")
 
 
 For this example, we will create one ensemble that holds the four models with
-four increasing number of steps. This is done through a call to ``state.create_ensemble``
+four increasing number of steps. This is done through a call to ``experiment.create_ensemble``
 as follows:
 
 .. code-blocK:: python
 
   # Create ensembles
   param_dict_1 = {"steps": [20, 25, 30, 35]}
-  state.create_ensemble("atm", params=param_dict)
+  experiment.create_ensemble("atm", params=param_dict)
 
 The parameter dictionary above specifies the placeholder we put into the configuration
 file as the keys and the values we wish for models to be configurated and created with
@@ -146,7 +146,7 @@ The argument ``n_models`` must be passed to the ``generate`` function.
   # Supply the generator with necessary files to run the simulation
   # and generate the specified models.
   base_config = "LAMMPS/in.atm"
-  GEN = Generator(state, model_files=base_config)
+  GEN = Generator(experiment, model_files=base_config)
   GEN.set_strategy("random")
   GEN.generate(n_models=2)
 
@@ -165,7 +165,7 @@ is the dictionary for a model.  For example:
     return [{ param_names[0] : param_values[0] }]
 
   base_config = "LAMMPS/in.atm"
-  GEN = Generator(state, model_files=base_config)
+  GEN = Generator(experiment, model_files=base_config)
   GEN.set_strategy(my_function)
   GEN.generate()
 
@@ -182,7 +182,7 @@ is also valid:
   # Supply the generator with necessary files to run the simulation
   # and generate the specified models
   base_config = "LAMMPS/in.atm"
-  GEN = Generator(state, model_files=base_config)
+  GEN = Generator(experiment, model_files=base_config)
   GEN.generate()
 
 

@@ -1,7 +1,7 @@
-from smartsim import Controller, Generator, State
+from smartsim import Experiment
 
-# initialize State
-state = State(experiment="double_gyre")
+# initialize Experiment
+experiment = Experiment("double_gyre")
 
 # Create ensembles
 quar_deg_params = {"KH": [200, 400],
@@ -14,17 +14,17 @@ half_deg_params = {"KH": [200, 400],
                    "x_resolution": 40,
                    "y_resolution": 20,
                    "months": 1}
-run_params = {"nodes":2,
+run_params = {"nodes":1,
+              "ppn": 24,
               "executable":"MOM6",
               "partition": "iv24"}
-state.create_ensemble("quar-deg", params=quar_deg_params, run_settings=run_params)
-state.create_ensemble("half-deg", params=half_deg_params, run_settings=run_params)
+experiment.create_ensemble("quar-deg", params=quar_deg_params, run_settings=run_params)
+experiment.create_ensemble("half-deg", params=half_deg_params, run_settings=run_params)
 
 # Generate Models
-gen = Generator(state, model_files="./MOM6_base_config")
-gen.generate()
+experiment.generate(model_files=["./MOM6_base_config"])
 
-sim = Controller(state, launcher="slurm")
-sim.start()
-sim.poll()
-sim.release()
+# Run the experiment
+experiment.start()
+experiment.poll()
+experiment.release()

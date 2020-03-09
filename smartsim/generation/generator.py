@@ -6,50 +6,82 @@ from os import mkdir, getcwd, path
 from distutils import dir_util
 
 from ..model import NumModel
+from ..ensemble import Ensemble
 from .modelwriter import ModelWriter
+from ..orchestrator import Orchestrator
+from ..smartSimNode import SmartSimNode
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
-from ..helpers import get_SSHOME
-from ..simModule import SmartSimModule
 
 from .strategies import create_all_permutations, random_permutations, step_values
 from ..utils import get_logger
 logger = get_logger(__name__)
 
 
-class Generator(SmartSimModule):
-    """A SmartSimModule that configures and generates instances of a model by reading
-       and writing model files that have been tagged by the user.
-
-       :param State state: A State instance
-       :param list model_files: The model files for the experiment.  Optional
-                               if model files are not needed for execution. Argument
-                               can be a file, directory, or a list of files
-       :param str strategy: The permutation strategy for generating models within ensembles.
-                            Options are "all_perm", "random", "step", or a callable function.
-                            defaults to "all_perm"
+class Generator():
+    """Class used by Experiment to generate the file structure for an experiment. The
+       Generator is responsible for reading, configuring, and writing model instances
+       within an ensemble created by an Experiment.
     """
-    def __init__(self, state, model_files=None, strategy="all_perm", **kwargs):
-        super().__init__(state, model_files=model_files, **kwargs)
-        self.set_state("Data Generation")
+    def __init__(self):
         self._writer = ModelWriter()
-        self._permutation_strategy = strategy
+        self.set_strategy("all_perm")
 
-    def generate(self, **kwargs):
-        """Based on the ensembles and models created by the user,
-           configure and generate the model and ensemble instances.
+    def generate_experiment(self,
+                            exp_path,
+                            ensembles=[],
+                            nodes=[],
+                            orchestrator=None,
+                            model_files=[],
+                            node_files=[],
+                            **kwargs):
+        """Generate the file structure for a SmartSim experiment. This includes the writing
+           and configuring of input files for a model. Ensembles created with a 'params' argument
+           will be expanded into multiple models based on a generation strategy. Model input files
+           are specified with the model_files argument. All files and directories listed as strings
+           in a list will be copied to each model within an ensemble. Every model file is read,
+           checked for input variables to configure, and written. Input variables to configure
+           are specified with a tag within the input file itself. The default tag is surronding
+           an input value with semicolons. e.g. THERMO=;90;
 
-           :param dict kwargs: optional key word arguments passed to permutation strategy.
+           Files for SmartSimNodes can also be included to be copied into node directories but
+           are never read nor written. All node_files will be copied into directories named after
+           the name of the SmartSimNode within the experiment.
+
+           :param str exp_path: Path to the directory, usually an experiment directory, where the
+                                directory structure will be created.
+           :param ensembles:  ensembles created by an Experiment to be generated
+           :type ensembles: List of Ensemble objects
+           :param nodes: nodes created by an experiment to be generated
+           :type nodes: list of SmartSimNodes
+           :param orchestrator: orchestrator object for file generation
+           :type orchestrator: Orchestrator object
+           :param model_files: files or directories to be read, configured and written for every
+                               model instance within an ensemble
+           :type model_files: a list of string paths
+           :param node_files: files or directories to be included in each node directory
+           :type node_files: a list of string paths
+           :param dict kwargs: optional key word arguments passed to generation strategy.
            :raises: SmartSimError
         """
-        try:
-            logger.info("SmartSim State: " + self.get_state())
-            self.set_strategy(self._permutation_strategy)
-            self._create_models(**kwargs)
-            self._create_experiment()
-            self._configure_models()
-        except SmartSimError as e:
-            logger.error(e)
-            raise
+        if isinstance(ensembles, Ensemble):
+            ensembles = [ensembles]
+        if isinstance(nodes, SmartSimNode):
+            nodes = [nodes]
+        if isinstance(model_files, str):
+            model_files = [model_files]
+        if isinstance(node_files, str):
+            node_files = [node_files]
+        if orchestrator and not isinstance(orchestrator, Orchestrator):
+            raise SmartSimError(
+                f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
+            )
+        self._generate_ensembles(ensembles, **kwargs)
+        self._create_experiment_dir(exp_path)
+        self._create_orchestrator_dir(exp_path, orchestrator)
+        self._create_nodes(exp_path, nodes, node_files)
+        self._create_ensembles(exp_path, ensembles)
+        self._configure_models(ensembles, exp_path, model_files)
+
 
     def set_tag(self, tag, regex=None):
         """Set a tag or a regular expression for the generator to look for when
@@ -100,7 +132,7 @@ class Generator(SmartSimModule):
                 "Permutation Strategy given is not supported: " +
                 str(permutation_strategy))
 
-    def _create_models(self, **kwargs):
+    def _generate_ensembles(self, ensembles, **kwargs):
         """Populates instances of NumModel class for all ensemble models.
            NumModels are created via the function that is set as the
            `_permutation_strategy` attribute.  Users may supply their own
@@ -121,15 +153,8 @@ class Generator(SmartSimModule):
             for name, val in ensemble.params.items():
                 param_names.append(name)
 
-                # if it came from a simulation.toml
-                if isinstance(val, dict):
-                    if isinstance(val["value"], list):
-                        parameters.append(val["value"])
-                    else:
-                        parameters.append([val["value"]])
-
                 # if the user called added a ensemble programmatically
-                elif isinstance(val, list):
+                if isinstance(val, list):
                     parameters.append(val)
                 elif isinstance(val, str) or isinstance(val, int):
                     parameters.append([val])
@@ -140,7 +165,6 @@ class Generator(SmartSimModule):
                         "Must be list, int, or string.")
             return param_names, parameters
 
-        ensembles = self.get_ensembles()
         for ensemble in ensembles:
             # if read_model_parameters returns empty lists, we shouldn't continue.
             # This is useful for empty ensembles where the user makes models.
@@ -156,60 +180,79 @@ class Generator(SmartSimModule):
                     m = NumModel(model_name, conf, None, run_settings={})
                     ensemble.add_model(m)
 
-    def _create_experiment(self):
+    def _create_experiment_dir(self, exp_path):
         """Creates the directory structure for the simulations"""
-        #TODO: add argument to override ensemble creation
-        exp_path = self.get_experiment_path()
 
-        # ok to have already created an experiment
         if not path.isdir(exp_path):
             mkdir(exp_path)
         else:
             logger.info("Working in previously created experiment")
 
-        if self.has_orchestrator():
-            orc_path = path.join(exp_path, "orchestrator")
-            self.state.orc.set_path(orc_path)
-            if not path.isdir(orc_path):
-                mkdir(orc_path)
 
-        for node in self.get_nodes():
-            # output from nodes will live in the experiment directory
-            node.set_path(exp_path)
+    def _create_orchestrator_dir(self, exp_path, orchestrator):
+        """Generate the directory that will house the orchestrator output files"""
 
-        # not ok to have already generated the ensemble.
-        ensembles = self.get_ensembles()
+        if not orchestrator:
+            return
+
+        orc_path = path.join(exp_path, "orchestrator")
+        orchestrator.set_path(orc_path)
+
+        # remove orc files if present
+        if path.isdir(orc_path):
+            shutil.rmtree(orc_path)
+        mkdir(orc_path)
+
+    def _create_nodes(self, exp_path, nodes, node_files):
+        """Generate the files and directories for SmartSimNodes"""
+
+        if not nodes:
+            return
+
+        for node in nodes:
+            node_path = path.join(exp_path, node.name)
+            node.set_path(node_path)
+            if path.isdir(node_path):
+                shutil.rmtree(node_path)
+            mkdir(node_path)
+
+        for node_file in node_files:
+            dst_path = path.join(node_path, path.basename(node_file))
+            config_path = self.check_path(node_file)
+            if path.isdir(config_path):
+                dir_util.copy_tree(config_path, node_path)
+            else:
+                shutil.copyfile(config_path, dst_path)
+
+    def _create_ensembles(self, exp_path, ensembles):
+        """Generate the directories for the ensembles"""
+
+        if not ensembles:
+            return
+
         for ensemble in ensembles:
             ensemble_dir = path.join(exp_path, ensemble.name)
-            if not path.isdir(ensemble_dir):
-                mkdir(ensemble_dir)
-            else:
-                raise SmartSimError(
-                    "Models for an experiment by this name have already been generated!"
-                )
+            if path.isdir(ensemble_dir):
+                shutil.rmtree(ensemble_dir)
+            mkdir(ensemble_dir)
 
-    def _configure_models(self):
-        """Duplicate the base configurations of ensemble models"""
-
-        listed_configs = self.get_config("model_files")
-        exp_path = self.get_experiment_path()
-        ensembles = self.get_ensembles()
+    def _configure_models(self, ensembles, exp_path, model_files):
+        """Based on the params argument to a Ensemble instance, read, configure
+           and write model input files.
+        """
 
         for ensemble in ensembles:
-            ensemble_models = ensemble.models
 
             # Make ensemble model directories
-            for name, model in ensemble_models.items():
+            for name, model in ensemble.models.items():
                 dst = path.join(exp_path, ensemble.name, name)
                 mkdir(dst)
                 model.set_path(dst)
 
-                if listed_configs:
-                    if not isinstance(listed_configs, list):
-                        listed_configs = [listed_configs]
-                    for config in listed_configs:
+                if model_files:
+                    for config in model_files:
                         dst_path = path.join(dst, path.basename(config))
-                        config_path = path.join(getcwd(), config)
+                        config_path = self.check_path(config)
                         if path.isdir(config_path):
                             dir_util.copy_tree(config_path, dst)
                         else:
@@ -217,3 +260,17 @@ class Generator(SmartSimModule):
 
                     # write in changes to configurations
                     self._writer.write(model)
+
+            logger.info(f"Generated {len(ensemble)} models for ensemble: {ensemble.name}")
+
+    def check_path(self, file_path):
+        """Given a user provided path-like str, find the actual path to
+           the directory or file and create a full path.
+        """
+        full_path = path.abspath(file_path)
+        if path.isfile(full_path):
+            return full_path
+        elif path.isdir(full_path):
+            return full_path
+        else:
+            raise SSConfigError(f"File or Directory {file_path} not found")

@@ -1,24 +1,18 @@
 
-from smartsim import State, Controller, Generator
+from smartsim import Experiment
 
-
-state = State(experiment="heat-sim")
+experiment = Experiment("heat-sim")
 
 run_settings = {
-    "nodes": 150,
+    "nodes": 50,
     "ppn": 24,
-    "exe_args": "heat_file.xml heat.out 60 60 2000 2000 20 10",
+    "exe_args": "heat_file.xml heat.out 40 30 1000 1000 20 10",
     "executable": "/lus/snx11254/mellis/Heat-Simulation/heat_transfer",
     "partition": "iv24"
 }
 
-state.create_model("heat_transfer", run_settings=run_settings)
-state.create_orchestrator(cluster_size=16, partition="knl")
-
-generator = Generator(state,
-                      model_files=["./heat_file.xml"])
-generator.generate()
-
-control = Controller(state, launcher="slurm")
-control.start()
-control.poll()
+experiment.create_model("heat_transfer", run_settings=run_settings)
+experiment.create_orchestrator(cluster_size=10, partition="iv24")
+experiment.generate(model_files="./heat_file.xml")
+experiment.start()
+experiment.poll()

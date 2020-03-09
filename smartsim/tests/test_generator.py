@@ -1,218 +1,201 @@
-from smartsim import Generator, State
-from os import path, environ
-from shutil import rmtree
-from ..error import SmartSimError, SSModelExistsError
 import pytest
+from os import path, environ, getcwd
+from shutil import rmtree
 
-from smartsim.utils.log import get_logger
-logger = get_logger(__name__)
-
-
-
-def test_generator_basic():
-    """Test for the creation of the experiment directory structure when both create_ensemble
-    and create_model are used."""
-
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-    state = State(experiment="lammps_atm")
-
-    param_dict = {"STEPS": [20, 25]}
-    state.create_ensemble("atm", params=param_dict)
-    state.create_model("add_1", "atm", {"STEPS": 90})
-
-    # Supply the generator with necessary files to run the simulation
-    # and generate the specified models
-    base_config = "../../examples/LAMMPS/in.atm"
-    gen = Generator(state, model_files=base_config)
-    gen.generate()
-
-    # assert that experiment directory was created
-    assert(path.isdir(experiment_dir))
-    ensemble = path.join(experiment_dir, "atm")
-    assert(path.isdir(ensemble))
-
-    ensemble_model_1 = path.join(ensemble, "atm_0")
-    ensemble_model_2 = path.join(ensemble, "atm_1")
-    ensemble_model_3 = path.join(ensemble, "add_1")
-
-    model_dirs = [ensemble_model_1, ensemble_model_2,
-                  ensemble_model_3]
-    # check for model dir and listed configuration file
-    for model in model_dirs:
-        assert(path.isdir(model))
-        assert(path.isfile(path.join(model, "in.atm")))
-
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+from smartsim import Experiment
+from smartsim.error import SSModelExistsError, SmartSimError
+from smartsim.generation import Generator
+from smartsim.tests.decorators import generator_test
 
 
-def test_model_exists():
-    """Test error thrown if same model is created twice."""
+test_path = path.join(getcwd(),  "./generator_test/")
 
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+exp = Experiment("test")
+gen = Generator()
 
-    STATE = State(experiment="lammps_atm")
-    STATE.create_model("add_1", params={"STEPS": 50})
-
-    # Supply the generator with necessary files to run the simulation
-    # and generate the specified models
-    base_config = "../../examples/LAMMPS/in.atm"
-    gen = Generator(STATE, model_files=base_config)
-    gen.generate()
-
-    try:
-        STATE.create_model("add_1", params={"STEPS": 90})
-        raise SmartSimError("Model name: add_1 has been incorrectly replaced")
-    except SSModelExistsError:
-        logger.info("Model exists error correctly thrown")
-        pass
-
-    assert(path.isdir(experiment_dir))
-    ensemble_1 = path.join(experiment_dir, "default")
-    ensemble_model_1 = path.join(ensemble_1, "add_1")
-
-    # check for model dir and listed configuration file
-    assert(path.isdir(ensemble_model_1))
-    assert(path.isfile(path.join(ensemble_model_1, "in.atm")))
-
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-def test_gen_select_strategy_user_function():
-    """A test of the generator using a user supplied function.
+@generator_test
+def test_ensemble():
+    """Test generating an ensemble of models with the all_perm strategy which
+       is the default strategy
     """
+    params = {
+        "THERMO": [10, 20, 30],
+        "STEPS": [10, 20, 30]
+        }
+    ensemble = exp.create_ensemble("test", params=params)
+    gen.generate_experiment(
+        test_path,
+        model_files="./test_configs/in.atm",
+        ensembles=ensemble
+    )
 
-    def raise_error(param_names, param_values):
-        raise NotImplementedError
+    assert(path.isdir("./generator_test/test/"))
+    for i in range(9):
+        assert(path.isdir("./generator_test/test/test_" + str(i)))
 
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+@generator_test
+def test_ensemble_random():
+    """test generation of an ensemble using the random generation strategy"""
 
-    STATE = State(experiment="lammps_atm")
-    param_dict = {"STEPS": [20, 25]}
-    STATE.create_ensemble("atm", params=param_dict)
+    gen.set_strategy("random")
+    n_models = 10 # number of models to generate
 
-    # Supply the generator with necessary files to run the simulation
-    # and generate the specified models
-    base_config = "../../examples/LAMMPS/in.atm"
-    GEN = Generator(STATE, model_files=base_config)
-    GEN.set_strategy(raise_error)
-    strategy_failed_out = False
-    try:
-        GEN.generate()
-    except NotImplementedError:
-        strategy_failed_out = True
-
-    assert(strategy_failed_out)
-
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-
-def test_gen_select_strategy_default():
-
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-    STATE = State(experiment="lammps_atm")
-
-    param_dict = {"STEPS": [20, 25], "THERMO": [10]}
-    STATE.create_ensemble("atm", params=param_dict)
-
-    # Supply the generator with necessary files to run the simulation
-    # and generate the specified models
-    base_config = "../../examples/LAMMPS/in.atm"
-    GEN = Generator(STATE, model_files=base_config)
-    GEN.set_strategy("all_perm")
-    GEN.generate()
-    assert(len(STATE.ensembles[0]) == 2)
-
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-
-def test_gen_random_strategy():
-
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
-
-    STATE = State(experiment="lammps_atm")
-
-    # make some parameter values
     import numpy as np
     steps = np.random.randint(10, 20, size=(50))
     thermo = np.random.randint(20, 200, size=(50))
 
     param_dict = {"STEPS": list(steps), "THERMO": list(thermo)}
-    STATE.create_ensemble("atm", params=param_dict)
+    ensemble = exp.create_ensemble("random", params=param_dict)
 
-    base_config = "../../examples/LAMMPS/in.atm"
-    GEN = Generator(STATE, model_files=base_config)
-    GEN.set_strategy("random")
-    GEN.generate(n_models=10)
+    gen.generate_experiment(
+        test_path,
+        model_files="./test_configs/in.atm",
+        ensembles=ensemble,
+        n_models=10
+    )
 
-    print(STATE)
-    assert(len(STATE.ensembles[0]) == 10)
+    assert(path.isdir("./generator_test/random/"))
+    for i in range(n_models):
+        assert(path.isdir("./generator_test/random/random_" + str(i)))
 
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+@generator_test
+def test_ensemble_stepped():
+    """test the generation of an ensemble using the stepped strategy"""
+
+    gen.set_strategy("step")
+
+    params = {
+        "THERMO": [10, 20, 30],
+        "STEPS": [10, 20, 30]
+        }
+    ensemble = exp.create_ensemble("step", params=params)
+    gen.generate_experiment(
+        test_path,
+        model_files="./test_configs/in.atm",
+        ensembles=ensemble
+    )
+
+    assert(path.isdir("./generator_test/step/"))
+    for i in range(3):
+        assert(path.isdir("./generator_test/step/step_" + str(i)))
 
 
-def test_gen_step_strategy():
+@generator_test
+def test_user_strategy():
+    """Test the generation of ensemble using a user given strategy"""
 
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+    def step_values(param_names, param_values):
+        permutations = []
+        for p in zip(*param_values):
+            permutations.append(dict(zip(param_names, p)))
+        return permutations
 
-    STATE = State(experiment="lammps_atm")
-    param_dict = {"STEPS": [20, 25, 30], "THERMO": [10, 20, 30]}
-    STATE.create_ensemble("atm", params=param_dict)
+    gen.set_strategy(step_values)
 
-    base_config = "../../examples/LAMMPS/in.atm"
-    GEN = Generator(STATE, model_files=base_config)
-    GEN.set_strategy("step")
-    GEN.generate()
-    assert(len(STATE.ensembles[0]) == 3)
+    params = {
+        "THERMO": [10, 20, 30],
+        "STEPS": [10, 20, 30]
+        }
+    ensemble = exp.create_ensemble("user", params=params)
+    gen.generate_experiment(
+        test_path,
+        model_files="./test_configs/in.atm",
+        ensembles=ensemble
+    )
+    assert(path.isdir("./generator_test/user/"))
+    for i in range(3):
+        assert(path.isdir("./generator_test/user/user_" + str(i)))
 
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
 
-def test_generator_no_model_files():
-    """Test for the creation of the experiment directory structure when both create_ensemble
-    and create_model are used but without specification of model files."""
+@generator_test
+def test_full_exp():
+    """test the generation of all other possible entities within SmartSim
+        - orchestrator
+        - node with node_files
+    """
 
-    experiment_dir = "./lammps_atm"
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+    node = exp.create_node("node")
+    orc = exp.create_orchestrator()
+    gen.generate_experiment(
+        test_path,
+        node_files="./test_configs/sleep.py",
+        nodes=node,
+        orchestrator=orc
+    )
 
-    state = State(experiment="lammps_atm")
+    assert(path.isdir("./generator_test/orchestrator"))
+    assert(path.isdir("./generator_test/node"))
+    assert(path.isfile("./generator_test/node/sleep.py"))
 
-    state.create_ensemble("atm")
-    state.create_ensemble("atm-2")
-    state.create_model("add_1", "atm", {})
 
-    # Supply the generator with state and build directories
-    gen = Generator(state)
-    gen.generate()
+@generator_test
+def test_dir_files():
+    """test the generate of models and nodes with model and node files that
+       are directories with subdirectories and files
+    """
+    gen.set_strategy("all_perm")
 
-    # assert that experiment directory was created
-    assert(path.isdir(experiment_dir))
-    ensemble_1 = path.join(experiment_dir, "atm")
-    assert(path.isdir(ensemble_1))
-    ensemble_2 = path.join(experiment_dir, "atm-2")
-    assert(path.isdir(ensemble_2))
+    params = {
+        "THERMO": [10, 20, 30],
+        "STEPS": [10, 20, 30]
+        }
+    ensemble = exp.create_ensemble("dir_test", params=params)
+    node = exp.create_node("node_1")
 
-    # assert model subdirectory was created
-    ensemble_model_1 = path.join(ensemble_1, "add_1")
-    assert(path.isdir(ensemble_model_1))
+    gen.generate_experiment(
+        test_path,
+        model_files="./test_configs/test_dir/",
+        node_files="./test_configs/test_dir/",
+        ensembles=ensemble,
+        nodes=node
+    )
 
-    if path.isdir(experiment_dir):
-        rmtree(experiment_dir)
+    assert(path.isdir("./generator_test/dir_test/"))
+    for i in range(9):
+        model_path = "./generator_test/dir_test/dir_test_" + str(i)
+        assert(path.isdir(model_path))
+        assert(path.isdir(path.join(model_path, "test_dir_1")))
+        assert(path.isfile(path.join(model_path, "test.py")))
+
+    assert(path.isdir("./generator_test/node_1"))
+    assert(path.isdir("./generator_test/node_1/test_dir_1"))
+    assert(path.isfile("./generator_test/node_1/test.py"))
+
+
+@generator_test
+def test_bad_file_path():
+    """Test when the user provides a bad file path to a node_files as
+       an argument"""
+
+    node = exp.create_node("node_2")
+
+    with pytest.raises(SmartSimError):
+        gen.generate_experiment(
+            test_path,
+            node_files="./test_configs/not_a_file.py",
+            nodes=node,
+        )
+
+@generator_test
+def test_full_path():
+    """Test when a full path is given as a model file"""
+    gen.set_strategy("all_perm")
+
+    full_path = path.join(getcwd(), "test_configs/in.atm")
+
+    params = {
+        "THERMO": [10, 20, 30],
+        "STEPS": [10, 20, 30]
+        }
+    ensemble = exp.create_ensemble("full_path", params=params)
+    gen.generate_experiment(
+        test_path,
+        model_files=full_path,
+        ensembles=ensemble
+    )
+
+    assert(path.isdir("./generator_test/full_path/"))
+    for i in range(9):
+        model_path = "./generator_test/full_path/full_path_" + str(i)
+        assert(path.isdir(model_path))
+        assert(path.isfile(path.join(model_path, "in.atm")))

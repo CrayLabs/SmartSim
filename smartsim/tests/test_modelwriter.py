@@ -1,4 +1,4 @@
-from smartsim import Generator, State
+from smartsim import Experiment
 from os import path, environ
 from glob import glob
 from shutil import rmtree
