@@ -1,10 +1,44 @@
-project(ClientTest)
+project(CppClientTester)
+
 set(CMAKE_BUILD_TYPE Debug)
 
 cmake_minimum_required(VERSION 3.10)
 
-set(BASE_DIR "/lus/snx11254/mellis")
-set(LIB_EXT "a")
+SET(CMAKE_CXX_STANDARD 11)
+
+#TODO put in output warnings
+# Determine where the hiredis library is based on if an environment variable
+# is set, and if not, it can be found in the $PATH directory
+if(DEFINED ENV{HIREDIS_INSTALL_PATH})
+	   string(CONCAT HIREDIS_LIB_PATH $ENV{HIREDIS_INSTALL_PATH} "/lib")
+	   find_library(HIREDIS_LIB hiredis PATHS ${HIREDIS_LIB_PATH} NO_DEFAULT_PATH)
+	   string(CONCAT HIREDIS_INCLUDE_PATH $ENV{HIREDIS_INSTALL_PATH} "/include")
+else()
+     	   find_library(HIREDIS_LIB hiredis PATH_SUFFIXES "/lib")
+	   find_path(HIREDIS_INCLUDE_PATH hiredis PATH_SUFFIXES "/include")
+endif()
+
+# Determine where the protobuf library is based on if an environment variable
+# is set, and if not, it can be found in the $PATH directory
+if(DEFINED ENV{PROTOBUF_INSTALL_PATH})
+	   string(CONCAT PROTOBUF_LIB_PATH $ENV{PROTOBUF_INSTALL_PATH} "/lib")
+	   find_library(PROTOBUF_LIB protobuf PATHS ${PROTOBUF_LIB_PATH} NO_DEFAULT_PATH)
+	   string(CONCAT PROTOBUF_INCLUDE_PATH $ENV{PROTOBUF_INSTALL_PATH} "include/")
+else()
+     	   find_library(PROTOBUF_LIB protobuf PATH_SUFFIXES "/lib")
+	   find_path(PROTOBUF_INCLUDE_PATH protobuf PATH_SUFFIXES "/include")
+endif()
+
+# Determine where the redis++ library is based on if an environment variable
+# is set, and if not, it can be found in the $PATH directory
+if(DEFINED ENV{REDISPP_INSTALL_PATH})
+	   string(CONCAT REDISPP_LIB_PATH $ENV{REDISPP_INSTALL_PATH} "/lib")
+	   find_library(REDISPP_LIB redis++ PATHS ${REDISPP_LIB_PATH} )
+	   string(CONCAT REDISPP_INCLUDE_PATH $ENV{REDISPP_INSTALL_PATH} "/include/")
+else()
+     	   find_library(REDISPP_LIB redis++ PATH_SUFFIXES "/lib")
+	   find_path(REDISPP_INCLUDE_PATH redis++ PATH_SUFFIXES "/include")
+endif()
 
 find_package(MPI)
 
@@ -12,24 +46,48 @@ include_directories(SYSTEM
     ${MPI_INCLUDE_PATH}
     ../../../clients/
     ../../../utils/protobuf/
-    ${BASE_DIR}/redis-plus-plus/install/include/
-    ${BASE_DIR}/hiredis/install/include/
-    ${BASE_DIR}/protobuf/install/include/
-    /usr/local/include/
+    /usr/local/include
+    ${HIREDIS_INCLUDE_PATH}
+    ${REDISPP_INCLUDE_PATH}
+    ${PROTOBUF_INCLUDE_PATH}
 )
 
-SET(CMAKE_CXX_STANDARD 11)
-
-add_executable(client_tester
-  client_test.cpp
+add_executable(client_tester_1D
+  client_test_1D.cpp
   ../../../clients/client.cc
   ../../../utils/protobuf/ss_protob_array.pb.cc
 )
 
-
-target_link_libraries(client_tester
+target_link_libraries(client_tester_1D
   MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${BASE_DIR}/redis-plus-plus/install/lib/libredis++.${LIB_EXT}
-  ${BASE_DIR}/hiredis/install/lib/libhiredis.${LIB_EXT}
-  ${BASE_DIR}/protobuf/install/lib/libprotobuf.${LIB_EXT}
+  ${REDISPP_LIB}
+  ${HIREDIS_LIB}
+  ${PROTOBUF_LIB}
 )
+
+add_executable(client_tester_2D
+  client_test_2D.cpp
+  ../../../clients/client.cc
+  ../../../utils/protobuf/ss_protob_array.pb.cc
+)
+
+target_link_libraries(client_tester_2D
+  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+  ${REDISPP_LIB}
+  ${HIREDIS_LIB}
+  ${PROTOBUF_LIB}
+)
+
+add_executable(client_tester_3D
+  client_test_3D.cpp
+  ../../../clients/client.cc
+  ../../../utils/protobuf/ss_protob_array.pb.cc
+)
+
+target_link_libraries(client_tester_3D
+  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+  ${REDISPP_LIB}
+  ${HIREDIS_LIB}
+  ${PROTOBUF_LIB}
+)
+
