@@ -52,17 +52,27 @@ function init_ssc_client() result(ssc_obj)
 end function init_ssc_client
 
 subroutine put_array_double(ssc_obj, key, array)
-  type(c_ptr), value          :: ssc_obj !< Pointer to initialized SSC instance
-  character(len=*)            :: key     !< The key used in the database
+  type(c_ptr), value                  :: ssc_obj !< Pointer to initialized SSC instance
+  character(len=*)                    :: key     !< The key used in the database
   real(kind=8), dimension(..), target :: array   !< Data to be sent
  
   character(kind=c_char) :: c_key(len(trim(key))+1)
   type(c_ptr) :: array_ptr
-  
+  integer :: ndims, i
+  integer, dimension(:), allocatable :: rev_dims
+
+  ndims = size(shape(array))
+  allocate(rev_dims(ndims))
+
+  do i=1,ndims
+    rev_dims(i) = size(array,ndims+1-i)
+  enddo
+
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
+  call put_nd_array_double_c( ssc_obj, c_key, array_ptr, rev_dims, ndims) 
 
-  call put_nd_array_double_c( ssc_obj, key, array_ptr, shape(array), size(shape(array))) 
+  deallocate(rev_dims)
 end subroutine put_array_double
 
 subroutine get_array_double(ssc_obj, key, array)
@@ -72,10 +82,18 @@ subroutine get_array_double(ssc_obj, key, array)
 
   character(kind=c_char) :: c_key(len(trim(key))+1)
   type(c_ptr) :: array_ptr
+  integer, dimension(:), allocatable :: rev_dims
+  integer :: ndims
+
+  allocate(rev_dims(ndims))
+
+  ndims = size(shape(array))
+  call flip_dims( shape(array), rev_dims, ndims )  
 
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
-  call get_nd_array_double_c(ssc_obj, key, array_ptr, shape(array), size(shape(array)))
+  call get_nd_array_double_c(ssc_obj, c_key, array_ptr, rev_dims, ndims) 
+  deallocate(rev_dims)
 
 end subroutine get_array_double
 
@@ -83,9 +101,22 @@ end subroutine get_array_double
 function make_c_string( f_string ) result(c_string)
   character(len=*) :: f_string !< Fortran string to be converted
   
-  character(kind=c_char) :: c_string
+  character(kind=c_char) :: c_string(len_trim(f_string)+1)
   c_string = transfer(trim(f_string)//c_null_char,c_string)
 
 end function make_c_string
+
+subroutine flip_dims( dims, rev_dims, ndims )
+  integer, dimension(:) :: dims
+  integer, dimension(:) :: rev_dims
+  integer               :: ndims
+
+  integer :: i
+
+  do i = 1,ndims
+    rev_dims = dims( ndims+1-i)
+  enddo
+
+end subroutine flip_dims 
 
 end module client_fortran_api 
