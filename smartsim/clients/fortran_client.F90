@@ -71,7 +71,6 @@ subroutine put_array_double(ssc_obj, key, array)
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
   call put_nd_array_double_c( ssc_obj, c_key, array_ptr, rev_dims, ndims) 
-
   deallocate(rev_dims)
 end subroutine put_array_double
 
