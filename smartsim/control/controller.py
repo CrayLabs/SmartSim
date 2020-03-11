@@ -9,12 +9,14 @@ from ..model import NumModel
 from ..launcher import SlurmLauncher, LocalLauncher
 from ..smartSimNode import SmartSimNode
 from ..orchestrator import Orchestrator
+from ..dbnode import DBNode
+from ..entity import SmartSimEntity
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
 
 from .job import Job
 from .allochandler import AllocHandler
 from .jobmanager import JobManager
-from .dbcluster import create_cluster, check_cluster_status
+from .dbcluster import create_cluster, check_cluster_status, kill_db_node
 from ..utils import get_config
 
 from ..utils import get_logger
@@ -31,11 +33,7 @@ class Controller():
         self._jobs = JobManager()
         self._launcher = None
 
-    def start(self,
-              ensembles=None,
-              nodes=None,
-              orchestrator=None,
-              duration="1:00:00"):
+    def start(self, ensembles=None, nodes=None, orchestrator=None, duration="1:00:00"):
         """Start the computation of a ensemble, nodes, and optionally
            facilitate communication between entities via an orchestrator.
            Controller.start() expects objects to be passed to the ensembles,
@@ -64,11 +62,7 @@ class Controller():
         self._launch(ensembles, nodes, orchestrator)
 
 
-    def stop(self,
-             ensembles=None,
-             models=None,
-             nodes=None,
-             stop_orchestrator=False):
+    def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
         """Stops specified ensembles, nodes, and orchestrator.
            If stop_orchestrator is set to true and all ensembles and
            nodes are stopped, the orchestrator will be stopped.
@@ -83,46 +77,40 @@ class Controller():
                 the ochestrator should be stopped.
             :raises: SSConfigError if called when using local launcher
         """
+        self.check_local("Controller.stop()")
+
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
         if isinstance(nodes, SmartSimNode):
             nodes = [nodes]
         if isinstance(models, NumModel):
             models = [models]
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Controller.stop() is not supported when launching locally")
+        if orchestrator and not isinstance(orchestrator, Orchestrator):
+            raise SmartSimError(
+                f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
+            )
         self._stop_ensembles(ensembles)
         self._stop_models(models)
         self._stop_nodes(nodes)
-        if stop_orchestrator:
-            self._stop_orchestrator()
+        if orchestrator:
+            self._stop_orchestrator(orchestrator.dbnodes)
 
-    def release(self, partition=None):
+    def release(self):
         """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources. To free all resources on all partitions, invoke
-           without passing a partition argument.
+           and freeing up resources.
 
-           :param str partition: name of the partition where the allocation is running
            :raises: SSConfigError if called when using local launcher
            :raises: SmartSimError if partition could not be found
         """
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Controller.release() is not supported when launching locally")
-        if partition:
-            try:
-                alloc_id = self._alloc_handler.allocs[partition]
-                self._launcher.free_alloc(alloc_id)
-                self._alloc_handler._remove_alloc(partition)
-            except KeyError:
-                raise SmartSimError(
-                    "Could not find allocation on partition: " + partition)
-        else:
-            allocs = self._alloc_handler.allocs.copy()
-            for partition, alloc_id in allocs.items():
-                self._launcher.free_alloc(alloc_id)
-                self._alloc_handler._remove_alloc(partition)
+        self.check_local("Controller.release()")
+
+        allocs = self._alloc_handler.allocs.copy()
+        for alloc_id in allocs.values():
+            logger.info(f"Releasing allocation: {alloc_id}")
+
+        for partition, alloc_id in allocs.items():
+            self._launcher.free_alloc(alloc_id)
+            self._alloc_handler._remove_alloc(partition)
 
 
     def get_job(self, name):
@@ -149,10 +137,8 @@ class Controller():
            :raises: SSConfigError if called when using local launcher
            :raises: SmartSimError if job argument is not a Job object
         """
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Controller.get_job_nodes() is not supported when launching locally"
-                )
+        self.check_local("Controller.get_job_nodes()")
+
         if not isinstance(job, Job):
             raise SmartSimError(
                 "Argument must be a Job instance"
@@ -172,46 +158,118 @@ class Controller():
            :param bool verbose: set verbosity
            :raises: SSConfigError if called when using local launcher
         """
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Controller.poll() is not supported when launching locally")
+        self.check_local("Controller.poll()")
 
         all_finished = False
         while not all_finished:
             time.sleep(interval)
             ignore_db = not poll_db
-            all_finished = self.finished(ignore_db=ignore_db, verbose=verbose)
+            all_finished = self._poll(ignore_db=ignore_db, verbose=verbose)
 
-    def finished(self, ignore_db, verbose):
+    def _poll(self, ignore_db, verbose):
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
 
            :param bool verbose: set verbosity
            :param bool ignore_db: return true even if the orchestrator nodes are still running
            :returns: True or False for if all models have finished
-           :raises: SSConfigError if called when using local launcher
         """
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Controller.finished() is not supported when launching locally"
-            )
-
-        statuses = []
+        finished = True
         for job in self._jobs().values():
             if ignore_db and job.entity.type == "db":
                 continue
             else:
                 self._check_job(job)
-                statuses.append(job.status.strip())
+                if not self._launcher.is_finished(job.status):
+                    finished = False
                 if verbose:
                     logger.info(job)
-        if "RUNNING" in statuses:
-            return False
-        if "assigned" in statuses:
-            return False
-        if "NOTFOUND" in statuses:
-            return False
-        return True
+        return finished
+
+    def finished(self, entity):
+        """Return a boolean indicating wether a job has finished or not
+
+           :param entity: object launched by SmartSim. One of the following:
+                          (SmartSimNode, NumModel, Ensemble)
+           :type entity: SmartSimEntity
+           :returns: bool
+        """
+        self.check_local("Controller.finished()")
+        try:
+            if isinstance(entity, Orchestrator):
+                raise SmartSimError("Finished() does not support Orchestrator instances")
+            if not isinstance(entity, SmartSimEntity):
+                raise SmartSimError("Finished() only takes arguments of SmartSimEntity instances")
+            if isinstance(entity, Ensemble):
+                return all([self.finished(model) for model in entity.models.values()])
+
+            job = self._jobs[entity.name]
+            self._check_job(job)
+            return self._launcher.is_finished(job.status)
+        except KeyError:
+            raise SmartSimError(
+                f"Entity by the name of {entity.name} has not been launched by this Controller")
+
+    def get_orchestrator_status(self, orchestrator):
+        """Return the workload manager status of an Orchestrator launched through the Controller
+
+           :param orchestrator: The Orchestrator instance to check the status of
+           :type orchestrator: Orchestrator instance
+           :returns: statuses of the orchestrator in a list
+           :rtype: list of str
+        """
+        if not isinstance(orchestrator, Orchestrator):
+            raise SmartSimError(
+                f"orchestrator argument was of type {type(orchestrator)} not of type Orchestrator")
+        statuses = []
+        for dbnode in orchestrator.dbnodes:
+            statuses.append(self._get_status(dbnode))
+        return statuses
+
+    def get_ensemble_status(self, ensemble):
+        """Return the workload manager status of an ensemble of models launched through the Controller
+
+           :param ensemble: The Ensemble instance to check the status of
+           :type ensemble: Ensemble instance
+           :returns: statuses of the ensemble in a list
+           :rtype: list of str
+        """
+        if not isinstance(ensemble, Ensemble):
+            raise SmartSimError(
+                f"ensemble argument was of type {type(ensemble)} not of type Ensemble")
+        statuses = []
+        for model in ensemble.models.values():
+            statuses.append(self._get_status(model))
+        return statuses
+
+    def get_model_status(self, model):
+        """Return the workload manager status of a model.
+
+           :param model: the model to check the status of
+           :type model: NumModel
+           :returns: status of the model given by the workload manager
+           :rtype: str
+        """
+        if not isinstance(model, NumModel):
+            raise SmartSimError(
+                f"model argument was of type {type(model)} not of type NumModel"
+            )
+        return self._get_status(model)
+
+    def get_node_status(self, node):
+        """Return the workload manager status of a SmartSimNode.
+
+           :param node: the SmartSimNode to check the status of
+           :type model: SmartSimNode
+           :returns: status of the SmartSimNode given by the workload manager
+           :rtype: str
+        """
+        if not isinstance(node, SmartSimNode):
+            raise SmartSimError(
+                f"node argument was of type {type(node)} not of type SmartSimNode"
+            )
+        return self._get_status(node)
+
 
     def init_launcher(self, launcher):
         """Run with a specific type of launcher"""
@@ -236,12 +294,12 @@ class Controller():
            :type ensembles: list of ensemble, optional ensemble
            :raises: SmartSimError
         """
-        if ensembles == None:
+        if not ensembles:
             return
 
         if not all(isinstance(x, Ensemble) for x in ensembles):
             raise SmartSimError(
-                "Only objects of type ensemble expected for variable ensembles"
+                "Only objects of type ensemble expected for input variable ensembles"
             )
 
         for ensemble in ensembles:
@@ -257,23 +315,19 @@ class Controller():
            :raises: SmartSimError
         """
 
-        if models == None:
+        if not models:
             return
 
         if not all(isinstance(x, NumModel) for x in models):
             raise SmartSimError(
-                "Only objects of type NumModel expected for variable models")
+                "Only objects of type NumModel expected for input variable models")
 
         for model in models:
             job = self._jobs[model.name]
             self._check_job(job)
-            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-                logger.info("Stopping model " + model.name + " job " +
-                            job.get_job_id())
-                self._launcher.stop(job.get_job_id())
-            else:
-                raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                    " because its status is " + job.status)
+            logger.info("Stopping model " + model.name + " job " +
+                        job.get_job_id())
+            self._launcher.stop(job.get_job_id())
 
     def _stop_nodes(self, nodes):
         """Stops specified nodes.  If nodes is None,
@@ -283,37 +337,43 @@ class Controller():
            :type nodes: list of SmartSimNode, optional SmartSimNode
            :raises: SmartSimError
         """
-        if nodes == None:
+        if not nodes:
             return
 
         if not all(isinstance(x, SmartSimNode) for x in nodes):
             raise SmartSimError(
-                "Only objects of type SmartSimNode expected for variable nodes"
+                "Only objects of type SmartSimNode expected for input variable nodes"
             )
 
         for node in nodes:
             job = self._jobs[node.name]
             self._check_job(job)
-            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-                logger.info("Stopping node " + node.name + " job " +
-                            job.get_job_id())
-                self._launcher.stop(job.get_job_id())
-            else:
-                raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                    " because its status is " + job.status)
+            logger.info("Stopping node " + node.name + " job " +
+                        job.get_job_id())
+            self._launcher.stop(job.get_job_id())
 
-    def _stop_orchestrator(self):
-        """Stops the orchestrator only if all
+
+    def _stop_orchestrator(self, dbnodes):
+        """Stops the orchestrator jobs that are currently running.
+
+           :param dbnodes: the databases that make up the orchestrator
+           :type dbnodes: a list of DBNode instances
            :raises: SmartSimError
         """
-        for job in self._jobs.db_jobs.values():
+        if not dbnodes:
+            return
+
+        if not all(isinstance(x, DBNode) for x in dbnodes):
+            raise SmartSimError(
+                "Only objects of type DBNode expected for input variable dbnodes"
+            )
+
+        for dbnode in dbnodes:
+            job = self._jobs[dbnode.name]
             self._check_job(job)
-            if not (job.status == 'NOTFOUND' or job.status == 'NAN'):
-                logger.info("Stopping orchestrator on job " + job.get_job_id())
-                self._launcher.stop(job.get_job_id())
-            else:
-                raise SmartSimError("Unable to stop job " + job.get_job_id() +
-                                    " because its status is " + job.status)
+            logger.debug("Stopping orchestrator on job " + job.get_job_id())
+            self._launcher.stop(job.get_job_id())
+
 
     def _prep_nodes(self, nodes):
         """Add the nodes to the list of requirement for all the entities
@@ -522,13 +582,16 @@ class Controller():
 
     def _check_job(self, job):
         """Takes in job and sets job properties"""
+
         if not self._launcher:
             raise SmartSimError("No launcher set")
         job_id = job.get_job_id()
-        status = self._launcher.get_sjob_stat(job_id)
-        job.set_status(status)
+        status, returncode = self._launcher.get_job_stat(job_id)
+        job.set_status(status, returncode)
 
     def _get_job_nodes(self, job):
+        """Query the workload manager for the nodes that a particular job was launched on"""
+
         if job.nodes:
             return job.nodes
         else:
@@ -537,3 +600,29 @@ class Controller():
             job.nodes = nodes
             return nodes
 
+
+    def _get_status(self, entity):
+        """Return the workload manager given status of a job.
+
+           :param entity: object launched by SmartSim. One of the following:
+                          (SmartSimNode, NumModel, Orchestrator, Ensemble)
+           :type entity: SmartSimEntity
+           :returns: tuple of status
+        """
+        try:
+            self.check_local("Controller._get_status()")
+            if not isinstance(entity, SmartSimEntity):
+                raise SmartSimError(
+                    "Controller._get_status() only takes arguments of SmartSimEntity instances")
+            job = self._jobs[entity.name]
+            self._check_job(job)
+        except KeyError:
+            raise SmartSimError(
+                f"Entity by the name of {entity.name} has not been launched by this Controller")
+        return job.status
+
+    def check_local(self, function_name):
+        """Checks if the user called a function that isnt supported with the local launcher"""
+
+        if isinstance(self._launcher, LocalLauncher):
+            raise SSConfigError(f"{function_name} is not supported when launching locally")

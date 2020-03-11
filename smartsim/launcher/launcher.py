@@ -126,16 +126,13 @@ class Launcher(abc.ABC):
                                 " not found.")
 
         (cancel_cmd, cancel_err_mess) = self._get_free_cmd(alloc_id)
-        try:
-            _, err = execute_cmd(cancel_cmd, err_message=cancel_err_mess)
+        returncode, _, err = execute_cmd(cancel_cmd)
 
-        except CalledProcessError:
-            logger.info("Unable to revoke your allocation for jobid %s" %
-                        alloc_id)
+        if returncode != 0:
+            logger.info("Unable to revoke your allocation for jobid %s" % alloc_id)
             logger.info(
-                "The job may have already timed out, or you may need to cancel the job manually"
-            )
-            raise LauncherError(cancel_err_mess)
+                "The job may have already timed out, or you may need to cancel the job manually")
+            raise LauncherError("Unable to revoke your allocation for jobid %s" % alloc_id)
 
-        logger.info("Successfully Freed Allocation %s" % alloc_id)
+        logger.info("Successfully freed allocation %s" % alloc_id)
         self.alloc_ids.pop(alloc_id)

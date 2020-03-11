@@ -17,7 +17,6 @@ class SlurmLauncher(Launcher):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.subjob_ids = list()
         self.alloc_partition = None
 
     class Partition():
@@ -41,46 +40,49 @@ class SlurmLauncher(Launcher):
             return True
 
     def sstat(self, args):
-        """Calls sstat sstat with args
+        """Calls sstat with args
            :params args: List of command and command arguments
            :type args: List of str
-           :returns: Output str of sstat command with args
+           :returns: Output and error of sstat
         """
 
         cmd = ["sstat"] + args
-        cmd_err_mess = "Could not execute sstat!"
+        returncode, out, error = execute_cmd(cmd)
+        return out, error
 
-        cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
+    def sacct(self, args):
+        """Calls sacct with args
 
-        return cmd_output_str
+           :params args: List of command and command arguments
+           :type args: List of str
+           :returns: Output and error of sacct
+        """
+        cmd = ["sacct"] + args
+        returncode, out, error = execute_cmd(cmd)
+        return out, error
 
     def salloc(self, args):
         """Calls slurm salloc with args
            :params args: List of command and command arguments
            :type args: List of str
-           :returns: Output str of salloc command with args
+           :returns: Output and error of salloc
         """
 
         cmd = ["salloc"] + args
-        cmd_err_mess = "Could not execute salloc!"
-
-        cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
-
-        return cmd_output_str
+        returncode, out, error = execute_cmd(cmd)
+        return out, error
 
     def sinfo(self, args):
         """Calls slurm sinfo with args
            :params args: List of command and command arguments
            :type args: List of str
-           :returns: Output str of sinfo command with args
+           :returns: Output and error of sinfo
         """
 
         cmd = ["sinfo"] + args
-        cmd_err_mess = "Could not execute sinfo!"
+        returncode, out, error = execute_cmd(cmd)
+        return out, error
 
-        cmd_output_str, _ = execute_cmd(cmd, err_message=cmd_err_mess)
-
-        return cmd_output_str
 
     def _get_system_partition_info(self):
         """Build a dictionary of slurm partitions filled with
@@ -88,7 +90,7 @@ class SlurmLauncher(Launcher):
            :returns: dict of Partition objects
         """
 
-        sinfo_output = self.sinfo(["--noheader", "--format", "%R %n %c"])
+        sinfo_output, sinfo_error = self.sinfo(["--noheader", "--format", "%R %n %c"])
 
         partitions = {}
         for line in sinfo_output.split("\n"):
@@ -116,7 +118,7 @@ class SlurmLauncher(Launcher):
         """Returns the default partition from slurm which is the partition with
            a star following its partition name in sinfo output
         """
-        sinfo_output = self.sinfo(["--noheader", "--format", "%P"])
+        sinfo_output, sinfo_error = self.sinfo(["--noheader", "--format", "%P"])
 
         default = None
         for line in sinfo_output.split("\n"):
@@ -172,32 +174,21 @@ class SlurmLauncher(Launcher):
         :return a string tuple (job_status, return_code)
         """
         job_id = str(job_id)
-        output,_ = execute_cmd(["sjobexitmod", "-l", job_id])
-        if not output:
+        sacct_out, sacct_error = self.sacct(["--noheader", "-p", "-b", "-j", job_id])
+        if not sacct_out:
             result = ("NOTFOUND","NAN")
         else:
-            for line in output.split("\n"):
+            for line in sacct_out.split("\n"):
                 if line.strip().startswith(job_id):
-                    line = line.split()
-                    stat =line[3]
-                    code = line[4].split(':')[0]
+                    line = line.split("|")
+                    stat = line[1]
+                    code = line[2].split(':')[0]
                     result = (stat, code)
                     break
             else:
                 result = ("NOTFOUND","NAN")
         return result
 
-    def get_sjob_stat(self, sub_job_id):
-        """Use the get_job_nodes function to determine the status of a job. If an error is not
-           raised when attempting to retrive the nodes, then the job is still running.
-           :param str sub_job_id: job id of the sub job of self.alloc
-           :returns: 1 if job is running -1 otherwise
-        """
-        try:
-            nodes = self.get_job_nodes(sub_job_id)
-            return 1
-        except LauncherError:
-            return -1
 
     def get_job_nodes(self, job_id):
         """ given a job_id, returns the list of nodes that job is running on
@@ -205,7 +196,7 @@ class SlurmLauncher(Launcher):
             :return a list of strings corresponding to nodes
         """
         jid = str(job_id)
-        output, error = execute_cmd(["sstat", jid, "-i", "-n", "-p", "-a"])
+        output, error = self.sstat([jid, "-i", "-n", "-p", "-a"])
         nodes = []
         if "error:" in error.split(" "):
             raise LauncherError("Could not find allocation for job: " + job_id)
@@ -242,10 +233,11 @@ class SlurmLauncher(Launcher):
         logger.debug(salloc)
         logger.debug("allocting %d nodes %d tasks/node, partition %s" %(nodes, ppn, partition))
 
-        _, err = execute_cmd(salloc)
+        #TODO figure out why this goes to stderr
+        returncode, _, err = execute_cmd(salloc)
         alloc_id = self._parse_salloc(err)
         if alloc_id:
-            logger.info("Allocation Successful with Job ID: %s" % alloc_id)
+            logger.info("Allocation successful with Job ID: %s" % alloc_id)
             # start sub_jobid counter
             self.alloc_ids[alloc_id] = 0
         else:
@@ -323,7 +315,6 @@ class SlurmLauncher(Launcher):
         else:
             subjob_id = ".".join((alloc_id, str(self.alloc_ids[alloc_id])))
             self.alloc_ids[alloc_id] += 1
-            self.subjob_ids.append(subjob_id)
             return subjob_id
 
     def stop(self, job_id):
@@ -331,19 +322,15 @@ class SlurmLauncher(Launcher):
 
             :param str job_id: sub job id with decimal increment to stop e.g. 64253.1
         """
-        if job_id not in self.subjob_ids:
-            raise LauncherError("Job id, " + str(job_id) + " not found.")
+        status, _ = self.get_job_stat(job_id)
+        if status != "COMPLETE":
+            cancel_cmd = ["scancel", job_id]
+            returncode, output, err = execute_cmd(cancel_cmd)
 
-        (cancel_cmd, cancel_err_mess) = self._get_free_cmd(job_id)
-        try:
-            _, err = execute_cmd(cancel_cmd, err_message=cancel_err_mess)
-
-        except CalledProcessError:
-            logger.info("Unable to cancel jobid %s" % job_id)
-            raise LauncherError(cancel_err_mess)
-
-        logger.info("Successfully canceled job %s" % job_id)
-        self.subjob_ids.remove(job_id)
+            if returncode != 0:
+                raise LauncherError("Unable to stop jobid %s" % job_id)
+            else:
+                logger.info("Successfully stopped job %s" % job_id)
 
     def _get_free_cmd(self, alloc_id):
         scancel = ["scancel", alloc_id]
@@ -391,3 +378,12 @@ class SlurmLauncher(Launcher):
         for k, v in env_vars.items():
             format_str += "," + "=".join((k,v))
         return format_str
+
+
+    def is_finished(self, status):
+        """Determines wether or not a job is finished based on the Slurm status"""
+
+        terminals = ["PENDING", "COMPLETING", "PREEMPTED", "RUNNING", "SUSPENDED", "STOPPED"]
+        if status in terminals:
+            return False
+        return True

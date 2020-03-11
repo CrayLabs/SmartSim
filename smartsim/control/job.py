@@ -13,17 +13,14 @@ class Job:
         self.entity = entity
         self.status = "NEW"
         self.nodes = None
+        self.returncode = None
 
     def get_job_id(self):
         return self.jid
 
-    def set_status(self, new_status):
-        if new_status == 1:
-            self.status = "RUNNING"
-        elif new_status == -1:
-            self.status = "COMPLETE"
-        else:
-            self.status = new_status
+    def set_status(self, new_status, returncode):
+        self.status = new_status
+        self.returncode = returncode
 
     def __str__(self):
         job = ("{}({}): {}")

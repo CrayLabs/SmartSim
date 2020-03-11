@@ -43,7 +43,7 @@ class Experiment:
                         an experiment. In order to stream data into the orchestrator or
                         recieve data from the orchestrator, one of the SmartSim clients
                         has to be used within a NumModel or SmartSimNode. Use
-                        experiment.register_connecition() to connect two entities within
+                        experiment.register_connection() to connect two entities within
                         SmartSim.
 
        :param str name: Name of the directory that will house all of
@@ -78,7 +78,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def stop(self, ensembles=None, models=None, nodes=None, orchestrator=False):
+    def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
         """Stop specific entities launched through SmartSim. This method is only
            applicable when launching with a workload manager.
 
@@ -88,7 +88,8 @@ class Experiment:
            :type models: list of Model objects
            :param nodes: SmartSimNodes to be stopped
            :type nodes: list of SmartSimNodes
-           :param bool orchestrator: if the orchestrator should be stopped as well
+           :param orchestrator: the orchestrator to be stoppped
+           :type orchestrator: instance of Orchestrator
            :raises: SmartSimError
         """
         try:
@@ -96,7 +97,7 @@ class Experiment:
                 ensembles=ensembles,
                 models=models,
                 nodes=nodes,
-                stop_orchestrator=orchestrator
+                orchestrator=orchestrator
             )
         except SmartSimError as e:
             logger.error(e)
@@ -109,35 +110,31 @@ class Experiment:
             :raises: SmartSimError
         """
         try:
-            orc = False
-            if self.orc:
-                orc = True
             self._control.stop(
                 ensembles=self.ensembles,
                 nodes=self.nodes,
-                stop_orchestrator=orc
+                orchestrator=self.orch
                 )
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def release(self, partition=None):
+    def release(self):
         """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources. To free all resources on all partitions, invoke
-           without passing a partition argument.
+           and freeing up resources.
 
-           :param str partition: name of the partition where the allocation is running
            :raises: SmartSimError
         """
         try:
-            self._control.release(partition=partition)
+            self._control.release()
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def poll(self, interval=20, poll_db=False, verbose=True):
-        """Poll the running simulations and recieve logging
-           output with the status of the job.
+    def poll(self, interval=10, poll_db=False, verbose=True):
+        """Poll the running simulations and recieve logging output with the status
+           of the job. If polling the database, jobs will continue until database
+           is manually shutdown.
 
            :param int interval: number of seconds to wait before polling again
            :param bool poll_db: poll dbnodes for status as well and see
@@ -152,17 +149,16 @@ class Experiment:
             raise
 
 
-    def finished(self, ignore_db=True, verbose=True):
-        """Poll all simulations and return a boolean for
-           if all jobs are finished or not.
+    def finished(self, entity):
+        """Return a boolean indicating wether or not a job has finished.
 
-           :param bool verbose: set verbosity
-           :param bool ignore_db: return true even if the orchestrator nodes are still running
-           :returns: True or False for if all models have finished
-           :raises: SmartSimError
+           :param entity: object launched by SmartSim. One of the following:
+                          (SmartSimNode, NumModel, Orchestrator, Ensemble)
+           :type entity: SmartSimEntity
+           :returns: bool
         """
         try:
-            return self._control.finished(ignore_db, verbose)
+            return self._control.finished(entity)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -209,6 +205,34 @@ class Experiment:
                 node_files=node_files,
                 **kwargs
             )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
+    def get_status(self, entity):
+        """Get the status of a running job that was launched through a workload manager.
+           Ensembles, Orchestrator, SmartSimNodes, and NumModel instances can all be passed
+           to have their status returned as a string. The type of string and content will
+           depend on the workload manager being used.
+
+           :param entity: The SmartSimEntity object that was launched to check the status of
+           :type entity: SmartSimEntity
+           :returns: status of the entity
+           :rtype: list if entity contains sub-entities such as cluster Orchestrator or Ensemble
+           :raises: SmartSimError
+        """
+        try:
+            if isinstance(entity, Ensemble):
+                return self._control.get_ensemble_status(entity)
+            elif isinstance(entity, Orchestrator):
+                return self._control.get_orchestrator_status(entity)
+            elif isinstance(entity, NumModel):
+                return self._control.get_model_status(entity)
+            elif isinstance(entity, SmartSimNode):
+                return self._control.get_node_status(entity)
+            else:
+                raise SmartSimError(
+                    f"entity argument was of type {type(entity)} not SmartSimEntity")
         except SmartSimError as e:
             logger.error(e)
             raise

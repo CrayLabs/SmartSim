@@ -39,12 +39,9 @@ class JobManager:
         else:
             self.jobs[name] = job
 
-
     def get_db_nodes(self):
         """Return a list of database nodes for cluster creation"""
         nodes = []
         for db_job in self.db_jobs.values():
             nodes.extend(db_job.nodes)
         return nodes
-
-

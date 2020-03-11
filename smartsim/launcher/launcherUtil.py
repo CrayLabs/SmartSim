@@ -71,14 +71,13 @@ def write_to_bash(cmd, name):
         for line in cmd:
             destFile.write("%s\n" % line)
 
-def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
+def execute_cmd(cmd_list, shell=False, cwd=None, verbose=False):
     """
         This is the function that runs a shell command and returns the output
         It will raise exceptions if the commands did not run successfully
+
         :param cmd_list: The command to be excuted
         :type cmd_list: List of str, optional str
-        :param str err_message: Error message for logger in event of
-                non-zero process return code
         :param shell: The shell argument (which defaults to False)
                 specifies whether to use the shell as the program to execute.
                 If shell is True, it is recommended to pass args
@@ -87,8 +86,7 @@ def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
         :type cwd: str
         :param verbose: Boolean for verbose output
         :type verbose: bool
-        :raises: CalledProcessError
-        :returns: tuple of str for output and error messages
+        :returns: tuple of process returncode, output and error messages
     """
     if verbose:
         logger.info("Executing shell command: %s" % " ".join(cmd_list))
@@ -101,12 +99,6 @@ def execute_cmd(cmd_list, err_message="", shell=False, cwd=None, verbose=False):
         logger.error("Exception while attempting to start a shell process")
         raise e
 
-    if proc.returncode is not 0:
-        logger.error("Command \"%s\" returned non-zero" % " ".join(cmd_list))
-        logger.error(err.decode('utf-8'))
-        logger.error(err_message)
-        # raise exception removed: no need to throw an exception here!
-
     # decoding the output and err and return as a string tuple
-    return (out.decode('utf-8'), err.decode('utf-8'))
+    return proc.returncode, out.decode('utf-8'), err.decode('utf-8')
 

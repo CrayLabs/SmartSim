@@ -71,6 +71,26 @@ def create_cluster(nodes, port):
         logger.debug(out)
         logger.info("KeyDB Cluster has been created with %s nodes" % str(len(nodes)))
 
+def kill_db_node(hostname, port):
+    """Kill all the db nodes in a cluster or a standalone database.
+
+       :param str hostname: the node the database instance was launched on
+       :param int port: port the database nodes were launched on
+    """
+    cmd = " ".join(("keydb-cli -h", hostname, "-p", str(port), "shutdown"))
+    proc = Popen(cmd, stderr=PIPE, stdout=PIPE, shell=True)
+
+    try:
+        output, errs = proc.communicate()
+        if proc.returncode != 0:
+            logger.debug(errs)
+            raise SmartSimError("Communication failed attempting to shutdown database nodes")
+    except TimeoutExpired:
+        proc.kill()
+        output, errs = proc.communicate()
+        logger.debug(errs)
+        raise SmartSimError("Communication failed attempting to shutdown database nodes")
+
 def check_cluster_status(nodes, port):
     """Check the status of the cluster and ensure that all nodes are up and running"""
     node_list = []

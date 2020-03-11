@@ -21,6 +21,8 @@ def slurm_controller_test(test_function):
         mkdir(experiment_dir)
         copyfile('./test_configs/sleep.py',
                  experiment_dir + "sleep.py")
+        copyfile('./test_configs/bad.py',
+                 experiment_dir + "bad.py")
 
         test_function()
 

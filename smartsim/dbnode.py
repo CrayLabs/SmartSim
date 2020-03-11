@@ -8,6 +8,7 @@ class DBNode(SmartSimEntity):
         name = "orchestrator_" + str(dbnodenum)
         super().__init__(name, path, "db", run_settings)
         self.setup_dbnode(cluster, port)
+        self.port = port
 
     def setup_dbnode(self, cluster, port):
         conf_path = "".join((get_env("ORCCONFIG"), "smartsimdb.conf "))
