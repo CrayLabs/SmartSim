@@ -59,7 +59,7 @@ include_directories(SYSTEM
 add_executable(client_tester
   parallel_driver.F90
   unit_test.F90
-  ../../../clients/client.F90
+  ../../../clients/fortran_client.F90
   ../../../clients/client.cc
   ../../../utils/protobuf/ss_protob_array.pb.cc
 )
