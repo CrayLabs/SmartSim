@@ -72,7 +72,12 @@ class Experiment:
         try:
             if not self._control._launcher:
                 self._control.init_launcher(launcher)
-            self._control.start(self.ensembles, self.nodes, self.orc)
+            self._control.start(
+                ensembles=self.ensembles,
+                nodes=self.nodes,
+                orchestrator=self.orc,
+                duration=duration
+            )
 
         except SmartSimError as e:
             logger.error(e)
