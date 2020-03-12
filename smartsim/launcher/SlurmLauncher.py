@@ -245,7 +245,6 @@ class SlurmLauncher(Launcher):
         return str(alloc_id)
 
 
-
     def run_on_alloc(self, cmd, alloc_id, nodes=None, ppn=None, duration="", add_opts=None,
                     partition=None, cwd="", env_vars=None, out_file=None, err_file=None):
         """Build and call "srun" on a user provided command within an allocation.
@@ -383,7 +382,16 @@ class SlurmLauncher(Launcher):
     def is_finished(self, status):
         """Determines wether or not a job is finished based on the Slurm status"""
 
-        terminals = ["PENDING", "COMPLETING", "PREEMPTED", "RUNNING", "SUSPENDED", "STOPPED"]
+        terminals = [
+            "PENDING",
+            "COMPLETING",
+            "PREEMPTED",
+            "RUNNING",
+            "SUSPENDED",
+            "STOPPED",
+            "NOTFOUND"
+            ]
+
         if status in terminals:
             return False
         return True

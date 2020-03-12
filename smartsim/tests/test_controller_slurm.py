@@ -10,7 +10,7 @@ from smartsim import Experiment
 from smartsim.utils import get_logger
 from smartsim.control import Controller
 from smartsim.tests.decorators import slurm_controller_test
-from smartsim.error import SmartSimError
+from smartsim.error import SmartSimError, LauncherError
 
 # create some entities for testing
 test_path = path.join(getcwd(),  "./controller_test/")
@@ -107,9 +107,10 @@ def test_stop_all():
 
 # Error handling test cases
 
-run_settings_immediate_failure = {
+run_settings_bad_partition = {
     "ppn": 1,
     "nodes": 1,
+    "partition": "not-a-partition",
     "executable": "python bad.py"
 }
 run_settings_report_failure = {
@@ -119,18 +120,19 @@ run_settings_report_failure = {
     "exe_args": "--time 10"
 }
 
-exp_3 = Experiment("test_immediate_failure")
-M3 = exp_3.create_model("m3", path=test_path, run_settings=run_settings_immediate_failure)
+exp_3 = Experiment("test_bad_partition")
+M3 = exp_3.create_model("m3", path=test_path, run_settings=run_settings_bad_partition)
 
 exp_4 = Experiment("test_report_failure")
 M4 = exp_4.create_model("m4", path=test_path, run_settings=run_settings_report_failure)
 
 
 @slurm_controller_test
-def test_catch_failure():
-    """Test when a failure inside a model occurs right after launch"""
-    with pytest.raises(SmartSimError):
+def test_bad_partition():
+    """Test when a user request a bad partition"""
+    with pytest.raises(LauncherError):
         ctrl.start(exp_3.ensembles)
+    ctrl.release()
 
 
 @slurm_controller_test
@@ -142,3 +144,4 @@ def test_failed_status():
     status = ctrl.get_model_status(M4)
     assert(status == "FAILED")
     ctrl.release()
+

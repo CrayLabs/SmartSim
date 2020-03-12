@@ -34,5 +34,10 @@ class AllocHandler:
 
            :param str partition: supplied by release. partition to be freed
         """
-        self.partitions.pop(partition)
-        self.allocs.pop(partition)
+        # accept keyerror for the case where partition has been populated
+        # but no allocation has been given
+        try:
+            self.partitions.pop(partition)
+            self.allocs.pop(partition)
+        except KeyError:
+            pass

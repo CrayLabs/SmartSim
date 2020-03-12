@@ -478,11 +478,16 @@ class Controller():
     def _validate_allocations(self):
         """Validate the allocations with specific requirements provided by the user."""
         for partition, nodes in self._alloc_handler.partitions.items():
-            if partition == "default":
-                partition = None
-            self._launcher.validate(nodes=nodes[0],
-                                    ppn=nodes[1],
-                                    partition=partition)
+            try:
+                part = partition
+                if partition == "default":
+                    part = None
+                self._launcher.validate(nodes=nodes[0],
+                                        ppn=nodes[1],
+                                        partition=part)
+            except LauncherError as e:
+                self._alloc_handler._remove_alloc(partition)
+                raise e
 
     def _get_allocations(self, duration):
         """Validate and retrieve n allocations where n is the number of partitions
@@ -534,7 +539,7 @@ class Controller():
             for node in nodes:
                 try:
                     self._launch_on_alloc(node, orchestrator)
-                    self.get_job_nodes(self._jobs[node.name])
+                    #self.get_job_nodes(self._jobs[node.name])
                 except LauncherError as e:
                     logger.error(
                         "An error occured when launching SmartSimNodes\n" +
@@ -551,7 +556,7 @@ class Controller():
                     try:
                         run_settings = model.get_run_settings()
                         self._launch_on_alloc(model, orchestrator)
-                        self.get_job_nodes(self._jobs[model.name])
+                        #self.get_job_nodes(self._jobs[model.name])
                     except LauncherError as e:
                         logger.error(
                             "An error occured when launching model ensembles.\n" +
