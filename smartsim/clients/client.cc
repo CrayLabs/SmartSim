@@ -119,7 +119,23 @@ void SmartSimClient::_place_nd_array_double_values(void* value, int* dims, int n
 void SmartSimClient::_put_to_keydb(const char* key, std::string& value)
 {
   std::string prefixed_key = _build_put_key(key);
-  bool success = redis_cluster.set(prefixed_key.c_str(), value);
+
+  int n_trials = 5;
+  bool success = false;
+  
+  while(n_trials > 0) {
+    try {
+      success = redis_cluster.set(prefixed_key.c_str(), value);
+      n_trials = -1;
+    }
+    catch (sw::redis::IoError& e) {
+      n_trials--;
+      std::cout<<"WARNING: Caught redis IOError: "<<e.what()<<std::endl;
+      std::cout<<"WARNING: Could not set key "<<prefixed_key<<" in database. "<<n_trials<<" more trials will be made."<<std::endl;
+    }
+  }
+  if(n_trials == 0)
+    throw std::runtime_error("Could not set "+prefixed_key+" in database due to redis IOError.");
 
   if(!success)
     throw std::runtime_error("KeyDB failed to receive key: " + std::string(key));
@@ -154,8 +170,24 @@ std::string SmartSimClient::_build_get_key(const char* key)
 std::string SmartSimClient::_get_from_keydb(const char* key)
 {
   std::string prefixed_key = _build_get_key(key);
-  sw::redis::OptionalString value = redis_cluster.get(prefixed_key.c_str());
-  
+
+  int n_trials = 5;
+  sw::redis::OptionalString value;
+
+  while(n_trials > 0) {
+    try {
+      value = redis_cluster.get(prefixed_key.c_str());
+      n_trials = -1;
+    }
+    catch (sw::redis::IoError& e) {
+      n_trials--;
+      std::cout<<"WARNING: Caught redis IOError: "<<e.what()<<std::endl;
+      std::cout<<"WARNING: Could not get key "<<prefixed_key<<" from database. "<<n_trials<<" more trials will be made."<<std::endl;
+    }
+  }
+  if(n_trials == 0)
+    throw std::runtime_error("Could not retreive "+prefixed_key+" from database due to redis IOError.");
+
   if(!value)
     throw std::runtime_error("The key " + std::string(key) + "could not be retrieved from the database");
 
