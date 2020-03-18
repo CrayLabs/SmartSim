@@ -81,13 +81,15 @@ subroutine get_array_double(ssc_obj, key, array)
 
   character(kind=c_char) :: c_key(len(trim(key))+1)
   type(c_ptr) :: array_ptr
+  integer :: ndims, i
   integer, dimension(:), allocatable :: rev_dims
-  integer :: ndims
-
-  allocate(rev_dims(ndims))
 
   ndims = size(shape(array))
-  call flip_dims( shape(array), rev_dims, ndims )  
+  allocate(rev_dims(ndims))
+
+  do i=1,ndims
+    rev_dims(i) = size(array,ndims+1-i)
+  enddo
 
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
@@ -104,18 +106,5 @@ function make_c_string( f_string ) result(c_string)
   c_string = transfer(trim(f_string)//c_null_char,c_string)
 
 end function make_c_string
-
-subroutine flip_dims( dims, rev_dims, ndims )
-  integer, dimension(:) :: dims
-  integer, dimension(:) :: rev_dims
-  integer               :: ndims
-
-  integer :: i
-
-  do i = 1,ndims
-    rev_dims = dims( ndims+1-i)
-  enddo
-
-end subroutine flip_dims 
 
 end module client_fortran_api 

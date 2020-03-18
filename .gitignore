@@ -1,3 +1,6 @@
 .vscode
 __pycache__
 .ipynb_checkpoints
+
+# Dependencies
+third-party

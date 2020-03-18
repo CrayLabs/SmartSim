@@ -19,6 +19,20 @@ class SlurmLauncher(Launcher):
         super().__init__(*args, **kwargs)
         self.alloc_partition = None
 
+    class ComputeNode():
+
+        def __init__(self, node_name=None, node_ppn=None):
+            self.name = node_name
+            self.ppn = node_ppn
+
+        def _is_valid_node(self):
+            if self.name is None:
+                return False
+            if self.ppn is None:
+                return False
+
+            return True
+
     class Partition():
 
         def __init__(self):
@@ -30,12 +44,11 @@ class SlurmLauncher(Launcher):
 
             if self.name is None:
                 return False
-            if self.min_ppn is None:
-                return False
-            if self.min_ppn<=0:
-                return False
             if len(self.nodes)<=0:
                 return False
+            for node in self.nodes:
+                if not node._is_valid_node():
+                    return False
 
             return True
 
@@ -106,11 +119,9 @@ class SlurmLauncher(Launcher):
 
             if not p_name in partitions:
                 partitions.update({p_name:self.Partition()})
+
             partitions[p_name].name = p_name
-            partitions[p_name].nodes.add(p_node)
-            if not partitions[p_name].min_ppn:
-                partitions[p_name].min_ppn = p_ppn
-            partitions[p_name].min_ppn = min(p_ppn, partitions[p_name].min_ppn)
+            partitions[p_name].nodes.add(self.ComputeNode(node_name=p_node, node_ppn=p_ppn))
 
         return partitions
 
@@ -131,39 +142,34 @@ class SlurmLauncher(Launcher):
 
     def validate(self, nodes=None, ppn=None, partition=None):
         """Check that there are sufficient resources in the provided Slurm partitions.
-            :param str partition: partition to validate
-            :param nodes: Override the default node count to validate
-            :type nodes: int
-            :param ppn: Override the default processes per node to validate
-            :type ppn: int
-            :raises: LauncherError
+           :param str partition: partition to validate
+           :param nodes: Override the default node count to validate
+           :type nodes: int
+           :param ppn: Override the default processes per node to validate
+           :type ppn: int
+           :raises: LauncherError
         """
-
         sys_partitions = self._get_system_partition_info()
 
         n_avail_nodes = 0
         avail_nodes = set()
-        min_ppn = None
 
-        p = partition
-        if not partition:
-            p = self._get_default_partition()
+        p_name = partition
+        if p_name is None:
+            p_name = self._get_default_partition()
 
-        if not p in sys_partitions:
-            raise LauncherError("Partition {0} is not found on this system".format(p))
-        avail_nodes = avail_nodes.union(sys_partitions[p].nodes)
-        if not min_ppn:
-            min_ppn = sys_partitions[p].min_ppn
-        else:
-            min_ppn = min(sys_partitions[p].min_ppn, min_ppn)
+        if not p_name in sys_partitions:
+            raise LauncherError("Partition {0} is not found on this system".format(p_name))
+
+        for node in sys_partitions[p_name].nodes:
+            if node.ppn >= ppn:
+                avail_nodes.add(node)
 
         n_avail_nodes = len(avail_nodes)
         logger.debug("Found {0} nodes that match the constraints provided".format(n_avail_nodes))
         if n_avail_nodes<nodes:
             raise LauncherError("{0} nodes are not available on the specified partitions.  Only "\
                                 "{1} nodes available.".format(nodes,n_avail_nodes))
-        #if min_ppn < ppn:
-        #	raise LauncherError("{0} ppn is not available on each node.".format(min_ppn))
 
         logger.info("Successfully validated Slurm with sufficient resources")
 
@@ -377,7 +383,6 @@ class SlurmLauncher(Launcher):
         for k, v in env_vars.items():
             format_str += "," + "=".join((k,v))
         return format_str
-
 
     def is_finished(self, status):
         """Determines wether or not a job is finished based on the Slurm status"""
