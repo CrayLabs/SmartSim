@@ -1,11 +1,14 @@
 import pickle
 import sys
+import zmq
+
 from os import path, mkdir, listdir, getcwd
 from .error import SmartSimError, SSConfigError
 from .ensemble import Ensemble
 from .model import NumModel
 from .orchestrator import Orchestrator
 from .smartSimNode import SmartSimNode
+from .entity import SmartSimEntity
 from .generation import Generator
 from .control import Controller
 
@@ -458,6 +461,13 @@ class Experiment:
            :raises: SmartSimError
         """
         try:
+            if isinstance(sender, SmartSimEntity):
+                sender = sender.name
+            if isinstance(reciever, SmartSimEntity):
+                reciever = reciever.name
+            if not isinstance(sender, str) or not isinstance(reciever, str):
+                raise SmartSimError(
+                    "Arguments to register connection must either be a str or a SmartSimEntity")
             if not self.orc:
                 raise SmartSimError("Create orchestrator to register connections")
             else:
@@ -476,6 +486,10 @@ class Experiment:
            :raises SmartSimError: if ensemble doesnt exist
         """
         try:
+            if isinstance(name, SmartSimEntity):
+                name = name.name
+            if not isinstance(name, str):
+                raise SmartSimError("Argument to delete_ensemble must be of type str")
             ensemble_deleted = False
             for t in self.ensembles:
                 if t.name == name:
@@ -497,6 +511,11 @@ class Experiment:
            :raises: SmartSimError if model is not found
         """
         try:
+            if not isinstance(ensemble, str):
+                raise SmartSimError("Ensemble argument to get_model must be of type str")
+            if not isinstance(model, str):
+                raise SmartSimError("Model argument to get_model must be of type str")
+
             ensemble = self.get_ensemble(ensemble)
             model = ensemble[model]
             return model
@@ -515,6 +534,8 @@ class Experiment:
            :raises: SmartSimError
         """
         try:
+            if not isinstance(ensemble, str):
+                raise SmartSimError("Argument to get_ensemble must be of type str")
             for t in self.ensembles:
                 if t.name == ensemble:
                     return t
@@ -532,6 +553,8 @@ class Experiment:
            :raises: SmartSimError
         """
         try:
+            if not isinstance(node, str):
+                raise SmartSimError("Argument to get_node must be of type str")
             for n in self.nodes:
                 if n.name == node:
                     return n
@@ -540,6 +563,67 @@ class Experiment:
             logger.error(e)
             raise
 
+    def get_db_address(self):
+        """Get the TCP address of the orchestrator returned by pinging the
+           domain name used by the workload manager e.g. nid00004 returns
+           127.0.0.1
+
+           :returns: tcp address of orchestrator
+           :rtype: returns a list if clustered orchestrator
+           :raises: SSConfigError
+           :raises: SmartSimError
+        """
+        if not self.orc:
+            raise SSConfigError("No orchestrator has been initialized")
+        addresses = []
+        for dbnode in self.orc.dbnodes:
+            job = self._control.get_job(dbnode.name)
+            if not job.nodes:
+                raise SmartSimError("Database has not been launched yet")
+            for address in job.nodes:
+                addr = ":".join((address, str(dbnode.port)))
+                addresses.append(addr)
+        if len(addresses) < 1:
+            raise SmartSimError("Could not find nodes Database was launched on")
+        return addresses
+
+    def init_remote_launcher(self, launcher="slurm", addr="127.0.0.1", port=5555):
+        """Initialize a remote launcher so that SmartSim can be run on compute
+           nodes where slurm and other workload manager commands are not available.
+           Remote launchers must be located on the same system, and be reachable
+           via tcp.
+
+           :param str launcher: Workload manager, default is "slurm" (currently only option)
+           :param str addr: Address of the running remote command center
+           :param int port: port the command center is running on
+           :raises: SSConfigError
+        """
+        self._control.init_launcher(launcher=launcher, remote=True, addr=addr, port=port)
+
+        # test to see if cmd_center has been spun up
+        context = zmq.Context()
+        socket = context.socket(zmq.REQ)
+        socket.setsockopt(zmq.SNDTIMEO, 1000)
+        socket.setsockopt(zmq.LINGER, 0)
+        address = "tcp://" + ":".join((addr, str(port)))
+        socket.connect(address)
+        try:
+            socket.send(pickle.dumps((["PING"], None, None, None, None)))
+
+            poller = zmq.Poller()
+            poller.register(socket, zmq.POLLIN)
+            if poller.poll(1*1000):
+                msg = socket.recv()
+                logger.debug(pickle.loads(msg))
+            else:
+                raise SmartSimError(
+                    f"Could not find command center at address {address}")
+        except zmq.error.Again:
+            raise SmartSimError(
+                f"Could not find command center at address {address}")
+        finally:
+            socket.close()
+            context.term()
 
     def __str__(self):
         experiment_str = "\n-- Experiment Summary --\n"

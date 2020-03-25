@@ -138,14 +138,19 @@ def test_validate_fail_ppn_one_partition():
     with pytest.raises(LauncherError):
         slurm.validate(nodes=1, ppn=max_ppn+1, partition=p_name)
 
-def test_run_on_alloc():
-    pass
+
+slurm = SlurmLauncher()
 
 def test_get_alloc():
-    pass
+    """Test getting an allocation on the default partition"""
+    slurm.get_alloc(nodes=1)
+    assert(len(slurm.alloc_manager().values()) == 1)
+    slurm.free_alloc(list(slurm.alloc_manager().keys())[0])
 
-def test_get_job_status():
-    pass
 
-def test_free_alloc():
-    pass
+# Error handling cases
+
+def test_bad_partition_get_alloc():
+    """Test getting an allocation on a non-existant partition"""
+    with pytest.raises(LauncherError):
+        slurm.get_alloc(nodes=1, partition="not-a-partition")

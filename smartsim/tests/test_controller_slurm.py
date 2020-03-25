@@ -35,6 +35,7 @@ C1 = exp_2.create_orchestrator(path=test_path, cluster_size=3)
 # init slurm controller for testing
 ctrl = Controller()
 ctrl.init_launcher("slurm")
+#ctrl.init_launcher("slurm", remote=True) # uncomment to test remote tests
 
 @slurm_controller_test
 def test_ensemble():

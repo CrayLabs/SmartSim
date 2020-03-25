@@ -2,6 +2,7 @@ import os
 from subprocess import Popen, PIPE, CalledProcessError
 from datetime import datetime
 
+
 from ..utils import get_logger
 logger = get_logger(__name__)
 
@@ -70,35 +71,4 @@ def write_to_bash(cmd, name):
     with open(name, 'w') as destFile:
         for line in cmd:
             destFile.write("%s\n" % line)
-
-def execute_cmd(cmd_list, shell=False, cwd=None, verbose=False):
-    """
-        This is the function that runs a shell command and returns the output
-        It will raise exceptions if the commands did not run successfully
-
-        :param cmd_list: The command to be excuted
-        :type cmd_list: List of str, optional str
-        :param shell: The shell argument (which defaults to False)
-                specifies whether to use the shell as the program to execute.
-                If shell is True, it is recommended to pass args
-                as a string rather than as a sequence.
-        :param cwd: The current working directory
-        :type cwd: str
-        :param verbose: Boolean for verbose output
-        :type verbose: bool
-        :returns: tuple of process returncode, output and error messages
-    """
-    if verbose:
-        logger.info("Executing shell command: %s" % " ".join(cmd_list))
-    # spawning the subprocess and connecting to its output
-    proc = Popen(cmd_list, stdout=PIPE, stderr=PIPE, shell=shell, cwd=cwd)
-    try:
-        # waiting for the process to terminate and capture its output
-        out, err = proc.communicate()
-    except CalledProcessError as e:
-        logger.error("Exception while attempting to start a shell process")
-        raise e
-
-    # decoding the output and err and return as a string tuple
-    return proc.returncode, out.decode('utf-8'), err.decode('utf-8')
 

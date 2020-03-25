@@ -16,8 +16,7 @@ class DBNode(SmartSimEntity):
 
         if cluster:
             conf_path += "--cluster-enabled yes "
-            cluster_conf = "nodes-" + self.name + "-" + str(
-                port) + ".conf"
+            cluster_conf = "nodes-" + self.name + "-" + str(port) + ".conf"
             cluster_file = " ".join(("--cluster-config-file ", cluster_conf))
         exe_args = " ".join((conf_path, "--port", str(port), cluster_file))
 

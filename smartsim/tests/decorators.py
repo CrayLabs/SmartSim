@@ -4,6 +4,9 @@ import pytest
 from os import path, mkdir
 from decorator import decorator
 from shutil import rmtree, which, copyfile
+from subprocess import Popen, PIPE
+from smartsim.utils import get_logger
+logger = get_logger()
 
 
 def slurm_controller_test(test_function):

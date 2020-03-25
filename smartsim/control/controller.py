@@ -15,7 +15,6 @@ from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherEr
 
 from .job import Job
 from .jobmanager import JobManager
-from .dbcluster import create_cluster, check_cluster_status, kill_db_node
 from ..utils import get_config
 
 from ..utils import get_logger
@@ -161,6 +160,10 @@ class Controller():
            :param str name: name of the entity launched by the Controller
            :raises: SmartSimError
         """
+        if isinstance(name, SmartSimEntity):
+            name = name.name
+        if not isinstance(name, str):
+            raise SmartSimError("Argument to get_job must be a string")
         try:
             return self._jobs[name]
         except KeyError:
@@ -174,7 +177,7 @@ class Controller():
            :param Job job: A job instance
            :param int wait: time for wait before checking nodelist after job has been launched
                             defaults to 5 seconds.
-           :returns: list of hostnames given a job or dict of job_name -> nodelist
+           :returns: list of hostnames given a job
            :raises: SSConfigError if called when using local launcher
            :raises: SmartSimError if job argument is not a Job object
         """
@@ -312,12 +315,16 @@ class Controller():
         return self._get_status(node)
 
 
-    def init_launcher(self, launcher):
+    def init_launcher(self, launcher, remote=False, addr="127.0.0.1", port=5555):
         """Run with a specific type of launcher"""
         if launcher is not None:
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
-                self._launcher = SlurmLauncher()
+                self._launcher = SlurmLauncher(
+                    remote=remote,
+                    cmd_center_addr=addr,
+                    cmd_center_port=port
+                )
             # Run all ensembles locally
             elif launcher == "local":
                 self._launcher = LocalLauncher()
@@ -513,8 +520,8 @@ class Controller():
             if len(orchestrator.dbnodes) > 2:
                 db_nodes = self._jobs.get_db_nodes()
                 port = orchestrator.port
-                create_cluster(db_nodes, port)
-                check_cluster_status(db_nodes, port)
+                self._launcher.create_cluster(db_nodes, port)
+                self._launcher.check_cluster_status(db_nodes, port)
 
         if nodes:
             for node in nodes:

@@ -6,7 +6,7 @@ import sys
 
 from .launcher import Launcher
 from subprocess import PIPE, Popen, CalledProcessError
-from .launcherUtil import seq_to_str, execute_cmd, write_to_bash
+from .launcherUtil import seq_to_str, write_to_bash
 from ..error import LauncherError
 
 from ..utils import get_logger, get_env
@@ -59,7 +59,7 @@ class SlurmLauncher(Launcher):
         """
 
         cmd = ["sstat"] + args
-        returncode, out, error = execute_cmd(cmd)
+        returncode, out, error = self.execute_cmd(cmd)
         return out, error
 
     def sacct(self, args):
@@ -70,7 +70,7 @@ class SlurmLauncher(Launcher):
            :returns: Output and error of sacct
         """
         cmd = ["sacct"] + args
-        returncode, out, error = execute_cmd(cmd)
+        returncode, out, error = self.execute_cmd(cmd)
         return out, error
 
     def salloc(self, args):
@@ -81,7 +81,7 @@ class SlurmLauncher(Launcher):
         """
 
         cmd = ["salloc"] + args
-        returncode, out, error = execute_cmd(cmd)
+        returncode, out, error = self.execute_cmd(cmd)
         return out, error
 
     def sinfo(self, args):
@@ -92,7 +92,7 @@ class SlurmLauncher(Launcher):
         """
 
         cmd = ["sinfo"] + args
-        returncode, out, error = execute_cmd(cmd)
+        returncode, out, error = self.execute_cmd(cmd)
         return out, error
 
 
@@ -267,7 +267,7 @@ class SlurmLauncher(Launcher):
         logger.debug("allocting %d nodes on partition %s" %(nodes, partition))
 
         #TODO figure out why this goes to stderr
-        returncode, _, err = execute_cmd(salloc)
+        returncode, _, err = self.execute_cmd(salloc)
         alloc_id = self._parse_salloc(err)
         if alloc_id:
             logger.info("Allocation successful with Job ID: %s" % alloc_id)
@@ -341,7 +341,7 @@ class SlurmLauncher(Launcher):
         srun += [cmd]
         logger.debug(seq_to_str(srun))
 
-        status = self._run_asynch_command(seq_to_str(srun), cwd)
+        status = self.execute_cmd([seq_to_str(srun)], cwd=cwd, is_async=True)
         if status == -1:
             raise LauncherError("Failed to run on allocation")
         else:
@@ -355,7 +355,7 @@ class SlurmLauncher(Launcher):
         status, _ = self.get_job_stat(job_id)
         if status != "COMPLETE":
             cancel_cmd = ["scancel", job_id]
-            returncode, output, err = execute_cmd(cancel_cmd)
+            returncode, output, err = self.execute_cmd(cancel_cmd)
 
             if returncode != 0:
                 raise LauncherError("Unable to stop jobid %s" % job_id)
@@ -394,14 +394,6 @@ class SlurmLauncher(Launcher):
         if to_string:
             return seq_to_str(salloc, add_equal=True)
         return salloc
-
-    def _run_asynch_command(self, cmd, cwd):
-        try:
-            popen_obj = Popen(cmd, cwd=cwd, shell=True)
-        except OSError as err:
-            logger.error(err)
-            return -1
-        return 1
 
     def _format_env_vars(self, env_vars):
         """Slurm takes exports in comma seperated lists

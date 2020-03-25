@@ -69,3 +69,13 @@ def test_duplicate_orchestrator_error():
 
     with pytest.raises(SmartSimError):
         experiment.create_orchestrator()
+
+def test_remote_launch():
+    """Test the setup of a remote launcher when a cmd_center has
+       not been launched
+
+       Test assumes that cmd_center is not running
+    """
+    experiment = Experiment("test")
+    with pytest.raises(SmartSimError):
+        experiment.init_remote_launcher()
