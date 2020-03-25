@@ -2,6 +2,15 @@ import pytest
 from os import path
 from smartsim.tests.clients.client_test_shell import compiled_client_test_builder
 
+
+def test_poll_and_key_value_check_int64_cpp():
+    """ This funtion tests putting a two dimensional
+        array into the database and then gets it from
+        the database and does a comparison.
+    """
+    test_path = path.dirname(path.abspath(__file__))
+    assert(compiled_client_test_builder(test_path, "poll_and_key_value_check_int64", ""))
+
 def test_put_get_one_dimensional_array_cpp():
     """ This funtion tests putting a one dimensional
         array into the database and then gets it from

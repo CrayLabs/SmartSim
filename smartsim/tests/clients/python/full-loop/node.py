@@ -1,4 +1,3 @@
-
 from smartsim import Client
 
 class Node():
@@ -10,10 +9,10 @@ class Node():
         i = 0
         while i <= 19:
             # recieve data from the simulation
-            data = self.client.get_data(str(i), "float64", wait=True)
+            data = self.client.get_array_nd_float64(str(i), wait=True)
             print("Recieving data for key", str(i), flush=True)
 
-            self.client.send_data(str(i), data)
+            self.client.put_array_nd_float64(str(i), data)
             i+=1
 
 

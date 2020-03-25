@@ -30,11 +30,15 @@ void test_3d_put_cpp(int dim1, int dim2, int dim3, std::string key_suffix="")
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &n_ranks);
   
-  key = "3d_test_with_nd_rank_"+std::to_string(rank)+"_"+key_suffix;
+  key = "3d_test_with_rank_"+std::to_string(rank)+"_"+key_suffix;
 
   double startPutTime = MPI_Wtime();
-  client.put_nd_array_double(key.c_str(), arr, dims, 3);
+  client.put_array_double(key.c_str(), arr, dims, 3);
   double endPutTime = MPI_Wtime();
+
+  if(!client.exists(key.c_str()))
+    throw std::runtime_error("Key existence could not be verified with key_exists()");
+
 
   MPI_Barrier(MPI_COMM_WORLD);
   double globalSumPutTime = 0;
@@ -63,7 +67,7 @@ void test_3d_put_cpp(int dim1, int dim2, int dim3, std::string key_suffix="")
   }
 
   double startGetTime = MPI_Wtime();
-  client.get_nd_array_double(key.c_str(), result, dims, 3);
+  client.get_array_double(key.c_str(), result, dims, 3);
   double endGetTime = MPI_Wtime();
 
   MPI_Barrier(MPI_COMM_WORLD);

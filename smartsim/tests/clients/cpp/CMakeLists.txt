@@ -55,7 +55,7 @@ include_directories(SYSTEM
 add_executable(client_tester_1D
   client_test_1D.cpp
   ../../../clients/client.cc
-  ../../../utils/protobuf/ss_protob_array.pb.cc
+  ../../../utils/protobuf/smartsim_protobuf.pb.cc
 )
 
 target_link_libraries(client_tester_1D
@@ -68,7 +68,7 @@ target_link_libraries(client_tester_1D
 add_executable(client_tester_2D
   client_test_2D.cpp
   ../../../clients/client.cc
-  ../../../utils/protobuf/ss_protob_array.pb.cc
+  ../../../utils/protobuf/smartsim_protobuf.pb.cc
 )
 
 target_link_libraries(client_tester_2D
@@ -81,7 +81,7 @@ target_link_libraries(client_tester_2D
 add_executable(client_tester_3D
   client_test_3D.cpp
   ../../../clients/client.cc
-  ../../../utils/protobuf/ss_protob_array.pb.cc
+  ../../../utils/protobuf/smartsim_protobuf.pb.cc
 )
 
 target_link_libraries(client_tester_3D
@@ -91,3 +91,15 @@ target_link_libraries(client_tester_3D
   ${PROTOBUF_LIB}
 )
 
+add_executable(poll_and_key_value_check_int64
+  poll_and_key_value_check_int64.cpp
+  ../../../clients/client.cc
+  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+)
+
+target_link_libraries(poll_and_key_value_check_int64
+  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+  ${REDISPP_LIB}
+  ${HIREDIS_LIB}
+  ${PROTOBUF_LIB}
+)

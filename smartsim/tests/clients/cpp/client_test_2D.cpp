@@ -23,13 +23,17 @@ void test_2d_put_cpp(int dim1, int dim2, std::string key_suffix="")
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   key = "2d_test_rank_"+std::to_string(rank) + key_suffix;
 
-  client.put_nd_array_double(key.c_str(), arr, dims, 2);
+  client.put_array_double(key.c_str(), arr, dims, 2);
 
+  if(!client.exists(key.c_str()))
+    throw std::runtime_error("Key existence could not be verified with key_exists()");
+
+  
   double** result = (double **)malloc(dim1 * sizeof(double *));
   for(int i=0; i<dim1; i++)
     result[i] = (double *)malloc(dim2 * sizeof(double));
 
-  client.get_nd_array_double(key.c_str(), result, dims, 2);
+  client.get_array_double(key.c_str(), result, dims, 2);
   
   for(int i=0; i<dim1; i++)
     for(int j=0; j<dim2; j++) {

@@ -11,49 +11,218 @@ SmartSimClient::~SmartSimClient()
 {
 }
 
-void SmartSimClient::get_nd_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-
-  if(n_dims<=0)
-    return;
-
-  int n_values = 1;
-  for(int i = 0; i < n_dims; i++)
-    n_values *= dims[i];
-
-  _put_keydb_value_into_protobuff_double(key, n_values);
-
-  // If it is a fortran array, reset dims to
-  // point to dynamically allocated dimension of 1
-  // so that _place_nd_array can be used.
-  if (fortran_array) {
-    n_dims = 1;
-    dims = new int[1];
-    dims[0] = n_values;
-  }
-
-  int proto_position = 0;
-  _place_nd_array_double_values(result, dims, n_dims, proto_position);
-
-  if(fortran_array)
-    delete[] dims;
-
-  _clear_protobuff_double();
-
+  this->_put_array<double>(&protob_array_double, key, value, dims, n_dims, fortran_array);
   return;
 }
 
-void SmartSimClient::put_nd_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  /*
-  const google::protobuf::Descriptor* descriptor = protob_double.GetDescriptor();
-  const google::protobuf::FieldDescriptor* data_field = descriptor->FindFieldByName("data");
-  const google::protobuf::Reflection* message_reflection = protob_double.GetReflection();
-  */
+  this->_put_array<float>(&protob_array_float, key, value, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::put_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  this->_put_array<int64_t>(&protob_array_int64, key, value, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::put_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  this->_put_array<int32_t>(&protob_array_int32, key, value, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::put_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  this->_put_array<uint64_t>(&protob_array_uint64, key, value, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::put_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  this->_put_array<uint32_t>(&protob_array_uint32, key, value, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<double>(&protob_array_double, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<float>(&protob_array_float, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<int64_t>(&protob_array_int64, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<int32_t>(&protob_array_int32, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<uint64_t>(&protob_array_uint64, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::get_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+  this->_get_array<uint32_t>(&protob_array_uint32, key, result, dims, n_dims, fortran_array);
+  return;
+}
+
+void SmartSimClient::put_scalar_double(const char* key, double value)
+{
+  this->_put_scalar<double>(&protob_scalar_double, key, value);
+  return;
+}
+
+void SmartSimClient::put_scalar_float(const char* key, float value)
+{
+  this->_put_scalar<float>(&protob_scalar_float, key, value);
+  return;
+}
+
+void SmartSimClient::put_scalar_int64(const char* key, int64_t value)
+{
+  this->_put_scalar<int64_t>(&protob_scalar_int64, key, value);
+  return;
+}
+
+void SmartSimClient::put_scalar_int32(const char* key, int32_t value)
+{
+  this->_put_scalar<int32_t>(&protob_scalar_int32, key, value);
+  return;
+}
+
+void SmartSimClient::put_scalar_uint64(const char* key, uint64_t value)
+{
+  this->_put_scalar<uint64_t>(&protob_scalar_uint64, key, value);
+  return;
+}
+
+void SmartSimClient::put_scalar_uint32(const char* key, uint32_t value)
+{
+  this->_put_scalar<uint32_t>(&protob_scalar_uint32, key, value);
+  return;
+}
+
+double SmartSimClient::get_scalar_double(const char* key)
+{
+  return this->_get_scalar<double>(&protob_scalar_double, key);
+}
+
+float SmartSimClient::get_scalar_float(const char* key)
+{
+  return this->_get_scalar<float>(&protob_scalar_float, key);
+}
+
+int64_t SmartSimClient::get_scalar_int64(const char* key)
+{
+  return this->_get_scalar<int64_t>(&protob_scalar_int64, key);
+}
+
+int32_t SmartSimClient::get_scalar_int32(const char* key)
+{
+  return this->_get_scalar<int32_t>(&protob_scalar_int32, key);
+}
+
+uint64_t SmartSimClient::get_scalar_uint64(const char* key)
+{
+  return this->_get_scalar<uint64_t>(&protob_scalar_uint64, key);
+}
+
+uint32_t SmartSimClient::get_scalar_uint32(const char* key)
+{
+  return this->_get_scalar<uint64_t>(&protob_scalar_uint32, key);
+}
+
+template <class T>
+void SmartSimClient::_put_scalar(google::protobuf::Message* pb_message, const char* key, T value)
+{
+  const google::protobuf::Reflection* refl = pb_message->GetReflection();
+  const google::protobuf::FieldDescriptor* data_field = pb_message->GetDescriptor()->FindFieldByName("data");
+  
+  //Protobuf does not support general add function like they do for arrays, so a check on the type is needed
+  if(std::is_same<T, double>::value)
+    refl->SetDouble(pb_message, data_field, value);
+  else if(std::is_same<T, float>::value)
+    refl->SetFloat(pb_message, data_field, value);
+  else if(std::is_same<T, int64_t>::value)
+    refl->SetInt64(pb_message, data_field, value);
+  else if(std::is_same<T, int32_t>::value)
+    refl->SetInt32(pb_message, data_field, value);
+  else if(std::is_same<T, uint64_t>::value)
+    refl->SetUInt64(pb_message, data_field, value);
+  else if(std::is_same<T,uint32_t>::value)
+    refl->SetUInt32(pb_message, data_field, value);
+  else
+    throw std::runtime_error("Client Error: Unsupported scalar type.");
+
+  std::string output = _serialize_protobuff(pb_message);
+  _clear_protobuff(pb_message);
+  _put_to_keydb(key, output);
+
+  return;  
+}
+
+template<class T>
+T SmartSimClient::_get_scalar(google::protobuf::Message* pb_message, const char* key)
+{
+  _put_keydb_value_into_protobuff(pb_message, key, 1);
+  
+  const google::protobuf::Reflection* refl = pb_message->GetReflection();
+  const google::protobuf::FieldDescriptor* data_field = pb_message->GetDescriptor()->FindFieldByName("data");
+
+  T value;
+
+  //Protobuf does not support general get function like they do for arrays, so a check on the type is needed
+  if(std::is_same<T, double>::value)
+    value = refl->GetDouble(*pb_message, data_field);
+  else if(std::is_same<T, float>::value)
+    value = refl->GetFloat(*pb_message, data_field);
+  else if(std::is_same<T, int64_t>::value)
+    value = refl->GetInt64(*pb_message, data_field);
+  else if(std::is_same<T, int32_t>::value)
+    value = refl->GetInt32(*pb_message, data_field);
+  else if(std::is_same<T, uint64_t>::value)
+    value = refl->GetUInt64(*pb_message, data_field);
+  else if(std::is_same<T,uint32_t>::value)
+    value = refl->GetUInt32(*pb_message, data_field);
+  else
+    throw std::runtime_error("Client Error: Unsupported scalar type.");
+
+  _clear_protobuff(pb_message);
+
+  return value;
+}
+
+template <class  T>
+void SmartSimClient::_put_array(google::protobuf::Message* pb_message, const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  const google::protobuf::Reflection* refl = pb_message->GetReflection();
+  const google::protobuf::FieldDescriptor* dim_field = pb_message->GetDescriptor()->FindFieldByName("dimension");
+  const google::protobuf::MutableRepeatedFieldRef<uint64_t> dimension = refl->GetMutableRepeatedFieldRef<uint64_t>(pb_message, dim_field);
 
   for(int i = 0; i < n_dims; i++)
-    protob_double.add_dimension(dims[i]);
+    dimension.Add(dims[i]);
 
+  // After saving the dims for later retrieval, point the pointer
+  // dims to a new dynamically allocated array of ints of length 1
+  // to indicate that a fotran array is contiguous in memory
+  // and recursion is not necessary
   if(fortran_array) {
     
       int n_values = 1;
@@ -65,53 +234,189 @@ void SmartSimClient::put_nd_array_double(const char* key, void* value, int* dims
       
       n_dims = 1;
   }
-  
-  _add_nd_array_double_values(value, dims, n_dims);
 
-  if(fortran_array) {
+  const google::protobuf::FieldDescriptor* data_field = pb_message->GetDescriptor()->FindFieldByName("data");
+  const google::protobuf::MutableRepeatedFieldRef<T> data = refl->GetMutableRepeatedFieldRef<T>(pb_message, data_field);
+  _add_array_values(data, value, dims, n_dims);
+
+  if(fortran_array)
     delete[] dims;
-  }
-  
-  std::string output = _serialize_protobuff_double();
 
-  _clear_protobuff_double();
+  std::string output = _serialize_protobuff(pb_message);
+
+  _clear_protobuff(pb_message);
 
   _put_to_keydb(key, output);
+
+  return;
+}
+
+template <class T>
+void SmartSimClient::_get_array(google::protobuf::Message* pb_message, const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+{
+
+  if(n_dims<=0)
+    return;
+
+  int n_values = 1;
+  for(int i = 0; i < n_dims; i++)
+    n_values *= dims[i];
+
+  _put_keydb_value_into_protobuff(pb_message, key, n_values);
+
+  // If it is a fortran array, reset dims to
+  // point to dynamically allocated dimension of 1
+  // so that _place_array can be used.
+  if (fortran_array) {
+    n_dims = 1;
+    dims = new int[1];
+    dims[0] = n_values;
+  }
+
+  int proto_position = 0;
+
+  const google::protobuf::Reflection* refl = pb_message->GetReflection();
+  const google::protobuf::FieldDescriptor* data_field = pb_message->GetDescriptor()->FindFieldByName("data");
+  const google::protobuf::MutableRepeatedFieldRef<T> data = refl->GetMutableRepeatedFieldRef<T>(pb_message, data_field);
+  _place_array_values<T>(data, result, dims, n_dims, proto_position);
+
+  if(fortran_array)
+    delete[] dims;
+
+  _clear_protobuff(pb_message);
+
+  return;
+}
+
+bool SmartSimClient::exists(const char* key)
+{
+  std::string prefixed_key = _build_get_key(key);
+  return redis_cluster.exists(prefixed_key.c_str());
+}
+
+bool SmartSimClient::poll_key(const char* key, int poll_frequency_ms, int num_tries)
+{
+  bool key_exists = false;
   
-  return;
+  while(!(num_tries==0)) {
+    if(this->exists(key)) {
+      key_exists = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(poll_frequency_ms));
+    if(num_tries>0)
+      num_tries--;
+  }
+
+  if(key_exists)
+    return true;
+  else
+    return false;
 }
 
-void SmartSimClient::_add_nd_array_double_values(void* value, int* dims, int n_dims)
+bool SmartSimClient::poll_key_and_check_scalar_double(const char* key, double value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<double>(key, value, poll_frequency_ms, num_tries);
+}
+
+bool SmartSimClient::poll_key_and_check_scalar_float(const char* key, float value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<float>(key, value, poll_frequency_ms, num_tries);
+}
+
+bool SmartSimClient::poll_key_and_check_scalar_int64(const char* key, int64_t value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<int64_t>(key, value, poll_frequency_ms, num_tries);
+}
+
+bool SmartSimClient::poll_key_and_check_scalar_int32(const char* key, int32_t value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<int32_t>(key, value, poll_frequency_ms, num_tries);
+}
+
+bool SmartSimClient::poll_key_and_check_scalar_uint64(const char* key, uint64_t value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<uint64_t>(key, value, poll_frequency_ms, num_tries);
+}
+
+bool SmartSimClient::poll_key_and_check_scalar_uint32(const char* key, uint32_t value, int poll_frequency_ms, int num_tries)
+{
+  return this->_poll_key_and_check_scalar<uint32_t>(key, value, poll_frequency_ms, num_tries);
+}
+
+template <class T>
+bool SmartSimClient::_poll_key_and_check_scalar(const char* key, T value, int poll_frequency_ms, int num_tries)
+{
+  bool matched_value = false;
+  T current_value;
+
+  while( !(num_tries==0) ) {
+    if(this->exists(key)) {
+      if(std::is_same<T, double>::value)
+	current_value = this->get_scalar_double(key);
+      else if(std::is_same<T, float>::value)
+	current_value = this->get_scalar_float(key);
+      else if(std::is_same<T, int64_t>::value)
+	current_value = this->get_scalar_int64(key);
+      else if(std::is_same<T, int32_t>::value)
+	current_value = this->get_scalar_int32(key);
+      else if(std::is_same<T, uint64_t>::value)
+	current_value = this->get_scalar_uint64(key);
+      else if(std::is_same<T,uint32_t>::value)
+	current_value = this->get_scalar_uint32(key);
+      else
+	throw std::runtime_error("Client Error: Unsupported scalar type.");
+
+      if(value == current_value) {
+	matched_value = true;
+	num_tries = 0;
+      }
+    }
+
+    if(!matched_value)
+      std::this_thread::sleep_for(std::chrono::milliseconds(poll_frequency_ms));
+    if(num_tries>0)
+      num_tries--;
+  }
+
+  if(matched_value)
+    return true;
+  else
+    return false;
+}
+
+template <class T>
+void SmartSimClient::_add_array_values(const google::protobuf::MutableRepeatedFieldRef<T>& pb_repeated_field, void* value, int* dims, int n_dims)
 {
   if(n_dims > 1) {
-    double** current = (double**) value;
+    T** current = (T**) value;
     for(int i = 0; i < dims[0]; i++) {
-      _add_nd_array_double_values(*current, &dims[1], n_dims-1);
+      _add_array_values(pb_repeated_field, *current, &dims[1], n_dims-1);
       current++;
     }
   }
   else {
-    double* dbl_array = (double*)value;
-    for(int i = 0; i < dims[0]; i++){
-      protob_double.add_data(dbl_array[i]);
-    }
-  }
-  return;
-}
-
-void SmartSimClient::_place_nd_array_double_values(void* value, int* dims, int n_dims, int& proto_position)
-{
-  if(n_dims > 1) {
-    double** current = (double**) value;
-    for(int i = 0; i < dims[0]; i++) {
-      _place_nd_array_double_values(*current, &dims[1], n_dims-1, proto_position);
-      current++;
-    }
-  }
-  else {
-    double* dbl_array = (double*)value;
+    T* array = (T*)value;
     for(int i = 0; i < dims[0]; i++)
-      dbl_array[i] = protob_double.data(proto_position++);
+      pb_repeated_field.Add(array[i]);
+  }
+  return;
+}
+
+template <class T>
+void SmartSimClient::_place_array_values(const google::protobuf::MutableRepeatedFieldRef<T>& pb_repeated_field, void* value, int* dims, int n_dims, int& proto_position)
+{
+  if(n_dims > 1) {
+    T** current = (T**) value;
+    for(int i = 0; i < dims[0]; i++) {
+      _place_array_values(pb_repeated_field, *current, &dims[1], n_dims-1, proto_position);
+      current++;
+    }
+  }
+  else {
+    T* array = (T*)value;
+    for(int i = 0; i < dims[0]; i++)
+      array[i] = pb_repeated_field.Get(proto_position++);
   }
   return;
 }
@@ -197,6 +502,7 @@ std::string SmartSimClient::_get_from_keydb(const char* key)
 std::string SmartSimClient::_get_ssdb()
 {
   char* host_and_port = getenv("SSDB");
+
   if(host_and_port == NULL)
     throw std::runtime_error("The environment variable SSDB must be set to use the client.");
   
@@ -205,10 +511,10 @@ std::string SmartSimClient::_get_ssdb()
   return ssdb;
 }
 
-std::string SmartSimClient::_serialize_protobuff_double()
+std::string SmartSimClient::_serialize_protobuff(google::protobuf::Message* pb_message)
 {
   std::string buff;
-  bool success = protob_double.SerializeToString(&buff);
+  bool success = pb_message->SerializeToString(&buff);
 
   if(!success)
     throw std::runtime_error("Protobuf serialization failed");
@@ -216,26 +522,28 @@ std::string SmartSimClient::_serialize_protobuff_double()
   return buff;
 }
 
-void SmartSimClient::_put_keydb_value_into_protobuff_double(const char* key, int n_values)
+void SmartSimClient::_put_keydb_value_into_protobuff(google::protobuf::Message* pb_message, const char* key, int n_values)
 {
   std::string value = _get_from_keydb(key);
 
-  protob_double.ParseFromString(value);
+  pb_message->ParseFromString(value);
 
-  if(!(protob_double.data_size()==n_values))
-    throw std::runtime_error("The protobuf array is not the same length as specified by n_values");
+  //if(!(protob_double.data_size()==n_values))
+  //  throw std::runtime_error("The protobuf array is not the same length as specified by n_values");
+  return;
 }
 
-void SmartSimClient::_clear_protobuff_double()
+void SmartSimClient::_clear_protobuff(google::protobuf::Message* pb_message)
 {
-  protob_double.clear_data();
-  protob_double.clear_dimension();
-}
+  const google::protobuf::Reflection* refl = pb_message->GetReflection();
+  std::vector<const google::protobuf::FieldDescriptor*>  pb_message_fields;
+  refl->ListFields(*pb_message, &pb_message_fields);
 
-void SmartSimClient::_clear_protobuff_float()
-{
-  protob_float.clear_data();
-  protob_double.clear_dimension();
+  std::vector<const google::protobuf::FieldDescriptor*>::iterator it;
+  for (it = pb_message_fields.begin(); it != pb_message_fields.end(); it++)
+    refl->ClearField(pb_message, *it);
+
+  return;
 }
 
 extern "C" void* GetObject() {
@@ -249,14 +557,14 @@ extern "C" void* ssc_constructor()
   return new SmartSimClient;
 }
 
-extern "C" void put_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
+extern "C" void put_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_nd_array_double(key, value, *dimensions, *ndims, true);
+  s->put_array_double(key, value, *dimensions, *ndims, true);
 }
 
-extern "C" void get_nd_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
+extern "C" void get_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->get_nd_array_double(key, value, *dimensions, *ndims, true);
+  s->get_array_double(key, value, *dimensions, *ndims, true);
 }

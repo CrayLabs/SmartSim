@@ -24,24 +24,24 @@ interface
 end interface
 
 interface
-  subroutine put_nd_array_double_c( ssc_obj, key, array_ptr, dims, ndims) bind(c, name="put_nd_array_double_ssc")
+  subroutine put_array_double_c( ssc_obj, key, array_ptr, dims, ndims) bind(c, name="put_array_double_ssc")
     use iso_c_binding, only : c_ptr, c_char, c_int
     type(c_ptr), value                :: ssc_obj   !< Pointer to initialized SSC instance
     character(kind=c_char)            :: key(*)    !< The key used in the database
     type(c_ptr),value                 :: array_ptr !< Pointer to the array to be sent
     integer(kind=c_int), dimension(:) :: dims      !< Array containing the shape of the array
     integer(kind=c_int)               :: ndims     !< Number of dimensions in array
-  end subroutine put_nd_array_double_c
+  end subroutine put_array_double_c
 end interface
 interface
-  subroutine get_nd_array_double_c( ssc_obj, key, array_ptr, dims, ndims) bind(c, name="get_nd_array_double_ssc")
+  subroutine get_array_double_c( ssc_obj, key, array_ptr, dims, ndims) bind(c, name="get_array_double_ssc")
     use iso_c_binding, only : c_ptr, c_char, c_int
     type(c_ptr), value                :: ssc_obj   !< Pointer to initialized SSC instance
     character(kind=c_char)            :: key(*)    !< The key used in the database
     type(c_ptr),value                 :: array_ptr !< Pointer to the array to be sent
     integer(kind=c_int), dimension(:) :: dims      !< Array containing the shape of the array
     integer(kind=c_int)               :: ndims     !< Number of dimensions in array
-  end subroutine get_nd_array_double_c
+  end subroutine get_array_double_c
 end interface
 
 contains
@@ -70,7 +70,7 @@ subroutine put_array_double(ssc_obj, key, array)
 
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
-  call put_nd_array_double_c( ssc_obj, c_key, array_ptr, rev_dims, ndims) 
+  call put_array_double_c( ssc_obj, c_key, array_ptr, rev_dims, ndims) 
   deallocate(rev_dims)
 end subroutine put_array_double
 
@@ -93,7 +93,7 @@ subroutine get_array_double(ssc_obj, key, array)
 
   c_key = make_c_string(key) 
   array_ptr = c_loc(array)
-  call get_nd_array_double_c(ssc_obj, c_key, array_ptr, rev_dims, ndims) 
+  call get_array_double_c(ssc_obj, c_key, array_ptr, rev_dims, ndims) 
   deallocate(rev_dims)
 
 end subroutine get_array_double

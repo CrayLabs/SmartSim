@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package SmartSimProtobuf;
+
+message ScalarUInt32 {
+  uint32 data = 1;
+}
+
+message ScalarUInt64 {
+  uint64 data = 1;
+}
+
+message ScalarSInt32 {
+  sint32 data = 1;
+}
+
+message ScalarSInt64 {
+  sint64 data = 1;
+}
+
+message ScalarFloat {
+  float data = 1;
+}
+
+message ScalarDouble {
+  double data = 1;
+}
+
+message ArrayUInt32 {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated uint32 data = 2 [packed=true];
+}
+
+message ArrayUInt64 {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated uint64 data = 2 [packed=true];
+}
+
+message ArraySInt32 {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated sint32 data = 2 [packed=true];
+}
+
+message ArraySInt64 {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated sint64 data = 2 [packed=true];
+}
+
+message ArrayFloat {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated float data = 2 [packed=true];
+}
+
+message ArrayDouble {
+  repeated uint64 dimension = 1 [packed=true];
+  repeated double data = 2 [packed=true];
+}

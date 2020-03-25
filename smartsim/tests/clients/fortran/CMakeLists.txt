@@ -61,7 +61,7 @@ add_executable(client_tester
   unit_test.F90
   ../../../clients/fortran_client.F90
   ../../../clients/client.cc
-  ../../../utils/protobuf/ss_protob_array.pb.cc
+  ../../../utils/protobuf/smartsim_protobuf.pb.cc
 )
 
 

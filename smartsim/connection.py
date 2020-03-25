@@ -37,3 +37,6 @@ class Connection:
 
     def send(self, key, value):
         self.conn.set(key, value)
+
+    def exists(self, key):
+        return self.conn.exists(key)

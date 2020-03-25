@@ -17,13 +17,13 @@ def run_full_loop(data_size, num_packets, client):
         # get data to send to node
         data = create_data(i, data_size)
         print("Sending data for key", str(i), flush=True)
-        client.send_data(str(i), data)
+        client.put_array_nd_float64(str(i), data)
 
         # get the data back from the node
-        processed_data = client.get_data(str(i), "float64", wait=True)
+        processed_data = client.get_array_nd_float64(str(i), wait=True)
 
         # ensure data made it back the same
-        assert(processed_data.all() == data.all())
+        assert(np.array_equal(processed_data, data))
         i+=1
 
 

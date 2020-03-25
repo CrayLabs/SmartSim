@@ -1,4 +1,3 @@
-
 import time
 import numpy as np
 import pickle
@@ -20,7 +19,7 @@ def run_simulations(data_size, num_packets, client):
     while i < int(num_packets):
         data = create_data(i, data_size)
         print("Sending data for key", str(i), flush=True)
-        client.send_data(str(i), data)
+        client.put_array_nd_float64(str(i), data)
         i+=1
 
 if __name__ == "__main__":
