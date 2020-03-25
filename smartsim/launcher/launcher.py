@@ -4,13 +4,14 @@ systems.
     - Examples: Slurm, pbs pro, Urika-xc, etc
 
 """
-
-import abc
-from subprocess import PIPE, Popen, CalledProcessError
-from .launcherUtil import seq_to_str, execute_cmd
 import os
+import abc
 import time
 import atexit
+from subprocess import PIPE, Popen, CalledProcessError
+
+from .alloc import AllocManager
+from .launcherUtil import seq_to_str, execute_cmd
 from ..error import LauncherError
 
 from ..utils import get_logger
@@ -37,8 +38,8 @@ class Launcher(abc.ABC):
         self.def_ppn = def_ppn
         self.def_partition = def_partition
         self.def_queue = def_queue
-        self.alloc_ids = dict()
         self.def_duration = def_duration
+        self.alloc_manager = AllocManager()
         super().__init__()
 
     #-------------- Abstract Methods --------------
@@ -121,7 +122,7 @@ class Launcher(abc.ABC):
         """
         if there is an active researvation, or if alloc_id is specified it gets cancelled
         """
-        if alloc_id not in self.alloc_ids.keys():
+        if alloc_id not in self.alloc_manager().keys():
             raise LauncherError("Allocation id, " + str(alloc_id) +
                                 " not found.")
 
@@ -134,5 +135,5 @@ class Launcher(abc.ABC):
                 "The job may have already timed out, or you may need to cancel the job manually")
             raise LauncherError("Unable to revoke your allocation for jobid %s" % alloc_id)
 
+        self.alloc_manager.remove_alloc(alloc_id)
         logger.info("Successfully freed allocation %s" % alloc_id)
-        self.alloc_ids.pop(alloc_id)

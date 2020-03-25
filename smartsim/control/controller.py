@@ -14,7 +14,6 @@ from ..entity import SmartSimEntity
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
 
 from .job import Job
-from .allochandler import AllocHandler
 from .jobmanager import JobManager
 from .dbcluster import create_cluster, check_cluster_status, kill_db_node
 from ..utils import get_config
@@ -29,11 +28,10 @@ class Controller():
        run framework.
     """
     def __init__(self):
-        self._alloc_handler = AllocHandler()
         self._jobs = JobManager()
         self._launcher = None
 
-    def start(self, ensembles=None, nodes=None, orchestrator=None, duration="1:00:00"):
+    def start(self, ensembles=None, nodes=None, orchestrator=None, duration="1:00:00", run_on_existing=False):
         """Start the computation of a ensemble, nodes, and optionally
            facilitate communication between entities via an orchestrator.
            Controller.start() expects objects to be passed to the ensembles,
@@ -46,6 +44,7 @@ class Controller():
            :type nodes: a list of SmartSimNode objects
            :param orchestrator: Orchestrator object to be launched for entity communication
            :type orchestrator: Orchestrator object
+           :param bool run_on_existing: if False, obtain allocation prior to run
         """
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -55,11 +54,15 @@ class Controller():
             raise SmartSimError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
-        self._prep_orchestrator(orchestrator)
-        self._prep_nodes(nodes)
-        self._prep_ensembles(ensembles)
-        self._get_allocations(duration)
-        self._launch(ensembles, nodes, orchestrator)
+        if isinstance(self._launcher, LocalLauncher):
+            self._launch(ensembles, nodes, orchestrator)
+        else:
+            allocs = self._calculate_allocation(ensembles, nodes, orchestrator)
+            if not run_on_existing:
+                self._get_allocations(allocs, duration)
+            else:
+                self._verify_allocation(allocs)
+            self._launch(ensembles, nodes, orchestrator)
 
 
     def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
@@ -95,23 +98,61 @@ class Controller():
         if orchestrator:
             self._stop_orchestrator(orchestrator.dbnodes)
 
+    def get_allocation(self, nodes, partition, duration="1:00:00", add_opts=None):
+        """Get an allocation with the requested resources and return the allocation
+           ID from the workload manager. Allocation obtained is automatically added
+           to the smartsim allocations list for future calls to start to run on.
+
+           :param int nodes: number of nodes in the requested allocation
+           :param str partition: partition for the requested allocation
+           :param str duration: duration of the allocation in format HH:MM:SS
+           :param add_opts: additional options to pass to workload manager command
+                            for obtaining an allocation
+           :type add_opts: list of strings
+           :return: allocation ID
+           :rtype: string
+        """
+        try:
+            self._launcher.validate(nodes=nodes, partition=partition)
+            alloc_id = self._launcher.get_alloc(
+                nodes=nodes,
+                partition=partition,
+                duration=duration,
+                add_opts=add_opts
+            )
+            return alloc_id
+        except LauncherError as e:
+            raise SmartSimError("Failed to get user requested allocation") from e
+
+
+    def add_allocation(self, alloc_id, partition, nodes):
+        """Add an existing allocation to SmartSim so that future calls to start can run
+           on it.
+
+           :param str alloc_id: id of the allocation given by the workload manager
+           :param str partition: partition of the allocation
+           :param int nodes: number of nodes in the allocation
+           :raises: SmartSimError
+        """
+        self.check_local("Controller.add_allocation()")
+        try:
+            alloc_id = str(alloc_id)
+            self._launcher.accept_allocation(alloc_id, partition, nodes)
+        except LauncherError as e:
+            raise SmartSimError("Failed to accept user obtained allocation") from e
+
     def release(self):
         """Release the allocation(s) stopping all jobs that are currently running
            and freeing up resources.
 
            :raises: SSConfigError if called when using local launcher
-           :raises: SmartSimError if partition could not be found
         """
         self.check_local("Controller.release()")
 
-        allocs = self._alloc_handler.allocs.copy()
-        for alloc_id in allocs.values():
+        allocs = self._launcher.alloc_manager().copy()
+        for alloc_id in allocs.keys():
             logger.info(f"Releasing allocation: {alloc_id}")
-
-        for partition, alloc_id in allocs.items():
             self._launcher.free_alloc(alloc_id)
-            self._alloc_handler._remove_alloc(partition)
-
 
     def get_job(self, name):
         """Retrieve a Job instance by name. The Job object carries information about the
@@ -375,138 +416,79 @@ class Controller():
             self._launcher.stop(job.get_job_id())
 
 
-    def _prep_nodes(self, nodes):
-        """Add the nodes to the list of requirement for all the entities
-           to be launched.
+    def _calculate_allocation(self, ensembles, nodes, orchestrator):
+        """Calculate the size of the allocation for all entities to be
+           launched at once. The total number of nodes per partition are
+           counted and the largest number of processes per node for all
+           entities is chosen.
         """
-        if not nodes:
-            return
+        allocs = {} # partition : (node_count, ppn)
+        settings = []
+        if nodes:
+            settings.extend([node.run_settings for node in nodes])
+        if orchestrator:
+            settings.extend([dbnode.run_settings for dbnode in orchestrator.dbnodes])
+        if ensembles:
+            for ensemble in ensembles:
+                run_settings = ensemble.run_settings
+                for model in ensemble.models.values():
+                    if ensemble.name == "default":        # use model run settings if in
+                        run_settings = model.run_settings # default ensemble
+                    settings.append(run_settings)
 
-        for node in nodes:
-            run_settings, cmd = self._build_run_dict(node.run_settings)
-            node.update_run_settings(run_settings)
-            node.set_cmd(cmd)
-            self._alloc_handler._add_to_allocs(run_settings)
+        for run_setting in settings:
+            ppn = int(run_setting["ppn"])
+            node_count = int(run_setting["nodes"])
+            part = run_setting["partition"]
+            if not part:
+                part = "default"
+            if part in allocs.keys():
+                allocs[part][0] += node_count
+                if allocs[part][1] < ppn:
+                    allocs[part][1] = ppn
+            else:
+                allocs[part] = [node_count, ppn]
+        return allocs
 
-    def _prep_orchestrator(self, orchestrator):
-        """Add the orchestrator to the allocations requested"""
-        if not orchestrator:
-            return
-
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(
-                "Orchestrators are not supported when launching locally"
-            )
-
-        for dbnode in orchestrator.dbnodes:
-            dbnode_settings, cmd = self._build_run_dict(dbnode.get_run_settings())
-            dbnode.update_run_settings(dbnode_settings)
-            dbnode.set_cmd(cmd)
-            self._alloc_handler._add_to_allocs(dbnode_settings)
-
-    def _prep_ensembles(self, ensembles):
-        """Add the models of each ensemble to the allocations requested"""
-        if not ensembles:
-            return
-
-        for ensemble in ensembles:
-            run_settings = {}
-            cmd = ""
-            if ensemble.name != "default":
-                run_settings, cmd = self._build_run_dict(
-                    ensemble.get_run_settings())
-            for model in ensemble.models.values():
-                if ensemble.name == "default":
-                    run_settings, cmd = self._build_run_dict(
-                        model.get_run_settings())
-                model.update_run_settings(run_settings)
-                model.set_cmd(cmd)
-                self._alloc_handler._add_to_allocs(run_settings)
-
-    def _remove_smartsim_args(self, arg_dict):
-        ss_args = ["exe_args", "run_args", "executable", "run_command"]
-        new_dict = dict()
-        for k, v in arg_dict.items():
-            if not k in ss_args:
-                new_dict[k] = v
-        return new_dict
-
-    def _build_cmd(self, run_settings):
-        """Contruct the run command from the entity run_settings"""
-
-        exe = get_config("executable", run_settings, none_ok=False)
-        exe_args = get_config("exe_args", run_settings, none_ok=True)
-        if not exe_args:
-            exe_args = ""
-        cmd = " ".join((exe, exe_args))
-
-        if isinstance(self._launcher, LocalLauncher):
-            run_command = get_config("run_command", run_settings, none_ok=False)
-            run_args = get_config("run_args", run_settings, none_ok=True)
-
-            if not run_args:
-                run_args = ""
-            cmd = " ".join((run_command, run_args, exe, exe_args))
-
-        return [cmd]
-
-    def _build_run_dict(self, entity_info):
-        """Build up the run settings by retrieving the settings of the Controller
-           as well as the run_settings for each entity.
-
-           :param dict entity_info: dictionary of settings for an entity
+    def _verify_allocation(self, potential_allocs):
+        """Verify that there are allocations that satify the configuration of models
+           provided by the user. Error if not
         """
-        run_dict = {}
-        try:
-            # ensemble level values optional because there are defaults
-            run_dict["nodes"] = get_config("nodes", entity_info, none_ok=True)
-            run_dict["ppn"] = get_config("ppn", entity_info, none_ok=True)
-            run_dict["partition"] = get_config("partition", entity_info, none_ok=True)
-            cmd = self._build_cmd(entity_info)
+        for partition, node_info in potential_allocs.items():
+            if partition == "default":
+                partition = None
+            if not self._launcher.alloc_manager.verify(partition, node_info[0]):
+                err_msg = "No existing allocation can satify provided configuration"
+                err_msg += "\n Existing allocations are:"
+                for alloc_id, alloc in self._launcher.alloc_manager().items():
+                    err_msg += f"\n {alloc}"
+                raise SmartSimError(err_msg)
 
-            # set partition to default if none selected
-            if not run_dict["partition"]:
-                run_dict["partition"] = "default"
-
-            return run_dict, cmd
-
-        except KeyError as e:
-            raise SSConfigError(
-                "SmartSim could not find following required field: %s" %
-                (e.args[0])) from e
-
-    def _validate_allocations(self):
+    def _validate_allocations(self, allocs):
         """Validate the allocations with specific requirements provided by the user."""
-        for partition, nodes in self._alloc_handler.partitions.items():
-            try:
-                part = partition
-                if partition == "default":
-                    part = None
-                self._launcher.validate(nodes=nodes[0],
-                                        ppn=nodes[1],
-                                        partition=part)
-            except LauncherError as e:
-                self._alloc_handler._remove_alloc(partition)
-                raise e
+        for partition, node_info in allocs.items():
+            self._launcher.validate(nodes=node_info[0],
+                                    ppn=node_info[1],
+                                    partition=partition)
 
-    def _get_allocations(self, duration):
-        """Validate and retrieve n allocations where n is the number of partitions
-           needed by the user.
+    def _get_allocations(self, potential_allocs, duration):
+        """calculate, validate and retrieve n allocations where n is the
+           number of partitions needed by the user.
         """
-        if not isinstance(self._launcher, LocalLauncher):
-            self._validate_allocations()
+        self._validate_allocations(potential_allocs)
 
-            for partition, nodes in self._alloc_handler.partitions.items():
+        try:
+            for partition, node_info in potential_allocs.items():
                 launch_partition = partition
-                if partition == "default":
-                    launch_partition = None
                 alloc_id = self._launcher.get_alloc(
-                    nodes=nodes[0],
-                    ppn=nodes[1],
+                    nodes=node_info[0],
+                    ppn=node_info[1],
                     partition=launch_partition,
                     duration=duration)
+        except LauncherError as e:
+            raise SmartSimError(
+                "Failed to obtain allocation for user configuration") from e
 
-                self._alloc_handler.allocs[partition] = alloc_id
 
     def _launch(self, ensembles, nodes, orchestrator):
         """Launch all entities within experiment with the configured launcher"""
@@ -534,12 +516,11 @@ class Controller():
                 create_cluster(db_nodes, port)
                 check_cluster_status(db_nodes, port)
 
-        # launch the SmartSimNodes and update job nodes
         if nodes:
             for node in nodes:
                 try:
                     self._launch_on_alloc(node, orchestrator)
-                    #self.get_job_nodes(self._jobs[node.name])
+
                 except LauncherError as e:
                     logger.error(
                         "An error occured when launching SmartSimNodes\n" +
@@ -548,15 +529,14 @@ class Controller():
                         "SmartSimNode %s failed to launch" % node.name
                         ) from e
 
-
-        # Launch ensembles and their respective models and update job nodes
         if ensembles:
             for ensemble in ensembles:
+                run_settings = ensemble.run_settings
                 for model in ensemble.models.values():
+                    if ensemble.name != "default":
+                        model.update_run_settings(run_settings)
                     try:
-                        run_settings = model.get_run_settings()
                         self._launch_on_alloc(model, orchestrator)
-                        #self.get_job_nodes(self._jobs[model.name])
                     except LauncherError as e:
                         logger.error(
                             "An error occured when launching model ensembles.\n" +
@@ -564,11 +544,12 @@ class Controller():
                         raise SmartSimError(
                             "Model %s failed to launch" % model.name) from e
 
+
     def _launch_on_alloc(self, entity, orchestrator):
         """launch a SmartSimEntity on an allocation provided by a workload manager."""
 
-        cmd = entity.get_cmd()
-        run_settings = self._remove_smartsim_args(entity.get_run_settings())
+        cmd = self._build_cmd(entity.run_settings)
+        run_settings = self._remove_smartsim_args(entity.run_settings)
 
         if isinstance(self._launcher, LocalLauncher):
             pid = self._launcher.run(cmd, run_settings)
@@ -579,11 +560,12 @@ class Controller():
                 run_settings["env_vars"] = env_vars
 
             partition = run_settings["partition"]
-            pid = self._launcher.run_on_alloc(
-                cmd, self._alloc_handler.allocs[partition], **run_settings)
+            alloc_id = self._launcher.alloc_manager[partition]
+            pid = self._launcher.run_on_alloc(cmd, alloc_id, **run_settings)
 
         logger.debug("Process id for " + entity.name + " is " + str(pid))
         self._jobs.add_job(entity.name, pid, entity)
+
 
     def _check_job(self, job):
         """Takes in job and sets job properties"""
@@ -593,6 +575,7 @@ class Controller():
         job_id = job.get_job_id()
         status, returncode = self._launcher.get_job_stat(job_id)
         job.set_status(status, returncode)
+
 
     def _get_job_nodes(self, job):
         """Query the workload manager for the nodes that a particular job was launched on"""
@@ -626,8 +609,46 @@ class Controller():
                 f"Entity by the name of {entity.name} has not been launched by this Controller")
         return job.status
 
+
     def check_local(self, function_name):
         """Checks if the user called a function that isnt supported with the local launcher"""
 
         if isinstance(self._launcher, LocalLauncher):
             raise SSConfigError(f"{function_name} is not supported when launching locally")
+
+
+    def _remove_smartsim_args(self, arg_dict):
+        """Remove non-workload manager arguments from a run_settings dictionary"""
+
+        ss_args = ["exe_args", "run_args", "executable", "run_command"]
+        new_dict = dict()
+        for k, v in arg_dict.items():
+            if not k in ss_args:
+                new_dict[k] = v
+        return new_dict
+
+
+    def _build_cmd(self, run_settings):
+        """Contruct the run command from the entity run_settings"""
+
+        try:
+            exe = get_config("executable", run_settings, none_ok=False)
+            exe_args = get_config("exe_args", run_settings, none_ok=True)
+            if not exe_args:
+                exe_args = ""
+            cmd = " ".join((exe, exe_args))
+
+            if isinstance(self._launcher, LocalLauncher):
+                run_command = get_config("run_command", run_settings, none_ok=False)
+                run_args = get_config("run_args", run_settings, none_ok=True)
+
+                if not run_args:
+                    run_args = ""
+                cmd = " ".join((run_command, run_args, exe, exe_args))
+
+            return [cmd]
+
+        except KeyError as e:
+            raise SSConfigError(
+                "SmartSim could not find following required field: %s" %
+                (e.args[0])) from e

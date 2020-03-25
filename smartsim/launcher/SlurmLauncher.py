@@ -17,7 +17,6 @@ class SlurmLauncher(Launcher):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.alloc_partition = None
 
     class ComputeNode():
 
@@ -154,8 +153,13 @@ class SlurmLauncher(Launcher):
         n_avail_nodes = 0
         avail_nodes = set()
 
+        if not nodes:
+            nodes = self.def_nodes
+        if not ppn:
+            ppn = self.def_ppn
+
         p_name = partition
-        if p_name is None:
+        if p_name is None or p_name == "default":
             p_name = self._get_default_partition()
 
         if not p_name in sys_partitions:
@@ -172,6 +176,7 @@ class SlurmLauncher(Launcher):
                                 "{1} nodes available.".format(nodes,n_avail_nodes))
 
         logger.info("Successfully validated Slurm with sufficient resources")
+
 
     def get_job_stat(self, job_id):
         """
@@ -219,6 +224,21 @@ class SlurmLauncher(Launcher):
         nodes = list(set(nodes))
         return nodes
 
+    def accept_allocation(self, alloc_id, partition, nodes):
+        """Take in an allocation provided by the user
+
+           :param str alloc_id: ID of the allocation
+           :param str partition: partition of the allocation aquired by the user
+           :param int nodes: number of nodes in the allocation
+        """
+        if partition in self.alloc_manager:
+            err_msg = "SmartSim does not allow two allocations on the same partition"
+            err_msg += f"\n Allocation {self.alloc_manager[partition]} already allocated"
+            raise LauncherError(err_msg)
+        else:
+            self.alloc_manager.add_alloc(alloc_id, partition, nodes)
+
+
     def get_alloc(self, nodes=None, ppn=None, partition=None, start_time=None, duration="",
         add_opts=None):
         """ Get the allocation using salloc and specified constraints.
@@ -229,25 +249,32 @@ class SlurmLauncher(Launcher):
             :param add_opts: Additional options to pass to salloc
             :return: allocation id
         """
+        if partition == "default":
+            partition = None
+        if partition in self.alloc_manager:
+            err_msg = "SmartSim does not allow two allocations on the same partition"
+            err_msg += f"\n Allocation {self.alloc_manager[partition]} already allocated"
+            raise LauncherError(err_msg)
         if not nodes:
             nodes = self.def_nodes
         if not ppn:
             ppn = self.def_ppn
 
+
         salloc = self._get_alloc_cmd(nodes, ppn, partition, start_time,
                                     duration, add_opts, to_string=False)
         logger.debug(salloc)
-        logger.debug("allocting %d nodes %d tasks/node, partition %s" %(nodes, ppn, partition))
+        logger.debug("allocting %d nodes on partition %s" %(nodes, partition))
 
         #TODO figure out why this goes to stderr
         returncode, _, err = execute_cmd(salloc)
         alloc_id = self._parse_salloc(err)
         if alloc_id:
             logger.info("Allocation successful with Job ID: %s" % alloc_id)
-            # start sub_jobid counter
-            self.alloc_ids[alloc_id] = 0
+            self.alloc_manager.add_alloc(alloc_id, partition, nodes)
         else:
-            raise LauncherError("Failed to get requested allocation")
+            error = self._parse_salloc_error(err)
+            raise LauncherError(error)
         return str(alloc_id)
 
 
@@ -272,7 +299,7 @@ class SlurmLauncher(Launcher):
            :return: subjob id
            :raises: LauncherError
         """
-        if str(alloc_id) not in self.alloc_ids.keys():
+        if str(alloc_id) not in self.alloc_manager().keys():
             raise LauncherError("Could not find allocation with id: " + str(alloc_id))
         if isinstance(cmd, list):
             cmd = " ".join(cmd)
@@ -288,10 +315,10 @@ class SlurmLauncher(Launcher):
         if not cwd:
             cwd = os.getcwd()
         if not out_file:
-            out_file = "-".join((str(alloc_id), str(self.alloc_ids[alloc_id]) + ".out"))
+            out_file = repr(self.alloc_manager()[alloc_id]) + ".out"
             out_file = os.path.join(cwd, out_file)
         if not err_file:
-            err_file = "-".join((str(alloc_id), str(self.alloc_ids[alloc_id]) + ".err"))
+            err_file = repr(self.alloc_manager()[alloc_id]) + ".err"
             err_file = os.path.join(cwd, err_file)
 
         srun = ["srun", "--jobid", str(alloc_id),
@@ -318,9 +345,7 @@ class SlurmLauncher(Launcher):
         if status == -1:
             raise LauncherError("Failed to run on allocation")
         else:
-            subjob_id = ".".join((alloc_id, str(self.alloc_ids[alloc_id])))
-            self.alloc_ids[alloc_id] += 1
-            return subjob_id
+            return self.alloc_manager.add_subjob(alloc_id)
 
     def stop(self, job_id):
         """Stop is used to stop a subjob that is currently running within an allocation.
@@ -347,6 +372,12 @@ class SlurmLauncher(Launcher):
         for line in output.split("\n"):
             if line.startswith("salloc: Granted job allocation"):
                 return line.split()[-1]
+
+    def _parse_salloc_error(self, output):
+        for line in output.split("\n"):
+            if line.startswith("salloc:"):
+                error = line.split("error:")[1]
+                return error
 
     def _get_alloc_cmd(self, nodes, ppn, partition, start_time, duration, add_opts, to_string=False):
         logger.debug("requesting %d nodes and %d tasks" %(nodes, ppn* nodes))

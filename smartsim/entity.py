@@ -29,20 +29,11 @@ class SmartSimEntity:
         defaults.update(self.run_settings)
         self.run_settings = defaults
 
-    def get_run_settings(self):
-        return self.run_settings
-
-    def get_cmd(self):
-        if not self.cmd:
-            raise SSConfigError("Entity has not been configured to run")
-        else:
-            return self.cmd
-
     def update_run_settings(self, update_dict):
+        """Update the run settings of an entity but keep the path the same"""
+        old_path = self.path
         self.run_settings.update(update_dict)
-
-    def set_cmd(self, cmd):
-        self.cmd = cmd
+        self.set_path(old_path)
 
     def set_path(self, new_path):
         self.path = new_path

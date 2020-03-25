@@ -50,13 +50,15 @@ def test_orchestrator():
     time.sleep(5)
     statuses = ctrl.get_orchestrator_status(O1)
     assert("FAILED" not in statuses)
+    ctrl.release()
 
 @slurm_controller_test
 def test_cluster_orchestrator():
     ctrl.start(orchestrator=C1)
-    time.sleep(10)
+    time.sleep(15)
     statuses = ctrl.get_orchestrator_status(O1)
     assert("FAILED" not in statuses)
+    ctrl.release()
 
 @slurm_controller_test
 def test_node():
@@ -65,6 +67,30 @@ def test_node():
         time.sleep(3)
     status = ctrl.get_node_status(N1)
     assert(status == "COMPLETED")
+    ctrl.release()
+
+@slurm_controller_test
+def test_get_allocation():
+    """test getting an allocation prior to start"""
+    alloc_id = ctrl.get_allocation(nodes=2, partition=None)
+    ctrl.start(ensembles=exp.ensembles, run_on_existing=True)
+    ctrl.poll(3, False, True)
+    statuses = ctrl.get_ensemble_status(exp.ensembles[0])
+    assert("FAILED" not in statuses)
+    ctrl.release()
+
+@slurm_controller_test
+def test_multiple_runs():
+    """test calling start multiple times in a row"""
+    ctrl.start(ensembles=exp.ensembles)
+    ctrl.poll(3, False, True)
+    statuses = ctrl.get_ensemble_status(exp.ensembles[0])
+    assert("FAILED" not in statuses)
+
+    ctrl.start(nodes=N1, run_on_existing=True)
+    ctrl.poll(3, False, True)
+    statuses = ctrl.get_node_status(N1)
+    assert("FAILED" not in statuses)
     ctrl.release()
 
 @slurm_controller_test
@@ -134,7 +160,6 @@ def test_bad_partition():
         ctrl.start(exp_3.ensembles)
     ctrl.release()
 
-
 @slurm_controller_test
 def test_failed_status():
     """Test when a failure occurs deep into model execution"""
@@ -145,3 +170,48 @@ def test_failed_status():
     assert(status == "FAILED")
     ctrl.release()
 
+@slurm_controller_test
+def test_insufficent_node_count():
+    """test a user provided or previously obtained allocation with
+       insufficent nodes to run an ensemble of two single node jobs"""
+    alloc_id = ctrl.get_allocation(nodes=1, partition=None)
+    with pytest.raises(SmartSimError):
+        ctrl.start(ensembles=exp.ensembles, run_on_existing=True)
+    ctrl.release()
+
+@slurm_controller_test
+def test_no_alloc_on_partition():
+    """Test when a user runs a job with existing or user provided
+       allocation with an incorrect partition"""
+    alloc_id = ctrl.get_allocation(nodes=1, partition=None)
+    with pytest.raises(SmartSimError):
+        # ensembles on paritition: "not-a-partition"
+        ctrl.start(ensembles=exp_3.ensembles, run_on_existing=True)
+    ctrl.release()
+
+@slurm_controller_test
+def test_already_alloc_on_partition():
+    """Test when a user lets smartsim aquire an allocation but
+       an allocation already exists on that partition"""
+    alloc_id = ctrl.get_allocation(nodes=1, partition=None)
+    with pytest.raises(SmartSimError):
+        # so we got an allocation and smartsim is now going to
+        # try and get an allocation as well
+        ctrl.start(ensembles=exp.ensembles, run_on_existing=False)
+    ctrl.release()
+
+@slurm_controller_test
+def test_bad_accept_alloc():
+    """Test when a user provides an allocation on a partition that
+       already has a partition allocated on it within smartsim
+    """
+    alloc_id = ctrl.get_allocation(nodes=1, partition=None)
+    with pytest.raises(SmartSimError):
+        ctrl.add_allocation(alloc_id, None, 1)
+    ctrl.release()
+
+@slurm_controller_test
+def test_start_no_allocs():
+    """Test when start is called and no partitions exist to run on"""
+    with pytest.raises(SmartSimError):
+        ctrl.start(exp.ensembles, run_on_existing=True)

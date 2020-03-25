@@ -48,37 +48,55 @@ class Experiment:
 
        :param str name: Name of the directory that will house all of
                         the created files and directories.
+       :param str launcher: the method by which jobs are launched. options are "slurm", and "local"
     """
-    def __init__(self, name):
+    def __init__(self, name, launcher="slurm"):
         self.name = name
         self.ensembles = []
         self.nodes = []
         self.orc = None
         self.exp_path = path.join(getcwd(), name)
         self._control = Controller()
+        self._control.init_launcher(launcher)
 
-    def start(self, launcher="slurm", duration="1:00:00"):
+    def start(self,
+              ensembles=None,
+              ssnodes=None,
+              orchestrator=None,
+              duration="1:00:00",
+              run_on_existing=False):
         """Start the experiment with the created entities. If using a workload manager,
            'slurm' is the default, the total allocation size will be determined and
            aquired for the duration specified as an argument to this function.
 
-           :param str launcher: the type of launcher to use. default is "slurm".
-                                options are "slurm" and "local"
+           :param ensembles: Ensembles to launch with specified launcher
+           :type ensembles: a list of Ensemble objects
+           :param ssnodes: SmartSimNodes to launch with specified launcher
+           :type ssnodes: a list of SmartSimNode objects
+           :param orchestrator: Orchestrator object to be launched for entity communication
+           :type orchestrator: Orchestrator object
            :param str duration: Time for the aquired allocation in format HH:MM:SS
+           :param bool run_on_existing: If False, calculate and get an allocation
+                                        for this workload
            :raises: SmartSimError
         """
         #TODO catch bad duration format
         logger.info(f"Starting experiment: {self.name}")
         try:
-            if not self._control._launcher:
-                self._control.init_launcher(launcher)
-            self._control.start(
-                ensembles=self.ensembles,
-                nodes=self.nodes,
-                orchestrator=self.orc,
-                duration=duration
-            )
+            if not ensembles:
+                ensembles = self.ensembles
+            if not ssnodes:
+                ssnodes = self.nodes
+            if not orchestrator:
+                orchestrator = self.orc
 
+            self._control.start(
+                ensembles=ensembles,
+                nodes=ssnodes,
+                orchestrator=orchestrator,
+                duration=duration,
+                run_on_existing=run_on_existing
+            )
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -108,6 +126,46 @@ class Experiment:
             logger.error(e)
             raise
 
+    def get_allocation(self, nodes, partition, duration="1:00:00", add_opts=None):
+        """Get an allocation with the requested resources and return the allocation
+           ID from the workload manager. Allocation obtained is automatically added
+           to the smartsim allocations list for future calls to start to run on.
+
+           :param int nodes: number of nodes in the requested allocation
+           :param str partition: partition for the requested allocation
+           :param str duration: duration of the allocation in format HH:MM:SS
+           :param add_opts: additional options to pass to workload manager command
+                            for obtaining an allocation
+           :type add_opts: list of strings
+           :return: allocation ID
+           :rtype: string
+           :raises: SmartSimError
+        """
+        try:
+            alloc_id = self._control.get_allocation(
+                nodes,
+                partition,
+                duration=duration,
+                add_opts=add_opts
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise e
+
+    def add_allocation(self, alloc_id, partition, nodes):
+        """Add an existing allocation to SmartSim so that future calls to start can run
+           on it.
+
+           :param str alloc_id: id of the allocation given by the workload manager
+           :param str partition: partition of the allocation
+           :param int nodes: number of nodes in the allocation
+           :raises: SmartSimError
+        """
+        try:
+            self._control.add_allocation(alloc_id, partition, nodes)
+        except SmartSimError as e:
+            logger.error(e)
+            raise e
 
     def stop_all(self):
         """Stop all entities that were created with this experiment
