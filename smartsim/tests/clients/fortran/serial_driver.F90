@@ -8,7 +8,7 @@ program serial_driver
 
   type(c_ptr)  :: ssc_client !< Pointer to initialized SSC 
 
-  integer, parameter :: ni = 10
+  integer(kind=8), parameter :: ni = 5000000
 
   ssc_client = init_ssc_client()
   call test_array(ssc_client,ni,"serial")

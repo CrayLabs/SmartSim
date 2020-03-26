@@ -557,14 +557,45 @@ extern "C" void* ssc_constructor()
   return new SmartSimClient;
 }
 
-extern "C" void put_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
+extern "C" void put_array_double_c(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
   s->put_array_double(key, value, *dimensions, *ndims, true);
 }
 
-extern "C" void get_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
+extern "C" void get_array_double_c(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
   s->get_array_double(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void get_array_int64_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->get_array_int64(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void put_array_int64_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->put_array_int64(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void put_scalar_int64_c(void* SmartSimClient_proto, const char *key, int64_t value)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->put_scalar_int64(key, value);
+}
+
+extern "C" int64_t get_scalar_int64_c(void* SmartSimClient_proto, const char *key)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  return  s->get_scalar_int64(key);
+}
+
+extern "C" bool poll_key_and_check_scalar_int64_c(void *SmartSimClient_proto, const char* key, int64_t value, 
+                                                  int poll_frequency_ms, int num_tries)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  return s->poll_key_and_check_scalar_int64(key, value, poll_frequency_ms, num_tries);
 }
