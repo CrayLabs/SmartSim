@@ -1,0 +1,846 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>smartsim.experiment &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.experiment</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.experiment</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">zmq</span>
+
+<span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">mkdir</span><span class="p">,</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">getcwd</span>
+<span class="kn">from</span> <span class="nn">.error</span> <span class="k">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSConfigError</span>
+<span class="kn">from</span> <span class="nn">.ensemble</span> <span class="k">import</span> <span class="n">Ensemble</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">NumModel</span>
+<span class="kn">from</span> <span class="nn">.orchestrator</span> <span class="k">import</span> <span class="n">Orchestrator</span>
+<span class="kn">from</span> <span class="nn">.smartSimNode</span> <span class="k">import</span> <span class="n">SmartSimNode</span>
+<span class="kn">from</span> <span class="nn">.entity</span> <span class="k">import</span> <span class="n">SmartSimEntity</span>
+<span class="kn">from</span> <span class="nn">.generation</span> <span class="k">import</span> <span class="n">Generator</span>
+<span class="kn">from</span> <span class="nn">.control</span> <span class="k">import</span> <span class="n">Controller</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">get_logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;In SmartSim, the Experiment class is an entity creation API that both houses</span>
+<span class="sd">       and operates on the entities it creates. The entities that can be created are:</span>
+
+<span class="sd">         - NumModels</span>
+<span class="sd">         - Ensembles</span>
+<span class="sd">         - SmartSimNodes</span>
+<span class="sd">         - Orchestrator</span>
+
+<span class="sd">        Each entity has a distinct purpose within an experiment.</span>
+
+<span class="sd">        NumModel  - Instances of numerical models or &quot;simulation&quot; models. NumModels can</span>
+<span class="sd">                    be created through a call to Experiment.create_model() and though</span>
+<span class="sd">                    the creation of an Ensemble.</span>
+<span class="sd">        Ensemble  - Ensembles are groups of NumModels to be either generated manually or</span>
+<span class="sd">                    through a call to experiment.generate(). Ensembles can be given model</span>
+<span class="sd">                    parameters to be written into input files for the model at runtime.</span>
+<span class="sd">                    There are multiple ways of generating ensemble members; see</span>
+<span class="sd">                    experiment.generate() for details.</span>
+<span class="sd">        SmartSimNodes - Nodes run processes adjacent to the simulation. Nodes can be used</span>
+<span class="sd">                        for anything from analysis, training, inference, etc. Nodes are the</span>
+<span class="sd">                        most flexible entity with no requirements on language or framework.</span>
+<span class="sd">                        Nodes are commonly used for acting on data being streamed out of a</span>
+<span class="sd">                        simulation model through the orchestrator</span>
+<span class="sd">        Orchestrator  - The Orchestrator is a KeyDB database, clustered or standalone, that</span>
+<span class="sd">                        is launched prior to the simulation. The Orchestrator can be used</span>
+<span class="sd">                        to store data from another entity in memory during the course of</span>
+<span class="sd">                        an experiment. In order to stream data into the orchestrator or</span>
+<span class="sd">                        recieve data from the orchestrator, one of the SmartSim clients</span>
+<span class="sd">                        has to be used within a NumModel or SmartSimNode. Use</span>
+<span class="sd">                        experiment.register_connection() to connect two entities within</span>
+<span class="sd">                        SmartSim.</span>
+
+<span class="sd">       :param str name: Name of the directory that will house all of</span>
+<span class="sd">                        the created files and directories.</span>
+<span class="sd">       :param str launcher: the method by which jobs are launched. options are &quot;slurm&quot;, and &quot;local&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orc</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span> <span class="o">=</span> <span class="n">Controller</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">init_launcher</span><span class="p">(</span><span class="n">launcher</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Experiment.start"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+              <span class="n">ensembles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">ssnodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">orchestrator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">duration</span><span class="o">=</span><span class="s2">&quot;1:00:00&quot;</span><span class="p">,</span>
+              <span class="n">run_on_existing</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start the experiment with the created entities. If using a workload manager,</span>
+<span class="sd">           &#39;slurm&#39; is the default, the total allocation size will be determined and</span>
+<span class="sd">           aquired for the duration specified as an argument to this function.</span>
+
+<span class="sd">           :param ensembles: Ensembles to launch with specified launcher</span>
+<span class="sd">           :type ensembles: a list of Ensemble objects</span>
+<span class="sd">           :param ssnodes: SmartSimNodes to launch with specified launcher</span>
+<span class="sd">           :type ssnodes: a list of SmartSimNode objects</span>
+<span class="sd">           :param orchestrator: Orchestrator object to be launched for entity communication</span>
+<span class="sd">           :type orchestrator: Orchestrator object</span>
+<span class="sd">           :param str duration: Time for the aquired allocation in format HH:MM:SS</span>
+<span class="sd">           :param bool run_on_existing: If False, calculate and get an allocation</span>
+<span class="sd">                                        for this workload</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#TODO catch bad duration format</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Starting experiment: </span><span class="si">{self.name}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ensembles</span><span class="p">:</span>
+                <span class="n">ensembles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ssnodes</span><span class="p">:</span>
+                <span class="n">ssnodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">orchestrator</span><span class="p">:</span>
+                <span class="n">orchestrator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">start</span><span class="p">(</span>
+                <span class="n">ensembles</span><span class="o">=</span><span class="n">ensembles</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="n">ssnodes</span><span class="p">,</span>
+                <span class="n">orchestrator</span><span class="o">=</span><span class="n">orchestrator</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                <span class="n">run_on_existing</span><span class="o">=</span><span class="n">run_on_existing</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.stop"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ensembles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">models</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">orchestrator</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop specific entities launched through SmartSim. This method is only</span>
+<span class="sd">           applicable when launching with a workload manager.</span>
+
+<span class="sd">           :param ensembles: Ensemble objects to be stopped</span>
+<span class="sd">           :type Ensembles: list of Ensemble objects</span>
+<span class="sd">           :param models: Specific models to be stopped</span>
+<span class="sd">           :type models: list of Model objects</span>
+<span class="sd">           :param nodes: SmartSimNodes to be stopped</span>
+<span class="sd">           :type nodes: list of SmartSimNodes</span>
+<span class="sd">           :param orchestrator: the orchestrator to be stoppped</span>
+<span class="sd">           :type orchestrator: instance of Orchestrator</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span>
+                <span class="n">ensembles</span><span class="o">=</span><span class="n">ensembles</span><span class="p">,</span>
+                <span class="n">models</span><span class="o">=</span><span class="n">models</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+                <span class="n">orchestrator</span><span class="o">=</span><span class="n">orchestrator</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_allocation"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_allocation">[docs]</a>    <span class="k">def</span> <span class="nf">get_allocation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">partition</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="s2">&quot;1:00:00&quot;</span><span class="p">,</span> <span class="n">add_opts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get an allocation with the requested resources and return the allocation</span>
+<span class="sd">           ID from the workload manager. Allocation obtained is automatically added</span>
+<span class="sd">           to the smartsim allocations list for future calls to start to run on.</span>
+
+<span class="sd">           :param int nodes: number of nodes in the requested allocation</span>
+<span class="sd">           :param str partition: partition for the requested allocation</span>
+<span class="sd">           :param str duration: duration of the allocation in format HH:MM:SS</span>
+<span class="sd">           :param add_opts: additional options to pass to workload manager command</span>
+<span class="sd">                            for obtaining an allocation</span>
+<span class="sd">           :type add_opts: list of strings</span>
+<span class="sd">           :return: allocation ID</span>
+<span class="sd">           :rtype: string</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">alloc_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_allocation</span><span class="p">(</span>
+                <span class="n">nodes</span><span class="p">,</span>
+                <span class="n">partition</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                <span class="n">add_opts</span><span class="o">=</span><span class="n">add_opts</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Experiment.add_allocation"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.add_allocation">[docs]</a>    <span class="k">def</span> <span class="nf">add_allocation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alloc_id</span><span class="p">,</span> <span class="n">partition</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an existing allocation to SmartSim so that future calls to start can run</span>
+<span class="sd">           on it.</span>
+
+<span class="sd">           :param str alloc_id: id of the allocation given by the workload manager</span>
+<span class="sd">           :param str partition: partition of the allocation</span>
+<span class="sd">           :param int nodes: number of nodes in the allocation</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">add_allocation</span><span class="p">(</span><span class="n">alloc_id</span><span class="p">,</span> <span class="n">partition</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Experiment.stop_all"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.stop_all">[docs]</a>    <span class="k">def</span> <span class="nf">stop_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop all entities that were created with this experiment</span>
+
+<span class="sd">            :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span>
+                <span class="n">ensembles</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span>
+                <span class="n">orchestrator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">orch</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.release"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.release">[docs]</a>    <span class="k">def</span> <span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Release the allocation(s) stopping all jobs that are currently running</span>
+<span class="sd">           and freeing up resources.</span>
+
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.poll"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">poll_db</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Poll the running simulations and recieve logging output with the status</span>
+<span class="sd">           of the job. If polling the database, jobs will continue until database</span>
+<span class="sd">           is manually shutdown.</span>
+
+<span class="sd">           :param int interval: number of seconds to wait before polling again</span>
+<span class="sd">           :param bool poll_db: poll dbnodes for status as well and see</span>
+<span class="sd">                                it in the logging output</span>
+<span class="sd">           :param bool verbose: set verbosity</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">poll_db</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="Experiment.finished"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a boolean indicating wether or not a job has finished.</span>
+
+<span class="sd">           :param entity: object launched by SmartSim. One of the following:</span>
+<span class="sd">                          (SmartSimNode, NumModel, Orchestrator, Ensemble)</span>
+<span class="sd">           :type entity: SmartSimEntity</span>
+<span class="sd">           :returns: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="Experiment.generate"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">node_files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;all_perm&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the file structure for a SmartSim experiment. This includes the writing</span>
+<span class="sd">           and configuring of input files for a model. Ensembles created with a &#39;params&#39; argument</span>
+<span class="sd">           will be expanded into multiple models based on a generation strategy. Model input files</span>
+<span class="sd">           are specified with the model_files argument. All files and directories listed as strings</span>
+<span class="sd">           in a list will be copied to each model within an ensemble. Every model file is read,</span>
+<span class="sd">           checked for input variables to configure, and written. Input variables to configure</span>
+<span class="sd">           are specified with a tag within the input file itself. The default tag is surronding</span>
+<span class="sd">           an input value with semicolons. e.g. THERMO=;90;</span>
+
+<span class="sd">           Files for SmartSimNodes can also be included to be copied into node directories but</span>
+<span class="sd">           are never read nor written. All node_files will be copied into directories named after</span>
+<span class="sd">           the name of the SmartSimNode within the experiment.</span>
+
+<span class="sd">            :param model_files: The model files for the experiment.  Optional if model files</span>
+<span class="sd">                                are not needed for execution.</span>
+<span class="sd">            :type model_files: list of path like strings to directories or files</span>
+<span class="sd">            :param node_files: files to be copied into node directories. These are most likely files</span>
+<span class="sd">                               needed to run the node computations. e.g. a python script</span>
+<span class="sd">            :type node_files: list of path like strings to directories or files</span>
+
+<span class="sd">            :param str strategy: The permutation strategy for generating models within</span>
+<span class="sd">                                ensembles.</span>
+<span class="sd">                                Options are &quot;all_perm&quot;, &quot;random&quot;, &quot;step&quot;, or a callable function.</span>
+<span class="sd">                                Defaults to &quot;all_perm&quot;</span>
+<span class="sd">            :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">generator</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">()</span>
+            <span class="n">generator</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
+                <span class="n">generator</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">generator</span><span class="o">.</span><span class="n">generate_experiment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span><span class="p">,</span>
+                <span class="n">ensembles</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span>
+                <span class="n">orchestrator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">,</span>
+                <span class="n">model_files</span><span class="o">=</span><span class="n">model_files</span><span class="p">,</span>
+                <span class="n">node_files</span><span class="o">=</span><span class="n">node_files</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_status"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the status of a running job that was launched through a workload manager.</span>
+<span class="sd">           Ensembles, Orchestrator, SmartSimNodes, and NumModel instances can all be passed</span>
+<span class="sd">           to have their status returned as a string. The type of string and content will</span>
+<span class="sd">           depend on the workload manager being used.</span>
+
+<span class="sd">           :param entity: The SmartSimEntity object that was launched to check the status of</span>
+<span class="sd">           :type entity: SmartSimEntity</span>
+<span class="sd">           :returns: status of the entity</span>
+<span class="sd">           :rtype: list if entity contains sub-entities such as cluster Orchestrator or Ensemble</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">Ensemble</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_ensemble_status</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">Orchestrator</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_orchestrator_status</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">NumModel</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_model_status</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">SmartSimNode</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_node_status</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="n">f</span><span class="s2">&quot;entity argument was of type {type(entity)} not SmartSimEntity&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="Experiment.create_ensemble"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.create_ensemble">[docs]</a>    <span class="k">def</span> <span class="nf">create_ensemble</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{},</span> <span class="n">run_settings</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Create a ensemble to be used within one or many of the SmartSim Modules. ensembles</span>
+<span class="sd">           keep track of groups of models. Parameters can be given to a ensemble as well in</span>
+<span class="sd">           order to generate models based on a combination of parameters and generation</span>
+<span class="sd">           experimentgies. For more on generation strategies, see the Generator Class.</span>
+
+<span class="sd">           :param str name: name of the new ensemble</span>
+<span class="sd">           :param dict params: dictionary of model parameters to generate models from based</span>
+<span class="sd">                               on a run strategy.</span>
+<span class="sd">           :raises: SmartSimError</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">new_ensemble</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;A ensemble named &quot;</span> <span class="o">+</span> <span class="n">ensemble</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                                        <span class="s2">&quot; already exists!&quot;</span><span class="p">)</span>
+
+            <span class="n">ensemble_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">ensemble_path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;ensemble directory already exists: &quot;</span> <span class="o">+</span>
+                                    <span class="n">ensemble_path</span><span class="p">)</span>
+            <span class="n">new_ensemble</span> <span class="o">=</span> <span class="n">Ensemble</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
+                                    <span class="n">params</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                    <span class="n">ensemble_path</span><span class="p">,</span>
+                                    <span class="n">run_settings</span><span class="o">=</span><span class="n">run_settings</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_ensemble</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_ensemble</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.create_model"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.create_model">[docs]</a>    <span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">name</span><span class="p">,</span>
+                     <span class="n">ensemble</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>
+                     <span class="n">params</span><span class="o">=</span><span class="p">{},</span>
+                     <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">run_settings</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Create a model belonging to a specific ensemble. This function is</span>
+<span class="sd">           useful for running a small number of models where the model files</span>
+<span class="sd">           are already in place for execution.</span>
+
+<span class="sd">           Calls to this function without specifying the `ensemble` argument</span>
+<span class="sd">           result in the creation/usage a ensemble named &quot;default&quot;, the default</span>
+<span class="sd">           argument for `ensemble`.</span>
+
+<span class="sd">           :param str name: name of the model to be created</span>
+<span class="sd">           :param str ensemble: name of the ensemble to place model into</span>
+<span class="sd">           :param dict params: dictionary of model parameters</span>
+<span class="sd">           :param str path: (optional) path to model files, defaults to os.getcwd()</span>
+<span class="sd">           :param dict run_settings: launcher settings for workload manager or local call</span>
+<span class="sd">                                   e.g. {&quot;ppn&quot;: 1, &quot;nodes&quot;: 10, &quot;partition&quot;:&quot;default_queue&quot;}</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">model_added</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">NumModel</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">run_settings</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">getcwd</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">ensemble</span> <span class="o">==</span> <span class="s2">&quot;default&quot;</span> <span class="ow">and</span> <span class="s2">&quot;default&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="n">ensemble</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">]:</span>
+
+                <span class="c1"># create empty ensemble</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{},</span> <span class="n">run_settings</span><span class="o">=</span><span class="p">{})</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">ensemble</span><span class="p">:</span>
+                    <span class="n">t</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                    <span class="n">model_added</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">model_added</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not find ensemble by the name of: &quot;</span> <span class="o">+</span>
+                                    <span class="n">ensemble</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">model</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.create_orchestrator"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.create_orchestrator">[docs]</a>    <span class="k">def</span> <span class="nf">create_orchestrator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                            <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span>
+                            <span class="n">cluster_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                            <span class="n">partition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an orchestrator database to faciliate the transfer of data</span>
+<span class="sd">           for online training and inference. After the orchestrator is created,</span>
+<span class="sd">           connections between models and nodes can be instantiated through a</span>
+<span class="sd">           call to Experiment.register_connection().</span>
+
+<span class="sd">           :param str path: desired path to output files of db cluster (defaults to</span>
+<span class="sd">                            os.getcwd())</span>
+<span class="sd">           :param int port: port for each database node for tcp communication</span>
+<span class="sd">           :param int cluster_size: number of database nodes in cluster</span>
+<span class="sd">           :param str partition: partition to launch db nodes</span>
+<span class="sd">           :returns: Orchestrator object</span>
+<span class="sd">           :raises: SmartSimError if one orchestrator has already been created</span>
+<span class="sd">           &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="s2">&quot;Only one orchestrator can exist within a experiment.&quot;</span><span class="p">)</span>
+            <span class="n">orcpath</span> <span class="o">=</span> <span class="n">getcwd</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">orcpath</span> <span class="o">=</span> <span class="n">path</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">orc</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span><span class="n">orcpath</span><span class="p">,</span>
+                                    <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span>
+                                    <span class="n">cluster_size</span><span class="o">=</span><span class="n">cluster_size</span><span class="p">,</span>
+                                    <span class="n">partition</span><span class="o">=</span><span class="n">partition</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.create_node"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.create_node">[docs]</a>    <span class="k">def</span> <span class="nf">create_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">script_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;Create a SmartSimNode for a specific task. Examples of SmartSimNode</span>
+<span class="sd">           tasks include training, processing, and inference. Nodes can be used</span>
+<span class="sd">           to run any task written in any language. The included script/executable</span>
+<span class="sd">           for nodes often use the Client class to send and recieve data from</span>
+<span class="sd">           the SmartSim orchestrator.</span>
+
+<span class="sd">           :param str name: name of the node to be launched</span>
+<span class="sd">           :param str script_path: path to the script or executable to be launched.</span>
+<span class="sd">                                   (default is the current working directory of the</span>
+<span class="sd">                                    SmartSim run script)</span>
+<span class="sd">           :param dict run_settings: Settings for the workload manager can be set by</span>
+<span class="sd">                                     including keyword arguments such as duration=&quot;1:00:00&quot;</span>
+<span class="sd">                                     or nodes=5</span>
+<span class="sd">           :returns: SmartSimNode created</span>
+<span class="sd">           :raises: SmartSimError if node exists by the same name</span>
+<span class="sd">           &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;A node named &quot;</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span>
+                                        <span class="s2">&quot; already exists!&quot;</span><span class="p">)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">SmartSimNode</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">script_path</span><span class="p">,</span> <span class="n">run_settings</span><span class="o">=</span><span class="n">run_settings</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">node</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.register_connection"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.register_connection">[docs]</a>    <span class="k">def</span> <span class="nf">register_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">reciever</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a runtime connection in orchestrator for data to be passed between two</span>
+<span class="sd">           SmartSim entities. The possible types of connections right now are:</span>
+
+<span class="sd">                Model -&gt; Node</span>
+<span class="sd">                Node  -&gt; Node</span>
+<span class="sd">                Node  -&gt; Model</span>
+
+<span class="sd">           :param str sender: name of the created entity with a Client instance to send</span>
+<span class="sd">                              data to a registered counterpart</span>
+<span class="sd">           :param str reciever: name of the created entity that will recieve data by</span>
+<span class="sd">                                making calls to a Client instance.</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">SmartSimEntity</span><span class="p">):</span>
+                <span class="n">sender</span> <span class="o">=</span> <span class="n">sender</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reciever</span><span class="p">,</span> <span class="n">SmartSimEntity</span><span class="p">):</span>
+                <span class="n">reciever</span> <span class="o">=</span> <span class="n">reciever</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reciever</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="s2">&quot;Arguments to register connection must either be a str or a SmartSimEntity&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Create orchestrator to register connections&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># TODO check if sender and reciever are registered entities</span>
+                <span class="c1"># TODO check for illegal connection types. e.g. model to model</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">junction</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">reciever</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.delete_ensemble"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.delete_ensemble">[docs]</a>    <span class="k">def</span> <span class="nf">delete_ensemble</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a created ensemble from Experiment so that any future calls to SmartSim</span>
+<span class="sd">           Modules will not include this ensemble.</span>
+
+<span class="sd">           :param str name: name of the ensemble to be deleted</span>
+<span class="sd">           :raises SmartSimError: if ensemble doesnt exist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">SmartSimEntity</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Argument to delete_ensemble must be of type str&quot;</span><span class="p">)</span>
+            <span class="n">ensemble_deleted</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+                    <span class="n">ensemble_deleted</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ensemble_deleted</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not delete ensemble: &quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_model"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">ensemble</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a specific model from a ensemble.</span>
+
+<span class="sd">           :param str model: name of the model to return</span>
+<span class="sd">           :param str ensemble: name of the ensemble where the model is located</span>
+
+<span class="sd">           :returns: NumModel instance</span>
+<span class="sd">           :raises: SmartSimError if model is not found</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Ensemble argument to get_model must be of type str&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Model argument to get_model must be of type str&quot;</span><span class="p">)</span>
+
+            <span class="n">ensemble</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ensemble</span><span class="p">(</span><span class="n">ensemble</span><span class="p">)</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">ensemble</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">model</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Model not found: &quot;</span> <span class="o">+</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_ensemble"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_ensemble">[docs]</a>    <span class="k">def</span> <span class="nf">get_ensemble</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ensemble</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a specific ensemble from Experiment</span>
+
+<span class="sd">           :param str ensemble: Name of the ensemble to return</span>
+
+<span class="sd">           :returns: ensemble instance</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ensemble</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Argument to get_ensemble must be of type str&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">ensemble</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">t</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;ensemble not found: &quot;</span> <span class="o">+</span> <span class="n">ensemble</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_node"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_node">[docs]</a>    <span class="k">def</span> <span class="nf">get_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a specific node from Experiment</span>
+
+<span class="sd">           :param str node: Name of the node to return</span>
+
+<span class="sd">           :returns: node instance</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Argument to get_node must be of type str&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">node</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">n</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Node not found: &quot;</span> <span class="o">+</span> <span class="n">node</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SmartSimError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Experiment.get_db_address"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.get_db_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_db_address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the TCP address of the orchestrator returned by pinging the</span>
+<span class="sd">           domain name used by the workload manager e.g. nid00004 returns</span>
+<span class="sd">           127.0.0.1</span>
+
+<span class="sd">           :returns: tcp address of orchestrator</span>
+<span class="sd">           :rtype: returns a list if clustered orchestrator</span>
+<span class="sd">           :raises: SSConfigError</span>
+<span class="sd">           :raises: SmartSimError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SSConfigError</span><span class="p">(</span><span class="s2">&quot;No orchestrator has been initialized&quot;</span><span class="p">)</span>
+        <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dbnode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="o">.</span><span class="n">dbnodes</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">dbnode</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Database has not been launched yet&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="n">addr</span> <span class="o">=</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">address</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">dbnode</span><span class="o">.</span><span class="n">port</span><span class="p">)))</span>
+                <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">addresses</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Could not find nodes Database was launched on&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">addresses</span></div>
+
+<div class="viewcode-block" id="Experiment.init_remote_launcher"><a class="viewcode-back" href="../../doc/api/experiment.html#smartsim.experiment.Experiment.init_remote_launcher">[docs]</a>    <span class="k">def</span> <span class="nf">init_remote_launcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">launcher</span><span class="o">=</span><span class="s2">&quot;slurm&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a remote launcher so that SmartSim can be run on compute</span>
+<span class="sd">           nodes where slurm and other workload manager commands are not available.</span>
+<span class="sd">           Remote launchers must be located on the same system, and be reachable</span>
+<span class="sd">           via tcp.</span>
+
+<span class="sd">           :param str launcher: Workload manager, default is &quot;slurm&quot; (currently only option)</span>
+<span class="sd">           :param str addr: Address of the running remote command center</span>
+<span class="sd">           :param int port: port the command center is running on</span>
+<span class="sd">           :raises: SSConfigError</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">init_launcher</span><span class="p">(</span><span class="n">launcher</span><span class="o">=</span><span class="n">launcher</span><span class="p">,</span> <span class="n">remote</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="n">addr</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">)</span>
+
+        <span class="c1"># test to see if cmd_center has been spun up</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+        <span class="n">socket</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">REQ</span><span class="p">)</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SNDTIMEO</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">LINGER</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">address</span> <span class="o">=</span> <span class="s2">&quot;tcp://&quot;</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">addr</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)))</span>
+        <span class="n">socket</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">socket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(([</span><span class="s2">&quot;PING&quot;</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
+
+            <span class="n">poller</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Poller</span><span class="p">()</span>
+            <span class="n">poller</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">zmq</span><span class="o">.</span><span class="n">POLLIN</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">poller</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">1000</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                    <span class="n">f</span><span class="s2">&quot;Could not find command center at address </span><span class="si">{address}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">zmq</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">Again</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span>
+                <span class="n">f</span><span class="s2">&quot;Could not find command center at address </span><span class="si">{address}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">term</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">experiment_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- Experiment Summary --</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">experiment_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- ensembles --&quot;</span>
+            <span class="k">for</span> <span class="n">ensemble</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensembles</span><span class="p">:</span>
+                <span class="n">experiment_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ensemble</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">experiment_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">-- Nodes --&quot;</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                <span class="n">experiment_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">:</span>
+            <span class="n">experiment_str</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">experiment_str</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

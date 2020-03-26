@@ -19,48 +19,30 @@ training and much more, while the simulation is running.
 With SmartSim, users can stream data out of their models and operate
 directly on the data at discrete time intervals decided by the user. The
 framework is extremely flexible and can handle largely any process from
-distributed machine learning to more tpyical data anaylsis and visualization.
-
-SmartSim utilizes a project structure called an ``experiment`` that holds all of the
-necessary files and data to run multiple simulations. Within each experiment are two
-types of objects that allow a user complete control over how the simulation data is
-generated and/or used. The first is called a ``ensemble``. ensembles are groups of models
-with similar configurations. Within each ensemble are the actual models. The models
-correspond to directories that house everything from configuration files to simulation
-output.
-
-A basic project structure with one ensemble and one model looks as follows:
-
-.. code-block:: text
-
-  lammps_atm           # experiment
-  └── atm              # ensemble
-      ├── atm_0        # model
-      │   └── in.atm   # model files
-      └── atm_1        # model
-          └── in.atm   # model files
-
-
-TODO
- - explain pipeline
- - KeyDB
- - nodes
-
+distributed machine learning to more typical data anaylsis and visualization.
 
 .. toctree::
    :maxdepth: 2
    :caption: General
 
+   doc/experiment
+   doc/online-sim-interaction
+   doc/clients
    doc/generate
-   doc/simulate
    doc/developers
 
 .. toctree::
    :maxdepth: 2
    :caption: Examples
 
-   doc/examples/cp2k
-   doc/examples/online-training
+   doc/examples/basic
+   doc/examples/ensembles
+   doc/examples/allocations
+   doc/examples/python
+   doc/examples/fortran
+   doc/examples/c-plus
+   doc/examples/urika
+   doc/examples/MPO
 
 
 .. toctree::
@@ -68,9 +50,6 @@ TODO
    :caption: API
 
    doc/api/experiment
-   doc/api/simModule
-   doc/api/generator
-   doc/api/controller
    doc/api/client
    doc/api/utilities
 

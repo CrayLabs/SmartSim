@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Generation &mdash; SmartSim 0.1.0 documentation</title>
+  <title>Text-Based Configuration Generation &mdash; SmartSim 0.1.0 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Simulation Control" href="simulate.html" />
+    <link rel="next" title="Developer" href="developers.html" />
     <link rel="prev" title="SmartSim" href="../index.html" /> 
 </head>
 
@@ -82,25 +82,26 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Generation</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Text-Based Configuration Generation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#tagging-and-creation">Tagging and Creation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generation-strategies">Generation Strategies</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="simulate.html">Simulation Control</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/cp2k.html">Ensembling CP2K Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/online-training.html">Use Machine Learning In Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/urika.html">Connect Jupyter to a Simulation</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/state.html">State</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/simModule.html">SmartSimModule</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/generator.html">Generator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/utilities.html">Utilities</a></li>
 </ul>
@@ -148,7 +149,7 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Generation</li>
+      <li>Text-Based Configuration Generation</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -167,10 +168,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="generation">
-<h1>Generation<a class="headerlink" href="#generation" title="Permalink to this headline">¶</a></h1>
-<p>For the succientness of the documentation, the examples below will all be using the
-python interface to run experiments.</p>
+  <div class="section" id="text-based-configuration-generation">
+<h1>Text-Based Configuration Generation<a class="headerlink" href="#text-based-configuration-generation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="tagging-and-creation">
 <h2>Tagging and Creation<a class="headerlink" href="#tagging-and-creation" title="Permalink to this headline">¶</a></h2>
 <p>To generate new instances of a simulation model, find and tag the simulation sepcific
@@ -256,20 +255,20 @@ anything that wont be already represented within the configuration file itself.
 For instance, in the example above, we wouldnt want to use dollar signs or curly
 braces for the tag.</p>
 <p>Once the configuration file(s) are tagged and ready, the experiment can be setup
-through the <code class="docutils literal notranslate"><span class="pre">State</span></code> initialization as follows</p>
+through the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> initialization as follows</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># import needed smartsim modules</span>
-<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Experiment</span>
 
-<span class="c1"># intialize state to conduct experiment</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;lammps_atm&quot;</span><span class="p">)</span>
+<span class="c1"># intialize experiment to conduct experiment</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;lammps_atm&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For this example, we will create one target that holds the four models with
-four increasing number of steps. This is done through a call to <code class="docutils literal notranslate"><span class="pre">state.create_target</span></code>
+<p>For this example, we will create one ensemble that holds the four models with
+four increasing number of steps. This is done through a call to <code class="docutils literal notranslate"><span class="pre">experiment.create_ensemble</span></code>
 as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create targets</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create ensembles</span>
 <span class="n">param_dict_1</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;steps&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">]}</span>
-<span class="n">state</span><span class="o">.</span><span class="n">create_target</span><span class="p">(</span><span class="s2">&quot;atm&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">param_dict</span><span class="p">)</span>
+<span class="n">experiment</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;atm&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">param_dict</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The parameter dictionary above specifies the placeholder we put into the configuration
@@ -293,7 +292,7 @@ The argument <code class="docutils literal notranslate"><span class="pre">n_mode
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Supply the generator with necessary files to run the simulation</span>
 <span class="c1"># and generate the specified models.</span>
 <span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
+<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
 <span class="n">GEN</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">)</span>
 <span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">n_models</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
@@ -309,7 +308,7 @@ is the dictionary for a model.  For example:</p>
   <span class="k">return</span> <span class="p">[{</span> <span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">param_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">}]</span>
 
 <span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
+<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
 <span class="n">GEN</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">my_function</span><span class="p">)</span>
 <span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
 </pre></div>
@@ -323,7 +322,7 @@ is also valid:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Supply the generator with necessary files to run the simulation</span>
 <span class="c1"># and generate the specified models</span>
 <span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
+<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
 <span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -338,7 +337,7 @@ is also valid:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="simulate.html" class="btn btn-neutral float-right" title="Simulation Control" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="developers.html" class="btn btn-neutral float-right" title="Developer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../index.html" class="btn btn-neutral float-left" title="SmartSim" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.protobuf.message &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.protobuf.message</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.protobuf.message</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Protocol Buffers - Google&#39;s data interchange format</span>
+<span class="c1"># Copyright 2008 Google Inc.  All rights reserved.</span>
+<span class="c1"># https://developers.google.com/protocol-buffers/</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are</span>
+<span class="c1"># met:</span>
+<span class="c1">#</span>
+<span class="c1">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c1"># notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#     * Redistributions in binary form must reproduce the above</span>
+<span class="c1"># copyright notice, this list of conditions and the following disclaimer</span>
+<span class="c1"># in the documentation and/or other materials provided with the</span>
+<span class="c1"># distribution.</span>
+<span class="c1">#     * Neither the name of Google Inc. nor the names of its</span>
+<span class="c1"># contributors may be used to endorse or promote products derived from</span>
+<span class="c1"># this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR</span>
+<span class="c1"># A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT</span>
+<span class="c1"># OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,</span>
+<span class="c1"># SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</span>
+<span class="c1"># DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</span>
+<span class="c1"># THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c1"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="c1"># TODO(robinson): We should just make these methods all &quot;pure-virtual&quot; and move</span>
+<span class="c1"># all implementation out, into reflection.py for now.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Contains an abstract base class for protocol messages.&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;robinson@google.com (Will Robinson)&#39;</span>
+
+<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="k">pass</span></div>
+<div class="viewcode-block" id="DecodeError"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.DecodeError">[docs]</a><span class="k">class</span> <span class="nc">DecodeError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span> <span class="k">pass</span></div>
+<div class="viewcode-block" id="EncodeError"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.EncodeError">[docs]</a><span class="k">class</span> <span class="nc">EncodeError</span><span class="p">(</span><span class="n">Error</span><span class="p">):</span> <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Message"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message">[docs]</a><span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+  <span class="sd">&quot;&quot;&quot;Abstract base class for protocol messages.</span>
+
+<span class="sd">  Protocol message classes are almost always generated by the protocol</span>
+<span class="sd">  compiler.  These generated types subclass Message and implement the methods</span>
+<span class="sd">  shown below.</span>
+
+<span class="sd">  TODO(robinson): Link to an HTML document here.</span>
+
+<span class="sd">  TODO(robinson): Document that instances of this class will also</span>
+<span class="sd">  have an Extensions attribute with __getitem__ and __setitem__.</span>
+<span class="sd">  Again, not sure how to best convey this.</span>
+
+<span class="sd">  TODO(robinson): Document that the class must also have a static</span>
+<span class="sd">    RegisterExtension(extension_field) method.</span>
+<span class="sd">    Not sure how to best express at this point.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="c1"># TODO(robinson): Document these fields and methods.</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[]</span>
+
+  <span class="n">DESCRIPTOR</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">clone</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)()</span>
+    <span class="n">clone</span><span class="o">.</span><span class="n">MergeFrom</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">clone</span>
+
+  <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursively compares two messages by value and structure.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+  <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_msg</span><span class="p">):</span>
+    <span class="c1"># Can&#39;t just say self != other_msg, since that would infinitely recurse. :)</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other_msg</span>
+
+  <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;unhashable object&#39;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Outputs a human-readable representation of the message.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+  <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Outputs a human-readable representation of the message.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="Message.MergeFrom"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.MergeFrom">[docs]</a>  <span class="k">def</span> <span class="nf">MergeFrom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merges the contents of the specified message into current message.</span>
+
+<span class="sd">    This method merges the contents of the specified message into the current</span>
+<span class="sd">    message. Singular fields that are set in the specified message overwrite</span>
+<span class="sd">    the corresponding fields in the current message. Repeated fields are</span>
+<span class="sd">    appended. Singular sub-messages and groups are recursively merged.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      other_msg: Message to merge into the current message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.CopyFrom"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.CopyFrom">[docs]</a>  <span class="k">def</span> <span class="nf">CopyFrom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copies the content of the specified message into the current message.</span>
+
+<span class="sd">    The method clears the current message and then merges the specified</span>
+<span class="sd">    message using MergeFrom.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      other_msg: Message to copy into the current one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span> <span class="ow">is</span> <span class="n">other_msg</span><span class="p">:</span>
+      <span class="k">return</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">MergeFrom</span><span class="p">(</span><span class="n">other_msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Message.Clear"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.Clear">[docs]</a>  <span class="k">def</span> <span class="nf">Clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Clears all data that was set in the message.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.SetInParent"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.SetInParent">[docs]</a>  <span class="k">def</span> <span class="nf">SetInParent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mark this as present in the parent.</span>
+
+<span class="sd">    This normally happens automatically when you assign a field of a</span>
+<span class="sd">    sub-message, but sometimes you want to make the sub-message</span>
+<span class="sd">    present while keeping it empty.  If you find yourself using this,</span>
+<span class="sd">    you may want to reconsider your design.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.IsInitialized"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.IsInitialized">[docs]</a>  <span class="k">def</span> <span class="nf">IsInitialized</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if the message is initialized.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The method returns True if the message is initialized (i.e. all of its</span>
+<span class="sd">      required fields are set).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+  <span class="c1"># TODO(robinson): MergeFromString() should probably return None and be</span>
+  <span class="c1"># implemented in terms of a helper that returns the # of bytes read.  Our</span>
+  <span class="c1"># deserialization routines would use the helper when recursively</span>
+  <span class="c1"># deserializing, but the end user would almost always just want the no-return</span>
+  <span class="c1"># MergeFromString().</span>
+
+<div class="viewcode-block" id="Message.MergeFromString"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.MergeFromString">[docs]</a>  <span class="k">def</span> <span class="nf">MergeFromString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serialized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merges serialized protocol buffer data into this message.</span>
+
+<span class="sd">    When we find a field in |serialized| that is already present</span>
+<span class="sd">    in this message:</span>
+<span class="sd">      - If it&#39;s a &quot;repeated&quot; field, we append to the end of our list.</span>
+<span class="sd">      - Else, if it&#39;s a scalar, we overwrite our field.</span>
+<span class="sd">      - Else, (it&#39;s a nonrepeated composite), we recursively merge</span>
+<span class="sd">        into the existing composite.</span>
+
+<span class="sd">    TODO(robinson): Document handling of unknown fields.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      serialized: Any object that allows us to call buffer(serialized)</span>
+<span class="sd">        to access a string of bytes using the buffer interface.</span>
+
+<span class="sd">    TODO(robinson): When we switch to a helper, this will return None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The number of bytes read from |serialized|.</span>
+<span class="sd">      For non-group messages, this will always be len(serialized),</span>
+<span class="sd">      but for messages which are actually groups, this will</span>
+<span class="sd">      generally be less than len(serialized), since we must</span>
+<span class="sd">      stop when we reach an END_GROUP tag.  Note that if</span>
+<span class="sd">      we *do* stop because of an END_GROUP tag, the number</span>
+<span class="sd">      of bytes returned does not include the bytes</span>
+<span class="sd">      for the END_GROUP tag information.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      message.DecodeError if the input cannot be parsed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.ParseFromString"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.ParseFromString">[docs]</a>  <span class="k">def</span> <span class="nf">ParseFromString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serialized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse serialized protocol buffer data into this message.</span>
+
+<span class="sd">    Like MergeFromString(), except we clear the object first.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">MergeFromString</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Message.SerializeToString"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.SerializeToString">[docs]</a>  <span class="k">def</span> <span class="nf">SerializeToString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Serializes the protocol message to a binary string.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">      **kwargs: Keyword arguments to the serialize method, accepts</span>
+<span class="sd">        the following keyword args:</span>
+<span class="sd">        deterministic: If true, requests deterministic serialization of the</span>
+<span class="sd">          protobuf, with predictable ordering of map keys.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A binary string representation of the message if all of the required</span>
+<span class="sd">      fields in the message are set (i.e. the message is initialized).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      message.EncodeError if the message isn&#39;t initialized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.SerializePartialToString"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.SerializePartialToString">[docs]</a>  <span class="k">def</span> <span class="nf">SerializePartialToString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Serializes the protocol message to a binary string.</span>
+
+<span class="sd">    This method is similar to SerializeToString but doesn&#39;t check if the</span>
+<span class="sd">    message is initialized.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">      **kwargs: Keyword arguments to the serialize method, accepts</span>
+<span class="sd">        the following keyword args:</span>
+<span class="sd">        deterministic: If true, requests deterministic serialization of the</span>
+<span class="sd">          protobuf, with predictable ordering of map keys.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A string representation of the partial message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+  <span class="c1"># TODO(robinson): Decide whether we like these better</span>
+  <span class="c1"># than auto-generated has_foo() and clear_foo() methods</span>
+  <span class="c1"># on the instances themselves.  This way is less consistent</span>
+  <span class="c1"># with C++, but it makes reflection-type access easier and</span>
+  <span class="c1"># reduces the number of magically autogenerated things.</span>
+  <span class="c1">#</span>
+  <span class="c1"># TODO(robinson): Be sure to document (and test) exactly</span>
+  <span class="c1"># which field names are accepted here.  Are we case-sensitive?</span>
+  <span class="c1"># What do we do with fields that share names with Python keywords</span>
+  <span class="c1"># like &#39;lambda&#39; and &#39;yield&#39;?</span>
+  <span class="c1">#</span>
+  <span class="c1"># nnorwitz says:</span>
+  <span class="c1"># &quot;&quot;&quot;</span>
+  <span class="c1"># Typically (in python), an underscore is appended to names that are</span>
+  <span class="c1"># keywords. So they would become lambda_ or yield_.</span>
+  <span class="c1"># &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Message.ListFields"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.ListFields">[docs]</a>  <span class="k">def</span> <span class="nf">ListFields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a list of (FieldDescriptor, value) tuples for all</span>
+<span class="sd">    fields in the message which are not empty.  A message field is</span>
+<span class="sd">    non-empty if HasField() would return true. A singular primitive field</span>
+<span class="sd">    is non-empty if HasField() would return true in proto2 or it is non zero</span>
+<span class="sd">    in proto3. A repeated field is non-empty if it contains at least one</span>
+<span class="sd">    element.  The fields are ordered by field number&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.HasField"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.HasField">[docs]</a>  <span class="k">def</span> <span class="nf">HasField</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if a certain field is set for the message, or if any field inside</span>
+<span class="sd">    a oneof group is set.  Note that if the field_name is not defined in the</span>
+<span class="sd">    message descriptor, ValueError will be raised.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.ClearField"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.ClearField">[docs]</a>  <span class="k">def</span> <span class="nf">ClearField</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Clears the contents of a given field, or the field set inside a oneof</span>
+<span class="sd">    group.  If the name neither refers to a defined field or oneof group,</span>
+<span class="sd">    ValueError is raised.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.WhichOneof"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.WhichOneof">[docs]</a>  <span class="k">def</span> <span class="nf">WhichOneof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oneof_group</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the name of the field that is set inside a oneof group, or</span>
+<span class="sd">    None if no field is set.  If no group with the given name exists, ValueError</span>
+<span class="sd">    will be raised.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.HasExtension"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.HasExtension">[docs]</a>  <span class="k">def</span> <span class="nf">HasExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension_handle</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.ClearExtension"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.ClearExtension">[docs]</a>  <span class="k">def</span> <span class="nf">ClearExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension_handle</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.UnknownFields"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.UnknownFields">[docs]</a>  <span class="k">def</span> <span class="nf">UnknownFields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the UnknownFieldSet.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.DiscardUnknownFields"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.DiscardUnknownFields">[docs]</a>  <span class="k">def</span> <span class="nf">DiscardUnknownFields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Message.ByteSize"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/message.html#google.protobuf.message.Message.ByteSize">[docs]</a>  <span class="k">def</span> <span class="nf">ByteSize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the serialized size of this message.</span>
+<span class="sd">    Recursively calls ByteSize() on all contained messages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+  <span class="k">def</span> <span class="nf">_SetListener</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_listener</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Internal method used by the protocol message implementation.</span>
+<span class="sd">    Clients should not call this directly.</span>
+
+<span class="sd">    Sets a listener that this message will call on certain state transitions.</span>
+
+<span class="sd">    The purpose of this method is to register back-edges from children to</span>
+<span class="sd">    parents at runtime, for the purpose of setting &quot;has&quot; bits and</span>
+<span class="sd">    byte-size-dirty bits in the parent and ancestor objects whenever a child or</span>
+<span class="sd">    descendant object is modified.</span>
+
+<span class="sd">    If the client wants to disconnect this Message from the object tree, she</span>
+<span class="sd">    explicitly sets callback to None.</span>
+
+<span class="sd">    If message_listener is None, unregisters any existing listener.  Otherwise,</span>
+<span class="sd">    message_listener must implement the MessageListener interface in</span>
+<span class="sd">    internal/message_listener.py, and we discard any listener registered</span>
+<span class="sd">    via a previous _SetListener() call.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+  <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support the pickle protocol.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">serialized</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">SerializePartialToString</span><span class="p">())</span>
+
+  <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support the pickle protocol.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="n">serialized</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;serialized&#39;</span><span class="p">]</span>
+    <span class="c1"># On Python 3, using encoding=&#39;latin1&#39; is required for unpickling</span>
+    <span class="c1"># protos pickled by Python 2.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">serialized</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+      <span class="n">serialized</span> <span class="o">=</span> <span class="n">serialized</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;latin1&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">message_descriptor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
+    <span class="k">if</span> <span class="n">message_descriptor</span><span class="o">.</span><span class="n">containing_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getstate__</span><span class="p">()</span>
+    <span class="c1"># the message type must be nested.</span>
+    <span class="c1"># Python does not pickle nested classes; use the symbol_database on the</span>
+    <span class="c1"># receiving end.</span>
+    <span class="n">container</span> <span class="o">=</span> <span class="n">message_descriptor</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">_InternalConstructMessage</span><span class="p">,</span> <span class="p">(</span><span class="n">container</span><span class="o">.</span><span class="n">full_name</span><span class="p">,),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__getstate__</span><span class="p">())</span></div>
+
+
+<span class="k">def</span> <span class="nf">_InternalConstructMessage</span><span class="p">(</span><span class="n">full_name</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Constructs a nested message.&quot;&quot;&quot;</span>
+  <span class="kn">from</span> <span class="nn">google.protobuf</span> <span class="k">import</span> <span class="n">symbol_database</span>  <span class="c1"># pylint:disable=g-import-not-at-top</span>
+
+  <span class="k">return</span> <span class="n">symbol_database</span><span class="o">.</span><span class="n">Default</span><span class="p">()</span><span class="o">.</span><span class="n">GetSymbol</span><span class="p">(</span><span class="n">full_name</span><span class="p">)()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

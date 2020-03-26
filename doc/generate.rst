@@ -1,9 +1,6 @@
 
-Generation
-----------
-
-For the succientness of the documentation, the examples below will all be using the
-python interface to run experiments.
+Text-Based Configuration Generation
+-----------------------------------
 
 
 Tagging and Creation
@@ -184,5 +181,3 @@ is also valid:
   base_config = "LAMMPS/in.atm"
   GEN = Generator(experiment, model_files=base_config)
   GEN.generate()
-
-

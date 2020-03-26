@@ -34,9 +34,7 @@
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer" href="developers.html" />
-    <link rel="prev" title="Generation" href="generate.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,26 +79,23 @@
             
             
               <p class="caption"><span class="caption-text">General</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="generate.html">Generation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation Control</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#slurm">Slurm</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#local">Local</a></li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="generate.html">Text-Based Configuration Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/cp2k.html">Ensembling CP2K Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/online-training.html">Use Machine Learning In Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/urika.html">Connect Jupyter to a Simulation</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/state.html">State</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/simModule.html">SmartSimModule</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/generator.html">Generator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/utilities.html">Utilities</a></li>
 </ul>
@@ -209,18 +204,18 @@ the script will continue on it’s main thread.</p>
 different configurations of an H20 simulation. The simulation uses the Slurm integration
 to launch the models each on one GPU. After they are submitted, we uses
 the <code class="docutils literal notranslate"><span class="pre">Controller.poll()</span></code> method to check on the status of the four models.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">State</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Experiment</span>
 
-<span class="c1"># init state</span>
-<span class="n">state</span><span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;h2o&quot;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">)</span>
+<span class="c1"># init experiment</span>
+<span class="n">experiment</span><span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;h2o&quot;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">)</span>
 
-<span class="c1"># create targets</span>
-<span class="n">target_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;STEPS&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">]}</span>
-<span class="n">state</span><span class="o">.</span><span class="n">create_target</span><span class="p">(</span><span class="s2">&quot;h2o-1&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">target_params</span><span class="p">)</span>
+<span class="c1"># create ensembles</span>
+<span class="n">ensemble_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;STEPS&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">]}</span>
+<span class="n">experiment</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;h2o-1&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">ensemble_params</span><span class="p">)</span>
 
 
 <span class="c1"># Data Generation Phase</span>
-<span class="n">gen</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="s2">&quot;CP2K/h2o.inp&quot;</span><span class="p">)</span>
+<span class="n">gen</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="s2">&quot;CP2K/h2o.inp&quot;</span><span class="p">)</span>
 <span class="n">gen</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
 
 <span class="n">sim_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;launcher&quot;</span><span class="p">:</span> <span class="s2">&quot;slurm&quot;</span><span class="p">,</span>       <span class="c1"># setup slurm</span>
@@ -229,7 +224,7 @@ the <code class="docutils literal notranslate"><span class="pre">Controller.poll
              <span class="s2">&quot;partition&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
              <span class="s2">&quot;exe_args&quot;</span><span class="p">:</span> <span class="s2">&quot;-i h2o.inp&quot;</span><span class="p">,</span>
              <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-<span class="n">sim</span> <span class="o">=</span> <span class="n">Controller</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">sim_params</span><span class="p">)</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">Controller</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="o">**</span><span class="n">sim_params</span><span class="p">)</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>                              <span class="c1"># run all the models in parallel</span>
 <span class="n">sim</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span>                               <span class="c1"># immediately poll the models</span>
 </pre></div>
@@ -252,15 +247,6 @@ Slurm integration except that some of the configurations(“duration”, “ppn�
            
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="developers.html" class="btn btn-neutral float-right" title="Developer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="generate.html" class="btn btn-neutral float-left" title="Generation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

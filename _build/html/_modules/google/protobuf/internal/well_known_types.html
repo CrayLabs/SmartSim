@@ -1,0 +1,1065 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.protobuf.internal.well_known_types &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.protobuf.internal.well_known_types</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.protobuf.internal.well_known_types</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Protocol Buffers - Google&#39;s data interchange format</span>
+<span class="c1"># Copyright 2008 Google Inc.  All rights reserved.</span>
+<span class="c1"># https://developers.google.com/protocol-buffers/</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are</span>
+<span class="c1"># met:</span>
+<span class="c1">#</span>
+<span class="c1">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c1"># notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#     * Redistributions in binary form must reproduce the above</span>
+<span class="c1"># copyright notice, this list of conditions and the following disclaimer</span>
+<span class="c1"># in the documentation and/or other materials provided with the</span>
+<span class="c1"># distribution.</span>
+<span class="c1">#     * Neither the name of Google Inc. nor the names of its</span>
+<span class="c1"># contributors may be used to endorse or promote products derived from</span>
+<span class="c1"># this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR</span>
+<span class="c1"># A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT</span>
+<span class="c1"># OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,</span>
+<span class="c1"># SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</span>
+<span class="c1"># DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</span>
+<span class="c1"># THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c1"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="sd">&quot;&quot;&quot;Contains well known classes.</span>
+
+<span class="sd">This files defines well known classes which need extra maintenance including:</span>
+<span class="sd">  - Any</span>
+<span class="sd">  - Duration</span>
+<span class="sd">  - FieldMask</span>
+<span class="sd">  - Struct</span>
+<span class="sd">  - Timestamp</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;jieluo@google.com (Jie Luo)&#39;</span>
+
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="c1"># Since python 3</span>
+  <span class="kn">import</span> <span class="nn">collections.abc</span> <span class="k">as</span> <span class="nn">collections_abc</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+  <span class="c1"># Won&#39;t work after python 3.8</span>
+  <span class="kn">import</span> <span class="nn">collections</span> <span class="k">as</span> <span class="nn">collections_abc</span>
+
+<span class="kn">from</span> <span class="nn">google.protobuf.descriptor</span> <span class="k">import</span> <span class="n">FieldDescriptor</span>
+
+<span class="n">_TIMESTAMPFOMAT</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S&#39;</span>
+<span class="n">_NANOS_PER_SECOND</span> <span class="o">=</span> <span class="mi">1000000000</span>
+<span class="n">_NANOS_PER_MILLISECOND</span> <span class="o">=</span> <span class="mi">1000000</span>
+<span class="n">_NANOS_PER_MICROSECOND</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">_MILLIS_PER_SECOND</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">_MICROS_PER_SECOND</span> <span class="o">=</span> <span class="mi">1000000</span>
+<span class="n">_SECONDS_PER_DAY</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>
+<span class="n">_DURATION_SECONDS_MAX</span> <span class="o">=</span> <span class="mi">315576000000</span>
+
+
+<span class="k">class</span> <span class="nc">Any</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for Any Message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="Any.Pack"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/any_pb2.html#google.protobuf.any_pb2.Any.Pack">[docs]</a>  <span class="k">def</span> <span class="nf">Pack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">type_url_prefix</span><span class="o">=</span><span class="s1">&#39;type.googleapis.com/&#39;</span><span class="p">,</span>
+           <span class="n">deterministic</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Packs the specified message into current Any message.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">type_url_prefix</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">type_url_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">type_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">type_url_prefix</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="o">.</span><span class="n">full_name</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">type_url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">type_url_prefix</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="o">.</span><span class="n">full_name</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">(</span><span class="n">deterministic</span><span class="o">=</span><span class="n">deterministic</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Any.Unpack"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/any_pb2.html#google.protobuf.any_pb2.Any.Unpack">[docs]</a>  <span class="k">def</span> <span class="nf">Unpack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unpacks the current Any message into specified message.&quot;&quot;&quot;</span>
+    <span class="n">descriptor</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">Is</span><span class="p">(</span><span class="n">descriptor</span><span class="p">):</span>
+      <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Any.TypeName"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/any_pb2.html#google.protobuf.any_pb2.Any.TypeName">[docs]</a>  <span class="k">def</span> <span class="nf">TypeName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the protobuf type name of the inner message.&quot;&quot;&quot;</span>
+    <span class="c1"># Only last part is to be used: b/25630112</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Any.Is"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/any_pb2.html#google.protobuf.any_pb2.Any.Is">[docs]</a>  <span class="k">def</span> <span class="nf">Is</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if this Any represents the given protobuf type.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;/&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_url</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">TypeName</span><span class="p">()</span> <span class="o">==</span> <span class="n">descriptor</span><span class="o">.</span><span class="n">full_name</span></div>
+
+
+<span class="n">_EPOCH_DATETIME</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Timestamp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for Timestamp message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="Timestamp.ToJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">ToJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to RFC 3339 date string format.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A string converted from timestamp. The string is always Z-normalized</span>
+<span class="sd">      and uses 3, 6 or 9 fractional digits as required to represent the</span>
+<span class="sd">      exact time. Example of the return format: &#39;1972-01-01T10:00:20.021Z&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nanos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">%</span> <span class="n">_NANOS_PER_SECOND</span>
+    <span class="n">total_sec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">-</span> <span class="n">nanos</span><span class="p">)</span> <span class="o">//</span> <span class="n">_NANOS_PER_SECOND</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">total_sec</span> <span class="o">%</span> <span class="n">_SECONDS_PER_DAY</span>
+    <span class="n">days</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_sec</span> <span class="o">-</span> <span class="n">seconds</span><span class="p">)</span> <span class="o">//</span> <span class="n">_SECONDS_PER_DAY</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e9</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># If there are 0 fractional digits, the fractional</span>
+      <span class="c1"># point &#39;.&#39; should be omitted when serializing.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e6</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># Serialize 3 fractional digits.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%03d</span><span class="s1">Z&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># Serialize 6 fractional digits.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%06d</span><span class="s1">Z&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">)</span>
+    <span class="c1"># Serialize 9 fractional digits.</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%09d</span><span class="s1">Z&#39;</span> <span class="o">%</span> <span class="n">nanos</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">FromJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse a RFC 3339 date string format to Timestamp.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      value: A date string. Any fractional digits (or none) and any offset are</span>
+<span class="sd">          accepted as long as they fit into nano-seconds precision.</span>
+<span class="sd">          Example of accepted format: &#39;1972-01-01T10:00:20.021-05:00&#39;</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      ValueError: On parsing problems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">timezone_offset</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">timezone_offset</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">timezone_offset</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">timezone_offset</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">timezone_offset</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">timezone_offset</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+          <span class="s1">&#39;Failed to parse timestamp: missing valid timezone offset.&#39;</span><span class="p">)</span>
+    <span class="n">time_value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">timezone_offset</span><span class="p">]</span>
+    <span class="c1"># Parse datetime and nanos.</span>
+    <span class="n">point_position</span> <span class="o">=</span> <span class="n">time_value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">point_position</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+      <span class="n">second_value</span> <span class="o">=</span> <span class="n">time_value</span>
+      <span class="n">nano_value</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">second_value</span> <span class="o">=</span> <span class="n">time_value</span><span class="p">[:</span><span class="n">point_position</span><span class="p">]</span>
+      <span class="n">nano_value</span> <span class="o">=</span> <span class="n">time_value</span><span class="p">[</span><span class="n">point_position</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+    <span class="n">date_object</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">second_value</span><span class="p">,</span> <span class="n">_TIMESTAMPFOMAT</span><span class="p">)</span>
+    <span class="n">td</span> <span class="o">=</span> <span class="n">date_object</span> <span class="o">-</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">days</span> <span class="o">*</span> <span class="n">_SECONDS_PER_DAY</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nano_value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+          <span class="s1">&#39;Failed to parse Timestamp: nanos </span><span class="si">{0}</span><span class="s1"> more than &#39;</span>
+          <span class="s1">&#39;9 fractional digits.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nano_value</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">nano_value</span><span class="p">:</span>
+      <span class="n">nanos</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;0.&#39;</span> <span class="o">+</span> <span class="n">nano_value</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e9</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">nanos</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># Parse timezone offsets.</span>
+    <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="n">timezone_offset</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">timezone_offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Failed to parse timestamp: invalid trailing&#39;</span>
+                         <span class="s1">&#39; data </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">timezone</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">timezone_offset</span><span class="p">:]</span>
+      <span class="n">pos</span> <span class="o">=</span> <span class="n">timezone</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;Invalid timezone offset value: </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timezone</span><span class="p">))</span>
+      <span class="k">if</span> <span class="n">timezone</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">:</span>
+        <span class="n">seconds</span> <span class="o">-=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">timezone</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">pos</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">timezone</span><span class="p">[</span><span class="n">pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]))</span><span class="o">*</span><span class="mi">60</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">seconds</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">timezone</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">pos</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">timezone</span><span class="p">[</span><span class="n">pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]))</span><span class="o">*</span><span class="mi">60</span>
+    <span class="c1"># Set seconds and nanos</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nanos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Timestamp.GetCurrentTime"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.GetCurrentTime">[docs]</a>  <span class="k">def</span> <span class="nf">GetCurrentTime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the current UTC into Timestamp.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">FromDatetime</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Timestamp.ToNanoseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToNanoseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToNanoseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to nanoseconds since epoch.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_NANOS_PER_SECOND</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span></div>
+
+<div class="viewcode-block" id="Timestamp.ToMicroseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToMicroseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToMicroseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to microseconds since epoch.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_MICROS_PER_SECOND</span> <span class="o">+</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">//</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Timestamp.ToMilliseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToMilliseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToMilliseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to milliseconds since epoch.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_MILLIS_PER_SECOND</span> <span class="o">+</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">//</span> <span class="n">_NANOS_PER_MILLISECOND</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Timestamp.ToSeconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToSeconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToSeconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to seconds since epoch.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromNanoseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromNanoseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromNanoseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nanos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts nanoseconds since epoch to Timestamp.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">nanos</span> <span class="o">//</span> <span class="n">_NANOS_PER_SECOND</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="n">nanos</span> <span class="o">%</span> <span class="n">_NANOS_PER_SECOND</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromMicroseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromMicroseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromMicroseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">micros</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts microseconds since epoch to Timestamp.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">micros</span> <span class="o">//</span> <span class="n">_MICROS_PER_SECOND</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="p">(</span><span class="n">micros</span> <span class="o">%</span> <span class="n">_MICROS_PER_SECOND</span><span class="p">)</span> <span class="o">*</span> <span class="n">_NANOS_PER_MICROSECOND</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromMilliseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromMilliseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromMilliseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">millis</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts milliseconds since epoch to Timestamp.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">millis</span> <span class="o">//</span> <span class="n">_MILLIS_PER_SECOND</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="p">(</span><span class="n">millis</span> <span class="o">%</span> <span class="n">_MILLIS_PER_SECOND</span><span class="p">)</span> <span class="o">*</span> <span class="n">_NANOS_PER_MILLISECOND</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromSeconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromSeconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromSeconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts seconds since epoch to Timestamp.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="Timestamp.ToDatetime"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.ToDatetime">[docs]</a>  <span class="k">def</span> <span class="nf">ToDatetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Timestamp to datetime.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_EPOCH_DATETIME</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span>
+        <span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">,</span> <span class="n">microseconds</span><span class="o">=</span><span class="n">_RoundTowardZero</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">,</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Timestamp.FromDatetime"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/timestamp_pb2.html#google.protobuf.any_pb2.Timestamp.FromDatetime">[docs]</a>  <span class="k">def</span> <span class="nf">FromDatetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts datetime to Timestamp.&quot;&quot;&quot;</span>
+    <span class="c1"># Using this guide: http://wiki.python.org/moin/WorkingWithTime</span>
+    <span class="c1"># And this conversion guide: http://docs.python.org/library/time.html</span>
+
+    <span class="c1"># Turn the date parameter into a tuple (struct_time) that can then be</span>
+    <span class="c1"># manipulated into a long value of seconds.  During the conversion from</span>
+    <span class="c1"># struct_time to long, the source date in UTC, and so it follows that the</span>
+    <span class="c1"># correct transformation is calendar.timegm()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">())</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">microsecond</span> <span class="o">*</span> <span class="n">_NANOS_PER_MICROSECOND</span></div>
+
+
+<span class="k">class</span> <span class="nc">Duration</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for Duration message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="Duration.ToJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">ToJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Duration to string format.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A string converted from self. The string format will contains</span>
+<span class="sd">      3, 6, or 9 fractional digits depending on the precision required to</span>
+<span class="sd">      represent the exact Duration value. For example: &quot;1s&quot;, &quot;1.010s&quot;,</span>
+<span class="sd">      &quot;1.000000100s&quot;, &quot;-3.100s&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_CheckDurationValid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span>
+      <span class="n">seconds</span> <span class="o">=</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="nb">int</span><span class="p">((</span><span class="mi">0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">)</span> <span class="o">//</span> <span class="mf">1e9</span><span class="p">)</span>
+      <span class="n">nanos</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1e9</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+      <span class="n">seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">//</span> <span class="mf">1e9</span><span class="p">)</span>
+      <span class="n">nanos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e9</span>
+    <span class="n">result</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">seconds</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e9</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># If there are 0 fractional digits, the fractional</span>
+      <span class="c1"># point &#39;.&#39; should be omitted when serializing.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;s&#39;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e6</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># Serialize 3 fractional digits.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%03d</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">%</span> <span class="mf">1e3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># Serialize 6 fractional digits.</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%06d</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">/</span> <span class="mf">1e3</span><span class="p">)</span>
+    <span class="c1"># Serialize 9 fractional digits.</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="s1">&#39;.</span><span class="si">%09d</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="n">nanos</span></div>
+
+<div class="viewcode-block" id="Duration.FromJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">FromJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a string to Duration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      value: A string to be converted. The string must end with &#39;s&#39;. Any</span>
+<span class="sd">          fractional digits (or none) are accepted as long as they fit into</span>
+<span class="sd">          precision. For example: &quot;1s&quot;, &quot;1.01s&quot;, &quot;1.0000001s&quot;, &quot;-3.100s</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      ValueError: On parsing problems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+          <span class="s1">&#39;Duration must end with letter &quot;s&quot;: </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">pos</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">nanos</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">[:</span><span class="n">pos</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+          <span class="n">nanos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-0</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">*</span><span class="mf">1e9</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">nanos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;0</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">*</span><span class="mf">1e9</span><span class="p">))</span>
+      <span class="n">_CheckDurationValid</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">nanos</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="n">nanos</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+          <span class="s1">&#39;Couldn</span><span class="se">\&#39;</span><span class="s1">t parse duration: </span><span class="si">{0}</span><span class="s1"> : </span><span class="si">{1}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Duration.ToNanoseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToNanoseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToNanoseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Duration to nanoseconds.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_NANOS_PER_SECOND</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span></div>
+
+<div class="viewcode-block" id="Duration.ToMicroseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToMicroseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToMicroseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Duration to microseconds.&quot;&quot;&quot;</span>
+    <span class="n">micros</span> <span class="o">=</span> <span class="n">_RoundTowardZero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">,</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_MICROS_PER_SECOND</span> <span class="o">+</span> <span class="n">micros</span></div>
+
+<div class="viewcode-block" id="Duration.ToMilliseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToMilliseconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToMilliseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Duration to milliseconds.&quot;&quot;&quot;</span>
+    <span class="n">millis</span> <span class="o">=</span> <span class="n">_RoundTowardZero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">,</span> <span class="n">_NANOS_PER_MILLISECOND</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">*</span> <span class="n">_MILLIS_PER_SECOND</span> <span class="o">+</span> <span class="n">millis</span></div>
+
+<div class="viewcode-block" id="Duration.ToSeconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToSeconds">[docs]</a>  <span class="k">def</span> <span class="nf">ToSeconds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a Duration to seconds.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span></div>
+
+<div class="viewcode-block" id="Duration.FromNanoseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromNanoseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromNanoseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nanos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts nanoseconds to Duration.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_NormalizeDuration</span><span class="p">(</span><span class="n">nanos</span> <span class="o">//</span> <span class="n">_NANOS_PER_SECOND</span><span class="p">,</span>
+                            <span class="n">nanos</span> <span class="o">%</span> <span class="n">_NANOS_PER_SECOND</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Duration.FromMicroseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromMicroseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromMicroseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">micros</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts microseconds to Duration.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_NormalizeDuration</span><span class="p">(</span>
+        <span class="n">micros</span> <span class="o">//</span> <span class="n">_MICROS_PER_SECOND</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">micros</span> <span class="o">%</span> <span class="n">_MICROS_PER_SECOND</span><span class="p">)</span> <span class="o">*</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Duration.FromMilliseconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromMilliseconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromMilliseconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">millis</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts milliseconds to Duration.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_NormalizeDuration</span><span class="p">(</span>
+        <span class="n">millis</span> <span class="o">//</span> <span class="n">_MILLIS_PER_SECOND</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">millis</span> <span class="o">%</span> <span class="n">_MILLIS_PER_SECOND</span><span class="p">)</span> <span class="o">*</span> <span class="n">_NANOS_PER_MILLISECOND</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Duration.FromSeconds"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromSeconds">[docs]</a>  <span class="k">def</span> <span class="nf">FromSeconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts seconds to Duration.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="Duration.ToTimedelta"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.ToTimedelta">[docs]</a>  <span class="k">def</span> <span class="nf">ToTimedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts Duration to timedelta.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span>
+        <span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seconds</span><span class="p">,</span> <span class="n">microseconds</span><span class="o">=</span><span class="n">_RoundTowardZero</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span><span class="p">,</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Duration.FromTimedelta"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/duration_pb2.html#google.protobuf.any_pb2.Duration.FromTimedelta">[docs]</a>  <span class="k">def</span> <span class="nf">FromTimedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">td</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts timedelta to Duration.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_NormalizeDuration</span><span class="p">(</span><span class="n">td</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="n">td</span><span class="o">.</span><span class="n">days</span> <span class="o">*</span> <span class="n">_SECONDS_PER_DAY</span><span class="p">,</span>
+                            <span class="n">td</span><span class="o">.</span><span class="n">microseconds</span> <span class="o">*</span> <span class="n">_NANOS_PER_MICROSECOND</span><span class="p">)</span></div>
+
+  <span class="k">def</span> <span class="nf">_NormalizeDuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">nanos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set Duration by seconds and nanos.&quot;&quot;&quot;</span>
+    <span class="c1"># Force nanos to be negative if the duration is negative.</span>
+    <span class="k">if</span> <span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nanos</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="n">seconds</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">nanos</span> <span class="o">-=</span> <span class="n">_NANOS_PER_SECOND</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">seconds</span> <span class="o">=</span> <span class="n">seconds</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">nanos</span> <span class="o">=</span> <span class="n">nanos</span>
+
+
+<span class="k">def</span> <span class="nf">_CheckDurationValid</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">nanos</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">seconds</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_DURATION_SECONDS_MAX</span> <span class="ow">or</span> <span class="n">seconds</span> <span class="o">&gt;</span> <span class="n">_DURATION_SECONDS_MAX</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s1">&#39;Duration is not valid: Seconds </span><span class="si">{0}</span><span class="s1"> must be in range &#39;</span>
+        <span class="s1">&#39;[-315576000000, 315576000000].&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">nanos</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">_NANOS_PER_SECOND</span> <span class="ow">or</span> <span class="n">nanos</span> <span class="o">&gt;=</span> <span class="n">_NANOS_PER_SECOND</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s1">&#39;Duration is not valid: Nanos </span><span class="si">{0}</span><span class="s1"> must be in range &#39;</span>
+        <span class="s1">&#39;[-999999999, 999999999].&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nanos</span><span class="p">))</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">seconds</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">nanos</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s1">&#39;Duration is not valid: Sign mismatch.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_RoundTowardZero</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">divider</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Truncates the remainder part after division.&quot;&quot;&quot;</span>
+  <span class="c1"># For some languanges, the sign of the remainder is implementation</span>
+  <span class="c1"># dependent if any of the operands is negative. Here we enforce</span>
+  <span class="c1"># &quot;rounded toward zero&quot; semantics. For example, for (-5) / 2 an</span>
+  <span class="c1"># implementation may give -3 as the result with the remainder being</span>
+  <span class="c1"># 1. This function ensures we always return -2 (closer to zero).</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">value</span> <span class="o">//</span> <span class="n">divider</span>
+  <span class="n">remainder</span> <span class="o">=</span> <span class="n">value</span> <span class="o">%</span> <span class="n">divider</span>
+  <span class="k">if</span> <span class="n">result</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">remainder</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="o">+</span> <span class="mi">1</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">class</span> <span class="nc">FieldMask</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for FieldMask message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="FieldMask.ToJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.ToJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">ToJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts FieldMask to string according to proto3 JSON spec.&quot;&quot;&quot;</span>
+    <span class="n">camelcase_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
+      <span class="n">camelcase_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_SnakeCaseToCamelCase</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">camelcase_paths</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FieldMask.FromJsonString"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.FromJsonString">[docs]</a>  <span class="k">def</span> <span class="nf">FromJsonString</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts string to FieldMask according to proto3 JSON spec.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_CamelCaseToSnakeCase</span><span class="p">(</span><span class="n">path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="FieldMask.IsValidForDescriptor"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.IsValidForDescriptor">[docs]</a>  <span class="k">def</span> <span class="nf">IsValidForDescriptor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks whether the FieldMask is valid for Message Descriptor.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">_IsValidPath</span><span class="p">(</span><span class="n">message_descriptor</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="FieldMask.AllFieldsFromDescriptor"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.AllFieldsFromDescriptor">[docs]</a>  <span class="k">def</span> <span class="nf">AllFieldsFromDescriptor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gets all direct fields of Message Descriptor to FieldMask.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">message_descriptor</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FieldMask.CanonicalFormFromMask"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.CanonicalFormFromMask">[docs]</a>  <span class="k">def</span> <span class="nf">CanonicalFormFromMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts a FieldMask to the canonical form.</span>
+
+<span class="sd">    Removes paths that are covered by another path. For example,</span>
+<span class="sd">    &quot;foo.bar&quot; is covered by &quot;foo&quot; and will be removed if &quot;foo&quot;</span>
+<span class="sd">    is also in the FieldMask. Then sorts all paths in alphabetical order.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      mask: The original FieldMask to be converted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">_FieldMaskTree</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">ToFieldMask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FieldMask.Union"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.Union">[docs]</a>  <span class="k">def</span> <span class="nf">Union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask1</span><span class="p">,</span> <span class="n">mask2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merges mask1 and mask2 into this FieldMask.&quot;&quot;&quot;</span>
+    <span class="n">_CheckFieldMaskMessage</span><span class="p">(</span><span class="n">mask1</span><span class="p">)</span>
+    <span class="n">_CheckFieldMaskMessage</span><span class="p">(</span><span class="n">mask2</span><span class="p">)</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">_FieldMaskTree</span><span class="p">(</span><span class="n">mask1</span><span class="p">)</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">MergeFromFieldMask</span><span class="p">(</span><span class="n">mask2</span><span class="p">)</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">ToFieldMask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FieldMask.Intersect"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.Intersect">[docs]</a>  <span class="k">def</span> <span class="nf">Intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask1</span><span class="p">,</span> <span class="n">mask2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Intersects mask1 and mask2 into this FieldMask.&quot;&quot;&quot;</span>
+    <span class="n">_CheckFieldMaskMessage</span><span class="p">(</span><span class="n">mask1</span><span class="p">)</span>
+    <span class="n">_CheckFieldMaskMessage</span><span class="p">(</span><span class="n">mask2</span><span class="p">)</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">_FieldMaskTree</span><span class="p">(</span><span class="n">mask1</span><span class="p">)</span>
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">_FieldMaskTree</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">mask2</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
+      <span class="n">tree</span><span class="o">.</span><span class="n">IntersectPath</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">intersection</span><span class="p">)</span>
+    <span class="n">intersection</span><span class="o">.</span><span class="n">ToFieldMask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FieldMask.MergeMessage"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/field_mask_pb2.html#google.protobuf.any_pb2.FieldMask.MergeMessage">[docs]</a>  <span class="k">def</span> <span class="nf">MergeMessage</span><span class="p">(</span>
+      <span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span>
+      <span class="n">replace_message_field</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">replace_repeated_field</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merges fields specified in FieldMask from source to destination.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      source: Source message.</span>
+<span class="sd">      destination: The destination message to be merged into.</span>
+<span class="sd">      replace_message_field: Replace message field if True. Merge message</span>
+<span class="sd">          field if False.</span>
+<span class="sd">      replace_repeated_field: Replace repeated field if True. Append</span>
+<span class="sd">          elements of repeated field if False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">_FieldMaskTree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">MergeMessage</span><span class="p">(</span>
+        <span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">replace_message_field</span><span class="p">,</span> <span class="n">replace_repeated_field</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_IsValidPath</span><span class="p">(</span><span class="n">message_descriptor</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Checks whether the path is valid for Message Descriptor.&quot;&quot;&quot;</span>
+  <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+  <span class="n">last</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+  <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="n">message_descriptor</span><span class="o">.</span><span class="n">fields_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">LABEL_REPEATED</span> <span class="ow">or</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">TYPE_MESSAGE</span><span class="p">):</span>
+      <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">message_descriptor</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">message_type</span>
+  <span class="k">return</span> <span class="n">last</span> <span class="ow">in</span> <span class="n">message_descriptor</span><span class="o">.</span><span class="n">fields_by_name</span>
+
+
+<span class="k">def</span> <span class="nf">_CheckFieldMaskMessage</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Raises ValueError if message is not a FieldMask.&quot;&quot;&quot;</span>
+  <span class="n">message_descriptor</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">message_descriptor</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;FieldMask&#39;</span> <span class="ow">or</span>
+      <span class="n">message_descriptor</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;google/protobuf/field_mask.proto&#39;</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Message </span><span class="si">{0}</span><span class="s1"> is not a FieldMask.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">message_descriptor</span><span class="o">.</span><span class="n">full_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_SnakeCaseToCamelCase</span><span class="p">(</span><span class="n">path_name</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Converts a path name from snake_case to camelCase.&quot;&quot;&quot;</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="n">after_underscore</span> <span class="o">=</span> <span class="kc">False</span>
+  <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">path_name</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+          <span class="s1">&#39;Fail to print FieldMask to Json string: Path name &#39;</span>
+          <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> must not contain uppercase letters.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">after_underscore</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="n">after_underscore</span> <span class="o">=</span> <span class="kc">False</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;Fail to print FieldMask to Json string: The &#39;</span>
+            <span class="s1">&#39;character after a &quot;_&quot; must be a lowercase letter &#39;</span>
+            <span class="s1">&#39;in path name </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_name</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+      <span class="n">after_underscore</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">+=</span> <span class="n">c</span>
+
+  <span class="k">if</span> <span class="n">after_underscore</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Fail to print FieldMask to Json string: Trailing &quot;_&quot; &#39;</span>
+                     <span class="s1">&#39;in path name </span><span class="si">{0}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_name</span><span class="p">))</span>
+  <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_CamelCaseToSnakeCase</span><span class="p">(</span><span class="n">path_name</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Converts a field name from camelCase to snake_case.&quot;&quot;&quot;</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">path_name</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Fail to parse FieldMask: Path name &#39;</span>
+                       <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> must not contain &quot;_&quot;s.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+      <span class="n">result</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span>
+      <span class="n">result</span> <span class="o">+=</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">result</span> <span class="o">+=</span> <span class="n">c</span>
+  <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_FieldMaskTree</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a FieldMask in a tree structure.</span>
+
+<span class="sd">  For example, given a FieldMask &quot;foo.bar,foo.baz,bar.baz&quot;,</span>
+<span class="sd">  the FieldMaskTree will be:</span>
+<span class="sd">      [_root] -+- foo -+- bar</span>
+<span class="sd">            |       |</span>
+<span class="sd">            |       +- baz</span>
+<span class="sd">            |</span>
+<span class="sd">            +- bar --- baz</span>
+<span class="sd">  In the tree, each leaf node represents a field path.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_root&#39;</span><span class="p">,)</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes the tree by FieldMask.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">field_mask</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">MergeFromFieldMask</span><span class="p">(</span><span class="n">field_mask</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">MergeFromFieldMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_mask</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merges a FieldMask to the tree.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">field_mask</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">AddPath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">AddPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds a field path into the tree.</span>
+
+<span class="sd">    If the field path to add is a sub-path of an existing field path</span>
+<span class="sd">    in the tree (i.e., a leaf node), it means the tree already matches</span>
+<span class="sd">    the given path so nothing will be added to the tree. If the path</span>
+<span class="sd">    matches an existing non-leaf node in the tree, that non-leaf node</span>
+<span class="sd">    will be turned into a leaf node with all its children removed because</span>
+<span class="sd">    the path matches all the node&#39;s children. Otherwise, a new path will</span>
+<span class="sd">    be added.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      path: The field path to add.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+        <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+      <span class="k">elif</span> <span class="ow">not</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+        <span class="c1"># Pre-existing empty node implies we already have this entire tree.</span>
+        <span class="k">return</span>
+      <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="c1"># Remove any sub-trees we might have had.</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">ToFieldMask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_mask</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts the tree to a FieldMask.&quot;&quot;&quot;</span>
+    <span class="n">field_mask</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="n">_AddFieldPaths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">field_mask</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">IntersectPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">intersection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the intersection part of a field path with this tree.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      path: The field path to calculates.</span>
+<span class="sd">      intersection: The out tree to record the intersection part.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+        <span class="k">return</span>
+      <span class="k">elif</span> <span class="ow">not</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+        <span class="n">intersection</span><span class="o">.</span><span class="n">AddPath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span>
+      <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">intersection</span><span class="o">.</span><span class="n">AddLeafNodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">AddLeafNodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds leaf nodes begin with prefix to this tree.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">AddPath</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+      <span class="n">child_path</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">name</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">AddLeafNodes</span><span class="p">(</span><span class="n">child_path</span><span class="p">,</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+  <span class="k">def</span> <span class="nf">MergeMessage</span><span class="p">(</span>
+      <span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span>
+      <span class="n">replace_message</span><span class="p">,</span> <span class="n">replace_repeated</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Merge all fields specified by this tree from source to destination.&quot;&quot;&quot;</span>
+    <span class="n">_MergeMessage</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">replace_message</span><span class="p">,</span> <span class="n">replace_repeated</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_StrConvert</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Converts value to str if it is not.&quot;&quot;&quot;</span>
+  <span class="c1"># This file is imported by c extension and some methods like ClearField</span>
+  <span class="c1"># requires string for the field name. py2/py3 has different text</span>
+  <span class="c1"># type and may use unicode.</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">_MergeMessage</span><span class="p">(</span>
+    <span class="n">node</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">replace_message</span><span class="p">,</span> <span class="n">replace_repeated</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Merge all fields specified by a sub-tree from source to destination.&quot;&quot;&quot;</span>
+  <span class="n">source_descriptor</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
+  <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="n">source_descriptor</span><span class="o">.</span><span class="n">fields_by_name</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Error: Can</span><span class="se">\&#39;</span><span class="s1">t find field </span><span class="si">{0}</span><span class="s1"> in message </span><span class="si">{1}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+          <span class="n">name</span><span class="p">,</span> <span class="n">source_descriptor</span><span class="o">.</span><span class="n">full_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">child</span><span class="p">:</span>
+      <span class="c1"># Sub-paths are only allowed for singular message fields.</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">LABEL_REPEATED</span> <span class="ow">or</span>
+          <span class="n">field</span><span class="o">.</span><span class="n">cpp_type</span> <span class="o">!=</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">CPPTYPE_MESSAGE</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Error: Field </span><span class="si">{0}</span><span class="s1"> in message </span><span class="si">{1}</span><span class="s1"> is not a singular &#39;</span>
+                         <span class="s1">&#39;message field and cannot have sub-fields.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                             <span class="n">name</span><span class="p">,</span> <span class="n">source_descriptor</span><span class="o">.</span><span class="n">full_name</span><span class="p">))</span>
+      <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">_MergeMessage</span><span class="p">(</span>
+            <span class="n">child</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+            <span class="n">replace_message</span><span class="p">,</span> <span class="n">replace_repeated</span><span class="p">)</span>
+      <span class="k">continue</span>
+    <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">LABEL_REPEATED</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">replace_repeated</span><span class="p">:</span>
+        <span class="n">destination</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="n">_StrConvert</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+      <span class="n">repeated_source</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+      <span class="n">repeated_destination</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+      <span class="n">repeated_destination</span><span class="o">.</span><span class="n">MergeFrom</span><span class="p">(</span><span class="n">repeated_source</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">cpp_type</span> <span class="o">==</span> <span class="n">FieldDescriptor</span><span class="o">.</span><span class="n">CPPTYPE_MESSAGE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">replace_message</span><span class="p">:</span>
+          <span class="n">destination</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="n">_StrConvert</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+          <span class="nb">getattr</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">MergeFrom</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_AddFieldPaths</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">field_mask</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Adds the field paths descended from node to field_mask.&quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span> <span class="ow">and</span> <span class="n">prefix</span><span class="p">:</span>
+    <span class="n">field_mask</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+    <span class="k">return</span>
+  <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">prefix</span><span class="p">:</span>
+      <span class="n">child_path</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">name</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">child_path</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">_AddFieldPaths</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">child_path</span><span class="p">,</span> <span class="n">field_mask</span><span class="p">)</span>
+
+
+<span class="n">_INT_OR_FLOAT</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">integer_types</span> <span class="o">+</span> <span class="p">(</span><span class="nb">float</span><span class="p">,)</span>
+
+
+<span class="k">def</span> <span class="nf">_SetStructValue</span><span class="p">(</span><span class="n">struct_value</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">null_value</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="c1"># Note: this check must come before the number check because in Python</span>
+    <span class="c1"># True and False are also considered numbers.</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">bool_value</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">string_value</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_INT_OR_FLOAT</span><span class="p">):</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">number_value</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Struct</span><span class="p">)):</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">struct_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">struct_value</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListValue</span><span class="p">)):</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">list_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">list_value</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unexpected type&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_GetStructValue</span><span class="p">(</span><span class="n">struct_value</span><span class="p">):</span>
+  <span class="n">which</span> <span class="o">=</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">WhichOneof</span><span class="p">(</span><span class="s1">&#39;kind&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;struct_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">struct_value</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;null_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">None</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;number_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">number_value</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;string_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">string_value</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;bool_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">bool_value</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="o">==</span> <span class="s1">&#39;list_value&#39;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">struct_value</span><span class="o">.</span><span class="n">list_value</span>
+  <span class="k">elif</span> <span class="n">which</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Value not set&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Struct</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for Struct message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_GetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+  <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+
+  <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">_SetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Struct.keys"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.keys">[docs]</a>  <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Struct.values"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.values">[docs]</a>  <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Struct.items"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.items">[docs]</a>  <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Struct.get_or_create_list"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.get_or_create_list">[docs]</a>  <span class="k">def</span> <span class="nf">get_or_create_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a list for this key, creating if it didn&#39;t exist already.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="s1">&#39;list_value&#39;</span><span class="p">):</span>
+      <span class="c1"># Clear will mark list_value modified which will indeed create a list.</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">list_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">list_value</span></div>
+
+<div class="viewcode-block" id="Struct.get_or_create_struct"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.get_or_create_struct">[docs]</a>  <span class="k">def</span> <span class="nf">get_or_create_struct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a struct for this key, creating if it didn&#39;t exist already.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="s1">&#39;struct_value&#39;</span><span class="p">):</span>
+      <span class="c1"># Clear will mark struct_value modified which will indeed create a struct.</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">struct_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">struct_value</span></div>
+
+<div class="viewcode-block" id="Struct.update"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.Struct.update">[docs]</a>  <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+      <span class="n">_SetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="n">collections_abc</span><span class="o">.</span><span class="n">MutableMapping</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Struct</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ListValue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Class for ListValue message type.&quot;&quot;&quot;</span>
+
+  <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ListValue.append"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.ListValue.append">[docs]</a>  <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">_SetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ListValue.extend"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.ListValue.extend">[docs]</a>  <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem_seq</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">elem_seq</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+  <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves item by the specified index.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_GetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+
+  <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">_SetStructValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ListValue.items"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.ListValue.items">[docs]</a>  <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
+      <span class="k">yield</span> <span class="bp">self</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ListValue.add_struct"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.ListValue.add_struct">[docs]</a>  <span class="k">def</span> <span class="nf">add_struct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Appends and returns a struct value as the next value in the list.&quot;&quot;&quot;</span>
+    <span class="n">struct_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">()</span><span class="o">.</span><span class="n">struct_value</span>
+    <span class="c1"># Clear will mark struct_value modified which will indeed create a struct.</span>
+    <span class="n">struct_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">struct_value</span></div>
+
+<div class="viewcode-block" id="ListValue.add_list"><a class="viewcode-back" href="../../../../third-party/protobuf/python/docs/google/protobuf/struct_pb2.html#google.protobuf.any_pb2.ListValue.add_list">[docs]</a>  <span class="k">def</span> <span class="nf">add_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Appends and returns a list value as the next value in the list.&quot;&quot;&quot;</span>
+    <span class="n">list_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">()</span><span class="o">.</span><span class="n">list_value</span>
+    <span class="c1"># Clear will mark list_value modified which will indeed create a list.</span>
+    <span class="n">list_value</span><span class="o">.</span><span class="n">Clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">list_value</span></div>
+
+<span class="n">collections_abc</span><span class="o">.</span><span class="n">MutableSequence</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ListValue</span><span class="p">)</span>
+
+
+<span class="n">WKTBASES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;google.protobuf.Any&#39;</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="s1">&#39;google.protobuf.Duration&#39;</span><span class="p">:</span> <span class="n">Duration</span><span class="p">,</span>
+    <span class="s1">&#39;google.protobuf.FieldMask&#39;</span><span class="p">:</span> <span class="n">FieldMask</span><span class="p">,</span>
+    <span class="s1">&#39;google.protobuf.ListValue&#39;</span><span class="p">:</span> <span class="n">ListValue</span><span class="p">,</span>
+    <span class="s1">&#39;google.protobuf.Struct&#39;</span><span class="p">:</span> <span class="n">Struct</span><span class="p">,</span>
+    <span class="s1">&#39;google.protobuf.Timestamp&#39;</span><span class="p">:</span> <span class="n">Timestamp</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

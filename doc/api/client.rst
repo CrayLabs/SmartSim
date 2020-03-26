@@ -2,5 +2,5 @@
 Client
 ------
 
-.. automodule:: smartsim.client
+.. automodule:: smartsim.clients.client
    :members:

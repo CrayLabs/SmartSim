@@ -20,23 +20,25 @@ Please check the following before submitting a pull request to the SmartSim repo
   5) The PR description is clear and concise.
   6) You have requested a review.
 
+Merging
+=======
+
+When merging there are a few guidelines to follow
+
+   - We follow the squash and merge strategy, if your commit has a number of small commits
+     that do things like clean up whitespace, please squash them prior to merge.
+   - Please delete the default merge message and replace with a informative merge message.
+   - Wrap all merge messages to 70 characters per line.
+
 Installation Instructions
 =========================
 
    - Clone the git repository
-      | git clone https://github.com/Spartee/Smart-Sim.git Smart-Sim
+      | git clone <link to repo> Smart-Sim
    - Set SmartSim env variables and add to python path
       | cd Smart-Sim && source setup_env.sh
    - Install Dependencies
       | pip install -r requirements.txt
-   - Install Launcher
-      | cd && git clone https://stash.us.cray.com/scm/ard/poseidon-launcher.git
-   - Setup Launcher
-      | cd poseidon-launcher && source setenv.sh   # currently requires a patch as well
-   - Install KeyDB
-      | git clone https://github.com/JohnSully/KeyDB && cd KeyDB && make
-      | cd src && export PATH=$PATH:$(pwd) # or add to .bashrc/.zshrc
-
 
 Coding Conventions
 ==================
@@ -44,7 +46,7 @@ Coding Conventions
 For the most part, the conventions are to follow PEP8 that is supplied by pylint. However, there
 are a few things to specifically mention.
 
-  - Underscores should preceed methods not meant to be utlized by the user in user facing classes
+  - Underscores should preceed methods not meant to be used outside a class
   - All methods should have docstrings (with some exceptions)
   - Variable names should accurately capture what values it is storing without being overly verbose
 
@@ -52,4 +54,3 @@ are a few things to specifically mention.
 Documentation
 =============
 To make the documentation, naviagate to the base directory of SmartSim and call ``make html``.
-

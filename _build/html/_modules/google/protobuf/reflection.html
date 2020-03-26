@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.protobuf.reflection &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.protobuf.reflection</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.protobuf.reflection</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Protocol Buffers - Google&#39;s data interchange format</span>
+<span class="c1"># Copyright 2008 Google Inc.  All rights reserved.</span>
+<span class="c1"># https://developers.google.com/protocol-buffers/</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are</span>
+<span class="c1"># met:</span>
+<span class="c1">#</span>
+<span class="c1">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c1"># notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#     * Redistributions in binary form must reproduce the above</span>
+<span class="c1"># copyright notice, this list of conditions and the following disclaimer</span>
+<span class="c1"># in the documentation and/or other materials provided with the</span>
+<span class="c1"># distribution.</span>
+<span class="c1">#     * Neither the name of Google Inc. nor the names of its</span>
+<span class="c1"># contributors may be used to endorse or promote products derived from</span>
+<span class="c1"># this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR</span>
+<span class="c1"># A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT</span>
+<span class="c1"># OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,</span>
+<span class="c1"># SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</span>
+<span class="c1"># DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</span>
+<span class="c1"># THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c1"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="c1"># This code is meant to work on Python 2.4 and above only.</span>
+
+<span class="sd">&quot;&quot;&quot;Contains a metaclass and helper functions used to create</span>
+<span class="sd">protocol message classes from Descriptor objects at runtime.</span>
+
+<span class="sd">Recall that a metaclass is the &quot;type&quot; of a class.</span>
+<span class="sd">(A class is to a metaclass what an instance is to a class.)</span>
+
+<span class="sd">In this case, we use the GeneratedProtocolMessageType metaclass</span>
+<span class="sd">to inject all the useful functionality into the classes</span>
+<span class="sd">output by the protocol compiler at compile-time.</span>
+
+<span class="sd">The upshot of all this is that the real implementation</span>
+<span class="sd">details for ALL pure-Python protocol buffers are *here in</span>
+<span class="sd">this file*.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;robinson@google.com (Will Robinson)&#39;</span>
+
+
+<span class="kn">from</span> <span class="nn">google.protobuf</span> <span class="k">import</span> <span class="n">message_factory</span>
+<span class="kn">from</span> <span class="nn">google.protobuf</span> <span class="k">import</span> <span class="n">symbol_database</span>
+
+<span class="c1"># The type of all Message classes.</span>
+<span class="c1"># Part of the public interface, but normally only used by message factories.</span>
+<span class="n">GeneratedProtocolMessageType</span> <span class="o">=</span> <span class="n">message_factory</span><span class="o">.</span><span class="n">_GENERATED_PROTOCOL_MESSAGE_TYPE</span>
+
+<span class="n">MESSAGE_CLASS_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="c1"># Deprecated. Please NEVER use reflection.ParseMessage().</span>
+<div class="viewcode-block" id="ParseMessage"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/reflection.html#google.protobuf.reflection.ParseMessage">[docs]</a><span class="k">def</span> <span class="nf">ParseMessage</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">byte_str</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Generate a new Message instance from this Descriptor and a byte string.</span>
+
+<span class="sd">  DEPRECATED: ParseMessage is deprecated because it is using MakeClass().</span>
+<span class="sd">  Please use MessageFactory.GetPrototype() instead.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    descriptor: Protobuf Descriptor object</span>
+<span class="sd">    byte_str: Serialized protocol buffer byte string</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    Newly created protobuf Message object.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">result_class</span> <span class="o">=</span> <span class="n">MakeClass</span><span class="p">(</span><span class="n">descriptor</span><span class="p">)</span>
+  <span class="n">new_msg</span> <span class="o">=</span> <span class="n">result_class</span><span class="p">()</span>
+  <span class="n">new_msg</span><span class="o">.</span><span class="n">ParseFromString</span><span class="p">(</span><span class="n">byte_str</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">new_msg</span></div>
+
+
+<span class="c1"># Deprecated. Please NEVER use reflection.MakeClass().</span>
+<div class="viewcode-block" id="MakeClass"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/reflection.html#google.protobuf.reflection.MakeClass">[docs]</a><span class="k">def</span> <span class="nf">MakeClass</span><span class="p">(</span><span class="n">descriptor</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Construct a class object for a protobuf described by descriptor.</span>
+
+<span class="sd">  DEPRECATED: use MessageFactory.GetPrototype() instead.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    descriptor: A descriptor.Descriptor object describing the protobuf.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    The Message class object described by the descriptor.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="c1"># Original implementation leads to duplicate message classes, which won&#39;t play</span>
+  <span class="c1"># well with extensions. Message factory info is also missing.</span>
+  <span class="c1"># Redirect to message_factory.</span>
+  <span class="k">return</span> <span class="n">symbol_database</span><span class="o">.</span><span class="n">Default</span><span class="p">()</span><span class="o">.</span><span class="n">GetPrototype</span><span class="p">(</span><span class="n">descriptor</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

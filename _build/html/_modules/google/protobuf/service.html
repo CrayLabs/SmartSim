@@ -1,0 +1,432 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.protobuf.service &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.protobuf.service</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.protobuf.service</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Protocol Buffers - Google&#39;s data interchange format</span>
+<span class="c1"># Copyright 2008 Google Inc.  All rights reserved.</span>
+<span class="c1"># https://developers.google.com/protocol-buffers/</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are</span>
+<span class="c1"># met:</span>
+<span class="c1">#</span>
+<span class="c1">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c1"># notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#     * Redistributions in binary form must reproduce the above</span>
+<span class="c1"># copyright notice, this list of conditions and the following disclaimer</span>
+<span class="c1"># in the documentation and/or other materials provided with the</span>
+<span class="c1"># distribution.</span>
+<span class="c1">#     * Neither the name of Google Inc. nor the names of its</span>
+<span class="c1"># contributors may be used to endorse or promote products derived from</span>
+<span class="c1"># this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR</span>
+<span class="c1"># A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT</span>
+<span class="c1"># OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,</span>
+<span class="c1"># SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</span>
+<span class="c1"># DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</span>
+<span class="c1"># THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c1"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="sd">&quot;&quot;&quot;DEPRECATED:  Declares the RPC service interfaces.</span>
+
+<span class="sd">This module declares the abstract interfaces underlying proto2 RPC</span>
+<span class="sd">services.  These are intended to be independent of any particular RPC</span>
+<span class="sd">implementation, so that proto2 services can be used on top of a variety</span>
+<span class="sd">of implementations.  Starting with version 2.3.0, RPC implementations should</span>
+<span class="sd">not try to build on these, but should instead provide code generator plugins</span>
+<span class="sd">which generate code specific to the particular RPC implementation.  This way</span>
+<span class="sd">the generated code can be more appropriate for the implementation in use</span>
+<span class="sd">and can avoid unnecessary layers of indirection.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;petar@google.com (Petar Petrov)&#39;</span>
+
+
+<div class="viewcode-block" id="RpcException"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcException">[docs]</a><span class="k">class</span> <span class="nc">RpcException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Exception raised on failed blocking RPC method call.&quot;&quot;&quot;</span>
+  <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Service"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.Service">[docs]</a><span class="k">class</span> <span class="nc">Service</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+  <span class="sd">&quot;&quot;&quot;Abstract base interface for protocol-buffer-based RPC services.</span>
+
+<span class="sd">  Services themselves are abstract classes (implemented either by servers or as</span>
+<span class="sd">  stubs), but they subclass this base interface. The methods of this</span>
+<span class="sd">  interface can be used to call the methods of the service without knowing</span>
+<span class="sd">  its exact type at compile time (analogous to the Message interface).</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Service.GetDescriptor"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.Service.GetDescriptor">[docs]</a>  <span class="k">def</span> <span class="nf">GetDescriptor</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves this service&#39;s descriptor.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Service.CallMethod"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.Service.CallMethod">[docs]</a>  <span class="k">def</span> <span class="nf">CallMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_descriptor</span><span class="p">,</span> <span class="n">rpc_controller</span><span class="p">,</span>
+                 <span class="n">request</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calls a method of the service specified by method_descriptor.</span>
+
+<span class="sd">    If &quot;done&quot; is None then the call is blocking and the response</span>
+<span class="sd">    message will be returned directly.  Otherwise the call is asynchronous</span>
+<span class="sd">    and &quot;done&quot; will later be called with the response value.</span>
+
+<span class="sd">    In the blocking case, RpcException will be raised on error.</span>
+
+<span class="sd">    Preconditions:</span>
+<span class="sd">    * method_descriptor.service == GetDescriptor</span>
+<span class="sd">    * request is of the exact same classes as returned by</span>
+<span class="sd">      GetRequestClass(method).</span>
+<span class="sd">    * After the call has started, the request must not be modified.</span>
+<span class="sd">    * &quot;rpc_controller&quot; is of the correct type for the RPC implementation being</span>
+<span class="sd">      used by this Service.  For stubs, the &quot;correct type&quot; depends on the</span>
+<span class="sd">      RpcChannel which the stub is using.</span>
+
+<span class="sd">    Postconditions:</span>
+<span class="sd">    * &quot;done&quot; will be called when the method is complete.  This may be</span>
+<span class="sd">      before CallMethod() returns or it may be at some point in the future.</span>
+<span class="sd">    * If the RPC failed, the response value passed to &quot;done&quot; will be None.</span>
+<span class="sd">      Further details about the failure can be found by querying the</span>
+<span class="sd">      RpcController.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Service.GetRequestClass"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.Service.GetRequestClass">[docs]</a>  <span class="k">def</span> <span class="nf">GetRequestClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the class of the request message for the specified method.</span>
+
+<span class="sd">    CallMethod() requires that the request is of a particular subclass of</span>
+<span class="sd">    Message. GetRequestClass() gets the default instance of this required</span>
+<span class="sd">    type.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">      method = service.GetDescriptor().FindMethodByName(&quot;Foo&quot;)</span>
+<span class="sd">      request = stub.GetRequestClass(method)()</span>
+<span class="sd">      request.ParseFromString(input)</span>
+<span class="sd">      service.CallMethod(method, request, callback)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Service.GetResponseClass"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.Service.GetResponseClass">[docs]</a>  <span class="k">def</span> <span class="nf">GetResponseClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_descriptor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the class of the response message for the specified method.</span>
+
+<span class="sd">    This method isn&#39;t really needed, as the RpcChannel&#39;s CallMethod constructs</span>
+<span class="sd">    the response protocol message. It&#39;s provided anyway in case it is useful</span>
+<span class="sd">    for the caller to know the response type in advance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="RpcController"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController">[docs]</a><span class="k">class</span> <span class="nc">RpcController</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+  <span class="sd">&quot;&quot;&quot;An RpcController mediates a single method call.</span>
+
+<span class="sd">  The primary purpose of the controller is to provide a way to manipulate</span>
+<span class="sd">  settings specific to the RPC implementation and to find out about RPC-level</span>
+<span class="sd">  errors. The methods provided by the RpcController interface are intended</span>
+<span class="sd">  to be a &quot;least common denominator&quot; set of features which we expect all</span>
+<span class="sd">  implementations to support.  Specific implementations may provide more</span>
+<span class="sd">  advanced features (e.g. deadline propagation).</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="c1"># Client-side methods below</span>
+
+<div class="viewcode-block" id="RpcController.Reset"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.Reset">[docs]</a>  <span class="k">def</span> <span class="nf">Reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Resets the RpcController to its initial state.</span>
+
+<span class="sd">    After the RpcController has been reset, it may be reused in</span>
+<span class="sd">    a new call. Must not be called while an RPC is in progress.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="RpcController.Failed"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.Failed">[docs]</a>  <span class="k">def</span> <span class="nf">Failed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns true if the call failed.</span>
+
+<span class="sd">    After a call has finished, returns true if the call failed.  The possible</span>
+<span class="sd">    reasons for failure depend on the RPC implementation.  Failed() must not</span>
+<span class="sd">    be called before a call has finished.  If Failed() returns true, the</span>
+<span class="sd">    contents of the response message are undefined.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="RpcController.ErrorText"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.ErrorText">[docs]</a>  <span class="k">def</span> <span class="nf">ErrorText</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If Failed is true, returns a human-readable description of the error.&quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="RpcController.StartCancel"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.StartCancel">[docs]</a>  <span class="k">def</span> <span class="nf">StartCancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initiate cancellation.</span>
+
+<span class="sd">    Advises the RPC system that the caller desires that the RPC call be</span>
+<span class="sd">    canceled.  The RPC system may cancel it immediately, may wait awhile and</span>
+<span class="sd">    then cancel it, or may not even cancel the call at all.  If the call is</span>
+<span class="sd">    canceled, the &quot;done&quot; callback will still be called and the RpcController</span>
+<span class="sd">    will indicate that the call failed at that time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+  <span class="c1"># Server-side methods below</span>
+
+<div class="viewcode-block" id="RpcController.SetFailed"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.SetFailed">[docs]</a>  <span class="k">def</span> <span class="nf">SetFailed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets a failure reason.</span>
+
+<span class="sd">    Causes Failed() to return true on the client side.  &quot;reason&quot; will be</span>
+<span class="sd">    incorporated into the message returned by ErrorText().  If you find</span>
+<span class="sd">    you need to return machine-readable information about failures, you</span>
+<span class="sd">    should incorporate it into your response protocol buffer and should</span>
+<span class="sd">    NOT call SetFailed().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="RpcController.IsCanceled"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.IsCanceled">[docs]</a>  <span class="k">def</span> <span class="nf">IsCanceled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if the client cancelled the RPC.</span>
+
+<span class="sd">    If true, indicates that the client canceled the RPC, so the server may</span>
+<span class="sd">    as well give up on replying to it.  The server should still call the</span>
+<span class="sd">    final &quot;done&quot; callback.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="RpcController.NotifyOnCancel"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcController.NotifyOnCancel">[docs]</a>  <span class="k">def</span> <span class="nf">NotifyOnCancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets a callback to invoke on cancel.</span>
+
+<span class="sd">    Asks that the given callback be called when the RPC is canceled.  The</span>
+<span class="sd">    callback will always be called exactly once.  If the RPC completes without</span>
+<span class="sd">    being canceled, the callback will be called after completion.  If the RPC</span>
+<span class="sd">    has already been canceled when NotifyOnCancel() is called, the callback</span>
+<span class="sd">    will be called immediately.</span>
+
+<span class="sd">    NotifyOnCancel() must be called no more than once per request.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="RpcChannel"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcChannel">[docs]</a><span class="k">class</span> <span class="nc">RpcChannel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+  <span class="sd">&quot;&quot;&quot;Abstract interface for an RPC channel.</span>
+
+<span class="sd">  An RpcChannel represents a communication line to a service which can be used</span>
+<span class="sd">  to call that service&#39;s methods.  The service may be running on another</span>
+<span class="sd">  machine. Normally, you should not use an RpcChannel directly, but instead</span>
+<span class="sd">  construct a stub {@link Service} wrapping it.  Example:</span>
+
+<span class="sd">  Example:</span>
+<span class="sd">    RpcChannel channel = rpcImpl.Channel(&quot;remotehost.example.com:1234&quot;)</span>
+<span class="sd">    RpcController controller = rpcImpl.Controller()</span>
+<span class="sd">    MyService service = MyService_Stub(channel)</span>
+<span class="sd">    service.MyMethod(controller, request, callback)</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RpcChannel.CallMethod"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/service.html#google.protobuf.service.RpcChannel.CallMethod">[docs]</a>  <span class="k">def</span> <span class="nf">CallMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_descriptor</span><span class="p">,</span> <span class="n">rpc_controller</span><span class="p">,</span>
+                 <span class="n">request</span><span class="p">,</span> <span class="n">response_class</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calls the method identified by the descriptor.</span>
+
+<span class="sd">    Call the given method of the remote service.  The signature of this</span>
+<span class="sd">    procedure looks the same as Service.CallMethod(), but the requirements</span>
+<span class="sd">    are less strict in one important way:  the request object doesn&#39;t have to</span>
+<span class="sd">    be of any specific class as long as its descriptor is method.input_type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

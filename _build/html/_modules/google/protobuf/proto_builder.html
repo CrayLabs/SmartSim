@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.protobuf.proto_builder &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.protobuf.proto_builder</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.protobuf.proto_builder</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Protocol Buffers - Google&#39;s data interchange format</span>
+<span class="c1"># Copyright 2008 Google Inc.  All rights reserved.</span>
+<span class="c1"># https://developers.google.com/protocol-buffers/</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are</span>
+<span class="c1"># met:</span>
+<span class="c1">#</span>
+<span class="c1">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c1"># notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#     * Redistributions in binary form must reproduce the above</span>
+<span class="c1"># copyright notice, this list of conditions and the following disclaimer</span>
+<span class="c1"># in the documentation and/or other materials provided with the</span>
+<span class="c1"># distribution.</span>
+<span class="c1">#     * Neither the name of Google Inc. nor the names of its</span>
+<span class="c1"># contributors may be used to endorse or promote products derived from</span>
+<span class="c1"># this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR</span>
+<span class="c1"># A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT</span>
+<span class="c1"># OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,</span>
+<span class="c1"># SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</span>
+<span class="c1"># DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</span>
+<span class="c1"># THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c1"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="sd">&quot;&quot;&quot;Dynamic Protobuf class creator.&quot;&quot;&quot;</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">ordereddict</span> <span class="k">import</span> <span class="n">OrderedDict</span>  <span class="c1">#PY26</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">google.protobuf</span> <span class="k">import</span> <span class="n">descriptor_pb2</span>
+<span class="kn">from</span> <span class="nn">google.protobuf</span> <span class="k">import</span> <span class="n">message_factory</span>
+
+
+<span class="k">def</span> <span class="nf">_GetMessageFromFactory</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">full_name</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Get a proto class from the MessageFactory by name.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    factory: a MessageFactory instance.</span>
+<span class="sd">    full_name: str, the fully qualified name of the proto type.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    A class, for the type identified by full_name.</span>
+<span class="sd">  Raises:</span>
+<span class="sd">    KeyError, if the proto is not found in the factory&#39;s descriptor pool.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">proto_descriptor</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">FindMessageTypeByName</span><span class="p">(</span><span class="n">full_name</span><span class="p">)</span>
+  <span class="n">proto_cls</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">GetPrototype</span><span class="p">(</span><span class="n">proto_descriptor</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">proto_cls</span>
+
+
+<div class="viewcode-block" id="MakeSimpleProtoClass"><a class="viewcode-back" href="../../../third-party/protobuf/python/docs/google/protobuf/proto_builder.html#google.protobuf.proto_builder.MakeSimpleProtoClass">[docs]</a><span class="k">def</span> <span class="nf">MakeSimpleProtoClass</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">full_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Create a Protobuf class whose fields are basic types.</span>
+
+<span class="sd">  Note: this doesn&#39;t validate field names!</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    fields: dict of {name: field_type} mappings for each field in the proto. If</span>
+<span class="sd">        this is an OrderedDict the order will be maintained, otherwise the</span>
+<span class="sd">        fields will be sorted by name.</span>
+<span class="sd">    full_name: optional str, the fully-qualified name of the proto type.</span>
+<span class="sd">    pool: optional DescriptorPool instance.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    a class, the new protobuf class with a FileDescriptor.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">factory</span> <span class="o">=</span> <span class="n">message_factory</span><span class="o">.</span><span class="n">MessageFactory</span><span class="p">(</span><span class="n">pool</span><span class="o">=</span><span class="n">pool</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">full_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">proto_cls</span> <span class="o">=</span> <span class="n">_GetMessageFromFactory</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">full_name</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">proto_cls</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+      <span class="c1"># The factory&#39;s DescriptorPool doesn&#39;t know about this class yet.</span>
+      <span class="k">pass</span>
+
+  <span class="c1"># Get a list of (name, field_type) tuples from the fields dict. If fields was</span>
+  <span class="c1"># an OrderedDict we keep the order, but otherwise we sort the field to ensure</span>
+  <span class="c1"># consistent ordering.</span>
+  <span class="n">field_items</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">):</span>
+    <span class="n">field_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">field_items</span><span class="p">)</span>
+
+  <span class="c1"># Use a consistent file name that is unlikely to conflict with any imported</span>
+  <span class="c1"># proto files.</span>
+  <span class="n">fields_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">()</span>
+  <span class="k">for</span> <span class="n">f_name</span><span class="p">,</span> <span class="n">f_type</span> <span class="ow">in</span> <span class="n">field_items</span><span class="p">:</span>
+    <span class="n">fields_hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">f_name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+    <span class="n">fields_hash</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">f_type</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+  <span class="n">proto_file_name</span> <span class="o">=</span> <span class="n">fields_hash</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;.proto&#39;</span>
+
+  <span class="c1"># If the proto is anonymous, use the same hash to name it.</span>
+  <span class="k">if</span> <span class="n">full_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">full_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;net.proto2.python.public.proto_builder.AnonymousProto_&#39;</span> <span class="o">+</span>
+                 <span class="n">fields_hash</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">())</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">proto_cls</span> <span class="o">=</span> <span class="n">_GetMessageFromFactory</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">full_name</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">proto_cls</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+      <span class="c1"># The factory&#39;s DescriptorPool doesn&#39;t know about this class yet.</span>
+      <span class="k">pass</span>
+
+  <span class="c1"># This is the first time we see this proto: add a new descriptor to the pool.</span>
+  <span class="n">factory</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+      <span class="n">_MakeFileDescriptorProto</span><span class="p">(</span><span class="n">proto_file_name</span><span class="p">,</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">field_items</span><span class="p">))</span>
+  <span class="k">return</span> <span class="n">_GetMessageFromFactory</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">full_name</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_MakeFileDescriptorProto</span><span class="p">(</span><span class="n">proto_file_name</span><span class="p">,</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">field_items</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Populate FileDescriptorProto for MessageFactory&#39;s DescriptorPool.&quot;&quot;&quot;</span>
+  <span class="n">package</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">full_name</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="n">file_proto</span> <span class="o">=</span> <span class="n">descriptor_pb2</span><span class="o">.</span><span class="n">FileDescriptorProto</span><span class="p">()</span>
+  <span class="n">file_proto</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">),</span> <span class="n">proto_file_name</span><span class="p">)</span>
+  <span class="n">file_proto</span><span class="o">.</span><span class="n">package</span> <span class="o">=</span> <span class="n">package</span>
+  <span class="n">desc_proto</span> <span class="o">=</span> <span class="n">file_proto</span><span class="o">.</span><span class="n">message_type</span><span class="o">.</span><span class="n">add</span><span class="p">()</span>
+  <span class="n">desc_proto</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+  <span class="k">for</span> <span class="n">f_number</span><span class="p">,</span> <span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="n">f_type</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">field_items</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">field_proto</span> <span class="o">=</span> <span class="n">desc_proto</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">add</span><span class="p">()</span>
+    <span class="n">field_proto</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">f_name</span>
+    <span class="n">field_proto</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">f_number</span>
+    <span class="n">field_proto</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">descriptor_pb2</span><span class="o">.</span><span class="n">FieldDescriptorProto</span><span class="o">.</span><span class="n">LABEL_OPTIONAL</span>
+    <span class="n">field_proto</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">f_type</span>
+  <span class="k">return</span> <span class="n">file_proto</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

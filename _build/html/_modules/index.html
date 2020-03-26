@@ -80,21 +80,23 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../doc/generate.html">Generation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../doc/simulate.html">Simulation Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/generate.html">Text-Based Configuration Generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../doc/developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../doc/examples/cp2k.html">Ensembling CP2K Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../doc/examples/online-training.html">Use Machine Learning In Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/allocations.html">Working with allocations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/python.html">Using the Python Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/fortran.html">Using the Fortran Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/c-plus.html">Using the C++ Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../doc/api/state.html">State</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../doc/api/simModule.html">SmartSimModule</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../doc/api/generator.html">Generator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../doc/api/controller.html">Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../doc/api/client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../doc/api/utilities.html">Utilities</a></li>
 </ul>
@@ -158,11 +160,32 @@
            <div itemprop="articleBody">
             
   <h1>All modules for which code is available</h1>
-<ul><li><a href="smartsim/client.html">smartsim.client</a></li>
-<li><a href="smartsim/control/controller.html">smartsim.control.controller</a></li>
-<li><a href="smartsim/generation/generator.html">smartsim.generation.generator</a></li>
-<li><a href="smartsim/simModule.html">smartsim.simModule</a></li>
-<li><a href="smartsim/state.html">smartsim.state</a></li>
+<ul><li><a href="google/protobuf/any_pb2.html">google.protobuf.any_pb2</a></li>
+<li><a href="google/protobuf/descriptor.html">google.protobuf.descriptor</a></li>
+<li><a href="google/protobuf/descriptor_database.html">google.protobuf.descriptor_database</a></li>
+<li><a href="google/protobuf/descriptor_pb2.html">google.protobuf.descriptor_pb2</a></li>
+<li><a href="google/protobuf/descriptor_pool.html">google.protobuf.descriptor_pool</a></li>
+<li><a href="google/protobuf/duration_pb2.html">google.protobuf.duration_pb2</a></li>
+<li><a href="google/protobuf/empty_pb2.html">google.protobuf.empty_pb2</a></li>
+<li><a href="google/protobuf/field_mask_pb2.html">google.protobuf.field_mask_pb2</a></li>
+<li><a href="google/protobuf/internal/enum_type_wrapper.html">google.protobuf.internal.enum_type_wrapper</a></li>
+<li><a href="google/protobuf/internal/well_known_types.html">google.protobuf.internal.well_known_types</a></li>
+<li><a href="google/protobuf/json_format.html">google.protobuf.json_format</a></li>
+<li><a href="google/protobuf/message.html">google.protobuf.message</a></li>
+<li><a href="google/protobuf/message_factory.html">google.protobuf.message_factory</a></li>
+<li><a href="google/protobuf/proto_builder.html">google.protobuf.proto_builder</a></li>
+<li><a href="google/protobuf/reflection.html">google.protobuf.reflection</a></li>
+<li><a href="google/protobuf/service.html">google.protobuf.service</a></li>
+<li><a href="google/protobuf/service_reflection.html">google.protobuf.service_reflection</a></li>
+<li><a href="google/protobuf/struct_pb2.html">google.protobuf.struct_pb2</a></li>
+<li><a href="google/protobuf/symbol_database.html">google.protobuf.symbol_database</a></li>
+<li><a href="google/protobuf/text_encoding.html">google.protobuf.text_encoding</a></li>
+<li><a href="google/protobuf/text_format.html">google.protobuf.text_format</a></li>
+<li><a href="google/protobuf/timestamp_pb2.html">google.protobuf.timestamp_pb2</a></li>
+<li><a href="google/protobuf/type_pb2.html">google.protobuf.type_pb2</a></li>
+<li><a href="google/protobuf/wrappers_pb2.html">google.protobuf.wrappers_pb2</a></li>
+<li><a href="smartsim/clients/client.html">smartsim.clients.client</a></li>
+<li><a href="smartsim/experiment.html">smartsim.experiment</a></li>
 <li><a href="smartsim/utils/log.html">smartsim.utils.log</a></li>
 </ul>
 

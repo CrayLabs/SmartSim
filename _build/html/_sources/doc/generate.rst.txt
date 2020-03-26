@@ -1,9 +1,6 @@
 
-Generation
-----------
-
-For the succientness of the documentation, the examples below will all be using the
-python interface to run experiments.
+Text-Based Configuration Generation
+-----------------------------------
 
 
 Tagging and Creation
@@ -110,15 +107,15 @@ through the ``Experiment`` initialization as follows
   experiment = Experiment(experiment="lammps_atm")
 
 
-For this example, we will create one target that holds the four models with
-four increasing number of steps. This is done through a call to ``experiment.create_target``
+For this example, we will create one ensemble that holds the four models with
+four increasing number of steps. This is done through a call to ``experiment.create_ensemble``
 as follows:
 
 .. code-blocK:: python
 
-  # Create targets
+  # Create ensembles
   param_dict_1 = {"steps": [20, 25, 30, 35]}
-  experiment.create_target("atm", params=param_dict)
+  experiment.create_ensemble("atm", params=param_dict)
 
 The parameter dictionary above specifies the placeholder we put into the configuration
 file as the keys and the values we wish for models to be configurated and created with
@@ -184,5 +181,3 @@ is also valid:
   base_config = "LAMMPS/in.atm"
   GEN = Generator(experiment, model_files=base_config)
   GEN.generate()
-
-
