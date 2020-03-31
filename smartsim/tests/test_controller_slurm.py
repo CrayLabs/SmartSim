@@ -131,6 +131,11 @@ def test_stop_all():
     ctrl.stop(exp.ensembles, nodes=N1, orchestrator=O1)
     ctrl.release()
 
+@slurm_controller_test
+def test_get_release_allocation():
+    """test getting and immediately releasing an allocation"""
+    alloc_id = ctrl.get_allocation(1, None)
+    ctrl.release(alloc_id=alloc_id)
 
 # Error handling test cases
 
@@ -216,3 +221,9 @@ def test_start_no_allocs():
     """Test when start is called and no partitions exist to run on"""
     with pytest.raises(SmartSimError):
         ctrl.start(exp.ensembles, run_on_existing=True)
+
+@slurm_controller_test
+def test_bad_release():
+    """Test when a non-existant alloc_id is given to release"""
+    with pytest.raises(LauncherError):
+        ctrl.release(alloc_id=111111)

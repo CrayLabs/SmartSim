@@ -140,18 +140,23 @@ class Controller():
         except LauncherError as e:
             raise SmartSimError("Failed to accept user obtained allocation") from e
 
-    def release(self):
+    def release(self, alloc_id=None):
         """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources.
+           and freeing up resources. If an allocation ID is provided, only stop
+           that allocation and remove it from SmartSim.
 
+           :param str alloc_id: if provided, release that specific allocation
            :raises: SSConfigError if called when using local launcher
         """
         self.check_local("Controller.release()")
-
-        allocs = self._launcher.alloc_manager().copy()
-        for alloc_id in allocs.keys():
-            logger.info(f"Releasing allocation: {alloc_id}")
+        if alloc_id:
+            alloc_id = str(alloc_id)
             self._launcher.free_alloc(alloc_id)
+        else:
+            allocs = self._launcher.alloc_manager().copy()
+            for alloc_id in allocs.keys():
+                logger.info(f"Releasing allocation: {alloc_id}")
+                self._launcher.free_alloc(alloc_id)
 
     def get_job(self, name):
         """Retrieve a Job instance by name. The Job object carries information about the

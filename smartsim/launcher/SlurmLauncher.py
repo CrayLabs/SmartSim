@@ -224,6 +224,7 @@ class SlurmLauncher(Launcher):
         nodes = list(set(nodes))
         return nodes
 
+
     def accept_allocation(self, alloc_id, partition, nodes):
         """Take in an allocation provided by the user
 
@@ -236,7 +237,8 @@ class SlurmLauncher(Launcher):
             err_msg += f"\n Allocation {self.alloc_manager[partition]} already allocated"
             raise LauncherError(err_msg)
         else:
-            self.alloc_manager.add_alloc(alloc_id, partition, nodes)
+            current_subjob = self._get_alloc_steps(alloc_id)
+            self.alloc_manager.add_alloc(alloc_id, partition, nodes, current_subjob)
 
 
     def get_alloc(self, nodes=None, ppn=None, partition=None, start_time=None, duration="",
@@ -271,7 +273,7 @@ class SlurmLauncher(Launcher):
         alloc_id = self._parse_salloc(err)
         if alloc_id:
             logger.info("Allocation successful with Job ID: %s" % alloc_id)
-            self.alloc_manager.add_alloc(alloc_id, partition, nodes)
+            self.alloc_manager.add_alloc(alloc_id, partition, nodes, 0)
         else:
             error = self._parse_salloc_error(err)
             raise LauncherError(error)
@@ -406,6 +408,30 @@ class SlurmLauncher(Launcher):
         for k, v in env_vars.items():
             format_str += "," + "=".join((k,v))
         return format_str
+
+    def _get_alloc_steps(self, alloc_id):
+        """Get the number of steps that has been launched on an allocation so far
+
+           :param str alloc_id: id of the allocation provided by the workload manager
+           :returns: number of jobs launched on the allocation so far + 1 or 0
+                     if no jobs have been launched yet on this allocation
+           :rtype: int
+        """
+        alloc_id = str(alloc_id)
+        sacct_out, sacct_error = self.sacct(["--noheader", "-p", "-b", "-j", alloc_id])
+        if not sacct_out:
+            raise LauncherError(f"User provided allocation, {alloc_id}, could not be found")
+        else:
+            line = sacct_out.strip().split("\n")[-1]
+            job_id = line.split("|")[0]
+            if "." in job_id:
+                job, step = job_id.split(".")
+                if step.startswith("ext"):
+                    return 0
+                else:
+                    return int(step) + 1
+            else:
+                return 0
 
     def is_finished(self, status):
         """Determines wether or not a job is finished based on the Slurm status"""

@@ -151,6 +151,7 @@ class Experiment:
                 duration=duration,
                 add_opts=add_opts
             )
+            return alloc_id
         except SmartSimError as e:
             logger.error(e)
             raise e
@@ -185,14 +186,16 @@ class Experiment:
             logger.error(e)
             raise
 
-    def release(self):
+    def release(self, alloc_id=None):
         """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources.
+           and freeing up resources. If an allocation ID is provided, only stop
+           that allocation and remove it from SmartSim.
 
-           :raises: SmartSimError
+           :param str alloc_id: if provided, release that specific allocation
+           :raises: SSConfigError if called when using local launcher
         """
         try:
-            self._control.release()
+            self._control.release(alloc_id=alloc_id)
         except SmartSimError as e:
             logger.error(e)
             raise

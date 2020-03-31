@@ -2,7 +2,7 @@
 from smartsim import Experiment
 from os import path, environ, getcwd
 from shutil import rmtree
-from ..error import SmartSimError, SSModelExistsError
+from ..error import SmartSimError, SSModelExistsError, LauncherError
 from ..model import NumModel
 from ..ensemble import Ensemble
 import pytest
@@ -79,3 +79,9 @@ def test_remote_launch():
     experiment = Experiment("test")
     with pytest.raises(SmartSimError):
         experiment.init_remote_launcher()
+
+def test_bad_release():
+    """test when experiment.release() is called with a bad alloc_id"""
+    experiment = Experiment("test")
+    with pytest.raises(LauncherError):
+        experiment.release(alloc_id=111111)

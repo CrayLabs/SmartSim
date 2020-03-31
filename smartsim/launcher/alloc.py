@@ -56,8 +56,9 @@ class AllocManager:
         self.allocs[alloc_id].subjobs += 1
         return subjob_id
 
-    def add_alloc(self, alloc_id, partition, nodes):
+    def add_alloc(self, alloc_id, partition, nodes, current_subjob):
         alloc = Allocation(alloc_id, partition, nodes)
+        alloc.subjobs = current_subjob
         self.allocs[alloc_id] = alloc
 
     def remove_alloc(self, alloc_id):
