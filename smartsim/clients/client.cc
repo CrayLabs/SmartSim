@@ -608,3 +608,34 @@ extern "C" bool poll_key_and_check_scalar_int64_c(void *SmartSimClient_proto, co
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
   return s->poll_key_and_check_scalar_int64(key, value, poll_frequency_ms, num_tries);
 }
+
+extern "C" void get_array_int32_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->get_array_int32(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void put_array_int32_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->put_array_int32(key, value, *dimensions, *ndims, true);
+}
+
+extern "C" void put_scalar_int32_c(void* SmartSimClient_proto, const char *key, int32_t value)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  s->put_scalar_int32(key, value);
+}
+
+extern "C" int32_t get_scalar_int32_c(void* SmartSimClient_proto, const char *key)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  return  s->get_scalar_int32(key);
+}
+
+extern "C" bool poll_key_and_check_scalar_int32_c(void *SmartSimClient_proto, const char* key, int32_t value, 
+                                                  int poll_frequency_ms, int num_tries)
+{
+  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
+  return s->poll_key_and_check_scalar_int32(key, value, poll_frequency_ms, num_tries);
+}

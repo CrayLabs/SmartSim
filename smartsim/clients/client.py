@@ -1,7 +1,7 @@
 from ..connection import Connection
 from ..clusterConnection import ClusterConnection
 from ..error import SmartSimError, SSConfigError, SmartSimConnectionError
-from ..utils.protobuf.smartsim_protobuf_pb2 import ArrayDouble, ScalarDouble, ScalarSInt64
+from ..utils.protobuf.smartsim_protobuf_pb2 import ArrayDouble, ScalarDouble, ScalarSInt64, ScalarSInt32, ArraySInt32
 import pickle
 import os
 import numpy as np
@@ -42,6 +42,16 @@ class Client:
         """
         return self._get_data(key, ArraySInt64(), wait, wait_interval)
 
+    def get_array_nd_int32(self, key, wait=False, wait_interval=1000):
+        """"This function gets a numpy array of type int32 from the database.
+            :param str key: key of the value to fetch
+            :param bool wait: flag for polling connection until value appears
+            :param float wait_interval: milliseconds to wait between polling requests
+            :returns all_data: dictionary of key connections_in.key() and value
+                               numpy.ndarray or single numpy.ndarray
+        """
+        return self._get_data(key, ArraySInt32(), wait, wait_interval)
+
     def get_scalar_float64(self, key, wait=False, wait_interval=1000):
         """"This function gets a scalar of type float64 from the database.
             :param str key: key of the value to fetch
@@ -61,6 +71,16 @@ class Client:
                                int64 or single int64
         """
         return self._get_data(key, ScalarSInt64(), wait, wait_interval)
+
+    def get_scalar_int32(self, key, wait=False, wait_interval=1000):
+        """"This function gets a scalar of type int32 from the database.
+            :param str key: key of the value to fetch
+            :param bool wait: flag for polling connection until value appears
+            :param float wait_interval: milliseconds to wait between polling requests
+            :returns all_data: dictionary of key connections_in.key() and value
+                               int32 or single int32
+        """
+        return self._get_data(key, ScalarSInt32(), wait, wait_interval)
 
     def put_array_nd_float64(self, key, value):
         """This function puts a numpy array of type float64 into the database.
@@ -88,6 +108,19 @@ class Client:
 
         self._put_data(key, value, ArraySInt64())
 
+    def put_array_nd_int32(self, key, value):
+        """This function puts a numpy array of type int32 into the database.
+           :param str key: key of the value being put
+           :param value: value being put
+           :type value: numpy.ndarray filled with int32
+        """
+        if not isinstance(value, np.ndarray):
+            raise SmartSimError("The value passed into put_array_nd_int32() must be of type numpy.ndarray.")
+        if not (value.dtype == np.dtype('int32')):
+            raise SmartSimError("The values inside of the numpy.ndarray must be of type int32 to use put_array_nd_int32().")
+
+        self._put_data(key, value, ArraySInt64())
+
     def put_scalar_float64(self, key, value):
         """This function puts a 64 bit float into the database.
            :param str key: key of the value being put
@@ -111,6 +144,18 @@ class Client:
             raise SmartSimError("The value passed into put_scalar_int64() must be of type int")
 
         self._put_data(key, value, ScalarSInt64())
+
+    def put_scalar_int32(self, key, value):
+        """This function puts a 32 bit integer into the database.
+           :param str key: key of the value being put
+           :param value: value being put
+           :type value: int
+        """
+
+        if not isinstance(value, int):
+            raise SmartSimError("The value passed into put_scalar_int32() must be of type int")
+
+        self._put_data(key, value, ScalarSInt32())
 
     def exists(self, key):
         """This function checks if a key is in the database through any of the
@@ -204,6 +249,34 @@ class Client:
 
         return matched_value
 
+    def poll_key_and_check_scalar_int32(self, key, value, poll_frequency=1000, num_tries=-1):
+        """Poll key to check existence and if it is exists check against value
+           :param str key: key to check for in the database
+           :param int value: value to compare to
+           :param float poll_frequency: the time in milliseconds beteween tries
+           :param int num_tries: the maximum number of tries.  If -1, unlimited
+                                 attempts will be made.
+        """
+        matched_value = False
+        current_value = None
+        while not num_tries == 0:
+
+            for name, conn in self.connections_in.items():
+                prefixed_key = "_".join((name, key))
+                if conn.exists(prefixed_key):
+                    current_value = self.get_scalar_int32(key)
+                    if current_value == value:
+                        num_tries = 0
+                        matched_value = True
+
+            if not matched_value:
+                time.sleep(poll_frequency/1000.0)
+
+            if num_tries>0:
+                num_tries -= 1
+
+        return matched_value
+
     def _get_data(self, key,  pb_message, wait=False, wait_interval=1000):
         """Get the value associated with some key from all the connections registered
            in the orchestrator
@@ -264,7 +337,7 @@ class Client:
             dimensions = list(value.shape)
             for dim in dimensions:
                 pb_message.dimension.append(dim)
-                
+
             for d in value.ravel():
                 pb_message.data.append(d)
         else:
@@ -363,5 +436,5 @@ class Client:
                 pb_value = ScalarSInt64
             else:
                 raise SmartSimError("Scalar data type " + dtype + " not supported by the protobuf implementation in SmartSim.")
-                
+
         return pb_value
