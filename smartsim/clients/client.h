@@ -56,12 +56,6 @@ private:
   // TODO Only have one private variable
   // pb_message that is determined based on class template parameter T.
   // This is a shortcut for now.
-  SmartSimProtobuf::ArrayDouble protob_array_double;
-  SmartSimProtobuf::ArrayFloat protob_array_float;
-  SmartSimProtobuf::ArraySInt64 protob_array_int64;
-  SmartSimProtobuf::ArraySInt32 protob_array_int32;
-  SmartSimProtobuf::ArrayUInt64 protob_array_uint64;
-  SmartSimProtobuf::ArrayUInt32 protob_array_uint32;
   SmartSimProtobuf::ScalarDouble protob_scalar_double;
   SmartSimProtobuf::ScalarFloat protob_scalar_float;
   SmartSimProtobuf::ScalarSInt64 protob_scalar_int64;
@@ -82,10 +76,12 @@ private:
     T _get_scalar(google::protobuf::Message* pb_message, const char* key);
   template <class T>
     void _put_scalar(google::protobuf::Message* pb_message, const char* key, T value);
+  template <class T, class U>
+    void _put_array(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
   template <class T>
-    void _put_array(google::protobuf::Message* pb_message, const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  template <class T>
-    void _get_array(google::protobuf::Message* pb_message, const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
+    void _serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims, bool fortran_array=false);
+  template <class T, class U>
+    void _get_array(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
   template <class T>
     void _add_array_values(const google::protobuf::MutableRepeatedFieldRef<T>& pb_repeated_field, void* value, int* dims, int n_dims);
   template <class T>

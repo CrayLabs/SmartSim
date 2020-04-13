@@ -36,9 +36,10 @@ void test_3d_put_cpp(int dim1, int dim2, int dim3, std::string key_suffix="")
   client.put_array_double(key.c_str(), arr, dims, 3);
   double endPutTime = MPI_Wtime();
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   if(!client.exists(key.c_str()))
     throw std::runtime_error("Key existence could not be verified with key_exists()");
-
 
   MPI_Barrier(MPI_COMM_WORLD);
   double globalSumPutTime = 0;

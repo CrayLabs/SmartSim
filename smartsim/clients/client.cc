@@ -13,73 +13,73 @@ SmartSimClient::~SmartSimClient()
 
 void SmartSimClient::put_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<double>(&protob_array_double, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::put_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<float>(&protob_array_float, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::put_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<int64_t>(&protob_array_int64, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::put_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<int32_t>(&protob_array_int32, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::put_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<uint64_t>(&protob_array_uint64, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::put_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
 {
-  this->_put_array<uint32_t>(&protob_array_uint32, key, value, dims, n_dims, fortran_array);
+  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<double>(&protob_array_double, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<float>(&protob_array_float, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<int64_t>(&protob_array_int64, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<int32_t>(&protob_array_int32, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<uint64_t>(&protob_array_uint64, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
 void SmartSimClient::get_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
-  this->_get_array<uint32_t>(&protob_array_uint32, key, result, dims, n_dims, fortran_array);
+  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, fortran_array);
   return;
 }
 
@@ -209,8 +209,19 @@ T SmartSimClient::_get_scalar(google::protobuf::Message* pb_message, const char*
   return value;
 }
 
+template <class T, class U>
+void SmartSimClient::_put_array(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+{
+  std::string buff;
+  T* pb_message = new T();
+  this->_serialize_array<U>(pb_message, buff, value, dims, n_dims, fortran_array);
+  delete pb_message;
+  this->_put_to_keydb(key, buff);
+  return;
+}
+
 template <class  T>
-void SmartSimClient::_put_array(google::protobuf::Message* pb_message, const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims, bool fortran_array)
 {
   const google::protobuf::Reflection* refl = pb_message->GetReflection();
   const google::protobuf::FieldDescriptor* dim_field = pb_message->GetDescriptor()->FindFieldByName("dimension");
@@ -242,19 +253,17 @@ void SmartSimClient::_put_array(google::protobuf::Message* pb_message, const cha
   if(fortran_array)
     delete[] dims;
 
-  std::string output = _serialize_protobuff(pb_message);
-
-  _clear_protobuff(pb_message);
-
-  _put_to_keydb(key, output);
+  buff = _serialize_protobuff(pb_message);
 
   return;
 }
 
-template <class T>
-void SmartSimClient::_get_array(google::protobuf::Message* pb_message, const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+template <class T, class U>
+void SmartSimClient::_get_array(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
 {
 
+  T* pb_message = new T();
+  
   if(n_dims<=0)
     return;
 
@@ -277,13 +286,13 @@ void SmartSimClient::_get_array(google::protobuf::Message* pb_message, const cha
 
   const google::protobuf::Reflection* refl = pb_message->GetReflection();
   const google::protobuf::FieldDescriptor* data_field = pb_message->GetDescriptor()->FindFieldByName("data");
-  const google::protobuf::MutableRepeatedFieldRef<T> data = refl->GetMutableRepeatedFieldRef<T>(pb_message, data_field);
-  _place_array_values<T>(data, result, dims, n_dims, proto_position);
+  const google::protobuf::MutableRepeatedFieldRef<U> data = refl->GetMutableRepeatedFieldRef<U>(pb_message, data_field);
+  _place_array_values<U>(data, result, dims, n_dims, proto_position);
 
   if(fortran_array)
     delete[] dims;
 
-  _clear_protobuff(pb_message);
+  delete pb_message;
 
   return;
 }

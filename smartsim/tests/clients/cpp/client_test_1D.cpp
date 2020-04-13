@@ -23,9 +23,12 @@ void test_1d_put_cpp(int dim1, std::string key_suffix="")
   client.put_array_double(key.c_str(), array, dims, 1);
 
   std::cout<<"Finished put!"<<std::endl<<std::flush;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
   if(!client.exists(key.c_str()))
     throw std::runtime_error("Key existence could not be verified with key_exists()");
-  
+
   client.get_array_double(key.c_str(), result, dims, 1);
 
   for(int i = 0; i < dim1; i++) {
