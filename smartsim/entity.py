@@ -20,7 +20,6 @@ class SmartSimEntity:
         defaults = {
             "nodes": 1,
             "ppn": 1,
-            "duration": "1:00:00",
             "partition": None
         }
         defaults["cwd"] = self.path
