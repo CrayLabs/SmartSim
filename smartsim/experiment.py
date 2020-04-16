@@ -2,7 +2,7 @@ import pickle
 import sys
 import zmq
 
-from os import path, mkdir, listdir, getcwd
+from os import path, mkdir, listdir, getcwd, environ
 from .error import SmartSimError, SSConfigError
 from .ensemble import Ensemble
 from .model import NumModel
@@ -389,6 +389,7 @@ class Experiment:
                             path=None,
                             port=6379,
                             cluster_size=3,
+                            dpn=1,
                             partition=None):
         """Create an orchestrator database to faciliate the transfer of data
            for online training and inference. After the orchestrator is created,
@@ -399,6 +400,7 @@ class Experiment:
                             os.getcwd())
            :param int port: port for each database node for tcp communication
            :param int cluster_size: number of database nodes in cluster
+           :param int dpn: databases to run per node
            :param str partition: partition to launch db nodes
            :returns: Orchestrator object
            :raises: SmartSimError if one orchestrator has already been created
@@ -414,6 +416,7 @@ class Experiment:
             self.orc = Orchestrator(orcpath,
                                     port=port,
                                     cluster_size=cluster_size,
+                                    dpn=dpn,
                                     partition=partition)
             return self.orc
         except SmartSimError as e:
@@ -464,13 +467,9 @@ class Experiment:
            :raises: SmartSimError
         """
         try:
-            if isinstance(sender, SmartSimEntity):
-                sender = sender.name
-            if isinstance(reciever, SmartSimEntity):
-                reciever = reciever.name
             if not isinstance(sender, str) or not isinstance(reciever, str):
                 raise SmartSimError(
-                    "Arguments to register connection must either be a str or a SmartSimEntity")
+                    "Arguments to register connection must either be a str")
             if not self.orc:
                 raise SmartSimError("Create orchestrator to register connections")
             else:
@@ -480,6 +479,26 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+    def create_connection(self, sender):
+        """Create a connection between the experiment script and SmartSim entity. This
+           method should be called after a database has been launched or an error will
+           be raised.
+
+           :param str sender: name of the created entity with a Client instance to send
+                              data to this smartsim script
+           :raises: SmartSimError
+        """
+        if not self.orc:
+            raise SmartSimError("Create orchestrator to register connections")
+        try:
+            environ["SSDB"] = self.get_db_address()[0]
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+        environ["SSNAME"] = self.name
+        environ["SSDATAIN"] = sender
+
 
     def delete_ensemble(self, name):
         """Delete a created ensemble from Experiment so that any future calls to SmartSim
@@ -580,9 +599,12 @@ class Experiment:
             raise SSConfigError("No orchestrator has been initialized")
         addresses = []
         for dbnode in self.orc.dbnodes:
-            job = self._control.get_job(dbnode.name)
-            if not job.nodes:
-                raise SmartSimError("Database has not been launched yet")
+            try:
+                job = self._control.get_job(dbnode.name)
+                if not job.nodes:
+                    raise SmartSimError()
+            except SmartSimError:
+                raise SmartSimError("Database has not been launched yet.")
             for address in job.nodes:
                 addr = ":".join((address, str(dbnode.port)))
                 addresses.append(addr)

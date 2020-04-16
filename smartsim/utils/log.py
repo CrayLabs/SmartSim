@@ -17,7 +17,7 @@ def get_logger(name=None, log_level=None):
     logger = logging.getLogger(name)
     if log_level is not None:
         logger.setLevel(log_level)
-    coloredlogs.install(level=log_level, logger=logger)
+    coloredlogs.install(level=log_level, logger=logger, stream=sys.stdout)
     return logger
 
 def set_global_logging_level(log_level):
@@ -51,7 +51,7 @@ def set_debug_mode():
         get_logger(name).setLevel(logging.NOTSET)
 
 def log_to_file(filename, log_level=None):
-    """Installs a second filestream handler to the root logger, 
+    """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 
     :param str filename: the name of the desired log file.

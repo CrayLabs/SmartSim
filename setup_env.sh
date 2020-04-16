@@ -103,5 +103,5 @@ fi
 
 cd ../
 
-export ORCCONFIG="$(pwd)/smartsim/"
-echo "SmartSim orchestrator config set to $(pwd)/smartsim/smartsimdb.conf"
+export SMARTSIMHOME="$(pwd)"
+echo "SMARTSIMHOME set to $(pwd)"

@@ -3,6 +3,7 @@ import time
 import os
 import atexit
 import sys
+from itertools import product
 
 from .launcher import Launcher
 from subprocess import PIPE, Popen, CalledProcessError
@@ -348,6 +349,38 @@ class SlurmLauncher(Launcher):
             raise LauncherError("Failed to run on allocation")
         else:
             return self.alloc_manager.add_subjob(alloc_id)
+
+    def make_multi_prog(self, ppn, executable, exe_args, out_file, **kwargs):
+        """Launch multiple programs on seperate CPUs on the same node using the
+           slurm --multi-prog feature. Currently we only support launching one
+           process with each execs and args. Execs and args are expected to be
+           lists of the same length. Writes out a run_orc.conf.
+
+           TODO: improve so that single exec or arg could be used
+           TODO: catch bad formatting errors
+
+           :param int ppn: total number of processes
+           :param executable: list of executables
+           :type executable: list of strings
+           :param exe_args: list of arguments to each executable
+           :type exe_args: list of strings
+           :param str out_file: path to where run_orc.confs should be outputted
+           :returns: path to run_orc.conf
+           :rtype: string
+        """
+        conf_path = os.path.join(os.path.dirname(out_file), "run_orc.conf")
+        if not isinstance(executable, list):
+            executable = [executable]
+        if not isinstance(exe_args, list):
+            exe_args = [exe_args]
+        launch_args = list(product(executable, exe_args))
+        with open(conf_path, "w+") as f:
+            proc_num = 0
+            for exe, arg in launch_args:
+                f.write(" ".join((str(proc_num),  exe, arg, "\n")))
+                proc_num += 1
+        return conf_path
+
 
     def stop(self, job_id):
         """Stop is used to stop a subjob that is currently running within an allocation.

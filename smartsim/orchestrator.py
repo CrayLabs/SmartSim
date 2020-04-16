@@ -10,18 +10,18 @@ class Orchestrator:
        the various user specified entities(Clients, Models) to the correct
        endpoints
     """
-    def __init__(self, orc_path, port=6379, cluster_size=3, partition=None):
+    def __init__(self, orc_path, port=6379, cluster_size=3, dpn=1, partition=None):
         self.port = port
         self.path = orc_path
         self.junction = Junction()
         self.dbnodes = []
-        self._init_db_nodes(cluster_size, partition)
+        self._init_db_nodes(cluster_size, partition, dpn)
 
-    def _init_db_nodes(self, cluster_size, partition):
+    def _init_db_nodes(self, cluster_size, partition, dpn):
         cluster = True
         if cluster_size < 3:
             cluster = False
-        run_settings = {"nodes": 1, "ppn": 1, "partition": partition}
+        run_settings = {"nodes": 1, "ppn": dpn, "partition": partition}
         for node_id in range(cluster_size):
             node = DBNode(node_id,
                           self.path,

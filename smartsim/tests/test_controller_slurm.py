@@ -32,6 +32,10 @@ N1 = exp.create_node("n1",script_path=test_path, run_settings=run_settings)
 exp_2 = Experiment("test_2")
 C1 = exp_2.create_orchestrator(path=test_path, cluster_size=3)
 
+# test multiple orchestrator per node
+exp_5 = Experiment("test_3")
+O2 = exp_5.create_orchestrator(path=test_path, cluster_size=1, dpn=3)
+
 # init slurm controller for testing
 ctrl = Controller()
 ctrl.init_launcher("slurm")
@@ -136,6 +140,15 @@ def test_get_release_allocation():
     """test getting and immediately releasing an allocation"""
     alloc_id = ctrl.get_allocation(1, None)
     ctrl.release(alloc_id=alloc_id)
+
+@slurm_controller_test
+def test_dpn():
+    """test launching multiple databases per node"""
+    ctrl.start(orchestrator=O2)
+    time.sleep(5)
+    statuses = ctrl.get_orchestrator_status(O2)
+    assert("FAILED" not in statuses)
+
 
 # Error handling test cases
 

@@ -19,7 +19,7 @@ from ..error import LauncherError, SmartSimError
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
-from ..utils import get_logger
+from ..utils import get_logger, get_env
 logger = get_logger(__name__)
 
 
@@ -163,24 +163,27 @@ class Launcher(abc.ABC):
             logger.error("Communication with database nodes failed")
             raise SmartSimError("Could not ping database nodes for cluster creation") from e
 
-    def create_cluster(self, nodes, port):
+    def create_cluster(self, nodes, ports):
         """Create a KeyDB cluster on the specifed nodes at port. This method
             is called using the KeyDB-cli tool and is called after all of the
             database nodes have been launched.
 
             :param nodes: the nodes the database instances were launched on
             :type nodes: list of strings
-            :param int port: port the database nodes were launched on
+            :param ports: ports the database nodes were launched on
+            :type ports: list of ints
             :raises: SmartSimError if cluster creation fails
         """
         cluster_str = ""
         for node in nodes:
             node_ip = self.get_ip_from_host(node)
-            node_ip += ":" + str(port)
-            cluster_str += node_ip + " "
+            for port in ports:
+                full_ip = ":".join((node_ip, str(port) + " "))
+                cluster_str += full_ip
 
         # call cluster command
-        keydb_cli = "keydb-cli"
+        smartsimhome = get_env("SMARTSIMHOME")
+        keydb_cli = os.path.join(smartsimhome, "third-party/KeyDB/src/keydb-cli")
         cmd = " ".join((keydb_cli, "--cluster create", cluster_str, "--cluster-replicas 0"))
         returncode, out, err = self.execute_cmd_with_input([cmd], "yes")
 
@@ -208,14 +211,15 @@ class Launcher(abc.ABC):
                 found = True
 
     @staticmethod
-    def check_cluster_status(nodes, port):
+    def check_cluster_status(nodes, ports):
         """Check the status of the cluster and ensure that all nodes are up and running"""
         node_list = []
         for node in nodes:
-            node_dict = dict()
-            node_dict["host"] = node
-            node_dict["port"] = port
-            node_list.append(node_dict)
+            for port in ports:
+                node_dict = dict()
+                node_dict["host"] = node
+                node_dict["port"] = port
+                node_list.append(node_dict)
 
         trials = 10
         while trials > 0:

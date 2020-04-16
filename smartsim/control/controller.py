@@ -509,6 +509,13 @@ class Controller():
         if orchestrator:
             for dbnode in orchestrator.dbnodes:
                 try:
+                    if len(dbnode.ports) > 1:
+                        exe = self._launcher.make_multi_prog(**dbnode.run_settings)
+                        dbnode.update_run_settings(
+                            {"executable": "--multi-prog " + exe,
+                             "exe_args": ""}
+                            )
+
                     self._launch_on_alloc(dbnode, orchestrator)
                     job_nodes = self.get_job_nodes(self._jobs[dbnode.name])
                     orchestrator.junction.store_db_addr(job_nodes[0],
@@ -519,14 +526,15 @@ class Controller():
                         "Check database node output files for details.")
                     raise SmartSimError(
                         "Database node %s failed to launch" % dbnode.name
-                        ) from e
+                        )
 
             # Create KeyDB cluster, min nodes for cluster = 3
             if len(orchestrator.dbnodes) > 2:
+                # ports are the same for each dbnode
+                all_ports = orchestrator.dbnodes[0].ports
                 db_nodes = self._jobs.get_db_nodes()
-                port = orchestrator.port
-                self._launcher.create_cluster(db_nodes, port)
-                self._launcher.check_cluster_status(db_nodes, port)
+                self._launcher.create_cluster(db_nodes, all_ports)
+                self._launcher.check_cluster_status(db_nodes, all_ports)
 
         if nodes:
             for node in nodes:
@@ -539,7 +547,7 @@ class Controller():
                         "Check node output files for details.")
                     raise SmartSimError(
                         "SmartSimNode %s failed to launch" % node.name
-                        ) from e
+                        )
 
         if ensembles:
             for ensemble in ensembles:
@@ -554,7 +562,7 @@ class Controller():
                             "An error occured when launching model ensembles.\n" +
                             "Check model output files for details.")
                         raise SmartSimError(
-                            "Model %s failed to launch" % model.name) from e
+                            "Model %s failed to launch" % model.name)
 
 
     def _launch_on_alloc(self, entity, orchestrator):
