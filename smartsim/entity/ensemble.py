@@ -1,9 +1,17 @@
 
 from os import path, mkdir
-from .error import SSModelExistsError
+from ..error import SSModelExistsError
 from .entity import SmartSimEntity
 
 class Ensemble(SmartSimEntity):
+    """Ensembles are groups of NumModels that can be used
+       for quickly generating a number of models with different
+       model parameter spaces.
+
+       Models within the default Ensemble will use their own
+       run_settings, whereas models not in the default ensemble
+       will inheirt the run_settings of that ensemble.
+    """
 
     def __init__(self, name, params, experiment, path, run_settings={}):
         super().__init__(name, path, "ensemble", run_settings)

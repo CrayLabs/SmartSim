@@ -1,4 +1,4 @@
-from .error import SmartSimError
+from ..error import SmartSimError
 from .entity import SmartSimEntity
 
 class NumModel(SmartSimEntity):

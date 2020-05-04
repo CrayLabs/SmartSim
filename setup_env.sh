@@ -44,9 +44,14 @@ fi
 if [[ -f ./protobuf/install/bin/protoc ]]; then
     echo "Protobuf has already been downloaded and installed"
     export PROTOBUF_INSTALL_PATH="$(pwd)/protobuf/install"
+    export LD_LIBRARY_PATH="$PROTOBUF_INSTALL_PATH/lib":$LD_LIBRARY_PATH
+    export PATH="$PROTOBUF_INSTALL_PATH/bin":$PATH
 else
     if [[ ! -d "./protobuf" ]]; then
-	git clone https://github.com/protocolbuffers/protobuf.git protobuf --branch master --depth=1
+	git clone https://github.com/protocolbuffers/protobuf.git protobuf
+	cd protobuf
+	git checkout tags/v3.11.3
+	cd ..
     else
 	echo "Protobuf downloaded"
     fi
@@ -55,10 +60,12 @@ else
     git submodule update --init --recursive
     ./autogen.sh
     ./configure --prefix="$(pwd)/install"
-    make
+    make -j 8
     make check
     make install
     export PROTOBUF_INSTALL_PATH="$(pwd)/install"
+    export LD_LIBRARY_PATH="$PROTOBUF_INSTALL_PATH/lib":$LD_LIBRARY_PATH
+    export PATH="$PROTOBUF_INSTALL_PATH/bin":$PATH
     echo "Finished installing Protobuf"
     cd ../
 fi

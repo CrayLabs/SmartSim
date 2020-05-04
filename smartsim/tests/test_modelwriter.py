@@ -1,11 +1,12 @@
-from smartsim import Experiment
+import filecmp
 from os import path, environ
 from glob import glob
 from shutil import rmtree
-from smartsim.model import NumModel
-from smartsim.generation.modelwriter import ModelWriter
 from distutils import dir_util
-import filecmp
+
+from smartsim import Experiment
+from smartsim.entity import NumModel
+from smartsim.generation.modelwriter import ModelWriter
 
 def test_write_easy_configs():
 

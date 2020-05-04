@@ -3,9 +3,11 @@ from smartsim import Experiment
 from os import path, environ, getcwd
 from shutil import rmtree
 from ..error import SmartSimError, SSModelExistsError, LauncherError
-from ..model import NumModel
-from ..ensemble import Ensemble
+from smartsim.entity import Ensemble, NumModel
 import pytest
+
+
+# --- Simple Entity Creation ----------------------------------------------
 
 def test_create_model():
     experiment = Experiment("test")
@@ -35,15 +37,6 @@ def test_get_ensemble():
     ensemble = experiment.create_ensemble("test-ensemble")
     assert(ensemble == experiment.ensembles[0])
 
-def test_get_ensemble_error():
-    experiment = Experiment("test")
-    experiment.create_ensemble("test-ensemble")
-    try:
-        ensemble = experiment.get_ensemble("test-ensemble_doesnt_exist")
-        assert(False)
-    except SmartSimError:
-        assert(True)
-
 def test_delete_ensemble():
     experiment = Experiment("test")
     experiment.create_ensemble("test-ensemble")
@@ -62,6 +55,14 @@ def test_ensemble_get_model():
     ensemble = experiment.create_ensemble("test-ensemble")
     model = experiment.create_model("test-model", "test-ensemble")
     assert(model == ensemble["test-model"])
+
+# --- Error Handling ---------------------------------------------------
+
+def test_get_ensemble_error():
+    experiment = Experiment("test")
+    experiment.create_ensemble("test-ensemble")
+    with pytest.raises(SmartSimError):
+        ensemble = experiment.get_ensemble("test-ensemble_doesnt_exist")
 
 def test_duplicate_orchestrator_error():
     experiment = Experiment("test")
@@ -83,5 +84,20 @@ def test_remote_launch():
 def test_bad_release():
     """test when experiment.release() is called with a bad alloc_id"""
     experiment = Experiment("test")
-    with pytest.raises(LauncherError):
+    with pytest.raises(SmartSimError):
         experiment.release(alloc_id=111111)
+
+def test_invalid_num_orc():
+    """test creating an orchestrator with 2 nodes"""
+    experiment = Experiment("test")
+    with pytest.raises(SmartSimError):
+        experiment.create_orchestrator_cluster(111111, db_nodes=2)
+
+# --- Local Launcher Experiment -------------------------------------
+
+def test_bad_cluster_orc():
+    """test when a user creates an experiment with a local launcher
+       but requests a clusted orchestrator"""
+    experiment = Experiment("test", launcher="local")
+    with pytest.raises(SmartSimError):
+        experiment.create_orchestrator_cluster(111111)

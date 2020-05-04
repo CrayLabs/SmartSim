@@ -1,2 +1,4 @@
-from .local import LocalLauncher
-from .SlurmLauncher import SlurmLauncher
+from .local.local import LocalLauncher
+from .slurm.slurmLauncher import SlurmLauncher
+
+

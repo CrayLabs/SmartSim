@@ -3,22 +3,23 @@ import sys
 import zmq
 
 from os import path, mkdir, listdir, getcwd, environ
-from .error import SmartSimError, SSConfigError
-from .ensemble import Ensemble
-from .model import NumModel
+from .error import SmartSimError, SSConfigError, RemoteLauncherError
 from .orchestrator import Orchestrator
-from .smartSimNode import SmartSimNode
-from .entity import SmartSimEntity
+from .entity import SmartSimEntity, SmartSimNode, NumModel, Ensemble
 from .generation import Generator
 from .control import Controller
+from .cmdClient import CmdClient
+from .cmdSchema import RemoteRequest
+from .launcher import LocalLauncher
 
 from .utils import get_logger
 logger = get_logger(__name__)
 
 
 class Experiment:
-    """In SmartSim, the Experiment class is an entity creation API that both houses
-       and operates on the entities it creates. The entities that can be created are:
+    """In SmartSim, the Experiment class is an entity creation API
+       that both houses and operates on the entities it creates.
+       The entities that can be created are:
 
          - NumModels
          - Ensembles
@@ -27,63 +28,68 @@ class Experiment:
 
         Each entity has a distinct purpose within an experiment.
 
-        NumModel  - Instances of numerical models or "simulation" models. NumModels can
-                    be created through a call to Experiment.create_model() and though
-                    the creation of an Ensemble.
-        Ensemble  - Ensembles are groups of NumModels to be either generated manually or
-                    through a call to experiment.generate(). Ensembles can be given model
-                    parameters to be written into input files for the model at runtime.
-                    There are multiple ways of generating ensemble members; see
-                    experiment.generate() for details.
-        SmartSimNodes - Nodes run processes adjacent to the simulation. Nodes can be used
-                        for anything from analysis, training, inference, etc. Nodes are the
-                        most flexible entity with no requirements on language or framework.
-                        Nodes are commonly used for acting on data being streamed out of a
-                        simulation model through the orchestrator
-        Orchestrator  - The Orchestrator is a KeyDB database, clustered or standalone, that
-                        is launched prior to the simulation. The Orchestrator can be used
-                        to store data from another entity in memory during the course of
-                        an experiment. In order to stream data into the orchestrator or
-                        recieve data from the orchestrator, one of the SmartSim clients
-                        has to be used within a NumModel or SmartSimNode. Use
-                        experiment.register_connection() to connect two entities within
-                        SmartSim.
+        NumModel
+        --------
+        Instances of numerical models or "simulation" models. NumModels can
+        be created through a call to Experiment.create_model() and though
+        the creation of an Ensemble.
 
-       :param str name: Name of the directory that will house all of
-                        the created files and directories.
-       :param str launcher: the method by which jobs are launched. options are "slurm", and "local"
+        Ensemble
+        --------
+        Ensembles are groups of NumModels to be either generated manually or
+        through a call to experiment.generate(). Ensembles can be given model
+        parameters to be written into input files for the model at runtime.
+        There are multiple ways of generating ensemble members; see
+        experiment.generate() for details.
+
+        SmartSimNodes
+        -------------
+        Nodes run processes adjacent to the simulation. Nodes can be used
+        for anything from analysis, training, inference, etc. Nodes are the
+        most flexible entity with no requirements on language or framework.
+        Nodes are commonly used for acting on data being streamed out of a
+        simulation model through the orchestrator
+
+        Orchestrator
+        ------------
+        The Orchestrator is a KeyDB database, clustered or standalone, that
+        is launched prior to the simulation. The Orchestrator can be used
+        to store data from another entity in memory during the course of
+        an experiment. In order to stream data into the orchestrator or
+        recieve data from the orchestrator, one of the SmartSim clients
+        has to be used within a NumModel or SmartSimNode. Use
+        experiment.register_connection() to connect two entities within
+        SmartSim.
     """
     def __init__(self, name, launcher="slurm"):
+        """Initialize an Experiment
+
+        :param name: Name of the experiment
+        :type name: str
+        :param launcher: type of launcher, options are "local" and "slurm",
+                         defaults to "slurm"
+        :type launcher: str, optional
+        """
         self.name = name
         self.ensembles = []
         self.nodes = []
         self.orc = None
         self.exp_path = path.join(getcwd(), name)
-        self._control = Controller()
-        self._control.init_launcher(launcher)
+        self._control = Controller(launcher=launcher)
 
-    def start(self,
-              ensembles=None,
-              ssnodes=None,
-              orchestrator=None,
-              duration="1:00:00",
-              run_on_existing=False):
-        """Start the experiment with the created entities. If using a workload manager,
-           'slurm' is the default, the total allocation size will be determined and
-           aquired for the duration specified as an argument to this function.
+    def start(self, ensembles=None, ssnodes=None, orchestrator=None):
+        """Start the experiment by turning all entities into jobs
+           for the underlying launcher specified at experiment
+           initialization. All entities in the experiemnt will be
+           launched if not arguments are passed.
 
-           :param ensembles: Ensembles to launch with specified launcher
-           :type ensembles: a list of Ensemble objects
-           :param ssnodes: SmartSimNodes to launch with specified launcher
-           :type ssnodes: a list of SmartSimNode objects
-           :param orchestrator: Orchestrator object to be launched for entity communication
-           :type orchestrator: Orchestrator object
-           :param str duration: Time for the aquired allocation in format HH:MM:SS
-           :param bool run_on_existing: If False, calculate and get an allocation
-                                        for this workload
-           :raises: SmartSimError
+        :param ensembles: list of Ensembles, defaults to None
+        :type ensembles: list Ensemble instances, optional
+        :param ssnodes: list of SmartSimNodes, defaults to None
+        :type ssnodes: list of SmartSimNode instances, optional
+        :param orchestrator: Orchestrator instance, defaults to None
+        :type orchestrator: Orchestrator, optional
         """
-        #TODO catch bad duration format
         logger.info(f"Starting experiment: {self.name}")
         try:
             if not ensembles:
@@ -96,10 +102,7 @@ class Experiment:
             self._control.start(
                 ensembles=ensembles,
                 nodes=ssnodes,
-                orchestrator=orchestrator,
-                duration=duration,
-                run_on_existing=run_on_existing
-            )
+                orchestrator=orchestrator)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -129,44 +132,53 @@ class Experiment:
             logger.error(e)
             raise
 
-    def get_allocation(self, nodes, partition, duration="1:00:00", add_opts=None):
-        """Get an allocation with the requested resources and return the allocation
-           ID from the workload manager. Allocation obtained is automatically added
-           to the smartsim allocations list for future calls to start to run on.
+    def get_allocation(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+        """Get an allocation through the launcher for future calls
+           to start to launch entities onto. This allocation is
+           maintained within SmartSim. To release the allocation
+           call Experiment.release().
 
-           :param int nodes: number of nodes in the requested allocation
-           :param str partition: partition for the requested allocation
-           :param str duration: duration of the allocation in format HH:MM:SS
-           :param add_opts: additional options to pass to workload manager command
-                            for obtaining an allocation
-           :type add_opts: list of strings
-           :return: allocation ID
-           :rtype: string
-           :raises: SmartSimError
+           The kwargs can be used to pass extra settings to the
+           workload manager such as the following for Slurm:
+             - nodelist="nid00004"
+
+           For arguments without a value, pass None or and empty
+           string as the value for the kwarg. For Slurm:
+             - exclusive=None
+
+        :param nodes: number of nodes for the allocation
+        :type nodes: int
+        :param ppn: processes per node
+        :type ppn: int
+        :param duration: length of the allocation in HH:MM:SS format,
+                         defaults to "1:00:00"
+        :type duration: str, optional
+        :raises SmartSimError: if allocation could not be obtained
+        :return: allocation id
+        :rtype: str
         """
         try:
             alloc_id = self._control.get_allocation(
-                nodes,
-                partition,
+                nodes=nodes,
+                ppn=ppn,
                 duration=duration,
-                add_opts=add_opts
+                **kwargs
             )
             return alloc_id
         except SmartSimError as e:
             logger.error(e)
             raise e
 
-    def add_allocation(self, alloc_id, partition, nodes):
-        """Add an existing allocation to SmartSim so that future calls to start can run
-           on it.
+    def add_allocation(self, alloc_id):
+        """Add an allocation to SmartSim such that entities can
+           be launched on it.
 
-           :param str alloc_id: id of the allocation given by the workload manager
-           :param str partition: partition of the allocation
-           :param int nodes: number of nodes in the allocation
-           :raises: SmartSimError
+        :param alloc_id: id of the allocation from the workload manager
+        :type alloc_id: str
+        :raises SmartSimError: If the allocation cannot be found
         """
         try:
-            self._control.add_allocation(alloc_id, partition, nodes)
+            self._control.add_allocation(alloc_id)
         except SmartSimError as e:
             logger.error(e)
             raise e
@@ -180,19 +192,21 @@ class Experiment:
             self._control.stop(
                 ensembles=self.ensembles,
                 nodes=self.nodes,
-                orchestrator=self.orch
+                orchestrator=self.orc
                 )
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def release(self, alloc_id=None):
-        """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources. If an allocation ID is provided, only stop
-           that allocation and remove it from SmartSim.
+        """Release the allocation(s) stopping all jobs that are
+           currently running and freeing up resources. If an
+           allocation ID is provided, only stop that allocation
+           and remove it from SmartSim.
 
-           :param str alloc_id: if provided, release that specific allocation
-           :raises: SSConfigError if called when using local launcher
+        :param alloc_id: id of the allocation, defaults to None
+        :type alloc_id: str, optional
+        :raises SmartSimError: if fail to release allocation
         """
         try:
             self._control.release(alloc_id=alloc_id)
@@ -201,9 +215,9 @@ class Experiment:
             raise
 
     def poll(self, interval=10, poll_db=False, verbose=True):
-        """Poll the running simulations and recieve logging output with the status
-           of the job. If polling the database, jobs will continue until database
-           is manually shutdown.
+        """Poll the running simulations and recieve logging output
+           with the status of the job. If polling the database,
+           jobs will continue until database is manually shutdown.
 
            :param int interval: number of seconds to wait before polling again
            :param bool poll_db: poll dbnodes for status as well and see
@@ -233,32 +247,38 @@ class Experiment:
             raise
 
 
-    def generate(self, model_files=None, node_files=None, tag=None, strategy="all_perm", **kwargs):
-        """Generate the file structure for a SmartSim experiment. This includes the writing
-           and configuring of input files for a model. Ensembles created with a 'params' argument
-           will be expanded into multiple models based on a generation strategy. Model input files
-           are specified with the model_files argument. All files and directories listed as strings
-           in a list will be copied to each model within an ensemble. Every model file is read,
-           checked for input variables to configure, and written. Input variables to configure
-           are specified with a tag within the input file itself. The default tag is surronding
-           an input value with semicolons. e.g. THERMO=;90;
+    def generate(self, model_files=None, node_files=None, tag=None,
+                 strategy="all_perm", **kwargs):
+        """Generate the file structure for a SmartSim experiment. This
+           includes the writing and configuring of input files for a
+           model. Ensembles created with a 'params' argument will be
+           expanded into multiple models based on a generation strategy.
+           Model input files are specified with the model_files argument.
+           All files and directories listed as strings in a list will be
+           copied to each model within an ensemble. Every model file is read,
+           checked for input variables to configure, and written. Input
+           variables to configure are specified with a tag within the input
+           file itself. The default tag is surronding an input value with
+           semicolons. e.g. THERMO=;90;
 
-           Files for SmartSimNodes can also be included to be copied into node directories but
-           are never read nor written. All node_files will be copied into directories named after
-           the name of the SmartSimNode within the experiment.
+           Files for SmartSimNodes can also be included to be copied into
+           node directories but are never read nor written. All node_files
+           will be copied into directories named after the name of the
+           SmartSimNode within the experiment.
 
-            :param model_files: The model files for the experiment.  Optional if model files
-                                are not needed for execution.
+            :param model_files: The model files for the experiment.  Optional
+                                if model files are not needed for execution.
             :type model_files: list of path like strings to directories or files
-            :param node_files: files to be copied into node directories. These are most likely files
-                               needed to run the node computations. e.g. a python script
+            :param node_files: files to be copied into node directories. These
+                               are most likely files needed to run the node
+                               computations. e.g. a python script
             :type node_files: list of path like strings to directories or files
 
             :param str strategy: The permutation strategy for generating models within
                                 ensembles.
-                                Options are "all_perm", "random", "step", or a callable function.
-                                Defaults to "all_perm"
-            :raises: SmartSimError
+                                Options are "all_perm", "random", "step", or a
+                                callable function. Defaults to "all_perm"
+            :raises SmartSimError: if generation fails
         """
         try:
             generator = Generator()
@@ -279,16 +299,20 @@ class Experiment:
             raise
 
     def get_status(self, entity):
-        """Get the status of a running job that was launched through a workload manager.
-           Ensembles, Orchestrator, SmartSimNodes, and NumModel instances can all be passed
-           to have their status returned as a string. The type of string and content will
-           depend on the workload manager being used.
+        """Get the status of a running job that was launched through
+           a workload manager. Ensembles, Orchestrator, SmartSimNodes,
+           and NumModel instances can all be passed to have their
+           status returned as a string. The type of string and content
+           will depend on the workload manager being used.
 
-           :param entity: The SmartSimEntity object that was launched to check the status of
+           :param entity: The SmartSimEntity object that was launched
+                          to check the status of
            :type entity: SmartSimEntity
            :returns: status of the entity
-           :rtype: list if entity contains sub-entities such as cluster Orchestrator or Ensemble
-           :raises: SmartSimError
+           :rtype: list if entity contains sub-entities such as cluster
+                   Orchestrator or Ensemble
+           :raises SmartSimError: if status retrieval fails
+           :raises TypeError: if one argument was not a SmartSimEntitiy
         """
         try:
             if isinstance(entity, Ensemble):
@@ -300,7 +324,7 @@ class Experiment:
             elif isinstance(entity, SmartSimNode):
                 return self._control.get_node_status(entity)
             else:
-                raise SmartSimError(
+                raise TypeError(
                     f"entity argument was of type {type(entity)} not SmartSimEntity")
         except SmartSimError as e:
             logger.error(e)
@@ -308,16 +332,24 @@ class Experiment:
 
 
     def create_ensemble(self, name, params={}, run_settings={}):
-        """Create a ensemble to be used within one or many of the SmartSim Modules. ensembles
-           keep track of groups of models. Parameters can be given to a ensemble as well in
-           order to generate models based on a combination of parameters and generation
-           experimentgies. For more on generation strategies, see the Generator Class.
+        """Create a ensemble to be used within one or many of the
+           SmartSim Modules. Ensembles contain groups of models.
+           Parameters can be given to a ensemble in order to generate
+           models based on a combination of parameters and generation
+           strategies. For more on generation strategies, see the
+           Generator Class.
 
-           :param str name: name of the new ensemble
-           :param dict params: dictionary of model parameters to generate models from based
-                               on a run strategy.
-           :raises: SmartSimError
-
+        :param name: name of the ensemble
+        :type name: str
+        :param params: model parameters for generation strategies,
+                       defaults to {}
+        :type params: dict, optional
+        :param run_settings: define how the model should be run,
+                             defaults to {}
+        :type run_settings: dict, optional
+        :raises SmartSimError: If ensemble cannot be created
+        :return: the created Ensemble
+        :rtype: Ensemble
         """
         try:
             new_ensemble = None
@@ -328,8 +360,9 @@ class Experiment:
 
             ensemble_path = path.join(self.exp_path, name)
             if path.isdir(ensemble_path):
-                raise SmartSimError("ensemble directory already exists: " +
-                                    ensemble_path)
+                error = " ".join((
+                    "ensemble directory already exists:",ensemble_path))
+                raise SmartSimError(error)
             new_ensemble = Ensemble(name,
                                     params,
                                     self.name,
@@ -341,11 +374,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_model(self,
-                     name,
-                     ensemble="default",
-                     params={},
-                     path=None,
+    def create_model(self, name, ensemble="default", params={}, path=None,
                      run_settings={}):
         """Create a model belonging to a specific ensemble. This function is
            useful for running a small number of models where the model files
@@ -355,13 +384,27 @@ class Experiment:
            result in the creation/usage a ensemble named "default", the default
            argument for `ensemble`.
 
-           :param str name: name of the model to be created
-           :param str ensemble: name of the ensemble to place model into
-           :param dict params: dictionary of model parameters
-           :param str path: (optional) path to model files, defaults to os.getcwd()
-           :param dict run_settings: launcher settings for workload manager or local call
-                                   e.g. {"ppn": 1, "nodes": 10, "partition":"default_queue"}
-           :raises: SmartSimError
+           Models in the default ensemble will be launched with their specific
+           run_settings as defined in intialization here. Otherwise the model
+           will use the run_settings defined for the Ensemble
+
+        :param name: name of the model
+        :type name: str
+        :param ensemble: name of the ensemble to add the model to,
+                         defaults to "default"
+        :type ensemble: str, optional
+        :param params: model parameters for generation strategies,
+                       defaults to {}
+        :type params: dict, optional
+        :param path: path to where the model should be executed at runtime,
+                     defaults to os.getcwd()
+        :type path: str, optional
+        :param run_settings: defines how the model should be run,
+                             defaults to {}
+        :type run_settings: dict, optional
+        :raises SmartSimError: if ensemble name provided doesnt exist
+        :return: the created model
+        :rtype: NumModel
         """
         try:
             model_added = False
@@ -385,26 +428,85 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_orchestrator(self,
-                            path=None,
-                            port=6379,
-                            cluster_size=3,
-                            dpn=1,
-                            partition=None):
-        """Create an orchestrator database to faciliate the transfer of data
-           for online training and inference. After the orchestrator is created,
-           connections between models and nodes can be instantiated through a
-           call to Experiment.register_connection().
+    def create_orchestrator_cluster(self, alloc, path=None, port=6379, db_nodes=3,
+                                     dpn=1, **kwargs):
+        """Create an in-memory database that can be used for the transfer of
+           data between launched entities. For increasing throughput,
+           the number of databases per node can be increased such that mulitple
+           database instances are launched on a single node and share the
+           memory of that node.
 
-           :param str path: desired path to output files of db cluster (defaults to
-                            os.getcwd())
-           :param int port: port for each database node for tcp communication
-           :param int cluster_size: number of database nodes in cluster
-           :param int dpn: databases to run per node
-           :param str partition: partition to launch db nodes
-           :returns: Orchestrator object
-           :raises: SmartSimError if one orchestrator has already been created
-           """
+           Orchestrator clusters are meant to be launched accross multiple
+           nodes with the minimum number of nodes being 3. Clusters of size
+           2 are not supported and single instances will be launched in
+           standalone mode. This function requires that an allocation id
+           is passed for the orchestrator to run on. If you want to run
+           an orchestrator locally, look at Experiment.create_orchestrator().
+
+           Additional options for where and how to launch the orchestrator
+           can be specified with the through the inclusion of extra kwargs
+           (e.g. partition="main")
+
+
+        :param alloc: id of the allocation for the orchestrator to run on
+        :type alloc: str
+        :param path: desired path for orchestrator output/error, defaults to cwd
+        :type path: str, optional
+        :param port: port orchestrator should run on, defaults to 6379
+        :type port: int, optional
+        :param db_nodes: number of database nodes in the cluster, defaults to 3
+        :type db_nodes: int, optional
+        :param dpn: number of databases per node, defaults to 1
+        :type dpn: int, optional
+        :raises SmartSimError: if an orchestrator already exists within the
+                               experiment
+        :raises SmartSimError: If experiment was initialized with local launcher
+        :return: Orchestrator instance
+        :rtype: Orchestrator
+        """
+        try:
+            if self.orc:
+                raise SmartSimError(
+                    "Only one orchestrator can exist within a experiment.")
+            if isinstance(self._control._launcher, LocalLauncher):
+                error = "Clustered orchestrators are not supported when using the local launcher\n"
+                error += "Use Experiment.create_orchestrator() for launching an orchestrator"
+                error += "with the local launcher"
+                raise SmartSimError(error)
+            orcpath = getcwd()
+            if path:
+                orcpath = path
+
+            self.orc = Orchestrator(orcpath,
+                                    port=port,
+                                    db_nodes=db_nodes,
+                                    dpn=dpn,
+                                    alloc=alloc,
+                                    **kwargs)
+            return self.orc
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
+    def create_orchestrator(self, path=None, port=6379, **kwargs):
+        """Create an in-memory database to run with an experiment. Launched
+           entities can communicate with the orchestrator through use
+           of one of the Python, C, C++ or Fortran clients.
+
+           With the default settings, this function can be used to create
+           a local orchestrator that will run in parallel with other
+           entities running serially in an experiment. For creating
+           clustered orchestrators accross multiple compute nodes
+           look at Experiment.create_orchestrator_cluster()
+
+        :param path: desired path for orchestrator output/error, defaults to cwd
+        :type path: str, optional
+        :param port: port orchestrator should run on, defaults to 6379
+        :type port: int, optional
+        :raises SmartSimError: if an orchestrator already exists
+        :return: Orchestrator instance created
+        :rtype: Orchestrator
+        """
         try:
             if self.orc:
                 raise SmartSimError(
@@ -415,9 +517,7 @@ class Experiment:
 
             self.orc = Orchestrator(orcpath,
                                     port=port,
-                                    cluster_size=cluster_size,
-                                    dpn=dpn,
-                                    partition=partition)
+                                    **kwargs)
             return self.orc
         except SmartSimError as e:
             logger.error(e)
@@ -435,10 +535,11 @@ class Experiment:
                                    (default is the current working directory of the
                                     SmartSim run script)
            :param dict run_settings: Settings for the workload manager can be set by
-                                     including keyword arguments such as duration="1:00:00"
-                                     or nodes=5
-           :returns: SmartSimNode created
+                                     including keyword arguments such as
+                                     duration="1:00:00" or nodes=5
            :raises: SmartSimError if node exists by the same name
+           :returns: SmartSimNode created
+           :rtype: SmartSimNode
            """
         try:
             for node in self.nodes:
@@ -453,22 +554,24 @@ class Experiment:
             raise
 
     def register_connection(self, sender, reciever):
-        """Create a runtime connection in orchestrator for data to be passed between two
-           SmartSim entities. The possible types of connections right now are:
+        """Create a runtime connection in orchestrator for data to be passed
+           between two SmartSim entities. The possible types of connections
+           right now are:
 
                 Model -> Node
                 Node  -> Node
                 Node  -> Model
 
-           :param str sender: name of the created entity with a Client instance to send
-                              data to a registered counterpart
-           :param str reciever: name of the created entity that will recieve data by
-                                making calls to a Client instance.
-           :raises: SmartSimError
+           :param str sender: name of the created entity with a Client instance
+                              to send data to a registered counterpart
+           :param str reciever: name of the created entity that will recieve
+                                data by making calls to a Client instance.
+           :raises TypeError: if arguments are not str names of entities
+           :raises SmartSimError: if orchestrator has not been created
         """
         try:
             if not isinstance(sender, str) or not isinstance(reciever, str):
-                raise SmartSimError(
+                raise TypeError(
                     "Arguments to register connection must either be a str")
             if not self.orc:
                 raise SmartSimError("Create orchestrator to register connections")
@@ -481,13 +584,14 @@ class Experiment:
             raise
 
     def create_connection(self, sender):
-        """Create a connection between the experiment script and SmartSim entity. This
-           method should be called after a database has been launched or an error will
-           be raised.
+        """Create a connection between the experiment script and
+           SmartSim entity. This method should be called after a
+           database has been launched or an error will be raised.
 
-           :param str sender: name of the created entity with a Client instance to send
-                              data to this smartsim script
-           :raises: SmartSimError
+           :param str sender: name of the created entity with a
+                              Client instance to send data to
+                              this smartsim script
+           :raises SmartSimError: if orchestrator has not been created
         """
         if not self.orc:
             raise SmartSimError("Create orchestrator to register connections")
@@ -501,17 +605,19 @@ class Experiment:
 
 
     def delete_ensemble(self, name):
-        """Delete a created ensemble from Experiment so that any future calls to SmartSim
-           Modules will not include this ensemble.
+        """Delete a created ensemble from Experiment so that
+           any future calls to SmartSim Modules will not include
+           this ensemble.
 
            :param str name: name of the ensemble to be deleted
+           :raises TypeError: if argument is not a str name of an ensemble
            :raises SmartSimError: if ensemble doesnt exist
         """
         try:
             if isinstance(name, SmartSimEntity):
                 name = name.name
             if not isinstance(name, str):
-                raise SmartSimError("Argument to delete_ensemble must be of type str")
+                raise TypeError("Argument to delete_ensemble must be of type str")
             ensemble_deleted = False
             for t in self.ensembles:
                 if t.name == name:
@@ -529,14 +635,17 @@ class Experiment:
            :param str model: name of the model to return
            :param str ensemble: name of the ensemble where the model is located
 
+           :raises SmartSimError: if model is not found
+           :raises TypeError: if arguments are not str names of a model
+                              and/or an Ensemble
            :returns: NumModel instance
-           :raises: SmartSimError if model is not found
+           :rtype: NumModel
         """
         try:
             if not isinstance(ensemble, str):
-                raise SmartSimError("Ensemble argument to get_model must be of type str")
+                raise TypeError("Ensemble argument to get_model must be of type str")
             if not isinstance(model, str):
-                raise SmartSimError("Model argument to get_model must be of type str")
+                raise TypeError("Model argument to get_model must be of type str")
 
             ensemble = self.get_ensemble(ensemble)
             model = ensemble[model]
@@ -551,13 +660,15 @@ class Experiment:
         """Return a specific ensemble from Experiment
 
            :param str ensemble: Name of the ensemble to return
-
+           :raises SmartSimError: if ensemble is not found
+           :raises TypeError: if argument is not a str name of
+                              an ensemble
            :returns: ensemble instance
-           :raises: SmartSimError
+           :rtype: Ensemble
         """
         try:
             if not isinstance(ensemble, str):
-                raise SmartSimError("Argument to get_ensemble must be of type str")
+                raise TypeError("Argument to get_ensemble must be of type str")
             for t in self.ensembles:
                 if t.name == ensemble:
                     return t
@@ -570,13 +681,15 @@ class Experiment:
         """Return a specific node from Experiment
 
            :param str node: Name of the node to return
-
+           :raises SmartSimError: if node cannot be found
+           :raises TypeError: if argument is not a str name
+                    of an node
            :returns: node instance
-           :raises: SmartSimError
+           :rtype: SmartSimNode
         """
         try:
             if not isinstance(node, str):
-                raise SmartSimError("Argument to get_node must be of type str")
+                raise TypeError("Argument to get_node must be of type str")
             for n in self.nodes:
                 if n.name == node:
                     return n
@@ -590,65 +703,51 @@ class Experiment:
            domain name used by the workload manager e.g. nid00004 returns
            127.0.0.1
 
+           :raises SmartSimError: if orchestrator has not been launched
+           :raises: SmartSimError: if database nodes cannot be found
            :returns: tcp address of orchestrator
            :rtype: returns a list if clustered orchestrator
-           :raises: SSConfigError
-           :raises: SmartSimError
         """
         if not self.orc:
-            raise SSConfigError("No orchestrator has been initialized")
+            raise SmartSimError("No orchestrator has been initialized")
         addresses = []
         for dbnode in self.orc.dbnodes:
-            try:
-                job = self._control.get_job(dbnode.name)
-                if not job.nodes:
-                    raise SmartSimError()
-            except SmartSimError:
+            job = self._control._jobs[dbnode.name]
+            if not job.nodes:
                 raise SmartSimError("Database has not been launched yet.")
+
             for address in job.nodes:
-                addr = ":".join((address, str(dbnode.port)))
-                addresses.append(addr)
+                for port in dbnode.ports:
+                    addr = ":".join((address, str(port)))
+                    addresses.append(addr)
         if len(addresses) < 1:
             raise SmartSimError("Could not find nodes Database was launched on")
         return addresses
 
-    def init_remote_launcher(self, launcher="slurm", addr="127.0.0.1", port=5555):
-        """Initialize a remote launcher so that SmartSim can be run on compute
-           nodes where slurm and other workload manager commands are not available.
-           Remote launchers must be located on the same system, and be reachable
+    def init_remote_launcher(self, addr="127.0.0.1", port=5555):
+        """Initialize a remote launcher so that SmartSim can be
+           run on compute nodes where slurm and other workload
+           manager commands are not available. Remote launchers
+           must be located on the same system, and be reachable
            via tcp.
 
-           :param str launcher: Workload manager, default is "slurm" (currently only option)
-           :param str addr: Address of the running remote command center
-           :param int port: port the command center is running on
-           :raises: SSConfigError
+        :param addr: address of the Command Server launched seperately,
+                     defaults to "127.0.0.1"
+        :type addr: str, optional
+        :param port: port of the Command Server, defaults to 5555
+        :type port: int, optional
+        :raises RemoteLauncherError: If setup with remote launcher
+                                     fails
         """
-        self._control.init_launcher(launcher=launcher, remote=True, addr=addr, port=port)
-
-        # test to see if cmd_center has been spun up
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        socket.setsockopt(zmq.SNDTIMEO, 1000)
-        socket.setsockopt(zmq.LINGER, 0)
+        # set the remote address for the cmd_client
         address = "tcp://" + ":".join((addr, str(port)))
-        socket.connect(address)
-        try:
-            socket.send(pickle.dumps((["PING"], None, None, None, None)))
+        environ["SMARTSIM_REMOTE"] = address
 
-            poller = zmq.Poller()
-            poller.register(socket, zmq.POLLIN)
-            if poller.poll(1*1000):
-                msg = socket.recv()
-                logger.debug(pickle.loads(msg))
-            else:
-                raise SmartSimError(
-                    f"Could not find command center at address {address}")
-        except zmq.error.Again:
-            raise SmartSimError(
-                f"Could not find command center at address {address}")
-        finally:
-            socket.close()
-            context.term()
+        client = CmdClient()
+        request = client.create_remote_request(["ping"], timeout=10)
+        _, out, _ = client.execute_remote_request(request)
+        logger.info("Command Server setup for remote commands")
+
 
     def __str__(self):
         experiment_str = "\n-- Experiment Summary --\n"

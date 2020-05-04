@@ -2,6 +2,7 @@ import pytest
 from os import path
 from smartsim.tests.clients.client_test_shell import compiled_client_test_builder
 
+pytestmark = pytest.mark.skip()
 
 def test_poll_and_key_value_check_int64_cpp():
     """ This funtion tests putting a two dimensional

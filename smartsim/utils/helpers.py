@@ -36,3 +36,17 @@ def get_config(param, aux, none_ok=False):
             return None
         else:
             raise KeyError(param)
+
+
+def remove_env(env_var):
+    """Remove a variable from the environment.
+
+    :param env_var: variable to remote
+    :type env_var: string
+    """
+
+    try:
+        environ.pop(env_var)
+        return
+    except KeyError:
+        return

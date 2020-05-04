@@ -4,18 +4,15 @@ import subprocess
 from os import listdir
 from os.path import isdir, basename, join
 
-from ..ensemble import Ensemble
-from ..model import NumModel
 from ..launcher import SlurmLauncher, LocalLauncher
-from ..smartSimNode import SmartSimNode
 from ..orchestrator import Orchestrator
-from ..dbnode import DBNode
-from ..entity import SmartSimEntity
+from ..entity import SmartSimEntity, DBNode, Ensemble, NumModel, SmartSimNode
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
+from ..launcher.clusterLauncher import create_cluster, check_cluster_status
 
 from .job import Job
 from .jobmanager import JobManager
-from ..utils import get_config
+from ..utils import get_config, remove_env
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -26,11 +23,11 @@ class Controller():
        that is the subject of Smartsim and the underlying workload manager or
        run framework.
     """
-    def __init__(self):
+    def __init__(self, launcher="slurm"):
         self._jobs = JobManager()
-        self._launcher = None
+        self.init_launcher(launcher)
 
-    def start(self, ensembles=None, nodes=None, orchestrator=None, duration="1:00:00", run_on_existing=False):
+    def start(self, ensembles=None, nodes=None, orchestrator=None):
         """Start the computation of a ensemble, nodes, and optionally
            facilitate communication between entities via an orchestrator.
            Controller.start() expects objects to be passed to the ensembles,
@@ -43,7 +40,6 @@ class Controller():
            :type nodes: a list of SmartSimNode objects
            :param orchestrator: Orchestrator object to be launched for entity communication
            :type orchestrator: Orchestrator object
-           :param bool run_on_existing: if False, obtain allocation prior to run
         """
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -53,15 +49,9 @@ class Controller():
             raise SmartSimError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
-        if isinstance(self._launcher, LocalLauncher):
-            self._launch(ensembles, nodes, orchestrator)
-        else:
-            allocs = self._calculate_allocation(ensembles, nodes, orchestrator)
-            if not run_on_existing:
-                self._get_allocations(allocs, duration)
-            else:
-                self._verify_allocation(allocs)
-            self._launch(ensembles, nodes, orchestrator)
+        self._sanity_check_launch(orchestrator)
+        models = self._update_models(ensembles)
+        self._launch(models, nodes, orchestrator)
 
 
     def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
@@ -79,7 +69,6 @@ class Controller():
                 the ochestrator should be stopped.
             :raises: SSConfigError if called when using local launcher
         """
-        self.check_local("Controller.stop()")
 
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -97,105 +86,70 @@ class Controller():
         if orchestrator:
             self._stop_orchestrator(orchestrator.dbnodes)
 
-    def get_allocation(self, nodes, partition, duration="1:00:00", add_opts=None):
-        """Get an allocation with the requested resources and return the allocation
-           ID from the workload manager. Allocation obtained is automatically added
-           to the smartsim allocations list for future calls to start to run on.
+    def get_allocation(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
+        """Get an allocation through the launcher for future calls
+           to start to launch entities onto.
 
-           :param int nodes: number of nodes in the requested allocation
-           :param str partition: partition for the requested allocation
-           :param str duration: duration of the allocation in format HH:MM:SS
-           :param add_opts: additional options to pass to workload manager command
-                            for obtaining an allocation
-           :type add_opts: list of strings
-           :return: allocation ID
-           :rtype: string
+        :param nodes: number of nodes for the allocation
+        :type nodes: int
+        :param ppn: processes per node
+        :type ppn: int
+        :param duration: length of the allocation in HH:MM:SS format,
+                         defaults to "1:00:00"
+        :type duration: str, optional
+        :raises SmartSimError: if allocation could not be obtained
+        :return: allocation id
+        :rtype: str
         """
+        logger.info("Attempting to obtain allocation...")
         try:
-            self._launcher.validate(nodes=nodes, partition=partition)
             alloc_id = self._launcher.get_alloc(
                 nodes=nodes,
-                partition=partition,
+                ppn=ppn,
                 duration=duration,
-                add_opts=add_opts
+                **kwargs
             )
             return alloc_id
         except LauncherError as e:
             raise SmartSimError("Failed to get user requested allocation") from e
 
+    def add_allocation(self, alloc_id):
+        """Add an allocation to SmartSim such that entities can
+           be launched on it.
 
-    def add_allocation(self, alloc_id, partition, nodes):
-        """Add an existing allocation to SmartSim so that future calls to start can run
-           on it.
-
-           :param str alloc_id: id of the allocation given by the workload manager
-           :param str partition: partition of the allocation
-           :param int nodes: number of nodes in the allocation
-           :raises: SmartSimError
+        :param alloc_id: id of the allocation from the workload manager
+        :type alloc_id: str
+        :raises SmartSimError: If the allocation cannot be found
         """
-        self.check_local("Controller.add_allocation()")
         try:
             alloc_id = str(alloc_id)
-            self._launcher.accept_allocation(alloc_id, partition, nodes)
+            self._launcher.accept_alloc(alloc_id)
         except LauncherError as e:
             raise SmartSimError("Failed to accept user obtained allocation") from e
 
+
     def release(self, alloc_id=None):
-        """Release the allocation(s) stopping all jobs that are currently running
-           and freeing up resources. If an allocation ID is provided, only stop
-           that allocation and remove it from SmartSim.
+        """Release the allocation(s) stopping all jobs that are
+           currently running and freeing up resources. If an
+           allocation ID is provided, only stop that allocation
+           and remove it from SmartSim.
 
-           :param str alloc_id: if provided, release that specific allocation
-           :raises: SSConfigError if called when using local launcher
+        :param alloc_id: id of the allocation, defaults to None
+        :type alloc_id: str, optional
+        :raises SmartSimError: if fail to release allocation
         """
-        self.check_local("Controller.release()")
-        if alloc_id:
-            alloc_id = str(alloc_id)
-            self._launcher.free_alloc(alloc_id)
-        else:
-            allocs = self._launcher.alloc_manager().copy()
-            for alloc_id in allocs.keys():
-                logger.info(f"Releasing allocation: {alloc_id}")
-                self._launcher.free_alloc(alloc_id)
-
-    def get_job(self, name):
-        """Retrieve a Job instance by name. The Job object carries information about the
-           job launched by the controller and it's current status.
-
-           :param str name: name of the entity launched by the Controller
-           :raises: SmartSimError
-        """
-        if isinstance(name, SmartSimEntity):
-            name = name.name
-        if not isinstance(name, str):
-            raise SmartSimError("Argument to get_job must be a string")
         try:
-            return self._jobs[name]
-        except KeyError:
-            raise SmartSimError("Job for " + name + " not found.")
+            if alloc_id:
+                alloc_id = str(alloc_id)
+                self._launcher.free_alloc(alloc_id)
+            else:
+                allocs = self._launcher.alloc_manager().copy()
+                for alloc_id in allocs.keys():
+                    logger.info(f"Releasing allocation: {alloc_id}")
+                    self._launcher.free_alloc(alloc_id)
+        except LauncherError as e:
+            raise SmartSimError(f"Failed to release allocation: {alloc_id}") from e
 
-    def get_job_nodes(self, job, wait=2):
-        """Get the hostname(s) of a job from the allocation
-           Wait time is necessary because Slurm take about 3 seconds to
-           register that a job has been submitted.
-
-           :param Job job: A job instance
-           :param int wait: time for wait before checking nodelist after job has been launched
-                            defaults to 5 seconds.
-           :returns: list of hostnames given a job
-           :raises: SSConfigError if called when using local launcher
-           :raises: SmartSimError if job argument is not a Job object
-        """
-        self.check_local("Controller.get_job_nodes()")
-
-        if not isinstance(job, Job):
-            raise SmartSimError(
-                "Argument must be a Job instance"
-                )
-        else:
-            time.sleep(wait)
-            nodes = self._get_job_nodes(job)
-            return nodes
 
     def poll(self, interval, poll_db, verbose):
         """Poll the running simulations and recieve logging
@@ -205,35 +159,12 @@ class Controller():
            :param bool poll_db: poll dbnodes for status as well and see
                                 it in the logging output
            :param bool verbose: set verbosity
-           :raises: SSConfigError if called when using local launcher
         """
-        self.check_local("Controller.poll()")
-
         all_finished = False
         while not all_finished:
             time.sleep(interval)
             ignore_db = not poll_db
-            all_finished = self._poll(ignore_db=ignore_db, verbose=verbose)
-
-    def _poll(self, ignore_db, verbose):
-        """Poll all simulations and return a boolean for
-           if all jobs are finished or not.
-
-           :param bool verbose: set verbosity
-           :param bool ignore_db: return true even if the orchestrator nodes are still running
-           :returns: True or False for if all models have finished
-        """
-        finished = True
-        for job in self._jobs().values():
-            if ignore_db and job.entity.type == "db":
-                continue
-            else:
-                self._check_job(job)
-                if not self._launcher.is_finished(job.status):
-                    finished = False
-                if verbose:
-                    logger.info(job)
-        return finished
+            all_finished = self._jobs.poll(ignore_db=ignore_db, verbose=verbose)
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -243,21 +174,7 @@ class Controller():
            :type entity: SmartSimEntity
            :returns: bool
         """
-        self.check_local("Controller.finished()")
-        try:
-            if isinstance(entity, Orchestrator):
-                raise SmartSimError("Finished() does not support Orchestrator instances")
-            if not isinstance(entity, SmartSimEntity):
-                raise SmartSimError("Finished() only takes arguments of SmartSimEntity instances")
-            if isinstance(entity, Ensemble):
-                return all([self.finished(model) for model in entity.models.values()])
-
-            job = self._jobs[entity.name]
-            self._check_job(job)
-            return self._launcher.is_finished(job.status)
-        except KeyError:
-            raise SmartSimError(
-                f"Entity by the name of {entity.name} has not been launched by this Controller")
+        return self._jobs.finished(entity)
 
     def get_orchestrator_status(self, orchestrator):
         """Return the workload manager status of an Orchestrator launched through the Controller
@@ -272,7 +189,7 @@ class Controller():
                 f"orchestrator argument was of type {type(orchestrator)} not of type Orchestrator")
         statuses = []
         for dbnode in orchestrator.dbnodes:
-            statuses.append(self._get_status(dbnode))
+            statuses.append(self._jobs.get_status(dbnode))
         return statuses
 
     def get_ensemble_status(self, ensemble):
@@ -288,7 +205,7 @@ class Controller():
                 f"ensemble argument was of type {type(ensemble)} not of type Ensemble")
         statuses = []
         for model in ensemble.models.values():
-            statuses.append(self._get_status(model))
+            statuses.append(self._jobs.get_status(model))
         return statuses
 
     def get_model_status(self, model):
@@ -303,7 +220,7 @@ class Controller():
             raise SmartSimError(
                 f"model argument was of type {type(model)} not of type NumModel"
             )
-        return self._get_status(model)
+        return self._jobs.get_status(model)
 
     def get_node_status(self, node):
         """Return the workload manager status of a SmartSimNode.
@@ -317,22 +234,37 @@ class Controller():
             raise SmartSimError(
                 f"node argument was of type {type(node)} not of type SmartSimNode"
             )
-        return self._get_status(node)
+        return self._jobs.get_status(node)
 
+    def init_launcher(self, launcher):
+        """Initialize the controller with a specific type of launcher.
+           Currently the options are "slurm" and "local".
 
-    def init_launcher(self, launcher, remote=False, addr="127.0.0.1", port=5555):
-        """Run with a specific type of launcher"""
+           Remove SMARTSIM_REMOTE env var if set as we are creating
+           a new launcher that should not be effected by previous
+           launcher settings in the environment
+
+           Since the JobManager and the controller share a launcher
+           instance, set the JobManager launcher if we create a new
+           launcher instance here.
+
+        :param launcher: which launcher to initialize
+        :type launcher: str
+        :raises SSUnsupportedError: if a string is passed that is not
+                                    a supported slurm launcher
+        :raises SSConfigError: if no launcher argument is provided.
+        """
+        remove_env("SMARTSIM_REMOTE")
+
         if launcher is not None:
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
-                self._launcher = SlurmLauncher(
-                    remote=remote,
-                    cmd_center_addr=addr,
-                    cmd_center_port=port
-                )
+                self._launcher = SlurmLauncher()
+                self._jobs._set_launcher(self._launcher)
             # Run all ensembles locally
             elif launcher == "local":
                 self._launcher = LocalLauncher()
+                self._jobs._set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " +
                                          launcher)
@@ -343,6 +275,7 @@ class Controller():
     def _stop_ensembles(self, ensembles):
         """Stops specified ensembles.  If ensembles is None,
            the function returns without performning any action.
+
            :param ensembles: List of ensembles to be stopped
            :type ensembles: list of ensemble, optional ensemble
            :raises: SmartSimError
@@ -377,10 +310,10 @@ class Controller():
 
         for model in models:
             job = self._jobs[model.name]
-            self._check_job(job)
-            logger.info("Stopping model " + model.name + " job " +
-                        job.get_job_id())
-            self._launcher.stop(job.get_job_id())
+            self._jobs.check_job(model.name)
+            logger.info(" ".join((
+                "Stopping model", model.name, "job", job.jid)))
+            self._launcher.stop(job.jid)
 
     def _stop_nodes(self, nodes):
         """Stops specified nodes.  If nodes is None,
@@ -400,11 +333,10 @@ class Controller():
 
         for node in nodes:
             job = self._jobs[node.name]
-            self._check_job(job)
+            self._jobs.check_job(node.name)
             logger.info("Stopping node " + node.name + " job " +
-                        job.get_job_id())
-            self._launcher.stop(job.get_job_id())
-
+                        job.jid)
+            self._launcher.stop(job.jid)
 
     def _stop_orchestrator(self, dbnodes):
         """Stops the orchestrator jobs that are currently running.
@@ -423,252 +355,235 @@ class Controller():
 
         for dbnode in dbnodes:
             job = self._jobs[dbnode.name]
-            self._check_job(job)
-            logger.debug("Stopping orchestrator on job " + job.get_job_id())
-            self._launcher.stop(job.get_job_id())
+            self._jobs.check_job(dbnode.name)
+            logger.debug("Stopping orchestrator on job " + job.jid)
+            self._launcher.stop(job.jid)
 
 
-    def _calculate_allocation(self, ensembles, nodes, orchestrator):
-        """Calculate the size of the allocation for all entities to be
-           launched at once. The total number of nodes per partition are
-           counted and the largest number of processes per node for all
-           entities is chosen.
+    def _update_models(self, ensembles):
+        """Update the model run_settings of each ensemble
+           such that the default ensemble models all use
+           there own run_settings at launch.
+
+        :param ensembles: all ensembles passed to controller.start()
+        :type ensembles: list of Ensemble instances
+        :return: list of NumModel instances
+        :rtype: list
         """
-        allocs = {} # partition : (node_count, ppn)
-        settings = []
-        if nodes:
-            settings.extend([node.run_settings for node in nodes])
+        if not ensembles:
+            return []
+
+        models = []
+        for ensemble in ensembles:
+            run_settings = ensemble.run_settings
+            for model in ensemble.models.values():
+                if ensemble.name != "default":
+                    model.update_run_settings(run_settings)
+                models.append(model)
+        return models
+
+    def _launch(self, models, nodes, orchestrator):
+        """The main launching function of the Controller.
+           Launches the orchestrator first in order to collect
+           information about job placement to pass to nodes and
+           models that need to connect to it. Each entitiy has
+           a step created for it, and a list of those steps
+           coupled with the entity objects in tuples are passed
+           to each launch function for a dedicated entity type.
+
+        :param models: list of all models passed to start
+        :type models: list of NumModel instances
+        :param nodes: list of all nodes passed to start
+        :type nodes: list of SmartSimNode instances
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        """
         if orchestrator:
-            settings.extend([dbnode.run_settings for dbnode in orchestrator.dbnodes])
-        if ensembles:
-            for ensemble in ensembles:
-                run_settings = ensemble.run_settings
-                for model in ensemble.models.values():
-                    if ensemble.name == "default":        # use model run settings if in
-                        run_settings = model.run_settings # default ensemble
-                    settings.append(run_settings)
-
-        for run_setting in settings:
-            ppn = int(run_setting["ppn"])
-            node_count = int(run_setting["nodes"])
-            part = run_setting["partition"]
-            if not part:
-                part = "default"
-            if part in allocs.keys():
-                allocs[part][0] += node_count
-                if allocs[part][1] < ppn:
-                    allocs[part][1] = ppn
-            else:
-                allocs[part] = [node_count, ppn]
-        return allocs
-
-    def _verify_allocation(self, potential_allocs):
-        """Verify that there are allocations that satify the configuration of models
-           provided by the user. Error if not
-        """
-        for partition, node_info in potential_allocs.items():
-            if partition == "default":
-                partition = None
-            if not self._launcher.alloc_manager.verify(partition, node_info[0]):
-                err_msg = "No existing allocation can satify provided configuration"
-                err_msg += "\n Existing allocations are:"
-                for alloc_id, alloc in self._launcher.alloc_manager().items():
-                    err_msg += f"\n {alloc}"
-                raise SmartSimError(err_msg)
-
-    def _validate_allocations(self, allocs):
-        """Validate the allocations with specific requirements provided by the user."""
-        for partition, node_info in allocs.items():
-            self._launcher.validate(nodes=node_info[0],
-                                    ppn=node_info[1],
-                                    partition=partition)
-
-    def _get_allocations(self, potential_allocs, duration):
-        """calculate, validate and retrieve n allocations where n is the
-           number of partitions needed by the user.
-        """
-        self._validate_allocations(potential_allocs)
-
-        try:
-            for partition, node_info in potential_allocs.items():
-                launch_partition = partition
-                alloc_id = self._launcher.get_alloc(
-                    nodes=node_info[0],
-                    ppn=node_info[1],
-                    partition=launch_partition,
-                    duration=duration)
-        except LauncherError as e:
-            raise SmartSimError(
-                "Failed to obtain allocation for user configuration") from e
-
-
-    def _launch(self, ensembles, nodes, orchestrator):
-        """Launch all entities within experiment with the configured launcher"""
-
-        # launch orchestrator and all dbnodes
-        if orchestrator:
-            for dbnode in orchestrator.dbnodes:
-                try:
-                    if len(dbnode.ports) > 1:
-                        exe = self._launcher.make_multi_prog(**dbnode.run_settings)
-                        dbnode.update_run_settings(
-                            {"executable": "--multi-prog " + exe,
-                             "exe_args": ""}
-                            )
-
-                    self._launch_on_alloc(dbnode, orchestrator)
-                    job_nodes = self.get_job_nodes(self._jobs[dbnode.name])
-                    orchestrator.junction.store_db_addr(job_nodes[0],
-                                                        orchestrator.port)
-                except LauncherError as e:
-                    logger.error(
-                        "An error occured when launching the KeyDB nodes\n" +
-                        "Check database node output files for details.")
-                    raise SmartSimError(
-                        "Database node %s failed to launch" % dbnode.name
-                        )
-
-            # Create KeyDB cluster, min nodes for cluster = 3
+            orc_steps = self._create_steps(orchestrator.dbnodes, orchestrator)
+            self._launch_orchestrator(orc_steps, orchestrator)
             if len(orchestrator.dbnodes) > 2:
-                # ports are the same for each dbnode
-                all_ports = orchestrator.dbnodes[0].ports
-                db_nodes = self._jobs.get_db_nodes()
-                self._launcher.create_cluster(db_nodes, all_ports)
-                self._launcher.check_cluster_status(db_nodes, all_ports)
+                self._create_orchestrator_cluster(orchestrator)
 
-        if nodes:
-            for node in nodes:
-                try:
-                    self._launch_on_alloc(node, orchestrator)
-
-                except LauncherError as e:
-                    logger.error(
-                        "An error occured when launching SmartSimNodes\n" +
-                        "Check node output files for details.")
-                    raise SmartSimError(
-                        "SmartSimNode %s failed to launch" % node.name
-                        )
-
-        if ensembles:
-            for ensemble in ensembles:
-                run_settings = ensemble.run_settings
-                for model in ensemble.models.values():
-                    if ensemble.name != "default":
-                        model.update_run_settings(run_settings)
-                    try:
-                        self._launch_on_alloc(model, orchestrator)
-                    except LauncherError as e:
-                        logger.error(
-                            "An error occured when launching model ensembles.\n" +
-                            "Check model output files for details.")
-                        raise SmartSimError(
-                            "Model %s failed to launch" % model.name)
+        # orchestrator passed in to get env_vars
+        node_steps = self._create_steps(nodes, orchestrator)
+        model_steps = self._create_steps(models, orchestrator)
+        self._launch_nodes(node_steps)
+        self._launch_models(model_steps)
+        logger.info("All entities launched")
 
 
-    def _launch_on_alloc(self, entity, orchestrator):
-        """launch a SmartSimEntity on an allocation provided by a workload manager."""
+    def _create_steps(self, entities, orchestrator):
+        """Create job steps for all entities with the launcher
 
-        cmd = self._build_cmd(entity.run_settings)
-        run_settings = self._remove_smartsim_args(entity.run_settings)
-
-        if isinstance(self._launcher, LocalLauncher):
-            pid = self._launcher.run(cmd, run_settings)
-        else:
-            # if orchestrator init and not a db node, setup connections to db
-            if orchestrator and entity.type != "db":
-                env_vars = orchestrator.get_connection_env_vars(entity.name)
-                run_settings["env_vars"] = env_vars
-
-            partition = run_settings["partition"]
-            alloc_id = self._launcher.alloc_manager[partition]
-            pid = self._launcher.run_on_alloc(cmd, alloc_id, **run_settings)
-
-        logger.debug("Process id for " + entity.name + " is " + str(pid))
-        self._jobs.add_job(entity.name, pid, entity)
-
-
-    def _check_job(self, job):
-        """Takes in job and sets job properties"""
-
-        if not self._launcher:
-            raise SmartSimError("No launcher set")
-        job_id = job.get_job_id()
-        status, returncode = self._launcher.get_job_stat(job_id)
-        job.set_status(status, returncode)
-
-
-    def _get_job_nodes(self, job):
-        """Query the workload manager for the nodes that a particular job was launched on"""
-
-        if job.nodes:
-            return job.nodes
-        else:
-            job_id = job.get_job_id()
-            nodes = self._launcher.get_job_nodes(job_id)
-            job.nodes = nodes
-            return nodes
-
-
-    def _get_status(self, entity):
-        """Return the workload manager given status of a job.
-
-           :param entity: object launched by SmartSim. One of the following:
-                          (SmartSimNode, NumModel, Orchestrator, Ensemble)
-           :type entity: SmartSimEntity
-           :returns: tuple of status
+        :param entities: list of all entities to create steps for
+        :type entities: list of SmartSimEntities
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        :return: list of tuples of (launcher_step, entity)
+        :rtype: list of tuples
         """
+        steps = []
+        if entities:
+            steps = [(self._create_entity_step(entity, orchestrator), entity)
+            for entity in entities]
+        return steps
+
+    def _create_entity_step(self, entity, orchestrator):
+        """Create a step for a single entity. Steps are defined
+           on the launcher level and are abstracted away from the
+           Controller. Steps determine exactly how the entity is
+           to be run and provide the input to Launcher.run().
+
+           Optionally create a step that utilizes multiple programs
+           within a single step as some workload managers like
+           Slurm allow for. Currently this is only supported for
+           launching multiple databases per node.
+
+        :param entity: entity to create step for
+        :type entity: SmartSimEntity
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        :raises LauncherError: if job step creation failed
+        :return: the created job step
+        :rtype: Step object (e.g. for Slurm its a SlurmStep)
+        """
+        multi_prog = False
         try:
-            self.check_local("Controller._get_status()")
-            if not isinstance(entity, SmartSimEntity):
+            # launch in MPMD mode if database per node > 1
+            if isinstance(entity, DBNode):
+                if len(entity.ports) > 1:
+                    multi_prog = True
+
+            self._set_entity_env_vars(entity, orchestrator)
+            step = self._launcher.create_step(entity.name,
+                                              entity.run_settings,
+                                              multi_prog=multi_prog)
+            return step
+        except LauncherError as e:
+            error = f"Failed to create job step for {entity.name}"
+            raise SmartSimError("\n".join((error, e.msg))) from None
+
+    def _set_entity_env_vars(self, entity, orchestrator):
+        """Retrieve the connections registered by the user for
+           each entity and utilize the orchestrator for turning
+           those connections into environment variables to launch
+           with the step.
+
+        :param entity: entity to find connections for
+        :type entity: SmartSimEntity
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        """
+        if orchestrator and not isinstance(entity, DBNode):
+            env_vars = orchestrator.get_connection_env_vars(entity.name)
+            existing_env_vars = entity.get_run_setting("env_vars")
+            final_env_vars = {"env_vars": env_vars}
+            if existing_env_vars:
+                existing_env_vars.update(env_vars)
+                final_env_vars["env_vars"] = existing_env_vars
+            entity.update_run_settings(final_env_vars)
+
+
+    def _launch_orchestrator(self, orc_steps, orchestrator):
+        """Launch the orchestrator instance as specified by the user.
+           Immediately get the hostnames of the nodes where the
+           orchestrator job was placed.
+
+        :param orc_steps: Tuples of (step, entity) in a list
+        :type orc_steps: list of tuples
+        :param orchestrator: Orchestrator instance
+        :type orchestrator: Orchestrator
+        :raises SmartSimError: if orchestrator launch fails
+        """
+
+        for step_tuple in orc_steps:
+            step, dbnode = step_tuple
+            try:
+                job_id = self._launcher.run(step)
+                self._jobs.add_job(dbnode.name, job_id, dbnode)
+
+                job_nodes = self._jobs.get_job_nodes(dbnode.name)
+                orchestrator.junction.store_db_addr(job_nodes[0],
+                                                    orchestrator.port)
+            except LauncherError as e:
+                logger.error(
+                    "An error occured when launching the KeyDB nodes\n" +
+                    "Check database node output files for details.")
                 raise SmartSimError(
-                    "Controller._get_status() only takes arguments of SmartSimEntity instances")
-            job = self._jobs[entity.name]
-            self._check_job(job)
-        except KeyError:
-            raise SmartSimError(
-                f"Entity by the name of {entity.name} has not been launched by this Controller")
-        return job.status
+                    f"Database node {dbnode.name} failed to launch"
+                    ) from None
 
 
-    def check_local(self, function_name):
-        """Checks if the user called a function that isnt supported with the local launcher"""
+    def _launch_nodes(self, node_steps):
+        """Launch all SmartSimNode steps using the launcher.
+           Add the job to the job manager to keep track of the
+           job information for the user.
 
-        if isinstance(self._launcher, LocalLauncher):
-            raise SSConfigError(f"{function_name} is not supported when launching locally")
+        :param node_steps: [description]
+        :type node_steps: [type]
+        :raises SmartSimError: [description]
+        """
+
+        for step_tuple in node_steps:
+            step, node = step_tuple
+            try:
+                job_id = self._launcher.run(step)
+                self._jobs.add_job(node.name, job_id, node)
+            except LauncherError as e:
+                logger.error(
+                    "An error occured when launching SmartSimNodes\n" +
+                    "Check node output files for details.")
+                raise SmartSimError(
+                    "SmartSimNode %s failed to launch" % node.name
+                    ) from None
+
+    def _launch_models(self, model_steps):
+        """Launch all model steps using the launcher.
+           Add the job to the job manager to keep track of the
+           job information for the user.
+
+        :param model_steps: tuples of (step, model)
+        :type model_steps: list of tuples
+        :raises SmartSimError: if any model fails to launch
+        """
+        for step_tuple in model_steps:
+            step, model = step_tuple
+            try:
+                job_id = self._launcher.run(step)
+                self._jobs.add_job(model.name, job_id, model)
+            except LauncherError as e:
+                logger.error(
+                    "An error occured when launching model ensembles.\n" +
+                    "Check model output files for details.")
+                raise SmartSimError(
+                    "Model %s failed to launch" % model.name
+                    ) from None
 
 
-    def _remove_smartsim_args(self, arg_dict):
-        """Remove non-workload manager arguments from a run_settings dictionary"""
+    def _create_orchestrator_cluster(self, orchestrator):
+        """If the number of database nodes is greater than 2
+           we create a clustered orchestrator using this function.
 
-        ss_args = ["exe_args", "run_args", "executable", "run_command"]
-        new_dict = dict()
-        for k, v in arg_dict.items():
-            if not k in ss_args:
-                new_dict[k] = v
-        return new_dict
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        """
+        all_ports = orchestrator.dbnodes[0].ports
+        db_nodes = self._jobs.get_db_hostnames()
+        create_cluster(db_nodes, all_ports)
+        check_cluster_status(db_nodes, all_ports)
 
+    def _sanity_check_launch(self, orchestrator):
+        """Sanity check the orchestrator settings in case the
+           user tries to do something silly. This function will
+           serve as the location of many such sanity checks to come.
 
-    def _build_cmd(self, run_settings):
-        """Contruct the run command from the entity run_settings"""
+        :param orchestrator: Orchestrator instance
+        :type orchestrator: Orchestrator
+        :raises SSConfigError: If local launcher is being used to
+                               launch a database cluster
+        """
 
-        try:
-            exe = get_config("executable", run_settings, none_ok=False)
-            exe_args = get_config("exe_args", run_settings, none_ok=True)
-            if not exe_args:
-                exe_args = ""
-            cmd = " ".join((exe, exe_args))
-
-            if isinstance(self._launcher, LocalLauncher):
-                run_command = get_config("run_command", run_settings, none_ok=False)
-                run_args = get_config("run_args", run_settings, none_ok=True)
-
-                if not run_args:
-                    run_args = ""
-                cmd = " ".join((run_command, run_args, exe, exe_args))
-
-            return [cmd]
-
-        except KeyError as e:
-            raise SSConfigError(
-                "SmartSim could not find following required field: %s" %
-                (e.args[0])) from e
+        if isinstance(self._launcher, LocalLauncher) and orchestrator:
+            if len(orchestrator.dbnodes) > 1:
+                raise SSConfigError(
+                    "Local launcher does not support launching multiple databases")

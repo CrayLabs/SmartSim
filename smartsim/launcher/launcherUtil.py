@@ -1,10 +1,61 @@
 import os
 from subprocess import Popen, PIPE, CalledProcessError
 from datetime import datetime
-
+from .shell import ping_host
 
 from ..utils import get_logger
 logger = get_logger(__name__)
+
+
+class ComputeNode():
+
+    def __init__(self, node_name=None, node_ppn=None):
+        self.name = node_name
+        self.ppn = node_ppn
+
+    def _is_valid_node(self):
+        if self.name is None:
+            return False
+        if self.ppn is None:
+            return False
+
+        return True
+
+class Partition():
+
+    def __init__(self):
+        self.name = None
+        self.min_ppn = None
+        self.nodes = set()
+
+    def _is_valid_partition(self):
+
+        if self.name is None:
+            return False
+        if len(self.nodes)<=0:
+            return False
+        for node in self.nodes:
+            if not node._is_valid_node():
+                return False
+
+        return True
+
+
+def get_ip_from_host(host):
+    """Return the IP address for the interconnect.
+
+    :param str host: hostname of the compute node e.g. nid00004
+    :returns: ip of host
+    :rtype: str
+    """
+    ping_out = ping_host(host)
+    found = False
+
+    for item in ping_out.split():
+        if found:
+            return item.split("(")[1].split(")")[0]
+        if item == host:
+            found = True
 
 
 def seq_to_str(seq, to_byte=False, encoding="utf-8", add_equal=False):

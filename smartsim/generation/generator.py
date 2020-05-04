@@ -5,16 +5,15 @@ from itertools import product
 from os import mkdir, getcwd, path
 from distutils import dir_util
 
-from ..model import NumModel
-from ..ensemble import Ensemble
 from .modelwriter import ModelWriter
+from ..entity import NumModel, Ensemble, SmartSimNode
 from ..orchestrator import Orchestrator
-from ..smartSimNode import SmartSimNode
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
-
 from .strategies import create_all_permutations, random_permutations, step_values
+
 from ..utils import get_logger
 logger = get_logger(__name__)
+logger.propagate = False
 
 
 class Generator():
@@ -26,42 +25,38 @@ class Generator():
         self._writer = ModelWriter()
         self.set_strategy("all_perm")
 
-    def generate_experiment(self,
-                            exp_path,
-                            ensembles=[],
-                            nodes=[],
-                            orchestrator=None,
-                            model_files=[],
-                            node_files=[],
-                            **kwargs):
-        """Generate the file structure for a SmartSim experiment. This includes the writing
-           and configuring of input files for a model. Ensembles created with a 'params' argument
-           will be expanded into multiple models based on a generation strategy. Model input files
-           are specified with the model_files argument. All files and directories listed as strings
-           in a list will be copied to each model within an ensemble. Every model file is read,
-           checked for input variables to configure, and written. Input variables to configure
-           are specified with a tag within the input file itself. The default tag is surronding
-           an input value with semicolons. e.g. THERMO=;90;
+    def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None,
+                            model_files=[], node_files=[], **kwargs):
+        """Generate the file structure for a SmartSim experiment. This
+           includes the writing and configuring of input files for a
+           model. Ensembles created with a 'params' argument will be
+           expanded into multiple models based on a generation strategy.
+           Model input files are specified with the model_files argument.
+           All files and directories listed as strings in a list will be
+           copied to each model within an ensemble. Every model file is read,
+           checked for input variables to configure, and written. Input
+           variables to configure are specified with a tag within the input
+           file itself. The default tag is surronding an input value with
+           semicolons. e.g. THERMO=;90;
 
-           Files for SmartSimNodes can also be included to be copied into node directories but
-           are never read nor written. All node_files will be copied into directories named after
-           the name of the SmartSimNode within the experiment.
+           Files for SmartSimNodes can also be included to be copied into
+           node directories but are never read nor written. All node_files
+           will be copied into directories named after the name of the
+           SmartSimNode within the experiment.
 
-           :param str exp_path: Path to the directory, usually an experiment directory, where the
-                                directory structure will be created.
-           :param ensembles:  ensembles created by an Experiment to be generated
-           :type ensembles: List of Ensemble objects
-           :param nodes: nodes created by an experiment to be generated
-           :type nodes: list of SmartSimNodes
-           :param orchestrator: orchestrator object for file generation
-           :type orchestrator: Orchestrator object
-           :param model_files: files or directories to be read, configured and written for every
-                               model instance within an ensemble
-           :type model_files: a list of string paths
-           :param node_files: files or directories to be included in each node directory
-           :type node_files: a list of string paths
-           :param dict kwargs: optional key word arguments passed to generation strategy.
-           :raises: SmartSimError
+            :param model_files: The model files for the experiment.  Optional
+                                if model files are not needed for execution.
+            :type model_files: list of path like strings to directories or files
+            :param node_files: files to be copied into node directories. These
+                               are most likely files needed to run the node
+                               computations. e.g. a python script
+            :type node_files: list of path like strings to directories or files
+
+            :param str strategy: The permutation strategy for generating models within
+                                ensembles.
+                                Options are "all_perm", "random", "step", or a
+                                callable function. Defaults to "all_perm"
+            :raises SmartSimError: if generation fails
         """
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -242,7 +237,6 @@ class Generator():
         """
 
         for ensemble in ensembles:
-
             # Make ensemble model directories
             for name, model in ensemble.models.items():
                 dst = path.join(exp_path, ensemble.name, name)

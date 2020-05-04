@@ -7,11 +7,10 @@ class Node():
 
     def train_loop(self):
         i = 0
-        while i <= 19:
+        while i <= 4:
             # recieve data from the simulation
             data = self.client.get_array_nd_float64(str(i), wait=True)
             print("Recieving data for key", str(i), flush=True)
-
             self.client.put_array_nd_float64(str(i), data)
             i+=1
 

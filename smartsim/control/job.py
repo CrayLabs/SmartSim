@@ -15,8 +15,6 @@ class Job:
         self.nodes = None
         self.returncode = None
 
-    def get_job_id(self):
-        return self.jid
 
     def set_status(self, new_status, returncode):
         self.status = new_status

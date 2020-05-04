@@ -23,12 +23,32 @@ class SSModelExistsError(SmartSimError):
     def __init__(self, message):
         super().__init__(message)
 
-class LauncherError(SmartSimError):
-    """Raised when a child process raises an error within the launcher"""
+class SmartSimConnectionError(SmartSimError):
+    """Raised when a connection fails between SmartSim entities and the orchestrator"""
     def __init__(self, message):
         super().__init__(message)
 
-class SmartSimConnectionError(SmartSimError):
-    """Raised when a connection fails between SmartSim entities and the orchestrator"""
+
+
+# ------ Launcher Errors ---------
+
+class LauncherError(SmartSimError):
+    """Raised when there is an error in the launcher"""
+    def __init__(self, message):
+        super().__init__(message)
+
+class ShellError(LauncherError):
+    """Raised when error arises from function within launcher.shell
+       Closely related to error from subprocess(Popen) commands"""
+    def __init__(self, message):
+        super().__init__(message)
+
+class RemoteLauncherError(LauncherError):
+    """Raised when there is a error when communicating with the remote launcher"""
+    def __init__(self, message):
+        super().__init__(message)
+
+class ClusterLauncherError(LauncherError):
+    """Raised when there is an error in the launcher"""
     def __init__(self, message):
         super().__init__(message)

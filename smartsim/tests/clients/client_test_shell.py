@@ -5,13 +5,16 @@ import time
 from shutil import rmtree, which
 from smartsim import Experiment
 
+# skip all tests
+#pytestmark = pytest.mark.skip()
+
 def compiled_client_test_builder(test_path, target_name, exe_args):
     """ This function is used to build and run
         compiled client tests.
     """
 
     # Check for slurm
-    if not which("mpiexec"):
+    if not which("srun"):
         pytest.skip()
 
     compile_dir = test_path + "/compile"
@@ -20,7 +23,7 @@ def compiled_client_test_builder(test_path, target_name, exe_args):
         rmtree(compile_dir)
     mkdir(compile_dir)
 
-    binary_name = compile_dir + '/' + target_name    
+    binary_name = compile_dir + '/' + target_name
     p = subprocess.run(["cmake", "../"], cwd=compile_dir, capture_output=True)
     p = subprocess.run(["make", target_name], cwd=compile_dir, capture_output=True)
     assert(path.isfile(binary_name))
@@ -29,13 +32,14 @@ def compiled_client_test_builder(test_path, target_name, exe_args):
         rmtree("client_test")
 
     experiment = Experiment("client_test")
+    alloc = experiment.get_allocation(nodes=4, ppn=1)
     run_settings = {"nodes":1,
                   "ppn": 1,
                   "executable":binary_name,
                   "exe_args": exe_args,
-                  "partition": "iv24"}
+                  "alloc": alloc}
     client_model = experiment.create_model("client_test", run_settings=run_settings)
-    experiment.create_orchestrator(cluster_size=3, partition="iv24")
+    experiment.create_orchestrator_cluster(alloc, db_nodes=3)
     experiment.register_connection("client_test", "client_test")
     experiment.generate()
     experiment.start()

@@ -2,6 +2,7 @@ from smartsim import Experiment
 
 # initialize Experiment
 experiment = Experiment("double_gyre")
+alloc = experiment.get_allocation(nodes=8, ppn=24)
 
 # Create ensembles
 quar_deg_params = {"KH": [200, 400],
@@ -17,7 +18,8 @@ half_deg_params = {"KH": [200, 400],
 run_params = {"nodes":1,
               "ppn": 24,
               "executable":"MOM6",
-              "partition": "iv24"}
+              "partition": "iv24",
+              "alloc": alloc}
 experiment.create_ensemble("quar-deg", params=quar_deg_params, run_settings=run_params)
 experiment.create_ensemble("half-deg", params=half_deg_params, run_settings=run_params)
 

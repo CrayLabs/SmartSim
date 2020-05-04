@@ -9,8 +9,8 @@ from smartsim.utils import get_logger
 logger = get_logger()
 
 
-def slurm_controller_test(test_function):
-    """Decorator for controller tests that should run on Slurm."""
+def controller_test(test_function):
+    """Decorator for controller tests"""
 
     experiment_dir = "./controller_test/"
 
