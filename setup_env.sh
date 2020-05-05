@@ -33,7 +33,8 @@ else
     else
         echo "Installing KeyDB"
         git clone https://github.com/JohnSully/KeyDB.git --branch v5.1.1 --depth=1
-        cd KeyDB/ && make
+        cd KeyDB/
+	CC=gcc CXX=g++ make -j 2
         cd ..
         export PATH="$(pwd)/KeyDB/src:${PATH}"
         echo "Finished installing KeyDB"
@@ -61,7 +62,7 @@ else
     ./autogen.sh
     ./configure --prefix="$(pwd)/install"
     make -j 8
-    make check
+    make check -j 8
     make install
     export PROTOBUF_INSTALL_PATH="$(pwd)/install"
     export LD_LIBRARY_PATH="$PROTOBUF_INSTALL_PATH/lib":$LD_LIBRARY_PATH
@@ -101,7 +102,7 @@ else
     mkdir compile
     cd compile
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${HIREDIS_INSTALL_PATH}" -DCMAKE_INSTALL_PREFIX="$(pwd)/../install" ..
-    make
+    make -j 2
     make install
     cd ../../
     export REDISPP_INSTALL_PATH="$(pwd)/redis-plus-plus/install"

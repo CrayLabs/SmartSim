@@ -1,5 +1,6 @@
 project(FortranClientTest)
-set(CMAKE_BUILD_TYPE Debug)
+
+set(CMAKE_BUILD_TYPE Release)
 
 cmake_minimum_required(VERSION 3.10)
 
@@ -56,18 +57,19 @@ include_directories(SYSTEM
     ${PROTOBUF_INCLUDE_PATH}
 )
 
+set(CLIENT_LIBRARIES ${REDISPP_LIB} ${HIREDIS_LIB} ${PROTOBUF_LIB})
+set(CLIENT_SRC ../../../clients/fortran_client.F90
+	       ../../../clients/client.cc
+	       ../../../utils/protobuf/smartsim_protobuf.pb.cc)
+
 add_executable(client_tester
   parallel_driver.F90
   unit_test.F90
-  ../../../clients/fortran_client.F90
-  ../../../clients/client.cc
-  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+  ${CLIENT_SRC}
 )
 
 
 target_link_libraries(client_tester
-  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${REDISPP_LIB}
-  ${HIREDIS_LIB}
-  ${PROTOBUF_LIB}
+  MPI::MPI_Fortran
+  ${CLIENT_LIBRARIES}
 )

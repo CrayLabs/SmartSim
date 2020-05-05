@@ -2,7 +2,7 @@ module unit_tests
 
 use mpi
 use iso_c_binding,  only : c_ptr
-use client_fortran_api, only : put_array, get_array, put_scalar, get_scalar
+use client_fortran_api, only : put_array, get_array, put_scalar, get_scalar_int64
 use client_fortran_api, only : poll_key_and_check_scalar
 
 implicit none; private
@@ -44,7 +44,7 @@ contains
     !---Scalar tests---!
     send_int64 = TRUE_INT64; recv_int64 = FALSE_INT64
     call put_scalar(ssc_client, trim(key_prefix)//"_int64", send_int64)
-    recv_int64 = get_scalar(ssc_client, trim(key_prefix)//"_int64")
+    recv_int64 = get_scalar_int64(ssc_client, trim(key_prefix)//"_int64")
     if (send_int64 /= recv_int64) then
       print *, "WRONG!!!!:", send_int64,' ', recv_int64
       error_flag = .true.
@@ -165,7 +165,7 @@ contains
 
     call system_clock(count_end, count_rate, count_max)
     time_end = count_end/count_rate
-    write(timing_unit,'(A,X,AE23.15E3,X,I)') trim(key_prefix),trim(test_name), time_end-time_start, ni
+    write(timing_unit,'(A,X,A,E23.15E3,X,I0)') trim(key_prefix), trim(test_name), time_end-time_start, ni
 
   end subroutine log_timing
 

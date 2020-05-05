@@ -1,6 +1,6 @@
 project(CppClientTester)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 cmake_minimum_required(VERSION 3.10)
 
@@ -52,54 +52,55 @@ include_directories(SYSTEM
     ${PROTOBUF_INCLUDE_PATH}
 )
 
+set(CLIENT_LIBRARIES ${REDISPP_LIB} ${HIREDIS_LIB} ${PROTOBUF_LIB})
+set(CLIENT_SRC ../../../clients/client.cc ../../../utils/protobuf/smartsim_protobuf.pb.cc)
+
+add_executable(cpp_client_profiler
+	client_1D_profiler.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(cpp_client_profiler
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
 add_executable(client_tester_1D
-  client_test_1D.cpp
-  ../../../clients/client.cc
-  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+	client_test_1D.cpp
+	${CLIENT_SRC}
 )
 
 target_link_libraries(client_tester_1D
-  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${REDISPP_LIB}
-  ${HIREDIS_LIB}
-  ${PROTOBUF_LIB}
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
 )
 
 add_executable(client_tester_2D
-  client_test_2D.cpp
-  ../../../clients/client.cc
-  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+	client_test_2D.cpp
+	${CLIENT_SRC}
 )
 
 target_link_libraries(client_tester_2D
-  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${REDISPP_LIB}
-  ${HIREDIS_LIB}
-  ${PROTOBUF_LIB}
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
 )
 
 add_executable(client_tester_3D
-  client_test_3D.cpp
-  ../../../clients/client.cc
-  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+	client_test_3D.cpp
+	${CLIENT_SRC}
 )
 
 target_link_libraries(client_tester_3D
-  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${REDISPP_LIB}
-  ${HIREDIS_LIB}
-  ${PROTOBUF_LIB}
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
 )
 
 add_executable(poll_and_key_value_check_int64
-  poll_and_key_value_check_int64.cpp
-  ../../../clients/client.cc
-  ../../../utils/protobuf/smartsim_protobuf.pb.cc
+	  poll_and_key_value_check_int64.cpp
+	  ${CLIENT_SRC}
 )
 
 target_link_libraries(poll_and_key_value_check_int64
-  MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  ${REDISPP_LIB}
-  ${HIREDIS_LIB}
-  ${PROTOBUF_LIB}
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
 )

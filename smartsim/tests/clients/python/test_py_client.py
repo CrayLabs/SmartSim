@@ -9,7 +9,7 @@ from os import path
 
 # control wether the test runs with a database cluster or not
 CLUSTER=True
-pytestmark = pytest.mark.skip()
+#pytestmark = pytest.mark.skip()
 
 def test_one_way():
     """test the latency for a sending a vector, a matrix, and a 3D tensor
