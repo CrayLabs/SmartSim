@@ -1,15 +1,15 @@
 import zmq
 import pickle
 from subprocess import Popen, CalledProcessError, PIPE, run
+from smartsim.remote import RemoteRequest, RemoteResponse
 from smartsim.launcher.shell import execute_async_cmd, execute_cmd
-from smartsim.cmdSchema import RemoteRequest, RemoteResponse
 
 from smartsim.utils import get_logger
 logger = get_logger()
 
 class CMDServer:
 
-    def __init__(self, address, port):
+    def __init__(self, address, port, verbose=True):
         """Initialize a command server at a tcp address. The
            command server is used for executing commands on
            another management or login node that is connected
@@ -19,26 +19,39 @@ class CMDServer:
         :type address: str
         :param port: port of the address
         :type port: int
+        :param verbose: control server logging verbosity
+        :type verbose: bool
         """
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind("tcp://" + address + ":" + str(port))
         self.running = False
+        self.verbose = verbose
 
     def serve(self):
         """Continually serve requests until a shutdown command is
            recieved.
         """
         self.running = True
+        logger.info(
+            "Command Server started. Ready to serve incoming requests...")
         while self.running:
-            request = self.socket.recv()
-            remote_request = pickle.loads(request)
-            logger.info("Got cmd: " + " ".join(remote_request.cmd))
-            returncode, out, err = self.process_command(remote_request)
-            response = RemoteResponse(returncode, out, err)
-            rep = response.serialize()
-            # send the response back to the compute node
-            self.socket.send(rep)
+            try:
+                request = self.socket.recv()
+                remote_request = pickle.loads(request)
+                returncode, out, err = self.process_command(remote_request)
+                response = RemoteResponse(returncode, out, err)
+                rep = response.serialize()
+                # send the response back to the compute node
+                self.socket.send(rep)
+            except KeyboardInterrupt:
+                self.running = False
+
+        # close the socket and terminate the context if
+        # we are no longer running
+        logger.info("Shutting down Command Server...")
+        self.socket.close()
+        self.context.term()
 
     def process_command(self, remote_request):
         """Process a recieved command and direct to the function
@@ -68,6 +81,9 @@ class CMDServer:
         :return: returncode, output, error of the command
         :rtype: tuple of (int, str, str)
         """
+        if self.verbose:
+                logger.info("Got cmd: " + " ".join(request.cmd))
+
         if request.is_async:
             return execute_async_cmd(request.cmd,
                                      request.cwd,
@@ -89,9 +105,10 @@ class CMDServer:
         :return: placeholders to ack that server has been shutdown
         :rtype: tuple of (int, str, str)
         """
+        if self.verbose:
+            logger.info(
+                "Recieved shutdown command from SmartSim experiment")
         self.running = False
-        self.socket.close()
-        self.context.term()
         return 0, "OK", ""
 
     def pong(self):
@@ -100,18 +117,8 @@ class CMDServer:
         :return: placeholders to ack that server is live
         :rtype: tuple of (int, str, str)
         """
+        if self.verbose:
+            logger.info(
+                "Recieved initialization comand from SmartSim experiment")
         return 0, "OK", ""
 
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--address', type=str, default="127.0.0.1",
-                        help='Address of the command server')
-    parser.add_argument('--port', type=int, default=5555,
-                        help='Port of the command server')
-    args = parser.parse_args()
-
-    cmd_center = CMDServer(args.address, args.port)
-    cmd_center.serve()

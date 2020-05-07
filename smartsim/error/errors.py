@@ -43,8 +43,8 @@ class ShellError(LauncherError):
     def __init__(self, message):
         super().__init__(message)
 
-class RemoteLauncherError(LauncherError):
-    """Raised when there is a error when communicating with the remote launcher"""
+class CommandServerError(LauncherError):
+    """Raised when there is a error when communicating with the command server"""
     def __init__(self, message):
         super().__init__(message)
 

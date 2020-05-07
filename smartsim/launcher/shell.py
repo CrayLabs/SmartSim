@@ -1,9 +1,9 @@
 import os
 import zmq
 import pickle
-from ..error import ShellError, LauncherError, RemoteLauncherError
+from ..error import ShellError, LauncherError
 from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
-from ..cmdClient import CmdClient
+from ..remote import CmdClient
 
 from ..utils import get_logger, get_env
 logger = get_logger(__name__)
@@ -16,10 +16,9 @@ def is_remote():
     :return: true if command should be a RemoteRequest
     :rtype: bool
     """
-    if not "SMARTSIM_REMOTE" in os.environ:
-        return False
-    else:
-        return True
+    if "SMARTSIM_REMOTE" in os.environ:
+            return True
+    return False
 
 def ping_host(hostname):
     """Ping a hostname and get the IPv4 address of the node.
@@ -70,7 +69,6 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
 
     # run the command remotely using CmdClient
     if is_remote() and remote:
-        logger.info("RUNNING REMOTELY")
         client = CmdClient()
         request = client.create_remote_request(
             cmd_list, shell=shell, cwd=cwd, proc_input=proc_input,

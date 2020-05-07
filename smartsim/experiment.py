@@ -3,13 +3,11 @@ import sys
 import zmq
 
 from os import path, mkdir, listdir, getcwd, environ
-from .error import SmartSimError, SSConfigError, RemoteLauncherError
+from .error import SmartSimError, SSConfigError
 from .orchestrator import Orchestrator
 from .entity import SmartSimEntity, SmartSimNode, NumModel, Ensemble
 from .generation import Generator
 from .control import Controller
-from .cmdClient import CmdClient
-from .cmdSchema import RemoteRequest
 from .launcher import LocalLauncher
 
 from .utils import get_logger
@@ -723,31 +721,6 @@ class Experiment:
         if len(addresses) < 1:
             raise SmartSimError("Could not find nodes Database was launched on")
         return addresses
-
-    def init_remote_launcher(self, addr="127.0.0.1", port=5555):
-        """Initialize a remote launcher so that SmartSim can be
-           run on compute nodes where slurm and other workload
-           manager commands are not available. Remote launchers
-           must be located on the same system, and be reachable
-           via tcp.
-
-        :param addr: address of the Command Server launched seperately,
-                     defaults to "127.0.0.1"
-        :type addr: str, optional
-        :param port: port of the Command Server, defaults to 5555
-        :type port: int, optional
-        :raises RemoteLauncherError: If setup with remote launcher
-                                     fails
-        """
-        # set the remote address for the cmd_client
-        address = "tcp://" + ":".join((addr, str(port)))
-        environ["SMARTSIM_REMOTE"] = address
-
-        client = CmdClient()
-        request = client.create_remote_request(["ping"], timeout=10)
-        _, out, _ = client.execute_remote_request(request)
-        logger.info("Command Server setup for remote commands")
-
 
     def __str__(self):
         experiment_str = "\n-- Experiment Summary --\n"

@@ -20,7 +20,7 @@ class RemoteRequest:
         :type is_async: bool, optional
         :param env: environment to run request with,
                     defaults to None (current environment)
-        :param timeout: timeout for waiting for output, defaults to None
+        :param timeout: timeout for waiting for output in seconds, defaults to None
         :type timeout: int, optional
         """
         self.cmd = cmd_list
@@ -29,7 +29,10 @@ class RemoteRequest:
         self.input = proc_input
         self.is_async = is_async
         self.env = env
-        self.timeout = timeout
+        if timeout:
+            self.timeout = int(timeout) * 1000
+        else:
+            self.timeout = 10000
 
     def serialize(self):
         request = pickle.dumps(self)

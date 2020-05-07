@@ -2,7 +2,7 @@ import os
 import zmq
 import pickle
 from .cmdSchema import RemoteRequest
-from .error import RemoteLauncherError
+from ..error import CommandServerError
 
 from smartsim.utils import get_logger
 logger = get_logger()
@@ -17,15 +17,15 @@ class CmdClient:
         """
         self.timeout = timeout * 1000
 
-    def _get_remote_address(self):
-        """Obtain the remote address set as an environment variable
+    def _get_cmd_server_address(self):
+        """Obtain the command server address set as an environment variable
 
-        :raises RemoteLauncherError: if remote launcher has not been setup
-        :return: address of the remote launcher
+        :raises CommandServerError: if command server has not been setup
+        :return: address of the command server
         :rtype: str
         """
         if not "SMARTSIM_REMOTE" in os.environ:
-            raise RemoteLauncherError(
+            raise CommandServerError(
                 "Command server has not been setup")
         return os.environ["SMARTSIM_REMOTE"]
 
@@ -46,12 +46,12 @@ class CmdClient:
 
         :param request: RemoteRequest instance
         :type request: RemoteRequest
-        :raises RemoteLauncherError: if communication with the remote
+        :raises CommandServerError: if communication with the remote
                                      server fails
         :return: returncode, out, err of the command
         :rtype: tuple of (int, str, str)
         """
-        address = self._get_remote_address()
+        address = self._get_cmd_server_address()
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.setsockopt(zmq.SNDTIMEO, 1000)
@@ -60,17 +60,23 @@ class CmdClient:
         try:
             socket.send(request.serialize())
 
+            # set timeout
+            timeout = self.timeout
+            if request.timeout:
+                timeout = request.timeout
+
             poller = zmq.Poller()
             poller.register(socket, zmq.POLLIN)
-            if poller.poll(self.timeout):
+
+            if poller.poll(timeout):
                 response = socket.recv()
                 response = pickle.loads(response)
                 return response.returncode, response.output, response.error
             else:
-                raise RemoteLauncherError(
+                raise CommandServerError(
                     f"Communication failed with command server at {address}")
         except zmq.error.Again:
-            raise RemoteLauncherError(
+            raise CommandServerError(
                     f"Communication failed with command server at {address}")
         finally:
             socket.close()

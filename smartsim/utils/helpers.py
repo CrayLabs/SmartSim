@@ -3,7 +3,7 @@
 A file of helper functions for SmartSim
 """
 from ..error import SSConfigError
-from os import environ
+from os import environ, unsetenv
 
 def get_env(env_var):
     """Retrieve an environment variable through os.environ
@@ -46,7 +46,8 @@ def remove_env(env_var):
     """
 
     try:
-        environ.pop(env_var)
+        unsetenv(env_var)
+        del environ[env_var]
         return
     except KeyError:
         return
