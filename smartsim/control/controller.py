@@ -519,9 +519,9 @@ class Controller():
            Add the job to the job manager to keep track of the
            job information for the user.
 
-        :param node_steps: [description]
-        :type node_steps: [type]
-        :raises SmartSimError: [description]
+        :param node_steps: steps for created_nodes
+        :type node_steps: step object dependant on launcher
+        :raises SmartSimError: if launch fails
         """
 
         for step_tuple in node_steps:

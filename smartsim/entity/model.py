@@ -2,36 +2,44 @@ from ..error import SmartSimError
 from .entity import SmartSimEntity
 
 class NumModel(SmartSimEntity):
-    """One instance of a model. This class holds the various information to configure
-       and run the model. A model can be created through experiment.create_model()."""
+    """A NumModel holds the information necessary to launch a model
+       onto whichever launcher is specified in the experiment.
+       NumModel is a subclass of SmartSimEntity and has the same
+       defaults as every other entity within SmartSim.
 
+       NumModels also have a params argument which allows models
+       to be a part of an ensemble. The params argument are model
+       parameters that can be written into model configuration files
+       through the generator.
+    """
     def __init__(self, name, params, path, run_settings):
-        """
-        NumModel initializer
+        """Initialize a model entity within Smartsim
 
-        :param str name: name of the model instance
-        :param dict params: parameters of the model to be written into model configuration
-                            files
-        :param str path: desired path to the model files/data created at runtime
-        :param dict run_settings: launcher settings for workload manager or local call
-                                   e.g. {"ppn": 1, "nodes": 10, "partition":"default_queue"}
+        :param name: name of the model
+        :type name: str
+        :param params: model parameters for writing into configuration files.
+        :type params: dict
+        :param path: path to output, error, and configuration files
+                     at runtime
+        :type path: str
+        :param run_settings: settings for the launcher specified in
+                             the experiment
+        :type run_settings: dict
         """
         super().__init__(name, path, "model", run_settings)
-        if type(params) != dict:
-            raise SmartSimError("Model must be initialized with parameter dictionary!  params are: " + str(params))
         self.params = params
 
-
     def get_param_value(self, param):
+        """Get a value of a model parameter
+
+        :param param: parameter name
+        :type param: str
+        :return: value of the model paramter
+        :rtype: str
+        """
         return self.params[param]
 
     def __eq__(self, other):
         if self.params == other.params:
             return True
         return False
-
-    def __str__(self):
-        model_str = "     " + self.name + "\n"
-        for param, value in self.params.items():
-            model_str += "       " + str(param) + " = " + str(value)  + "\n"
-        return model_str

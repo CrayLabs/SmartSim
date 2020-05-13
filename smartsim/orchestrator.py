@@ -73,8 +73,8 @@ class Orchestrator:
         return self.junction.get_connections(entity)
 
     def __str__(self):
-        orc_str = "\n-- Orchestrator --"
-        orc_str += str(self.junction)
+        orc_str = "Name: Orchestrator \n"
+        orc_str += "Number of Databases: " + str(len(self.dbnodes)) + "\n"
         return orc_str
 
     def set_path(self, new_path):
