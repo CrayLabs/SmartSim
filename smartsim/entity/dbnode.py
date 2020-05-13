@@ -87,7 +87,39 @@ class DBNode(SmartSimEntity):
         :return: redis db arguments for cluster
         :rtype: str
         """
-        cluster_conf = "nodes-" + self.name + "-" + str(port) + ".conf"
+        cluster_conf = self._get_dbnode_conf_fname(port)
         db_args = " ".join(("--cluster-enabled yes",
                             "--cluster-config-file ", cluster_conf))
         return db_args
+
+    def _get_dbnode_conf_fname(self, port):
+        """Returns the .conf file name for the given port number
+
+        :param port: port of a dbnode instance
+        :type port: int
+        :return: the dbnode configuration file name
+        :rtype: str
+        """
+
+        return "nodes-" + self.name + "-" + str(port) + ".conf"
+
+    def remove_stale_dbnode_files(self):
+        """This function removes the .conf, .err, and .out files that
+        have the same names used by this dbnode that may have been
+        created from a previous experiment execution.
+        """
+
+        for port in self.ports:
+            conf_file = "/".join((self.path, self._get_dbnode_conf_fname(port)))
+            if os.path.exists(conf_file):
+                os.remove(conf_file)
+
+        if "out_file" in self.run_settings:
+            out_file = self.run_settings["out_file"]
+            if os.path.exists(out_file):
+                os.remove(out_file)
+
+        if "err_file" in self.run_settings:
+            err_file = self.run_settings["err_file"]
+            if os.path.exists(err_file):
+                os.remove(err_file)

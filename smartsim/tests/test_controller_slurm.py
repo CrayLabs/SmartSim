@@ -138,6 +138,30 @@ def test_dpn():
     assert("FAILED" not in statuses)
     ctrl.stop(orchestrator=O2)
 
+# --- existing db files -----------------------------------------------
+
+exp_3 = Experiment("test_3")
+O3 = exp_3.create_orchestrator_cluster(alloc, path=test_path, db_nodes=3, dpn=3)
+
+@controller_test
+def test_db_file_removal():
+    """test that existing .conf, .out, and .err do not prevent
+       launch of database.
+    """
+    for dbnode in O3.dbnodes:
+        for port in dbnode.ports:
+            conf_file = "/".join((dbnode.path, dbnode._get_dbnode_conf_fname(port)))
+            open(conf_file, 'w').close()
+        out_file = dbnode.run_settings["out_file"]
+        err_file = dbnode.run_settings["err_file"]
+        open(err_file, 'w').close()
+        open(out_file, 'w').close()
+    ctrl.start(orchestrator=O3)
+    time.sleep(5)
+    statuses = ctrl.get_orchestrator_status(O3)
+    assert("FAILED" not in statuses)
+    ctrl.stop(orchestrator=O3)
+
 # --- error handling ---------------------------------------------------
 
 # Error handling test cases

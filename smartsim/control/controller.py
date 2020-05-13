@@ -399,6 +399,8 @@ class Controller():
         :type orchestrator: Orchestrator
         """
         if orchestrator:
+            for dbnode in orchestrator.dbnodes:
+                dbnode.remove_stale_dbnode_files()
             orc_steps = self._create_steps(orchestrator.dbnodes, orchestrator)
             self._launch_orchestrator(orc_steps, orchestrator)
             if len(orchestrator.dbnodes) > 2:
