@@ -48,6 +48,16 @@ def test_orchestrator():
     ctrl.stop(orchestrator=O1)
 
 @controller_test
+def test_add_alloc():
+    exp_2 = Experiment("exp_2")
+    exp_2.add_allocation(alloc)
+    model = exp_2.create_model("model", path=test_path, run_settings=run_settings)
+    exp_2.start()
+    exp_2.poll()
+    status = exp_2.get_status(model)
+    assert(status == "COMPLETED")
+
+@controller_test
 def test_node():
     ctrl.start(nodes=N1)
     while not ctrl.finished(N1):

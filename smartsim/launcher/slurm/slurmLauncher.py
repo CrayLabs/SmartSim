@@ -148,7 +148,7 @@ class SlurmLauncher(Launcher):
 
         nodes = len(self.get_step_nodes(alloc_id))
         allocation = SlurmAllocation(nodes=nodes)
-        self.alloc_manager.add_alloc(alloc_id, allocation)
+        self.alloc_manager.add(alloc_id, allocation)
 
     def get_alloc(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
         """Request an allocation with the specified arguments. Anything
