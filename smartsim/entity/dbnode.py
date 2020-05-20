@@ -12,7 +12,7 @@ class DBNode(SmartSimEntity):
        into the smartsimdb.conf.
     """
 
-    def __init__(self, dbnodenum, path, run_settings, port=6379, cluster=True):
+    def __init__(self, dbnodenum, path, run_settings, port=6379, cluster=True, **kwargs):
         """Initialize a database node within an orchestrator.
 
         :param dbnodenum: database node id within orchestrator
@@ -28,7 +28,7 @@ class DBNode(SmartSimEntity):
         :type cluster: bool, optional
         """
         name = "orchestrator_" + str(dbnodenum)
-        super().__init__(name, path, "db", run_settings)
+        super().__init__(name, path, "db", run_settings, **kwargs)
         self.ports = []
         self.setup_dbnodes(cluster, port)
 

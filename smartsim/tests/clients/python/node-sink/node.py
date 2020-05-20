@@ -11,12 +11,12 @@ class Node():
     def train_loop(self):
         i = 0
         while i <= 4:
-            data = self.client.get_array_nd_float64(str(i), wait=True)
-            sim_1_data = data["sim_1"]
-            sim_2_data = data["sim_2"]
-            receive_time = time.time()
-            assert(len(data.keys()) == 2)
             print("Receiving data for key", str(i))
+            self.client.set_data_source("sim_1")
+            sim_1_data = self.client.get_array_nd_float64(str(i), wait=True)
+            self.client.set_data_source("sim_2")
+            sim_2_data = self.client.get_array_nd_float64(str(i), wait=True)
+            receive_time = time.time()
             i+=1
 
 if __name__ == "__main__":

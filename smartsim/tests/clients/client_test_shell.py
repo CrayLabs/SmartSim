@@ -40,7 +40,6 @@ def compiled_client_test_builder(test_path, target_name, exe_args):
                   "alloc": alloc}
     client_model = experiment.create_model("client_test", run_settings=run_settings)
     experiment.create_orchestrator_cluster(alloc, db_nodes=3)
-    experiment.register_connection("client_test", "client_test")
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)

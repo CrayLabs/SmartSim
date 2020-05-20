@@ -10,7 +10,7 @@ class Ensemble(SmartSimEntity):
 
        Models within the default Ensemble will use their own
        run_settings, whereas models not in the default ensemble
-       will inheirt the run_settings of that ensemble.
+       will inherit the run_settings of that ensemble.
     """
 
     def __init__(self, name, params, experiment, path, run_settings={}):
@@ -43,7 +43,28 @@ class Ensemble(SmartSimEntity):
             raise SSModelExistsError("Model name: " + model.name +
                                      " already exists in ensemble: " + self.name)
         else:
+            # Ensemble members need a key_prefix set to avoid namespace clashes
             self.models[model.name] = model
+            if self.name != 'default':
+                model.key_prefix = f'{self.name}_{model.name}'
+                model.enable_key_prefixing()
+
+    def register_incoming_entity(self, incoming_entity, receiving_client_type):
+        """Registers the named data sources that this entity has access to by storing
+           the key_prefix associated with that entity
+
+           Only python clients can have multiple incoming connections
+
+           :param incoming_entity: The named SmartSim entity that the ensemble will
+                                   receive data from
+           :param type: SmartSimEntity
+           :param receiving_client_type: The language of the SmartSim client used by
+                                         this ensemble object. Can be cpp, fortran,
+                                         python
+           :param type: str
+        """
+        for model in self.models.values():
+            model.register_incoming_entity(incoming_entity, receiving_client_type)
 
     def __eq__(self, other):
         for model_1, model_2 in zip(self.models.values(),

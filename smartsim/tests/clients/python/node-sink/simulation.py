@@ -18,7 +18,7 @@ def run_simulations(data_size, num_packets, client):
     prep_times = 0
     while i < int(num_packets):
         data = create_data(i, data_size)
-        print("Sending data for key", str(i), flush=True)
+        print(f"Sending data with key {client.put_key_prefix}_{str(i)}", flush=True)
         client.put_array_nd_float64(str(i), data)
         i+=1
 

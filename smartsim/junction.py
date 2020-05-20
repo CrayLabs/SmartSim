@@ -1,77 +1,67 @@
-
+from .error import SSConfigError
+from itertools import product
 
 class Junction:
-    """A Junction holds multiple registered connections. The connections are made
-       through incrementing a database counter on a single database instance. Each
-       time a new connection is registered, something happens
-       TODO: write this better
+    """A Junction manages all the data endpoints of a SmartSim experiment and the
+       database cluster that serves as the central hub of communication
     """
 
     def __init__(self):
-        self.senders = {}  # senders[entity_name] = receivers
-        self.recievers = {} # recievers[entity_name] = senders
+        self.database_instances = []
 
     def store_db_addr(self, addr, port):
-        self.db_addr = addr
-        self.db_port = str(port)
+        """Register a database instance by its hostid and port used to communicate
+           :param addr: Hostname on which the database instance was started
+           :type addr:  str
+           :param port: Port number of the initialized database instance
+           :type port:  int
+        """
+        if not isinstance(port,list):
+            port = [port]
+        port = [ str(p) for p in port if not isinstance(p,str) ]
 
-    def register(self, sender, reciever):
-        """register a connection from on entity to another"""
-
-        if reciever in self.recievers:
-            self.recievers[reciever].append(sender)
-        else:
-            self.recievers[reciever] = [sender]
-
-        if sender in self.senders:
-            self.senders[sender].append(reciever)
-        else:
-            self.senders[sender] = [reciever]
-
+        for combine in product(addr,port):
+            self.database_instances.append(':'.join(combine))
 
     def get_connections(self, entity):
-        """Collects all the connections and formats them into a dictionary of
-           {'SSDB' : '127.0.0.1:6379',
-            'SSDATAIN' : sim_one;sim_two
-            'SSDATAOUT : node_one
-           }
+        """Retrieve all the connections that have been registered to this entity
+           :param entity: The entity from which to retrieve the connections
+           :type entity:  SmartSimEntity
+           :returns: Dictionary whose keys are environment variables to be set
+           :rtype: dict
         """
-        data_in = self._get_connections(entity)
         connections = {}
-        def get_env_str(database_list):
-            if database_list:
-                env_str = ""
-                for i, conn in enumerate(database_list):
-                    if i == len(database_list)-1:
-                        env_str += str(conn)
-                    else:
-                        env_str += str(conn) + ":"
-                return env_str.strip()
-            else:
-                return ""
-        connections["SSDATAIN"] = get_env_str(data_in)
-        connections["SSDB"] = ":".join((self.db_addr, self.db_port))
-        connections["SSNAME"] = entity
+        connections["SSDB"] = _env_safe_string( ";".join(self.database_instances))
+        if entity.incoming_entities:
+            connections["SSKEYIN"] = _env_safe_string(
+                    ";".join( [in_entity.name for in_entity in
+                    entity.incoming_entities]))
+        if entity.query_key_prefixing():
+            connections["SSKEYOUT"] = entity.name
         return connections
-
-    def _get_connections(self, entity):
-        """get the connections for a specific entity, returning None if there
-           are no entities to connect or send to"""
-
-        def get_connection(entity, conn_dict):
-            if entity in conn_dict.keys():
-                return conn_dict[entity]
-            else:
-                return None
-
-        data_in = get_connection(entity, self.recievers)
-        return data_in
-
 
     def __str__(self):
         junction_str = "\n   Connections \n"
-        for sender, recievers in self.senders.items():
-            recieve_str = ", ".join(recievers)
-            junction_str += " ".join(("    ", sender, " => ", recieve_str, "\n"))
+        for sender, receivers in self.senders.items():
+            receive_str = ", ".join(receivers)
+            junction_str += " ".join(("    ", sender, " => ", receive_str, "\n"))
         junction_str += "\n"
         return junction_str
+
+    def __repr__(self):
+        return {
+            'database_instances':self.database_instances
+        }
+def _env_safe_string(string):
+    """Format a string that can be safely set as an environment variable
+       by enclosing it in double quotation marks
+       :param string: The string value of an environment variable
+       :type string:  str
+       :returns string: The original string enclosed in double quotes
+    """
+
+    if string[0] != '"':
+        string = '"' + string
+    if string[-1] != '"':
+        string += '"'
+    return string

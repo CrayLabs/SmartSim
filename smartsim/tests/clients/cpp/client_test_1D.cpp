@@ -26,7 +26,7 @@ void test_1d_put_cpp(int dim1, std::string key_suffix="")
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(!client.exists(key.c_str()))
+  if(!client.key_exists(key.c_str()))
     throw std::runtime_error("Key existence could not be verified with key_exists()");
 
   client.get_array_double(key.c_str(), result, dims, 1);

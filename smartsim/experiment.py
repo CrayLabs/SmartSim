@@ -54,7 +54,7 @@ class Experiment:
         is launched prior to the simulation. The Orchestrator can be used
         to store data from another entity in memory during the course of
         an experiment. In order to stream data into the orchestrator or
-        recieve data from the orchestrator, one of the SmartSim clients
+        receive data from the orchestrator, one of the SmartSim clients
         has to be used within a NumModel or SmartSimNode. Use
         experiment.register_connection() to connect two entities within
         SmartSim.
@@ -78,7 +78,7 @@ class Experiment:
     def start(self, ensembles=None, ssnodes=None, orchestrator=None):
         """Start the experiment by turning all entities into jobs
            for the underlying launcher specified at experiment
-           initialization. All entities in the experiemnt will be
+           initialization. All entities in the experiment will be
            launched if not arguments are passed.
 
         :param ensembles: list of Ensembles, defaults to None
@@ -213,7 +213,7 @@ class Experiment:
             raise
 
     def poll(self, interval=10, poll_db=False, verbose=True):
-        """Poll the running simulations and recieve logging output
+        """Poll the running simulations and receive logging output
            with the status of the job. If polling the database,
            jobs will continue until database is manually shutdown.
 
@@ -367,13 +367,14 @@ class Experiment:
                                     ensemble_path,
                                     run_settings=run_settings)
             self.ensembles.append(new_ensemble)
+
             return new_ensemble
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def create_model(self, name, ensemble="default", params={}, path=None,
-                     run_settings={}):
+                     run_settings={}, enable_key_prefixing=False):
         """Create a model belonging to a specific ensemble. This function is
            useful for running a small number of models where the model files
            are already in place for execution.
@@ -400,6 +401,10 @@ class Experiment:
         :param run_settings: defines how the model should be run,
                              defaults to {}
         :type run_settings: dict, optional
+        :param enable_key_prefixing: If true, keys sent by this model will be
+                                     prefixed with the model's name.
+                                     Defaults to False
+        :type enable_key_prefixing, optional: bool
         :raises SmartSimError: if ensemble name provided doesnt exist
         :return: the created model
         :rtype: NumModel
@@ -407,6 +412,8 @@ class Experiment:
         try:
             model_added = False
             model = NumModel(name, params, path, run_settings)
+            if enable_key_prefixing:
+                model._key_prefixing_enabled = True
             if not path:
                 path = getcwd()
             if ensemble == "default" and "default" not in [
@@ -421,6 +428,7 @@ class Experiment:
             if not model_added:
                 raise SmartSimError("Could not find ensemble by the name of: " +
                                     ensemble)
+
             return model
         except SmartSimError as e:
             logger.error(e)
@@ -521,11 +529,12 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_node(self, name, script_path=None, run_settings={}):
+    def create_node(self, name, script_path=None, run_settings={},
+                    enable_key_prefixing=False):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode
            tasks include training, processing, and inference. Nodes can be used
            to run any task written in any language. The included script/executable
-           for nodes often use the Client class to send and recieve data from
+           for nodes often use the Client class to send and receive data from
            the SmartSim orchestrator.
 
            :param str name: name of the node to be launched
@@ -535,6 +544,10 @@ class Experiment:
            :param dict run_settings: Settings for the workload manager can be set by
                                      including keyword arguments such as
                                      duration="1:00:00" or nodes=5
+           :param enable_key_prefixing: If true, keys sent by this model will be
+                                        prefixed with the model's name.
+                                        Defaults to False
+           :type enable_key_prefixing, optional: bool
            :raises: SmartSimError if node exists by the same name
            :returns: SmartSimNode created
            :rtype: SmartSimNode
@@ -545,38 +558,10 @@ class Experiment:
                     raise SmartSimError("A node named " + node.name +
                                         " already exists!")
             node = SmartSimNode(name, script_path, run_settings=run_settings)
+            if enable_key_prefixing:
+                node._key_prefixing_enabled = True
             self.nodes.append(node)
             return node
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    def register_connection(self, sender, reciever):
-        """Create a runtime connection in orchestrator for data to be passed
-           between two SmartSim entities. The possible types of connections
-           right now are:
-
-                Model -> Node
-                Node  -> Node
-                Node  -> Model
-
-           :param str sender: name of the created entity with a Client instance
-                              to send data to a registered counterpart
-           :param str reciever: name of the created entity that will recieve
-                                data by making calls to a Client instance.
-           :raises TypeError: if arguments are not str names of entities
-           :raises SmartSimError: if orchestrator has not been created
-        """
-        try:
-            if not isinstance(sender, str) or not isinstance(reciever, str):
-                raise TypeError(
-                    "Arguments to register connection must either be a str")
-            if not self.orc:
-                raise SmartSimError("Create orchestrator to register connections")
-            else:
-                # TODO check if sender and reciever are registered entities
-                # TODO check for illegal connection types. e.g. model to model
-                self.orc.junction.register(sender, reciever)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -600,7 +585,6 @@ class Experiment:
             raise
         environ["SSNAME"] = self.name
         environ["SSDATAIN"] = sender
-
 
     def delete_ensemble(self, name):
         """Delete a created ensemble from Experiment so that

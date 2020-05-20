@@ -152,7 +152,7 @@ class Controller():
 
 
     def poll(self, interval, poll_db, verbose):
-        """Poll the running simulations and recieve logging
+        """Poll the running simulations and receive logging
            output with the status of the job.
 
            :param int interval: number of seconds to wait before polling again
@@ -238,7 +238,6 @@ class Controller():
 
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
-           Currently the options are "slurm" and "local".
 
            Remove SMARTSIM_REMOTE env var if set as we are creating
            a new launcher that should not be effected by previous
@@ -317,7 +316,7 @@ class Controller():
 
     def _stop_nodes(self, nodes):
         """Stops specified nodes.  If nodes is None,
-           the function returns without performning any action.
+           the function returns without performing any action.
 
            :param nodes: List of nodes to be stopped
            :type nodes: list of SmartSimNode, optional SmartSimNode
@@ -477,7 +476,7 @@ class Controller():
         :type orchestrator: Orchestrator
         """
         if orchestrator and not isinstance(entity, DBNode):
-            env_vars = orchestrator.get_connection_env_vars(entity.name)
+            env_vars = orchestrator.get_connection_env_vars(entity)
             existing_env_vars = entity.get_run_setting("env_vars")
             final_env_vars = {"env_vars": env_vars}
             if existing_env_vars:
@@ -505,8 +504,8 @@ class Controller():
                 self._jobs.add_job(dbnode.name, job_id, dbnode)
 
                 job_nodes = self._jobs.get_job_nodes(dbnode.name)
-                orchestrator.junction.store_db_addr(job_nodes[0],
-                                                    orchestrator.port)
+                orchestrator.junction.store_db_addr(job_nodes,
+                                                    dbnode.ports)
             except LauncherError as e:
                 logger.error(
                     "An error occured when launching the KeyDB nodes\n" +

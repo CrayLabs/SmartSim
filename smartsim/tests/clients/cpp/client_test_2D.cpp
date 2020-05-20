@@ -27,7 +27,7 @@ void test_2d_put_cpp(int dim1, int dim2, std::string key_suffix="")
 
   MPI_Barrier(MPI_COMM_WORLD);
   
-  if(!client.exists(key.c_str()))
+  if(!client.key_exists(key.c_str()))
     throw std::runtime_error("Key existence could not be verified with key_exists()");
   
   double** result = (double **)malloc(dim1 * sizeof(double *));

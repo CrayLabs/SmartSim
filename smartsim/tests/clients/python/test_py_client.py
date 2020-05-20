@@ -70,8 +70,6 @@ def run_one_way_poll_and_check(cluster_size=3):
     sim = experiment.create_model("sim",
                                   run_settings=sim_dict)
     experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim", "sim")
-    experiment.register_connection("sim", "node")
 
     experiment.generate(
         model_files=base_dir+"/one-way-poll-check-int/simulation.py",
@@ -110,8 +108,6 @@ def run_one_way(data_size, num_packets, test_id, cluster_size):
     sim = experiment.create_model("sim",
                                   run_settings=sim_dict)
     experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim", "sim")
-    experiment.register_connection("sim", "node")
 
     experiment.generate(
         model_files=base_dir+"/one-way/simulation.py",
@@ -150,9 +146,6 @@ def run_full_loop(data_size, num_packets, test_id, cluster_size):
     sim = experiment.create_model("sim",
                                   run_settings=sim_dict)
     experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim", "node")
-    experiment.register_connection("node", "sim")
-
     experiment.generate(
         model_files=base_dir+"/full-loop/simulation.py",
         node_files=base_dir+"/full-loop/node.py"
@@ -172,7 +165,7 @@ def run_node_sink(data_size, num_packets, test_id, cluster_size):
     base_dir = path.dirname(path.abspath(__file__))
     experiment_dir = "".join((base_dir,"/node-sink", test_id, "/"))
     experiment = Experiment(experiment_dir)
-    alloc = experiment.get_allocation(cluster_size+2)
+    alloc = experiment.get_allocation(cluster_size+3)
 
     node_settings = {
         "nodes": 1,
@@ -187,14 +180,13 @@ def run_node_sink(data_size, num_packets, test_id, cluster_size):
     }
     node = experiment.create_node("node",
                                   run_settings=node_settings)
-    sim_1 = experiment.create_model("sim_1",
-                                    run_settings=sim_dict)
-    sim_2 = experiment.create_model("sim_2",
-                                    run_settings=sim_dict)
+    sim_1 = experiment.create_model("sim_1", run_settings=sim_dict,
+            enable_key_prefixing = True)
+    sim_2 = experiment.create_model("sim_2", run_settings=sim_dict,
+            enable_key_prefixing = True)
+    node.register_incoming_entity(sim_1,"python")
+    node.register_incoming_entity(sim_2,"python")
     experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim_1", "node")
-    experiment.register_connection("sim_2", "node")
-
 
     experiment.generate(
         model_files=base_dir+"/node-sink/simulation.py",
@@ -235,9 +227,6 @@ def test_one_way_poll_and_check_int():
     sim = experiment.create_model("sim",
                                   run_settings=sim_dict)
     experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim", "sim")
-    experiment.register_connection("sim", "node")
-
     experiment.generate(
         model_files=base_dir+"/one-way-poll-check-int/simulation.py",
         node_files=base_dir+"/one-way-poll-check-int/node.py"
@@ -275,13 +264,11 @@ def test_one_way_poll_and_check_float():
                                   run_settings=node_settings)
     sim = experiment.create_model("sim",
                                   run_settings=sim_dict)
-    experiment.create_orchestrator(alloc, db_nodes=cluster_size)
-    experiment.register_connection("sim", "sim")
-    experiment.register_connection("sim", "node")
+    experiment.create_orchestrator_cluster(alloc, db_nodes=cluster_size)
 
     experiment.generate(
-        model_files=base_dir+"/one-way-poll-check-int/simulation.py",
-        node_files=base_dir+"/one-way-poll-check-int/node.py"
+        model_files=base_dir+"/one-way-poll-check-float/simulation.py",
+        node_files=base_dir+"/one-way-poll-check-float/node.py"
     )
 
     experiment.start()
