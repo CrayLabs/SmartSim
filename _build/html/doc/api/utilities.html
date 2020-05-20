@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="Client" href="client.html" /> 
+    <link rel="prev" title="Remote" href="remote.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,23 +81,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Creating an Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cmdservers.html">Using a Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote.html">Remote</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities</a></li>
 </ul>
 
@@ -166,9 +175,9 @@
   <div class="section" id="utilities">
 <h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h1>
 <p>A set of utilities designed to make creating, using, and debugging Smart Sim experiments.</p>
-<span class="target" id="module-smartsim.utils.log"></span><dl class="function">
+<span class="target" id="module-smartsim.utils.log"></span><dl class="py function">
 <dt id="smartsim.utils.log.get_logger">
-<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">get_logger</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">log_level=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.get_logger" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">get_logger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_level</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.get_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a log handle that has had the appropriate style
 set to ensure logging practices are consistent and clean across the
 code base.</p>
@@ -183,9 +192,9 @@ defined in the python logging module.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="smartsim.utils.log.log_to_file">
-<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">log_to_file</code><span class="sig-paren">(</span><em class="sig-param">filename</em>, <em class="sig-param">log_level=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#log_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.log_to_file" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">log_to_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">log_level</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#log_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.log_to_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Installs a second filestream handler to the root logger,
 allowing subsequent logging calls to be sent to filename.</p>
 <dl class="field-list simple">
@@ -200,16 +209,16 @@ logging information.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="smartsim.utils.log.set_debug_mode">
 <code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_debug_mode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_debug_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_debug_mode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the root logger to debug mode, and clears the logging level set
 on other loggers such that they log at the debug level.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="smartsim.utils.log.set_global_logging_level">
-<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_global_logging_level</code><span class="sig-paren">(</span><em class="sig-param">log_level</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_global_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_global_logging_level" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_global_logging_level</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">log_level</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_global_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_global_logging_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the root logging level, which subsequent loggers
 inherit from unless setLevel has been called on them.</p>
 <dl class="field-list simple">
@@ -219,9 +228,9 @@ inherit from unless setLevel has been called on them.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="smartsim.utils.log.set_logging_level">
-<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_logging_level</code><span class="sig-paren">(</span><em class="sig-param">logger</em>, <em class="sig-param">log_level</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_logging_level" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">smartsim.utils.log.</code><code class="sig-name descname">set_logging_level</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logger</span></em>, <em class="sig-param"><span class="n">log_level</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/utils/log.html#set_logging_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.utils.log.set_logging_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the logging level for an individual logger.  Typically,
 a logger inherits the log_level from root (and is NOTSET).</p>
 <dl class="field-list simple">
@@ -245,7 +254,7 @@ a logger inherits the log_level from root (and is NOTSET).</p>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="client.html" class="btn btn-neutral float-left" title="Client" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="remote.html" class="btn btn-neutral float-left" title="Remote" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

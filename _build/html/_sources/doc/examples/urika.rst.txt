@@ -1,6 +1,6 @@
 
 
-Connect Jupyter to a Simulation
--------------------------------
+Leverage Cray Urika
+-------------------
 
-Show how to use Urika and connect jupyter to a simulation
+Show example with working with Urika XC

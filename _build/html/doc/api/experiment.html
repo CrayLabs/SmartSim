@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Client" href="client.html" />
-    <link rel="prev" title="Connect Jupyter to a Simulation" href="../examples/urika.html" /> 
+    <link rel="prev" title="Python" href="../clients/python.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,23 +82,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Creating an Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cmdservers.html">Using a Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
 </ul>
 
@@ -166,11 +175,12 @@
             
   <div class="section" id="module-smartsim.experiment">
 <span id="experiment"></span><h1>Experiment<a class="headerlink" href="#module-smartsim.experiment" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="smartsim.experiment.Experiment">
-<em class="property">class </em><code class="sig-prename descclassname">smartsim.experiment.</code><code class="sig-name descname">Experiment</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">launcher='slurm'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment" title="Permalink to this definition">¶</a></dt>
-<dd><p>In SmartSim, the Experiment class is an entity creation API that both houses
-and operates on the entities it creates. The entities that can be created are:</p>
+<em class="property">class </em><code class="sig-prename descclassname">smartsim.experiment.</code><code class="sig-name descname">Experiment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">launcher</span><span class="o">=</span><span class="default_value">'slurm'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>In SmartSim, the Experiment class is an entity creation API
+that both houses and operates on the entities it creates.
+The entities that can be created are:</p>
 <blockquote>
 <div><blockquote>
 <div><ul class="simple">
@@ -181,108 +191,139 @@ and operates on the entities it creates. The entities that can be created are:</
 </ul>
 </div></blockquote>
 <p>Each entity has a distinct purpose within an experiment.</p>
-<dl class="simple">
-<dt>NumModel  - Instances of numerical models or “simulation” models. NumModels can</dt><dd><p>be created through a call to Experiment.create_model() and though
+<p>Instances of numerical models or “simulation” models. NumModels can
+be created through a call to Experiment.create_model() and though
 the creation of an Ensemble.</p>
-</dd>
-<dt>Ensemble  - Ensembles are groups of NumModels to be either generated manually or</dt><dd><p>through a call to experiment.generate(). Ensembles can be given model
+<p>Ensembles are groups of NumModels to be either generated manually or
+through a call to experiment.generate(). Ensembles can be given model
 parameters to be written into input files for the model at runtime.
 There are multiple ways of generating ensemble members; see
 experiment.generate() for details.</p>
-</dd>
-<dt>SmartSimNodes - Nodes run processes adjacent to the simulation. Nodes can be used</dt><dd><p>for anything from analysis, training, inference, etc. Nodes are the
+<p>Nodes run processes adjacent to the simulation. Nodes can be used
+for anything from analysis, training, inference, etc. Nodes are the
 most flexible entity with no requirements on language or framework.
 Nodes are commonly used for acting on data being streamed out of a
 simulation model through the orchestrator</p>
-</dd>
-<dt>Orchestrator  - The Orchestrator is a KeyDB database, clustered or standalone, that</dt><dd><p>is launched prior to the simulation. The Orchestrator can be used
+<p>The Orchestrator is a KeyDB database, clustered or standalone, that
+is launched prior to the simulation. The Orchestrator can be used
 to store data from another entity in memory during the course of
 an experiment. In order to stream data into the orchestrator or
 recieve data from the orchestrator, one of the SmartSim clients
 has to be used within a NumModel or SmartSimNode. Use
 experiment.register_connection() to connect two entities within
 SmartSim.</p>
-</dd>
-</dl>
 </div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – Name of the directory that will house all of
-the created files and directories.</p></li>
-<li><p><strong>launcher</strong> (<em>str</em>) – the method by which jobs are launched. options are “slurm”, and “local”</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.add_allocation">
-<code class="sig-name descname">add_allocation</code><span class="sig-paren">(</span><em class="sig-param">alloc_id</em>, <em class="sig-param">partition</em>, <em class="sig-param">nodes</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.add_allocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.add_allocation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add an existing allocation to SmartSim so that future calls to start can run
-on it.</p>
+<code class="sig-name descname">add_allocation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alloc_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.add_allocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.add_allocation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Add an allocation to SmartSim such that entities can</dt><dd><p>be launched on it.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>alloc_id</strong> (<em>str</em>) – id of the allocation given by the workload manager</p></li>
-<li><p><strong>partition</strong> (<em>str</em>) – partition of the allocation</p></li>
-<li><p><strong>nodes</strong> (<em>int</em>) – number of nodes in the allocation</p></li>
-</ul>
+<dd class="field-odd"><p><strong>alloc_id</strong> (<em>str</em>) – id of the allocation from the workload manager</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dd class="field-even"><p><strong>SmartSimError</strong> – If the allocation cannot be found</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.experiment.Experiment.create_connection">
+<code class="sig-name descname">create_connection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sender</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a connection between the experiment script and
+SmartSim entity. This method should be called after a
+database has been launched or an error will be raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sender</strong> (<em>str</em>) – name of the created entity with a
+Client instance to send data to
+this smartsim script</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if orchestrator has not been created</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.create_ensemble">
-<code class="sig-name descname">create_ensemble</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params={}</em>, <em class="sig-param">run_settings={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_ensemble" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a ensemble to be used within one or many of the SmartSim Modules. ensembles
-keep track of groups of models. Parameters can be given to a ensemble as well in
-order to generate models based on a combination of parameters and generation
-experimentgies. For more on generation strategies, see the Generator Class.</p>
+<code class="sig-name descname">create_ensemble</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">run_settings</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_ensemble" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Create a ensemble to be used within one or many of the</dt><dd><p>SmartSim Modules. Ensembles contain groups of models.
+Parameters can be given to a ensemble in order to generate
+models based on a combination of parameters and generation
+strategies. For more on generation strategies, see the
+Generator Class.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – name of the new ensemble</p></li>
-<li><p><strong>params</strong> (<em>dict</em>) – dictionary of model parameters to generate models from based
-on a run strategy.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – name of the ensemble</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em>, </em><em>optional</em>) – model parameters for generation strategies,
+defaults to {}</p></li>
+<li><p><strong>run_settings</strong> (<em>dict</em><em>, </em><em>optional</em>) – define how the model should be run,
+defaults to {}</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dd class="field-even"><p><strong>SmartSimError</strong> – If ensemble cannot be created</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the created Ensemble</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Ensemble</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.create_model">
-<code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">ensemble='default'</em>, <em class="sig-param">params={}</em>, <em class="sig-param">path=None</em>, <em class="sig-param">run_settings={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a model belonging to a specific ensemble. This function is
-useful for running a small number of models where the model files
+<code class="sig-name descname">create_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">ensemble</span><span class="o">=</span><span class="default_value">'default'</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">run_settings</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_model" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>Create a model belonging to a specific ensemble. This function is</dt><dd><p>useful for running a small number of models where the model files
 are already in place for execution.</p>
 <p>Calls to this function without specifying the <cite>ensemble</cite> argument
 result in the creation/usage a ensemble named “default”, the default
 argument for <cite>ensemble</cite>.</p>
+<p>Models in the default ensemble will be launched with their specific
+run_settings as defined in intialization here. Otherwise the model
+will use the run_settings defined for the Ensemble</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) – name of the model to be created</p></li>
-<li><p><strong>ensemble</strong> (<em>str</em>) – name of the ensemble to place model into</p></li>
-<li><p><strong>params</strong> (<em>dict</em>) – dictionary of model parameters</p></li>
-<li><p><strong>path</strong> (<em>str</em>) – (optional) path to model files, defaults to os.getcwd()</p></li>
-<li><p><strong>run_settings</strong> (<em>dict</em>) – launcher settings for workload manager or local call
-e.g. {“ppn”: 1, “nodes”: 10, “partition”:”default_queue”}</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – name of the model</p></li>
+<li><p><strong>ensemble</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the ensemble to add the model to,
+defaults to “default”</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em>, </em><em>optional</em>) – model parameters for generation strategies,
+defaults to {}</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – path to where the model should be executed at runtime,
+defaults to os.getcwd()</p></li>
+<li><p><strong>run_settings</strong> (<em>dict</em><em>, </em><em>optional</em>) – defines how the model should be run,
+defaults to {}</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if ensemble name provided doesnt exist</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the created model</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>NumModel</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.create_node">
-<code class="sig-name descname">create_node</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">script_path=None</em>, <em class="sig-param">run_settings={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_node" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">script_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">run_settings</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a SmartSimNode for a specific task. Examples of SmartSimNode
 tasks include training, processing, and inference. Nodes can be used
 to run any task written in any language. The included script/executable
@@ -299,63 +340,121 @@ the SmartSim orchestrator.</p>
 </div></blockquote>
 </p></li>
 <li><p><strong>run_settings</strong> (<em>dict</em>) – Settings for the workload manager can be set by
-including keyword arguments such as duration=”1:00:00”
-or nodes=5</p></li>
+including keyword arguments such as
+duration=”1:00:00” or nodes=5</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>SmartSimNode created</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p>SmartSimError if node exists by the same name</p>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError if node exists by the same name</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>SmartSimNode created</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>SmartSimNode</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.create_orchestrator">
-<code class="sig-name descname">create_orchestrator</code><span class="sig-paren">(</span><em class="sig-param">path=None</em>, <em class="sig-param">port=6379</em>, <em class="sig-param">cluster_size=3</em>, <em class="sig-param">partition=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_orchestrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_orchestrator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create an orchestrator database to faciliate the transfer of data
-for online training and inference. After the orchestrator is created,
-connections between models and nodes can be instantiated through a
-call to Experiment.register_connection().</p>
+<code class="sig-name descname">create_orchestrator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">6379</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_orchestrator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_orchestrator" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>Create an in-memory database to run with an experiment. Launched</dt><dd><p>entities can communicate with the orchestrator through use
+of one of the Python, C, C++ or Fortran clients.</p>
+<p>With the default settings, this function can be used to create
+a local orchestrator that will run in parallel with other
+entities running serially in an experiment. For creating
+clustered orchestrators accross multiple compute nodes
+look at Experiment.create_orchestrator_cluster()</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> (<em>str</em>) – desired path to output files of db cluster (defaults to
-os.getcwd())</p></li>
-<li><p><strong>port</strong> (<em>int</em>) – port for each database node for tcp communication</p></li>
-<li><p><strong>cluster_size</strong> (<em>int</em>) – number of database nodes in cluster</p></li>
-<li><p><strong>partition</strong> (<em>str</em>) – partition to launch db nodes</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – desired path for orchestrator output/error, defaults to cwd</p></li>
+<li><p><strong>port</strong> (<em>int</em><em>, </em><em>optional</em>) – port orchestrator should run on, defaults to 6379</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Orchestrator object</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if an orchestrator already exists</p>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError if one orchestrator has already been created</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Orchestrator instance created</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Orchestrator</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.experiment.Experiment.create_orchestrator_cluster">
+<code class="sig-name descname">create_orchestrator_cluster</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alloc</span></em>, <em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">6379</span></em>, <em class="sig-param"><span class="n">db_nodes</span><span class="o">=</span><span class="default_value">3</span></em>, <em class="sig-param"><span class="n">dpn</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.create_orchestrator_cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.create_orchestrator_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>Create an in-memory database that can be used for the transfer of</dt><dd><p>data between launched entities. For increasing throughput,
+the number of databases per node can be increased such that mulitple
+database instances are launched on a single node and share the
+memory of that node.</p>
+<p>Orchestrator clusters are meant to be launched accross multiple
+nodes with the minimum number of nodes being 3. Clusters of size
+2 are not supported and single instances will be launched in
+standalone mode. This function requires that an allocation id
+is passed for the orchestrator to run on. If you want to run
+an orchestrator locally, look at Experiment.create_orchestrator().</p>
+<p>Additional options for where and how to launch the orchestrator
+can be specified with the through the inclusion of extra kwargs
+(e.g. partition=”main”)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alloc</strong> (<em>str</em>) – id of the allocation for the orchestrator to run on</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – desired path for orchestrator output/error, defaults to cwd</p></li>
+<li><p><strong>port</strong> (<em>int</em><em>, </em><em>optional</em>) – port orchestrator should run on, defaults to 6379</p></li>
+<li><p><strong>db_nodes</strong> (<em>int</em><em>, </em><em>optional</em>) – number of database nodes in the cluster, defaults to 3</p></li>
+<li><p><strong>dpn</strong> (<em>int</em><em>, </em><em>optional</em>) – number of databases per node, defaults to 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>SmartSimError</strong> – if an orchestrator already exists within the
+experiment</p></li>
+<li><p><strong>SmartSimError</strong> – If experiment was initialized with local launcher</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Orchestrator instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Orchestrator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.delete_ensemble">
-<code class="sig-name descname">delete_ensemble</code><span class="sig-paren">(</span><em class="sig-param">name</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.delete_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.delete_ensemble" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete a created ensemble from Experiment so that any future calls to SmartSim
-Modules will not include this ensemble.</p>
+<code class="sig-name descname">delete_ensemble</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.delete_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.delete_ensemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a created ensemble from Experiment so that
+any future calls to SmartSim Modules will not include
+this ensemble.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – name of the ensemble to be deleted</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>SmartSimError</strong> – if ensemble doesnt exist</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – if argument is not a str name of an ensemble</p></li>
+<li><p><strong>SmartSimError</strong> – if ensemble doesnt exist</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.finished">
-<code class="sig-name descname">finished</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.finished"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.finished" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">finished</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">entity</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.finished"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.finished" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a boolean indicating wether or not a job has finished.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -368,32 +467,37 @@ Modules will not include this ensemble.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.generate">
-<code class="sig-name descname">generate</code><span class="sig-paren">(</span><em class="sig-param">model_files=None</em>, <em class="sig-param">node_files=None</em>, <em class="sig-param">tag=None</em>, <em class="sig-param">strategy='all_perm'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.generate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate the file structure for a SmartSim experiment. This includes the writing
-and configuring of input files for a model. Ensembles created with a ‘params’ argument
-will be expanded into multiple models based on a generation strategy. Model input files
-are specified with the model_files argument. All files and directories listed as strings
-in a list will be copied to each model within an ensemble. Every model file is read,
-checked for input variables to configure, and written. Input variables to configure
-are specified with a tag within the input file itself. The default tag is surronding
-an input value with semicolons. e.g. THERMO=;90;</p>
-<p>Files for SmartSimNodes can also be included to be copied into node directories but
-are never read nor written. All node_files will be copied into directories named after
-the name of the SmartSimNode within the experiment.</p>
+<code class="sig-name descname">generate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">node_files</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tag</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">strategy</span><span class="o">=</span><span class="default_value">'all_perm'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.generate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the file structure for a SmartSim experiment. This
+includes the writing and configuring of input files for a
+model. Ensembles created with a ‘params’ argument will be
+expanded into multiple models based on a generation strategy.
+Model input files are specified with the model_files argument.
+All files and directories listed as strings in a list will be
+copied to each model within an ensemble. Every model file is read,
+checked for input variables to configure, and written. Input
+variables to configure are specified with a tag within the input
+file itself. The default tag is surronding an input value with
+semicolons. e.g. THERMO=;90;</p>
+<p>Files for SmartSimNodes can also be included to be copied into
+node directories but are never read nor written. All node_files
+will be copied into directories named after the name of the
+SmartSimNode within the experiment.</p>
 <blockquote>
 <div><dl class="field-list simple">
 <dt class="field-odd">param model_files</dt>
-<dd class="field-odd"><p>The model files for the experiment.  Optional if model files
-are not needed for execution.</p>
+<dd class="field-odd"><p>The model files for the experiment.  Optional
+if model files are not needed for execution.</p>
 </dd>
 <dt class="field-even">type model_files</dt>
 <dd class="field-even"><p>list of path like strings to directories or files</p>
 </dd>
 <dt class="field-odd">param node_files</dt>
-<dd class="field-odd"><p>files to be copied into node directories. These are most likely files
-needed to run the node computations. e.g. a python script</p>
+<dd class="field-odd"><p>files to be copied into node directories. These
+are most likely files needed to run the node
+computations. e.g. a python script</p>
 </dd>
 <dt class="field-even">type node_files</dt>
 <dd class="field-even"><p>list of path like strings to directories or files</p>
@@ -401,86 +505,109 @@ needed to run the node computations. e.g. a python script</p>
 <dt class="field-odd">param str strategy</dt>
 <dd class="field-odd"><p>The permutation strategy for generating models within
 ensembles.
-Options are “all_perm”, “random”, “step”, or a callable function.
-Defaults to “all_perm”</p>
+Options are “all_perm”, “random”, “step”, or a
+callable function. Defaults to “all_perm”</p>
 </dd>
-<dt class="field-even">raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dt class="field-even">raises SmartSimError</dt>
+<dd class="field-even"><p>if generation fails</p>
 </dd>
 </dl>
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_allocation">
-<code class="sig-name descname">get_allocation</code><span class="sig-paren">(</span><em class="sig-param">nodes</em>, <em class="sig-param">partition</em>, <em class="sig-param">duration='1:00:00'</em>, <em class="sig-param">add_opts=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_allocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_allocation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get an allocation with the requested resources and return the allocation
-ID from the workload manager. Allocation obtained is automatically added
-to the smartsim allocations list for future calls to start to run on.</p>
+<code class="sig-name descname">get_allocation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">ppn</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">duration</span><span class="o">=</span><span class="default_value">'1:00:00'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_allocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_allocation" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>Get an allocation through the launcher for future calls</dt><dd><p>to start to launch entities onto. This allocation is
+maintained within SmartSim. To release the allocation
+call Experiment.release().</p>
+<p>The kwargs can be used to pass extra settings to the
+workload manager such as the following for Slurm:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>nodelist=”nid00004”</p></li>
+</ul>
+</div></blockquote>
+<p>For arguments without a value, pass None or and empty
+string as the value for the kwarg. For Slurm:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>exclusive=None</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nodes</strong> (<em>int</em>) – number of nodes in the requested allocation</p></li>
-<li><p><strong>partition</strong> (<em>str</em>) – partition for the requested allocation</p></li>
-<li><p><strong>duration</strong> (<em>str</em>) – duration of the allocation in format HH:MM:SS</p></li>
-<li><p><strong>add_opts</strong> (<em>list of strings</em>) – additional options to pass to workload manager command
-for obtaining an allocation</p></li>
+<li><p><strong>nodes</strong> (<em>int</em>) – number of nodes for the allocation</p></li>
+<li><p><strong>ppn</strong> (<em>int</em>) – processes per node</p></li>
+<li><p><strong>duration</strong> (<em>str</em><em>, </em><em>optional</em>) – length of the allocation in HH:MM:SS format,
+defaults to “1:00:00”</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>allocation ID</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if allocation could not be obtained</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>allocation id</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_db_address">
 <code class="sig-name descname">get_db_address</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_db_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_db_address" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the TCP address of the orchestrator returned by pinging the
 domain name used by the workload manager e.g. nid00004 returns
 127.0.0.1</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>SmartSimError</strong> – if orchestrator has not been launched</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p>SmartSimError: if database nodes cannot be found</p>
+</dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>tcp address of orchestrator</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>returns a list if clustered orchestrator</p>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SSConfigError</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
-</dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_ensemble">
-<code class="sig-name descname">get_ensemble</code><span class="sig-paren">(</span><em class="sig-param">ensemble</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_ensemble" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_ensemble</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ensemble</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_ensemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_ensemble" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a specific ensemble from Experiment</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>ensemble</strong> (<em>str</em>) – Name of the ensemble to return</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>ensemble instance</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>SmartSimError</strong> – if ensemble is not found</p></li>
+<li><p><strong>TypeError</strong> – if argument is not a str name of
+an ensemble</p></li>
+</ul>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>ensemble instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Ensemble</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_model">
-<code class="sig-name descname">get_model</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">ensemble</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">ensemble</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a specific model from a ensemble.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -489,82 +616,81 @@ domain name used by the workload manager e.g. nid00004 returns
 <li><p><strong>ensemble</strong> (<em>str</em>) – name of the ensemble where the model is located</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>NumModel instance</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>SmartSimError</strong> – if model is not found</p></li>
+<li><p><strong>TypeError</strong> – if arguments are not str names of a model
+and/or an Ensemble</p></li>
+</ul>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError if model is not found</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>NumModel instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>NumModel</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_node">
-<code class="sig-name descname">get_node</code><span class="sig-paren">(</span><em class="sig-param">node</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_node" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a specific node from Experiment</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>node</strong> (<em>str</em>) – Name of the node to return</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>node instance</p>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>SmartSimError</strong> – if node cannot be found</p></li>
+<li><p><strong>TypeError</strong> – if argument is not a str name
+of an node</p></li>
+</ul>
 </dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node instance</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>SmartSimNode</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.get_status">
-<code class="sig-name descname">get_status</code><span class="sig-paren">(</span><em class="sig-param">entity</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_status" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the status of a running job that was launched through a workload manager.
-Ensembles, Orchestrator, SmartSimNodes, and NumModel instances can all be passed
-to have their status returned as a string. The type of string and content will
-depend on the workload manager being used.</p>
+<code class="sig-name descname">get_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">entity</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.get_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.get_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the status of a running job that was launched through
+a workload manager. Ensembles, Orchestrator, SmartSimNodes,
+and NumModel instances can all be passed to have their
+status returned as a string. The type of string and content
+will depend on the workload manager being used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>entity</strong> (<em>SmartSimEntity</em>) – The SmartSimEntity object that was launched to check the status of</p>
+<dd class="field-odd"><p><strong>entity</strong> (<em>SmartSimEntity</em>) – The SmartSimEntity object that was launched
+to check the status of</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>status of the entity</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list if entity contains sub-entities such as cluster Orchestrator or Ensemble</p>
+<dd class="field-odd"><p>list if entity contains sub-entities such as cluster
+Orchestrator or Ensemble</p>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="smartsim.experiment.Experiment.init_remote_launcher">
-<code class="sig-name descname">init_remote_launcher</code><span class="sig-paren">(</span><em class="sig-param">launcher='slurm'</em>, <em class="sig-param">addr='127.0.0.1'</em>, <em class="sig-param">port=5555</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.init_remote_launcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.init_remote_launcher" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize a remote launcher so that SmartSim can be run on compute
-nodes where slurm and other workload manager commands are not available.
-Remote launchers must be located on the same system, and be reachable
-via tcp.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>launcher</strong> (<em>str</em>) – Workload manager, default is “slurm” (currently only option)</p></li>
-<li><p><strong>addr</strong> (<em>str</em>) – Address of the running remote command center</p></li>
-<li><p><strong>port</strong> (<em>int</em>) – port the command center is running on</p></li>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>SmartSimError</strong> – if status retrieval fails</p></li>
+<li><p><strong>TypeError</strong> – if one argument was not a SmartSimEntitiy</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SSConfigError</p>
-</dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.poll">
-<code class="sig-name descname">poll</code><span class="sig-paren">(</span><em class="sig-param">interval=10</em>, <em class="sig-param">poll_db=False</em>, <em class="sig-param">verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.poll" title="Permalink to this definition">¶</a></dt>
-<dd><p>Poll the running simulations and recieve logging output with the status
-of the job. If polling the database, jobs will continue until database
-is manually shutdown.</p>
+<code class="sig-name descname">poll</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">interval</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">poll_db</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll the running simulations and recieve logging output
+with the status of the job. If polling the database,
+jobs will continue until database is manually shutdown.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -580,11 +706,12 @@ it in the logging output</p></li>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.register_connection">
-<code class="sig-name descname">register_connection</code><span class="sig-paren">(</span><em class="sig-param">sender</em>, <em class="sig-param">reciever</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.register_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.register_connection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a runtime connection in orchestrator for data to be passed between two
-SmartSim entities. The possible types of connections right now are:</p>
+<code class="sig-name descname">register_connection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sender</span></em>, <em class="sig-param"><span class="n">reciever</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.register_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.register_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a runtime connection in orchestrator for data to be passed
+between two SmartSim entities. The possible types of connections
+right now are:</p>
 <blockquote>
 <div><p>Model -&gt; Node
 Node  -&gt; Node
@@ -593,56 +720,63 @@ Node  -&gt; Model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sender</strong> (<em>str</em>) – name of the created entity with a Client instance to send
-data to a registered counterpart</p></li>
-<li><p><strong>reciever</strong> (<em>str</em>) – name of the created entity that will recieve data by
-making calls to a Client instance.</p></li>
+<li><p><strong>sender</strong> (<em>str</em>) – name of the created entity with a Client instance
+to send data to a registered counterpart</p></li>
+<li><p><strong>reciever</strong> (<em>str</em>) – name of the created entity that will recieve
+data by making calls to a Client instance.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – if arguments are not str names of entities</p></li>
+<li><p><strong>SmartSimError</strong> – if orchestrator has not been created</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.release">
-<code class="sig-name descname">release</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.release"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.release" title="Permalink to this definition">¶</a></dt>
-<dd><p>Release the allocation(s) stopping all jobs that are currently running
-and freeing up resources.</p>
+<code class="sig-name descname">release</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alloc_id</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.release"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.release" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Release the allocation(s) stopping all jobs that are</dt><dd><p>currently running and freeing up resources. If an
+allocation ID is provided, only stop that allocation
+and remove it from SmartSim.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p>SmartSimError</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>alloc_id</strong> (<em>str</em><em>, </em><em>optional</em>) – id of the allocation, defaults to None</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>SmartSimError</strong> – if fail to release allocation</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.start">
-<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param">ensembles=None</em>, <em class="sig-param">ssnodes=None</em>, <em class="sig-param">orchestrator=None</em>, <em class="sig-param">duration='1:00:00'</em>, <em class="sig-param">run_on_existing=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start the experiment with the created entities. If using a workload manager,
-‘slurm’ is the default, the total allocation size will be determined and
-aquired for the duration specified as an argument to this function.</p>
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ensembles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ssnodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">orchestrator</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.start" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Start the experiment by turning all entities into jobs</dt><dd><p>for the underlying launcher specified at experiment
+initialization. All entities in the experiemnt will be
+launched if not arguments are passed.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ensembles</strong> (<em>a list of Ensemble objects</em>) – Ensembles to launch with specified launcher</p></li>
-<li><p><strong>ssnodes</strong> (<em>a list of SmartSimNode objects</em>) – SmartSimNodes to launch with specified launcher</p></li>
-<li><p><strong>orchestrator</strong> (<em>Orchestrator object</em>) – Orchestrator object to be launched for entity communication</p></li>
-<li><p><strong>duration</strong> (<em>str</em>) – Time for the aquired allocation in format HH:MM:SS</p></li>
-<li><p><strong>run_on_existing</strong> (<em>bool</em>) – If False, calculate and get an allocation
-for this workload</p></li>
+<li><p><strong>ensembles</strong> (<em>list Ensemble instances</em><em>, </em><em>optional</em>) – list of Ensembles, defaults to None</p></li>
+<li><p><strong>ssnodes</strong> (<em>list of SmartSimNode instances</em><em>, </em><em>optional</em>) – list of SmartSimNodes, defaults to None</p></li>
+<li><p><strong>orchestrator</strong> (<em>Orchestrator</em><em>, </em><em>optional</em>) – Orchestrator instance, defaults to None</p></li>
 </ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p>SmartSimError</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.stop">
-<code class="sig-name descname">stop</code><span class="sig-paren">(</span><em class="sig-param">ensembles=None</em>, <em class="sig-param">models=None</em>, <em class="sig-param">nodes=None</em>, <em class="sig-param">orchestrator=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.stop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">stop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ensembles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">models</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nodes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">orchestrator</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop specific entities launched through SmartSim. This method is only
 applicable when launching with a workload manager.</p>
 <dl class="field-list simple">
@@ -660,7 +794,7 @@ applicable when launching with a workload manager.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.experiment.Experiment.stop_all">
 <code class="sig-name descname">stop_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/experiment.html#Experiment.stop_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.experiment.Experiment.stop_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop all entities that were created with this experiment</p>
@@ -686,7 +820,7 @@ applicable when launching with a workload manager.</p>
         <a href="client.html" class="btn btn-neutral float-right" title="Client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../examples/urika.html" class="btn btn-neutral float-left" title="Connect Jupyter to a Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../clients/python.html" class="btn btn-neutral float-left" title="Python" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

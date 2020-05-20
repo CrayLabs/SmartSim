@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -80,24 +80,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/cmdservers.html">Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
 </ul>
 
@@ -181,7 +189,7 @@
     <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">log_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">log_level</span><span class="p">)</span>
-    <span class="n">coloredlogs</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
+    <span class="n">coloredlogs</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">logger</span></div>
 
 <div class="viewcode-block" id="set_global_logging_level"><a class="viewcode-back" href="../../../doc/api/utilities.html#smartsim.utils.log.set_global_logging_level">[docs]</a><span class="k">def</span> <span class="nf">set_global_logging_level</span><span class="p">(</span><span class="n">log_level</span><span class="p">):</span>
@@ -215,7 +223,7 @@
         <span class="n">get_logger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="log_to_file"><a class="viewcode-back" href="../../../doc/api/utilities.html#smartsim.utils.log.log_to_file">[docs]</a><span class="k">def</span> <span class="nf">log_to_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Installs a second filestream handler to the root logger, </span>
+    <span class="sd">&quot;&quot;&quot;Installs a second filestream handler to the root logger,</span>
 <span class="sd">    allowing subsequent logging calls to be sent to filename.</span>
 
 <span class="sd">    :param str filename: the name of the desired log file.</span>

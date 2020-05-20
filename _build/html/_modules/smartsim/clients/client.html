@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -80,24 +80,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/cmdservers.html">Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
 </ul>
 
@@ -162,10 +170,10 @@
            <div itemprop="articleBody">
             
   <h1>Source code for smartsim.clients.client</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">..connection</span> <span class="k">import</span> <span class="n">Connection</span>
-<span class="kn">from</span> <span class="nn">..clusterConnection</span> <span class="k">import</span> <span class="n">ClusterConnection</span>
-<span class="kn">from</span> <span class="nn">..error</span> <span class="k">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSConfigError</span><span class="p">,</span> <span class="n">SmartSimConnectionError</span>
-<span class="kn">from</span> <span class="nn">..utils.protobuf.smartsim_protobuf_pb2</span> <span class="k">import</span> <span class="n">ArrayDouble</span><span class="p">,</span> <span class="n">ScalarDouble</span><span class="p">,</span> <span class="n">ScalarSInt64</span>
+<span></span><span class="kn">from</span> <span class="nn">..connection</span> <span class="kn">import</span> <span class="n">Connection</span>
+<span class="kn">from</span> <span class="nn">..clusterConnection</span> <span class="kn">import</span> <span class="n">ClusterConnection</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="n">SmartSimError</span><span class="p">,</span> <span class="n">SSConfigError</span><span class="p">,</span> <span class="n">SmartSimConnectionError</span>
+<span class="kn">from</span> <span class="nn">..utils.protobuf.smartsim_protobuf_pb2</span> <span class="kn">import</span> <span class="n">ArrayDouble</span><span class="p">,</span> <span class="n">ScalarDouble</span><span class="p">,</span> <span class="n">ScalarSInt64</span><span class="p">,</span> <span class="n">ScalarSInt32</span><span class="p">,</span> <span class="n">ArraySInt32</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -180,7 +188,7 @@
 <span class="sd">       get_data(key) will retrieve all data that has been stored under that key for</span>
 <span class="sd">       each connection.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connections_in</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connection_out</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="n">cluster</span>
@@ -206,6 +214,16 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ArraySInt64</span><span class="p">(),</span> <span class="n">wait</span><span class="p">,</span> <span class="n">wait_interval</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="Client.get_array_nd_int32"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.get_array_nd_int32">[docs]</a>    <span class="k">def</span> <span class="nf">get_array_nd_int32</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">wait_interval</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;This function gets a numpy array of type int32 from the database.</span>
+<span class="sd">            :param str key: key of the value to fetch</span>
+<span class="sd">            :param bool wait: flag for polling connection until value appears</span>
+<span class="sd">            :param float wait_interval: milliseconds to wait between polling requests</span>
+<span class="sd">            :returns all_data: dictionary of key connections_in.key() and value</span>
+<span class="sd">                               numpy.ndarray or single numpy.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ArraySInt32</span><span class="p">(),</span> <span class="n">wait</span><span class="p">,</span> <span class="n">wait_interval</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="Client.get_scalar_float64"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.get_scalar_float64">[docs]</a>    <span class="k">def</span> <span class="nf">get_scalar_float64</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">wait_interval</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;&quot;This function gets a scalar of type float64 from the database.</span>
 <span class="sd">            :param str key: key of the value to fetch</span>
@@ -225,6 +243,16 @@
 <span class="sd">                               int64 or single int64</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ScalarSInt64</span><span class="p">(),</span> <span class="n">wait</span><span class="p">,</span> <span class="n">wait_interval</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Client.get_scalar_int32"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.get_scalar_int32">[docs]</a>    <span class="k">def</span> <span class="nf">get_scalar_int32</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">wait_interval</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;This function gets a scalar of type int32 from the database.</span>
+<span class="sd">            :param str key: key of the value to fetch</span>
+<span class="sd">            :param bool wait: flag for polling connection until value appears</span>
+<span class="sd">            :param float wait_interval: milliseconds to wait between polling requests</span>
+<span class="sd">            :returns all_data: dictionary of key connections_in.key() and value</span>
+<span class="sd">                               int32 or single int32</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ScalarSInt32</span><span class="p">(),</span> <span class="n">wait</span><span class="p">,</span> <span class="n">wait_interval</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Client.put_array_nd_float64"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.put_array_nd_float64">[docs]</a>    <span class="k">def</span> <span class="nf">put_array_nd_float64</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function puts a numpy array of type float64 into the database.</span>
@@ -252,6 +280,19 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_put_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ArraySInt64</span><span class="p">())</span></div>
 
+<div class="viewcode-block" id="Client.put_array_nd_int32"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.put_array_nd_int32">[docs]</a>    <span class="k">def</span> <span class="nf">put_array_nd_int32</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This function puts a numpy array of type int32 into the database.</span>
+<span class="sd">           :param str key: key of the value being put</span>
+<span class="sd">           :param value: value being put</span>
+<span class="sd">           :type value: numpy.ndarray filled with int32</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;The value passed into put_array_nd_int32() must be of type numpy.ndarray.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;The values inside of the numpy.ndarray must be of type int32 to use put_array_nd_int32().&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ArraySInt64</span><span class="p">())</span></div>
+
 <div class="viewcode-block" id="Client.put_scalar_float64"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.put_scalar_float64">[docs]</a>    <span class="k">def</span> <span class="nf">put_scalar_float64</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function puts a 64 bit float into the database.</span>
 <span class="sd">           :param str key: key of the value being put</span>
@@ -275,6 +316,18 @@
             <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;The value passed into put_scalar_int64() must be of type int&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_put_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ScalarSInt64</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Client.put_scalar_int32"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.put_scalar_int32">[docs]</a>    <span class="k">def</span> <span class="nf">put_scalar_int32</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This function puts a 32 bit integer into the database.</span>
+<span class="sd">           :param str key: key of the value being put</span>
+<span class="sd">           :param value: value being put</span>
+<span class="sd">           :type value: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;The value passed into put_scalar_int32() must be of type int&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_put_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ScalarSInt32</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="Client.exists"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This function checks if a key is in the database through any of the</span>
@@ -368,6 +421,34 @@
 
         <span class="k">return</span> <span class="n">matched_value</span></div>
 
+<div class="viewcode-block" id="Client.poll_key_and_check_scalar_int32"><a class="viewcode-back" href="../../../doc/api/client.html#smartsim.clients.client.Client.poll_key_and_check_scalar_int32">[docs]</a>    <span class="k">def</span> <span class="nf">poll_key_and_check_scalar_int32</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">poll_frequency</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_tries</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Poll key to check existence and if it is exists check against value</span>
+<span class="sd">           :param str key: key to check for in the database</span>
+<span class="sd">           :param int value: value to compare to</span>
+<span class="sd">           :param float poll_frequency: the time in milliseconds beteween tries</span>
+<span class="sd">           :param int num_tries: the maximum number of tries.  If -1, unlimited</span>
+<span class="sd">                                 attempts will be made.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matched_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">current_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">num_tries</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">conn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">connections_in</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">prefixed_key</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">conn</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">prefixed_key</span><span class="p">):</span>
+                    <span class="n">current_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scalar_int32</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">current_value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="n">num_tries</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="n">matched_value</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matched_value</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">poll_frequency</span><span class="o">/</span><span class="mf">1000.0</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">num_tries</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">num_tries</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">matched_value</span></div>
+
     <span class="k">def</span> <span class="nf">_get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span>  <span class="n">pb_message</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">wait_interval</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the value associated with some key from all the connections registered</span>
 <span class="sd">           in the orchestrator</span>
@@ -428,7 +509,7 @@
             <span class="n">dimensions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
                 <span class="n">pb_message</span><span class="o">.</span><span class="n">dimension</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-                
+
             <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">ravel</span><span class="p">():</span>
                 <span class="n">pb_message</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -527,7 +608,7 @@
                 <span class="n">pb_value</span> <span class="o">=</span> <span class="n">ScalarSInt64</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">SmartSimError</span><span class="p">(</span><span class="s2">&quot;Scalar data type &quot;</span> <span class="o">+</span> <span class="n">dtype</span> <span class="o">+</span> <span class="s2">&quot; not supported by the protobuf implementation in SmartSim.&quot;</span><span class="p">)</span>
-                
+
         <span class="k">return</span> <span class="n">pb_value</span></div></div>
 </pre></div>
 

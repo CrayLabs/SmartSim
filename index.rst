@@ -26,9 +26,9 @@ distributed machine learning to more typical data anaylsis and visualization.
    :caption: General
 
    doc/experiment
-   doc/online-sim-interaction
-   doc/clients
    doc/generate
+   doc/launchers
+   doc/cmdservers
    doc/developers
 
 .. toctree::
@@ -37,13 +37,18 @@ distributed machine learning to more typical data anaylsis and visualization.
 
    doc/examples/basic
    doc/examples/ensembles
-   doc/examples/allocations
-   doc/examples/python
-   doc/examples/fortran
-   doc/examples/c-plus
+   doc/examples/jupyter
    doc/examples/urika
    doc/examples/MPO
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Clients
+
+   doc/clients/fortran
+   doc/clients/c-plus
+   doc/clients/c
+   doc/clients/python
 
 .. toctree::
    :maxdepth: 2
@@ -51,6 +56,7 @@ distributed machine learning to more typical data anaylsis and visualization.
 
    doc/api/experiment
    doc/api/client
+   doc/api/remote
    doc/api/utilities
 
 

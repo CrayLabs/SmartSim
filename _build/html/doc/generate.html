@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Text-Based Configuration Generation &mdash; SmartSim 0.1.0 documentation</title>
+  <title>Ensembles &mdash; SmartSim 0.1.0 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -35,8 +35,8 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer" href="developers.html" />
-    <link rel="prev" title="SmartSim" href="../index.html" /> 
+    <link rel="next" title="Launchers" href="launchers.html" />
+    <link rel="prev" title="Creating an Experiment" href="experiment.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,27 +82,36 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Text-Based Configuration Generation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#tagging-and-creation">Tagging and Creation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#generation-strategies">Generation Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experiment.html">Creating an Experiment</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Ensembles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ensemble-parameters">Ensemble Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ensemble-generation">Ensemble Generation</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cmdservers.html">Using a Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/utilities.html">Utilities</a></li>
 </ul>
 
@@ -149,7 +158,7 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Text-Based Configuration Generation</li>
+      <li>Ensembles</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -168,164 +177,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="text-based-configuration-generation">
-<h1>Text-Based Configuration Generation<a class="headerlink" href="#text-based-configuration-generation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="tagging-and-creation">
-<h2>Tagging and Creation<a class="headerlink" href="#tagging-and-creation" title="Permalink to this headline">¶</a></h2>
-<p>To generate new instances of a simulation model, find and tag the simulation sepcific
-configuration file. The following experiment will use a particle simulation model
-named <code class="docutils literal notranslate"><span class="pre">LAMMPS</span></code>. The model configuration file, <code class="docutils literal notranslate"><span class="pre">in.atm</span></code> specifies LAMMPS to run
-a Axilrod-Teller-Muto (ATM) potential calculation.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Axilrod-Teller-Muto potential example
-
-variable        x index 1
-variable        y index 1
-variable        z index 1
-
-variable        xx equal 10*$x
-variable        yy equal 10*$y
-variable        zz equal 10*$z
-
-units           lj
-atom_style      atomic
-
-lattice         fcc 0.65
-region          box block 0 ${xx} 0 ${yy} 0 ${zz}
-create_box      1 box
-create_atoms    1 box
-
-pair_style      hybrid/overlay lj/cut 4.5 atm 4.5 2.5
-pair_coeff      * * lj/cut 1.0 1.0
-pair_coeff      * * atm * 0.072
-
-mass            * 1.0
-velocity        all create 1.033 12345678 loop geom
-
-fix             1 all nvt temp 1.033 1.033 0.05
-
-timestep        0.002
-thermo          5
-
-run             25
-</pre></div>
+  <div class="section" id="ensembles">
+<h1>Ensembles<a class="headerlink" href="#ensembles" title="Permalink to this headline">¶</a></h1>
+<p>Talk through the motivation and reason behind the ensemble entity
+and how its used.</p>
+<div class="section" id="ensemble-parameters">
+<h2>Ensemble Parameters<a class="headerlink" href="#ensemble-parameters" title="Permalink to this headline">¶</a></h2>
+<p>describe how ensembles use model parameters</p>
 </div>
-<p>The last variable listed, <code class="docutils literal notranslate"><span class="pre">run</span></code>, tells the simulation to run for a number of steps
-before exiting. For this example, we will tag, and modify the number of steps in order
-to generate four simulation models that run for 4 different lengths of time.</p>
-<p>Tagging the configuration file lets the <code class="docutils literal notranslate"><span class="pre">Generator</span></code> know which of and where in
-the model files to edit given a file or folder of model files to modify.</p>
-<p>To tag the <code class="docutils literal notranslate"><span class="pre">in.atm</span></code> configuration file listed above, place semicolons on either
-side of the values that you wish to change, and put in a good placeholder name
-so that you can remember which values are being edited.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Axilrod-Teller-Muto potential example
-
-variable        x index 1
-variable        y index 1
-variable        z index 1
-
-variable        xx equal 10*$x
-variable        yy equal 10*$y
-variable        zz equal 10*$z
-
-units           lj
-atom_style      atomic
-
-lattice         fcc 0.65
-region          box block 0 ${xx} 0 ${yy} 0 ${zz}
-create_box      1 box
-create_atoms    1 box
-
-pair_style      hybrid/overlay lj/cut 4.5 atm 4.5 2.5
-pair_coeff      * * lj/cut 1.0 1.0
-pair_coeff      * * atm * 0.072
-
-mass            * 1.0
-velocity        all create 1.033 12345678 loop geom
-
-fix             1 all nvt temp 1.033 1.033 0.05
-
-timestep        0.002
-thermo          5
-
-run             ;STEPS;
-</pre></div>
-</div>
-<p>The tag can also be set through a call to <code class="docutils literal notranslate"><span class="pre">Generator.set_tag()</span></code>. The tag can be
-anything that wont be already represented within the configuration file itself.
-For instance, in the example above, we wouldnt want to use dollar signs or curly
-braces for the tag.</p>
-<p>Once the configuration file(s) are tagged and ready, the experiment can be setup
-through the <code class="docutils literal notranslate"><span class="pre">Experiment</span></code> initialization as follows</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># import needed smartsim modules</span>
-<span class="kn">from</span> <span class="nn">smartsim</span> <span class="kn">import</span> <span class="n">Controller</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Experiment</span>
-
-<span class="c1"># intialize experiment to conduct experiment</span>
-<span class="n">experiment</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s2">&quot;lammps_atm&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>For this example, we will create one ensemble that holds the four models with
-four increasing number of steps. This is done through a call to <code class="docutils literal notranslate"><span class="pre">experiment.create_ensemble</span></code>
-as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create ensembles</span>
-<span class="n">param_dict_1</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;steps&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">]}</span>
-<span class="n">experiment</span><span class="o">.</span><span class="n">create_ensemble</span><span class="p">(</span><span class="s2">&quot;atm&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">param_dict</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The parameter dictionary above specifies the placeholder we put into the configuration
-file as the keys and the values we wish for models to be configurated and created with
-as the values.</p>
-</div>
-<div class="section" id="generation-strategies">
-<h2>Generation Strategies<a class="headerlink" href="#generation-strategies" title="Permalink to this headline">¶</a></h2>
-<p>To generate our models we need to create an instance of a generator, provide
-the tagged configuration files and make a call to <code class="docutils literal notranslate"><span class="pre">Generator.generate()</span></code>.  The
-<code class="docutils literal notranslate"><span class="pre">generate</span></code> function creates models according to the specified permutation strategy,
-which, by default, is “all permutations”: it creates every model possible, given the
-input parameters.  In order to select the strategy, we may call the
-<code class="docutils literal notranslate"><span class="pre">Generator.set_strategy()</span></code> function with the following argument types: a string
-corresponding to one of the internal strategies, a string formatted as “module.function”
-that the Generator will then load, or an actual function.</p>
-<p>There are three built in permutation strategies: “all_perm”, “random”, and “step”.
-“all_perm” returns all possible combinations of the input parameters; “random” returns
-<code class="docutils literal notranslate"><span class="pre">n_models</span></code> models; this can be seen as a random subset of all possible combinations.
-The argument <code class="docutils literal notranslate"><span class="pre">n_models</span></code> must be passed to the <code class="docutils literal notranslate"><span class="pre">generate</span></code> function.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Supply the generator with necessary files to run the simulation</span>
-<span class="c1"># and generate the specified models.</span>
-<span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">n_models</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>User supplied functions must accept at _least_ <code class="docutils literal notranslate"><span class="pre">param_names</span></code> and <code class="docutils literal notranslate"><span class="pre">param_values</span></code>,
-where param_names is a list of the supplied parameter names, and param_values is a
-list of the corresponding parameter names.  In the following example, <code class="docutils literal notranslate"><span class="pre">param_names</span></code>
-is equal to <code class="docutils literal notranslate"><span class="pre">[steps]</span></code>, and param_values is <code class="docutils literal notranslate"><span class="pre">[20,</span> <span class="pre">25,</span> <span class="pre">30,</span> <span class="pre">35]</span></code>.</p>
-<p>The functions must return a list of dictionaries, where each element in the list
-is the dictionary for a model.  For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">my_function</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">param_values</span><span class="p">):</span>
-  <span class="c1"># only return the single parameter/value</span>
-  <span class="k">return</span> <span class="p">[{</span> <span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:</span> <span class="n">param_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">}]</span>
-
-<span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">my_function</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>User written functions are not limited to only receiving the above arguments.
-Extra arguments may be added to the function as necessary; at runtime, these are
-passed through to the selection strategy via the <code class="docutils literal notranslate"><span class="pre">generate</span></code> function (as above,
-as in for “random” and <code class="docutils literal notranslate"><span class="pre">n_models</span></code>).</p>
-<p>Strategy selection is optional; by default, “all_perm” is used, and the following
-is also valid:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Supply the generator with necessary files to run the simulation</span>
-<span class="c1"># and generate the specified models</span>
-<span class="n">base_config</span> <span class="o">=</span> <span class="s2">&quot;LAMMPS/in.atm&quot;</span>
-<span class="n">GEN</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">model_files</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
-<span class="n">GEN</span><span class="o">.</span><span class="n">generate</span><span class="p">()</span>
-</pre></div>
-</div>
+<div class="section" id="ensemble-generation">
+<h2>Ensemble Generation<a class="headerlink" href="#ensemble-generation" title="Permalink to this headline">¶</a></h2>
+<p>Describe the generation strategies</p>
 </div>
 </div>
 
@@ -337,10 +199,10 @@ is also valid:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="developers.html" class="btn btn-neutral float-right" title="Developer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="launchers.html" class="btn btn-neutral float-right" title="Launchers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../index.html" class="btn btn-neutral float-left" title="SmartSim" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="experiment.html" class="btn btn-neutral float-left" title="Creating an Experiment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

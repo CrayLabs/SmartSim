@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Text-Based Configuration Generation" href="doc/generate.html" /> 
+    <link rel="next" title="Experiments" href="doc/experiment.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,24 +81,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/cmdservers.html">Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/utilities.html">Utilities</a></li>
 </ul>
 
@@ -183,11 +191,18 @@ distributed machine learning to more typical data anaylsis and visualization.</p
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Text-Based Configuration Generation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#tagging-and-creation">Tagging and Creation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#generation-strategies">Generation Strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/generate.html">Ensembles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#ensemble-parameters">Ensemble Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/generate.html#ensemble-generation">Ensemble Generation</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="doc/launchers.html">Launchers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/launchers.html#slurm">Slurm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/launchers.html#local">Local</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/cmdservers.html">Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/developers.html">Developer</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="doc/developers.html#development-setup">Development Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="doc/developers.html#pull-requests">Pull Requests</a></li>
@@ -202,14 +217,24 @@ distributed machine learning to more typical data anaylsis and visualization.</p
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/urika.html">Connect Jupyter to a Simulation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="doc/examples/MPO.html">Model Parameter Optimization with CrayAI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/ensembles.html">Generate and Run Ensembles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/examples/ensembles.html#tagging-and-creation">Tagging and Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/examples/ensembles.html#generation-strategies">Generation Strategies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/clients/python.html">Python</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
@@ -217,6 +242,7 @@ distributed machine learning to more typical data anaylsis and visualization.</p
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doc/api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="doc/api/utilities.html">Utilities</a></li>
 </ul>
 </div>
@@ -236,7 +262,7 @@ distributed machine learning to more typical data anaylsis and visualization.</p
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="doc/generate.html" class="btn btn-neutral float-right" title="Text-Based Configuration Generation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="doc/experiment.html" class="btn btn-neutral float-right" title="Experiments" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

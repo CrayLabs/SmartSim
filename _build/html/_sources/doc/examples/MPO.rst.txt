@@ -1,6 +1,6 @@
 
 
-Model Parameter Optimization with CrayAI
-----------------------------------------
+Optimize Model Parameters
+-------------------------
 
 example showing how to use CrayAI with SmartSim

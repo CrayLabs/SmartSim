@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Utilities" href="utilities.html" />
+    <link rel="next" title="Remote" href="remote.html" />
     <link rel="prev" title="Experiment" href="experiment.html" /> 
 </head>
 
@@ -82,23 +82,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Creating an Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cmdservers.html">Using a Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="experiment.html">Experiment</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
 </ul>
 
@@ -166,18 +175,18 @@
             
   <div class="section" id="module-smartsim.clients.client">
 <span id="client"></span><h1>Client<a class="headerlink" href="#module-smartsim.clients.client" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="smartsim.clients.client.Client">
-<em class="property">class </em><code class="sig-prename descclassname">smartsim.clients.client.</code><code class="sig-name descname">Client</code><span class="sig-paren">(</span><em class="sig-param">cluster=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">smartsim.clients.client.</code><code class="sig-name descname">Client</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cluster</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client" title="Permalink to this definition">¶</a></dt>
 <dd><p>The client class is used to communicate with various SmartSim entities that
 the user defines. Clients can hold multiple connection objects and therefore
 can send and recieve from multiple locations.</p>
 <p>If multiple connections are registered to this specific client, each call to
 get_data(key) will retrieve all data that has been stored under that key for
 each connection.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.deserialize">
-<code class="sig-name descname">deserialize</code><span class="sig-paren">(</span><em class="sig-param">pb_message</em>, <em class="sig-param">data_bytes</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.deserialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.deserialize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">deserialize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pb_message</span></em>, <em class="sig-param"><span class="n">data_bytes</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.deserialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.deserialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpacks the serialized protocol buffer into a numpy.ndarray
 :param pb_message: protobuf message objec to decode bytes
 :type pb_message: google.protobuf.message
@@ -187,9 +196,9 @@ each connection.</p>
 :rtype: numpy.ndarray, float, or int</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.exists">
-<code class="sig-name descname">exists</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.exists" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">exists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.exists" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function checks if a key is in the database through any of the
 incoming connections
 :param str key: key to check in the database
@@ -197,9 +206,9 @@ incoming connections
 :rtype key_exists: bool</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.get_array_nd_float64">
-<code class="sig-name descname">get_array_nd_float64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">wait=False</em>, <em class="sig-param">wait_interval=1000</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_array_nd_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_array_nd_float64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_array_nd_float64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_array_nd_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_array_nd_float64" title="Permalink to this definition">¶</a></dt>
 <dd><p>“This function gets a numpy array of type float64 from the database.
 :param str key: key of the value to fetch
 :param bool wait: flag for polling connection until value appears
@@ -210,9 +219,22 @@ incoming connections
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.get_array_nd_int32">
+<code class="sig-name descname">get_array_nd_int32</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_array_nd_int32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_array_nd_int32" title="Permalink to this definition">¶</a></dt>
+<dd><p>“This function gets a numpy array of type int32 from the database.
+:param str key: key of the value to fetch
+:param bool wait: flag for polling connection until value appears
+:param float wait_interval: milliseconds to wait between polling requests
+:returns all_data: dictionary of key connections_in.key() and value</p>
+<blockquote>
+<div><p>numpy.ndarray or single numpy.ndarray</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.get_array_nd_int64">
-<code class="sig-name descname">get_array_nd_int64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">wait=False</em>, <em class="sig-param">wait_interval=1000</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_array_nd_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_array_nd_int64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_array_nd_int64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_array_nd_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_array_nd_int64" title="Permalink to this definition">¶</a></dt>
 <dd><p>“This function gets a numpy array of type int64 from the database.
 :param str key: key of the value to fetch
 :param bool wait: flag for polling connection until value appears
@@ -223,9 +245,9 @@ incoming connections
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.get_protobuf_message">
-<code class="sig-name descname">get_protobuf_message</code><span class="sig-paren">(</span><em class="sig-param">value</em>, <em class="sig-param">dtype</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_protobuf_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_protobuf_message" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_protobuf_message</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dtype</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_protobuf_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_protobuf_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function returns the correct protobuf message object
 based on the type of value.  Note that python floats
 are 64 bit and automatically assigned to double type.</p>
@@ -253,9 +275,9 @@ are 64 bit and automatically assigned to double type.</p>
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.get_scalar_float64">
-<code class="sig-name descname">get_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">wait=False</em>, <em class="sig-param">wait_interval=1000</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_scalar_float64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_scalar_float64" title="Permalink to this definition">¶</a></dt>
 <dd><p>“This function gets a scalar of type float64 from the database.
 :param str key: key of the value to fetch
 :param bool wait: flag for polling connection until value appears
@@ -266,9 +288,22 @@ are 64 bit and automatically assigned to double type.</p>
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.get_scalar_int32">
+<code class="sig-name descname">get_scalar_int32</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_scalar_int32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_scalar_int32" title="Permalink to this definition">¶</a></dt>
+<dd><p>“This function gets a scalar of type int32 from the database.
+:param str key: key of the value to fetch
+:param bool wait: flag for polling connection until value appears
+:param float wait_interval: milliseconds to wait between polling requests
+:returns all_data: dictionary of key connections_in.key() and value</p>
+<blockquote>
+<div><p>int32 or single int32</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.get_scalar_int64">
-<code class="sig-name descname">get_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">wait=False</em>, <em class="sig-param">wait_interval=1000</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_scalar_int64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">wait_interval</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.get_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.get_scalar_int64" title="Permalink to this definition">¶</a></dt>
 <dd><p>“This function gets a scalar of type int64 from the database.
 :param str key: key of the value to fetch
 :param bool wait: flag for polling connection until value appears
@@ -279,9 +314,9 @@ are 64 bit and automatically assigned to double type.</p>
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.poll_key">
-<code class="sig-name descname">poll_key</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">poll_frequency=1000</em>, <em class="sig-param">num_tries=-1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">poll_key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">poll_frequency</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">num_tries</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function polls for a key with a specificed frequency
 and specified number of times
 :param str key: key to check for in the database
@@ -292,9 +327,9 @@ and specified number of times
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.poll_key_and_check_scalar_float64">
-<code class="sig-name descname">poll_key_and_check_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em>, <em class="sig-param">poll_frequency=1000</em>, <em class="sig-param">num_tries=-1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key_and_check_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key_and_check_scalar_float64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">poll_key_and_check_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">poll_frequency</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">num_tries</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key_and_check_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key_and_check_scalar_float64" title="Permalink to this definition">¶</a></dt>
 <dd><p>Poll key to check existence and if it is exists check against value
 :param str key: key to check for in the database
 :param flaot value: value to compare to
@@ -305,9 +340,9 @@ and specified number of times
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
-<dt id="smartsim.clients.client.Client.poll_key_and_check_scalar_int64">
-<code class="sig-name descname">poll_key_and_check_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em>, <em class="sig-param">poll_frequency=1000</em>, <em class="sig-param">num_tries=-1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key_and_check_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key_and_check_scalar_int64" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.poll_key_and_check_scalar_int32">
+<code class="sig-name descname">poll_key_and_check_scalar_int32</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">poll_frequency</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">num_tries</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key_and_check_scalar_int32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key_and_check_scalar_int32" title="Permalink to this definition">¶</a></dt>
 <dd><p>Poll key to check existence and if it is exists check against value
 :param str key: key to check for in the database
 :param int value: value to compare to
@@ -318,45 +353,76 @@ and specified number of times
 </div></blockquote>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.poll_key_and_check_scalar_int64">
+<code class="sig-name descname">poll_key_and_check_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">poll_frequency</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">num_tries</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.poll_key_and_check_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.poll_key_and_check_scalar_int64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll key to check existence and if it is exists check against value
+:param str key: key to check for in the database
+:param int value: value to compare to
+:param float poll_frequency: the time in milliseconds beteween tries
+:param int num_tries: the maximum number of tries.  If -1, unlimited</p>
+<blockquote>
+<div><p>attempts will be made.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.put_array_nd_float64">
-<code class="sig-name descname">put_array_nd_float64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_array_nd_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_array_nd_float64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">put_array_nd_float64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_array_nd_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_array_nd_float64" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function puts a numpy array of type float64 into the database.
 :param str key: key of the value being put
 :param value: value being put
 :type value: numpy.ndarray filled with float64</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.put_array_nd_int32">
+<code class="sig-name descname">put_array_nd_int32</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_array_nd_int32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_array_nd_int32" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function puts a numpy array of type int32 into the database.
+:param str key: key of the value being put
+:param value: value being put
+:type value: numpy.ndarray filled with int32</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.put_array_nd_int64">
-<code class="sig-name descname">put_array_nd_int64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_array_nd_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_array_nd_int64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">put_array_nd_int64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_array_nd_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_array_nd_int64" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function puts a numpy array of type int64 into the database.
 :param str key: key of the value being put
 :param value: value being put
 :type value: numpy.ndarray filled with int64</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.put_scalar_float64">
-<code class="sig-name descname">put_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_scalar_float64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">put_scalar_float64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_scalar_float64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_scalar_float64" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function puts a 64 bit float into the database.
 :param str key: key of the value being put
 :param value: value being put
 :type value: float</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="smartsim.clients.client.Client.put_scalar_int32">
+<code class="sig-name descname">put_scalar_int32</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_scalar_int32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_scalar_int32" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function puts a 32 bit integer into the database.
+:param str key: key of the value being put
+:param value: value being put
+:type value: int</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.put_scalar_int64">
-<code class="sig-name descname">put_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_scalar_int64" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">put_scalar_int64</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.put_scalar_int64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.put_scalar_int64" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function puts a 64 bit integer into the database.
 :param str key: key of the value being put
 :param value: value being put
 :type value: int</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.serialize">
-<code class="sig-name descname">serialize</code><span class="sig-paren">(</span><em class="sig-param">pb_message</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.serialize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">serialize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pb_message</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.serialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.serialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Serializes value using protocol buffer
 :param pb_message: protobuf message object
 :type pb_message: google.protobuf.message
@@ -365,7 +431,7 @@ and specified number of times
 TODO let user specify row vs column major</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="smartsim.clients.client.Client.setup_connections">
 <code class="sig-name descname">setup_connections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/smartsim/clients/client.html#Client.setup_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smartsim.clients.client.Client.setup_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve the environment variables specific to this Client instance that have
@@ -386,7 +452,7 @@ open for sending and recieving data</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="utilities.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="remote.html" class="btn btn-neutral float-right" title="Remote" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="experiment.html" class="btn btn-neutral float-left" title="Experiment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

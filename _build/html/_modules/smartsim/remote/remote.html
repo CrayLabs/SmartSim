@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>smartsim.remote.remote &mdash; SmartSim 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SmartSim
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/experiment.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/cmdservers.html">Command Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/developers.html">Developer</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/basic.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/examples/MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/clients/python.html">Python</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/experiment.html">Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/remote.html">Remote</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc/api/utilities.html">Utilities</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartSim</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>smartsim.remote.remote</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for smartsim.remote.remote</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">.cmdClient</span> <span class="kn">import</span> <span class="n">CmdClient</span>
+<span class="kn">from</span> <span class="nn">..error</span> <span class="kn">import</span> <span class="n">CommandServerError</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">remove_env</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="init_command_server"><a class="viewcode-back" href="../../../doc/api/remote.html#smartsim.remote.remote.init_command_server">[docs]</a><span class="k">def</span> <span class="nf">init_command_server</span><span class="p">(</span><span class="n">addr</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5555</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize a command server so that SmartSim can be</span>
+<span class="sd">        run on compute nodes where slurm and other workload</span>
+<span class="sd">        manager commands are not available. Command servers</span>
+<span class="sd">        must be located on the same system, and be reachable</span>
+<span class="sd">        via tcp.</span>
+
+<span class="sd">        Keep in mind that this does not actually start the</span>
+<span class="sd">        CmdServer instance, that must be started manually.</span>
+
+<span class="sd">    :param addr: address of the Command Server launched seperately,</span>
+<span class="sd">                    defaults to &quot;127.0.0.1&quot;</span>
+<span class="sd">    :type addr: str, optional</span>
+<span class="sd">    :param port: port of the Command Server, defaults to 5555</span>
+<span class="sd">    :type port: int, optional</span>
+<span class="sd">    :raises CommandServerError: If setup with remote launcher</span>
+<span class="sd">                                    fails</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># set the remote address for the cmd_client</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="s2">&quot;tcp://&quot;</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">addr</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SMARTSIM_REMOTE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">address</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">CmdClient</span><span class="p">()</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_remote_request</span><span class="p">([</span><span class="s2">&quot;ping&quot;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_remote_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Command Server setup for remote commands&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">CommandServerError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Could not initialize Command Server&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="shutdown_command_server"><a class="viewcode-back" href="../../../doc/api/remote.html#smartsim.remote.remote.shutdown_command_server">[docs]</a><span class="k">def</span> <span class="nf">shutdown_command_server</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Shutdown a command server launched by the user by</span>
+<span class="sd">       sending a shutdown request to the running CmdServer.</span>
+
+<span class="sd">    :raises CommandServerError: If shutdown fails</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># ensure remote has been set in environment</span>
+        <span class="n">address</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SMARTSIM_REMOTE&quot;</span><span class="p">]</span>
+
+        <span class="n">client</span> <span class="o">=</span> <span class="n">CmdClient</span><span class="p">()</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_remote_request</span><span class="p">([</span><span class="s2">&quot;shutdown&quot;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_remote_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Command Server shutdown successful&quot;</span><span class="p">)</span>
+
+        <span class="c1"># remove the remote env so future calls do not use this</span>
+        <span class="c1"># command server</span>
+        <span class="n">remove_env</span><span class="p">(</span><span class="s2">&quot;SMARTSIM_REMOTE&quot;</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">remove_env</span><span class="p">(</span><span class="s2">&quot;SMARTSIM_REMOTE&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to shutdown Command Server&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CommandServerError</span><span class="p">(</span><span class="s2">&quot;Could not find Command Center to shutdown&quot;</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="n">CommandServerError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">remove_env</span><span class="p">(</span><span class="s2">&quot;SMARTSIM_REMOTE&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to shutdown Command Server&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Sam Partee
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

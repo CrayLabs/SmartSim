@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Basic Usage &mdash; SmartSim 0.1.0 documentation</title>
+  <title>Quick Start &mdash; SmartSim 0.1.0 documentation</title>
   
 
   
@@ -21,10 +21,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Generating and Running Ensembles" href="ensembles.html" />
+    <link rel="next" title="Generate and Run Ensembles" href="ensembles.html" />
     <link rel="prev" title="Developer" href="../developers.html" /> 
 </head>
 
@@ -82,23 +82,32 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../generate.html">Text-Based Configuration Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../experiment.html">Creating an Experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generate.html">Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launchers.html">Launchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cmdservers.html">Using a Command Server</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers.html">Developer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Examples</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ensembles.html">Generating and Running Ensembles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="allocations.html">Working with allocations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="python.html">Using the Python Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fortran.html">Using the Fortran Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="c-plus.html">Using the C++ Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="urika.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ensembles.html">Generate and Run Ensembles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jupyter.html">Connect Jupyter to a Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="urika.html">Leverage Cray Urika</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MPO.html">Optimize Model Parameters</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Clients</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../clients/fortran.html">Fortran</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c-plus.html">C++</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/c.html">C</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../clients/python.html">Python</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/experiment.html">Experiment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/remote.html">Remote</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/utilities.html">Utilities</a></li>
 </ul>
 
@@ -145,7 +154,7 @@
     
       <li><a href="../../index.html">Docs</a> &raquo;</li>
         
-      <li>Basic Usage</li>
+      <li>Quick Start</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -164,8 +173,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="basic-usage">
-<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
 <p>Show basic examples of how to run models</p>
 </div>
 
@@ -177,7 +186,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="ensembles.html" class="btn btn-neutral float-right" title="Generating and Running Ensembles" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="ensembles.html" class="btn btn-neutral float-right" title="Generate and Run Ensembles" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../developers.html" class="btn btn-neutral float-left" title="Developer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
