@@ -573,26 +573,6 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_connection(self, sender):
-        """Create a connection between the experiment script and
-           SmartSim entity. This method should be called after a
-           database has been launched or an error will be raised.
-
-           :param str sender: name of the created entity with a
-                              Client instance to send data to
-                              this smartsim script
-           :raises SmartSimError: if orchestrator has not been created
-        """
-        if not self.orc:
-            raise SmartSimError("Create orchestrator to register connections")
-        try:
-            environ["SSDB"] = self.get_db_address()[0]
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-        environ["SSNAME"] = self.name
-        environ["SSDATAIN"] = sender
-
     def delete_ensemble(self, name):
         """Delete a created ensemble from Experiment so that
            any future calls to SmartSim Modules will not include

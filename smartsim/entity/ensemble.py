@@ -1,6 +1,5 @@
-
 from os import path, mkdir
-from ..error import EntityExistsError
+from ..error import EntityExistsError, SmartSimError
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
@@ -31,6 +30,7 @@ class Ensemble(SmartSimEntity):
         super().__init__(name, path, "ensemble", run_settings)
         self.params = params
         self.experiment = experiment
+        self._key_prefixing_enabled = True
         self.models = {}
 
     def add_model(self, model, overwrite=False):
@@ -39,7 +39,7 @@ class Ensemble(SmartSimEntity):
         :param model: model instance
         :type model: NumModel
         :param overwrite: overwrite model if it already exists
-        :raises SSModelExistsError: if model already exists in this ensemble
+        :raises EntityExistsError: if model already exists in this ensemble
         """
         if model.name in self.models and not overwrite:
             raise EntityExistsError(
@@ -48,7 +48,6 @@ class Ensemble(SmartSimEntity):
             # Ensemble members need a key_prefix set to avoid namespace clashes
             self.models[model.name] = model
             if self.name != 'default':
-                model.key_prefix = f'{self.name}_{model.name}'
                 model.enable_key_prefixing()
 
     def register_incoming_entity(self, incoming_entity, receiving_client_type):
@@ -67,6 +66,26 @@ class Ensemble(SmartSimEntity):
         """
         for model in self.models.values():
             model.register_incoming_entity(incoming_entity, receiving_client_type)
+
+    def enable_key_prefixing(self):
+        """If called, all models within this ensemble will prefix their keys with its
+        own model name.
+        """
+        for model in self.models:
+            model.enable_key_prefixing()
+
+    def disable_key_prefixing(self):
+        """This function should not be called for SmartSim ensemble instances to avoid
+        key namespace clashes
+        """
+        raise SmartSimError("Ensembles should never have key prefixing disabled")
+
+    def query_key_prefixing(self):
+        """Inquire as to whether each model within the ensemble will prefix its keys
+        :returns: True if all models have key prefixing enabled, False otherwise
+        :rtype: dict
+        """
+        return all([model.query_key_prefixing() for model in self.models])
 
     def __str__(self):
         ensemble_str = f"\nEnsemble: {self.name}"
