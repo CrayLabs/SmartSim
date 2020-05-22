@@ -22,14 +22,19 @@ run_settings = {"executable": "cp2k.psmp",
                 "alloc": alloc}
 
 # Create the ensemble with settings listed above
-experiment.create_ensemble("h2o-1", params=ensemble_params, run_settings=run_settings)
+ensemble = experiment.create_ensemble("h2o-1",
+                                      params=ensemble_params,
+                                      run_settings=run_settings)
+
+# attach input file to this ensemble
+ensemble.attach_generator_files(to_configure="./h2o.inp")
 
 # Generate an experiment directory and create the
 # ensembles based on the settings supplied to the
 # ensemble, which in this case will create 4 models
 # each with a different value in their configuration
 # file for number of steps
-experiment.generate(model_files="./h2o.inp")
+experiment.generate(overwrite=True)
 
 # launch the ensemble. Since we dont specify which
 # ensemble to run, launch all entities defined within
@@ -43,4 +48,5 @@ experiment.poll()
 # release all allocations obtained by this experiment
 experiment.release()
 
-
+# print the experiment summary
+print(experiment)

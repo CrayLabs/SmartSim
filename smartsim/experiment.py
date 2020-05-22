@@ -3,7 +3,7 @@ import sys
 import zmq
 
 from os import path, mkdir, listdir, getcwd, environ
-from .error import SmartSimError, SSConfigError
+from .error import SmartSimError, SSConfigError, EntityExistsError
 from .orchestrator import Orchestrator
 from .entity import SmartSimEntity, SmartSimNode, NumModel, Ensemble
 from .generation import Generator
@@ -245,32 +245,23 @@ class Experiment:
             raise
 
 
-    def generate(self, model_files=None, node_files=None, tag=None,
-                 strategy="all_perm", **kwargs):
+    def generate(self, tag=None, strategy="all_perm", overwrite=False, **kwargs):
         """Generate the file structure for a SmartSim experiment. This
            includes the writing and configuring of input files for a
            model. Ensembles created with a 'params' argument will be
            expanded into multiple models based on a generation strategy.
-           Model input files are specified with the model_files argument.
-           All files and directories listed as strings in a list will be
-           copied to each model within an ensemble. Every model file is read,
-           checked for input variables to configure, and written. Input
-           variables to configure are specified with a tag within the input
-           file itself. The default tag is surronding an input value with
-           semicolons. e.g. THERMO=;90;
 
-           Files for SmartSimNodes can also be included to be copied into
-           node directories but are never read nor written. All node_files
-           will be copied into directories named after the name of the
-           SmartSimNode within the experiment.
+           To have files or directories present in the created entity
+           directories, such as datasets or input files, call
+           entity.attach_generator_files prior to generation. See
+           entity.attach_generator_files() for more information on
+           what types of files can be included.
 
-            :param model_files: The model files for the experiment.  Optional
-                                if model files are not needed for execution.
-            :type model_files: list of path like strings to directories or files
-            :param node_files: files to be copied into node directories. These
-                               are most likely files needed to run the node
-                               computations. e.g. a python script
-            :type node_files: list of path like strings to directories or files
+           Tagged model files are read, checked for input variables to
+           configure, and written. Input variables to configure are
+           specified with a tag within the input file itself.
+           The default tag is surronding an input value with semicolons.
+           e.g. THERMO=;90;
 
             :param str strategy: The permutation strategy for generating models within
                                 ensembles.
@@ -279,7 +270,7 @@ class Experiment:
             :raises SmartSimError: if generation fails
         """
         try:
-            generator = Generator()
+            generator = Generator(overwrite=overwrite)
             generator.set_strategy(strategy)
             if tag:
                 generator.set_tag(tag)
@@ -288,8 +279,6 @@ class Experiment:
                 ensembles=self.ensembles,
                 nodes=self.nodes,
                 orchestrator=self.orc,
-                model_files=model_files,
-                node_files=node_files,
                 **kwargs
             )
         except SmartSimError as e:
@@ -329,7 +318,7 @@ class Experiment:
             raise
 
 
-    def create_ensemble(self, name, params={}, run_settings={}):
+    def create_ensemble(self, name, params={}, run_settings={}, overwrite=False):
         """Create a ensemble to be used within one or many of the
            SmartSim Modules. Ensembles contain groups of models.
            Parameters can be given to a ensemble in order to generate
@@ -345,6 +334,9 @@ class Experiment:
         :param run_settings: define how the model should be run,
                              defaults to {}
         :type run_settings: dict, optional
+        :param overwrite: overwrite an existing ensemble if on by the
+                          same name already exists
+        :type overwrite: bool
         :raises SmartSimError: If ensemble cannot be created
         :return: the created Ensemble
         :rtype: Ensemble
@@ -353,14 +345,14 @@ class Experiment:
             new_ensemble = None
             for ensemble in self.ensembles:
                 if ensemble.name == name:
-                    raise SmartSimError("A ensemble named " + ensemble.name +
-                                        " already exists!")
+                    if overwrite:
+                        self.ensembles.remove(ensemble)
+                    else:
+                        error = f"Ensemble {ensemble.name} already exists.\n"
+                        error += f"Call with overwrite=True to replace this Ensemble"
+                        raise EntityExistsError(error)
 
             ensemble_path = path.join(self.exp_path, name)
-            if path.isdir(ensemble_path):
-                error = " ".join((
-                    "ensemble directory already exists:",ensemble_path))
-                raise SmartSimError(error)
             new_ensemble = Ensemble(name,
                                     params,
                                     self.name,
@@ -374,7 +366,7 @@ class Experiment:
             raise
 
     def create_model(self, name, ensemble="default", params={}, path=None,
-                     run_settings={}, enable_key_prefixing=False):
+                     run_settings={}, enable_key_prefixing=False, overwrite=False):
         """Create a model belonging to a specific ensemble. This function is
            useful for running a small number of models where the model files
            are already in place for execution.
@@ -403,8 +395,11 @@ class Experiment:
         :type run_settings: dict, optional
         :param enable_key_prefixing: If true, keys sent by this model will be
                                      prefixed with the model's name.
-                                     Defaults to False
-        :type enable_key_prefixing, optional: bool
+                                     Optional, defaults to False
+        :type enable_key_prefixing: bool
+        :param overwrite: replace model if one exists by the same name,
+                          Optional, defaults to false
+        :type overwrite: bool
         :raises SmartSimError: if ensemble name provided doesnt exist
         :return: the created model
         :rtype: NumModel
@@ -423,19 +418,18 @@ class Experiment:
                 self.create_ensemble(ensemble, params={}, run_settings={})
             for t in self.ensembles:
                 if t.name == ensemble:
-                    t.add_model(model)
+                    t.add_model(model, overwrite=overwrite)
                     model_added = True
             if not model_added:
-                raise SmartSimError("Could not find ensemble by the name of: " +
-                                    ensemble)
-
+                raise SmartSimError(
+                    f"Could not find ensemble {ensemble}")
             return model
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def create_orchestrator_cluster(self, alloc, path=None, port=6379, db_nodes=3,
-                                     dpn=1, **kwargs):
+                                     dpn=1, overwrite=False, **kwargs):
         """Create an in-memory database that can be used for the transfer of
            data between launched entities. For increasing throughput,
            the number of databases per node can be increased such that mulitple
@@ -471,9 +465,11 @@ class Experiment:
         :rtype: Orchestrator
         """
         try:
-            if self.orc:
-                raise SmartSimError(
-                    "Only one orchestrator can exist within a experiment.")
+            if self.orc and not overwrite:
+                error = "Only one orchestrator can exist within a experiment.\n"
+                error += "Call with overwrite=True to replace the current orchestrator"
+                raise EntityExistsError(error)
+
             if isinstance(self._control._launcher, LocalLauncher):
                 error = "Clustered orchestrators are not supported when using the local launcher\n"
                 error += "Use Experiment.create_orchestrator() for launching an orchestrator"
@@ -494,7 +490,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_orchestrator(self, path=None, port=6379, **kwargs):
+    def create_orchestrator(self, path=None, port=6379, overwrite=False, **kwargs):
         """Create an in-memory database to run with an experiment. Launched
            entities can communicate with the orchestrator through use
            of one of the Python, C, C++ or Fortran clients.
@@ -514,9 +510,11 @@ class Experiment:
         :rtype: Orchestrator
         """
         try:
-            if self.orc:
-                raise SmartSimError(
-                    "Only one orchestrator can exist within a experiment.")
+            if self.orc and not overwrite:
+                error = "Only one orchestrator can exist within a experiment.\n"
+                error += "Call with overwrite=True to replace the current orchestrator"
+                raise EntityExistsError(error)
+
             orcpath = getcwd()
             if path:
                 orcpath = path
@@ -529,7 +527,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_node(self, name, script_path=None, run_settings={},
+    def create_node(self, name, path=None, run_settings={}, overwrite=False,
                     enable_key_prefixing=False):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode
            tasks include training, processing, and inference. Nodes can be used
@@ -537,27 +535,36 @@ class Experiment:
            for nodes often use the Client class to send and receive data from
            the SmartSim orchestrator.
 
-           :param str name: name of the node to be launched
-           :param str script_path: path to the script or executable to be launched.
-                                   (default is the current working directory of the
-                                    SmartSim run script)
-           :param dict run_settings: Settings for the workload manager can be set by
-                                     including keyword arguments such as
-                                     duration="1:00:00" or nodes=5
+           :param name: name of the node to be launched
+           :type name: str
+           :param path: path to the script or executable to be launched.
+                        (default is the current working directory of the
+                        SmartSim run script)
+           :type path: str
+           :param run_settings: Settings for the workload manager can be set by
+                                including keyword arguments such as
+                                duration="1:00:00" or nodes=5
+           :type run_settings: dict
            :param enable_key_prefixing: If true, keys sent by this model will be
                                         prefixed with the model's name.
                                         Defaults to False
-           :type enable_key_prefixing, optional: bool
+           :type enable_key_prefixing: bool, optional
+           :param overwrite: replace node if one exists by the same name
            :raises: SmartSimError if node exists by the same name
            :returns: SmartSimNode created
            :rtype: SmartSimNode
-           """
+        """
         try:
             for node in self.nodes:
                 if node.name == name:
-                    raise SmartSimError("A node named " + node.name +
-                                        " already exists!")
-            node = SmartSimNode(name, script_path, run_settings=run_settings)
+                    if overwrite:
+                        self.nodes.remove(node)
+                    else:
+                        error = f"Node {node.name} already exists.\n"
+                        error += "Call with overwrite=True to replace"
+                        raise EntityExistsError(error)
+
+            node = SmartSimNode(name, path, run_settings=run_settings)
             if enable_key_prefixing:
                 node._key_prefixing_enabled = True
             self.nodes.append(node)
@@ -709,13 +716,14 @@ class Experiment:
     def __str__(self):
         experiment_str = "\n-- Experiment Summary --\n"
         if len(self.ensembles) > 0:
-            experiment_str += "\n-- ensembles --"
+            experiment_str += "\n-- ensembles --\n"
             for ensemble in self.ensembles:
                 experiment_str += str(ensemble)
         if len(self.nodes) > 0:
-            experiment_str += "\n-- Nodes --"
+            experiment_str += "\n-- Nodes --\n"
             for node in self.nodes:
                 experiment_str += str(node)
         if self.orc:
+            experiment_str += "\n -- Orchestrator --\n"
             experiment_str += str(self.orc)
         return experiment_str

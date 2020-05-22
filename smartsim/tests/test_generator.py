@@ -3,7 +3,7 @@ from os import path, environ, getcwd
 from shutil import rmtree
 
 from smartsim import Experiment
-from smartsim.error import SSModelExistsError, SmartSimError
+from smartsim.error import SmartSimError, SSConfigError
 from smartsim.generation import Generator
 from smartsim.tests.decorators import generator_test
 
@@ -23,9 +23,9 @@ def test_ensemble():
         "STEPS": [10, 20, 30]
         }
     ensemble = exp.create_ensemble("test", params=params)
+    ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(
         test_path,
-        model_files="./test_configs/in.atm",
         ensembles=ensemble
     )
 
@@ -46,10 +46,10 @@ def test_ensemble_random():
 
     param_dict = {"STEPS": list(steps), "THERMO": list(thermo)}
     ensemble = exp.create_ensemble("random", params=param_dict)
+    ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
 
     gen.generate_experiment(
         test_path,
-        model_files="./test_configs/in.atm",
         ensembles=ensemble,
         n_models=10
     )
@@ -69,9 +69,9 @@ def test_ensemble_stepped():
         "STEPS": [10, 20, 30]
         }
     ensemble = exp.create_ensemble("step", params=params)
+    ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(
         test_path,
-        model_files="./test_configs/in.atm",
         ensembles=ensemble
     )
 
@@ -97,9 +97,9 @@ def test_user_strategy():
         "STEPS": [10, 20, 30]
         }
     ensemble = exp.create_ensemble("user", params=params)
+    ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(
         test_path,
-        model_files="./test_configs/in.atm",
         ensembles=ensemble
     )
     assert(path.isdir("./generator_test/user/"))
@@ -115,10 +115,10 @@ def test_full_exp():
     """
 
     node = exp.create_node("node")
+    node.attach_generator_files(to_copy="./test_configs/sleep.py")
     orc = exp.create_orchestrator()
     gen.generate_experiment(
         test_path,
-        node_files="./test_configs/sleep.py",
         nodes=node,
         orchestrator=orc
     )
@@ -140,12 +140,12 @@ def test_dir_files():
         "STEPS": [10, 20, 30]
         }
     ensemble = exp.create_ensemble("dir_test", params=params)
+    ensemble.attach_generator_files(to_copy="./test_configs/test_dir/")
     node = exp.create_node("node_1")
+    node.attach_generator_files(to_copy="./test_configs/test_dir/")
 
     gen.generate_experiment(
         test_path,
-        model_files="./test_configs/test_dir/",
-        node_files="./test_configs/test_dir/",
         ensembles=ensemble,
         nodes=node
     )
@@ -163,20 +163,6 @@ def test_dir_files():
 
 
 @generator_test
-def test_bad_file_path():
-    """Test when the user provides a bad file path to a node_files as
-       an argument"""
-
-    node = exp.create_node("node_2")
-
-    with pytest.raises(SmartSimError):
-        gen.generate_experiment(
-            test_path,
-            node_files="./test_configs/not_a_file.py",
-            nodes=node,
-        )
-
-@generator_test
 def test_full_path():
     """Test when a full path is given as a model file"""
     gen.set_strategy("all_perm")
@@ -188,9 +174,9 @@ def test_full_path():
         "STEPS": [10, 20, 30]
         }
     ensemble = exp.create_ensemble("full_path", params=params)
+    ensemble.attach_generator_files(to_configure=full_path)
     gen.generate_experiment(
         test_path,
-        model_files=full_path,
         ensembles=ensemble
     )
 

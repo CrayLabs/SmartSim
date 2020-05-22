@@ -4,6 +4,7 @@ import os
 import atexit
 import sys
 
+from shutil import which
 from ..launcher import Launcher
 from ..launcherUtil import seq_to_str, write_to_bash, ComputeNode, Partition
 from ...error import LauncherError, SSConfigError
@@ -12,7 +13,7 @@ from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
 from .slurmParser import parse_salloc_error, parse_sstat_nodes, parse_step_id_from_sacct
 from .slurmStep import SlurmStep
 from .slurm import sstat, sacct, salloc, sinfo, scancel
-from ..shell import execute_cmd, execute_async_cmd
+from ..shell import execute_cmd, execute_async_cmd, is_remote
 
 from ...utils import get_logger, get_env
 logger = get_logger(__name__)
@@ -139,6 +140,8 @@ class SlurmLauncher(Launcher):
         :type alloc_id: str
         :raises LauncherError: if the allocation cannot be found
         """
+        self._check_for_slurm()
+
         alloc_id = str(alloc_id)
         sacct_out, sacct_error = sacct(["--noheader", "-p",
                                         "-b", "-j", alloc_id])
@@ -168,6 +171,8 @@ class SlurmLauncher(Launcher):
            :return: the id of the allocation
            :rtype: str
         """
+        self._check_for_slurm()
+
         allocation = SlurmAllocation(nodes=nodes, ppn=ppn,
                                      duration=duration, **kwargs)
         salloc = allocation.get_alloc_cmd()
@@ -197,6 +202,7 @@ class SlurmLauncher(Launcher):
         :return: job_step id
         :rtype: str
         """
+        self._check_for_slurm()
 
         alloc_id = step.alloc_id
         if str(alloc_id) not in self.alloc_manager().keys():
@@ -216,6 +222,8 @@ class SlurmLauncher(Launcher):
         :type step_id: str
         :raises LauncherError: if unable to stop job step
         """
+        self._check_for_slurm()
+
         status, _ = self.get_step_status(step_id)
         if status != "COMPLETE":
             returncode, out, err = scancel([str(step_id)])
@@ -252,6 +260,7 @@ class SlurmLauncher(Launcher):
         :raises LauncherError: if allocation not found within the AllocManager
         :raises LauncherError: if allocation could not be freed
         """
+        self._check_for_slurm()
 
         if alloc_id not in self.alloc_manager().keys():
             raise LauncherError("Allocation id, " + str(alloc_id) +
@@ -282,7 +291,8 @@ class SlurmLauncher(Launcher):
         :returns: if of the step
         :rtype: str
         """
-        n_trials = 5
+        time.sleep(1)
+        n_trials = 10
         step_id = None
         while n_trials > 0:
             output, error = sacct(["--noheader", "-p",
@@ -292,6 +302,7 @@ class SlurmLauncher(Launcher):
             if step_id:
                 break
             else:
+                time.sleep(1)
                 n_trials -= 1
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
@@ -339,3 +350,17 @@ class SlurmLauncher(Launcher):
         if not default:
             raise LauncherError("Could not find default partition!")
         return default
+
+
+    def _check_for_slurm(self):
+        """Check for slurm if not using a remote Command Server and return
+           an error if the user has not initalized the remote launcher.
+
+        :raises LauncherError: if no access to slurm and no remote Command
+                               Server has been initialized.
+        """
+        if not which("salloc") and not is_remote():
+            error = "User attempted Slurm methods without access to Slurm at the call site.\n"
+            error += "Setup a Command Server, and initialize with"
+            error += " SmartSim.remote.init_command_server()"
+            raise LauncherError(error)

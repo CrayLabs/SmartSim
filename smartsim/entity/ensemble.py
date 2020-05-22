@@ -1,7 +1,8 @@
 
 from os import path, mkdir
-from ..error import SSModelExistsError
+from ..error import EntityExistsError
 from .entity import SmartSimEntity
+from .files import EntityFiles
 
 class Ensemble(SmartSimEntity):
     """Ensembles are groups of NumModels that can be used
@@ -32,16 +33,17 @@ class Ensemble(SmartSimEntity):
         self.experiment = experiment
         self.models = {}
 
-    def add_model(self, model):
+    def add_model(self, model, overwrite=False):
         """Add a model to this ensemble
 
         :param model: model instance
         :type model: NumModel
+        :param overwrite: overwrite model if it already exists
         :raises SSModelExistsError: if model already exists in this ensemble
         """
-        if model.name in self.models:
-            raise SSModelExistsError("Model name: " + model.name +
-                                     " already exists in ensemble: " + self.name)
+        if model.name in self.models and not overwrite:
+            raise EntityExistsError(
+                f"Model {model.name} already exists in ensemble {self.name}")
         else:
             # Ensemble members need a key_prefix set to avoid namespace clashes
             self.models[model.name] = model
@@ -65,6 +67,15 @@ class Ensemble(SmartSimEntity):
         """
         for model in self.models.values():
             model.register_incoming_entity(incoming_entity, receiving_client_type)
+
+    def __str__(self):
+        ensemble_str = f"\nEnsemble: {self.name}"
+        if len(self.models) < 1:
+            return super().__str__()
+
+        for model in self.models.values():
+            ensemble_str += "\n" + str(model)
+        return ensemble_str
 
     def __eq__(self, other):
         for model_1, model_2 in zip(self.models.values(),

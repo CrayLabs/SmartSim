@@ -1,6 +1,7 @@
 from os import getcwd
 from os.path import join
-from smartsim.error.errors import SSConfigError
+from .files import EntityFiles
+from ..error import SSConfigError
 
 class SmartSimEntity:
     def __init__(self, name, path, entity_type, run_settings):
@@ -33,6 +34,7 @@ class SmartSimEntity:
         self.incoming_entities = []
         self._key_prefixing_enabled = False
         self._init_run_settings(path)
+        self.files = None
 
     def _init_run_settings(self, init_path):
         """intialize the run_settings from the defaults
@@ -121,9 +123,34 @@ class SmartSimEntity:
         """If called, the entity will not prefix its keys with its own model name
         """
         self._key_prefixing_enabled = False
+
     def query_key_prefixing(self):
         """Inquire as to whether this entity will prefix its keys with its name"""
         return self._key_prefixing_enabled
+
+    def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
+        """Attach files needed for the entity that, upon generation,
+           will be located in the path of the entity.
+
+           During generation files "to_copy" are just copied into
+           the path of the entity, and files "to_symlink" are
+           symlinked into the path of the entity.
+
+           Files "to_configure" are text based model input files where
+           parameters for the model are set. Note that only models
+           support the "to_configure" field. These files must have
+           fields tagged that correspond to the values the user
+           would like to change. The tag is settable but defaults
+           to a semicolon e.g. THERMO = ;10;
+
+        :param to_copy: files to copy, defaults to []
+        :type to_copy: list, optional
+        :param to_symlink: files to symlink, defaults to []
+        :type to_symlink: list, optional
+        :param to_configure: [description], defaults to []
+        :type to_configure: list, optional
+        """
+        self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
     def __repr__(self):
         return self.name

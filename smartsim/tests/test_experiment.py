@@ -2,7 +2,7 @@
 from smartsim import Experiment
 from os import path, environ, getcwd
 from shutil import rmtree
-from ..error import SmartSimError, SSModelExistsError, LauncherError
+from ..error import SmartSimError, LauncherError
 from smartsim.entity import Ensemble, NumModel
 import pytest
 
@@ -47,7 +47,7 @@ def test_delete_ensemble():
 
 def test_create_node():
     experiment = Experiment("test")
-    experiment.create_node("test-node", script_path=getcwd())
+    experiment.create_node("test-node", path=getcwd())
     assert(len(experiment.nodes) > 0)
 
 def test_ensemble_get_model():

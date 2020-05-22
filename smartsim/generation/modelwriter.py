@@ -2,7 +2,7 @@ import re
 import glob
 import os
 from os import path
-from ..error import SSConfigError, SmartSimError
+from ..error import GenerationError
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -14,48 +14,64 @@ class ModelWriter:
         self.tag = ";"
         self.regex = "(;.+;)"
 
-    def write(self, model):
-        """Takes a model and writes the configuration to the ensemble configs
-           Base configurations are duplicated blindly to ensure all needed
-           files are copied.
+    def set_tag(self, tag, regex=None):
+        """Set the tag for the modelwriter to search for within
+           tagged files attached to an entity.
+
+        :param tag: tag for the modelwriter to search for,
+                    defaults to semi-colon e.g. ";"
+        :type tag: str
+        :param regex: full regex for the modelwriter to search for,
+                     defaults to "(;.+;)"
+        :type regex: str, optional
         """
-
-        # configurations reset each time a new model is introduced
-        for conf_path, _, files in os.walk(model.path):
-            for fn in files:
-                conf = path.join(conf_path, fn)
-                if path.isfile(conf):
-                    self._set_lines(conf)
-                    self._replace_tags(model)
-                    self._write_changes(conf)
-                elif path.isdir(conf):
-                    continue
-                else:
-                    raise SmartSimError("Data-Generation", "Could not find ensemble configuration files")
-
-    def _set_tag(self, tag, regex=None):
         if regex:
             self.regex = regex
         else:
             self.tag = tag
             self.regex = "".join(('(',tag,".+", tag, ')'))
 
+    def configure_tagged_model_files(self, model):
+        """Read, write and configure tagged files attached to a NumModel
+           instance.
 
-    def _set_lines(self, conf_path):
-        fp = open(conf_path, "r+")
-        self.lines = fp.readlines()
-        fp.close()
+        :param model: a model instance
+        :type model: NumModel
+        """
+        for tagged_file in model.files.tagged:
+            self._set_lines(tagged_file)
+            self._replace_tags(model)
+            self._write_changes(tagged_file)
 
-    def _write_changes(self, conf_path):
+    def _set_lines(self, file_path):
+        """Set the lines for the modelwrtter to iterate over
+
+        :param file_path: path to the newly created and tagged file
+        :type file_path: str
+        :raises GenerationError: if the newly created file cannot be read
+        """
+        try:
+            fp = open(file_path, "r+")
+            self.lines = fp.readlines()
+            fp.close()
+        except (IOError, OSError):
+            raise GenerationError(
+                f"Could not edit tagged file {file_path}")
+
+    def _write_changes(self, file_path):
         """Write the ensemble-specific changes"""
-        fp = open(conf_path, "w+")
+        fp = open(file_path, "w+")
         for line in self.lines:
             fp.write(line)
         fp.close()
 
     def _replace_tags(self, model):
-        """Adds the configurations specified in the regex syntax or the
-           simulation.toml"""
+        """Replace the tagged within the tagged file attached to this
+           model. The tag defaults to ";"
+
+        :param model: The model instance
+        :type model: NumModel
+        """
         edited = []
         unused_tags = {}
         for i, line in enumerate(self.lines):

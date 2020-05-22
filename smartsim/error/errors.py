@@ -17,17 +17,25 @@ class SSUnsupportedError(SmartSimError):
     def __init__(self, message):
         super().__init__(message)
 
-class SSModelExistsError(SmartSimError):
-    """An error that is raised when a duplicate model (or model with the same name)
-    is added to a ensemble."""
-    def __init__(self, message):
-        super().__init__(message)
-
 class SmartSimConnectionError(SmartSimError):
     """Raised when a connection fails between SmartSim entities and the orchestrator"""
     def __init__(self, message):
         super().__init__(message)
 
+
+# ------ Generation Errors -------
+
+
+class GenerationError(SmartSimError):
+    """Raised when there is an error within the generator"""
+    def __init__(self, message):
+        super().__init__(message)
+
+class EntityExistsError(SmartSimError):
+    """Raised when a user tries to create an entity or files/directories for
+       an entity and either the entity/files/directories already exist"""
+    def __init__(self, message):
+        super().__init__(message)
 
 
 # ------ Launcher Errors ---------

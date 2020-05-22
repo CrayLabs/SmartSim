@@ -2,13 +2,15 @@ import sys
 import shutil
 
 from itertools import product
-from os import mkdir, getcwd, path
+from os import mkdir, getcwd, path, symlink
 from distutils import dir_util
+from copy import deepcopy
 
 from .modelwriter import ModelWriter
 from ..entity import NumModel, Ensemble, SmartSimNode
 from ..orchestrator import Orchestrator
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
+from ..error import GenerationError, EntityExistsError
 from .strategies import create_all_permutations, random_permutations, step_values
 
 from ..utils import get_logger
@@ -17,40 +19,50 @@ logger.propagate = False
 
 
 class Generator():
-    """Class used by Experiment to generate the file structure for an experiment. The
-       Generator is responsible for reading, configuring, and writing model instances
-       within an ensemble created by an Experiment.
+    """The primary job of the generator is to create, and configure models
+       for ensembles. When a user creates an ensemble with parameters, the
+       ensemble can be given to the generator for configuration of its model
+       files. For more information on model generation see
+       Generator.generate_experiment.
+
+       The Generator also creates the file structure for a SmartSim
+       experiment. When called from experiment, all entities present
+       within SmartSim will have directories created for their error
+       and output files.
     """
-    def __init__(self):
+    def __init__(self, overwrite=False):
+        """Initialize a generator object, if overwrite is true, replace
+           any existing configured models within an ensemble if there
+           is a name collision. Also replace any and all directories
+           for the experiment with fresh copies. Otherwise, if overwrite
+           is false, raises EntityExistsError when there is a name
+           collision between entities.
+
+        :param overwrite: toggle entity replacement, defaults to False
+        :type overwrite: bool, optional
+        """
         self._writer = ModelWriter()
         self.set_strategy("all_perm")
+        self.overwrite = overwrite
 
     def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None,
-                            model_files=[], node_files=[], **kwargs):
+                            **kwargs):
         """Generate the file structure for a SmartSim experiment. This
            includes the writing and configuring of input files for a
            model. Ensembles created with a 'params' argument will be
            expanded into multiple models based on a generation strategy.
-           Model input files are specified with the model_files argument.
-           All files and directories listed as strings in a list will be
-           copied to each model within an ensemble. Every model file is read,
-           checked for input variables to configure, and written. Input
-           variables to configure are specified with a tag within the input
-           file itself. The default tag is surronding an input value with
-           semicolons. e.g. THERMO=;90;
 
-           Files for SmartSimNodes can also be included to be copied into
-           node directories but are never read nor written. All node_files
-           will be copied into directories named after the name of the
-           SmartSimNode within the experiment.
+           To have files or directories present in the created entity
+           directories, such as datasets or input files, call
+           entity.attach_generator_files prior to generation. See
+           entity.attach_generator_files() for more information on
+           what types of files can be included.
 
-            :param model_files: The model files for the experiment.  Optional
-                                if model files are not needed for execution.
-            :type model_files: list of path like strings to directories or files
-            :param node_files: files to be copied into node directories. These
-                               are most likely files needed to run the node
-                               computations. e.g. a python script
-            :type node_files: list of path like strings to directories or files
+           Tagged model files are read, checked for input variables to
+           configure, and written. Input variables to configure are
+           specified with a tag within the input file itself.
+           The default tag is surronding an input value with semicolons.
+           e.g. THERMO=;90;
 
             :param str strategy: The permutation strategy for generating models within
                                 ensembles.
@@ -62,52 +74,48 @@ class Generator():
             ensembles = [ensembles]
         if isinstance(nodes, SmartSimNode):
             nodes = [nodes]
-        if isinstance(model_files, str):
-            model_files = [model_files]
-        if isinstance(node_files, str):
-            node_files = [node_files]
         if orchestrator and not isinstance(orchestrator, Orchestrator):
-            raise SmartSimError(
+            raise TypeError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
         self._generate_ensembles(ensembles, **kwargs)
         self._create_experiment_dir(exp_path)
         self._create_orchestrator_dir(exp_path, orchestrator)
-        self._create_nodes(exp_path, nodes, node_files)
+        self._create_nodes(exp_path, nodes)
         self._create_ensembles(exp_path, ensembles)
-        self._configure_models(ensembles, exp_path, model_files)
-
 
     def set_tag(self, tag, regex=None):
-        """Set a tag or a regular expression for the generator to look for when
-           configuring new models.
+        """Set a tag or a regular expression for the
+           generator to look for when configuring new models.
 
-           For example, a tag might be ``;`` where the expression being replaced
-           in the model configuration file would look like ``;expression;``
+           For example, a tag might be ``;`` where the
+           expression being replaced in the model configuration
+           file would look like ``;expression;``
 
-           A full regular expression might tag specific model configurations such
-           that the configuration files don't need to be tagged manually.
+           A full regular expression might tag specific
+           model configurations such that the configuration
+           files don't need to be tagged manually.
 
-           :param str tag: A string of characters that signify an string to be changed.
-                           Defaults to ``;``
-           :param str regex: a regular expression that model files are tagged with
+           :param tag: A string of characters that signify
+                       an string to be changed. Defaults to ``;``
+           :type tag: str
+           :param regex: a regular expression that model files
+                         are tagged with (optional)
+           :type regex: str
 
         """
-
-        self._writer._set_tag(tag, regex)
+        self._writer.set_tag(tag, regex)
 
     def set_strategy(self, permutation_strategy):
-        """Load the strategy for generating model configurations based on the
-           values of the ensemble parameters.
+        """Load the strategy for generating model configurations
+           based on the values of the ensemble parameters.
 
-           all_perm creates all possible permutations of the ensemble parameters as
-           individual models. This is the default strategy for the Generator module.
+           "all_perm" creates all possible permutations of the
+           ensemble parameters as individual models. This is the
+           default strategy for the Generator module.
 
-           Calling with a string formatted as "module.function" attempts to use the
-           function, `function`, from the module, `module`.
-
-           Calling with a callable function results in that function being used as
-           the permutation strategy.
+           Calling with a callable function results in that
+           function being used asthe permutation strategy.
 
            :param str permutation_strategy: Options are "all_perm", "step", "random",
                                             or a callable function.
@@ -148,14 +156,12 @@ class Generator():
             for name, val in ensemble.params.items():
                 param_names.append(name)
 
-                # if the user called added a ensemble programmatically
                 if isinstance(val, list):
                     parameters.append(val)
                 elif isinstance(val, str) or isinstance(val, int):
                     parameters.append([val])
                 else:
-                    # TODO improve this error message
-                    raise SmartSimError(
+                    raise GenerationError(
                         "Incorrect type for ensemble parameters\n" +
                         "Must be list, int, or string.")
             return param_names, parameters
@@ -172,11 +178,19 @@ class Generator():
                 # will run with ensemble run_settings
                 for i, conf in enumerate(all_configs):
                     model_name = "_".join((ensemble.name, str(i)))
-                    m = NumModel(model_name, conf, None, run_settings={})
-                    ensemble.add_model(m)
+                    model = NumModel(model_name, conf, None, run_settings={})
+                    ensemble.add_model(model, overwrite=self.overwrite)
+                    if ensemble.files:
+                        model.files = deepcopy(ensemble.files)
+
 
     def _create_experiment_dir(self, exp_path):
-        """Creates the directory structure for the simulations"""
+        """Create the directory for an experiment if it does not
+           already exist.
+
+        :param exp_path: path to the experiment
+        :type exp_path: str
+        """
 
         if not path.isdir(exp_path):
             mkdir(exp_path)
@@ -185,7 +199,14 @@ class Generator():
 
 
     def _create_orchestrator_dir(self, exp_path, orchestrator):
-        """Generate the directory that will house the orchestrator output files"""
+        """Create the directory that will hold the error, output and
+           configuration files for the orchestrator.
+
+        :param exp_path: path to the experiment
+        :type exp_path: str
+        :param orchestrator: Orchestrator instance
+        :type orchestrator: Orchestrator
+        """
 
         if not orchestrator:
             return
@@ -193,78 +214,118 @@ class Generator():
         orc_path = path.join(exp_path, "orchestrator")
         orchestrator.set_path(orc_path)
 
-        # remove orc files if present
+        # Always remove orchestrator files if present.
         if path.isdir(orc_path):
             shutil.rmtree(orc_path)
         mkdir(orc_path)
 
-    def _create_nodes(self, exp_path, nodes, node_files):
-        """Generate the files and directories for SmartSimNodes"""
+    def _create_nodes(self, exp_path, nodes):
+        """Create the node directories and copy/symlink any listed
+           files
+
+        :param exp_path: [description]
+        :type exp_path: [type]
+        :param nodes: [description]
+        :type nodes: [type]
+        :raises EntityExistsError: [description]
+        """
 
         if not nodes:
             return
 
         for node in nodes:
+            error = f"Node directory for {node.name} " \
+                    f"already exists with {exp_path}"
+
             node_path = path.join(exp_path, node.name)
             node.set_path(node_path)
             if path.isdir(node_path):
+                if not self.overwrite:
+                    raise EntityExistsError(error)
                 shutil.rmtree(node_path)
             mkdir(node_path)
 
-        for node_file in node_files:
-            dst_path = path.join(node_path, path.basename(node_file))
-            config_path = self.check_path(node_file)
-            if path.isdir(config_path):
-                dir_util.copy_tree(config_path, node_path)
-            else:
-                shutil.copyfile(config_path, dst_path)
+            self._copy_entity_files(node)
+            self._link_entity_files(node)
 
     def _create_ensembles(self, exp_path, ensembles):
-        """Generate the directories for the ensembles"""
+        """Create the ensemble directories and the model directories
+           within each ensemble.
+
+        :param exp_path: path to the experiment
+        :type exp_path: str
+        :param ensembles: list of ensembles
+        :type ensembles: list
+        :raises EntityExistsError: if an ensemble directory already exists
+        """
 
         if not ensembles:
             return
 
         for ensemble in ensembles:
+            error = f"Ensemble directory for {ensemble.name} " \
+                    f"already exists with {exp_path}"
+
             ensemble_dir = path.join(exp_path, ensemble.name)
             if path.isdir(ensemble_dir):
+                if not self.overwrite:
+                    raise EntityExistsError(error)
                 shutil.rmtree(ensemble_dir)
             mkdir(ensemble_dir)
 
-    def _configure_models(self, ensembles, exp_path, model_files):
-        """Based on the params argument to a Ensemble instance, read, configure
-           and write model input files.
-        """
-
-        for ensemble in ensembles:
-            # Make ensemble model directories
             for name, model in ensemble.models.items():
                 dst = path.join(exp_path, ensemble.name, name)
                 mkdir(dst)
                 model.set_path(dst)
+                self._copy_entity_files(model)
+                self._link_entity_files(model)
+                self._write_tagged_entity_files(model)
 
-                if model_files:
-                    for config in model_files:
-                        dst_path = path.join(dst, path.basename(config))
-                        config_path = self.check_path(config)
-                        if path.isdir(config_path):
-                            dir_util.copy_tree(config_path, dst)
-                        else:
-                            shutil.copyfile(config_path, dst_path)
+        logger.info(f"Generated {len(ensemble)} models for ensemble: {ensemble.name}")
 
-                    # write in changes to configurations
-                    self._writer.write(model)
+    def _write_tagged_entity_files(self, entity):
+        """Read, configure and write the tagged input files for
+           a NumModel instance within an ensemble. This function
+           specifically deals with the tagged files attached to
+           an Ensemble.
 
-            logger.info(f"Generated {len(ensemble)} models for ensemble: {ensemble.name}")
-
-    def check_path(self, file_path):
-        """Given a user provided path-like str, find the actual path to
-           the directory or file and create a full path.
+        :param entity: a SmartSimEntity, for now just NumModels
+        :type entity: SmartSimEntity
         """
-        full_path = path.abspath(file_path)
-        if path.isfile(full_path):
-            return full_path
-        elif path.isdir(full_path):
-            return full_path
-        else:
-            raise SSConfigError(f"File or Directory {file_path} not found")
+        if entity.files:
+            for i, tagged_file in enumerate(entity.files.tagged):
+                dst_path = path.join(entity.path, path.basename(tagged_file))
+                shutil.copyfile(tagged_file, dst_path)
+                entity.files.tagged[i] = dst_path
+
+            # write in changes to configurations
+            if entity.type == "model":
+                self._writer.configure_tagged_model_files(entity)
+
+    def _copy_entity_files(self, entity):
+         """Copy the entity files and directories attached to this entity.
+
+         :param entity: SmartSimEntity
+         :type entity: SmartSimEntity
+         """
+         if entity.files:
+            for i, to_copy in enumerate(entity.files.copy):
+                dst_path = path.join(entity.path, path.basename(to_copy))
+                if path.isdir(to_copy):
+                    dir_util.copy_tree(to_copy, entity.path)
+                    entity.files.copy[i] = entity.path
+                else:
+                    shutil.copyfile(to_copy, dst_path)
+                    entity.files.copy[i] = dst_path
+
+    def _link_entity_files(self, entity):
+        """Symlink the entity files attached to this entity.
+
+         :param entity: SmartSimEntity
+         :type entity: SmartSimEntity
+         """
+        if entity.files:
+            for i, to_link in enumerate(entity.files.link):
+                dst_path = path.join(entity.path, path.basename(to_link))
+                symlink(to_link, dst_path)
+                entity.files.link[i] = dst_path

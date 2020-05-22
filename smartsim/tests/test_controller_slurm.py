@@ -30,7 +30,7 @@ run_settings = {
 M1 = exp.create_model("m1", path=test_path, run_settings=run_settings)
 M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)
 O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
-N1 = exp.create_node("n1",script_path=test_path, run_settings=run_settings)
+N1 = exp.create_node("n1", path=test_path, run_settings=run_settings)
 
 @controller_test
 def test_ensemble():
