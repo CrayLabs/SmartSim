@@ -3,6 +3,7 @@ import time
 import os
 import atexit
 import sys
+import numpy as np
 
 from shutil import which
 from ..launcher import Launcher
@@ -89,7 +90,7 @@ class SlurmLauncher(Launcher):
             else:
                 # increment the internal job per allocation counter
                 step_num = self.alloc_manager.add_step(str(alloc_id))
-                name = entity_name + "-" + str(alloc_id) + "." + str(step_num)
+                name = entity_name + '-' + str(np.base_repr(time.time_ns(), 36))
                 step = SlurmStep(name, run_settings, multi_prog)
                 return step
         except SSConfigError as e:

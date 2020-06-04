@@ -118,7 +118,6 @@ def test_get_release_allocation():
     alloc_id = ctrl.get_allocation(nodes=1, ppn=1)
     ctrl.release(alloc_id=alloc_id)
 
-
 # ---- cluster orchestrator -------------------------------------------
 
 # experiment with clustered orchestrator
@@ -147,6 +146,44 @@ def test_dpn():
     statuses = ctrl.get_orchestrator_status(O2)
     assert("FAILED" not in statuses)
     ctrl.stop(orchestrator=O2)
+
+# --- unique job names ------------------------------------------------
+
+# test that multiple launches of entities with the same name
+# (e.g. orchestrators) have unique step ids
+@controller_test
+def test_multiple_entity_runs():
+    dpn = 3
+    db_nodes = 3
+    exp_4 = Experiment("test_4")
+    exp_4.add_allocation(alloc)
+    O4 = exp_4.create_orchestrator_cluster(alloc, path=test_path,
+                                           db_nodes=db_nodes, dpn=dpn)
+    exp_4.start(orchestrator=O4)
+    time.sleep(5)
+    step_ids_1 = {}
+    for dbnode in exp_4.orc.dbnodes:
+        step_ids_1[dbnode.name] = exp_4._control._jobs[dbnode.name].jid
+    exp_4.stop(orchestrator=O4)
+    exp_4.poll(interval=1, poll_db=True)
+    assert("FAILED" not in exp_4.get_status(O4))
+
+    exp_5 = Experiment("test_5")
+    exp_5.add_allocation(alloc)
+    O5 = exp_5.create_orchestrator_cluster(alloc, path=test_path,
+                                           db_nodes=db_nodes, dpn=dpn)
+    exp_5.start(orchestrator=O5)
+    time.sleep(5)
+    step_ids_2 = {}
+    for dbnode in exp_5.orc.dbnodes:
+        step_ids_2[dbnode.name] = exp_5._control._jobs[dbnode.name].jid
+    exp_5.stop(orchestrator=O5)
+    exp_5.poll(interval=1, poll_db=True)
+    assert("FAILED" not in exp_5.get_status(O5))
+    assert(len(step_ids_1)==db_nodes)
+    assert(len(step_ids_2)==db_nodes)
+    for dbnode_name in step_ids_1:
+        assert(not(step_ids_1[dbnode_name]==step_ids_2[dbnode_name]))
 
 # --- existing db files -----------------------------------------------
 
