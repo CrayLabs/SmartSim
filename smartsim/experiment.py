@@ -527,6 +527,76 @@ class Experiment:
             logger.error(e)
             raise
 
+    def reconnect_orchestrator(self, previous_orc_dir):
+        """Reconnect to an orchestrator that was created in a separate
+        SmartSim experiment.
+
+        :param previous_orc_dir: Directory where the previous experiment database
+        files are located.
+        :type orc_dir: str
+        :raises SmartSimError: The database config file is missing, incomplete,
+                               or corrupted
+        :return: Orchestrator instance
+        :rtype: Orchestrator
+        """
+
+        try:
+
+            if isinstance(self._control._launcher, LocalLauncher):
+                raise SmartSimError("Local launcher does not support "\
+                                    "reconnecting to a database.")
+
+            if self.orc:
+                raise SmartSimError(
+                    "Only one orchestrator can exist within a experiment.")
+
+            db_file = "/".join((previous_orc_dir, "smartsim_db.dat"))
+            if not path.exists(db_file):
+                raise SmartSimError(f"The SmartSim database config file "\
+                                    "{db_file} cannot be found.")
+
+            try:
+                with open(db_file, "rb") as pickle_file:
+                    db_config = pickle.load(pickle_file)
+            except (OSError, IOError) as e:
+                raise SmartSimError(str(e))
+
+            err_message = "The SmartSim database config file is incomplete.  "
+            if not "orc" in db_config:
+                raise SmartSimError(err_message +
+                                    "Could not find the orchestrator object.")
+
+            if not db_config["orc"].port:
+                raise SmartSimError(err_message +
+                                    "The orchestrator is missing db port "\
+                                    "information.")
+
+            if not db_config["orc"].dbnodes:
+                raise SmartSimError(err_message +
+                                    "The orchestrator is missing db node "\
+                                    "information.")
+
+            if not "db_jobs" in db_config:
+                raise SmartSimError(err_message +
+                                    "Could not find database job objects.")
+
+            for db_job in db_config["db_jobs"].values():
+                self._control._jobs.db_jobs[db_job.name] = db_job
+
+            self.orc = db_config["orc"]
+
+            if not isinstance(self._control._launcher, LocalLauncher):
+                db_statuses = self.get_status(self.orc)
+                if not all(status=="RUNNING" for status in db_statuses):
+                    raise SmartSimError("The specified database is no "\
+                                        "longer running")
+
+            return self.orc
+
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
     def create_node(self, name, path=None, run_settings={}, overwrite=False,
                     enable_key_prefixing=False):
         """Create a SmartSimNode for a specific task. Examples of SmartSimNode

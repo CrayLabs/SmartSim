@@ -36,6 +36,63 @@ def controller_test(test_function):
 
     return decorator(wrapper, test_function)
 
+def orchestrator_test_slurm(test_function):
+
+    exp_base_path = "./orchestrator_test"
+    exp_1_dir = "./orchestrator_test/exp_1/"
+    exp_2_dir = "./orchestrator_test/exp_2/"
+
+    def wrapper(*args, **kwargs):
+        if not which("srun"):
+            pytest.skip()
+
+        if path.isdir(exp_base_path):
+            rmtree(exp_base_path)
+        mkdir(exp_base_path)
+        mkdir(exp_1_dir)
+        mkdir(exp_2_dir)
+
+        copyfile('./test_configs/reconnect_sim.py',
+                 exp_1_dir + "reconnect_sim.py")
+        copyfile('./test_configs/reconnect_node.py',
+                 exp_2_dir + "reconnect_node.py")
+
+        test_function()
+
+        if path.isdir(exp_base_path):
+            rmtree(exp_base_path)
+
+        return
+
+    return decorator(wrapper, test_function)
+
+def orchestrator_test_local(test_function):
+
+    exp_base_path = "./orchestrator_test"
+    exp_1_dir = "./orchestrator_test/exp_1/"
+    exp_2_dir = "./orchestrator_test/exp_2/"
+
+    def wrapper(*args, **kwargs):
+
+        if path.isdir(exp_base_path):
+            rmtree(exp_base_path)
+        mkdir(exp_base_path)
+        mkdir(exp_1_dir)
+        mkdir(exp_2_dir)
+
+        copyfile('./test_configs/reconnect_sim.py',
+                 exp_1_dir + "reconnect_sim.py")
+        copyfile('./test_configs/reconnect_node.py',
+                 exp_2_dir + "reconnect_node.py")
+
+        test_function()
+
+        if path.isdir(exp_base_path):
+            rmtree(exp_base_path)
+
+        return
+
+    return decorator(wrapper, test_function)
 
 def generator_test(test_function):
     """Decorator for generator tests"""

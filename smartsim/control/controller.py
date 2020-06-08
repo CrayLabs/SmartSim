@@ -1,6 +1,7 @@
 import sys
 import time
 import subprocess
+import pickle
 from os import listdir
 from os.path import isdir, basename, join
 
@@ -397,13 +398,24 @@ class Controller():
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
         """
+
         if orchestrator:
-            for dbnode in orchestrator.dbnodes:
-                dbnode.remove_stale_dbnode_files()
-            orc_steps = self._create_steps(orchestrator.dbnodes, orchestrator)
-            self._launch_orchestrator(orc_steps, orchestrator)
-            if len(orchestrator.dbnodes) > 2:
-                self._create_orchestrator_cluster(orchestrator)
+            active_orc = False
+            if not isinstance(self._launcher, LocalLauncher):
+                node_to_test = orchestrator.dbnodes[0]
+                if self._jobs.job_exists(node_to_test):
+                    if self._jobs.get_status(node_to_test) == "RUNNING":
+                        active_orc = True
+
+            if not active_orc:
+                for dbnode in orchestrator.dbnodes:
+                    dbnode.remove_stale_dbnode_files()
+                orc_steps = self._create_steps(orchestrator.dbnodes,
+                                               orchestrator)
+                self._launch_orchestrator(orc_steps, orchestrator)
+                if len(orchestrator.dbnodes) > 2:
+                    self._create_orchestrator_cluster(orchestrator)
+                self._save_orchestrator(orchestrator)
 
         # orchestrator passed in to get env_vars
         node_steps = self._create_steps(nodes, orchestrator)
@@ -588,3 +600,17 @@ class Controller():
             if len(orchestrator.dbnodes) > 1:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases")
+
+    def _save_orchestrator(self, orchestrator):
+        """This function saves the orchestrator information to a pickle
+        file that can be imported by subsequent experiments to reconnect
+        to the orchestrator.
+
+        :param orchestrator: Orchestrator configuration to be saved
+        :type orchestrator: Orchestrator
+        """
+
+        dat_file = "/".join((orchestrator.path,"smartsim_db.dat"))
+        orc_data = {"orc":orchestrator, "db_jobs":self._jobs.db_jobs}
+        with open(dat_file, "wb") as pickle_file:
+            pickle.dump(orc_data, pickle_file)

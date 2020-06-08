@@ -179,3 +179,17 @@ class JobManager:
         :type launcher: Launcher instance
         """
         self._launcher = launcher
+
+    def job_exists(self, entity):
+        """Return a boolean for existence of a job in the jobmanager
+
+        :param entity: Entity to check for job
+        :type entity: SmartSimEntity
+        :return: boolean indicating the existence of a job
+        :rtype: bool
+        """
+        try:
+            if self[entity.name]:
+                return True
+        except KeyError:
+            return False

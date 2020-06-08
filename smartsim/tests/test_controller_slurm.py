@@ -105,6 +105,7 @@ def test_stop_orchestrator():
     ctrl.start(orchestrator=O1)
     time.sleep(3)
     ctrl.stop(orchestrator=O1)
+    exp.poll(poll_db=True)
 
 @controller_test
 def test_stop_all():

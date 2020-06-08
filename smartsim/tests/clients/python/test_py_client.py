@@ -65,6 +65,7 @@ def test_one_way():
     assert(experiment.get_status(sim) == "COMPLETED")
     assert(experiment.get_status(node) == "COMPLETED")
     experiment.stop(orchestrator=orc)
+    experiment.poll(poll_db=True)
 
 
 @python_client_test(base_dir + "/full-loop/")
@@ -86,6 +87,7 @@ def test_full_loop():
     assert(experiment.get_status(sim) == "COMPLETED")
     assert(experiment.get_status(node) == "COMPLETED")
     experiment.stop(orchestrator=orc)
+    experiment.poll(poll_db=True)
 
 @python_client_test(base_dir + "/node-sink/")
 def test_node_sink():
@@ -116,7 +118,7 @@ def test_node_sink():
     assert(experiment.get_status(sim_2) == "COMPLETED")
     assert(experiment.get_status(node) == "COMPLETED")
     experiment.stop(orchestrator=orc)
-
+    experiment.poll(poll_db=True)
 
 @python_client_test(base_dir + "/one-way-poll-check-int/")
 def test_one_way_poll_and_check_int():
@@ -149,6 +151,7 @@ def test_one_way_poll_and_check_int():
     assert(experiment.get_status(sim) == "COMPLETED")
     assert(experiment.get_status(node) == "COMPLETED")
     experiment.stop(orchestrator=orc)
+    experiment.poll(poll_db=True)
 
 @python_client_test(base_dir + "/one-way-poll-check-float/")
 def test_one_way_poll_and_check_float():
@@ -181,6 +184,7 @@ def test_one_way_poll_and_check_float():
     assert(experiment.get_status(sim) == "COMPLETED")
     assert(experiment.get_status(node) == "COMPLETED")
     experiment.stop(orchestrator=orc)
+    experiment.poll(poll_db=True)
 
 def test_release():
     """helper to release the allocation at the end of testing"""

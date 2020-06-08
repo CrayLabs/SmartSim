@@ -398,9 +398,9 @@ class Client:
            open for sending and receiving data
         """
         try:
-            # export SSDB="127.0.0.1:6379"
-
-            db_location = os.environ["SSDB"].split(";")
+            ssdb = os.environ["SSDB"]
+            ssdb = ssdb.strip('"')
+            db_location = ssdb.split(";")
             address, port = db_location[0].split(":")
 
             # setup data out connection to orchestrator
@@ -466,4 +466,3 @@ class Client:
             return "_".join((self.put_key_prefix, key))
         else:
             return key
-
