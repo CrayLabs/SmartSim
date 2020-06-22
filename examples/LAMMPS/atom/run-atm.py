@@ -10,10 +10,9 @@ run_settings = {
     "exe_args": "-in in.atm"
 }
 
-param_dict_1 = {"STEPS": [5, 10], "THERMO": 5}
-experiment.create_ensemble("atm", params=param_dict_1, run_settings=run_settings)
+param_dict = {"STEPS": [5, 10], "THERMO": 5}
+experiment.create_ensemble("atm", params=param_dict, run_settings=run_settings)
 
 base_config = "./in.atm"
 experiment.generate(model_files=base_config)
 experiment.start(launcher="local")
-

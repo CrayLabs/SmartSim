@@ -1,7 +1,7 @@
 from ..connection import Connection
 from ..clusterConnection import ClusterConnection
 from ..error import SmartSimError, SSConfigError, SmartSimConnectionError
-from ..utils.protobuf.smartsim_protobuf_pb2 import ArrayDouble, ScalarDouble, ScalarSInt64, ScalarSInt32, ArraySInt32
+from ..utils.protobuf.smartsim_protobuf_pb2 import ArrayDouble, ScalarDouble, ScalarSInt64, ScalarSInt32, ArraySInt32, ArraySInt64
 import pickle
 import os
 import numpy as np
