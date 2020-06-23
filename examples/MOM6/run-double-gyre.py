@@ -7,8 +7,8 @@ alloc = experiment.get_allocation(nodes=8, ppn=24)
 # Create ensembles
 quar_deg_params = {"KH": [200, 400],
                    "KHTH": [200, 400],
-                   "x_resolution": 40,
-                   "y_resolution": 20,
+                   "x_resolution": 80,
+                   "y_resolution": 40,
                    "months": 3}
 half_deg_params = {"KH": [200, 400],
                    "KHTH": [200, 400],
