@@ -25,6 +25,7 @@ distributed machine learning to more typical data anaylsis and visualization.
    :maxdepth: 2
    :caption: General
 
+   doc/installation
    doc/experiment
    doc/generate
    doc/launchers
