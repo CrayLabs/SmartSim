@@ -37,7 +37,8 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'breathe'
 ]
 
 
@@ -49,6 +50,9 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+breathe_projects = {
+        "c_client":"doc/c_client/xml"
+        }
 
 # -- Options for HTML output -------------------------------------------------
 

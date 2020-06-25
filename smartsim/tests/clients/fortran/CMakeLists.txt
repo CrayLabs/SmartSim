@@ -60,6 +60,7 @@ include_directories(SYSTEM
 set(CLIENT_LIBRARIES ${REDISPP_LIB} ${HIREDIS_LIB} ${PROTOBUF_LIB})
 set(CLIENT_SRC ../../../clients/fortran_client.F90
 	       ../../../clients/client.cc
+		   ../../../clients/c_client.cc
 	       ../../../utils/protobuf/smartsim_protobuf.pb.cc)
 
 add_executable(client_tester

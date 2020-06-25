@@ -1,3 +1,5 @@
+#ifndef SMARTSIM_CPP_CLIENT_H
+#define SMARTSIM_CPP_CLIENT_H
 #include "string.h"
 #include "stdlib.h"
 #include <iostream>
@@ -14,25 +16,25 @@ class SmartSimClient;
 class SmartSimClient
 {
 public:
-  SmartSimClient();
+  SmartSimClient(bool fortran_array = false);
   ~SmartSimClient();
   sw::redis::RedisCluster redis_cluster;
 
   void set_data_source(const char* source_id);
   const char* query_get_prefix();
-  void put_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
+  void put_array_double(const char* key, void* value, int* dims, int n_dims);
+  void put_array_float(const char* key, void* value, int* dims, int n_dims);
+  void put_array_int64(const char* key, void* value, int* dims, int n_dims);
+  void put_array_int32(const char* key, void* value, int* dims, int n_dims);
+  void put_array_uint64(const char* key, void* value, int* dims, int n_dims);
+  void put_array_uint32(const char* key, void* value, int* dims, int n_dims);
   
-  void get_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
+  void get_array_double(const char* key, void* result, int* dims, int n_dims);
+  void get_array_float(const char* key, void* result, int* dims, int n_dims);
+  void get_array_int64(const char* key, void* result, int* dims, int n_dims);
+  void get_array_int32(const char* key, void* result, int* dims, int n_dims);
+  void get_array_uint64(const char* key, void* result, int* dims, int n_dims);
+  void get_array_uint32(const char* key, void* result, int* dims, int n_dims);
 
   void put_scalar_double(const char* key, double value);
   void put_scalar_float(const char* key, float value);
@@ -57,19 +59,19 @@ public:
   bool poll_key_and_check_scalar_uint64(const char* key, uint64_t value, int poll_frequency_ms = 1000, int num_tries = -1);
   bool poll_key_and_check_scalar_uint32(const char* key, uint32_t value, int poll_frequency_ms = 1000, int num_tries = -1);
 
-  void put_exact_key_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_exact_key_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_exact_key_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_exact_key_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_exact_key_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
-  void put_exact_key_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false);
+  void put_exact_key_array_double(const char* key, void* value, int* dims, int n_dims);
+  void put_exact_key_array_float(const char* key, void* value, int* dims, int n_dims);
+  void put_exact_key_array_int64(const char* key, void* value, int* dims, int n_dims);
+  void put_exact_key_array_int32(const char* key, void* value, int* dims, int n_dims);
+  void put_exact_key_array_uint64(const char* key, void* value, int* dims, int n_dims);
+  void put_exact_key_array_uint32(const char* key, void* value, int* dims, int n_dims);
   
-  void get_exact_key_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_exact_key_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_exact_key_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_exact_key_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_exact_key_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
-  void get_exact_key_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false);
+  void get_exact_key_array_double(const char* key, void* result, int* dims, int n_dims);
+  void get_exact_key_array_float(const char* key, void* result, int* dims, int n_dims);
+  void get_exact_key_array_int64(const char* key, void* result, int* dims, int n_dims);
+  void get_exact_key_array_int32(const char* key, void* result, int* dims, int n_dims);
+  void get_exact_key_array_uint64(const char* key, void* result, int* dims, int n_dims);
+  void get_exact_key_array_uint32(const char* key, void* result, int* dims, int n_dims);
 
   void put_exact_key_scalar_double(const char* key, double value);
   void put_exact_key_scalar_float(const char* key, float value);
@@ -117,17 +119,18 @@ private:
   std::string _put_key_prefix;
   std::string _get_key_prefix;
   std::vector<std::string> _get_key_prefixes;
+  bool _fortran_array; 
   
   template <class T>
     T _get_scalar(google::protobuf::Message* pb_message, const char* key, bool add_prefix=true);
   template <class T>
     void _put_scalar(google::protobuf::Message* pb_message, const char* key, T value, bool add_prefix=true);
   template <class T, class U>
-    void _put_array(const char* key, void* value, int* dims, int n_dims, bool fortran_array=false, bool add_prefix=true);
+    void _put_array(const char* key, void* value, int* dims, int n_dims, bool add_prefix=true);
   template <class T>
-    void _serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims, bool fortran_array=false);
+    void _serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims);
   template <class T, class U>
-    void _get_array(const char* key, void* result, int* dims, int n_dims, bool fortran_array=false, bool add_prefix=true);
+    void _get_array(const char* key, void* result, int* dims, int n_dims, bool add_prefix=true);
   template <class T>
     void _add_array_values(const google::protobuf::MutableRepeatedFieldRef<T>& pb_repeated_field, void* value, int* dims, int n_dims);
   template <class T>
@@ -137,8 +140,7 @@ private:
 
 };
 
-// C-wrapped functions
-typedef void *OpaqueObject;
-extern "C" void *ssc_constructor();
-extern "C" void put_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims);
-extern "C" void get_array_double_ssc(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims);
+extern "C" void* initialize_c_client( );
+extern "C" void* initialize_fortran_client( );
+
+#endif //SMARTSIM_CPP_CLIENT_H

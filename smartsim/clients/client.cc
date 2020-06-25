@@ -1,10 +1,11 @@
 #include "client.h"
 
-SmartSimClient::SmartSimClient() :
+SmartSimClient::SmartSimClient(bool fortran_array) :
     redis_cluster(_get_ssdb())
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   this->_set_prefixes_from_env();
+  this->_fortran_array = fortran_array;
   return;
 }
 
@@ -67,75 +68,75 @@ const char* SmartSimClient::query_get_prefix()
 }
 
 // Put and get routines that query the database for the exact key
-void SmartSimClient::put_exact_key_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_double(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_exact_key_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_float(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_exact_key_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_int64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_exact_key_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_int32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_exact_key_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_uint64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_exact_key_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_exact_key_array_uint32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_double(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_float(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_int64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_int32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_uint64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_exact_key_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_exact_key_array_uint32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, false);
   return;
 }
 
@@ -206,75 +207,75 @@ uint32_t SmartSimClient::get_exact_key_scalar_uint32(const char* key)
 }
 
 // Put and get routines that potentially mangle the requested key with prefixing
-void SmartSimClient::put_array_double(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_double(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_array_float(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_float(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_array_int64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_int64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_array_int32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_int32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_array_uint64(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_uint64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::put_array_uint32(const char* key, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::put_array_uint32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, fortran_array, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_double(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_double(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_float(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_float(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_int64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_int64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_int32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_int32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_uint64(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_uint64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, false);
   return;
 }
 
-void SmartSimClient::get_array_uint32(const char* key, void* result, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::get_array_uint32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, fortran_array, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, false);
   return;
 }
 
@@ -545,20 +546,20 @@ T SmartSimClient::_get_scalar(google::protobuf::Message* pb_message, const char*
 }
 
 template <class T, class U>
-void SmartSimClient::_put_array(const char* key, void* value, int* dims, int n_dims, bool fortran_array, bool add_prefix)
+void SmartSimClient::_put_array(const char* key, void* value, int* dims, int n_dims, bool add_prefix)
 {
   std::string buff;
   std::string put_key = (add_prefix) ? this->_build_put_key(key) : std::string(key);
 
   T* pb_message = new T();
-  this->_serialize_array<U>(pb_message, buff, value, dims, n_dims, fortran_array);
+  this->_serialize_array<U>(pb_message, buff, value, dims, n_dims);
   delete pb_message;
   this->_put_to_keydb(put_key.c_str(), buff);
   return;
 }
 
 template <class  T>
-void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims, bool fortran_array)
+void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std::string& buff, void* value, int* dims, int n_dims)
 {
   const google::protobuf::Reflection* refl = pb_message->GetReflection();
   const google::protobuf::FieldDescriptor* dim_field = pb_message->GetDescriptor()->FindFieldByName("dimension");
@@ -571,11 +572,11 @@ void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std
   // dims to a new dynamically allocated array of ints of length 1
   // to indicate that a fotran array is contiguous in memory
   // and recursion is not necessary
-  if(fortran_array) {
+  if(this->_fortran_array) {
 
       int n_values = 1;
       for(int i = 0; i < n_dims; i++)
-	n_values *= dims[i];
+	      n_values *= dims[i];
 
       dims = new int[1];
       dims[0] = n_values;
@@ -587,7 +588,7 @@ void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std
   const google::protobuf::MutableRepeatedFieldRef<T> data = refl->GetMutableRepeatedFieldRef<T>(pb_message, data_field);
   _add_array_values(data, value, dims, n_dims);
 
-  if(fortran_array)
+  if(this->_fortran_array)
     delete[] dims;
 
   buff = _serialize_protobuff(pb_message);
@@ -596,7 +597,7 @@ void SmartSimClient::_serialize_array(google::protobuf::Message* pb_message, std
 }
 
 template <class T, class U>
-void SmartSimClient::_get_array(const char* key, void* result, int* dims, int n_dims, bool fortran_array, bool add_prefix)
+void SmartSimClient::_get_array(const char* key, void* result, int* dims, int n_dims, bool add_prefix)
 {
 
   T* pb_message = new T();
@@ -614,7 +615,7 @@ void SmartSimClient::_get_array(const char* key, void* result, int* dims, int n_
   // If it is a fortran array, reset dims to
   // point to dynamically allocated dimension of 1
   // so that _place_array can be used.
-  if (fortran_array) {
+  if (this->_fortran_array) {
     n_dims = 1;
     dims = new int[1];
     dims[0] = n_values;
@@ -627,7 +628,7 @@ void SmartSimClient::_get_array(const char* key, void* result, int* dims, int n_
   const google::protobuf::MutableRepeatedFieldRef<U> data = refl->GetMutableRepeatedFieldRef<U>(pb_message, data_field);
   _place_array_values<U>(data, result, dims, n_dims, proto_position);
 
-  if(fortran_array)
+  if(this->_fortran_array)
     delete[] dims;
 
   delete pb_message;
@@ -788,87 +789,14 @@ void SmartSimClient::_clear_protobuff(google::protobuf::Message* pb_message)
   return;
 }
 
-extern "C" void* GetObject() {
-  SmartSimClient *s = new SmartSimClient();
+extern "C" void* initialize_c_client() {
+  SmartSimClient *s = new SmartSimClient(false);
   void* c_ptr = (void*)s;
   return c_ptr;
 }
 
-extern "C" void* ssc_constructor()
-{
-  return new SmartSimClient;
-}
-
-extern "C" void put_array_double_c(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_array_double(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void get_array_double_c(void* SmartSimClient_proto, const char *key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->get_array_double(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void get_array_int64_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->get_array_int64(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void put_array_int64_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_array_int64(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void put_scalar_int64_c(void* SmartSimClient_proto, const char *key, int64_t value)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_scalar_int64(key, value);
-}
-
-extern "C" int64_t get_scalar_int64_c(void* SmartSimClient_proto, const char *key)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  return  s->get_scalar_int64(key);
-}
-
-extern "C" bool poll_key_and_check_scalar_int64_c(void *SmartSimClient_proto, const char* key, int64_t value,
-                                                  int poll_frequency_ms, int num_tries)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  return s->poll_key_and_check_scalar_int64(key, value, poll_frequency_ms, num_tries);
-}
-
-extern "C" void get_array_int32_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->get_array_int32(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void put_array_int32_c(void* SmartSimClient_proto, const char* key, void *value, int **dimensions, int *ndims)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_array_int32(key, value, *dimensions, *ndims, true);
-}
-
-extern "C" void put_scalar_int32_c(void* SmartSimClient_proto, const char *key, int32_t value)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  s->put_scalar_int32(key, value);
-}
-
-extern "C" int32_t get_scalar_int32_c(void* SmartSimClient_proto, const char *key)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  return  s->get_scalar_int32(key);
-}
-
-extern "C" bool poll_key_and_check_scalar_int32_c(void *SmartSimClient_proto, const char* key, int32_t value,
-                                                  int poll_frequency_ms, int num_tries)
-{
-  SmartSimClient *s = (SmartSimClient *)SmartSimClient_proto;
-  return s->poll_key_and_check_scalar_int32(key, value, poll_frequency_ms, num_tries);
+extern "C" void* initialize_fortran_client() {
+  SmartSimClient *s = new SmartSimClient(true);
+  void* c_ptr = (void*)s;
+  return c_ptr;
 }

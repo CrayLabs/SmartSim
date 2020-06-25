@@ -51,6 +51,7 @@ contains
       num_errors = num_errors + 1
     endif
     call throw_error(error_flag, "Send/Receive scalar integer : Failed", num_errors )
+    write(*,*) "Send/receive scalar int64: Success"
 
     !---1-dimensional tests---!
     !----Double Precision----!
@@ -75,6 +76,7 @@ contains
       endif
     enddo
     call throw_error(error_flag, "Send/Receive 1d Double: Failed", num_errors )
+    write(*,*) "Send/receive 1D double array: Success"
 
     !----8 byte integers----!
     do i=1,ni; array_1d_send_int64(i) = i*2; enddo
@@ -98,6 +100,7 @@ contains
       endif
     enddo
     call throw_error(error_flag, "Send/Receive 1d Int64: Failed", num_errors )
+    write(*,*) "Send/receive 1D int64 array: Success"
 
     !---2-dimensional tests---!
     if (mod(ni,2) /= 0) then
@@ -128,21 +131,24 @@ contains
       endif
     enddo; enddo;
     call throw_error(error_flag, "Send/Receive 2d Double: Failed", num_errors )
+    write(*,*) "Send/receive 2D double array: Success"
 
-    !---Database-interaction tests---!
-    call put_scalar(ssc_client, trim(key_prefix)//"_int64", TRUE_INT64)
-    ! Make sure that the poll fails when matching the false value
-    poll_status = poll_key_and_check_scalar(ssc_client, trim(key_prefix)//"_int64", FALSE_INT64, POLL_FREQ, NUM_TRIES )
-    if (poll_status) then
-      num_errors = num_errors + 1; error_flag = .true.
-      call throw_error(error_flag, "Polling failed. Returned true with wrong value", num_errors)
-    endif
+   !---Database-interaction tests---!
+   call put_scalar(ssc_client, trim(key_prefix)//"_int64", TRUE_INT64)
+   ! Make sure that the poll fails when matching the false value
+   poll_status = poll_key_and_check_scalar(ssc_client, trim(key_prefix)//"_int64", FALSE_INT64, POLL_FREQ, NUM_TRIES )
+   if (poll_status) then
+     num_errors = num_errors + 1; error_flag = .true.
+     call throw_error(error_flag, "Polling failed. Returned true with wrong value", num_errors)
+   endif
+   write(*,*) "Polling correctly failed with the 'wrong' value"
 
-    poll_status = poll_key_and_check_scalar(ssc_client, trim(key_prefix)//"_int64", TRUE_INT64, POLL_FREQ, -1 )
-    if (.not. poll_status) then
-      num_errors = num_errors + 1; error_flag = .true.
-      call throw_error(error_flag, "Polling failed: Returned false with true value", num_errors)
-    endif
+   poll_status = poll_key_and_check_scalar(ssc_client, trim(key_prefix)//"_int64", TRUE_INT64, POLL_FREQ, NUM_TRIES )
+   if (.not. poll_status) then
+     num_errors = num_errors + 1; error_flag = .true.
+     call throw_error(error_flag, "Polling failed: Returned false with true value", num_errors)
+   endif
+   write(*,*) "Polling succceeded with the correct value"
 
   end subroutine test_array
 
