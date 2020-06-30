@@ -32,7 +32,7 @@ else
         echo "Added KeyDB to PATH"
     else
         echo "Installing KeyDB"
-        git clone https://github.com/JohnSully/KeyDB.git --branch v5.1.1 --depth=1
+        git clone https://github.com/JohnSully/KeyDB.git --branch v5.3.3 --depth=1
         cd KeyDB/
 	CC=gcc CXX=g++ make -j 2
         cd ..
