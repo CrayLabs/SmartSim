@@ -2,7 +2,6 @@
 
 Fortran
 -------
+.. doxygenindex::
+        :project: fortran_client
 
-Document Fortran API and simple client usage
-Trivial code examples
-show subroutine calls

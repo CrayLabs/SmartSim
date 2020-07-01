@@ -3,4 +3,5 @@
 C
 -
 
-Document C API and simple client usage
+.. doxygenindex::
+        :project: c_client
