@@ -36,5 +36,4 @@ if __name__ == "__main__":
 
     # setup client and begin sending data
     client = Client()
-    client.setup_connections()
     run_full_loop(args.size, args.num_packets, client)

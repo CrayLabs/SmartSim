@@ -56,7 +56,6 @@ distributed machine learning to more typical data anaylsis and visualization.
    :caption: API
 
    doc/api/experiment
-   doc/api/client
    doc/api/remote
    doc/api/utilities
 

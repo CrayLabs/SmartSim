@@ -31,5 +31,4 @@ if __name__ == "__main__":
 
     # setup client and begin sending data
     client = Client(cluster=True)
-    client.setup_connections()
     run_simulations(args.size, args.num_packets, client)

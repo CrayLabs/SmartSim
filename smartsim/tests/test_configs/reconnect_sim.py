@@ -20,8 +20,6 @@ if __name__ == "__main__":
     else:
         client = Client(cluster=False)
 
-    client.setup_connections()
-
     for i in range(0,5):
         data = create_data(i, 100)
         client.put_array_nd_float64(str(i), data)

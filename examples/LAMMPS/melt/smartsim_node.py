@@ -13,9 +13,8 @@ if __name__ == "__main__":
 
     n_ranks = args.ranks
     t_step = args.time
-    
+
     client = Client(cluster=True)
-    client.setup_connections()
 
     atom_id = []
     atom_type = []
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     n_atoms = len(atom_id)
     for i in range(n_atoms):
         print(f"{atom_id[i]} {atom_type[i]} {atom_x[i]} {atom_y[i]} {atom_z[i]}")
-        
+
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.set_xlabel('x')

@@ -19,7 +19,7 @@ The Fortran Client relies on the formalized interoperability between C and
 Fortran without users needing to ever call the underlying C functions. The
 conversion of Fortran primitive types to C-compatible types is handled within
 the client. The Fortran Client handles the following operations, all of which
-are opaque to the user: 
+are opaque to the user:
 
     - Translate Fortran character arrays (used for strings) to a
       null-terminated, C-style string
@@ -43,7 +43,7 @@ details).
 - ``put_array``/``get_array``: Send or receive an arbitrarily indexed array of any
   rank or shape to the database
 - ``put_scalar``/``get_scalar``: Send or receive a scalar value from the database
-- ``poll_key_and_check_scalar``: A blocking function that polls the database 
+- ``poll_key_and_check_scalar``: A blocking function that polls the database
   for the existence and value of a specific key
 
 Examples using the Fortran Client
@@ -70,7 +70,7 @@ retrieved with the same key.
       real, dimension(20,10) :: array_to_send, array_to_receive
       type(c_ptr)            :: smartsim_client
 
-      ! Initialize SmartSim Client 
+      ! Initialize SmartSim Client
       smartsim_client = init_ssc_client()
       ! Fill array with data
       call RANDOM_NUMBER(array_to_send)
@@ -102,39 +102,40 @@ The parallel example instruments the serial example with MPI calls so that multi
 processing elements (PEs) will send arrays to the database in parallel.
 
 .. code-block:: fortran
-  :linenos:
-  program parallel_example
 
-    use mpi
-    use client_fortran_api, only : init_ssc_client
-    use iso_c_binding,      only : c_ptr
+   :linenos:
+   program parallel_example
 
-    implicit none
+      use mpi
+      use client_fortran_api, only : init_ssc_client
+      use iso_c_binding,      only : c_ptr
 
-    type(c_ptr)  :: smartsim_client
-    ! MPI related vars
-    integer :: pe_id
-    integer :: err_code
-    integer :: timing_unit
-    character(len=10) :: rank_suffix
+      implicit none
 
-    ! Initialize MPI
-    call MPI_init( err_code )
-    call MPI_comm_rank( MPI_COMM_WORLD, pe_id, err_code )
+      type(c_ptr)  :: smartsim_client
+      ! MPI related vars
+      integer :: pe_id
+      integer :: err_code
+      integer :: timing_unit
+      character(len=10) :: rank_suffix
 
-    smartsim_client = init_ssc_client()
-    write(rank_suffix, "(A,I6.6)") "_pe",pe_id
+      ! Initialize MPI
+      call MPI_init( err_code )
+      call MPI_comm_rank( MPI_COMM_WORLD, pe_id, err_code )
 
-    ! Fill array with data
-    call RANDOM_NUMBER(array_to_send)
-    call put_array(smartsim_client, "example_key"//rank_suffix, array_to_send)
-    call get_array(smartsim_client, "example_key"//rank_suffix, array_to_receive)
-    write(*,*) SUM(array_to_send(:,:) - array_to_receive(:,:))
+      smartsim_client = init_ssc_client()
+      write(rank_suffix, "(A,I6.6)") "_pe",pe_id
 
-    ! Bring down the MPI communicators
-    call MPI_Finalize(err_code)
+      ! Fill array with data
+      call RANDOM_NUMBER(array_to_send)
+      call put_array(smartsim_client, "example_key"//rank_suffix, array_to_send)
+      call get_array(smartsim_client, "example_key"//rank_suffix, array_to_receive)
+      write(*,*) SUM(array_to_send(:,:) - array_to_receive(:,:))
 
-  end program parallel_example
+      ! Bring down the MPI communicators
+      call MPI_Finalize(err_code)
+
+   end program parallel_example
 
   The primary difference from the SmartSim perspective is the creation of a
   PE-specific suffix, ``rank_suffix``, based on the MPI rank of the PE. The

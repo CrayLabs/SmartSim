@@ -14,8 +14,6 @@ if __name__ == "__main__":
     else:
         client = Client(cluster=False)
 
-    client.setup_connections()
-
     for i in range(0,5):
         data = client.get_array_nd_float64(str(i))
         for d in data:

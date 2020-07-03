@@ -21,5 +21,4 @@ class Node():
 
 if __name__ == "__main__":
     tn = Node()
-    tn.client.setup_connections()
     tn.train_loop()
