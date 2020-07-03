@@ -1,0 +1,89 @@
+#!/bin/bash
+#
+# Copyright 2018 Cray Inc. All Rights Reserved.
+#
+# (c) Cray Inc.  All Rights Reserved.  Unpublished Proprietary
+# Information.  This unpublished work is protected by trade secret,
+# copyright and other laws.  Except as permitted by contract or
+# express written permission of Cray Inc., no part of this work or
+# its content may be used, reproduced or disclosed in any form.
+
+usage_exit(){
+  echo "Usage: $0 -n <name> -v <version> -r <release> -s <directory containing Makefile, spec file, and module file> [<var>=<value> ...]"
+  exit 1
+}
+
+# defaults
+name=
+version=unknown
+release=1
+source_specs_dir=
+
+#
+# getopts
+#
+NO_ARGS=0 
+E_OPTERROR=65
+while getopts "in:v:r:s:" Option
+do
+  case $Option in
+    i ) incremental=1;;
+    n ) name=$OPTARG;;
+    v ) version=$OPTARG;;
+    r ) release=$OPTARG;;
+    s ) source_specs_dir=$OPTARG;;
+    * ) echo "Unimplemented option chosen.";;   # DEFAULT
+  esac
+done
+#  Decrements the argument pointer so it points to next argument.
+#  $1 now references the first non option item supplied on the command line
+#  if one exists.
+shift $(($OPTIND - 1))
+
+# Checks
+if [ "$name" == "" ] ; then
+  usage_exit
+fi
+if [ "$source_specs_dir" == "" ] ; then
+  usage_exit
+fi
+if [ -z "$incremental" ] ; then
+  if [ -e $name ] ; then
+    echo "$name exists!  This is dangerous.  Exiting..."
+    exit 1
+  fi
+fi
+if [ -z "$name" ] ; then
+  echo "No name specified, use -n <name>."
+fi
+
+
+CP="cp --preserve=timestamps"
+
+echorun(){
+  echo "$*"
+  $*
+  if [ $? != 0 ] ; then
+    echo "Error running $*"
+    echo rm -rf $name
+    rm -rf $name
+    exit 1
+  fi
+}
+
+echorun mkdir -p $name/$version
+echorun cd $name/$version
+echorun mkdir -p BUILD RPMS SOURCES SPECS
+echorun cd SPECS
+echorun cp $source_specs_dir/Makefile $source_specs_dir/*.spec $source_specs_dir/*modulefile .
+echorun make RELEASE=$release $*
+if [ -z "$incremental" ] ; then
+  echorun make RELEASE=$release clean $*
+fi
+echorun cd ../../..
+echorun mv $name/$version/RPMS/*/* .
+if [ -n "$incremental" ] ; then
+  echorun rm -rf $name/$version/{BUILD,RPMS}
+else
+  echorun rm -rf $name
+fi
