@@ -9,7 +9,7 @@ logger = get_logger()
 
 class CMDServer:
 
-    def __init__(self, address, port, verbose=True):
+    def __init__(self, address, port):
         """Initialize a command server at a tcp address. The
            command server is used for executing commands on
            another management or login node that is connected
@@ -19,14 +19,11 @@ class CMDServer:
         :type address: str
         :param port: port of the address
         :type port: int
-        :param verbose: control server logging verbosity
-        :type verbose: bool
         """
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind("tcp://" + address + ":" + str(port))
         self.running = False
-        self.verbose = verbose
 
     def serve(self):
         """Continually serve requests until a shutdown command is
@@ -81,14 +78,12 @@ class CMDServer:
         :return: returncode, output, error of the command
         :rtype: tuple of (int, str, str)
         """
-        if self.verbose:
-                logger.info("Got cmd: " + " ".join(request.cmd))
+        logger.debug("CMD: " + " ".join(request.cmd))
 
         if request.is_async:
             return execute_async_cmd(request.cmd,
                                      request.cwd,
-                                     remote=False,
-                                     verbose=False)
+                                     remote=False)
         else:
             return execute_cmd(request.cmd,
                                shell=request.shell,
@@ -96,8 +91,7 @@ class CMDServer:
                                proc_input=request.input,
                                timeout=request.timeout,
                                env=request.env,
-                               remote=False,
-                               verbose=False)
+                               remote=False)
 
     def shutdown(self):
         """Shutdown the command server
@@ -105,8 +99,7 @@ class CMDServer:
         :return: placeholders to ack that server has been shutdown
         :rtype: tuple of (int, str, str)
         """
-        if self.verbose:
-            logger.info(
+        logger.info(
                 "Recieved shutdown command from SmartSim experiment")
         self.running = False
         return 0, "OK", ""
@@ -117,8 +110,7 @@ class CMDServer:
         :return: placeholders to ack that server is live
         :rtype: tuple of (int, str, str)
         """
-        if self.verbose:
-            logger.info(
+        logger.info(
                 "Recieved initialization comand from SmartSim experiment")
         return 0, "OK", ""
 

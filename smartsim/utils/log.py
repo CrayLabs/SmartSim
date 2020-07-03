@@ -1,6 +1,40 @@
+import sys
 import logging
 import coloredlogs
-import sys
+from ..error import SSConfigError
+from ..utils.helpers import get_env
+
+
+def _get_log_level():
+    """Get the logging level based on environment variable
+       SMARTSIM_LOG_LEVEL
+
+       Logging levels
+         - quiet: Just shows errors and warnings
+         - info: Show basic information and errors (default)
+         - debug: Shows info, errors and user debug information
+         - developer: Shows everything happening during execution
+                      extremely verbose logging.
+
+    :return: Log level for coloredlogs
+    :rtype: str
+    """
+    try:
+        log_level = str(get_env("SMARTSIM_LOG_LEVEL"))
+        if log_level == "quiet":
+            return "warning"
+        elif log_level == "info":
+            return "info"
+        elif log_level == "debug":
+            return "debug"
+        # extremely verbose logging used internally
+        elif log_level == "developer":
+            return "debug"
+        else:
+            return "info"
+    except SSConfigError:
+        return "info"
+
 
 def get_logger(name=None, log_level=None):
     """Returns a log handle that has had the appropriate style
@@ -12,43 +46,14 @@ def get_logger(name=None, log_level=None):
     :param int log_level: what level to set the logger at.  Valid values are
                           defined in the python logging module.
     """
-
     # if name is None, then logger is the root logger
     logger = logging.getLogger(name)
-    if log_level is not None:
+    if log_level:
         logger.setLevel(log_level)
+    else:
+        log_level = _get_log_level()
     coloredlogs.install(level=log_level, logger=logger, stream=sys.stdout)
     return logger
-
-def set_global_logging_level(log_level):
-    """Sets the root logging level, which subsequent loggers
-    inherit from unless setLevel has been called on them.
-
-    :param int log_level: as defined in `get_logger`.
-    """
-
-    get_logger().setLevel(log_level)
-
-def set_logging_level(logger, log_level):
-    """Sets the logging level for an individual logger.  Typically,
-    a logger inherits the log_level from root (and is NOTSET).
-
-    :param logger: the handle to the logger.
-
-    :param int log_level: as defined in `get_logger`.
-    """
-
-    logger.setLevel(log_level)
-
-def set_debug_mode():
-    """Sets the root logger to debug mode, and clears the logging level set
-    on other loggers such that they log at the debug level.
-    """
-
-    set_global_logging_level(logging.DEBUG)
-    for name in logging.root.manager.loggerDict:
-        # the root logger is not in this dictionary
-        get_logger(name).setLevel(logging.NOTSET)
 
 def log_to_file(filename, log_level=None):
     """Installs a second filestream handler to the root logger,

@@ -6,6 +6,7 @@ from ..error import GenerationError
 
 from ..utils import get_logger
 logger = get_logger(__name__)
+logger.propagate = False
 
 
 class ModelWriter:
@@ -38,6 +39,7 @@ class ModelWriter:
         :param model: a model instance
         :type model: NumModel
         """
+        logger.debug(f"Configuring model {model.name} with params {model.params}")
         for tagged_file in model.files.tagged:
             self._set_lines(tagged_file)
             self._replace_tags(model)
@@ -95,7 +97,7 @@ class ModelWriter:
             else:
                 edited.append(line)
         for tag in unused_tags.keys():
-            logger.warning("TAG: " + tag + " unused on line(s): " + str(unused_tags[tag]))
+            logger.warning(f"Unused tag {tag} on line(s): {str(unused_tags[tag])}")
         self.lines = edited
 
 

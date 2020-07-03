@@ -177,7 +177,8 @@ class SlurmLauncher(Launcher):
         allocation = SlurmAllocation(nodes=nodes, ppn=ppn,
                                      duration=duration, **kwargs)
         salloc = allocation.get_alloc_cmd()
-        logger.debug(salloc)
+        debug_msg = " ".join(salloc[2:])
+        logger.debug(f"Allocation settings: {debug_msg}")
 
         #TODO figure out why this goes to stderr
         returncode, _, err = execute_cmd(salloc)
@@ -264,19 +265,21 @@ class SlurmLauncher(Launcher):
         self._check_for_slurm()
 
         if alloc_id not in self.alloc_manager().keys():
-            raise LauncherError("Allocation id, " + str(alloc_id) +
-                                " not found.")
+            raise LauncherError(
+                f"Allocation {str(alloc_id)} not found.")
 
+        logger.info(f"Releasing allocation: {alloc_id}")
         returncode, _, err = scancel([str(alloc_id)])
 
         if returncode != 0:
-            logger.info("Unable to revoke your allocation for jobid %s" % alloc_id)
-            logger.info(
+            logger.error("Unable to revoke your allocation for jobid %s" % alloc_id)
+            logger.error(
                 "The job may have already timed out, or you may need to cancel the job manually")
             raise LauncherError("Unable to revoke your allocation for jobid %s" % alloc_id)
 
         self.alloc_manager.remove(alloc_id)
-        logger.info("Successfully freed allocation %s" % alloc_id)
+        logger.info(f"Successfully freed allocation {alloc_id}")
+
 
 
     def _get_slurm_step_id(self, step):

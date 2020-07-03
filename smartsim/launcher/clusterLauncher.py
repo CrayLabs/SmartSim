@@ -71,7 +71,7 @@ def check_cluster_status(nodes, ports):
             redis_tester.delete("__test__")
             break
         except ClusterDownError:
-            logger.debug("Caught a cluster down error")
+            logger.debug("Caught a cluster down error in cluster setup")
             time.sleep(5)
             trials -= 1
     if trials == 0:

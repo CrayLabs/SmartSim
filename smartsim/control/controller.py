@@ -47,7 +47,7 @@ class Controller():
         if isinstance(nodes, SmartSimNode):
             nodes = [nodes]
         if orchestrator and not isinstance(orchestrator, Orchestrator):
-            raise SmartSimError(
+            raise TypeError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
         self._sanity_check_launch(orchestrator)
@@ -78,7 +78,7 @@ class Controller():
         if isinstance(models, NumModel):
             models = [models]
         if orchestrator and not isinstance(orchestrator, Orchestrator):
-            raise SmartSimError(
+            raise TypeError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
         self._stop_ensembles(ensembles)
@@ -125,6 +125,7 @@ class Controller():
         try:
             alloc_id = str(alloc_id)
             self._launcher.accept_alloc(alloc_id)
+            logger.info(f"Accepted user obtained allocation with id: {alloc_id}")
         except LauncherError as e:
             raise SmartSimError("Failed to accept user obtained allocation") from e
 
@@ -146,10 +147,9 @@ class Controller():
             else:
                 allocs = self._launcher.alloc_manager().copy()
                 for alloc_id in allocs.keys():
-                    logger.info(f"Releasing allocation: {alloc_id}")
                     self._launcher.free_alloc(alloc_id)
         except LauncherError as e:
-            raise SmartSimError(f"Failed to release allocation: {alloc_id}") from e
+            raise SmartSimError(f"Failed to release resources: {alloc_id}") from e
 
 
     def poll(self, interval, poll_db, verbose):
@@ -186,7 +186,7 @@ class Controller():
            :rtype: list of str
         """
         if not isinstance(orchestrator, Orchestrator):
-            raise SmartSimError(
+            raise TypeError(
                 f"orchestrator argument was of type {type(orchestrator)} not of type Orchestrator")
         statuses = []
         for dbnode in orchestrator.dbnodes:
@@ -202,7 +202,7 @@ class Controller():
            :rtype: list of str
         """
         if not isinstance(ensemble, Ensemble):
-            raise SmartSimError(
+            raise TypeError(
                 f"ensemble argument was of type {type(ensemble)} not of type Ensemble")
         statuses = []
         for model in ensemble.models.values():
@@ -218,7 +218,7 @@ class Controller():
            :rtype: str
         """
         if not isinstance(model, NumModel):
-            raise SmartSimError(
+            raise TypeError(
                 f"model argument was of type {type(model)} not of type NumModel"
             )
         return self._jobs.get_status(model)
@@ -232,7 +232,7 @@ class Controller():
            :rtype: str
         """
         if not isinstance(node, SmartSimNode):
-            raise SmartSimError(
+            raise TypeError(
                 f"node argument was of type {type(node)} not of type SmartSimNode"
             )
         return self._jobs.get_status(node)
@@ -277,15 +277,14 @@ class Controller():
            the function returns without performning any action.
 
            :param ensembles: List of ensembles to be stopped
-           :type ensembles: list of ensemble, optional ensemble
-           :raises: SmartSimError
+           :type ensembles: list of Ensemble instances
         """
         if not ensembles:
             return
 
         if not all(isinstance(x, Ensemble) for x in ensembles):
-            raise SmartSimError(
-                "Only objects of type ensemble expected for input variable ensembles"
+            raise TypeError(
+                "Only objects of type Ensemble expected for input variable ensembles"
             )
 
         for ensemble in ensembles:
@@ -297,15 +296,14 @@ class Controller():
            the function returns without performing any action.
 
            :param models: List of models to be stopped
-           :type models: list of Model, option Model
-           :raises: SmartSimError
+           :type models: list of NumModel instances
         """
 
         if not models:
             return
 
         if not all(isinstance(x, NumModel) for x in models):
-            raise SmartSimError(
+            raise TypeError(
                 "Only objects of type NumModel expected for input variable models")
 
         for model in models:
@@ -320,14 +318,13 @@ class Controller():
            the function returns without performing any action.
 
            :param nodes: List of nodes to be stopped
-           :type nodes: list of SmartSimNode, optional SmartSimNode
-           :raises: SmartSimError
+           :type nodes: list of SmartSimNode instances
         """
         if not nodes:
             return
 
         if not all(isinstance(x, SmartSimNode) for x in nodes):
-            raise SmartSimError(
+            raise TypeError(
                 "Only objects of type SmartSimNode expected for input variable nodes"
             )
 
@@ -343,13 +340,12 @@ class Controller():
 
            :param dbnodes: the databases that make up the orchestrator
            :type dbnodes: a list of DBNode instances
-           :raises: SmartSimError
         """
         if not dbnodes:
             return
 
         if not all(isinstance(x, DBNode) for x in dbnodes):
-            raise SmartSimError(
+            raise TypeError(
                 "Only objects of type DBNode expected for input variable dbnodes"
             )
 
@@ -404,6 +400,7 @@ class Controller():
             if not isinstance(self._launcher, LocalLauncher):
                 node_to_test = orchestrator.dbnodes[0]
                 if self._jobs.job_exists(node_to_test):
+                    # TODO change this to use self._jobs.finished()
                     if self._jobs.get_status(node_to_test) == "RUNNING":
                         active_orc = True
 
@@ -412,10 +409,13 @@ class Controller():
                     dbnode.remove_stale_dbnode_files()
                 orc_steps = self._create_steps(orchestrator.dbnodes,
                                                orchestrator)
+
                 self._launch_orchestrator(orc_steps, orchestrator)
                 if len(orchestrator.dbnodes) > 2:
                     self._create_orchestrator_cluster(orchestrator)
                 self._save_orchestrator(orchestrator)
+                logger.debug(
+                    f"Orchestrator launched on nodes: {self._jobs.get_db_hostnames()}")
 
         # orchestrator passed in to get env_vars
         node_steps = self._create_steps(nodes, orchestrator)
@@ -508,7 +508,7 @@ class Controller():
         :type orchestrator: Orchestrator
         :raises SmartSimError: if orchestrator launch fails
         """
-
+        logger.debug("Launching orchestrator...")
         for step_tuple in orc_steps:
             step, dbnode = step_tuple
             try:
@@ -536,10 +536,10 @@ class Controller():
         :type node_steps: step object dependant on launcher
         :raises SmartSimError: if launch fails
         """
-
         for step_tuple in node_steps:
             step, node = step_tuple
             try:
+                logger.debug(f"Launching Node: {node.name}")
                 job_id = self._launcher.run(step)
                 self._jobs.add_job(node.name, job_id, node)
             except LauncherError as e:
@@ -562,6 +562,7 @@ class Controller():
         for step_tuple in model_steps:
             step, model = step_tuple
             try:
+                logger.debug(f"Launching Model: {model.name}")
                 job_id = self._launcher.run(step)
                 self._jobs.add_job(model.name, job_id, model)
             except LauncherError as e:
@@ -580,6 +581,7 @@ class Controller():
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
         """
+        logger.debug("Constructing Orchestrator cluster...")
         all_ports = orchestrator.dbnodes[0].ports
         db_nodes = self._jobs.get_db_hostnames()
         create_cluster(db_nodes, all_ports)

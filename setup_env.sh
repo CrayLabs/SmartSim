@@ -10,7 +10,7 @@ fi
 
 # Update PYTHONPATH if smartsim not found already
 if [[ ":$PYTHONPATH:" != *"$(pwd)"* ]]; then
-    echo "Adding current directory to the python path"
+    echo "Adding SmartSim to PYTHONPATH"
     export PYTHONPATH="$(pwd):${PYTHONPATH}"
 else
     echo "SmartSim found in PYTHONPATH"
@@ -111,5 +111,8 @@ fi
 
 cd ../
 
+# Set environment variables for SmartSim
 export SMARTSIMHOME="$(pwd)"
 echo "SMARTSIMHOME set to $(pwd)"
+export SMARTSIM_LOG_LEVEL="info"
+echo "SMARTSIM_LOG_LEVEL set to 'info'"

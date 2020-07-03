@@ -1,12 +1,18 @@
 import os
 import zmq
 import pickle
-from ..error import ShellError, LauncherError
+from ..error import ShellError, LauncherError, SSConfigError
 from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
 from ..remote import CmdClient
 
 from ..utils import get_logger, get_env
 logger = get_logger(__name__)
+
+try:
+    level = get_env("SMARTSIM_LOG_LEVEL")
+    verbose_shell = True if level == "developer" else False
+except SSConfigError:
+    verbose_shell = False
 
 def is_remote():
     """Determine if a command should be sent to a CmdServer
@@ -37,7 +43,7 @@ def ping_host(hostname):
 
 
 def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
-                verbose=False, timeout=None, remote=True):
+                timeout=None, remote=True):
     """Execute a command either locally or remotely depending on the
        configuration set by the user for this experiment. If SMARSIM_REMOTE
        is set, send the command over the network to a CmdServer listening
@@ -54,8 +60,6 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
     :type env: dict, optional
     :param proc_input: input to the process, defaults to ""
     :type proc_input: str, optional
-    :param verbose: control verbosity, defaults to True
-    :type verbose: bool, optional
     :param timeout: timeout of the process, defaults to None
     :type timeout: int, optional
     :param remote: disable remote sending(for CmdServer),
@@ -66,6 +70,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
     :return: returncode, output, and error of the process
     :rtype: tuple of (int, str, str)
     """
+    global verbose_shell
 
     # run the command remotely using CmdClient
     if is_remote() and remote:
@@ -75,8 +80,9 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
             env=env, timeout=timeout)
         return client.execute_remote_request(request)
 
-    if verbose:
-        logger.info("Executing command: %s" % " ".join(cmd_list))
+    if verbose_shell:
+        source = "shell" if shell else "Popen"
+        logger.debug("Executing %s cmd: %s" % (source, " ".join(cmd_list)))
 
     # spawning the subprocess and connecting to its output
     proc = Popen(cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE,
@@ -97,7 +103,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
     return proc.returncode, out.decode('utf-8'), err.decode('utf-8')
 
 
-def execute_async_cmd(cmd_list, cwd, remote=True, verbose=False):
+def execute_async_cmd(cmd_list, cwd, remote=True):
     """Execute an asynchronous command either locally or through
        zmq to a CmdServer listening over TCP.
 
@@ -107,14 +113,12 @@ def execute_async_cmd(cmd_list, cwd, remote=True, verbose=False):
     :type cwd: str
     :param remote: disable remote(for CmdServer), defaults to True
     :type remote: bool, optional
-    :param verbose: control verbosity, defaults to True
-    :type verbose: bool, optional
     :return: returncode and placeholders for output and error
     :rtype: tuple of (int, str, str)
     """
-
-    if verbose:
-        logger.info("Executing command: %s" % " ".join(cmd_list))
+    global verbose_shell
+    if verbose_shell:
+        logger.debug("Executing async shell cmd: %s" % " ".join(cmd_list))
 
     if is_remote() and remote:
         client = CmdClient()
