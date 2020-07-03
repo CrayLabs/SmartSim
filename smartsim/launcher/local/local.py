@@ -65,7 +65,7 @@ class LocalLauncher:
     def stop(self, step_id):
         raise SSUnsupportedError("Local launcher does not support job interaction")
 
-    def is_finished(self):
+    def is_finished(self, status):
         raise SSUnsupportedError("Local launcher does not support job interaction")
 
     def _write_output(self, out_file, err_file, output, error):

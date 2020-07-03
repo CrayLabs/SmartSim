@@ -77,6 +77,7 @@ def test_accept_alloc():
         ctrl.add_allocation(111111)
 
 def test_get_status():
+    print(type(ctrl._jobs._launcher))
     with pytest.raises(SSUnsupportedError):
         ctrl.get_ensemble_status(exp.ensembles[0])
 

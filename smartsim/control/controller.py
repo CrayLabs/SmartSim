@@ -310,7 +310,7 @@ class Controller():
             job = self._jobs[model.name]
             self._jobs.check_job(model.name)
             logger.info(" ".join((
-                "Stopping model", model.name, "job", job.jid)))
+                "Stopping model", model.name, "job", str(job.jid))))
             self._launcher.stop(job.jid)
 
     def _stop_nodes(self, nodes):

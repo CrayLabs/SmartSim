@@ -104,10 +104,12 @@ class JobManager:
                             is to have it's status updated
         :type entity_name: str
         """
-
-        job = self[entity_name]
-        status, returncode = self._launcher.get_step_status(job.jid)
-        job.set_status(status, returncode)
+        try:
+            job = self[entity_name]
+            status, returncode = self._launcher.get_step_status(job.jid)
+            job.set_status(status, returncode)
+        except SmartSimError:
+            logger.warning(f"Could not retrieve status of {entity_name}")
 
 
     def get_status(self, entity):

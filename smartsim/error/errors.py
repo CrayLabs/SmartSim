@@ -7,13 +7,13 @@ class SmartSimError(Exception):
     def __str__(self):
         return self.msg
 
-class SSConfigError(SmartSimError):
-    """Raised when there is an error in the configuration of SmartSim"""
+class SSUnsupportedError(Exception):
+    """raised in the event that a called method isn't supported by SmartSim yet"""
     def __init__(self, message):
         super().__init__(message)
 
-class SSUnsupportedError(SmartSimError):
-    """raised in the event that a called method isn't supported by SmartSim yet"""
+class SSConfigError(SmartSimError):
+    """Raised when there is an error in the configuration of SmartSim"""
     def __init__(self, message):
         super().__init__(message)
 
