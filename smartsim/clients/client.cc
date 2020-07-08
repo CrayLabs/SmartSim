@@ -15,31 +15,32 @@ SmartSimClient::~SmartSimClient()
 
 void SmartSimClient::_set_prefixes_from_env()
 {
-  if (const char* keyout_p = std::getenv("SSKEYOUT"))
+  const char* keyout_p = std::getenv("SSKEYOUT");
+  if (keyout_p)
     this->_put_key_prefix = keyout_p;
   else
     this->_put_key_prefix.clear();
 
-  if (const char* keyin_p = std::getenv("SSKEYIN")){
-    std::string keyin_env_string(keyin_p);
-    // Parse a delimited list of input prefixes
-    char parse_char[] = ";";
-    int start_pos = 0;
-    int end_pos = 0;
-    int str_len = keyin_env_string.length();
-
-    for (int i=0; i<str_len; i++) {
-      if ( keyin_env_string[i] == parse_char[0]) {
-        end_pos = i-1;
-        this->_get_key_prefixes.push_back(keyin_env_string.substr(start_pos,end_pos));
-        start_pos = i+1;
+  char* keyin_p = std::getenv("SSKEYIN");
+  if(keyin_p) {
+    char* a = &keyin_p[0];
+    char* b = a;
+    char parse_char = ';';
+    while (*b) {
+      if(*b==parse_char) {
+	if(a!=b)
+	  this->_get_key_prefixes.push_back(std::string(a, b-a));
+	a=++b;
       }
-      else if (i == str_len-1)
-        this->_get_key_prefixes.push_back(keyin_env_string.substr(start_pos,str_len-1));
+      else
+	b++;
     }
-  if ( this->_get_key_prefixes.size() == 1)
-    this->set_data_source( this->_get_key_prefixes[0].c_str() );
+    if(a!=b)
+      this->_get_key_prefixes.push_back(std::string(a, b-a));
   }
+
+  if (this->_get_key_prefixes.size() > 0)
+    this->set_data_source(this->_get_key_prefixes[0].c_str());
 }
 
 void SmartSimClient::set_data_source(const char *source_id)
@@ -47,10 +48,8 @@ void SmartSimClient::set_data_source(const char *source_id)
   bool valid_prefix = false;
   int num_prefix = _get_key_prefixes.size();
   int i = 0;
-  for (i=0; i<num_prefix; i++)
-  {
-    if ( this->_get_key_prefixes[i].compare(source_id))
-    {
+  for (i=0; i<num_prefix; i++) {
+    if (this->_get_key_prefixes[i].compare(source_id)==0) {
       valid_prefix = true;
       break;
     }
@@ -59,7 +58,10 @@ void SmartSimClient::set_data_source(const char *source_id)
   if (valid_prefix)
     this->_get_key_prefix = this->_get_key_prefixes[i];
   else
-	  throw std::runtime_error("Client error: requested key" + std::string(source_id) + "has not been registered");
+    throw std::runtime_error("Client error: data source " +
+			     std::string(source_id) +
+			     "could not be found during client "+
+			     "initialization.");
 }
 
 const char* SmartSimClient::query_get_prefix()
@@ -209,140 +211,140 @@ uint32_t SmartSimClient::get_exact_key_scalar_uint32(const char* key)
 // Put and get routines that potentially mangle the requested key with prefixing
 void SmartSimClient::put_array_double(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArrayDouble,double>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_array_float(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArrayFloat,float>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_array_int64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_array_int32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_array_uint64(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_array_uint32(const char* key, void* value, int* dims, int n_dims)
 {
-  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, false);
+  this->_put_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, value, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_double(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArrayDouble, double>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_float(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArrayFloat, float>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_int64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt64,int64_t>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_int32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArraySInt32,int32_t>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_uint64(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt64,uint64_t>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::get_array_uint32(const char* key, void* result, int* dims, int n_dims)
 {
-  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, false);
+  this->_get_array<SmartSimProtobuf::ArrayUInt32,uint32_t>(key, result, dims, n_dims, true);
   return;
 }
 
 void SmartSimClient::put_scalar_double(const char* key, double value)
 {
-  this->_put_scalar<double>(&protob_scalar_double, key, value, false);
+  this->_put_scalar<double>(&protob_scalar_double, key, value, true);
   return;
 }
 
 void SmartSimClient::put_scalar_float(const char* key, float value)
 {
-  this->_put_scalar<float>(&protob_scalar_float, key, value, false);
+  this->_put_scalar<float>(&protob_scalar_float, key, value, true);
   return;
 }
 
 void SmartSimClient::put_scalar_int64(const char* key, int64_t value)
 {
-  this->_put_scalar<int64_t>(&protob_scalar_int64, key, value, false);
+  this->_put_scalar<int64_t>(&protob_scalar_int64, key, value, true);
   return;
 }
 
 void SmartSimClient::put_scalar_int32(const char* key, int32_t value)
 {
-  this->_put_scalar<int32_t>(&protob_scalar_int32, key, value, false);
+  this->_put_scalar<int32_t>(&protob_scalar_int32, key, value, true);
   return;
 }
 
 void SmartSimClient::put_scalar_uint64(const char* key, uint64_t value)
 {
-  this->_put_scalar<uint64_t>(&protob_scalar_uint64, key, value, false);
+  this->_put_scalar<uint64_t>(&protob_scalar_uint64, key, value, true);
   return;
 }
 
 void SmartSimClient::put_scalar_uint32(const char* key, uint32_t value)
 {
-  this->_put_scalar<uint32_t>(&protob_scalar_uint32, key, value, false);
+  this->_put_scalar<uint32_t>(&protob_scalar_uint32, key, value, true);
   return;
 }
 
 double SmartSimClient::get_scalar_double(const char* key)
 {
-  return this->_get_scalar<double>(&protob_scalar_double, key, false);
+  return this->_get_scalar<double>(&protob_scalar_double, key, true);
 }
 
 float SmartSimClient::get_scalar_float(const char* key)
 {
-  return this->_get_scalar<float>(&protob_scalar_float, key, false);
+  return this->_get_scalar<float>(&protob_scalar_float, key, true);
 }
 
 int64_t SmartSimClient::get_scalar_int64(const char* key)
 {
-  return this->_get_scalar<int64_t>(&protob_scalar_int64, key, false);
+  return this->_get_scalar<int64_t>(&protob_scalar_int64, key, true);
 }
 
 int32_t SmartSimClient::get_scalar_int32(const char* key)
 {
-  return this->_get_scalar<int32_t>(&protob_scalar_int32, key, false);
+  return this->_get_scalar<int32_t>(&protob_scalar_int32, key, true);
 }
 
 uint64_t SmartSimClient::get_scalar_uint64(const char* key)
 {
-  return this->_get_scalar<uint64_t>(&protob_scalar_uint64, key, false);
+  return this->_get_scalar<uint64_t>(&protob_scalar_uint64, key, true);
 }
 
 uint32_t SmartSimClient::get_scalar_uint32(const char* key)
 {
-  return this->_get_scalar<uint32_t>(&protob_scalar_uint32, key, false);
+  return this->_get_scalar<uint32_t>(&protob_scalar_uint32, key, true);
 }
 
 // Routines for polling and checking scalars within the database by key
@@ -357,6 +359,26 @@ bool SmartSimClient::poll_key(const char* key, int poll_frequency_ms, int num_tr
 
   while(!(num_tries==0)) {
     if(this->key_exists(key)) {
+      key_exists = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(poll_frequency_ms));
+    if(num_tries>0)
+      num_tries--;
+  }
+
+  if(key_exists)
+    return true;
+  else
+    return false;
+}
+
+bool SmartSimClient::poll_exact_key(const char* key, int poll_frequency_ms, int num_tries)
+{
+  bool key_exists = false;
+
+  while(!(num_tries==0)) {
+    if(this->exact_key_exists(key)) {
       key_exists = true;
       break;
     }
@@ -409,32 +431,32 @@ bool SmartSimClient::poll_key_and_check_scalar_uint32(const char* key, uint32_t 
   // Poll for the exact key
 bool SmartSimClient::poll_exact_key_and_check_scalar_double(const char* key, double value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<double>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<double>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 bool SmartSimClient::poll_exact_key_and_check_scalar_float(const char* key, float value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<float>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<float>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 bool SmartSimClient::poll_exact_key_and_check_scalar_int64(const char* key, int64_t value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<int64_t>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<int64_t>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 bool SmartSimClient::poll_exact_key_and_check_scalar_int32(const char* key, int32_t value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<int32_t>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<int32_t>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 bool SmartSimClient::poll_exact_key_and_check_scalar_uint64(const char* key, uint64_t value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<uint64_t>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<uint64_t>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 bool SmartSimClient::poll_exact_key_and_check_scalar_uint32(const char* key, uint32_t value, int poll_frequency_ms, int num_tries)
 {
-  return this->_poll_key_and_check_scalar<uint32_t>(key, value, poll_frequency_ms, num_tries);
+  return this->_poll_key_and_check_scalar<uint32_t>(key, value, poll_frequency_ms, num_tries, false);
 }
 
 template <class T>
@@ -446,21 +468,21 @@ bool SmartSimClient::_poll_key_and_check_scalar(const char* key, T value, int po
   std::string get_key = (add_prefix) ? this->_build_get_key(key) : key;
 
   while( !(num_tries==0) ) {
-    if(this->key_exists(get_key.c_str())) {
+    if(this->exact_key_exists(get_key.c_str())) {
       if(std::is_same<T, double>::value)
-    	current_value = this->get_scalar_double(get_key.c_str());
+        current_value = this->get_exact_key_scalar_double(get_key.c_str());
       else if(std::is_same<T, float>::value)
-	    current_value = this->get_scalar_float(get_key.c_str());
+        current_value = this->get_exact_key_scalar_float(get_key.c_str());
       else if(std::is_same<T, int64_t>::value)
-    	current_value = this->get_scalar_int64(get_key.c_str());
+        current_value = this->get_exact_key_scalar_int64(get_key.c_str());
       else if(std::is_same<T, int32_t>::value)
-	    current_value = this->get_scalar_int32(get_key.c_str());
+        current_value = this->get_exact_key_scalar_int32(get_key.c_str());
       else if(std::is_same<T, uint64_t>::value)
-    	current_value = this->get_scalar_uint64(get_key.c_str());
+        current_value = this->get_exact_key_scalar_uint64(get_key.c_str());
       else if(std::is_same<T,uint32_t>::value)
-    	current_value = this->get_scalar_uint32(get_key.c_str());
+        current_value = this->get_exact_key_scalar_uint32(get_key.c_str());
       else
-    	throw std::runtime_error("Client Error: Unsupported scalar type.");
+        throw std::runtime_error("Client Error: Unsupported scalar type.");
 
       if(value == current_value) {
         matched_value = true;
@@ -674,7 +696,6 @@ void SmartSimClient::_place_array_values(const google::protobuf::MutableRepeated
 
 void SmartSimClient::_put_to_keydb(const char* key, std::string& value)
 {
-
   int n_trials = 5;
   bool success = false;
 

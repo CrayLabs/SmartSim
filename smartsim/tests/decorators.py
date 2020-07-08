@@ -4,7 +4,7 @@ import pytest
 from os import path, mkdir
 from decorator import decorator
 from shutil import rmtree, which, copyfile
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, run
 from smartsim.utils import get_logger
 logger = get_logger()
 
@@ -73,6 +73,8 @@ def orchestrator_test_local(test_function):
     exp_2_dir = "./orchestrator_test/exp_2/"
 
     def wrapper(*args, **kwargs):
+        if which("srun"):
+            pytest.skip()
 
         if path.isdir(exp_base_path):
             rmtree(exp_base_path)
@@ -155,6 +157,40 @@ def python_client_test(test_dir):
 
         if path.isdir(experiment_dir):
             rmtree(experiment_dir)
+
+        return decorator(wrapper, test_function)
+    return decorator(wrapper)
+
+def compiled_client_test(*args, **kwargs):
+    """Decorator for compiled client tests"""
+
+    def wrapper(test_function):
+        test_dir = kwargs['test_dir']
+        compile_dir = test_dir + "/compile"
+        if path.isdir(compile_dir):
+            rmtree(compile_dir)
+        mkdir(compile_dir)
+
+        binary_names = []
+        for target_name in kwargs['target_names']:
+            binary_name = compile_dir + '/' + target_name
+            print(binary_name)
+            binary_names.append(binary_name)
+            p = run(["cmake", "../"], cwd=compile_dir,
+                    capture_output=True)
+            p = run(["make", target_name], cwd=compile_dir,
+                    capture_output=True)
+            assert(path.isfile(binary_name))
+
+        if path.isdir("client_test"):
+            rmtree("client_test")
+
+        test_function(binary_names=binary_names)
+
+        if path.isdir(compile_dir):
+            rmtree(compile_dir)
+        if path.isdir("client_test"):
+            rmtree("client_test")
 
         return decorator(wrapper, test_function)
     return decorator(wrapper)

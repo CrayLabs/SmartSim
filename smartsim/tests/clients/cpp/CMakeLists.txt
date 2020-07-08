@@ -55,52 +55,112 @@ include_directories(SYSTEM
 set(CLIENT_LIBRARIES ${REDISPP_LIB} ${HIREDIS_LIB} ${PROTOBUF_LIB})
 set(CLIENT_SRC ../../../clients/client.cc ../../../utils/protobuf/smartsim_protobuf.pb.cc)
 
-add_executable(cpp_client_profiler
-	client_1D_profiler.cpp
+add_executable(client_test_poll_check_exact_keys_scalar_send
+	client_test_poll_check_exact_keys_scalar_send.cpp
 	${CLIENT_SRC}
 )
 
-target_link_libraries(cpp_client_profiler
+target_link_libraries(client_test_poll_check_exact_keys_scalar_send
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
 
-add_executable(client_tester_1D
-	client_test_1D.cpp
+add_executable(client_test_poll_check_exact_keys_scalar_receive
+	client_test_poll_check_exact_keys_scalar_receive.cpp
 	${CLIENT_SRC}
 )
 
-target_link_libraries(client_tester_1D
+target_link_libraries(client_test_poll_check_exact_keys_scalar_receive
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
 
-add_executable(client_tester_2D
-	client_test_2D.cpp
+add_executable(client_test_poll_check_scalar_send
+	client_test_poll_check_scalar_send.cpp
 	${CLIENT_SRC}
 )
 
-target_link_libraries(client_tester_2D
+target_link_libraries(client_test_poll_check_scalar_send
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
 
-add_executable(client_tester_3D
-	client_test_3D.cpp
+add_executable(client_test_poll_check_scalar_receive
+	client_test_poll_check_scalar_receive.cpp
 	${CLIENT_SRC}
 )
 
-target_link_libraries(client_tester_3D
+target_link_libraries(client_test_poll_check_scalar_receive
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
 
-add_executable(poll_and_key_value_check_int64
-	  poll_and_key_value_check_int64.cpp
-	  ${CLIENT_SRC}
+add_executable(client_test_array_put_get_3D_exact_key
+	client_test_array_put_get_3D_exact_key.cpp
+	${CLIENT_SRC}
 )
 
-target_link_libraries(poll_and_key_value_check_int64
+target_link_libraries(client_test_array_put_get_3D_exact_key
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_scalar_put_get_exact_keys
+	client_test_scalar_put_get_exact_keys.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_scalar_put_get_exact_keys
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_env_parsing
+	client_test_env_parsing.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_env_parsing
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_scalar_put_get
+	client_test_scalar_put_get.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_scalar_put_get
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_array_put_get_1D
+	client_test_array_put_get_1D.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_array_put_get_1D
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_array_put_get_2D
+	client_test_array_put_get_2D.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_array_put_get_2D
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_array_put_get_3D
+	client_test_array_put_get_3D.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_array_put_get_3D
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
