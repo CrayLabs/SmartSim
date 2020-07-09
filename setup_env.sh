@@ -115,4 +115,4 @@ cd ../
 export SMARTSIMHOME="$(pwd)"
 echo "SMARTSIMHOME set to $(pwd)"
 export SMARTSIM_LOG_LEVEL="info"
-echo "SMARTSIM_LOG_LEVEL set to 'info'"
+echo "SMARTSIM_LOG_LEVEL set to $SMARTSIM_LOG_LEVEL"

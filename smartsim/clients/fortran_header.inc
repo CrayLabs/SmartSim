@@ -26,6 +26,7 @@ public :: get_scalar_int32
 public :: get_scalar_int64
 public :: get_scalar_float
 public :: get_scalar_double
+public :: get_scalar
 public :: put_exact_key_array_int32
 public :: put_exact_key_array_int64
 public :: put_exact_key_array_float
@@ -50,6 +51,7 @@ public :: get_exact_key_scalar_int32
 public :: get_exact_key_scalar_int64
 public :: get_exact_key_scalar_float
 public :: get_exact_key_scalar_double
+public :: get_exact_key_scalar
 !> Generic interface for putting an array into the database
 interface put_array
   module procedure put_array_int32,&
@@ -82,6 +84,14 @@ interface put_scalar
     put_scalar_double
 end interface put_scalar
 
+!> Generic interface for retrieving a scalar from the database
+interface get_scalar
+  module procedure get_scalar_int32,&
+    get_scalar_int64,&
+    get_scalar_float,&
+    get_scalar_double
+end interface get_scalar
+
 !> Generic interface for putting an array into the database with the exact key
 interface put_exact_key_array
   module procedure put_exact_key_array_int32,&
@@ -113,6 +123,14 @@ interface put_exact_key_scalar
     put_exact_key_scalar_float,&
     put_exact_key_scalar_double
 end interface put_exact_key_scalar
+
+!> Generic interface for retrieving a scalar from the database with the exact_key
+interface get_exact_key_scalar
+  module procedure get_exact_key_scalar_int32,&
+    get_exact_key_scalar_int64,&
+    get_exact_key_scalar_float,&
+    get_exact_key_scalar_double
+end interface get_exact_key_scalar
 
 ! End of generated code
 

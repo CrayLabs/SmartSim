@@ -49,7 +49,7 @@ find_package(MPI)
 
 include_directories(SYSTEM
     ${MPI_INCLUDE_PATH}
-    ../../../clients
+    ../../../clients/
     ../../../utils/protobuf/
     /usr/local/include/
     ${HIREDIS_INCLUDE_PATH}
@@ -58,19 +58,67 @@ include_directories(SYSTEM
 )
 
 set(CLIENT_LIBRARIES ${REDISPP_LIB} ${HIREDIS_LIB} ${PROTOBUF_LIB})
-set(CLIENT_SRC ../../../clients/fortran_client.F90
+set(CLIENT_SRC
+           unit_test_aux.F90
+		   ../../../clients/fortran_client.F90
 	       ../../../clients/client.cc
 		   ../../../clients/c_client.cc
 	       ../../../utils/protobuf/smartsim_protobuf.pb.cc)
-
-add_executable(client_tester
-  parallel_driver.F90
-  unit_test.F90
+# Not exact key tests
+add_executable(scalar_unit_test
+  scalar_unit_test.F90
   ${CLIENT_SRC}
 )
-
-
-target_link_libraries(client_tester
-  MPI::MPI_Fortran
+target_link_libraries(scalar_unit_test
+  ${CLIENT_LIBRARIES}
+  )
+add_executable(poll_key_and_check_scalar_unit_test
+  poll_key_and_check_scalar_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(poll_key_and_check_scalar_unit_test
+  ${CLIENT_LIBRARIES}
+)
+add_executable(array_1d_unit_test
+  array_1d_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(array_1d_unit_test
+  ${CLIENT_LIBRARIES}
+)
+add_executable(array_2d_unit_test
+  array_2d_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(array_2d_unit_test
+  ${CLIENT_LIBRARIES}
+)
+# Exact key tests
+add_executable(exact_key_scalar_unit_test
+  exact_key_scalar_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(exact_key_scalar_unit_test
+  ${CLIENT_LIBRARIES}
+)
+add_executable(poll_exact_key_and_check_scalar_unit_test
+  exact_key_poll_key_and_check_scalar_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(poll_exact_key_and_check_scalar_unit_test
+  ${CLIENT_LIBRARIES}
+)
+add_executable(exact_key_array_1d_unit_test
+  exact_key_array_1d_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(exact_key_array_1d_unit_test
+  ${CLIENT_LIBRARIES}
+)
+add_executable(exact_key_array_2d_unit_test
+  exact_key_array_2d_unit_test.F90
+  ${CLIENT_SRC}
+)
+target_link_libraries(exact_key_array_2d_unit_test
   ${CLIENT_LIBRARIES}
 )
