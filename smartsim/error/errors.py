@@ -60,3 +60,11 @@ class ClusterLauncherError(LauncherError):
     """Raised when there is an error in the launcher"""
     def __init__(self, message):
         super().__init__(message)
+
+
+# ------ MPO Errors -----------------
+
+class MPOError(Exception):
+    """Raised when errors arise with crayai integration"""
+    def __init__(self, message):
+        super().__init__(message)

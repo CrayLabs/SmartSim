@@ -223,11 +223,11 @@ class Generator():
         """Create the node directories and copy/symlink any listed
            files
 
-        :param exp_path: [description]
-        :type exp_path: [type]
-        :param nodes: [description]
-        :type nodes: [type]
-        :raises EntityExistsError: [description]
+        :param exp_path: path to the experiment
+        :type exp_path: str
+        :param nodes: nodes to generate directories for
+        :type nodes: SmartSimNode
+        :raises EntityExistsError: if node directory already exists
         """
 
         if not nodes:
@@ -256,25 +256,31 @@ class Generator():
         :type exp_path: str
         :param ensembles: list of ensembles
         :type ensembles: list
-        :raises EntityExistsError: if an ensemble directory already exists
+        :raises EntityExistsError: if a model directory already exists
         """
 
         if not ensembles:
             return
 
         for ensemble in ensembles:
-            error = f"Ensemble directory for {ensemble.name} " \
-                    f"already exists with {exp_path}"
 
             ensemble_dir = path.join(exp_path, ensemble.name)
             if path.isdir(ensemble_dir):
-                if not self.overwrite:
-                    raise EntityExistsError(error)
-                shutil.rmtree(ensemble_dir)
-            mkdir(ensemble_dir)
+                if self.overwrite:
+                    shutil.rmtree(ensemble_dir)
+                    mkdir(ensemble_dir)
+            else:
+                mkdir(ensemble_dir)
 
             for name, model in ensemble.models.items():
                 dst = path.join(exp_path, ensemble.name, name)
+                if path.isdir(dst):
+                    if self.overwrite:
+                        shutil.rmtree(dst)
+                    else:
+                        error = f"Model directory for {model.name} " \
+                                f"already exists with {exp_path}"
+                        raise EntityExistsError(error)
                 mkdir(dst)
                 model.set_path(dst)
                 self._copy_entity_files(model)
