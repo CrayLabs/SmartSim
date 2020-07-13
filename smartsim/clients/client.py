@@ -112,6 +112,102 @@ class Client:
         """
         return self._get_data(key, ScalarSInt32(), True, wait, wait_interval)
 
+    def get_exact_key_array_nd_float64(self, key, wait=False,
+                                       wait_interval=1000):
+        """This function gets a numpy array of type float64 from the database
+        without key prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: numpy.ndarray
+        """
+        return self._get_data(key, ArrayDouble(), False, wait, wait_interval)
+
+    def get_exact_key_array_nd_int64(self, key, wait=False,
+                                     wait_interval=1000):
+        """This function gets a numpy array of type int64 from the database
+        without key prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: numpy.ndarray
+        """
+        return self._get_data(key, ArraySInt64(), False, wait, wait_interval)
+
+    def get_exact_key_array_nd_int32(self, key, wait=False,
+                                     wait_interval=1000):
+        """This function gets a numpy array of type int32 from the database
+        without key prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: numpy.ndarray
+        """
+        return self._get_data(key, ArraySInt32(), False, wait, wait_interval)
+
+    def get_exact_key_scalar_float64(self, key, wait=False,
+                                     wait_interval=1000):
+        """This function gets a scalar of type float64 from the database
+        without prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: float64
+        """
+        return self._get_data(key, ScalarDouble(), False, wait, wait_interval)
+
+    def get_exact_key_scalar_int64(self, key, wait=False,
+                                   wait_interval=1000):
+        """This function gets a scalar of type int64 from the database
+        without prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: int64
+        """
+        return self._get_data(key, ScalarSInt64(), False, wait, wait_interval)
+
+    def get_exact_key_scalar_int32(self, key, wait=False,
+                                   wait_interval=1000):
+        """This function gets a scalar of type int32 from the database
+        without key prefixing.
+
+        :param key: key to fetch
+        :type key: str
+        :param wait: flag to poll database until key is present
+        :type wait: bool
+        :param wait_interval: time (milliseconds) between polling requests
+        :type wait_interval: float
+        :return: array data associated with given key
+        :rtype: int32
+        """
+        return self._get_data(key, ScalarSInt32(), False, wait, wait_interval)
+
     def put_array_nd_float64(self, key, value):
         """This function puts a numpy array of type float64 into the database.
 
@@ -207,6 +303,104 @@ class Client:
 
         self._put_data(key, value, ScalarSInt32(), True)
 
+    def put_exact_key_array_nd_float64(self, key, value):
+        """This function puts a numpy array of type float64 into the database
+        without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: numpy.ndarray filled with float64
+        """
+        if not isinstance(value, np.ndarray):
+            raise SmartSimError("The value passed into put_array_nd_float64()"\
+                                " must be of type numpy.ndarray.")
+        if not (value.dtype == np.dtype('float64')):
+            raise SmartSimError("The values inside of the numpy.ndarray must"\
+                                " have type float64 to use"\
+                                " put_array_nd_float64().")
+
+        self._put_data(key, value, ArrayDouble(), False)
+
+    def put_exact_key_array_nd_int64(self, key, value):
+        """This function puts a numpy array of type int64 into the database
+        without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: numpy.ndarray filled with int64
+        """
+        if not isinstance(value, np.ndarray):
+            raise SmartSimError("The value passed into put_array_nd_int64()"\
+                                " must be of type numpy.ndarray.")
+        if not (value.dtype == np.dtype('int64')):
+            raise SmartSimError("The values inside of the numpy.ndarray must"\
+                                " have type int64 to use put_array_nd_int64().")
+
+        self._put_data(key, value, ArraySInt64(), False)
+
+    def put_exact_key_array_nd_int32(self, key, value):
+        """This function puts a numpy array of type int32 into the database
+        without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: numpy.ndarray filled with int32
+        """
+        if not isinstance(value, np.ndarray):
+            raise SmartSimError("The value passed into put_array_nd_int32()"\
+                                " must be of type numpy.ndarray.")
+        if not (value.dtype == np.dtype('int32')):
+            raise SmartSimError("The values inside of the numpy.ndarray must"\
+                                " be of type int32 to use"\
+                                " put_array_nd_int32().")
+
+        self._put_data(key, value, ArraySInt32(), False)
+
+    def put_exact_key_scalar_float64(self, key, value):
+        """This function puts a float64 into the database without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: float
+        """
+        if not isinstance(value, float):
+            raise SmartSimError("The value passed into put_scalar_float64()"\
+                                " must be of type float")
+
+        self._put_data(key, value, ScalarDouble(), False)
+
+    def put_exact_key_scalar_int64(self, key, value):
+        """This function puts an int64 into the database without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: int
+        """
+        if not isinstance(value, int):
+            raise SmartSimError("The value passed into put_scalar_int64()"\
+                                " must be of type int")
+
+        self._put_data(key, value, ScalarSInt64(), False)
+
+    def put_exact_key_scalar_int32(self, key, value):
+        """This function puts an int32 into the database without prefixing.
+
+        :param key: key of the value being put
+        :type key: str
+        :param value: value being put
+        :type value: int
+        """
+        if not isinstance(value, int):
+            raise SmartSimError("The value passed into put_scalar_int32()"\
+                                " must be of type int")
+
+        self._put_data(key, value, ScalarSInt32(), False)
+
     def exact_key_exists(self, key):
         """This function checks if a key is in the database
 
@@ -287,22 +481,14 @@ class Client:
         :param num_tries: the maximum number of tries.  If <0, unlimited
             attempts will be made.
         :type num_tries: int
+        :returns: False if the key with matching value could not be found
+            after specified number of tries, otherwise true.
+        :rtype: bool
         """
-        matched_value = False
-        current_value = None
-
-        while not num_tries == 0:
-            if self.key_exists(key):
-                current_value = self.get_scalar_float64(key)
-                if current_value == value:
-                    num_tries = 0
-                    matched_value = True
-            if not matched_value:
-                time.sleep(poll_frequency/1000.0)
-            if num_tries>0:
-                num_tries -= 1
-
-        return matched_value
+        return self._poll_key_and_check_scalar(key, value,
+                                               self.get_scalar_float64,
+                                               self.key_exists,
+                                               poll_frequency, num_tries)
 
     def poll_key_and_check_scalar_int64(self, key, value, poll_frequency=1000,
                                         num_tries=-1):
@@ -317,24 +503,14 @@ class Client:
         :param num_tries: the maximum number of tries.  If <0, unlimited
             attempts will be made.
         :type num_tries: int
+        :returns: False if the key with matching value could not be found
+            after specified number of tries, otherwise true.
+        :rtype: bool
         """
-        matched_value = False
-        current_value = None
-
-        while not num_tries == 0:
-            if self.key_exists(key):
-                current_value = self.get_scalar_int64(key)
-                if current_value == value:
-                    num_tries = 0
-                    matched_value = True
-
-            if not matched_value:
-                time.sleep(poll_frequency/1000.0)
-
-            if num_tries>0:
-                num_tries -= 1
-
-        return matched_value
+        return self._poll_key_and_check_scalar(key, value,
+                                               self.get_scalar_int64,
+                                               self.key_exists,
+                                               poll_frequency, num_tries)
 
     def poll_key_and_check_scalar_int32(self, key, value, poll_frequency=1000,
                                         num_tries=-1):
@@ -349,19 +525,115 @@ class Client:
         :param num_tries: the maximum number of tries.  If <0, unlimited
             attempts will be made.
         :type num_tries: int
+        :returns: False if the key with matching value could not be found after
+            specified number of tires.
+        :rtype: bool
+        """
+        return self._poll_key_and_check_scalar(key, value,
+                                               self.get_scalar_int32,
+                                               self.key_exists,
+                                               poll_frequency, num_tries)
+
+    def poll_exact_key_and_check_scalar_float64(self, key, value,
+                                           poll_frequency=1000, num_tries=-1):
+        """Poll key to check existence and if it is exists check against value
+
+        :param key: key to check for in the database
+        :type key:
+        :param value: value to compare to
+        :type value: float
+        :param poll_frequency: the time in milliseconds beteween tries
+        :type poll_frequency: float
+        :param num_tries: the maximum number of tries.  If <0, unlimited
+            attempts will be made.
+        :type num_tries: int
+        :returns: False if the key with matching value could not be found
+            after specified number of tries, otherwise true.
+        :rtype: bool
+        """
+        return self._poll_key_and_check_scalar(key, value,
+                                            self.get_exact_key_scalar_float64,
+                                            self.exact_key_exists,
+                                            poll_frequency, num_tries)
+
+    def poll_exact_key_and_check_scalar_int64(self, key, value,
+                                        poll_frequency=1000, num_tries=-1):
+        """Poll key to check existence and if it is exists check against value
+
+        :param key: key to check for in the database
+        :type key:
+        :param value: value to compare to
+        :type value: int
+        :param poll_frequency: the time in milliseconds beteween tries
+        :type poll_frequency: float
+        :param num_tries: the maximum number of tries.  If <0, unlimited
+            attempts will be made.
+        :type num_tries: int
+        :returns: False if the key with matching value could not be found
+            after specified number of tries, otherwise true.
+        :rtype: bool
+        """
+        return self._poll_key_and_check_scalar(key, value,
+                                            self.get_exact_key_scalar_int64,
+                                            self.exact_key_exists,
+                                            poll_frequency, num_tries)
+
+    def poll_exact_key_and_check_scalar_int32(self, key, value,
+                                        poll_frequency=1000, num_tries=-1):
+        """Poll key to check existence and if it is exists check against value
+
+        :param key: key to check for in the database
+        :type key:
+        :param value: value to compare to
+        :type value: float
+        :param poll_frequency: the time in milliseconds beteween tries
+        :type poll_frequency: int
+        :param num_tries: the maximum number of tries.  If <0, unlimited
+            attempts will be made.
+        :type num_tries: int
+        :returns: False if the key with matching value could not be found
+            after specified number of tries, otherwise true.
+        :rtype: bool
+        """
+        return self._poll_key_and_check_scalar(key, value,
+                                            self.get_exact_key_scalar_int32,
+                                            self.exact_key_exists,
+                                            poll_frequency, num_tries)
+
+    def _poll_key_and_check_scalar(self, key, value,
+                                   get_function, exists_function,
+                                   poll_frequency=1000, num_tries=-1):
+        """Poll key to check existence and if it is exists check
+        against value
+
+        :param key: key to check for in the database
+        :type key:
+        :param value: value to compare to
+        :type value: float
+        :get_function: pointer to Client function for retrieving scalar
+        :type get_function: function pointer
+        :exists_function: pointer to Client function for checking key
+        :type exists_function: function pointer
+        :param poll_frequency: the time in milliseconds beteween tries
+        :type poll_frequency: float
+        :param num_tries: the maximum number of tries.  If <0, unlimited
+            attempts will be made.
+        :type num_tries: int
+        :returns: False if the key with matching value could not be found after
+            specified number of tires.
+        :rtype: bool
         """
         matched_value = False
         current_value = None
+
         while not num_tries == 0:
-            if self.key_exists(key):
-                current_value = self.get_scalar_int32(key)
+            if exists_function(key):
+                current_value = get_function(key)
                 if current_value == value:
                     num_tries = 0
                     matched_value = True
-
             if not matched_value:
                 time.sleep(poll_frequency/1000.0)
-
             if num_tries>0:
                 num_tries -= 1
 

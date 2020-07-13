@@ -136,31 +136,6 @@ def modelwriter_test(test_function):
 
     return decorator(wrapper, test_function)
 
-
-def python_client_test(test_dir):
-    """Decorator for Python client"""
-
-    experiment_dir = "./clients/python/python_client_test/"
-
-    def wrapper(test_function, *args, **kwargs):
-
-        if path.isdir(experiment_dir):
-            rmtree(experiment_dir)
-        mkdir(experiment_dir)
-
-        copyfile(test_dir + 'node.py',
-                experiment_dir + "node.py")
-        copyfile(test_dir + 'simulation.py',
-                experiment_dir + "simulation.py")
-
-        test_function()
-
-        if path.isdir(experiment_dir):
-            rmtree(experiment_dir)
-
-        return decorator(wrapper, test_function)
-    return decorator(wrapper)
-
 def compiled_client_test(*args, **kwargs):
     """Decorator for compiled client tests"""
 
@@ -191,6 +166,25 @@ def compiled_client_test(*args, **kwargs):
             rmtree(compile_dir)
         if path.isdir("client_test"):
             rmtree("client_test")
+
+        return decorator(wrapper, test_function)
+    return decorator(wrapper)
+
+def python_client_test():
+    """Decorator for Python client unit tests"""
+
+    exp_dir = "client_test"
+
+    def wrapper(test_function, *args, **kwargs):
+
+        if path.isdir(exp_dir):
+            rmtree(exp_dir)
+        mkdir(exp_dir)
+
+        test_function()
+
+        if path.isdir(exp_dir):
+            rmtree(exp_dir)
 
         return decorator(wrapper, test_function)
     return decorator(wrapper)
