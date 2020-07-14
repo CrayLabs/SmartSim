@@ -1,19 +1,25 @@
-Building and Installing SmartSim
-================================
+****************
+Install SmartSim
+****************
 
-Building and Installing From Source
------------------------------------
+From Source
+===========
 
 If your system does not include SmartSim
 as a module, the instructions in this section
 can be used to build and install SmartSim from source.
 
+Prerequisites
+-------------
 The prerequisites to begin building SmartSim are:
 
 - Python 3.7.x (or later)
 - C compiler
 - C++ compiler
 - CMake 3.10.x (or later)
+
+Python libraries
+----------------
 
 Most SmartSim library requirements can be installed via Python's
 package manager *pip* with the following command executed in the
@@ -46,6 +52,9 @@ the top level directory:
 .. code-block:: console
 
 		python setup.py install
+
+Third Party Libraries
+---------------------
 
 KeyDB_, `Google Protobuf`_, and Redis-plus-plus_ are also required
 in order to use all features of SmartSim.  These packages
@@ -82,8 +91,9 @@ documentation. The user should source `setup_env.sh` whenever
 beginning a new session to ensure that environment
 variables are properly set.
 
+
 Suggested Environments for Cray Systems
----------------------------------------
+=======================================
 
 SmartSim has been built and tested on a number of
 Cray XC and CS systems.  To help users build from source
@@ -92,6 +102,7 @@ the terminal commands to load a working environment
 will be given.
 
 Osprey (Cray CS)
+----------------
 
 .. code-block:: console
 
@@ -102,6 +113,7 @@ Osprey (Cray CS)
 		module load cudatoolkit/10.1
 
 Loon (Cray CS)
+--------------
 
 .. code-block:: console
 
@@ -112,6 +124,7 @@ Loon (Cray CS)
 		module load gcc/8.1.0
 
 Raptor (Cray CS)
+----------------
 
 .. code-block:: console
 
@@ -121,6 +134,7 @@ Raptor (Cray CS)
 		module load gcc/8.1.0
 
 Tiger (Cray XC)
+---------------
 
 .. code-block:: console
 
@@ -129,6 +143,7 @@ Tiger (Cray XC)
 		module load gcc/8.1.0
 
 Jupiter (Cray XC)
+-----------------
 
 .. code-block:: console
 
@@ -137,6 +152,7 @@ Jupiter (Cray XC)
 		module load gcc/8.1.0
 
 Heron
+-----
 
 .. code-block:: console
 
@@ -145,5 +161,6 @@ Heron
 		module load gcc/8.1.0
 
 Cicero (Cray XC)
+----------------
 
 *Default system configurations and modules are sufficient on Cicero.*

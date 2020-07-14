@@ -9,9 +9,6 @@ from smartsim.error import MPOError
 class MPO():
 
     model_initialized = False
-    if not which("srun"):
-        raise MPOError(
-            "MPO currently only supports Slurm as the SmartSim backend")
 
     def __init__(self, tunable_params, data_dir="MPO"):
         """Initalize a MPO instance for running SmartSim with CrayAI
@@ -144,3 +141,4 @@ class MPO():
             name += f"{k}-{v}_"
         name = name.rstrip("_")
         return name
+

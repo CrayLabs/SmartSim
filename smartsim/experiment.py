@@ -17,47 +17,6 @@ logger = get_logger(__name__)
 class Experiment:
     """In SmartSim, the Experiment class is an entity creation API
        that both houses and operates on the entities it creates.
-       The entities that can be created are:
-
-         - NumModels
-         - Ensembles
-         - SmartSimNodes
-         - Orchestrator
-
-        Each entity has a distinct purpose within an experiment.
-
-        NumModel
-        --------
-        Instances of numerical models or "simulation" models. NumModels can
-        be created through a call to Experiment.create_model() and though
-        the creation of an Ensemble.
-
-        Ensemble
-        --------
-        Ensembles are groups of NumModels to be either generated manually or
-        through a call to experiment.generate(). Ensembles can be given model
-        parameters to be written into input files for the model at runtime.
-        There are multiple ways of generating ensemble members; see
-        experiment.generate() for details.
-
-        SmartSimNodes
-        -------------
-        Nodes run processes adjacent to the simulation. Nodes can be used
-        for anything from analysis, training, inference, etc. Nodes are the
-        most flexible entity with no requirements on language or framework.
-        Nodes are commonly used for acting on data being streamed out of a
-        simulation model through the orchestrator
-
-        Orchestrator
-        ------------
-        The Orchestrator is a KeyDB database, clustered or standalone, that
-        is launched prior to the simulation. The Orchestrator can be used
-        to store data from another entity in memory during the course of
-        an experiment. In order to stream data into the orchestrator or
-        receive data from the orchestrator, one of the SmartSim clients
-        has to be used within a NumModel or SmartSimNode. Use
-        experiment.register_connection() to connect two entities within
-        SmartSim.
     """
     def __init__(self, name, launcher="slurm"):
         """Initialize an Experiment

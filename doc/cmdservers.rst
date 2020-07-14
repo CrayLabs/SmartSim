@@ -1,7 +1,8 @@
 
-
+**************
 Command Server
---------------
+**************
+
 SmartSim can be used interactively which can be particularly useful when
 developing new experiments or prototyping online analysis. The command server
 enables this development to be done at scale even when scripts or Jupyter
@@ -12,4 +13,15 @@ command server. All commands that managing allocations or launching the
 experiment originate on the compute node, but are actually executed on this
 login node. The Jupyter instance on the compute node has full access to every
 aspect of the experiment including the orchestrator.
+
+Starting the Command Server
+===========================
+
+notes on how to start the command server
+
+
+Connecting to the Command Server
+================================
+
+how to connect to the command server from SmartSim
 

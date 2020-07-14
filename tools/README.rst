@@ -1,8 +1,9 @@
+***************
 Code generators
----------------
+***************
 
-Need for code generators
-~~~~~~~~~~~~~~~~~~~~~~~~
+Why Generate Code?
+==================
 
 The C++ SmartSim client handles the low-level interactions between Redis and
 protobuf. The high-level, user-facing functions are implemented as methods of
@@ -17,20 +18,22 @@ user would also have to have make C and Fortran wrappers. The C and Fortran
 code generators here help automate this task and ensure consistency of functions
 for all variable types.
 
-Example: adding a new variable type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Adding a New Variable Type
+==========================
+
 This example shows how the generator scripts would have to be modified to add
-support in SmartSim for a :code:`boolean` variable. 
+support in SmartSim for a :code:`boolean` variable.
 
 1. Make a new protobuf template for a C++ :code:`bool` and make class methods
    for each of the main SmartSim functionals
-2. Modify :code:`c_code_generator.py`, adding :code:`bool` to the 
+2. Modify :code:`c_code_generator.py`, adding :code:`bool` to the
    :code:`var_types` list.
 3. Modify :code:`fortran_code_generator.py` adding :code:`{'c_kind':'c_bool' 'ftype':'logical', 'kind':4}` to the :code:`var_types` list.
 4. Run both scripts and recompile the SmartSim clients.
 
-Adding a new function
-~~~~~~~~~~~~~~~~~~~~~
+Adding a New Function
+=====================
+
 .. note::
     If the new routine does not follow the existing routines, more extensive
     modifications may have to be made to the code generator.
