@@ -1,5 +1,6 @@
 #ifndef SMARTSIM_CPP_CLIENT_H
 #define SMARTSIM_CPP_CLIENT_H
+
 #include "string.h"
 #include "stdlib.h"
 #include <iostream>
@@ -10,91 +11,461 @@
 #include "smartsim_protobuf.pb.h"
 #include <google/protobuf/reflection.h>
 #include <google/protobuf/stubs/port.h>
-
+///@file
+///\brief The C++ SmartSimClient class
 class SmartSimClient;
 
 class SmartSimClient
 {
 public:
+  //! SmartSim client constructor
   SmartSimClient(bool fortran_array = false);
+  //! SmartSim client destructor
   ~SmartSimClient();
-  sw::redis::RedisCluster redis_cluster;
 
-  void set_data_source(const char* source_id);
-  const char* query_get_prefix();
-  void put_array_double(const char* key, void* value, int* dims, int n_dims);
-  void put_array_float(const char* key, void* value, int* dims, int n_dims);
-  void put_array_int64(const char* key, void* value, int* dims, int n_dims);
-  void put_array_int32(const char* key, void* value, int* dims, int n_dims);
-  void put_array_uint64(const char* key, void* value, int* dims, int n_dims);
-  void put_array_uint32(const char* key, void* value, int* dims, int n_dims);
+  //! Put an array of type double into the database
+  void put_array_double(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  void get_array_double(const char* key, void* result, int* dims, int n_dims);
-  void get_array_float(const char* key, void* result, int* dims, int n_dims);
-  void get_array_int64(const char* key, void* result, int* dims, int n_dims);
-  void get_array_int32(const char* key, void* result, int* dims, int n_dims);
-  void get_array_uint64(const char* key, void* result, int* dims, int n_dims);
-  void get_array_uint32(const char* key, void* result, int* dims, int n_dims);
+  //! Put an array of type float into the database
+  void put_array_float(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  void put_scalar_double(const char* key, double value);
-  void put_scalar_float(const char* key, float value);
-  void put_scalar_int64(const char* key, int64_t value);
-  void put_scalar_int32(const char* key, int32_t value);
-  void put_scalar_uint64(const char* key, uint64_t value);
-  void put_scalar_uint32(const char* key, uint32_t value);
+  //! Put an array of type int64_t into the database
+  void put_array_int64(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  double   get_scalar_double(const char* key);
-  float    get_scalar_float(const char* key);
-  int64_t  get_scalar_int64(const char* key);
-  int32_t  get_scalar_int32(const char* key);
-  uint64_t get_scalar_uint64(const char* key);
-  uint32_t get_scalar_uint32(const char* key);
+  //! Put an array of type int32_t into the database
+  void put_array_int32(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  bool key_exists(const char* key);
-  bool poll_key(const char* key, int poll_frequency_ms=1000, int num_tries=-1);
-  bool poll_key_and_check_scalar_double(const char* key, double value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_key_and_check_scalar_float(const char* key, float value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_key_and_check_scalar_int64(const char* key, int64_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_key_and_check_scalar_int32(const char* key, int32_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_key_and_check_scalar_uint64(const char* key, uint64_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_key_and_check_scalar_uint32(const char* key, uint32_t value, int poll_frequency_ms = 1000, int num_tries = -1);
+  //! Put an array of type uint64_t into the database
+  void put_array_uint64(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  void put_exact_key_array_double(const char* key, void* value, int* dims, int n_dims);
-  void put_exact_key_array_float(const char* key, void* value, int* dims, int n_dims);
-  void put_exact_key_array_int64(const char* key, void* value, int* dims, int n_dims);
-  void put_exact_key_array_int32(const char* key, void* value, int* dims, int n_dims);
-  void put_exact_key_array_uint64(const char* key, void* value, int* dims, int n_dims);
-  void put_exact_key_array_uint32(const char* key, void* value, int* dims, int n_dims);
+  //! Put an array of type uint32_t into the database
+  void put_array_uint32(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  void get_exact_key_array_double(const char* key, void* result, int* dims, int n_dims);
-  void get_exact_key_array_float(const char* key, void* result, int* dims, int n_dims);
-  void get_exact_key_array_int64(const char* key, void* result, int* dims, int n_dims);
-  void get_exact_key_array_int32(const char* key, void* result, int* dims, int n_dims);
-  void get_exact_key_array_uint64(const char* key, void* result, int* dims, int n_dims);
-  void get_exact_key_array_uint32(const char* key, void* result, int* dims, int n_dims);
+  //! Get an array of type double from the database
+  void get_array_double(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  void put_exact_key_scalar_double(const char* key, double value);
-  void put_exact_key_scalar_float(const char* key, float value);
-  void put_exact_key_scalar_int64(const char* key, int64_t value);
-  void put_exact_key_scalar_int32(const char* key, int32_t value);
-  void put_exact_key_scalar_uint64(const char* key, uint64_t value);
-  void put_exact_key_scalar_uint32(const char* key, uint32_t value);
+  //! Get an array of type float from the database
+  void get_array_float(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  double   get_exact_key_scalar_double(const char* key);
-  float    get_exact_key_scalar_float(const char* key);
-  int64_t  get_exact_key_scalar_int64(const char* key);
-  int32_t  get_exact_key_scalar_int32(const char* key);
-  uint64_t get_exact_key_scalar_uint64(const char* key);
-  uint32_t get_exact_key_scalar_uint32(const char* key);
+  //! Get an array of type int64_t from the database
+  void get_array_int64(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
 
-  bool exact_key_exists(const char* key);
-  bool poll_exact_key(const char* key, int poll_frequency_ms=1000, int num_tries=-1);
-  bool poll_exact_key_and_check_scalar_double(const char* key, double value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_exact_key_and_check_scalar_float(const char* key, float value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_exact_key_and_check_scalar_int64(const char* key, int64_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_exact_key_and_check_scalar_int32(const char* key, int32_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_exact_key_and_check_scalar_uint64(const char* key, uint64_t value, int poll_frequency_ms = 1000, int num_tries = -1);
-  bool poll_exact_key_and_check_scalar_uint32(const char* key, uint32_t value, int poll_frequency_ms = 1000, int num_tries = -1);
+  //! Get an array of type int32_t from the database
+  void get_array_int32(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type uint64_t from the database
+  void get_array_uint64(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type uint32_t from the database
+  void get_array_uint32(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put a scalar of type double into the database
+  void put_scalar_double(
+      const char* key     /*!< Identifier for this object in the database */,
+      double value        /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type float into the database
+  void put_scalar_float(
+      const char* key     /*!< Identifier for this object in the database */,
+      float value         /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type int64_t into the database
+  void put_scalar_int64(
+      const char* key     /*!< Identifier for this object in the database */,
+      int64_t value       /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type int32_t into the database
+  void put_scalar_int32(
+      const char* key     /*!< Identifier for this object in the database */,
+      int32_t value       /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type uint64_t into the database
+  void put_scalar_uint64(
+      const char* key     /*!< Identifier for this object in the database */,
+      uint64_t value      /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type uint32_t into the database
+  void put_scalar_uint32(
+      const char* key     /*!< Identifier for this object in the database */,
+      uint32_t value      /*!< Scalar value to store in the database */
+  );
+
+  //! Get an scalar of type double from the database
+  double get_scalar_double(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type float from the database
+  float get_scalar_float(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type int64_t from the database
+  int64_t get_scalar_int64(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type int32_t from the database
+  int32_t get_scalar_int32(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type uint64_t from the database
+  uint64_t get_scalar_uint64(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type uint32_t from the database
+  uint32_t get_scalar_uint32(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Check if a key exists in the database
+  bool key_exists(
+      const char* key       /*!< Identifier to check for in the database */
+  );
+
+  //! Poll the database until a specified key exists.
+  bool poll_key(
+      const char* key      /*!< Identifier for this object in the database */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries=-1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_double(
+      const char* key        /*!< Identifier for this object in the database */,
+      double value           /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_float(
+      const char* key        /*!< Identifier for this object in the database */,
+      float value            /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_int64(
+      const char* key        /*!< Identifier for this object in the database */,
+      int64_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_int32(
+      const char* key        /*!< Identifier for this object in the database */,
+      int32_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_uint64(
+      const char* key        /*!< Identifier for this object in the database */,
+      uint64_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_key_and_check_scalar_uint32(
+      const char* key        /*!< Identifier for this object in the database */,
+      uint32_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Put an array of type double into the database without key prefixing
+  void put_exact_key_array_double(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put an array of type float into the database without key prefixing
+  void put_exact_key_array_float(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put an array of type int64_t into the database without key prefixing
+  void put_exact_key_array_int64(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put an array of type int32_t into the database without key prefixing
+  void put_exact_key_array_int32(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put an array of type uint64_t into the database without key prefixing
+  void put_exact_key_array_uint64(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Put an array of type uint32_t into the database without key prefixing
+  void put_exact_key_array_uint32(
+      const char* key     /*!< Identifier for this object in the database */,
+      void* value         /*!< Array to store in the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type double from the database without key prefixing
+  void get_exact_key_array_double(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type float from the database without key prefixing
+  void get_exact_key_array_float(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type int64_t from the database without key prefixing
+  void get_exact_key_array_int64(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type int32_t from the database without key prefixing
+  void get_exact_key_array_int32(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type uint64_t from the database without key prefixing
+  void get_exact_key_array_uint64(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an array of type uint32_t from the database without key prefixing
+  void get_exact_key_array_uint32(
+      const char* key     /*!< Identifier for this object in th database */,
+      void* result        /*!< Array to fill with data from the database */,
+      int* dims           /*!< Length along each dimension of the array */,
+      int n_dims          /*!< Number of dimensions of the array */
+  );
+
+  //! Get an scalar of type double from the database without key prefixing
+  void put_exact_key_scalar_double(
+      const char* key     /*!< Identifier for this object in the database */,
+      double value        /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type float into the database without key prefixing
+  void put_exact_key_scalar_float(
+      const char* key     /*!< Identifier for this object in the database */,
+      float value         /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type int64_t into the database without key prefixing
+  void put_exact_key_scalar_int64(
+      const char* key     /*!< Identifier for this object in the database */,
+      int64_t value       /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type int32_t into the database without key prefixing
+  void put_exact_key_scalar_int32(
+      const char* key     /*!< Identifier for this object in the database */,
+      int32_t value       /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type uint64_t into the database without key prefixing
+  void put_exact_key_scalar_uint64(
+      const char* key     /*!< Identifier for this object in the database */,
+      uint64_t value      /*!< Scalar value to store in the database */
+  );
+
+  //! Put a scalar of type uint32_t into the database without key prefixing
+  void put_exact_key_scalar_uint32(
+      const char* key     /*!< Identifier for this object in the database */,
+      uint32_t value      /*!< Scalar value to store in the database */
+  );
+
+  //! Get an scalar of type double from the database without key prefixing
+  double   get_exact_key_scalar_double(
+     const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type float from the database without key prefixing
+  float    get_exact_key_scalar_float(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type int64_t from the database without key prefixing
+  int64_t  get_exact_key_scalar_int64(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type int32_t from the database without key prefixing
+  int32_t  get_exact_key_scalar_int32(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type uint64_t from the database without key prefixing
+  uint64_t get_exact_key_scalar_uint64(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Get an scalar of type uint32_t from the database without key prefixing
+  uint32_t get_exact_key_scalar_uint32(
+      const char* key      /*!< Identifier for this object in the database */
+  );
+
+  //! Check if a key exists in the database
+  bool exact_key_exists(
+      const char* key       /*!< Identifier to check for in the database */
+  );
+
+  //! Poll the database until a specified key exists.
+  bool poll_exact_key(
+      const char* key      /*!< Identifier for this object in the database */,
+      int poll_frequency_ms=1000  /*!< How often to check the database in milliseconds */,
+      int num_tries=-1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_double(
+      const char* key        /*!< Identifier for this object in the database */,
+      double value           /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_float(
+      const char* key        /*!< Identifier for this object in the database */,
+      float value            /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_int64(
+      const char* key        /*!< Identifier for this object in the database */,
+      int64_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_int32(
+      const char* key        /*!< Identifier for this object in the database */,
+      int32_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_uint64(
+      const char* key        /*!< Identifier for this object in the database */,
+      uint64_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
+
+  //! Poll the database for a key and check its value
+  bool poll_exact_key_and_check_scalar_uint32(
+      const char* key        /*!< Identifier for this object in the database */,
+      uint32_t value          /*!< Scalar value against which to check */,
+      int poll_frequency_ms = 1000  /*!< How often to check the database in milliseconds */,
+      int num_tries = -1     /*!< Number of times to check the database */
+  );
 
 protected:
   bool _fortran_array;
@@ -106,8 +477,11 @@ protected:
   std::string _build_put_key(const char* key);
   std::string _get_from_keydb(const char* key);
   std::string _get_ssdb();
-  
+  void set_data_source(const char* source_id);
+  const char* query_get_prefix();
+
 private:
+  sw::redis::RedisCluster redis_cluster;
   SmartSimProtobuf::ScalarDouble protob_scalar_double;
   SmartSimProtobuf::ScalarFloat protob_scalar_float;
   SmartSimProtobuf::ScalarSInt64 protob_scalar_int64;

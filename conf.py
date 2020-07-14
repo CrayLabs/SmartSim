@@ -52,7 +52,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 breathe_projects = {
         "c_client":"doc/c_client/xml",
-        "fortran_client":"doc/fortran_client/xml"
+        "fortran_client":"doc/fortran_client/xml",
+        "cpp_client":"doc/cpp_client/xml"
         }
 
 # -- Options for HTML output -------------------------------------------------
