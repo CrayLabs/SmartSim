@@ -145,37 +145,37 @@ extern "C" uint32_t get_scalar_uint32_c(void* SmartSimClient_p, const char* key)
   return s->get_scalar_uint32(key);
 }
 
-extern "C" bool poll_key_and_check_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_double(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_key_and_check_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_float(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_key_and_check_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_int64(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_key_and_check_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_int32(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_key_and_check_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_uint64(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_key_and_check_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_key_and_check_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_key_and_check_scalar_uint32(key, scalar, poll_frequency_ms, num_tries);
@@ -253,37 +253,37 @@ extern "C" void get_exact_key_array_uint32_c(void* SmartSimClient_p, const char*
   s->get_exact_key_array_uint32(key, array, *dimensions, *ndims);
 }
 
-extern "C" void put_exact_key_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_double(key, scalar);
 }
 
-extern "C" void put_exact_key_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_float(key, scalar);
 }
 
-extern "C" void put_exact_key_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_int64(key, scalar);
 }
 
-extern "C" void put_exact_key_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_int32(key, scalar);
 }
 
-extern "C" void put_exact_key_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_uint64(key, scalar);
 }
 
-extern "C" void put_exact_key_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar, int** dimensions, int* ndims)
+extern "C" void put_exact_key_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   s->put_exact_key_scalar_uint32(key, scalar);
@@ -325,37 +325,37 @@ extern "C" uint32_t get_exact_key_scalar_uint32_c(void* SmartSimClient_p, const 
   return s->get_exact_key_scalar_uint32(key);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_double_c(void* SmartSimClient_p, const char* key, double scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_double(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_float_c(void* SmartSimClient_p, const char* key, float scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_float(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_int64_c(void* SmartSimClient_p, const char* key, int64_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_int64(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_int32_c(void* SmartSimClient_p, const char* key, int32_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_int32(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_uint64_c(void* SmartSimClient_p, const char* key, uint64_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_uint64(key, scalar, poll_frequency_ms, num_tries);
 }
 
-extern "C" bool poll_exact_key_and_check_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar, int poll_frequency_ms, int num_tries)
+extern "C" int poll_exact_key_and_check_scalar_uint32_c(void* SmartSimClient_p, const char* key, uint32_t scalar, int poll_frequency_ms, int num_tries)
 {
   SmartSimClient *s = (SmartSimClient *)SmartSimClient_p;
   return s->poll_exact_key_and_check_scalar_uint32(key, scalar, poll_frequency_ms, num_tries);

@@ -1,6 +1,6 @@
 #ifndef SMARTSIM_CPP_CLIENT_H
 #define SMARTSIM_CPP_CLIENT_H
-
+#ifdef __cplusplus
 #include "string.h"
 #include "stdlib.h"
 #include <iostream>
@@ -512,8 +512,11 @@ private:
     bool _poll_key_and_check_scalar(const char* key, T value, int poll_frequency_ms, int num_tries, bool add_prefix=true);
 
 };
-
 extern "C" void* initialize_c_client( );
 extern "C" void* initialize_fortran_client( );
+#else
+void* initialize_c_client( );
+void* initialize_fortran_client( );
+#endif
 
 #endif //SMARTSIM_CPP_CLIENT_H

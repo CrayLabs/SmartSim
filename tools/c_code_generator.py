@@ -106,7 +106,6 @@ class c_function:
         if generic_type.endswith('_t'):
             generic_type = generic_type[:-2]
         contents =  f'//! {self.description.format(var_type=var_type)}\n'
-        contents += 'extern "C" '
         if 'var_type' in self.ctype:
             contents += f'{self.ctype.format(var_type=var_type)} {self.c_name.format(var_type=generic_type)}(\n'
         else:
@@ -174,7 +173,7 @@ if __name__ == "__main__":
         [SmartSim_ptr, key],
         'key')
     poll_key_and_check_scalar = c_function(
-        'bool',
+        'int',
         'poll_key_and_check_scalar_{var_type}',
         'Poll the database for a key and check its value',
         [SmartSim_ptr, key, scalar_check, poll_frequency, num_tries],
@@ -195,7 +194,7 @@ if __name__ == "__main__":
         'void',
         'put_exact_key_scalar_{var_type}',
         'Put an array of type {var_type} into the database',
-        [SmartSim_ptr, key, scalar_put, dimension, ndims],
+        [SmartSim_ptr, key, scalar_put],
         'key, scalar')
     get_exact_key_scalar = c_function(
         '{var_type}',
@@ -204,7 +203,7 @@ if __name__ == "__main__":
         [SmartSim_ptr, key],
         'key')
     poll_exact_key_and_check_scalar = c_function(
-        'bool',
+        'int',
         'poll_exact_key_and_check_scalar_{var_type}',
         'Poll the database for a key and check its value',
         [SmartSim_ptr, key, scalar_check, poll_frequency, num_tries],
@@ -230,10 +229,13 @@ if __name__ == "__main__":
             print(header,file=hfile)
             print('#ifndef SMARTSIM_C_CLIENT_H', file=hfile)
             print('#define SMARTSIM_C_CLIENT_H', file=hfile)
-            print('#include "client.h"', file=hfile)
             # Following lines are for doxygen
             print('///@file',file=hfile)
             print('///\\brief C-wrappers for the C++ SmartSimClient class',file=hfile)
+            print('#include "client.h"', file=hfile)
+            print("#ifdef __cplusplus",file=hfile)
+            print('extern "C" {',file=hfile)
+            print("#endif",file=hfile)
 
             # c_client.c header
             print(header,file=sfile)
@@ -243,4 +245,10 @@ if __name__ == "__main__":
                 for type in var_types:
                     func.write_header(type,file=hfile)
                     func.write_contents(type,file=sfile)
+
+            # c_client.h footer
+            print("#ifdef __cplusplus",file=hfile)
+            print("}",file=hfile)
+            print("#endif",file=hfile)
             print('#endif // SMARTSIM_C_CLIENT_H',file=hfile)
+
