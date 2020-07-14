@@ -151,7 +151,7 @@ class SlurmStep:
                               "LD_LIBRARY_PATH=", get_env("LD_LIBRARY_PATH")))
 
         for k, v in env_vars.items():
-            format_str += "," + "=".join((k,v))
+            format_str += "," + "=".join((k,str(v)))
         return format_str
 
     def _set_cwd(self):
