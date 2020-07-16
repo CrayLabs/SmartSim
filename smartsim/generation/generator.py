@@ -84,6 +84,52 @@ class Generator():
         self._create_nodes(exp_path, nodes)
         self._create_ensembles(exp_path, ensembles)
 
+    def generate_ensemble(self, exp_path, ensembles, **kwargs):
+        """Generate a single or a list of ensembles. This will
+           generate the underlying model objects as well as configure
+           and write their input files if attached.
+
+           A directory for the ensemble and it's models will be
+           created as a result of this function.
+
+        :param exp_path: path to the experiment directory
+        :type exp_path: str
+        :param ensembles: list of Ensembles
+        :type ensembles: list
+        :raises TypeError: if ensembles argument is not of type Ensemble
+                           or list of Ensembles
+        """
+        if isinstance(ensembles, Ensemble):
+            ensembles = [ensembles]
+        if not isinstance(ensembles[0], Ensemble):
+            raise TypeError(
+                f"ensembles argument must be of type Ensemble or list of Ensemble"
+            )
+        self._create_experiment_dir(exp_path)
+        self._generate_ensembles(ensembles, **kwargs)
+        self._create_ensembles(exp_path, ensembles)
+
+    def generate_node(self, exp_path, nodes):
+        """Generate a single or list of SmartSimNodes.
+           A directory will be created in the experiment
+           directory for each model.
+
+        :param exp_path: path to the experiment
+        :type exp_path: str
+        :param nodes: list of SmartSimNodes
+        :type nodes: list
+        :raises TypeError: if nodes is not of type SmartSimNode or
+                           list of SmartSimNodes.
+        """
+        if isinstance(nodes, SmartSimNode):
+            nodes = [nodes]
+        if not isinstance(nodes[0], SmartSimNode):
+            raise TypeError(
+                f"nodes argument must be of type SmartSimNode or list of SmartSimNode"
+            )
+        self._create_experiment_dir(exp_path)
+        self._create_nodes(exp_path, nodes)
+
     def set_tag(self, tag, regex=None):
         """Set a tag or a regular expression for the
            generator to look for when configuring new models.

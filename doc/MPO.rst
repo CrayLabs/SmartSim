@@ -37,7 +37,7 @@ Prerequsites
 
 To run MPO, in addition to SmartSim being setup, CrayAI must also
 be setup and available. For instructions on how to setup CrayAI
-see the `github repository<https://cray.github.io/crayai/hpo/hpo.html>`_
+see the `github repository <https://cray.github.io/crayai/hpo/hpo.html>`_
 
 How to use MPO
 ==============
@@ -53,18 +53,9 @@ are listed below:
  4. Choose an evaluation metric for your model
  5. Write the SmartSim evaluation script using the MPO class
 
-There are two scripts required to run MPO with SmartSim and CrayAI: the
-evalulation script, using SmartSim's MPO class, and the driver script,
-using typical CrayAI HPO methods. Below is a high level overview of the
-steps required to use MPO. For a more detailed example see
-`the examples for running MPO on MOM6<examples/MPO/README.html>`_
+There are two scripts required to run MPO with SmartSim and CrayAI:
 
+ 1) Evalulation script, using SmartSim's MPO class
+ 2) Driver script using typical CrayAI HPO methods.
 
-MPO API
-=======
-
-.. automodule:: smartsim.mpo.mpo
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+For a more detailed example see the examples for running `MPO on MOM6 <../examples/MPO/README.html>`_

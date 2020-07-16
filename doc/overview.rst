@@ -91,16 +91,62 @@ Library Design
 
 There are two components of the SmartSim library:
 
-  1. Client libraries
-  2. Infrastructure Library
+  1. Infrastructure Library
+  2. Client libraries
+
+
+Infrastructure Library
+======================
+
+The infrastructure library (IL) makes up the bulk of SmartSim's codebase. The IL
+provides interfaces to automate the process of deploying the infrastructure
+necessary to run complex experiments. This includes interaction with the file
+system, workload manager, system level APIs, external libraries, and
+simulation models.
+
+An important responsibility of the IL is to interact with the workload manager
+of a system. This includes but is not limited to: obtaining, tracking and
+releasing allocations; launching, stopping and monitoring jobs; and creating
+communication channels between jobs.
+
+The primary reason for implementing the IL is that many workflows in the HPC
+space require complex configuration that reduces reproducibility and
+productivity. The abtractions of the IL provide a simple mechanism in Python
+for workflow configuration which enables reproducibility accross users,
+machines, and sites as well as decreases time to solution.
 
 
 Clients
 =======
 
-information on client
+Traditional workflows on an HPC system lack flexibility and lock applications
+into using only packages that are compatible with the software stack being
+used. We recognized this when conducting research on how to connect simulation
+models to tools and libraries more commonly used in the space of Data Science.
+A user with a traditional MPI workload was forced to either make their application
+work with MPI, configure inflexible, complex RDMA communication, or even worse,
+write their output to the file system.
 
-Infrastructure Library
-======================
+We are not the first library in the HPC space to aide with these inflexible
+application coupling and communication paradigms. Libraries like SENSEI and
+GLEAN, and DataSpaces offer useful methods to mitigate this inflexibility
+especially for large scale visualization. These libraries, however, often
+lock users into using specific data models or formats that are not helpful
+when conducting analysis or data processing for machine learning.
 
-notes on the base library itself
+For the above reasons, we decided to create our own client libraries that
+would loosely integrate with the IL and tightly integrate with the
+simulations themselves. The client libraries allow users to stream their
+data out of their simulations, and recieve that data in an environment
+and data format that is more suited for the type of analytical and processing
+workflows done for machine learning. A user of the SmartSim clients
+can decide where in their model data is to be communicated without changing
+their data format internally and with only a few function
+calls. The clients were designed to be minimally intrusive to the simulation
+codebase and flexible enough to be fully integrated if need be.
+
+In a nutshell, the clients make it possible to have a Fortran, C, or C++ program
+communicating with a Python environment while the simulation is running. Combining
+the IL with the clients, users don't ever have to leave a Jupyter notebook to
+configure, launch, monitor, analyze and create learning systems from their
+simulations.

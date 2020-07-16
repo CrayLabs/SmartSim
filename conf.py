@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'breathe'
 ]

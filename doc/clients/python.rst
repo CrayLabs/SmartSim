@@ -52,6 +52,5 @@ to a user-specified value.
 Python Client API
 =================
 
-
 .. automodule:: smartsim.clients.client
    :members:

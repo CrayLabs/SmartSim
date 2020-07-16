@@ -3,12 +3,29 @@
 Clients
 *******
 
+.. list-table:: Supported Languages
+   :widths: 25 25
+   :header-rows: 1
+   :align: center
+
+   * - Language
+     - Version/Standard
+   * - Python
+     - 3.7+
+   * - C++
+     - C++11
+   * - C
+     - C99
+   * - Fortran
+     - Fortran 2003 +
+
+
 Simulation and data analytics codes communicate with the database using
 SmartSim clients written in the native language of the codebase. These
 clients perform two essential tasks (both of which are opaque to the application):
 
- 1. serialization/deserialization of data
- 2. communication with the database
+ 1. Serialization/deserialization of data
+ 2. Communication with the database
 
 The API for these clients are designed so that implementation within
 simulation and analysis codes requires minimal instrumentation.
@@ -17,7 +34,6 @@ simulation and analysis codes requires minimal instrumentation.
 .. |SmartSim Clients| image:: images/Smartsim_Client_Communication.png
   :width: 500
   :alt: Alternative text
-
 
 |SmartSim Clients|
 
@@ -90,18 +106,6 @@ details).
 For more information on the Fortran client see
 `Fortran client API documentation <clients/fortran.html>`_
 
-
-Flexible Data Model
-===================
-
-SmartSim leverages Google Protocol Buffers (protobuf) to handle the serialization
-of data structures typical of numerical models. Scalars and arrays of floating-point,
-integer, string, and boolean data types can be serialized in protobuf messages
-(all of which are included within SmartSim). Messages can also be nested within
-each other to construct more complex message types.  For example, a user can create
-a custom message that includes metadata about the simulation that might be important
-for analysis or data aggregation. SmartSim provides C and Fortran compatible interfaces
-to protobuf's native C++ implementation.
 
 
 Redis Client Libraries

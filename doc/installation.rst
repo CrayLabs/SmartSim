@@ -34,16 +34,18 @@ installed by the previous *pip* command are shown below.  Care
 should be taken to match package version numbers to avoid build
 and runtime errors.
 
-- coloredlogs 10.0
-- pytest 5.0.1
-- dask 2.3.0
-- xarray 0.12.3
-- toolz 0.10.0
-- decorator 4.4.2
-- redis 3.0.1
-- redis-py-cluster 2.0.0
-- protobuf 3.11.3
-- pyzmq 18.1.0
+- coloredlogs==10.0
+- pytest==5.0.1
+- toolz==0.10.0
+- decorator==4.4.2
+- redis==3.0.1
+- redis-py-cluster==2.0.0
+- protobuf==3.11.3
+- pyzmq==18.1.0
+- breathe==4.19.2
+- sphinx==3.1.1
+- numpy>=1.18.2
+
 
 After installing the SmartSim Python requirements, the SmartSim
 Python package can be installed with the following command in

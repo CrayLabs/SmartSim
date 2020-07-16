@@ -1,53 +1,131 @@
 
+*********
 Ensembles
----------
+*********
 
-Talk through the motivation and reason behind the ensemble entity
-and how its used.
+Ensembles are a user-facing object within SmartSim. Ensembles are used
+to quickly create a number of models that span a model parameter space.
+The primary reason for exposing an ``Ensemble`` object is that manually
+creating and executing many models can be very tedious. By utilizing
+``Ensemble`` in SmartSim, creating an ensemble is as easy as defining
+a few dictionarys and a single method call.
+
+The ``Generator`` is the primary object responsible for creating and
+configuring ensembles within SmartSim. There are two ways to use
+a ``Generator``.
+
+The most common method is through the ``Experiment.generate()``
+method. This method will generate all of the previously defined
+objects within an ``Experiment``. Calling this method will generate
+the file structure for an experiment as well as create and configure
+the model objects for each ``Ensemble`` created by that ``Experiment``.
+
+The ``Experiment.generate`` method makes generating a number of models
+quick and easy, but if greater control over the generation process is
+needed, a ``Generator`` object can be initialized seperately from the
+``Experiment``. Users can then user the ``Generator`` interface to
+generate specific Ensembles and SmartSim entities along with their file
+structure. An example of this is provided in the
+`Ensemble suite tutorial <../examples/MOM6/double-gyre-ensembles/README.html>`_
 
 
-Ensemble Parameters
-===================
+Configuring Ensembles
+=====================
 
-describe how ensembles use model parameters
+Ensembles are created through the method ``Experiment.create_ensemble()`` or
+manually initialized for advanced users. Before calling the creation method,
+however, the configuration of the Ensemble must be defined.
+
+Model Parameters
+----------------
+
+The first step in configuring an ensemble is tagging the input files
+where the simulation configurations are held. Tagging is the process
+of identifying model configurations you would like to create a
+parameter space for and surronding those values with a specific
+character which SmartSim refers to as a ``tag``. The default tag
+is a semi-colon (e.g. ``;``) but can be changed either through
+the ``Experiment.generate`` method as an arugment, or if you are
+manually initializing a ``Generator`` instance, through the method
+``Generator.set_tag``. A tutorial on tagging input files is
+provided in the `ensemble generation tutorial <../examples/LAMMPS/crack/README.html>`_
+
+
+Run Settings
+------------
+
+The run settings for any entity define how the model should be run on
+the SmartSim launcher backend being used for the experiment. In the
+case of Ensembles, run settings determine how each model in the
+ensemble will be executed. For example, because of the ``run_settings``
+defined below, each model in the ensemble configured with these
+run settings will run the ``lmp`` executeable with the arguments
+``-i in.crack`` on 1 node with 48 processors per node inside of the
+allocation with the id 123456.
+
+.. code-block:: python
+
+  run_settings = {
+      "executable": "lmp",
+      "exe_args": "-i in.crack",
+      "nodes": 1,
+      "ppn": 48,
+      "env_vars": {
+          "OMP_NUM_THREADS": 1
+      },
+      "alloc": 123456
+  }
+
+
+Input files and Datasets
+-------------------------
+
+Once input files have been tagged, the ``Generator`` needs to know
+where to get them from such that they can put them in the same filepath
+as the simulation. To do this, created entities have a method to
+attach files for the generator to utilize. There are three arguments
+to the ``Ensemble.attach_generator_files`` function:
+
+``to_configure`` is used for input files that a user would like the
+``Generator`` to read and write their model parameters into. These
+files must be tagged ahead of time, and only include tagged variables
+that are also included in the model parameters of the Ensemble or
+Model object. These files are provided as a list of file paths.
+
+``to_copy`` is used for files that a user wants to have copied into
+the filepath of the simulation, but not have read or written. Both
+files and directories can be included as paths in a list.
+
+``to_symlink`` is used for files that a user wants to have in the
+path of the simulation, but not want to have copied such as large
+input datasets.
 
 
 Ensemble Generation
 ===================
 
-Describe the generation strategies
-
 
 Generation Strategies
-=====================
+---------------------
 
-To generate our models we need to create an instance of a generator, provide
-the tagged configuration files and make a call to ``Generator.generate()``.  The
-``generate`` function creates models according to the specified permutation strategy,
-which, by default, is "all permutations": it creates every model possible, given the
-input parameters.  In order to select the strategy, we may call the
-``Generator.set_strategy()`` function with the following argument types: a string
-corresponding to one of the internal strategies, a string formatted as "module.function"
-that the Generator will then load, or an actual function.
+The Generator utilizes multiple strategies of generating models
+from the Ensemble parameters provided by the user.
+There are three built in permutation strategies: ``all_perm``, ``random``, and ``step``.
 
-There are three built in permutation strategies: "all_perm", "random", and "step".
-"all_perm" returns all possible combinations of the input parameters; "random" returns
-``n_models`` models; this can be seen as a random subset of all possible combinations.
-The argument ``n_models`` must be passed to the ``generate`` function.
+  1) ``all_perm`` returns all possible combinations of the input parameters
+  2) ``random`` returns ``n_models`` models. This can be seen as a random subset of all possible combinations.
+     The argument ``n_models`` must be passed as a keyword argument to the function being used for generation.
+  3) ``step`` returns every pair of equal length arrays. Like ``zip`` in python.
 
 .. code-block:: python
 
-  # Supply the generator with necessary files to run the simulation
-  # and generate the specified models.
-  base_config = "LAMMPS/in.atm"
-  GEN = Generator(experiment, model_files=base_config)
-  GEN.set_strategy("random")
-  GEN.generate(n_models=2)
+  exp = Experiment("generation-example")
+  # < create some entities ...>
+  exp.generate(strategy="random", n_models=2)
 
-User supplied functions must accept at _least_ ``param_names`` and ``param_values``,
-where param_names is a list of the supplied parameter names, and param_values is a
-list of the corresponding parameter names.  In the following example, ``param_names``
-is equal to ``[steps]``, and param_values is ``[20, 25, 30, 35]``.
+User supplied functions must accept at least ``param_names`` and ``param_values``,
+where ``param_names`` is a list of the supplied parameter names, and ``param_values`` is a
+list of the corresponding parameter names.
 
 The functions must return a list of dictionaries, where each element in the list
 is the dictionary for a model.  For example:
@@ -58,23 +136,11 @@ is the dictionary for a model.  For example:
     # only return the single parameter/value
     return [{ param_names[0] : param_values[0] }]
 
-  base_config = "LAMMPS/in.atm"
-  GEN = Generator(experiment, model_files=base_config)
-  GEN.set_strategy(my_function)
-  GEN.generate()
+  exp = Experiment("generation-example")
+  # < create some entities ...>
+  exp.generate(strategy=my_function, n_models=2)
 
 User written functions are not limited to only receiving the above arguments.
 Extra arguments may be added to the function as necessary; at runtime, these are
-passed through to the selection strategy via the ``generate`` function (as above,
+passed through to the selection strategy via the ``Experiment.generate`` function (as above,
 as in for "random" and ``n_models``).
-
-Strategy selection is optional; by default, "all_perm" is used, and the following
-is also valid:
-
-.. code-block:: python
-
-  # Supply the generator with necessary files to run the simulation
-  # and generate the specified models
-  base_config = "LAMMPS/in.atm"
-  GEN = Generator(experiment, model_files=base_config)
-  GEN.generate()

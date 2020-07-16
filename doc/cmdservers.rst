@@ -17,11 +17,38 @@ aspect of the experiment including the orchestrator.
 Starting the Command Server
 ===========================
 
-notes on how to start the command server
+Starting the command server is very easy. Assuming SmartSim has already been
+setup, navigate to the scripts directory where SmartSim was installed and
+find the ``start_cmd_server.py`` script. The script requires two arguments
+
+ 1) The IP address where you want commands to run (usually the head node)
+ 2) The port you want to open.
+
+.. code-block:: bash
+
+    python start_cmd_server.py --addr 127.0.0.1 --port 5555
 
 
 Connecting to the Command Server
 ================================
 
-how to connect to the command server from SmartSim
+To connect to the command server within a SmartSim script, import
+the ``remote`` module and call the ``init_command_server`` function.
+View the `API documentation for the remote module <api/remote.html>`_
+for more information.
+
+.. code-block:: python
+
+   from smartsim import Experiment
+   from smartsim.remote import init_command_server
+
+   exp = Experiment("exp-on-compute-node")
+   init_command_server(addr="127.0.0.1", port=5555)
+
+   # .. continue with experiment code ...
+
+Your experiment should now be connected to the already running command
+server and all system command, such as obtaining an allocation from Slurm,
+will now take place on the server (head node) where the command server
+was started.
 

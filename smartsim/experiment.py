@@ -21,11 +21,11 @@ class Experiment:
     def __init__(self, name, launcher="slurm"):
         """Initialize an Experiment
 
-        :param name: Name of the experiment
-        :type name: str
-        :param launcher: type of launcher, options are "local" and "slurm",
-                         defaults to "slurm"
-        :type launcher: str, optional
+           :param name: Name of the experiment
+           :type name: str
+           :param launcher: type of launcher, options are "local" and "slurm",
+                            defaults to "slurm"
+           :type launcher: str, optional
         """
         self.name = name
         self.ensembles = []
@@ -35,17 +35,19 @@ class Experiment:
         self._control = Controller(launcher=launcher)
 
     def start(self, ensembles=None, ssnodes=None, orchestrator=None):
-        """Start the experiment by turning all entities into jobs
+        """Start the SmartSim Experiment
+
+           Start the experiment by turning all entities into jobs
            for the underlying launcher specified at experiment
            initialization. All entities in the experiment will be
            launched if not arguments are passed.
 
-        :param ensembles: list of Ensembles, defaults to None
-        :type ensembles: list Ensemble instances, optional
-        :param ssnodes: list of SmartSimNodes, defaults to None
-        :type ssnodes: list of SmartSimNode instances, optional
-        :param orchestrator: Orchestrator instance, defaults to None
-        :type orchestrator: Orchestrator, optional
+           :param ensembles: list of Ensembles, defaults to None
+           :type ensembles: list Ensemble instances, optional
+           :param ssnodes: list of SmartSimNodes, defaults to None
+           :type ssnodes: list of SmartSimNode instances, optional
+           :param orchestrator: Orchestrator instance, defaults to None
+           :type orchestrator: Orchestrator
         """
         logger.info(f"Starting experiment: {self.name}")
         try:

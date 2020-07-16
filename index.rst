@@ -11,10 +11,10 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples
+   :caption: Tutorials
 
    doc/examples/basic
-   examples/LAMMPS/atom/README
+   examples/LAMMPS/crack/README
    examples/MOM6/double-gyre-ensembles/README
    examples/MPO/README
    examples/LAMMPS/melt/README
@@ -43,10 +43,12 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: API
+   :caption: User Interface
 
    doc/api/experiment
+   doc/api/entity
    doc/api/MPO
+   doc/api/generator
    doc/api/remote
 
 
@@ -59,6 +61,8 @@
    tools/README
    doc/developer/editor
    doc/developer/documentation
+
+
 
 Indices and tables
 ==================
