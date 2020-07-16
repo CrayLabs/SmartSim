@@ -20,27 +20,35 @@ logger = get_logger(__name__)
 
 
 class Controller():
-    """The controller module provides an interface between the numerical model
-       that is the subject of Smartsim and the underlying workload manager or
-       run framework.
+    """The controller module provides an interface between the
+    numerical model that is the subject of Smartsim and the
+    underlying workload manager or run framework.
     """
+
     def __init__(self, launcher="slurm"):
+        """Initialize a Controller
+
+        :param launcher: the type of launcher being used
+        :type launcher: str
+        """
         self._jobs = JobManager()
         self.init_launcher(launcher)
 
     def start(self, ensembles=None, nodes=None, orchestrator=None):
-        """Start the computation of a ensemble, nodes, and optionally
-           facilitate communication between entities via an orchestrator.
-           Controller.start() expects objects to be passed to the ensembles,
-           nodes, and orchestrator objects. These are usually provided by
-           Experiment when calling Experiment.start().
+        """Start the Controller instance
 
-           :param ensembles: Ensembles to launch with specified launcher
-           :type ensembles: a list of Ensemble objects
-           :param nodes: SmartSimNodes to launch with specified launcher
-           :type nodes: a list of SmartSimNode objects
-           :param orchestrator: Orchestrator object to be launched for entity communication
-           :type orchestrator: Orchestrator object
+        The function starts the computation of a ensemble, nodes, and
+        optionally facilitate communication between entities via an
+        orchestrator.  Controller.start() expects objects to be passed
+        to the ensembles, nodes, and orchestrator objects. These are
+        usually provided by Experiment when calling Experiment.start().
+
+        :param ensembles: Ensembles to launch with specified launcher
+        :type ensembles: a list of Ensemble objects
+        :param nodes: SmartSimNodes to launch with specified launcher
+        :type nodes: a list of SmartSimNode objects
+        :param orchestrator: Orchestrator object to be launched for entity communication
+        :type orchestrator: Orchestrator object
         """
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -54,21 +62,22 @@ class Controller():
         models = self._update_models(ensembles)
         self._launch(models, nodes, orchestrator)
 
-
     def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
-        """Stops specified ensembles, nodes, and orchestrator.
-           If stop_orchestrator is set to true and all ensembles and
-           nodes are stopped, the orchestrator will be stopped.
+        """Stop the Controller instance
 
-           :param ensembles: List of ensembles to be stopped
-           :type ensembles: list of ensemble, optional ensemble
-           :param models: List of models to be stopped
-           :type models: list of NumModel, option NumModel
-           :param smartSimNode nodes: List of nodes to be stopped
-           :type nodes: list of smartSimNode, optional smartSimNode
-           :param bool stop_orchestrator: Boolean indicating if
-                the ochestrator should be stopped.
-            :raises: SSConfigError if called when using local launcher
+        Stops specified ensembles, nodes, and orchestrator.
+        If stop_orchestrator is set to true and all ensembles and
+        nodes are stopped, the orchestrator will be stopped.
+
+        :param ensembles: List of ensembles to be stopped
+        :type ensembles: list of ensemble, optional ensemble
+        :param models: List of models to be stopped
+        :type models: list of NumModel, option NumModel
+        :param smartSimNode nodes: List of nodes to be stopped
+        :type nodes: list of smartSimNode, optional smartSimNode
+        :param bool stop_orchestrator: Boolean indicating if
+                the orchestrator should be stopped.
+        :raises: SSConfigError if called when using local launcher
         """
 
         if isinstance(ensembles, Ensemble):
@@ -88,8 +97,10 @@ class Controller():
             self._stop_orchestrator(orchestrator.dbnodes)
 
     def get_allocation(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
-        """Get an allocation through the launcher for future calls
-           to start to launch entities onto.
+        """Get an allocation through the launcher
+
+        This function gets an allocation through the launcher
+        for future calls to start to launch entities onto.
 
         :param nodes: number of nodes for the allocation
         :type nodes: int
@@ -115,8 +126,7 @@ class Controller():
             raise SmartSimError("Failed to get user requested allocation") from e
 
     def add_allocation(self, alloc_id):
-        """Add an allocation to SmartSim such that entities can
-           be launched on it.
+        """Add an allocation to SmartSim for future entity launching
 
         :param alloc_id: id of the allocation from the workload manager
         :type alloc_id: str
@@ -129,12 +139,13 @@ class Controller():
         except LauncherError as e:
             raise SmartSimError("Failed to accept user obtained allocation") from e
 
-
     def release(self, alloc_id=None):
-        """Release the allocation(s) stopping all jobs that are
-           currently running and freeing up resources. If an
-           allocation ID is provided, only stop that allocation
-           and remove it from SmartSim.
+        """Release the allocation(s)
+
+        The function releases the allocation(s) stopping all
+        jobs that are currently running and freeing up resources.
+        If an allocation ID is provided, only stop that allocation
+        and remove it from SmartSim.
 
         :param alloc_id: id of the allocation, defaults to None
         :type alloc_id: str, optional
@@ -151,15 +162,16 @@ class Controller():
         except LauncherError as e:
             raise SmartSimError(f"Failed to release resources: {alloc_id}") from e
 
-
     def poll(self, interval, poll_db, verbose):
-        """Poll the running simulations and receive logging
-           output with the status of the job.
+        """Poll running simulations and receive logging output of job status
 
-           :param int interval: number of seconds to wait before polling again
-           :param bool poll_db: poll dbnodes for status as well and see
-                                it in the logging output
-           :param bool verbose: set verbosity
+        :param interval: number of seconds to wait before polling again
+        :type interval: int
+        :param poll_db: poll dbnodes for status as well and see
+                            it in the logging output
+        :type poll_db: bool
+        :param verbose: set verbosity
+        :type verbose: bool
         """
         all_finished = False
         while not all_finished:
@@ -168,22 +180,26 @@ class Controller():
             all_finished = self._jobs.poll(ignore_db=ignore_db, verbose=verbose)
 
     def finished(self, entity):
-        """Return a boolean indicating wether a job has finished or not
+        """Return a boolean indicating wether a job has finished
 
-           :param entity: object launched by SmartSim. One of the following:
+        :param entity: object launched by SmartSim. One of the following:
                           (SmartSimNode, NumModel, Ensemble)
-           :type entity: SmartSimEntity
-           :returns: bool
+        :type entity: SmartSimEntity
+        :returns: boolean indicating if a job is finished
+        :rtype: bool
         """
         return self._jobs.finished(entity)
 
     def get_orchestrator_status(self, orchestrator):
-        """Return the workload manager status of an Orchestrator launched through the Controller
+        """Return the workload manager status of an Orchestrator
 
-           :param orchestrator: The Orchestrator instance to check the status of
-           :type orchestrator: Orchestrator instance
-           :returns: statuses of the orchestrator in a list
-           :rtype: list of str
+        This function returns the workload manager status of an
+        orchestrator launched through the Controller.
+
+        :param orchestrator: The Orchestrator instance to check the status of
+        :type orchestrator: Orchestrator instance
+        :returns: statuses of the orchestrator in a list
+        :rtype: list of str
         """
         if not isinstance(orchestrator, Orchestrator):
             raise TypeError(
@@ -194,12 +210,15 @@ class Controller():
         return statuses
 
     def get_ensemble_status(self, ensemble):
-        """Return the workload manager status of an ensemble of models launched through the Controller
+        """Return the workload manager status of an ensemble of models
 
-           :param ensemble: The Ensemble instance to check the status of
-           :type ensemble: Ensemble instance
-           :returns: statuses of the ensemble in a list
-           :rtype: list of str
+        This function returns the workload manager status
+        of an ensemble of models launched through the Controller.
+
+        :param ensemble: The Ensemble instance to check the status of
+        :type ensemble: Ensemble instance
+        :returns: statuses of the ensemble in a list
+        :rtype: list of str
         """
         if not isinstance(ensemble, Ensemble):
             raise TypeError(
@@ -212,10 +231,10 @@ class Controller():
     def get_model_status(self, model):
         """Return the workload manager status of a model.
 
-           :param model: the model to check the status of
-           :type model: NumModel
-           :returns: status of the model given by the workload manager
-           :rtype: str
+        :param model: the model to check the status of
+        :type model: NumModel
+        :returns: status of the model given by the workload manager
+        :rtype: str
         """
         if not isinstance(model, NumModel):
             raise TypeError(
@@ -226,10 +245,10 @@ class Controller():
     def get_node_status(self, node):
         """Return the workload manager status of a SmartSimNode.
 
-           :param node: the SmartSimNode to check the status of
-           :type model: SmartSimNode
-           :returns: status of the SmartSimNode given by the workload manager
-           :rtype: str
+        :param node: the SmartSimNode to check the status of
+        :type model: SmartSimNode
+        :returns: status of the SmartSimNode given by the workload manager
+        :rtype: str
         """
         if not isinstance(node, SmartSimNode):
             raise TypeError(
@@ -240,13 +259,13 @@ class Controller():
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
-           Remove SMARTSIM_REMOTE env var if set as we are creating
-           a new launcher that should not be effected by previous
-           launcher settings in the environment
+        Remove SMARTSIM_REMOTE env var if set as we are creating
+        a new launcher that should not be effected by previous
+        launcher settings in the environment
 
-           Since the JobManager and the controller share a launcher
-           instance, set the JobManager launcher if we create a new
-           launcher instance here.
+        Since the JobManager and the controller share a launcher
+        instance, set the JobManager launcher if we create a new
+        launcher instance here.
 
         :param launcher: which launcher to initialize
         :type launcher: str
@@ -273,11 +292,15 @@ class Controller():
                 "Must provide a 'launcher' argument")
 
     def _stop_ensembles(self, ensembles):
-        """Stops specified ensembles.  If ensembles is None,
-           the function returns without performning any action.
+        """Stops specified ensembles.
 
-           :param ensembles: List of ensembles to be stopped
-           :type ensembles: list of Ensemble instances
+        This function stops the specified ensembles.
+        If ensembles is None, the function returns without
+        performing any action.
+
+        :param ensembles: List of ensembles to be stopped
+        :type ensembles: list of Ensemble instances
+        :raises TypeError: if provided models is not SmartSim Ensemble
         """
         if not ensembles:
             return
@@ -292,11 +315,15 @@ class Controller():
             self._stop_models(models)
 
     def _stop_models(self, models):
-        """Stops the specified models.  If the models is None,
-           the function returns without performing any action.
+        """Stops the specified models.
 
-           :param models: List of models to be stopped
-           :type models: list of NumModel instances
+        This function stops the specified models.  If
+        the models is None, the function returns
+        without performing any action.
+
+        :param models: List of models to be stopped
+        :type models: list of NumModel instances
+        :raises TypeError: if provided models is not SmartSim Model
         """
 
         if not models:
@@ -314,11 +341,14 @@ class Controller():
             self._launcher.stop(job.jid)
 
     def _stop_nodes(self, nodes):
-        """Stops specified nodes.  If nodes is None,
-           the function returns without performing any action.
+        """Stops specified nodes.
 
-           :param nodes: List of nodes to be stopped
-           :type nodes: list of SmartSimNode instances
+        If nodes is None, the function returns without performing
+        any action.
+
+        :param nodes: List of nodes to be stopped
+        :type nodes: list of SmartSimNode instances
+        :raises TypeError: if provided models is not SmartSimNode
         """
         if not nodes:
             return
@@ -338,8 +368,9 @@ class Controller():
     def _stop_orchestrator(self, dbnodes):
         """Stops the orchestrator jobs that are currently running.
 
-           :param dbnodes: the databases that make up the orchestrator
-           :type dbnodes: a list of DBNode instances
+        :param dbnodes: the databases that make up the orchestrator
+        :type dbnodes: a list of DBNode instances
+        :raises TypeError: if provided db_nodes are not DBNode
         """
         if not dbnodes:
             return
@@ -355,11 +386,12 @@ class Controller():
             logger.debug("Stopping orchestrator on job " + job.jid)
             self._launcher.stop(job.jid)
 
-
     def _update_models(self, ensembles):
         """Update the model run_settings of each ensemble
-           such that the default ensemble models all use
-           there own run_settings at launch.
+
+        This function updates the run_settings of each
+        ensemble such that the default ensemble models all use
+        there own run_settings at launch.
 
         :param ensembles: all ensembles passed to controller.start()
         :type ensembles: list of Ensemble instances
@@ -379,13 +411,15 @@ class Controller():
         return models
 
     def _launch(self, models, nodes, orchestrator):
-        """The main launching function of the Controller.
-           Launches the orchestrator first in order to collect
-           information about job placement to pass to nodes and
-           models that need to connect to it. Each entitiy has
-           a step created for it, and a list of those steps
-           coupled with the entity objects in tuples are passed
-           to each launch function for a dedicated entity type.
+        """Launch provided entities
+
+        The main launching function of the Controller.
+        Launches the orchestrator first in order to collect
+        information about job placement to pass to nodes and
+        models that need to connect to it. Each entity has
+        a step created for it, and a list of those steps
+        coupled with the entity objects in tuples are passed
+        to each launch function for a dedicated entity type.
 
         :param models: list of all models passed to start
         :type models: list of NumModel instances
@@ -442,21 +476,22 @@ class Controller():
         return steps
 
     def _create_entity_step(self, entity, orchestrator):
-        """Create a step for a single entity. Steps are defined
-           on the launcher level and are abstracted away from the
-           Controller. Steps determine exactly how the entity is
-           to be run and provide the input to Launcher.run().
+        """Create a step for a single entity
 
-           Optionally create a step that utilizes multiple programs
-           within a single step as some workload managers like
-           Slurm allow for. Currently this is only supported for
-           launching multiple databases per node.
+         Steps are defined on the launcher level and are abstracted
+         away from the Controller. Steps determine exactly how the
+         entity is to be run and provide the input to Launcher.run().
+
+        Optionally create a step that utilizes multiple programs
+        within a single step as some workload managers like
+        Slurm allow for. Currently this is only supported for
+        launching multiple databases per node.
 
         :param entity: entity to create step for
         :type entity: SmartSimEntity
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
-        :raises LauncherError: if job step creation failed
+        :raises SmartSimError: if job step creation failed
         :return: the created job step
         :rtype: Step object (e.g. for Slurm its a SlurmStep)
         """
@@ -477,10 +512,12 @@ class Controller():
             raise SmartSimError("\n".join((error, e.msg))) from None
 
     def _set_entity_env_vars(self, entity, orchestrator):
-        """Retrieve the connections registered by the user for
-           each entity and utilize the orchestrator for turning
-           those connections into environment variables to launch
-           with the step.
+        """Set connection environment variables
+
+        Retrieve the connections registered by the user for
+        each entity and utilize the orchestrator for turning
+        those connections into environment variables to launch
+        with the step.
 
         :param entity: entity to find connections for
         :type entity: SmartSimEntity
@@ -496,11 +533,12 @@ class Controller():
                 final_env_vars["env_vars"] = existing_env_vars
             entity.update_run_settings(final_env_vars)
 
-
     def _launch_orchestrator(self, orc_steps, orchestrator):
-        """Launch the orchestrator instance as specified by the user.
-           Immediately get the hostnames of the nodes where the
-           orchestrator job was placed.
+        """Launch the orchestrator
+
+        Launch the orchestrator instance as specified by the user.
+        Immediately get the hostnames of the nodes where the
+        orchestrator job was placed.
 
         :param orc_steps: Tuples of (step, entity) in a list
         :type orc_steps: list of tuples
@@ -526,11 +564,12 @@ class Controller():
                     f"Database node {dbnode.name} failed to launch"
                     ) from None
 
-
     def _launch_nodes(self, node_steps):
-        """Launch all SmartSimNode steps using the launcher.
-           Add the job to the job manager to keep track of the
-           job information for the user.
+        """Launch the SmartSimNode steps
+
+        Launch all SmartSimNode steps using the launcher.
+        Add the job to the job manager to keep track of the
+        job information for the user.
 
         :param node_steps: steps for created_nodes
         :type node_steps: step object dependant on launcher
@@ -551,9 +590,11 @@ class Controller():
                     ) from None
 
     def _launch_models(self, model_steps):
-        """Launch all model steps using the launcher.
-           Add the job to the job manager to keep track of the
-           job information for the user.
+        """Launch the SmartSim models
+
+        Launch all model steps using the launcher.
+        Add the job to the job manager to keep track of the
+        job information for the user.
 
         :param model_steps: tuples of (step, model)
         :type model_steps: list of tuples
@@ -575,8 +616,10 @@ class Controller():
 
 
     def _create_orchestrator_cluster(self, orchestrator):
-        """If the number of database nodes is greater than 2
-           we create a clustered orchestrator using this function.
+        """Create an orchestrator cluster
+
+        If the number of database nodes is greater than 2
+        we create a clustered orchestrator using this function.
 
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
@@ -588,9 +631,11 @@ class Controller():
         check_cluster_status(db_nodes, all_ports)
 
     def _sanity_check_launch(self, orchestrator):
-        """Sanity check the orchestrator settings in case the
-           user tries to do something silly. This function will
-           serve as the location of many such sanity checks to come.
+        """Check the orchestrator settigns
+
+        Sanity check the orchestrator settings in case the
+        user tries to do something silly. This function will
+        serve as the location of many such sanity checks to come.
 
         :param orchestrator: Orchestrator instance
         :type orchestrator: Orchestrator
@@ -604,7 +649,9 @@ class Controller():
                     "Local launcher does not support launching multiple databases")
 
     def _save_orchestrator(self, orchestrator):
-        """This function saves the orchestrator information to a pickle
+        """Save the orchestartor object via pickle
+
+        This function saves the orchestrator information to a pickle
         file that can be imported by subsequent experiments to reconnect
         to the orchestrator.
 

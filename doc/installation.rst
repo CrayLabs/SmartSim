@@ -22,7 +22,7 @@ Python libraries
 ----------------
 
 Most SmartSim library requirements can be installed via Python's
-package manager *pip* with the following command executed in the
+package manager ``pip`` with the following command executed in the
 top level directory of SmartSim.
 
 .. code-block:: console
@@ -71,25 +71,25 @@ following command in the top level of the SmartSim project:
 
   ./setup_env.sh
 
-The `setup_env.sh` script will install the three packages into
-the `third-party` directory in the top level directory of
-SmartSim.  The `setup_env.sh` script will print all build and
+The ``setup_env.sh`` script will install the three packages into
+the ``third-party`` directory in the top level directory of
+SmartSim.  The ``setup_env.sh`` script will print all build and
 and installation output to the terminal, and any failures
 will be evident there.  These packages do not require
 many dependencies, but it is worth checking that
 your system meets the prerequisites
 listed on each project GitHub page.  It is not recommended
-that users install these packages without using `setup_env.sh`
+that users install these packages without using ``setup_env.sh``
 because specific versions and build settings
 have been selected for SmartSim.
 
-In addition to installing packages, `setup_env.sh` sets
+In addition to installing packages, ``setup_env.sh`` sets
 system environment variables that are used by SmartSim
 to run experiments and can be used by the user to
 locate files needed to  build SmartSim clients into their
 applications.  The use of environment variables for compiling
 SmartSim clients into applications is discussed in the client
-documentation. The user should source `setup_env.sh` whenever
+documentation. The user should source ``setup_env.sh`` whenever
 beginning a new session to ensure that environment
 variables are properly set.
 

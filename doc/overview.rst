@@ -20,7 +20,7 @@ C, C++, Fortran, and Python clients using an in-memory, distributed database clu
 SmartSim manages hardware allocations, orchestrates simulation and
 analytics workloads, and automates model ensembling. The creation of the in-memory database,
 the management of HPC system resource allocations, and management of application input and output
-is all automated through the SmartSim API allowing users to launch asynchronous, interconnected
+is all automated through the SmartSim API, allowing users to launch asynchronous, interconnected
 jobs within a single Python script.
 
 Prior to SmartSim, operating on simulation model data was a slow and iterative
@@ -36,7 +36,7 @@ tools and libraries that were not easily used before.
 With SmartSim, users can stream data out of their models and operate
 directly on the data at discrete time intervals decided by the user. The
 framework is flexible and can handle largely any process from
-distributed machine learning to more typical data anaylsis and visualization.
+distributed machine learning to more typical data analysis and visualization.
 
 
 
@@ -49,7 +49,7 @@ that SmartSim was intended for are:
   1. Jupyter Environment
   2. Python script/shell
 
-Jupyter Enivronment
+Jupyter Environment
 -------------------
 
 Jupyter notebooks have become the medium of choice for many data scientists
@@ -57,7 +57,7 @@ and Python programmers because they allow for self-documentation and quick
 iteration. The latter is crucial for data analysis, data processing, and
 prototyping of ML/DL models. SmartSim was designed with Jupyter in mind because
 of these reasons. SmartSim allows for the simulation expert to never leave the
-comfort of the Jupyter environment. Users can configure, run, and analyize
+comfort of the Jupyter environment. Users can configure, run, and analyze
 simulation data all within a Jupyter notebook. One can
 easily document and share Jupyter notebooks with other SmartSim users
 so that all model parameters, run settings (e.g. number of processors) and
@@ -111,8 +111,8 @@ communication channels between jobs.
 
 The primary reason for implementing the IL is that many workflows in the HPC
 space require complex configuration that reduces reproducibility and
-productivity. The abtractions of the IL provide a simple mechanism in Python
-for workflow configuration which enables reproducibility accross users,
+productivity. The abstractions of the IL provide a simple mechanism in Python
+for workflow configuration which enables reproducibility across users,
 machines, and sites as well as decreases time to solution.
 
 
@@ -137,7 +137,7 @@ when conducting analysis or data processing for machine learning.
 For the above reasons, we decided to create our own client libraries that
 would loosely integrate with the IL and tightly integrate with the
 simulations themselves. The client libraries allow users to stream their
-data out of their simulations, and recieve that data in an environment
+data out of their simulations, and receive that data in an environment
 and data format that is more suited for the type of analytical and processing
 workflows done for machine learning. A user of the SmartSim clients
 can decide where in their model data is to be communicated without changing

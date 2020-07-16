@@ -8,9 +8,11 @@ from itertools import product
 class SlurmStep:
 
     def __init__(self, name, run_settings, multi_prog):
-        """Initialize a job step for Slurm using Smartsim entity
-           run_settings. Optionally make a multi-prog command by
-           writing a multiple program configuration.
+        """Initialize a job step for Slurm
+
+        This function initializes a job step using Smartsim entity
+        run_settings. Optionally make a multi-prog command by
+        writing a multiple program configuration.
 
         :param name: identifer for the step instance
         :type name: str
@@ -26,9 +28,11 @@ class SlurmStep:
         self.set_alloc()
 
     def set_alloc(self, alloc_id=None):
-        """Read the run_settings of the entity provided by the
-           controller and search for "alloc" keyword for setting
-           the allocation
+        """Set the allocation id of the job step
+
+        Read the run_settings of the entity provided by the
+        controller and search for "alloc" keyword for setting
+        the allocation
 
         :param alloc_id: id of the allocation, defaults to None
         :type alloc_id: str, optional
@@ -44,7 +48,7 @@ class SlurmStep:
 
 
     def build_cmd(self):
-        """build the command to run the step with Slurm.
+        """Build the command to run the step with Slurm.
 
         :return: full srun command to run the job step
         :rtype: str
@@ -84,8 +88,7 @@ class SlurmStep:
 
 
     def _build_exe_cmd(self):
-        """Use smartsim arguments to construct the executable portion
-           of the srun command.
+        """Use smartsim arguments to construct executable portion of srun command.
 
         :raises SSConfigError: if executable argument is not provided
         :return: executable portion of srun command
@@ -111,20 +114,22 @@ class SlurmStep:
 
 
     def _build_multi_prog_exe(self, executable, exe_args):
-        """Launch multiple programs on seperate CPUs on the same node using the
-           slurm --multi-prog feature. Currently we only support launching one
-           process with each execs and args. Execs and args are expected to be
-           lists of the same length. Writes out a run_orc.conf.
+        """Build Slurm multi prog executable
 
-           TODO: improve so that single exec or arg could be used
-           TODO: catch bad formatting errors
-           TODO: eliminate writing side effect of this function
+        Launch multiple programs on seperate CPUs on the same node using the
+        slurm --multi-prog feature. Currently we only support launching one
+        process with each execs and args. Execs and args are expected to be
+        lists of the same length. Writes out a run_orc.conf.
 
-           :type executable: list of strings
-           :param exe_args: list of arguments to each executable
-           :type exe_args: list of strings
-           :returns: path to run_orc.conf
-           :rtype: str
+        TODO: improve so that single exec or arg could be used
+        TODO: catch bad formatting errors
+        TODO: eliminate writing side effect of this function
+
+        :type executable: list of strings
+        :param exe_args: list of arguments to each executable
+        :type exe_args: list of strings
+        :returns: path to run_orc.conf
+        :rtype: str
         """
         out = self.run_settings["out_file"]
         ppn = self.run_settings["ppn"]
@@ -143,9 +148,16 @@ class SlurmStep:
         return conf_path
 
     def _format_env_vars(self, env_vars):
-        """Slurm takes exports in comma seperated lists
-           the list starts with all as to not disturb the rest of the environment
-           for more information on this, see the slurm documentation for srun"""
+        """Build environment variable string for Slurm
+
+        Slurm takes exports in comma seperated lists
+        the list starts with all as to not disturb the rest of the environment
+        for more information on this, see the slurm documentation for srun
+        :param env_vars: additional environment variables to add
+        :type env_vars: list of str, optional
+        :returns: the formatted string of environment variables
+        :rtype: str
+        """
         format_str = "".join(("PATH=", get_env("PATH"), ",",
                               "PYTHONPATH=", get_env("PYTHONPATH"), ","
                               "LD_LIBRARY_PATH=", get_env("LD_LIBRARY_PATH")))
@@ -155,10 +167,6 @@ class SlurmStep:
         return format_str
 
     def _set_cwd(self):
-        """return the cwd directory of a smartsim entity and set
-           as the cwd directory of this step.
-
-        :return: current working directory of the smartsim entity
-        :rtype: str
+        """Set the current working directory of the step
         """
         self.cwd = self.run_settings["cwd"]

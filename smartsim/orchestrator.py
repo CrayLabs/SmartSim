@@ -29,13 +29,13 @@ class Orchestrator:
         self._init_db_nodes(db_nodes, **kwargs)
 
     def _init_db_nodes(self, db_nodes, **kwargs):
-        """Initialize DBNode instances for the orchestrator. The number
-           of DBNode instances created depends on the value of the
-           db_nodes argument passed to the orchestrator intialization.
+        """Initialize DBNode instances for the orchestrator.
 
-           If multiple databases per node are requested, the port is
-           incremented by 1 starting at the port listed in the
-           orchestrator initialization.
+        The number of DBNode instances created depends on the value
+        of the db_nodes argument passed to the orchestrator initialization.
+        If multiple databases per node are requested through
+        kwarg "dpn", the port is incremented by 1 starting at the
+        port listed in the orchestrator initialization.
 
         :param db_nodes: number of DBNode instances to create
         :type db_nodes: int
@@ -66,8 +66,10 @@ class Orchestrator:
 
     def get_connection_env_vars(self, entity):
         """Return the environment variables needed to launch an entity
-           with a connection to this orchestrator. The connections are
-           registered and held within the junction class.
+
+        This function returns the environment variables needed to launch
+        an entity with a connection to this orchestrator. The connections
+        are registered and held within the junction class.
 
         :param entity: SmartSimEntity object to obtain connections for
         :type entity: SmartSimEntity
@@ -77,13 +79,20 @@ class Orchestrator:
         return self.junction.get_connections(entity)
 
     def __str__(self):
+        """Return user-readable string form of Orchestrator
+
+        :return: user-readable string of the Orchestrator object
+        :rtype: str
+        """
         orc_str = "Name: Orchestrator \n"
         orc_str += "Number of Databases: " + str(len(self.dbnodes)) + "\n"
         return orc_str
 
     def set_path(self, new_path):
-        """Set the path for logging outputs for the database when user calls
-           the generator.
+        """Set the path for logging db outputs when user calls the generator.
+
+        :param new_path: The path to use for logging database outputs
+        :type new_path: str
         """
         self.path = new_path
         for dbnode in self.dbnodes:

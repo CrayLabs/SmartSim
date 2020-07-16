@@ -15,4 +15,4 @@ could make the process of developing on SmartSim a bit easier.
  - Strict Whitespace, for ensuring no whitespace left in code
  - Python Docstring Generator, for writing docstring quickly
  - C/C++, for client development
- - Settings Sync, for syncing settings accross remote servers
+ - Settings Sync, for syncing settings across remote servers

@@ -21,12 +21,24 @@ class JobManager:
     """
 
     def __init__(self, launcher=None):
+        """Initialize a Jobmanager
+
+        :param launcher: a Launcher object to manage jobs
+        :type: SmartSim.Launcher
+        """
         self._launcher = launcher
         self.jobs = {}
         self.db_jobs = {}
         self.node_jobs = {}
 
     def __getitem__(self, job_name):
+        """Return the job associated with the job_name
+
+        :param job_name: The name of the job
+        :type job_name: str
+        :returns: the Job associated with the job_name
+        :rtype: Job
+        """
         if job_name in self.db_jobs.keys():
             return self.db_jobs[job_name]
         elif job_name in self.node_jobs.keys():
@@ -37,6 +49,11 @@ class JobManager:
             raise KeyError
 
     def __call__(self):
+        """ Returns dictionary all jobs for () operator
+
+        :returns: Dictionary of all jobs
+        :rtype: dictionary
+        """
         all_jobs = {
             **self.jobs,
             **self.node_jobs,
@@ -46,8 +63,9 @@ class JobManager:
 
     def get_job_nodes(self, name, wait=2):
         """Get the hostname(s) of a job from the allocation
-           Wait time is necessary because Slurm take about 3 seconds to
-           register that a job has been submitted.
+
+        Wait time is necessary because Slurm take about 3 seconds to
+        register that a job has been submitted.
 
         :param name: name of the launched entity
         :type name: str
@@ -67,8 +85,7 @@ class JobManager:
             return nodes
 
     def add_job(self, name, job_id, entity):
-        """Add a job to the job manager which holds
-           specific jobs by type.
+        """Add a job to the job manager which holds specific jobs by type.
 
         :param name: job name (usually the entity name)
         :type name: str
@@ -115,10 +132,10 @@ class JobManager:
     def get_status(self, entity):
         """Return the workload manager given status of a job.
 
-           :param entity: object launched by SmartSim. One of the following:
-                          (SmartSimNode, NumModel, Orchestrator, Ensemble)
-           :type entity: SmartSimEntity
-           :returns: tuple of status
+        :param entity: object launched by SmartSim. One of the following:
+                    (SmartSimNode, NumModel, Orchestrator, Ensemble)
+        :type entity: SmartSimEntity
+        :returns: tuple of status
         """
         try:
             job = self[entity.name]
@@ -132,9 +149,10 @@ class JobManager:
         """Poll all simulations and return a boolean for
            if all jobs are finished or not.
 
-           :param bool verbose: set verbosity
-           :param bool ignore_db: return true even if the orchestrator nodes are still running
-           :returns: True or False for if all models have finished
+        :param bool verbose: set verbosity
+        :param bool ignore_db: return true even if the orchestrator
+                                nodes are still running
+        :returns: True or False for if all models have finished
         """
         finished = True
         for job in self().values():
@@ -151,10 +169,10 @@ class JobManager:
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
 
-           :param entity: object launched by SmartSim. One of the following:
+        :param entity: object launched by SmartSim. One of the following:
                           (SmartSimNode, NumModel, Ensemble)
-           :type entity: SmartSimEntity
-           :returns: bool
+        :type entity: SmartSimEntity
+        :returns: bool
         """
         try:
             if isinstance(entity, Orchestrator):
@@ -174,8 +192,7 @@ class JobManager:
                 f"Entity by the name of {entity.name} has not been launched by this Controller")
 
     def _set_launcher(self, launcher):
-        """Set the launcher of the job manager to a specific launcher
-           instance created by the controller.
+        """Set the launcher of the job manager to a specific launcher instance
 
         :param launcher: child of Launcher
         :type launcher: Launcher instance

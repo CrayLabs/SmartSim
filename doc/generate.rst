@@ -3,12 +3,12 @@
 Ensembles
 *********
 
-Ensembles are a user-facing object within SmartSim. Ensembles are used
+Ensembles are a user-facing object within SmartSim that can be used
 to quickly create a number of models that span a model parameter space.
 The primary reason for exposing an ``Ensemble`` object is that manually
 creating and executing many models can be very tedious. By utilizing
 ``Ensemble`` in SmartSim, creating an ensemble is as easy as defining
-a few dictionarys and a single method call.
+a few dictionaries and a single method call.
 
 The ``Generator`` is the primary object responsible for creating and
 configuring ensembles within SmartSim. There are two ways to use
@@ -22,8 +22,8 @@ the model objects for each ``Ensemble`` created by that ``Experiment``.
 
 The ``Experiment.generate`` method makes generating a number of models
 quick and easy, but if greater control over the generation process is
-needed, a ``Generator`` object can be initialized seperately from the
-``Experiment``. Users can then user the ``Generator`` interface to
+needed, a ``Generator`` object can be initialized separately from the
+``Experiment``. Users can then use the ``Generator`` interface to
 generate specific Ensembles and SmartSim entities along with their file
 structure. An example of this is provided in the
 `Ensemble suite tutorial <../examples/MOM6/double-gyre-ensembles/README.html>`_
@@ -42,10 +42,10 @@ Model Parameters
 The first step in configuring an ensemble is tagging the input files
 where the simulation configurations are held. Tagging is the process
 of identifying model configurations you would like to create a
-parameter space for and surronding those values with a specific
+parameter space for and surrounding those values with a specific
 character which SmartSim refers to as a ``tag``. The default tag
 is a semi-colon (e.g. ``;``) but can be changed either through
-the ``Experiment.generate`` method as an arugment, or if you are
+the ``Experiment.generate`` method as an argument, or if you are
 manually initializing a ``Generator`` instance, through the method
 ``Generator.set_tag``. A tutorial on tagging input files is
 provided in the `ensemble generation tutorial <../examples/LAMMPS/crack/README.html>`_
@@ -59,7 +59,7 @@ the SmartSim launcher backend being used for the experiment. In the
 case of Ensembles, run settings determine how each model in the
 ensemble will be executed. For example, because of the ``run_settings``
 defined below, each model in the ensemble configured with these
-run settings will run the ``lmp`` executeable with the arguments
+run settings will run the ``lmp`` executable with the arguments
 ``-i in.crack`` on 1 node with 48 processors per node inside of the
 allocation with the id 123456.
 
@@ -81,7 +81,7 @@ Input files and Datasets
 -------------------------
 
 Once input files have been tagged, the ``Generator`` needs to know
-where to get them from such that they can put them in the same filepath
+where to retrieve them in order to place them in the same filepath
 as the simulation. To do this, created entities have a method to
 attach files for the generator to utilize. There are three arguments
 to the ``Ensemble.attach_generator_files`` function:

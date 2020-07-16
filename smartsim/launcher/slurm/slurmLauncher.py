@@ -21,18 +21,25 @@ logger = get_logger(__name__)
 
 
 class SlurmLauncher(Launcher):
+    """This class encapsulates the functionality needed
+    to manager allocations and launch jobs on systems that use
+    Slurm as a workload manager.
+    """
 
     def __init__(self, *args, **kwargs):
+        """Initialize a SlurmLauncher
+        """
         super().__init__(*args, **kwargs)
 
     def validate(self, nodes=None, ppn=None, partition=None):
         """Check that there are sufficient resources in the provided Slurm partitions.
-           :param str partition: partition to validate
-           :param nodes: Override the default node count to validate
-           :type nodes: int
-           :param ppn: Override the default processes per node to validate
-           :type ppn: int
-           :raises: LauncherError
+
+        :param str partition: partition to validate
+        :param nodes: Override the default node count to validate
+        :type nodes: int
+        :param ppn: Override the default processes per node to validate
+        :type ppn: int
+        :raises: LauncherError
         """
         sys_partitions = self._get_system_partition_info()
 
@@ -65,9 +72,11 @@ class SlurmLauncher(Launcher):
 
     def create_step(self, entity_name, run_settings, multi_prog=False):
         """Convert a smartsim entity run_settings into a Slurm step
-           to be launched on an allocation. An entity must have an
-           allocation assigned to it in the running settings or
-           create_step will throw a LauncherError
+
+        This function convert a smartsim entity run_settings
+        into a Slurm stepto be launched on an allocation. An entity
+        must have an allocation assigned to it in the running settings
+        or create_step will throw a LauncherError
 
         :param entity_name: name of the entity to create a step for
         :type entity_name: str
@@ -97,8 +106,7 @@ class SlurmLauncher(Launcher):
             raise LauncherError("Job step creation failed: " + e.msg) from None
 
     def get_step_status(self, step_id):
-        """Get the status of a SlurmStep via the id of the step
-           e.g. 12345.0
+        """Get the status of a SlurmStep via the id of the step (e.g. 12345.0)
 
         :param step_id: id of the step in form xxxxx.x
         :type step_id: str
@@ -115,7 +123,9 @@ class SlurmLauncher(Launcher):
 
     def get_step_nodes(self, step_id):
         """Return the compute nodes of a specific job or allocation
-           in a list with the duplicates removed.
+
+        This function returns the compute nodes of a specific job or allocation
+        in a list with the duplicates removed.
 
         :param step_id: job step id or allocation id
         :type step_id: str
@@ -132,10 +142,12 @@ class SlurmLauncher(Launcher):
             return parse_sstat_nodes(output)
 
     def accept_alloc(self, alloc_id):
-        """Accept a user provided and obtained allocation into the
-           Launcher for future launching of entities. Obtain as much
-           information about the allocation as possible by parsing the
-           output of slurm commands.
+        """Accept a user provided and obtained allocation
+
+        This function accepts a user provided and obtained allocation
+        into the Launcher for future launching of entities. It obtains
+        as much information about the allocation as possible by parsing
+        the output of slurm commands.
 
         :param alloc_id: id of the allocation
         :type alloc_id: str
@@ -155,22 +167,24 @@ class SlurmLauncher(Launcher):
         self.alloc_manager.add(alloc_id, allocation)
 
     def get_alloc(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
-        """Request an allocation with the specified arguments. Anything
-           passed to the keywords args will be processed as a Slurm
-           argument and appended to the salloc command with the appropriate
-           prefix (e.g. "-" or "--"). The requested allocation will be
-           added to the AllocManager for launching entities.
+        """Request an allocation
 
-           :param nodes: number of nodes for the allocation, defaults to 1
-           :type nodes: int, optional
-           :param ppn: number of tasks to run per node, defaults to 1
-           :type ppn: int, optional
-           :param duration: length of the allocation in HH:MM:SS format,
+        This function requests an allocation with the specified arguments.
+        Anything passed to the keywords args will be processed as a Slurm
+        argument and appended to the salloc command with the appropriate
+        prefix (e.g. "-" or "--"). The requested allocation will be
+        added to the AllocManager for launching entities.
+
+        :param nodes: number of nodes for the allocation, defaults to 1
+        :type nodes: int, optional
+        :param ppn: number of tasks to run per node, defaults to 1
+        :type ppn: int, optional
+        :param duration: length of the allocation in HH:MM:SS format,
                            defaults to "1:00:00"
-           :type duration: str, optional
-           :raises LauncherError: if the allocation is not successful
-           :return: the id of the allocation
-           :rtype: str
+        :type duration: str, optional
+        :raises LauncherError: if the allocation is not successful
+        :return: the id of the allocation
+        :rtype: str
         """
         self._check_for_slurm()
 
@@ -192,10 +206,12 @@ class SlurmLauncher(Launcher):
         return str(alloc_id)
 
     def run(self, step):
-        """Run a job step on an allocation through the slurm launcher.
-           A constructed job step is required such that the argument
-           translation from SmartSimEntity to SlurmStep has been
-           completed and an allocation has been assigned to the step.
+        """Run a job step
+
+        This function runs a job step on an allocation through the
+        slurm launcher. A constructed job step is required such that
+        the argument translation from SmartSimEntity to SlurmStep has
+        been completed and an allocation has been assigned to the step.
 
         :param step: Job step to be launched
         :type step: SlurmStep
@@ -235,8 +251,7 @@ class SlurmLauncher(Launcher):
                 logger.info(f"Successfully stopped job {str(step_id)}")
 
     def is_finished(self, status):
-        """Determine wether a job is finished according to slurm
-           status parsed from sacct
+        """Determine wether a job is finished by parsing slurm sacct
 
         :param status: status returned from sacct command
         :type status: str
@@ -254,8 +269,7 @@ class SlurmLauncher(Launcher):
         return True
 
     def free_alloc(self, alloc_id):
-        """Free an allocation from within the launcher so
-           that these resources can be used by other users.
+        """Free an allocation from within the launcher
 
         :param alloc_id: allocation id
         :type alloc_id: str
@@ -280,15 +294,13 @@ class SlurmLauncher(Launcher):
         self.alloc_manager.remove(alloc_id)
         logger.info(f"Successfully freed allocation {alloc_id}")
 
-
-
     def _get_slurm_step_id(self, step):
-        """Use the sacct command to find the step_id of a step that
-           has been launched by this SlurmLauncher instance. Use the
-           step name to find the corresponding step_id.
-
-           Perform a number of trials in case the slurm launcher
-           takes a while to populate the Sacct database
+        """Get the step_id of a step
+        This function uses the sacct command to find the step_id of
+        a step that has been launched by this SlurmLauncher instance.
+        Use the step name to find the corresponding step_id.  This
+        function performs a number of trials in case the slurm launcher
+        takes a while to populate the Sacct database
 
         :param step: step to find the id of
         :type step: SlurmStep
@@ -314,9 +326,9 @@ class SlurmLauncher(Launcher):
 
 
     def _get_system_partition_info(self):
-        """Build a dictionary of slurm partitions filled with
-           Partition objects.
+        """Build a dictionary of slurm partitions
            :returns: dict of Partition objects
+           :rtype: dict
         """
 
         sinfo_output, sinfo_error = sinfo(["--noheader", "--format", "%R %n %c"])
@@ -341,8 +353,12 @@ class SlurmLauncher(Launcher):
         return partitions
 
     def _get_default_partition(self):
-        """Returns the default partition from slurm which is the partition with
-           a star following its partition name in sinfo output
+        """Returns the default partition from slurm which
+
+        This default partition is assumed to be the partition with
+        a star following its partition name in sinfo output
+        :returns: the name of the default partition
+        :rtype: str
         """
         sinfo_output, sinfo_error = sinfo(["--noheader", "--format", "%P"])
 
@@ -357,8 +373,11 @@ class SlurmLauncher(Launcher):
 
 
     def _check_for_slurm(self):
-        """Check for slurm if not using a remote Command Server and return
-           an error if the user has not initalized the remote launcher.
+        """Check if slurm is available
+
+        This function checks for slurm if not using a remote
+        Command Server and return an error if the user has not
+        initalized the remote launcher.
 
         :raises LauncherError: if no access to slurm and no remote Command
                                Server has been initialized.

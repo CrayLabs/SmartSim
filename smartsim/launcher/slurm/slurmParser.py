@@ -1,13 +1,10 @@
-
-
 def parse_salloc(output):
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
 
 def parse_salloc_error(output):
-    """Parse the error output of a failed salloc command
-        and return the error message
+    """Parse and return error output of a failed salloc command
 
     :param output: stderr output of salloc command
     :type output: str
@@ -30,7 +27,6 @@ def parse_salloc_error(output):
 
 def parse_sacct_step(output):
     """Parse the number of job steps launched on an allocation
-        so far.
 
     :param output: output of the sacct command
     :type output: str
@@ -49,8 +45,7 @@ def parse_sacct_step(output):
             return int(step) + 1
 
 def parse_sacct(output, job_id):
-    """Parse the output of the sacct command and return
-        relevant information
+    """Parse and return output of the sacct command
 
     :param output: output of the sacct command
     :type output: str
@@ -70,8 +65,10 @@ def parse_sacct(output, job_id):
     return result
 
 def parse_sstat_nodes(output):
-    """parse the sstat command and return the nodes of
-        a job in a list with the duplicates removed.
+    """Parse and return the sstat command
+
+    This function parses and returns the nodes of
+    a job in a list with the duplicates removed.
 
     :param output: output of the sstat command
     :type output: str
@@ -89,16 +86,15 @@ def parse_sstat_nodes(output):
     return list(set(nodes))
 
 def parse_step_id_from_sacct(output, step_name):
-    """Parse the step id from a sacct command and return
-       it for future queries.
+    """Parse and return the step id from a sacct command
 
     :param output: output of sacct --noheader -p
                    --format=jobname,jobid --job <alloc>
-    :type output: [type]
-    :param step_name: [description]
-    :type step_name: [type]
-    :return: [description]
-    :rtype: [type]
+    :type output: str
+    :param step_name: the name of the step to query
+    :type step_name: str
+    :return: the step_id
+    :rtype: str
     """
     step_id = None
     for line in output.split("\n"):

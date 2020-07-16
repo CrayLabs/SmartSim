@@ -17,7 +17,7 @@ Please check the following before submitting a pull request to the SmartSim repo
 
   1) Your feature is on a new branch off master.
   2) You are merging the feature branch from your fork into the main repository.
-  3) All uncessescary whitespace has been purged from your code.
+  3) All unnecessary whitespace has been purged from your code.
   4) All your code as been appropriately documented.
   5) The PR description is clear and concise.
   6) You have requested a review.

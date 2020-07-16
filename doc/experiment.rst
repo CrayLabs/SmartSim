@@ -38,20 +38,17 @@ object contains run settings for the simulation such as the number
 of computational nodes for the simulation, the number of processes per
 node, the executable, and executable arguments. For more information
 on how to configure the runtime settings of a Model or any entity,
-see the `launcher documentation <launchers.html>`_
-
-Instances of numerical models or "simulation" models. Models can
-be created through a call to ``Experiment.create_model()`` and though
-the creation of an Ensemble.
+see the `launcher documentation <launchers.html>`_ Instances of SmartSim
+models can be created through a call to ``Experiment.create_model()``.
 
 Ensemble
 --------
 In addition to a single model, SmartSim has the ability to launch an
 ensemble(s) of simulations simultaneously. An ensemble can be manually
 constructed through API calls or SmartSim can be used to generate an
-ensemble of model realizations by copying and modifying input files.
-For the latter approach, at run-time, user-defined character tags in
-the simulation's configuration files (e.g. Fortran namelists or XML)
+ensemble of model realizations by automatically copying and modifying
+input files For the latter approach, at run-time, user-defined character
+tags in the simulation's configuration files (e.g. Fortran namelists or XML)
 are replaced by SmartSim with specific parameter values. Users can
 specify ranges for each of these parameters with the ensemble of
 realizations run using a number of preset strategies or implementing
@@ -73,11 +70,11 @@ is launched prior to the simulation. The Orchestrator can be used
 to store data from another entity in memory during the course of
 an experiment. In order to stream data into the orchestrator or
 receive data from the orchestrator, one of the SmartSim clients
-has to be used within a NumModel or SmartSimNode.
+has to be used within a SmartSim Model or SmartSim Node.
 
 The use of an in-memory, distributed database to store data is one
 of the key components of SmartSim that allows for scalable simulation
-and analysis workloads. The inclusion of an in-memory database to the
+and analysis workloads. The inclusion of an in-memory database in the
 in-transit framework provides data persistence so that the data can
 be accessed at any time during or after the SmartSim experiment.
 A distributed framework enables the database to be scaled to the needs
@@ -130,6 +127,13 @@ SmartSim models and nodes can be monitored with a blocking poll command through 
 Monitoring Experiments
 ======================
 
+SmartSim allows users to monitor the status of SmartSim models, nodes, and
+orchestrators that have been launched in an experiment.  The ``Experiment``
+class provides a continuous status check with ``experiment.poll()`` that
+reports entity status and blocks execution until all entities are no longer
+running.  A non-blocking status check can be performed with
+``experiment.get_status()`` which will return the status of the launched
+entity.
 
 Stopping Experiments
 ====================

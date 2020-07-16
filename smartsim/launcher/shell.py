@@ -16,8 +16,10 @@ except SSConfigError:
 
 def is_remote():
     """Determine if a command should be sent to a CmdServer
-       running elsewhere by examining SMARTSIM_REMOTE env
-       var.
+
+    This function determines if a command should be sent to
+    a CmdSerer running elsewhere by examining SMARTSIM_REMOTE env
+    var.
 
     :return: true if command should be a RemoteRequest
     :rtype: bool
@@ -44,10 +46,12 @@ def ping_host(hostname):
 
 def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
                 timeout=None, remote=True):
-    """Execute a command either locally or remotely depending on the
-       configuration set by the user for this experiment. If SMARSIM_REMOTE
-       is set, send the command over the network to a CmdServer listening
-       on a tcp socket. Otherwise execute the command locally.
+    """Execute a command locally or remotely
+
+    This function executes a command either locally or remotely depending
+    on the configuration set by the user for this experiment. If SMARSIM_REMOTE
+    is set, send the command over the network to a CmdServer listening
+    on a tcp socket. Otherwise execute the command locally.
 
     :param cmd_list: list of command with arguments
     :type cmd_list: list of str
@@ -104,8 +108,10 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
 
 
 def execute_async_cmd(cmd_list, cwd, remote=True):
-    """Execute an asynchronous command either locally or through
-       zmq to a CmdServer listening over TCP.
+    """Execute an asynchronous command
+
+    This function executes an asynchronous command either
+    locally or through zmq to a CmdServer listening over TCP.
 
     :param cmd_list: list of command with arguments
     :type cmd_list: list of str

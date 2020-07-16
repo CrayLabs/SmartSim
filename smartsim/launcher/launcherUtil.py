@@ -8,12 +8,29 @@ logger = get_logger(__name__)
 
 
 class ComputeNode():
-
+    """The ComputeNode class holds resource information
+    about a physical compute node
+    """
     def __init__(self, node_name=None, node_ppn=None):
+        """Initialize a ComputeNode
+
+        :param node_name: the name of the node
+        :type node_name: str
+        :param node_ppn: the number of ppn
+        :type node_ppn: int
+        """
         self.name = node_name
         self.ppn = node_ppn
 
     def _is_valid_node(self):
+        """Check if the node is complete
+
+        Currently, validity is judged by name
+        and ppn being not None.
+
+        :returns: True if valid, false otherwise
+        :rtype: bool
+        """
         if self.name is None:
             return False
         if self.ppn is None:
@@ -22,14 +39,25 @@ class ComputeNode():
         return True
 
 class Partition():
-
+    """The partition class holds information about
+    a system partition.
+    """
     def __init__(self):
+        """Initialize a system partition
+        """
         self.name = None
         self.min_ppn = None
         self.nodes = set()
 
     def _is_valid_partition(self):
+        """Check if the partition is valid
 
+        Currently, validity is judged by name
+        and each ComputeNode being valid
+
+        :returns: True if valid, false otherwise
+        :rtype: bool
+        """
         if self.name is None:
             return False
         if len(self.nodes)<=0:
@@ -59,10 +87,13 @@ def get_ip_from_host(host):
 
 
 def seq_to_str(seq, to_byte=False, encoding="utf-8", add_equal=False):
-    """
-    An auxiliary function to convert the commands in the sequence format to string format
-    This is necessary based on the shell boolean used when we start a subprocess. the problem
+    """Convert a sequence to a string
+
+    An auxiliary function to convert the commands in the sequence
+    format to string format.   This is necessary based on the
+    shell boolean used when we start a subprocess. the problem
     is the --option=value. Otherwise, a simple " ".join would suffice
+
     :param seq (string array)
     :param to_byte(bool) whether or not convert to byte stream
     """
@@ -85,9 +116,12 @@ def seq_to_str(seq, to_byte=False, encoding="utf-8", add_equal=False):
 
 
 def extract_line(output, key):
-    """
-    an auxiliary function to find a key in a multi-line string
+    """Find a key in a multiline string
+
+    An auxiliary function to find a key in a multi-line string
+
     :returns the first line which contains the key
+    :rtype: str or None
     """
     for line in output:
         if key in line:
@@ -96,8 +130,10 @@ def extract_line(output, key):
 
 
 def current_time_military(minute_add = 0):
-    """
-    returns the current time in format hhmm as a string
+    """Convert current time to military time
+
+    :returns: the current time in format hhmm as a string
+    :rtype: str
     """
     t_now = datetime.now()
     hour_int = t_now.hour
