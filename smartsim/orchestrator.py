@@ -11,7 +11,7 @@ class Orchestrator:
        entities by using one of the Python, C, C++ or Fortran clients
        within an entity.
     """
-    def __init__(self, orc_path, port=6379, db_nodes=1, dpn=1, **kwargs):
+    def __init__(self, orc_path, port=6379, db_nodes=1, **kwargs):
         """Initialize an orchestrator for an Experiment.
 
         :param orc_path: path to output, error and conf files
@@ -21,17 +21,14 @@ class Orchestrator:
         :param db_nodes: number of database instances to launch,
                          defaults to 1
         :type db_nodes: int, optional
-        :param dpn: number of databases to launch per instance,
-                    defaults to 1
-        :type dpn: int, optional
         """
         self.port = port
         self.path = orc_path
         self.junction = Junction()
         self.dbnodes = []
-        self._init_db_nodes(db_nodes, dpn, **kwargs)
+        self._init_db_nodes(db_nodes, **kwargs)
 
-    def _init_db_nodes(self, db_nodes, dpn, **kwargs):
+    def _init_db_nodes(self, db_nodes, **kwargs):
         """Initialize DBNode instances for the orchestrator. The number
            of DBNode instances created depends on the value of the
            db_nodes argument passed to the orchestrator intialization.
@@ -42,8 +39,6 @@ class Orchestrator:
 
         :param db_nodes: number of DBNode instances to create
         :type db_nodes: int
-        :param dpn: number of databases per instance
-        :type dpn: int
         :raises SmartSimError: if invalid db_nodes is requested
         """
         if db_nodes == 2:
@@ -51,6 +46,15 @@ class Orchestrator:
                 "Only clusters of size 1 and >= 3 are supported by Smartsim"
                 )
         cluster = False if db_nodes < 3 else True
+        # We need to remove dpn from kwargs because
+        # it is not a valid command line argument.
+        # "dpn" is set as "ppn" later.
+        if "dpn" in kwargs:
+            dpn = kwargs["dpn"]
+            kwargs.pop("dpn")
+        else:
+            dpn = 1
+
         run_settings = {"nodes": 1, "ppn": dpn, **kwargs}
         for node_id in range(db_nodes):
             node = DBNode(node_id,

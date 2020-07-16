@@ -40,8 +40,8 @@ def test_db_cluster_reconnect_status_and_stop():
         "alloc": alloc_1,
         "exe_args":"--cluster"
     }
-    O1 = exp_1.create_orchestrator_cluster(alloc_1, path=exp_1_dir,
-                                           db_nodes=3, dpn=3)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir,
+                                   db_nodes=3, dpn=3, alloc=alloc_1)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
     exp_1.start()
     exp_1.poll()
@@ -105,8 +105,8 @@ def test_db_cluster_reconnect_send_receive():
         "alloc": alloc_1,
         "exe_args":"--cluster"
     }
-    O1 = exp_1.create_orchestrator_cluster(alloc_1, path=exp_1_dir,
-                                           db_nodes=3, dpn=3)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir,
+                                   db_nodes=3, dpn=3, alloc=alloc_1)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
     exp_1.start()
     exp_1.poll()
@@ -197,8 +197,8 @@ def test_db_reconnection_not_running_failure():
         "alloc": alloc_1,
         "exe_args":"--cluster"
     }
-    O1 = exp_1.create_orchestrator_cluster(alloc_1, path=exp_1_dir,
-                                           db_nodes=3, dpn=3)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir,
+                                   db_nodes=3, dpn=3, alloc=alloc_1)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
     exp_1.start()
     exp_1.poll()

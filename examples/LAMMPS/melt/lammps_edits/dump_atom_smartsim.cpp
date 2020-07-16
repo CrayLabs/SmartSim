@@ -42,7 +42,7 @@ DumpAtomSmartSim::~DumpAtomSmartSim()
 
 void DumpAtomSmartSim::write()
 {
-  SmartSimClient client;
+  SmartSimClient client(true);
 
   int rank;
   std::string key;
@@ -82,10 +82,10 @@ void DumpAtomSmartSim::write()
     client.put_scalar_int64(key.c_str(), domain->triclinic);
     key = this->_make_key("scale_flag", rank);
     client.put_scalar_int64(key.c_str(), scale_flag);
-    
+
     int n_local = atom->nlocal;
     int n_cols = (image_flag == 1) ? 8 : 5;
-    
+
     nme = count();
     if (nme > maxbuf) {
         maxbuf = nme;

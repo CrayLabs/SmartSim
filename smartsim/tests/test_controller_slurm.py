@@ -123,7 +123,7 @@ def test_get_release_allocation():
 
 # experiment with clustered orchestrator
 exp_2 = Experiment("test_2")
-C1 = exp_2.create_orchestrator_cluster(alloc, path=test_path, db_nodes=3)
+C1 = exp_2.create_orchestrator(path=test_path, db_nodes=3, alloc=alloc)
 
 @controller_test
 def test_cluster_orchestrator():
@@ -137,7 +137,7 @@ def test_cluster_orchestrator():
 
 # test multiple orchestrator per node
 exp_3 = Experiment("test_3")
-O2 = exp_3.create_orchestrator_cluster(alloc, path=test_path, db_nodes=1, dpn=3)
+O2 = exp_3.create_orchestrator(path=test_path, db_nodes=1, dpn=3, alloc=alloc)
 
 @controller_test
 def test_dpn():
@@ -158,8 +158,8 @@ def test_multiple_entity_runs():
     db_nodes = 3
     exp_4 = Experiment("test_4")
     exp_4.add_allocation(alloc)
-    O4 = exp_4.create_orchestrator_cluster(alloc, path=test_path,
-                                           db_nodes=db_nodes, dpn=dpn)
+    O4 = exp_4.create_orchestrator(path=test_path,
+                                   db_nodes=db_nodes, dpn=dpn, alloc=alloc)
     exp_4.start(orchestrator=O4)
     time.sleep(5)
     step_ids_1 = {}
@@ -171,8 +171,8 @@ def test_multiple_entity_runs():
 
     exp_5 = Experiment("test_5")
     exp_5.add_allocation(alloc)
-    O5 = exp_5.create_orchestrator_cluster(alloc, path=test_path,
-                                           db_nodes=db_nodes, dpn=dpn)
+    O5 = exp_5.create_orchestrator(path=test_path,
+                                   db_nodes=db_nodes, dpn=dpn, alloc=alloc)
     exp_5.start(orchestrator=O5)
     time.sleep(5)
     step_ids_2 = {}
@@ -189,7 +189,7 @@ def test_multiple_entity_runs():
 # --- existing db files -----------------------------------------------
 
 exp_3 = Experiment("test_3")
-O3 = exp_3.create_orchestrator_cluster(alloc, path=test_path, db_nodes=3, dpn=3)
+O3 = exp_3.create_orchestrator(path=test_path, db_nodes=3, dpn=3, alloc=alloc)
 
 @controller_test
 def test_db_file_removal():

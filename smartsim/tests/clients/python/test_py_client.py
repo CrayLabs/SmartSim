@@ -33,7 +33,7 @@ def test_ndarray_put_get_wo_prefixing():
                                            run_settings=run_settings)
     client_model.attach_generator_files(
         to_copy=[test_dir+'/ndarray_put_get/ndarray_put_get.py'])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -63,7 +63,7 @@ def test_ndarray_put_get_w_prefixing():
         to_copy=[test_dir+'/ndarray_put_get/ndarray_put_get.py'])
     client_model.register_incoming_entity(client_model, 'python')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -92,7 +92,7 @@ def test_ndarray_exact_key_put_get_wo_prefixing():
     client_model.attach_generator_files(
         to_copy=[test_dir+"/ndarray_exact_key_put_get/"\
                           "ndarray_exact_key_put_get.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -124,7 +124,36 @@ def test_ndarray_exact_key_put_get_w_prefixing():
                           "ndarray_exact_key_put_get.py"])
     client_model.register_incoming_entity(client_model, 'python')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
+    experiment.generate()
+    experiment.start()
+    experiment.poll(interval=5)
+    assert(experiment.get_status(client_model) == "COMPLETED")
+    experiment.stop(orchestrator=orc)
+    experiment.poll(poll_db=True)
+
+@python_client_test()
+def test_scalar_put_get_wo_prefixing_no_cluster():
+    """ This function tests putting and getting scalars to and
+        from the SmartSim database.  Success is based on equality
+        of the sent and retreived scalars. All supported scalar
+        data types are tested herein.  Key prefixing is not used
+        in this test.  A single database node is used in this
+        test.
+    """
+    experiment = Experiment("client_test")
+    experiment.add_allocation(alloc)
+    run_settings = {"nodes":1,
+                    "ppn": 1,
+                    "executable":"python",
+                    "exe_args": "scalar_put_get_no_cluster.py ",
+                    "alloc": alloc}
+    client_model = experiment.create_model("client_test",
+                                           run_settings=run_settings)
+    client_model.attach_generator_files(
+        to_copy=[test_dir+"/scalar_put_get_no_cluster/"\
+                          "scalar_put_get_no_cluster.py"])
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -152,7 +181,7 @@ def test_scalar_put_get_wo_prefixing():
     client_model.attach_generator_files(
         to_copy=[test_dir+"/scalar_put_get/"\
                           "scalar_put_get.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -183,7 +212,7 @@ def test_scalar_put_get_w_prefixing():
                           "scalar_put_get.py"])
     client_model.register_incoming_entity(client_model, 'python')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -211,7 +240,7 @@ def test_scalar_exact_key_put_get_wo_prefixing():
     client_model.attach_generator_files(
         to_copy=[test_dir+"/scalar_exact_key_put_get/"\
                           "scalar_exact_key_put_get.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -242,7 +271,7 @@ def test_scalar_exact_key_put_get_w_prefixing():
                           "scalar_exact_key_put_get.py"])
     client_model.register_incoming_entity(client_model, 'python')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -279,7 +308,7 @@ def test_poll_check_key_wo_prefixing():
                                          run_settings=recv_client_settings)
     client_node.attach_generator_files(
         to_copy=[test_dir+"/scalar_poll_and_check/receiver.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -318,7 +347,7 @@ def test_poll_check_key_w_prefixing():
                                          run_settings=recv_client_settings)
     client_node.attach_generator_files(
         to_copy=[test_dir+"/scalar_poll_and_check/receiver.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     client_node.register_incoming_entity(client_model, 'python')
     client_node.enable_key_prefixing()
     client_model.enable_key_prefixing()
@@ -359,7 +388,7 @@ def test_poll_check_exact_key_wo_prefixing():
                                          run_settings=recv_client_settings)
     client_node.attach_generator_files(
         to_copy=[test_dir+"/scalar_poll_and_check_exact_key/receiver.py"])
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -401,7 +430,7 @@ def test_poll_check_exact_key_w_prefixing():
     client_node.register_incoming_entity(client_model, 'python')
     client_node.enable_key_prefixing()
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc)
+    orc = experiment.create_orchestrator(db_nodes=3, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)

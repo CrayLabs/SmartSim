@@ -19,7 +19,10 @@ class SmartSimClient
 {
 public:
   //! SmartSim client constructor
-  SmartSimClient(bool fortran_array = false);
+  SmartSimClient(
+      bool cluster /*!< Flag to indicate if a database cluster is being used*/,
+      bool fortran_array = false /*!< Flag to indicate if fortran arrays are being used*/
+  );
   //! SmartSim client destructor
   ~SmartSimClient();
 
@@ -481,7 +484,8 @@ protected:
   const char* query_get_prefix();
 
 private:
-  sw::redis::RedisCluster redis_cluster;
+  sw::redis::RedisCluster* redis_cluster;
+  sw::redis::Redis* redis;
   SmartSimProtobuf::ScalarDouble protob_scalar_double;
   SmartSimProtobuf::ScalarFloat protob_scalar_float;
   SmartSimProtobuf::ScalarSInt64 protob_scalar_int64;
@@ -512,11 +516,11 @@ private:
     bool _poll_key_and_check_scalar(const char* key, T value, int poll_frequency_ms, int num_tries, bool add_prefix=true);
 
 };
-extern "C" void* initialize_c_client( );
-extern "C" void* initialize_fortran_client( );
+extern "C" void* initialize_c_client( bool cluster );
+extern "C" void* initialize_fortran_client( bool cluster );
 #else
-void* initialize_c_client( );
-void* initialize_fortran_client( );
+void* initialize_c_client( int cluster );
+void* initialize_fortran_client( int cluster );
 #endif
 
 #endif //SMARTSIM_CPP_CLIENT_H

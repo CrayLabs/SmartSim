@@ -1,11 +1,18 @@
 #include "client.h"
 
-SmartSimClient::SmartSimClient(bool fortran_array) :
-    redis_cluster(_get_ssdb())
+SmartSimClient::SmartSimClient(bool cluster, bool fortran_array)
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   this->_set_prefixes_from_env();
   this->_fortran_array = fortran_array;
+  if(cluster) {
+    redis_cluster = new sw::redis::RedisCluster(_get_ssdb());
+    redis = 0;
+  }
+  else {
+    redis_cluster = 0;
+    redis = new sw::redis::Redis(_get_ssdb());
+  }
   return;
 }
 
@@ -350,7 +357,10 @@ uint32_t SmartSimClient::get_scalar_uint32(const char* key)
 // Routines for polling and checking scalars within the database by key
 bool SmartSimClient::exact_key_exists(const char* key)
 {
-  return redis_cluster.exists(key);
+  if(redis_cluster)
+    return redis_cluster->exists(key);
+  else
+    return redis->exists(key);
 }
 
 bool SmartSimClient::poll_key(const char* key, int poll_frequency_ms, int num_tries)
@@ -396,7 +406,10 @@ bool SmartSimClient::poll_exact_key(const char* key, int poll_frequency_ms, int 
 // These routines potentially modify keys by adding a prefix
 bool SmartSimClient::key_exists(const char* key)
 {
-  return redis_cluster.exists(this->_build_get_key(key).c_str());
+  if(redis_cluster)
+    return redis_cluster->exists(this->_build_get_key(key).c_str());
+  else
+    return redis->exists(this->_build_get_key(key).c_str());
 }
 
 bool SmartSimClient::poll_key_and_check_scalar_double(const char* key, double value, int poll_frequency_ms, int num_tries)
@@ -701,7 +714,10 @@ void SmartSimClient::_put_to_keydb(const char* key, std::string& value)
 
   while(n_trials > 0) {
     try {
-      success = redis_cluster.set(key, value);
+      if(redis_cluster)
+        success = redis_cluster->set(key, value);
+      else
+        success = redis->set(key, value);
       n_trials = -1;
     }
     catch (sw::redis::IoError& e) {
@@ -747,7 +763,10 @@ std::string SmartSimClient::_get_from_keydb(const char* key)
 
   while(n_trials > 0) {
     try {
-      value = redis_cluster.get(key);
+      if(redis_cluster)
+        value = redis_cluster->get(key);
+      else
+        value = redis->get(key);
       n_trials = -1;
     }
     catch (sw::redis::IoError& e) {
@@ -810,14 +829,14 @@ void SmartSimClient::_clear_protobuff(google::protobuf::Message* pb_message)
   return;
 }
 
-extern "C" void* initialize_c_client() {
-  SmartSimClient *s = new SmartSimClient(false);
+extern "C" void* initialize_c_client( bool cluster ) {
+  SmartSimClient *s = new SmartSimClient(cluster, false);
   void* c_ptr = (void*)s;
   return c_ptr;
 }
 
-extern "C" void* initialize_fortran_client() {
-  SmartSimClient *s = new SmartSimClient(true);
+extern "C" void* initialize_fortran_client( bool cluster ) {
+  SmartSimClient *s = new SmartSimClient(cluster, true);
   void* c_ptr = (void*)s;
   return c_ptr;
 }

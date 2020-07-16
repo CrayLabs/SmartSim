@@ -2,7 +2,7 @@
 module client_fortran_api
 
 use iso_c_binding, only : c_ptr, c_loc, c_char, c_double, c_int, c_float, c_null_char, c_f_pointer
-use iso_c_binding, only : c_int32_t, c_int64_t
+use iso_c_binding, only : c_int32_t, c_int64_t, c_bool
 
 implicit none; private
 
@@ -16,8 +16,9 @@ integer, parameter :: MAX_RANK = 31
 
 !---C-interfaces for C++ class---!
 interface
-  function init_ssc_client_c() bind(c, name='initialize_fortran_client') result( ssc_ptr )
-    use iso_c_binding, only : c_ptr
+  function init_ssc_client_c( cluster ) bind(c, name='initialize_fortran_client') result( ssc_ptr )
+    use iso_c_binding, only : c_ptr, c_bool
+    logical(kind=c_bool), value :: cluster !< True if database is a distributed across multiple nodes
     type(c_ptr) :: ssc_ptr  !< Pointer to instanced SmartSim Client
   end function init_ssc_client_c
 end interface
@@ -26,12 +27,14 @@ end interface
 #include "fortran_interface.inc"
 
 contains
-
-!> Return the pointer to an initialized SmartSim client
-function init_ssc_client() result(ssc_obj)
-  type(c_ptr) :: ssc_obj
-  ssc_obj = init_ssc_client_c()
-end function init_ssc_client
+ !> Return the pointer to an initialized SmartSim client
+ function init_ssc_client( cluster ) result(ssc_obj)
+   logical :: cluster !< True if database is a distributed across multiple nodes
+   type(c_ptr) :: ssc_obj
+   logical(kind=c_bool) :: cluster_as_bool
+   cluster_as_bool = cluster
+   ssc_obj = init_ssc_client_c( cluster_as_bool )
+ end function init_ssc_client
 
 !---Local utility functions---!
 !> Make a c-style string that terminates the end of the string with the c null character

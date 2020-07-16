@@ -10,7 +10,7 @@ void put_get_scalar(void (SmartSimClient::*sendFunction)(const char*, T_send),
 		    std::string key_suffix="")
 {
 
-  SmartSimClient client(false);
+  SmartSimClient client(true);
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

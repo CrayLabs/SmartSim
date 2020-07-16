@@ -9,7 +9,7 @@ void put_get_1D_array(
 		  void (*fill_array)(T_send*, int), int dim1, std::string key_suffix="")
 {
 
-  SmartSimClient client(false);
+  SmartSimClient client(true);
 
   T_send* array = new T_send[dim1];
   T_recv* result = new T_recv[dim1];

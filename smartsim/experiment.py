@@ -205,7 +205,6 @@ class Experiment:
             logger.error(e)
             raise
 
-
     def generate(self, tag=None, strategy="all_perm", overwrite=False, **kwargs):
         """Generate the file structure for a SmartSim experiment. This
            includes the writing and configuring of input files for a
@@ -389,53 +388,48 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_orchestrator_cluster(self, alloc, path=None, port=6379, db_nodes=3,
-                                     dpn=1, overwrite=False, **kwargs):
-        """Create an in-memory database that can be used for the transfer of
-           data between launched entities. For increasing throughput,
-           the number of databases per node can be increased such that mulitple
-           database instances are launched on a single node and share the
-           memory of that node.
+    def create_orchestrator(self, path=None, port=6379, overwrite=False,
+                            db_nodes=1, **kwargs):
+        """Create an in-memory database to run with an experiment.
 
-           Orchestrator clusters are meant to be launched accross multiple
-           nodes with the minimum number of nodes being 3. Clusters of size
-           2 are not supported and single instances will be launched in
-           standalone mode. This function requires that an allocation id
-           is passed for the orchestrator to run on. If you want to run
-           an orchestrator locally, look at Experiment.create_orchestrator().
+        Launched entities can communicate with the orchestrator through use
+        of one of the Python, C, C++ or Fortran clients.
 
-           Additional options for where and how to launch the orchestrator
-           can be specified with the through the inclusion of extra kwargs
-           (e.g. partition="main")
+        With the default settings, this function can be used to create
+        a local orchestrator that will run in parallel with other
+        entities running serially in an experiment. If launching the
+        orchestrator on a machine with a workload manager, include
+        "alloc" as a kwarg to launch the orchestrator on a specified
+        compute resource allocation.  For creating
+        clustered orchestrators accross multiple compute nodes,
+        set db_nodes to 3 or larger.  Additionally, the kwarg "dpn"
+        can be used to launch multiple databases per compute node.
 
-
-        :param alloc: id of the allocation for the orchestrator to run on
-        :type alloc: str
         :param path: desired path for orchestrator output/error, defaults to cwd
         :type path: str, optional
         :param port: port orchestrator should run on, defaults to 6379
         :type port: int, optional
+        :param overwrite: flag to indicate that existing orcestrator files
+        in the experiment directory should be overwritten
+        :type overwrite: bool, optional
         :param db_nodes: number of database nodes in the cluster, defaults to 3
         :type db_nodes: int, optional
-        :param dpn: number of databases per node, defaults to 1
-        :type dpn: int, optional
-        :raises SmartSimError: if an orchestrator already exists within the
-                               experiment
-        :raises SmartSimError: If experiment was initialized with local launcher
-        :return: Orchestrator instance
+        :raises SmartSimError: if an orchestrator already exists
+        :return: Orchestrator instance created
         :rtype: Orchestrator
         """
         try:
+            if isinstance(self._control._launcher, LocalLauncher) and db_nodes>1:
+                error = "Clustered orchestrators are not supported when using the local launcher\n"
+                error += "Use Experiment.create_orchestrator() for launching an orchestrator"
+                error += "with the local launcher"
+                raise SmartSimError(error)
+
             if self.orc and not overwrite:
                 error = "Only one orchestrator can exist within a experiment.\n"
                 error += "Call with overwrite=True to replace the current orchestrator"
                 raise EntityExistsError(error)
 
-            if isinstance(self._control._launcher, LocalLauncher):
-                error = "Clustered orchestrators are not supported when using the local launcher\n"
-                error += "Use Experiment.create_orchestrator() for launching an orchestrator"
-                error += "with the local launcher"
-                raise SmartSimError(error)
             orcpath = getcwd()
             if path:
                 orcpath = path
@@ -443,45 +437,6 @@ class Experiment:
             self.orc = Orchestrator(orcpath,
                                     port=port,
                                     db_nodes=db_nodes,
-                                    dpn=dpn,
-                                    alloc=alloc,
-                                    **kwargs)
-            return self.orc
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    def create_orchestrator(self, path=None, port=6379, overwrite=False, **kwargs):
-        """Create an in-memory database to run with an experiment. Launched
-           entities can communicate with the orchestrator through use
-           of one of the Python, C, C++ or Fortran clients.
-
-           With the default settings, this function can be used to create
-           a local orchestrator that will run in parallel with other
-           entities running serially in an experiment. For creating
-           clustered orchestrators accross multiple compute nodes
-           look at Experiment.create_orchestrator_cluster()
-
-        :param path: desired path for orchestrator output/error, defaults to cwd
-        :type path: str, optional
-        :param port: port orchestrator should run on, defaults to 6379
-        :type port: int, optional
-        :raises SmartSimError: if an orchestrator already exists
-        :return: Orchestrator instance created
-        :rtype: Orchestrator
-        """
-        try:
-            if self.orc and not overwrite:
-                error = "Only one orchestrator can exist within a experiment.\n"
-                error += "Call with overwrite=True to replace the current orchestrator"
-                raise EntityExistsError(error)
-
-            orcpath = getcwd()
-            if path:
-                orcpath = path
-
-            self.orc = Orchestrator(orcpath,
-                                    port=port,
                                     **kwargs)
             return self.orc
         except SmartSimError as e:

@@ -95,6 +95,26 @@ target_link_libraries(client_test_poll_check_scalar_receive
 	${CLIENT_LIBRARIES}
 )
 
+add_executable(client_test_poll_check_scalar_send_cluster
+	client_test_poll_check_scalar_send_cluster.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_poll_check_scalar_send_cluster
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
+add_executable(client_test_poll_check_scalar_receive_cluster
+	client_test_poll_check_scalar_receive_cluster.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_poll_check_scalar_receive_cluster
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
 add_executable(client_test_array_put_get_3D_exact_key
 	client_test_array_put_get_3D_exact_key.cpp
 	${CLIENT_SRC}
@@ -125,6 +145,16 @@ target_link_libraries(client_test_env_parsing
 	${CLIENT_LIBRARIES}
 )
 
+add_executable(client_test_scalar_put_get_cluster
+	client_test_scalar_put_get_cluster.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_scalar_put_get_cluster
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
 add_executable(client_test_scalar_put_get
 	client_test_scalar_put_get.cpp
 	${CLIENT_SRC}
@@ -144,6 +174,17 @@ target_link_libraries(client_test_array_put_get_1D
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
+
+add_executable(client_test_array_put_get_1D_cluster
+	client_test_array_put_get_1D_cluster.cpp
+	${CLIENT_SRC}
+)
+
+target_link_libraries(client_test_array_put_get_1D_cluster
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)
+
 
 add_executable(client_test_array_put_get_2D
 	client_test_array_put_get_2D.cpp

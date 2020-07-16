@@ -9,7 +9,7 @@ void put_get_3D_array(void (SmartSimClient::*sendFunction)(const char*, void*, i
 		      int dim1, int dim2, int dim3, std::string key_suffix="")
 {
 
-  SmartSimClient client;
+  SmartSimClient client(false);
 
   T_send*** array = allocate_3D_array<T_send>(dim1, dim2, dim3);
 

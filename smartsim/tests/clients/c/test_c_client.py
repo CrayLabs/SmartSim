@@ -28,7 +28,7 @@ def test_put_get_scalar(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -52,7 +52,7 @@ def test_put_get_array_1d(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -76,7 +76,7 @@ def test_put_get_array_2d(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -100,7 +100,7 @@ def test_poll_key_and_check(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -125,7 +125,7 @@ def test_exact_key_put_get_scalar(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -149,7 +149,7 @@ def test_exact_key_put_get_array_1d(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -173,7 +173,7 @@ def test_exact_key_put_get_array_2d(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -197,7 +197,7 @@ def test_exact_key_poll_key_and_check(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -224,7 +224,7 @@ def test_exact_key_put_get_scalar_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'c')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -250,7 +250,7 @@ def test_exact_key_put_get_array_1d_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'c')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -276,7 +276,7 @@ def test_exact_key_put_get_array_2d_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'c')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -302,7 +302,7 @@ def test_exact_key_poll_key_and_check_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'c')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)

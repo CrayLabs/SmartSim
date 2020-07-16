@@ -27,7 +27,7 @@ program exact_key_array_2d_unit_test
   call MPI_comm_rank( MPI_COMM_WORLD, pe_id, err_code )
   write(key_prefix, "(A,I6.6)") "pe_",pe_id
   num_failed = 0
-  smartsim_client = init_ssc_client()
+  smartsim_client = init_ssc_client( .false. )
 
   call RANDOM_NUMBER(random_array_2d_for_real_4)
   true_array_2d_real_4 = random_array_2d_for_real_4*1000

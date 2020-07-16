@@ -8,7 +8,7 @@ void check_scalar(bool (SmartSimClient::*checkFunction)
                         (const char*, T_recv, int, int),
           		    T_recv comp_value, std::string key_suffix="")
 {
-  SmartSimClient client;
+  SmartSimClient client (false);
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

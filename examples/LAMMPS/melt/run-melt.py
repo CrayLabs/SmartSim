@@ -58,7 +58,8 @@ n1.attach_generator_files(to_copy=[f"{os.getcwd()}/smartsim_node.py"])
 
 # Create the SmartSim orchestrator object and database using the default
 # database cluster setting of three database nodes
-orc = experiment.create_orchestrator_cluster(alloc, overwrite=True)
+orc = experiment.create_orchestrator(db_nodes=db_compute_nodes,
+                                     overwrite=True, alloc=alloc)
 
 # Generate the experiment directory structure and copy the files
 # attached to SmartSim entities into that folder structure.

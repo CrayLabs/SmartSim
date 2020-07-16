@@ -81,7 +81,7 @@ def test_invalid_num_orc():
     """test creating an orchestrator with 2 nodes"""
     experiment = Experiment("test")
     with pytest.raises(SmartSimError):
-        experiment.create_orchestrator_cluster(111111, db_nodes=2)
+        experiment.create_orchestrator(db_nodes=2)
 
 # --- Local Launcher Experiment -------------------------------------
 
@@ -90,4 +90,4 @@ def test_bad_cluster_orc():
        but requests a clusted orchestrator"""
     experiment = Experiment("test", launcher="local")
     with pytest.raises(SmartSimError):
-        experiment.create_orchestrator_cluster(111111)
+        experiment.create_orchestrator(db_nodes=3)

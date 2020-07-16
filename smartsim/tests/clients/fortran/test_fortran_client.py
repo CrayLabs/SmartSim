@@ -29,7 +29,7 @@ def test_put_get_one_dimensional_array_ftn(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -53,7 +53,7 @@ def test_put_get_two_dimensional_array_ftn(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -79,7 +79,7 @@ def test_put_get_one_dimensional_array_ftn_w_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     client_model.register_incoming_entity(client_model, 'ftn')
     client_model.enable_key_prefixing()
     experiment.generate()
@@ -105,7 +105,7 @@ def test_put_get_scalar_wo_prefixing_ftn(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -130,7 +130,7 @@ def test_put_get_scalar_ftn_w_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     client_model.register_incoming_entity(client_model, 'ftn')
     client_model.enable_key_prefixing()
     experiment.generate()
@@ -160,7 +160,7 @@ def test_put_get_scalar_exact_key_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.register_incoming_entity(client_model, 'ftn')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -186,7 +186,7 @@ def test_put_get_scalar_exact_key_wo_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -214,7 +214,7 @@ def test_poll_key_and_check_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'fortran')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -242,7 +242,7 @@ def test_poll_exact_key_and_check_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.enable_key_prefixing()
     client_model.register_incoming_entity(client_model,'fortran')
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -268,7 +268,7 @@ def test_poll_key_and_check_wo_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -294,7 +294,7 @@ def test_poll_exact_key_and_check_wo_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1, alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)

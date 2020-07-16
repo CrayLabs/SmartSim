@@ -27,7 +27,7 @@ program poll_key_and_check_scalar_unit_test
   call MPI_comm_rank( MPI_COMM_WORLD, pe_id, err_code )
   write(key_prefix, "(A,I6.6)") "pe_",pe_id
   num_failed = 0
-  smartsim_client = init_ssc_client()
+  smartsim_client = init_ssc_client( .false. )
 
   true_real_4 = 3.125
   false_real_4 = 4.125

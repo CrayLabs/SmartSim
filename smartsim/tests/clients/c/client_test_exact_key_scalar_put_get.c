@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  void *smartsim_client = initialize_c_client();
+  void *smartsim_client = initialize_c_client( 0 );
 
   char scalar_int32_key[] = "scalar_int32";
   int32_t true_scalar_int32 = safe_rand();

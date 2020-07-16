@@ -13,6 +13,33 @@ alloc_experiment = Experiment("alloc_retrieval")
 alloc = alloc_experiment.get_allocation(nodes=5, ppn=2)
 
 @compiled_client_test(test_dir=test_dir,
+                 target_names=["client_test_array_put_get_1D_cluster"])
+def test_put_get_one_dimensional_array_cpp_cluster(*args, **kwargs):
+    """ This function tests putting and getting a one dimensional
+        array to and from the SmartSim database.  Success is
+        based on equality of the sent and retreived arrays.
+        All supported array data types are tested herein.
+        A db cluster is used in this test.
+    """
+
+    experiment = Experiment("client_test")
+    experiment.add_allocation(alloc)
+    run_settings = {"nodes":1,
+                    "ppn": 2,
+                    "executable":kwargs['binary_names'][0],
+                    "exe_args": "10000",
+                    "alloc": alloc}
+    client_model = experiment.create_model("client_test",
+                                            run_settings=run_settings)
+    orc = experiment.create_orchestrator(db_nodes=3,alloc=alloc)
+    experiment.generate()
+    experiment.start()
+    experiment.poll(interval=5)
+    assert(experiment.get_status(client_model) == "COMPLETED")
+    experiment.stop(orchestrator=orc)
+    experiment.poll(interval=1, poll_db=True)
+
+@compiled_client_test(test_dir=test_dir,
                  target_names=["client_test_array_put_get_1D"])
 def test_put_get_one_dimensional_array_cpp(*args, **kwargs):
     """ This function tests putting and getting a one dimensional
@@ -30,7 +57,7 @@ def test_put_get_one_dimensional_array_cpp(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -55,7 +82,7 @@ def test_put_get_two_dimensional_array_cpp(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -80,7 +107,7 @@ def test_put_get_three_dimensional_array_cpp(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -107,9 +134,34 @@ def test_put_get_one_dimensional_array_cpp_w_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     client_model.register_incoming_entity(client_model, 'cpp')
     client_model.enable_key_prefixing()
+    experiment.generate()
+    experiment.start()
+    experiment.poll(interval=5)
+    assert(experiment.get_status(client_model) == "COMPLETED")
+    experiment.stop(orchestrator=orc)
+    experiment.poll(interval=1, poll_db=True)
+
+@compiled_client_test(test_dir=test_dir,
+                 target_names=["client_test_scalar_put_get_cluster"])
+def test_put_get_scalar_cpp(*args, **kwargs):
+    """ This function tests putting and getting a scalar
+        value to and from the SmartSim database.  Success is
+        based on equality of the sent and retreived scalars.
+        All supported scalar data types are tested herein.
+    """
+    experiment = Experiment("client_test")
+    experiment.add_allocation(alloc)
+    run_settings = {"nodes":1,
+                    "ppn": 2,
+                    "executable":kwargs['binary_names'][0],
+                    "exe_args": "",
+                    "alloc": alloc}
+    client_model = experiment.create_model("client_test",
+                                            run_settings=run_settings)
+    orc = experiment.create_orchestrator(db_nodes=3,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -134,7 +186,7 @@ def test_put_get_scalar_cpp(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -160,7 +212,7 @@ def test_put_get_scalar_cpp_w_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     client_model.register_incoming_entity(client_model, 'cpp')
     client_model.enable_key_prefixing()
     experiment.generate()
@@ -188,7 +240,7 @@ def test_env_parsing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.register_incoming_entity(client_model, 'cpp')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -218,7 +270,7 @@ def test_put_get_scalar_exact_key_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.register_incoming_entity(client_model, 'cpp')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -245,7 +297,7 @@ def test_put_get_scalar_exact_key_wo_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -275,7 +327,7 @@ def test_put_get_array_exact_key_w_prefixing(*args, **kwargs):
                                             run_settings=run_settings)
     client_model.register_incoming_entity(client_model, 'cpp')
     client_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -302,11 +354,43 @@ def test_put_get_array_exact_key_wo_prefixing(*args, **kwargs):
                     "alloc": alloc}
     client_model = experiment.create_model("client_test",
                                             run_settings=run_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
     assert(experiment.get_status(client_model) == "COMPLETED")
+    experiment.stop(orchestrator=orc)
+    experiment.poll(interval=1, poll_db=True)
+
+@compiled_client_test(test_dir=test_dir,
+                 target_names=["client_test_poll_check_scalar_send_cluster",
+                               "client_test_poll_check_scalar_receive_cluster"])
+def test_poll_check_scalar_cluster(*args, **kwargs):
+    """ This function tests polling and checking for scalar values.
+        Success is based on the receiving client being able to find
+        the key and exact scalar value in the database.  Key prefixing
+        is disabled in this text.
+    """
+    experiment = Experiment("client_test")
+    experiment.add_allocation(alloc)
+    send_client_settings = {"nodes":1,
+                            "ppn": 2,
+                            "executable":kwargs['binary_names'][0],
+                            "alloc": alloc}
+    recv_client_settings = {"nodes":1,
+                            "ppn": 2,
+                            "executable":kwargs['binary_names'][1],
+                            "alloc": alloc}
+    client_send_model = experiment.create_model("client_send",
+        run_settings=send_client_settings)
+    client_recv_model = experiment.create_model("client_recv",
+        run_settings=recv_client_settings)
+    orc = experiment.create_orchestrator(db_nodes=3,alloc=alloc)
+    experiment.generate()
+    experiment.start()
+    experiment.poll(interval=5)
+    assert(experiment.get_status(client_send_model) == "COMPLETED")
+    assert(experiment.get_status(client_recv_model) == "COMPLETED")
     experiment.stop(orchestrator=orc)
     experiment.poll(interval=1, poll_db=True)
 
@@ -333,7 +417,7 @@ def test_poll_check_scalar(*args, **kwargs):
         run_settings=send_client_settings)
     client_recv_model = experiment.create_model("client_recv",
         run_settings=recv_client_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -365,7 +449,7 @@ def test_poll_check_exact_key_scalar_wo_prefixing(*args, **kwargs):
         run_settings=send_client_settings)
     client_recv_model = experiment.create_model("client_recv",
         run_settings=recv_client_settings)
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)
@@ -400,7 +484,7 @@ def test_poll_check_exact_key_scalar_w_prefixing(*args, **kwargs):
     client_recv_model.register_incoming_entity(client_send_model, 'cpp')
     client_send_model.enable_key_prefixing()
     client_recv_model.enable_key_prefixing()
-    orc = experiment.create_orchestrator_cluster(alloc, db_nodes=3)
+    orc = experiment.create_orchestrator(db_nodes=1,alloc=alloc)
     experiment.generate()
     experiment.start()
     experiment.poll(interval=5)

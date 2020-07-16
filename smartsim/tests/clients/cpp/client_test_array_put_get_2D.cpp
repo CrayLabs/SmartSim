@@ -9,7 +9,7 @@ void put_get_2D_array(
 		    void (*fill_array)(T_send**, int, int),
 		    int dim1, int dim2, std::string key_suffix="")
 {
-  SmartSimClient client;
+  SmartSimClient client(false);
 
   T_send** array = allocate_2D_array<T_send>(dim1, dim2);
 

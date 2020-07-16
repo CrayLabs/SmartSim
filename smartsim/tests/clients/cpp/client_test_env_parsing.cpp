@@ -4,6 +4,7 @@
 
 class ClientTester : public SmartSimClient{
 public:
+  ClientTester(bool cluster):SmartSimClient(cluster){}
   std::string get_key_prefix(){
     return this->_get_key_prefix;
   }
@@ -14,7 +15,7 @@ public:
 
 void check_put_prefix(std::string exp_val) {
 
-  ClientTester client;
+  ClientTester client(false);
   std::string put_prefix = client.put_key_prefix();
   std::cout<<"put prefix = "<<put_prefix<<std::endl;
   if(put_prefix.compare(exp_val)!=0) {
@@ -30,7 +31,7 @@ void check_put_prefix(std::string exp_val) {
 
 void check_get_prefix(std::string exp_val) {
 
-  ClientTester client;
+  ClientTester client(false);
   std::cout<<"raw SSKEYIN = "<<std::getenv("SSKEYIN")<<std::endl;
   std::string get_prefix = client.get_key_prefix();
   std::cout<<"get prefix = "<<get_prefix<<std::endl;
