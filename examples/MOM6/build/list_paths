@@ -1,0 +1,198 @@
+#!/bin/sh
+#
+#-----------------------------------------------------------------------
+#              list_paths: CVS administrative script
+#
+# AUTHOR: V. Balaji (vb@gfdl.gov)
+#         SGI/GFDL Princeton University
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# For the full text of the GNU General Public License,
+# write to: Free Software Foundation, Inc.,
+#           675 Mass Ave, Cambridge, MA 02139, USA.
+#-----------------------------------------------------------------------
+
+usage () {
+   echo "Usage: list_paths [OPTIONS] <paths>"
+}
+
+help () {
+    usage
+    echo ""
+    echo "Options:"
+    echo "     -h"
+    echo "          Display usage information."
+    echo ""
+    echo "     -o <out_file>"
+    echo "          Write report to file <out_file>.  Default file is \"path_names\"."
+    echo ""
+    echo "     -d"
+    echo "          Find documentation files in <paths> and create a HTML file with links."
+    echo "          Documentation file name is <out_file>.html."
+    echo ""
+    echo "     -l"
+    echo "          Follow symlinks.  This option may cause problems if links to files are"
+    echo "          circular."
+    echo ""
+    echo "     -v"
+    echo "          Be verbose in output."
+    echo ""
+    echo "     -V"
+    echo "          Write version information and exit."
+    echo ""
+    echo "     <paths>"
+    echo "          Space separated list of directories or files to search for known source files."
+    echo ""
+}
+
+# Directory of this script
+BIN_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+
+# Version
+VERSION="2.1"
+
+# Default settings, can be changed by options
+outFile=path_names
+verbose=0
+findDocFiles=false
+followSymLinks=""
+noIncludeTestDirs="-type d \( -name test_\* -o -name t \) -prune -o"
+
+while getopts :dhlo:tvV OPT
+do
+    case "$OPT" in
+        d)
+            findDocFiles=true
+            ;;
+        l)
+            followSymLinks="-L"
+            ;;
+        h)
+            help
+            exit 0
+            ;;
+        o)
+            outFile=${OPTARG}
+            ;;
+        t)
+            noIncludeTestDirs=""
+            ;;
+        v)
+            : $((verbose+=1))
+            ;;
+        V)
+            echo "list_paths ${VERSION}"
+            exit 0
+            ;;
+        \?)
+            echo "Unknown option:" $${OPTARG} >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+# Need to pass in at least one path
+if [ $# -lt 1 ]
+then
+    echo "Need to give at least one path to search." >&2
+    usage >&2
+    exit 1
+fi
+
+# Make sure noclobber is OFF
+set +o noclobber
+
+if [ "${verbose}" -gt 0 ]
+then
+    echo "Running $0 in $(pwd), search paths $*" >&2
+fi
+if [ "${verbose}" -gt 1 ]
+then
+    echo "Output file: ${outFile}" >&2
+    echo "Creat Docs file: ${findDocFiles}" >&2
+    echo "followSymLinks: ${followSymLinks}" >&2
+fi
+# If three -v options, then print all commands before executing.
+if [ ${verbose} -gt 2 ]
+then
+    set -o xtrace
+fi
+# Temp file to hold ound files.
+outTmp=$(mktemp ${outFile}.XXXXX) || \
+    (echo "Unable to create output file in $(pwd)." >&2 && exit 1)
+if [ ${verbose} -gt 0 ]
+then
+    echo "Temporary output file ${outTmp}." >&2
+fi
+
+eval "find ${followSymLinks} $* \
+           ${noIncludeTestDirs} \
+           -type f \
+           \( -name \*.c   \
+           -o -name \*.C   \
+           -o -name \*.cc  \
+           -o -name \*.f   \
+           -o -name \*.fh  \
+           -o -name \*.F   \
+           -o -name \*.f90 \
+           -o -name \*.F90 \
+           -o -name \*.h   \
+           -o -name \*.H   \
+           -o -name \*.inc \
+           \) -print" >> ${outTmp}
+
+sed 's:.*/\(.*\):& \1:' ${outTmp} | nl | sort --key 3 -u | sort -n | awk '{print $2}' > ${outFile}
+
+echo "A list of the files you checked out is in the file ${outFile}."
+
+rm -f ${outTmp}
+
+if [ "${findDocFiles}" = "true" ]
+then
+    # Temp file to hold the found files
+    outTmp=$(mktemp ${outFile}.XXXXX) || \
+        (echo "Unable to create output file in $(pwd)." >&2 && exit 1)
+    # Output file for documentation list
+    outDocFile=${outFile}.html
+
+    #touch $doc # create the file if it doesn't exist
+    eval "find ${followSymLinks} $* \
+               ${noIncludeTestDirs} \
+               -type f \
+               \( -name \*.html \
+               -o -name \*.ps   \
+               -o -name \*.txt  \
+               -o -name \*.pdf  \
+               -o -name \*.jpg  \
+               -o -name \*.md   \
+               -o -name readme  \
+               -o -name read_me \
+               -o -name README  \
+               \) -print" > $outTmp
+
+    # Only create the
+    if [ -s ${outTmp} ]
+    then
+        #write path_names.html file
+        echo "<title>Documentation in current working directory</title>"             > $outDocFile
+        echo "<h1>Documentation in current working directory</h1>"                  >> $outDocFile
+        sort -u ${outTmp} | awk '{print "<p><a href=\"" $1 "\">" $1 "</a>"}'        >> $outDocFile
+        echo "<hr /><p><small>This file was automatically generated by list_paths," >> $outDocFile
+        echo "Version $VERSION</small></p>"                                         >> $outDocFile
+
+        echo "A list of documentation files are in the file ${outDocFile}."
+    fi
+
+    rm -f ${outTmp}
+fi

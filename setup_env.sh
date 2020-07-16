@@ -75,6 +75,7 @@ fi
 if ls ./hiredis/install/lib/libhiredis* 1>/dev/null 2>&1; then
     echo "Hiredis has already been downloaded and installed"
     export HIREDIS_INSTALL_PATH="$(pwd)/hiredis/install"
+    export LD_LIBRARY_PATH="$HIREDIS_INSTALL_PATH/lib":$LD_LIBRARY_PATH
 else
     if [[ ! -d "./hiredis" ]]; then
 	git clone https://github.com/redis/hiredis.git hiredis --branch master --depth=1
@@ -85,6 +86,7 @@ else
     make PREFIX="$(pwd)/install" install
     cd ../
     export HIREDIS_INSTALL_PATH="$(pwd)/hiredis/install"
+    export LD_LIBRARY_PATH="$HIREDIS_INSTALL_PATH/lib":$LD_LIBRARY_PATH
     echo "Finished installing Hiredis"
 fi
 
@@ -92,6 +94,7 @@ fi
 if ls ./redis-plus-plus/install/lib/libredis++* 1>/dev/null 2>&1; then
     echo "Redis-plus-plus has already been downloaded and installed"
     export REDISPP_INSTALL_PATH="$(pwd)/redis-plus-plus/install"
+    export LD_LIBRARY_PATH="$REDISPP_INSTALL_PATH/lib":$LD_LIBRARY_PATH
 else
     if [[ ! -d "./redis-plus-plus" ]]; then
         git clone https://github.com/sewenew/redis-plus-plus.git redis-plus-plus --branch master --depth=1
@@ -106,6 +109,7 @@ else
     make install
     cd ../../
     export REDISPP_INSTALL_PATH="$(pwd)/redis-plus-plus/install"
+    export LD_LIBRARY_PATH="$REDISPP_INSTALL_PATH/lib":$LD_LIBRARY_PATH
     echo "Finished installing Redis-plus-plus"
 fi
 

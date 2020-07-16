@@ -14,11 +14,11 @@
 /
 
 &ocean_solo_nml
-    months = ;months;
+    months = 24;
     days = 0
     date_init = 1, 1, 1, 0, 0, 0
     hours = 0
     minutes = 0
     seconds = 0
-    calendar = 'noleap'
+    calendar = 'thirty_day_months'
 /

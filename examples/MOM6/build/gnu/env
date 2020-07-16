@@ -1,0 +1,10 @@
+module unload PrgEnv-pgi
+module unload PrgEnv-pathscale
+module unload PrgEnv-intel
+module unload PrgEnv-gnu
+module unload PrgEnv-cray
+
+module load PrgEnv-gnu
+module unload netcdf
+module load cray-netcdf
+module load cray-hdf5
