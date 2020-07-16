@@ -370,7 +370,7 @@ C++ client utiliation in LAMMPS are necessary
 in the SmartSim experiment script.
 
 
-.. code-block:: bash
+.. code-block:: python
 
   from smartsim import Experiment
   import os
