@@ -23,17 +23,17 @@ of the simulation provided by the user. Each evaluation, a new set
 of parameters are given to the evaluation script and a figure of
 merit is retrieved from the evaluation script and stored with CrayAI.
 
-In this example, we will optimize parameters for the Modular Ocean
-Model 6 (MOM6). The two parameters we will optimize are KH (eddy viscosity)
-and KHTH (thickness diffusion). To evaluate how each set of values for
-KH and KHTH perform in the model, we choose to calculate Jet Penetration
-for each model evaluated and compare it to the Jet Penetration of a
-high resolution (5km) version of the same model. The difference between
-the jet penetration values squared represents the figure of merit for
-each model provided to CrayAI.
+In this example, we will optimize parameters for the Modular Ocean Model 6
+(MOM6). The two parameters we will optimize are ``KH`` (eddy viscosity) and
+``KHTH`` (thickness diffusion). To evaluate how each set of values for ``KH``
+and ``KHTH`` perform in the model, we choose to calculate Jet Penetration for
+each model evaluated and compare it to the Jet Penetration of a high
+resolution (5km) version of the same model. The difference between the jet
+penetration values squared represents the figure of merit for each model
+provided to CrayAI.
 
-Below we will walk through every step and show how a user of SmartSim
-could apply this optimization strategy to whatever model they please.
+Below we walk through every step and show how a user of SmartSim could apply
+this optimization strategy to their own model.
 
 
 Writing the Evaluation Script
@@ -42,9 +42,9 @@ Writing the Evaluation Script
 Tagging Model Input Files
 -------------------------
 
-Assuming the simulation is compiled and installed, the first step in setting up an
-MPO experiment is identifying and tagging the input files that correspond to the
-parameters that you want to optimize.
+Assuming the simulation is compiled and installed, the first step in setting
+up an MPO experiment is identifying and tagging the input files that
+correspond to the parameters that you want to optimize.
 
 Below is an example of an input file from Modular Ocean Model 6 (MOM6) where the
 value of KH has been tagged with the default tag: ``;``
@@ -76,9 +76,10 @@ value of KH has been tagged with the default tag: ``;``
 Configuring the Model Evaluation
 --------------------------------
 
-The value within the tag (currently a placeholder ``KH`` must correspond directly)
-with the value provided as the ``tunable_params`` argument to the ``MPO`` initializer
-and the name of the value provided to the ``crayai.hpo.params`` initializer.
+The value within the tag (currently a placeholder ``KH`` must correspond
+directly) with the value provided as the ``tunable_params`` argument to the
+``MPO`` initializer and the name of the value provided to the
+``crayai.hpo.params`` initializer.
 
 In the evaluation script, we provide the parameter names with defaults:
 
@@ -88,7 +89,7 @@ In the evaluation script, we provide the parameter names with defaults:
                      "KHTH": 1000}
 
 Any other parameters to be written into the input files of each simulation
-can be provided as ``model_params`` to the ``MPO`` class. For intance, in
+can be provided as ``model_params`` to the ``MPO`` class. For instance, in
 this example, we also keep the resolution and length of the simulation as
 controllable parameters from the evaluation script so that they can be
 easily changed. Note that this parameters must also be tagged in the
@@ -115,7 +116,7 @@ architectures, see `the launcher documentation <../../doc/launchers.html>`_.
                     "partition": "iv24"}
 
 After we have configured these parts of the simulation, we are ready to
-initalize the MPO class and the model that will be evaluated.
+initialize the MPO class and the model that will be evaluated.
 
 .. code-block:: python
 
@@ -145,15 +146,14 @@ initalize the MPO class and the model that will be evaluated.
 Input Datasets and Configurations
 ---------------------------------
 
-In some cases, your model may rely on input files that are not to be
-read and written by SmartSim, but do need to be included in the
-directory in which the executable will be run. SmartSim can handle
-three types of these files: files to copy, files to configure, and
-files to symlink. In this case, we will copy over the base configuration
-for the double gyre model of MOM6, and specify that we need to be
-able to configure the files: ``MOM_input`` and ``input.nml``. We
-do this through a method call on the object returned by the ``MPO.init_model``
-method as follows:
+In some cases, your model may rely on input files that are not to be read and
+written by SmartSim, but do need to be included in the directory in which the
+executable will be run. SmartSim can handle three types of these files: files
+to copy, files to configure, and files to be symbolically linked. In this
+examplee, we will copy over the base configuration for the double gyre model of
+MOM6, and specify that we need to be able to configure the files:
+``MOM_input`` and ``input.nml``. We do this through a method call on the
+object returned by the ``MPO.init_model`` method as follows:
 
 .. code-block:: python
 
@@ -193,14 +193,14 @@ Performing the Evaluation
 -------------------------
 
 Once the user has tested and ensured their model can run
-from the evaluation script, the next step is to calcuate the
+from the evaluation script, the next step is to calculate the
 figure of merit for the model that CrayAI will use for optimization.
 
 The MPO class provides a couple of helpful methods to retrieve
 the evaluation parameters provided by CrayAI at each iteration
 and files generated by the simulation for analysis. We utilize
 one of these methods, ``MPO.get_model_file()`` to retrieve two
-files that we need to calcuate the figure of merit, jet penetration,
+files that we need to calculate the figure of merit, jet penetration,
 for each model.
 
 Once the figure of merit has been calculated, we need to print
@@ -241,7 +241,7 @@ Choosing a Strategy
 
 Three scripts are included in this directory to show how
 optimization methods can be interchanged easily. We will
-dicuss them briefly here, but for more information, please
+discuss them briefly here, but for more information, please
 see the CrayAI repository.
 
 The ``Grid`` strategy is useful if you have a specific set of
@@ -254,7 +254,7 @@ the ranges provided by the user. This strategy is usually a useful
 first step for optimization to get an idea of ranges to use for
 something like Grid or Genetic.
 
-The ``Genetic`` strategy intializes populations of candidate models
+The ``Genetic`` strategy initializes populations of candidate models
 and evolves those populations through multiple iterations of
 evaluation. This strategy often produces the best results for
 many use cases.
@@ -264,9 +264,9 @@ Initializing the Parameter Space
 --------------------------------
 
 
-In the CrayAI driver script, we provide the parameter names with defaults
-and ranges to optimize over. Note that these must be the exact same names
-as the placeholders in the input files and the values within the ``tunable_params``
+In the CrayAI driver script, we provide the parameter names with defaults and
+ranges to optimize over. Note that these must be the exact same names as the
+placeholders in the input files and the values within the ``tunable_params``
 argument within the evaluation script.
 
 .. code-block:: python
@@ -285,8 +285,8 @@ within CrayAI. This includes the number of parallel executions of
 candidate models.
 
 Since SmartSim is actually launching the model, we tell CrayAI to
-launch the evaluation script "locally", but we do specify that we
-would like 20 candidate evaluations to be run in parallel as follows:
+launch the evaluation script "locally", but we do specify that the
+20 candidate evaluations should be run in parallel as follows:
 
 .. code-block:: python
 
@@ -407,7 +407,7 @@ The full evaluation script
                     "executable":"MOM6",
                     "partition": "iv24"}
 
-    # intialize the MPO instance and name the data directory "MOM6-mpo"
+    # initialize the MPO instance and name the data directory "MOM6-mpo"
     mpo = MPO(tunable_params, data_dir="MOM6-mpo")
 
     # initialize the model we want to evaluate.
@@ -451,17 +451,17 @@ The full evaluation script
 Background on Parameters Optimized in this Example
 ===================================================
 
-KH effectively increases the friction throughout the ocean basin. KH reduces horizontal gradients in velocity
-as energy is transferred more efficiently between fluids moving at two
-different speeds. KH also serves to remove energy from the system by
-acting as a dampening effect on momentum. In the case of the double
-gyre system, a high viscosity stretches the western boundary current
-over a wider distance. This weakens the boundary current’s effect on
-the basin.
+KH effectively increases the friction throughout the ocean basin. KH reduces
+horizontal gradients in velocity as energy is transferred more efficiently
+between fluids moving at two different speeds. KH also serves to remove
+energy from the system by acting as a dampening effect on momentum. In the
+case of the double gyre system, a high viscosity stretches the western
+boundary current over a wider distance. This weakens the boundary current’s
+effect on the basin.
 
-KHTH acts on another type of turbulence in the model that
-arises from baroclinic instability. Turbulence from baroclinic
-instability arises from the vertical changes in density of the
-ocean model. KHTH serves to extract energy from the sloping gradients
-in the vertical and flattens them. The total amount of turbulence
-in the eddy-permitting cases is directly effected by the tunable parameter space.
+KHTH acts on another type of turbulence in the model that arises from
+baroclinic instability. Turbulence from baroclinic instability arises from
+the vertical changes in density of the ocean model. KHTH serves to extract
+energy from the sloping gradients in the vertical and flattens them. The
+total amount of turbulence in the eddy-permitting cases is directly effected
+by the tunable parameter space.

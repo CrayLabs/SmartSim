@@ -8,18 +8,19 @@ developing new experiments or prototyping online analysis. The command server
 enables this development to be done at scale even when scripts or Jupyter
 notebooks are deployed on compute nodes which may not have access to the scheduler.
 
-SmartSim uses ZMQ to send messages from the compute node to head node running a
-command server. All commands that managing allocations or launching the
-experiment originate on the compute node, but are actually executed on this
-login node. The Jupyter instance on the compute node has full access to every
-aspect of the experiment including the orchestrator.
+SmartSim uses ZMQ to send messages from the compute node to a head node
+running the command server. All commands that managing allocations or
+launching the experiment originate on the compute node, but are actually
+executed on this login node. The Jupyter instance on the compute node has
+full access to every aspect of the experiment including the orchestrator.
 
 Starting the Command Server
 ===========================
 
-Starting the command server is very easy. Assuming SmartSim has already been
-setup, navigate to the scripts directory where SmartSim was installed and
-find the ``start_cmd_server.py`` script. The script requires two arguments
+Starting the command server is simple. Ensure that the SmartSim environment
+has already been setup, navigate to the scripts directory where SmartSim was
+installed and find the ``start_cmd_server.py`` script. The script requires
+two arguments
 
  1) The IP address where you want commands to run (usually the head node)
  2) The port you want to open.
@@ -47,8 +48,7 @@ for more information.
 
    # .. continue with experiment code ...
 
-Your experiment should now be connected to the already running command
-server and all system command, such as obtaining an allocation from Slurm,
-will now take place on the server (head node) where the command server
+Your experiment should now be connected to the already running command server
+and all system commands, such as obtaining an allocation from Slurm, will now
+emit from the server (in this case the head node) where the command server
 was started.
-

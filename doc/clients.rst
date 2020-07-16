@@ -28,7 +28,8 @@ clients perform two essential tasks (both of which are opaque to the application
  2. Communication with the database
 
 The API for these clients are designed so that implementation within
-simulation and analysis codes requires minimal instrumentation.
+simulation and analysis codes requires minimal modification to the underlying
+codebase.
 
 
 .. |SmartSim Clients| image:: images/Smartsim_Client_Communication.png
@@ -40,17 +41,17 @@ simulation and analysis codes requires minimal instrumentation.
 
 Supporting Fortran and C
 ========================
-Communication with a Redis or KeyDB database is simple in C++ and Python as
-open source redis clients exist in those languages. SmartSim supports C and Fortran
-clients by wrapping the main C++ interfaces with the appropriate bindings.
-
+Communication with a Redis or KeyDB database is simple in C++ and Python due
+to the existence of open source redis clients exist in those languages. The
+SmartSim C and Fortran clients wrap the methods of C++ client with the
+appropriate bindings.
 
 C client
 --------
-For C, this is relatively simple with the C++ class being instantiated
-as a void pointer and pointer to the appropriate structure-like methods.
-To view the API for the C client, see `C client API documetation <clients/c.html>`_
-
+The C-client only needs to do a minimal amount of manipulations so that the
+functions are compatible. The C++ SmartSim client is instantiated as a void
+pointer and pointer to the appropriate structure-like methods. To view the
+API for the C client, see `C client API documentation <clients/c.html>`_
 
 Fortran Client
 --------------
@@ -64,14 +65,14 @@ Requirements
 Design philosophy
 *****************
 
-The SmartSim Fortran Client is designed to require minimimal modification to
-Fortran codebases in order to communicate with the rest of SmartSim. The
-functionality of the C and C++ clients are contained within a single, Fortran
+The SmartSim Fortran Client is designed to require minimal modification to
+Fortran codebases in order to communicate with the rest of SmartSim. The entire
+functionality of the C and C++ clients are contained within a single Fortran
 2000 compliant module. The public interfaces rely only on primitive Fortran
 data structures (e.g. n-dimensional numeric arrays and character arrays).
 
-The Fortran Client relies on the formalized interoperability between C and
-Fortran without users needing to ever call the underlying C functions. The
+The Fortran Client leverages the formalized interoperability between C and
+Fortran without the need for users to ever call the underlying C functions. The
 conversion of Fortran primitive types to C-compatible types is handled within
 the client. The Fortran Client handles the following operations, all of which
 are opaque to the user:

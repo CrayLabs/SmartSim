@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'SmartSim'
-copyright = '2019, Sam Partee'
-author = 'Sam Partee'
+copyright = '2020, Cray, a Hewlett Packard Enterprise company'
+author = 'HPE AI & Advanced Productivity'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = 'internal_release'
 
 
 # -- General configuration ---------------------------------------------------

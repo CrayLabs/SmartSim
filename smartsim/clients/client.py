@@ -14,7 +14,7 @@ class Client:
     The output of any get command is a numpy object or scalar.
     """
     def __init__(self, cluster=True):
-        """This function initializes a SmartSim Python Client object
+        """Initializes a SmartSim Python Client object
 
         :param cluster: Boolean flag indicating if a single database is
         being used (False) or a cluster of database nodes is being used
@@ -29,7 +29,7 @@ class Client:
         self._setup_connections()
 
     def get_array_nd_float64(self, key, wait=False, wait_interval=1000):
-        """This function gets a numpy array of type float64 from the database.
+        """Get a numpy array of type float64 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -43,7 +43,7 @@ class Client:
         return self._get_data(key, ArrayDouble(), True, wait, wait_interval)
 
     def get_array_nd_int64(self, key, wait=False, wait_interval=1000):
-        """This function gets a numpy array of type int64 from the database.
+        """Get a numpy array of type int64 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -57,7 +57,7 @@ class Client:
         return self._get_data(key, ArraySInt64(), True, wait, wait_interval)
 
     def get_array_nd_int32(self, key, wait=False, wait_interval=1000):
-        """This function gets a numpy array of type int32 from the database.
+        """Get a numpy array of type int32 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -71,7 +71,7 @@ class Client:
         return self._get_data(key, ArraySInt32(), True, wait, wait_interval)
 
     def get_scalar_float64(self, key, wait=False, wait_interval=1000):
-        """This function gets a scalar of type float64 from the database.
+        """Get a scalar of type float64 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -85,7 +85,7 @@ class Client:
         return self._get_data(key, ScalarDouble(), True, wait, wait_interval)
 
     def get_scalar_int64(self, key, wait=False, wait_interval=1000):
-        """This function gets a scalar of type int64 from the database.
+        """Get a scalar of type int64 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -99,7 +99,7 @@ class Client:
         return self._get_data(key, ScalarSInt64(), True, wait, wait_interval)
 
     def get_scalar_int32(self, key, wait=False, wait_interval=1000):
-        """This function gets a scalar of type int32 from the database.
+        """Get a scalar of type int32 from the database.
 
         :param key: key to fetch
         :type key: str
@@ -114,7 +114,7 @@ class Client:
 
     def get_exact_key_array_nd_float64(self, key, wait=False,
                                        wait_interval=1000):
-        """This function gets a numpy array of type float64 from the database
+        """Get a numpy array of type float64 from the database
         without key prefixing.
 
         :param key: key to fetch
@@ -130,7 +130,7 @@ class Client:
 
     def get_exact_key_array_nd_int64(self, key, wait=False,
                                      wait_interval=1000):
-        """This function gets a numpy array of type int64 from the database
+        """Get a numpy array of type int64 from the database
         without key prefixing.
 
         :param key: key to fetch
@@ -146,7 +146,7 @@ class Client:
 
     def get_exact_key_array_nd_int32(self, key, wait=False,
                                      wait_interval=1000):
-        """This function gets a numpy array of type int32 from the database
+        """Get a numpy array of type int32 from the database
         without key prefixing.
 
         :param key: key to fetch
@@ -162,7 +162,7 @@ class Client:
 
     def get_exact_key_scalar_float64(self, key, wait=False,
                                      wait_interval=1000):
-        """This function gets a scalar of type float64 from the database
+        """Get a scalar of type float64 from the database
         without prefixing.
 
         :param key: key to fetch
@@ -178,7 +178,7 @@ class Client:
 
     def get_exact_key_scalar_int64(self, key, wait=False,
                                    wait_interval=1000):
-        """This function gets a scalar of type int64 from the database
+        """Get a scalar of type int64 from the database
         without prefixing.
 
         :param key: key to fetch
@@ -194,7 +194,7 @@ class Client:
 
     def get_exact_key_scalar_int32(self, key, wait=False,
                                    wait_interval=1000):
-        """This function gets a scalar of type int32 from the database
+        """Get a scalar of type int32 from the database
         without key prefixing.
 
         :param key: key to fetch
@@ -209,7 +209,7 @@ class Client:
         return self._get_data(key, ScalarSInt32(), False, wait, wait_interval)
 
     def put_array_nd_float64(self, key, value):
-        """This function puts a numpy array of type float64 into the database.
+        """Put a numpy array of type float64 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -227,7 +227,7 @@ class Client:
         self._put_data(key, value, ArrayDouble(), True)
 
     def put_array_nd_int64(self, key, value):
-        """This function puts a numpy array of type int64 into the database.
+        """Put a numpy array of type int64 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -244,7 +244,7 @@ class Client:
         self._put_data(key, value, ArraySInt64(), True)
 
     def put_array_nd_int32(self, key, value):
-        """This function puts a numpy array of type int32 into the database.
+        """Put a numpy array of type int32 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -262,7 +262,7 @@ class Client:
         self._put_data(key, value, ArraySInt32(), True)
 
     def put_scalar_float64(self, key, value):
-        """This function puts a float64 into the database.
+        """Put a scalar of type float64 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -276,7 +276,7 @@ class Client:
         self._put_data(key, value, ScalarDouble(), True)
 
     def put_scalar_int64(self, key, value):
-        """This function puts an int64 into the database.
+        """Put a scalar of type int64 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -290,7 +290,7 @@ class Client:
         self._put_data(key, value, ScalarSInt64(), True)
 
     def put_scalar_int32(self, key, value):
-        """This function puts an int32 into the database.
+        """Put a scalar of type int32 into the database.
 
         :param key: key of the value being put
         :type key: str
@@ -304,7 +304,7 @@ class Client:
         self._put_data(key, value, ScalarSInt32(), True)
 
     def put_exact_key_array_nd_float64(self, key, value):
-        """This function puts a numpy array of type float64 into the database
+        """Put a numpy array of type float64 into the database
         without prefixing.
 
         :param key: key of the value being put
@@ -323,7 +323,7 @@ class Client:
         self._put_data(key, value, ArrayDouble(), False)
 
     def put_exact_key_array_nd_int64(self, key, value):
-        """This function puts a numpy array of type int64 into the database
+        """Put a numpy array of type int64 into the database
         without prefixing.
 
         :param key: key of the value being put
@@ -341,7 +341,7 @@ class Client:
         self._put_data(key, value, ArraySInt64(), False)
 
     def put_exact_key_array_nd_int32(self, key, value):
-        """This function puts a numpy array of type int32 into the database
+        """Put a numpy array of type int32 into the database
         without prefixing.
 
         :param key: key of the value being put
@@ -360,7 +360,7 @@ class Client:
         self._put_data(key, value, ArraySInt32(), False)
 
     def put_exact_key_scalar_float64(self, key, value):
-        """This function puts a float64 into the database without prefixing.
+        """Put a scalar float64 into the database without prefixing.
 
         :param key: key of the value being put
         :type key: str
@@ -374,7 +374,7 @@ class Client:
         self._put_data(key, value, ScalarDouble(), False)
 
     def put_exact_key_scalar_int64(self, key, value):
-        """This function puts an int64 into the database without prefixing.
+        """Put a scalar of type int64 into the database without prefixing.
 
         :param key: key of the value being put
         :type key: str
@@ -388,7 +388,7 @@ class Client:
         self._put_data(key, value, ScalarSInt64(), False)
 
     def put_exact_key_scalar_int32(self, key, value):
-        """This function puts an int32 into the database without prefixing.
+        """Put a scalar of type int32 into the database without prefixing.
 
         :param key: key of the value being put
         :type key: str
@@ -402,7 +402,7 @@ class Client:
         self._put_data(key, value, ScalarSInt32(), False)
 
     def exact_key_exists(self, key):
-        """This function checks if a key is in the database
+        """Checks if a key is in the database"
 
         :param key: key to check in the database
         :type key: str
@@ -412,8 +412,10 @@ class Client:
         return self.db_connection.exists(key)
 
     def key_exists(self, key):
-        """This function checks if a key is in the database. This method
-        prefixes keys to align with key prefixing in get and put methods.
+        """This function checks if a key is in the database.
+
+        This method prefixes keys to align with key prefixing
+        in get and put methods.
 
         :param key: key to check in the database
         :type key: str
@@ -423,7 +425,7 @@ class Client:
         return self.db_connection.exists(self._build_get_key(key))
 
     def poll_exact_key(self, key, poll_frequency=1000, num_tries=-1):
-        """This function polls for a key without prefixing at a specificed
+        """Poll for a key without prefixing at a specified
         frequency and specified number of times
 
         :param key: key to check for in the database
@@ -446,7 +448,7 @@ class Client:
         return False
 
     def poll_key(self, key, poll_frequency=1000, num_tries=-1):
-        """This function polls for a key with a specificed frequency
+        """Poll for a key with a specified frequency
         and specified number of times
 
         :param key: key to check for in the database
@@ -470,7 +472,7 @@ class Client:
 
     def poll_key_and_check_scalar_float64(self, key, value, poll_frequency=1000,
                                           num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check gainst value
 
         :param key: key to check for in the database
         :type key:
@@ -492,7 +494,8 @@ class Client:
 
     def poll_key_and_check_scalar_int64(self, key, value, poll_frequency=1000,
                                         num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check
+        against value
 
         :param key: key to check for in the database
         :type key:
@@ -514,7 +517,8 @@ class Client:
 
     def poll_key_and_check_scalar_int32(self, key, value, poll_frequency=1000,
                                         num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check
+        against value
 
         :param key: key to check for in the database
         :type key:
@@ -536,7 +540,8 @@ class Client:
 
     def poll_exact_key_and_check_scalar_float64(self, key, value,
                                            poll_frequency=1000, num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check
+        against value
 
         :param key: key to check for in the database
         :type key:
@@ -558,7 +563,8 @@ class Client:
 
     def poll_exact_key_and_check_scalar_int64(self, key, value,
                                         poll_frequency=1000, num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check
+        against value
 
         :param key: key to check for in the database
         :type key:
@@ -580,7 +586,8 @@ class Client:
 
     def poll_exact_key_and_check_scalar_int32(self, key, value,
                                         poll_frequency=1000, num_tries=-1):
-        """Poll key to check existence and if it is exists check against value
+        """Poll database for existence of a key and if it is exists check
+        against value
 
         :param key: key to check for in the database
         :type key:
@@ -603,7 +610,7 @@ class Client:
     def _poll_key_and_check_scalar(self, key, value,
                                    get_function, exists_function,
                                    poll_frequency=1000, num_tries=-1):
-        """Poll key to check existence and if it is exists check
+        """Poll database for existence of a key and if it is exists check
         against value
 
         :param key: key to check for in the database

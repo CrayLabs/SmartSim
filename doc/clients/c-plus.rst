@@ -41,16 +41,16 @@ _____________________
 The C++ client connection is initialized with the object constructor.
 Client connection settings are managed by SmartSim through
 environment variables, and as a result, no arguments need to be
-passed to the contructor to establish this connection.
+passed to the constructor to establish this connection.
 
 Sending and Receiving Data
 __________________________
 
 Sending and receiving data is accomplished with a single function call,
 respectively. To send data, the C++ client has a set of methods
-beginning with "put_array" and "put_scalar" that are suffixed by
+beginning with ``put_array`` and ``put_scalar`` that are suffixed by
 the data type being sent.  Similarly, to retrieve data, the C++
-client has a set of methods beginning with "get_array" and "get_scalar"
+client has a set of methods beginning with ``get_array`` and ``get_scalar``
 that are suffixed by the data type being received.
 
 Client Queries

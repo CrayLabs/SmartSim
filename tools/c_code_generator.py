@@ -131,7 +131,7 @@ if __name__ == "__main__":
     SmartSim_ptr = c_argument('void*', 'SmartSimClient_p',
         'Pointer to an initialized SmartSim Client')
     key = c_argument('const char*', 'key',
-        'Identifier for this object in th database')
+        'Identifier for this object in the database')
     array_put = c_argument('void*', 'array', 'Array to store in the database')
     array_get = c_argument('void*', 'array', 'Array to get from the database')
     scalar_put = c_argument('{var_type}', 'scalar',
@@ -181,31 +181,31 @@ if __name__ == "__main__":
     put_exact_key_array = c_function(
         'void',
         'put_exact_key_array_{var_type}',
-        'Put an array of type {var_type} into the database',
+        'Put an array of type {var_type} from the database using the exact key specified (no prefixing)',
         [SmartSim_ptr, key, array_put, dimension, ndims],
         'key, array, *dimensions, *ndims')
     get_exact_key_array = c_function(
         'void',
         'get_exact_key_array_{var_type}',
-        'Get an array of type {var_type} from the database',
+        'Get an array of type {var_type} from the database using the exact key specified (no prefixing)',
         [SmartSim_ptr, key, array_get, dimension, ndims],
         'key, array, *dimensions, *ndims')
     put_exact_key_scalar = c_function(
         'void',
         'put_exact_key_scalar_{var_type}',
-        'Put an array of type {var_type} into the database',
+        'Put an array of type {var_type} into the database using the exact key (no prefixing)',
         [SmartSim_ptr, key, scalar_put],
         'key, scalar')
     get_exact_key_scalar = c_function(
         '{var_type}',
         'get_exact_key_scalar_{var_type}',
-        'Get an array of type {var_type} from the database',
+        'Get an array of type {var_type} from the database using the exact key (no prefixing)',
         [SmartSim_ptr, key],
         'key')
     poll_exact_key_and_check_scalar = c_function(
         'int',
         'poll_exact_key_and_check_scalar_{var_type}',
-        'Poll the database for a key and check its value',
+        'Poll the database for an exact key and check its value',
         [SmartSim_ptr, key, scalar_check, poll_frequency, num_tries],
         'key, scalar, poll_frequency_ms, num_tries')
 

@@ -11,7 +11,7 @@ extern "C" {
 //! Put an array of type double into the database
 void put_array_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -20,7 +20,7 @@ void put_array_double_c(
 //! Put an array of type float into the database
 void put_array_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -29,7 +29,7 @@ void put_array_float_c(
 //! Put an array of type int64_t into the database
 void put_array_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -38,7 +38,7 @@ void put_array_int64_c(
 //! Put an array of type int32_t into the database
 void put_array_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -47,7 +47,7 @@ void put_array_int32_c(
 //! Put an array of type uint64_t into the database
 void put_array_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -56,7 +56,7 @@ void put_array_uint64_c(
 //! Put an array of type uint32_t into the database
 void put_array_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -65,7 +65,7 @@ void put_array_uint32_c(
 //! Get an array of type double from the database
 void get_array_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -74,7 +74,7 @@ void get_array_double_c(
 //! Get an array of type float from the database
 void get_array_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -83,7 +83,7 @@ void get_array_float_c(
 //! Get an array of type int64_t from the database
 void get_array_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -92,7 +92,7 @@ void get_array_int64_c(
 //! Get an array of type int32_t from the database
 void get_array_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -101,7 +101,7 @@ void get_array_int32_c(
 //! Get an array of type uint64_t from the database
 void get_array_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -110,7 +110,7 @@ void get_array_uint64_c(
 //! Get an array of type uint32_t from the database
 void get_array_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
@@ -119,85 +119,85 @@ void get_array_uint32_c(
 //! Put a scalar of type double into the database
 void put_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     double scalar       /*!< Scalar value to store in the database */
 );
 
 //! Put a scalar of type float into the database
 void put_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     float scalar       /*!< Scalar value to store in the database */
 );
 
 //! Put a scalar of type int64_t into the database
 void put_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int64_t scalar       /*!< Scalar value to store in the database */
 );
 
 //! Put a scalar of type int32_t into the database
 void put_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int32_t scalar       /*!< Scalar value to store in the database */
 );
 
 //! Put a scalar of type uint64_t into the database
 void put_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint64_t scalar       /*!< Scalar value to store in the database */
 );
 
 //! Put a scalar of type uint32_t into the database
 void put_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint32_t scalar       /*!< Scalar value to store in the database */
 );
 
 //! Get an array of type double from the database
 double get_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Get an array of type float from the database
 float get_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Get an array of type int64_t from the database
 int64_t get_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Get an array of type int32_t from the database
 int32_t get_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Get an array of type uint64_t from the database
 uint64_t get_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Get an array of type uint32_t from the database
 uint32_t get_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     double scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
@@ -206,7 +206,7 @@ int poll_key_and_check_scalar_double_c(
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     float scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
@@ -215,7 +215,7 @@ int poll_key_and_check_scalar_float_c(
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int64_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
@@ -224,7 +224,7 @@ int poll_key_and_check_scalar_int64_c(
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int32_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
@@ -233,7 +233,7 @@ int poll_key_and_check_scalar_int32_c(
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint64_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
@@ -242,247 +242,247 @@ int poll_key_and_check_scalar_uint64_c(
 //! Poll the database for a key and check its value
 int poll_key_and_check_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint32_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Put an array of type double into the database
+//! Put an array of type double from the database using the exact key specified (no prefixing)
 void put_exact_key_array_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type float into the database
+//! Put an array of type float from the database using the exact key specified (no prefixing)
 void put_exact_key_array_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type int64_t into the database
+//! Put an array of type int64_t from the database using the exact key specified (no prefixing)
 void put_exact_key_array_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type int32_t into the database
+//! Put an array of type int32_t from the database using the exact key specified (no prefixing)
 void put_exact_key_array_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type uint64_t into the database
+//! Put an array of type uint64_t from the database using the exact key specified (no prefixing)
 void put_exact_key_array_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type uint32_t into the database
+//! Put an array of type uint32_t from the database using the exact key specified (no prefixing)
 void put_exact_key_array_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to store in the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type double from the database
+//! Get an array of type double from the database using the exact key specified (no prefixing)
 void get_exact_key_array_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type float from the database
+//! Get an array of type float from the database using the exact key specified (no prefixing)
 void get_exact_key_array_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type int64_t from the database
+//! Get an array of type int64_t from the database using the exact key specified (no prefixing)
 void get_exact_key_array_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type int32_t from the database
+//! Get an array of type int32_t from the database using the exact key specified (no prefixing)
 void get_exact_key_array_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type uint64_t from the database
+//! Get an array of type uint64_t from the database using the exact key specified (no prefixing)
 void get_exact_key_array_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Get an array of type uint32_t from the database
+//! Get an array of type uint32_t from the database using the exact key specified (no prefixing)
 void get_exact_key_array_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     void* array             /*!< Array to get from the database */,
     int** dimensions        /*!< Length along each dimension of the array */,
     int* ndims              /*!< Number of dimensions of the array */
 );
 
-//! Put an array of type double into the database
+//! Put an array of type double into the database using the exact key (no prefixing)
 void put_exact_key_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     double scalar       /*!< Scalar value to store in the database */
 );
 
-//! Put an array of type float into the database
+//! Put an array of type float into the database using the exact key (no prefixing)
 void put_exact_key_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     float scalar       /*!< Scalar value to store in the database */
 );
 
-//! Put an array of type int64_t into the database
+//! Put an array of type int64_t into the database using the exact key (no prefixing)
 void put_exact_key_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int64_t scalar       /*!< Scalar value to store in the database */
 );
 
-//! Put an array of type int32_t into the database
+//! Put an array of type int32_t into the database using the exact key (no prefixing)
 void put_exact_key_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int32_t scalar       /*!< Scalar value to store in the database */
 );
 
-//! Put an array of type uint64_t into the database
+//! Put an array of type uint64_t into the database using the exact key (no prefixing)
 void put_exact_key_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint64_t scalar       /*!< Scalar value to store in the database */
 );
 
-//! Put an array of type uint32_t into the database
+//! Put an array of type uint32_t into the database using the exact key (no prefixing)
 void put_exact_key_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint32_t scalar       /*!< Scalar value to store in the database */
 );
 
-//! Get an array of type double from the database
+//! Get an array of type double from the database using the exact key (no prefixing)
 double get_exact_key_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Get an array of type float from the database
+//! Get an array of type float from the database using the exact key (no prefixing)
 float get_exact_key_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Get an array of type int64_t from the database
+//! Get an array of type int64_t from the database using the exact key (no prefixing)
 int64_t get_exact_key_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Get an array of type int32_t from the database
+//! Get an array of type int32_t from the database using the exact key (no prefixing)
 int32_t get_exact_key_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Get an array of type uint64_t from the database
+//! Get an array of type uint64_t from the database using the exact key (no prefixing)
 uint64_t get_exact_key_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Get an array of type uint32_t from the database
+//! Get an array of type uint32_t from the database using the exact key (no prefixing)
 uint32_t get_exact_key_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */
+    const char* key         /*!< Identifier for this object in the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_double_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     double scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_float_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     float scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_int64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int64_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_int32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     int32_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_uint64_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint64_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */
 );
 
-//! Poll the database for a key and check its value
+//! Poll the database for an exact key and check its value
 int poll_exact_key_and_check_scalar_uint32_c(
     void* SmartSimClient_p  /*!< Pointer to an initialized SmartSim Client */,
-    const char* key         /*!< Identifier for this object in th database */,
+    const char* key         /*!< Identifier for this object in the database */,
     uint32_t scalar       /*!< Scalar value against which to check */,
     int poll_frequency_ms   /*!< How often to check the database in milliseconds */,
     int num_tries           /*!< Number of times to check the database */

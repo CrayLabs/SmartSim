@@ -3,13 +3,12 @@
 Launchers
 *********
 
-SmartSim interfaces with a number of backends we call "launchers".
-Launchers are usually workload managers like Slurm that can obtain
-allocations(or equivalent), and launch jobs onto various machine
-architectures.
+SmartSim interfaces with a number of "launchers", i.e workload managers like
+Slurm that can obtain allocations(or equivalent), and launch jobs onto
+various machine architectures.
 
-Currently, SmartSim supports lauching on Slurm, and locally. We plan
-to support PBS, and Kubernetes soon.
+Currently, SmartSim supports launching on Slurm, and locally. Support for
+PBS, and Kubernetes is under development.
 
 Largely, the launcher backend is opaque to the user. Once the launcher
 has been specified in the ``Experiment``, no further action needs to
@@ -17,7 +16,7 @@ be taken on the part of the user to configure or call the workload
 manager (e.g. ``salloc`` or ``srun`` for Slurm).
 
 To specify a specific launcher, one argument needs to be provided
-to the ``Experiment`` initalization.
+to the ``Experiment`` initialization.
 
 .. code-block:: python
 
@@ -48,11 +47,11 @@ The id of the allocation is returned as a string to the user so that
 they can specify what entities should run on which allocations
 obtained by SmartSim.
 
-The keyword arguments to the ``get_allocation`` method minic the exact naming of Slurm
-arguments that one would normally include in the ``salloc`` command as arguments.
-This includes command line arguments that do not have a value associated
-with them. In such cases, users can place a value of ``None`` for that argument.
-An example of a more complicated allocation is given below:
+The keyword arguments to the ``get_allocation`` method mimic the exact naming
+of Slurm arguments that one would normally include in the ``salloc`` command
+as arguments. This includes command line arguments that do not have a value
+associated with them. In such cases, users can place a value of ``None`` for
+that argument. An example of a more complicated allocation is given below:
 
 .. code-block:: python
 
@@ -67,8 +66,8 @@ Adding Existing Allocations
 ---------------------------
 
 Existing allocations can also be added to SmartSim. If you already obtained
-the allocation you wish for your SmartSim experiment to run on, you can
-add it to the Experiment as follows:
+the allocation to be used for your SmartSim experiment, it can be added to
+the Experiment as follows:
 
 .. code-block:: python
 
@@ -82,10 +81,10 @@ Where ``alloc_id`` is the id of the allocation in Slurm.
 Releasing Allocations
 ---------------------
 
-SmartSim can release the allocations it has obtained through ``Experiment.release()``.
-If an id of the allocation is not provided as an arugment, all allocations
-in the experiment will be released. Below is an example of obtaining and releasing an
-allocation.
+SmartSim can release the allocations it has obtained through
+``Experiment.release()``. If an id of the allocation is not provided as an
+argument, all allocations in the experiment will be released. Below is an
+example of obtaining and releasing an allocation.
 
 .. code-block:: python
 
