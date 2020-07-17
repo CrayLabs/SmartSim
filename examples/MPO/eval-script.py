@@ -5,7 +5,7 @@ from smartsim import MPO
 # evaluation run.
 tunable_params = {"KH": 1000,
                   "KHTH": 1000}
-model_params =  {"months": 12,
+model_params =  {"months": 3,
                  "x_resolution": 40,
                  "y_resolution": 40}
 run_settings = {"nodes":1,
@@ -21,9 +21,9 @@ mpo = MPO(tunable_params, data_dir="MOM6-mpo")
 # directory where the evaluation model will be run.
 model = mpo.init_model(run_settings, model_params=model_params)
 model.attach_generator_files(
-    to_copy=["../MOM6/MOM6_base_config/"],
-    to_configure=["../MOM6/MOM6_base_config/input.nml",
-                  "../MOM6/MOM6_base_config/MOM_input"])
+    to_copy=["./MOM6_base_config/"],
+    to_configure=["./MOM6_base_config/input.nml",
+                  "./MOM6_base_config/MOM_input"])
 
 # Start the underlying experiment that
 # contains the generated and configured model
