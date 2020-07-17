@@ -11,7 +11,7 @@ class MPO():
     model_initialized = False
 
     def __init__(self, tunable_params, data_dir="MPO"):
-        """Initalize a MPO instance for running SmartSim with CrayAI
+        """Initialize a MPO instance for running SmartSim with CrayAI
 
         :param tunable_params: Model parameters to tune with
                                defaults
@@ -27,8 +27,10 @@ class MPO():
         self._setup_evaluation(args)
 
     def init_model(self, run_settings, model_params={}):
-        """Initialize a model for evaluation. This should only
-           be called once in an evaluation script for CrayAI.
+        """Initialize a model for evaluation.
+
+          This should only be called once in an evaluation script
+          for CrayAI.
 
         :param run_settings: how the model should run on SmartSim backend
         :type run_settings: dict
@@ -52,7 +54,9 @@ class MPO():
         return model
 
     def run(self, poll_interval=10):
-        """Start the model initialized by MPO.init_model() and
+        """Execute initialized model
+
+           Start the model initialized by MPO.init_model() and
            any other models, nodes, or orchestrators within the
            MPO experiment. This will usually just be the single
            model for evaluation. MPO.init_model() must be called
@@ -72,8 +76,7 @@ class MPO():
         self.experiment.poll(interval=poll_interval)
 
     def get_model_file(self, file_name):
-        """Retrieve a file path from the directory of the
-           model created by MPO.init_model()
+        """Retrieve a file path from the initialized model.
 
         :param file_name: name of the file to retrieve
         :type file_name: str
@@ -85,8 +88,9 @@ class MPO():
         return path.join(model.path, file_name)
 
     def get_eval_params(self):
-        """Return the evaluation parameters provided by CrayAI
-           for this model instance.
+        """Return the evaluation parameters
+
+        The evaluation parameters are provided from the CrayAI script
 
         :return: tunable model parameters
         :rtype: dict

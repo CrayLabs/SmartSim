@@ -6,15 +6,17 @@ from ..error import SSConfigError
 class SmartSimEntity:
     def __init__(self, name, path, entity_type, run_settings):
         """SmartSimEntity is the base class for all entities within SmartSim.
-           Each entity starts of with default run settings for launching with
-           a workload manager. Upon user initialization, those defaults are
+           Each entity starts of with default run settings for execution with
+           a launcher. Upon user initialization, those defaults are
            updated with the arguments passed in by the user, and transformed
            into the commands for a specific type of launcher - slurm, local etc.
         """
 
     def __init__(self, name, path, entity_type, run_settings):
-        """Intialize a SmartSim entity. Each entity must have a name,
-           path, type, and run_settings. All entities within SmartSim
+        """Initialize a SmartSim entity.
+
+           Each entity must have a name, path, type, and
+           run_settings. All entities within SmartSim
            share these attributes.
 
         :param name: Name of the entity
@@ -37,7 +39,7 @@ class SmartSimEntity:
         self.files = None
 
     def _init_run_settings(self, init_path):
-        """intialize the run_settings from the defaults
+        """Initialize the run_settings from the defaults
 
         :param init_path: path to output, err and conf files,
                           defaults to os.getcwd()
@@ -57,9 +59,10 @@ class SmartSimEntity:
         self.run_settings = default_run_settings
 
     def update_run_settings(self, updated_run_settings):
-        """Update the run settings of an entity. This is commonly
-           used with the Generator and Controller classes for changing
-           the entity run_settings.
+        """Update the run settings of an entity.
+
+           This is commonly used with the Generator and
+           Controller classes for changing the entity run_settings.
 
         :param updated_run_settings: new run settings
         :type updated_run_settings: dict
@@ -69,8 +72,7 @@ class SmartSimEntity:
         self.set_path(old_path)
 
     def set_path(self, new_path):
-        """Set the path to error, output, and command location within
-           the filesystem.
+        """Set the path to error, output, and execution location
 
         :param new_path: path to set within run_settings
         :type new_path: str
@@ -81,17 +83,20 @@ class SmartSimEntity:
         self.run_settings["err_file"] = join(self.path, self.name + ".err")
 
     def register_incoming_entity(self, incoming_entity, receiving_client_type):
-        """Registers the named data sources that this entity has access to by storing
-           the key_prefix associated with that entity
+        """Register future communication between entities.
+
+           Registers the named data sources that this entity
+           has access to by storing the key_prefix associated
+           with that entity
 
            Only python clients can have multiple incoming connections
 
            :param incoming_entity: The named SmartSim entity that data will be
                                    received from
-           :param type: SmartSimEntity
+           :param incoming_entity: SmartSimEntity
            :param receiving_client_type: The language of the SmartSim client used by
-           this object. Can be cpp, fortran, python
-           :param type: str
+                                         this object. Can be cpp, fortran, python
+           :param receiving_client_type: str
         """
         # Update list as clients are developed
         multiple_conn_supported = receiving_client_type in ['python']
@@ -106,7 +111,7 @@ class SmartSimEntity:
         self.incoming_entities.append(incoming_entity)
 
     def get_run_setting(self, setting):
-        """retrieve a run_setting
+        """Retrieve a setting from entity.run_settings
 
         :param setting: key for run_setting
         :type setting: str
@@ -129,7 +134,9 @@ class SmartSimEntity:
         return self._key_prefixing_enabled
 
     def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
-        """Attach files needed for the entity that, upon generation,
+        """Attach files to an entity for generation
+
+           Attach files needed for the entity that, upon generation,
            will be located in the path of the entity.
 
            During generation files "to_copy" are just copied into

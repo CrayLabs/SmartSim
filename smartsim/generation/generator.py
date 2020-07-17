@@ -23,7 +23,7 @@ class Generator():
        for ensembles. When a user creates an ensemble with parameters, the
        ensemble can be given to the generator for configuration of its model
        files. For more information on model generation see
-       Generator.generate_experiment.
+       ``Generator.generate_experiment``.
 
        The Generator also creates the file structure for a SmartSim
        experiment. When called from experiment, all entities present
@@ -31,8 +31,10 @@ class Generator():
        and output files.
     """
     def __init__(self, overwrite=False):
-        """Initialize a generator object, if overwrite is true, replace
-           any existing configured models within an ensemble if there
+        """Initialize a generator object
+
+           if overwrite is true, replace any existing
+           configured models within an ensemble if there
            is a name collision. Also replace any and all directories
            for the experiment with fresh copies. Otherwise, if overwrite
            is false, raises EntityExistsError when there is a name
@@ -47,28 +49,34 @@ class Generator():
 
     def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None,
                             **kwargs):
-        """Generate the file structure for a SmartSim experiment. This
+        """Run ensemble and experiment file structure generation
+
+           Generate the file structure for a SmartSim experiment. This
            includes the writing and configuring of input files for a
            model. Ensembles created with a 'params' argument will be
            expanded into multiple models based on a generation strategy.
 
            To have files or directories present in the created entity
            directories, such as datasets or input files, call
-           entity.attach_generator_files prior to generation. See
-           entity.attach_generator_files() for more information on
+           ``entity.attach_generator_files`` prior to generation. See
+           ``entity.attach_generator_files`` for more information on
            what types of files can be included.
 
            Tagged model files are read, checked for input variables to
            configure, and written. Input variables to configure are
            specified with a tag within the input file itself.
            The default tag is surronding an input value with semicolons.
-           e.g. THERMO=;90;
+           e.g. ``THERMO=;90;``
 
-            :param str strategy: The permutation strategy for generating models within
-                                ensembles.
-                                Options are "all_perm", "random", "step", or a
-                                callable function. Defaults to "all_perm"
-            :raises SmartSimError: if generation fails
+        :param exp_path: path to the experiment directory
+        :type exp_path: str
+        :param ensembles: list of Ensemble instances
+        :type ensembles: list
+        :param nodes: list of SmartSimNode instances
+        :type nodes: list
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        :raises SmartSimError: if generation fails
         """
         if isinstance(ensembles, Ensemble):
             ensembles = [ensembles]
@@ -85,7 +93,9 @@ class Generator():
         self._create_ensembles(exp_path, ensembles)
 
     def generate_ensemble(self, exp_path, ensembles, **kwargs):
-        """Generate a single or a list of ensembles. This will
+        """Generate models and file structure for an ensemble
+
+           Generate a single or a list of ensembles. This will
            generate the underlying model objects as well as configure
            and write their input files if attached.
 
@@ -110,7 +120,9 @@ class Generator():
         self._create_ensembles(exp_path, ensembles)
 
     def generate_node(self, exp_path, nodes):
-        """Generate a single or list of SmartSimNodes.
+        """Generate file structure for a SmartSimNode(s)
+
+           Generate a single or list of SmartSimNodes.
            A directory will be created in the experiment
            directory for each model.
 
@@ -131,7 +143,9 @@ class Generator():
         self._create_nodes(exp_path, nodes)
 
     def set_tag(self, tag, regex=None):
-        """Set a tag or a regular expression for the
+        """Set the tag used for tagging input files
+
+           Set a tag or a regular expression for the
            generator to look for when configuring new models.
 
            For example, a tag might be ``;`` where the
@@ -145,15 +159,13 @@ class Generator():
            :param tag: A string of characters that signify
                        an string to be changed. Defaults to ``;``
            :type tag: str
-           :param regex: a regular expression that model files
-                         are tagged with (optional)
-           :type regex: str
-
         """
         self._writer.set_tag(tag, regex)
 
     def set_strategy(self, permutation_strategy):
-        """Load the strategy for generating model configurations
+        """Set ensemble generation strategy
+
+           Load the strategy for generating model configurations
            based on the values of the ensemble parameters.
 
            "all_perm" creates all possible permutations of the

@@ -8,7 +8,9 @@ class SmartSimNode(SmartSimEntity):
         super().__init__(name, path, "node", run_settings)
 
     def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
-        """Attach files needed for the entity that, upon generation,
+        """Attach files to an entity for generation
+
+           Attach files needed for the entity that, upon generation,
            will be located in the path of the entity.
 
            During generation files "to_copy" are just copied into

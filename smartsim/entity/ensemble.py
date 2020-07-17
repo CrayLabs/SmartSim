@@ -14,7 +14,7 @@ class Ensemble(SmartSimEntity):
     """
 
     def __init__(self, name, params, experiment, path, run_settings={}):
-        """Initalize an Ensemble of NumModel instances.
+        """Initialize an Ensemble of NumModel instances.
 
         :param name: Name of the ensemble
         :type name: str
@@ -51,18 +51,20 @@ class Ensemble(SmartSimEntity):
                 model.enable_key_prefixing()
 
     def register_incoming_entity(self, incoming_entity, receiving_client_type):
-        """Registers the named data sources that this entity has access to by storing
-           the key_prefix associated with that entity
+        """Register future communication between entities.
+
+           Registers the named data sources that this entity
+           has access to by storing the key_prefix associated
+           with that entity
 
            Only python clients can have multiple incoming connections
 
-           :param incoming_entity: The named SmartSim entity that the ensemble will
-                                   receive data from
-           :param type: SmartSimEntity
+           :param incoming_entity: The named SmartSim entity that data will be
+                                   received from
+           :param incoming_entity: SmartSimEntity
            :param receiving_client_type: The language of the SmartSim client used by
-                                         this ensemble object. Can be cpp, fortran,
-                                         python
-           :param type: str
+                                         this object. Can be cpp, fortran, python
+           :param receiving_client_type: str
         """
         for model in self.models.values():
             model.register_incoming_entity(incoming_entity, receiving_client_type)
@@ -82,6 +84,7 @@ class Ensemble(SmartSimEntity):
 
     def query_key_prefixing(self):
         """Inquire as to whether each model within the ensemble will prefix its keys
+
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: dict
         """

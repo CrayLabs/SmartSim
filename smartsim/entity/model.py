@@ -27,8 +27,9 @@ class NumModel(SmartSimEntity):
         :type run_settings: dict
         """
         super().__init__(name, path, "model", run_settings)
-        if type(params) != dict:
-            raise SmartSimError("Model must be initialized with parameter dictionary!  params are: " + str(params))
+        if not isinstance(params, dict):
+            raise SmartSimError(
+                "Model must be initialized with parameter dictionary!")
         self.params = params
 
     def get_param_value(self, param):
@@ -36,7 +37,7 @@ class NumModel(SmartSimEntity):
 
         :param param: parameter name
         :type param: str
-        :return: value of the model paramter
+        :return: value of the model parameter
         :rtype: str
         """
         return self.params[param]

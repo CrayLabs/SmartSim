@@ -8,14 +8,16 @@ logger = get_logger(__name__)
 
 
 def init_command_server(addr="127.0.0.1", port=5555):
-    """Initialize a command server so that SmartSim can be
-        run on compute nodes where slurm and other workload
-        manager commands are not available. Command servers
-        must be located on the same system, and be reachable
-        via tcp.
+    """Connect to a running command server
 
-        Keep in mind that this does not actually start the
-        CmdServer instance, that must be started manually.
+       Initialize a command server connection so that SmartSim can be
+       run on compute nodes where slurm and other workload
+       manager commands are not available. Command servers
+       must be located on the same system, and be reachable
+       via tcp.
+
+       Keep in mind that this does not actually start the
+       CmdServer instance, that must be started manually.
 
     :param addr: address of the Command Server launched seperately,
                     defaults to "127.0.0.1"
@@ -38,7 +40,9 @@ def init_command_server(addr="127.0.0.1", port=5555):
         raise e
 
 def shutdown_command_server():
-    """Shutdown a command server launched by the user by
+    """Send a shutdown command to the command server
+
+       Shutdown a command server launched by the user by
        sending a shutdown request to the running CmdServer.
 
     :raises CommandServerError: If shutdown fails
