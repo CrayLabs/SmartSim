@@ -123,7 +123,7 @@ def test_db_cluster_reconnect_send_receive():
     }
     N2 = exp_2.create_node("N2", path=exp_2_dir, run_settings=node_settings)
     assert(all(status == "RUNNING" for status in exp_2.get_status(O2)))
-    exp_2.start(ssnodes=[N2])
+    exp_2.start(ssnodes=[N2], orchestrator=O2)
     exp_2.poll()
 
     f1 = "/".join((exp_1_dir,"M1.out"))
@@ -168,7 +168,7 @@ def test_db_reconnect_send_receive():
     }
     N2 = exp_2.create_node("N2", path=exp_2_dir, run_settings=node_settings)
     assert(all(status == "RUNNING" for status in exp_2.get_status(O2)))
-    exp_2.start(ssnodes=[N2])
+    exp_2.start(ssnodes=[N2], orchestrator=O2)
     exp_2.poll()
 
     f1 = "/".join((exp_1_dir,"M1.out"))

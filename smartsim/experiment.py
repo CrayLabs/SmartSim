@@ -59,7 +59,7 @@ class Experiment:
             if not ssnodes and not ensembles and not orchestrator:
                 ssnodes = self.nodes
                 ensembles = self.ensembles
-                orchestrator = self.orchestrator
+                orchestrator = self.orc
 
             self._control.start(
                 ensembles=ensembles,
