@@ -8,5 +8,4 @@ if sys.version_info < (3,7):
 
 # Main modules
 from .experiment import Experiment
-from .clients import Client
 from .mpo import MPO
