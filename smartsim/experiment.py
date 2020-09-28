@@ -1,6 +1,10 @@
 import pickle
 import sys
 import zmq
+import pandas as pd
+from pprint import pprint
+from tqdm import trange
+import time
 
 from os import path, mkdir, listdir, getcwd, environ
 from .error import SmartSimError, SSConfigError, EntityExistsError
@@ -9,6 +13,7 @@ from .entity import SmartSimEntity, SmartSimNode, NumModel, Ensemble
 from .generation import Generator
 from .control import Controller
 from .launcher import LocalLauncher
+from .utils.helpers import colorize
 
 from .utils import get_logger
 logger = get_logger(__name__)
@@ -37,7 +42,7 @@ class Experiment:
         self.exp_path = path.join(getcwd(), name)
         self._control = Controller(launcher=launcher)
 
-    def start(self, ensembles=None, ssnodes=None, orchestrator=None):
+    def start(self, ensembles=None, ssnodes=None, orchestrator=None, launch_summary=False):
         """Start the SmartSim Experiment
 
            Start the experiment by turning all entities into jobs
@@ -52,7 +57,6 @@ class Experiment:
            :param orchestrator: Orchestrator instance
            :type orchestrator: Orchestrator
         """
-        logger.info(f"Starting experiment: {self.name}")
         try:
             # if a user calls start without arguments then
             # start all entities within the experiment
@@ -60,6 +64,18 @@ class Experiment:
                 ssnodes = self.nodes
                 ensembles = self.ensembles
                 orchestrator = self.orc
+            # otherwise make sure types are correct
+            else:
+                if isinstance(ensembles, Ensemble):
+                    ensembles = [ensembles]
+                if isinstance(ssnodes, SmartSimNode):
+                    ssnodes = [ssnodes]
+                if orchestrator and not isinstance(orchestrator, Orchestrator):
+                    raise TypeError(
+                        f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator")
+
+            if launch_summary:
+                self._launch_summary(ensembles=ensembles, nodes=ssnodes, orchestrator=orchestrator)
 
             self._control.start(
                 ensembles=ensembles,
@@ -221,7 +237,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def generate(self, tag=None, strategy="all_perm", overwrite=False, **kwargs):
+    def generate(self, tag=None, overwrite=False):
         """Call generator on all entities within this experiment.
 
            Generate the file structure for a SmartSim experiment. This
@@ -253,15 +269,13 @@ class Experiment:
         """
         try:
             generator = Generator(overwrite=overwrite)
-            generator.set_strategy(strategy)
             if tag:
                 generator.set_tag(tag)
             generator.generate_experiment(
                 self.exp_path,
                 ensembles=self.ensembles,
                 nodes=self.nodes,
-                orchestrator=self.orc,
-                **kwargs
+                orchestrator=self.orc
             )
         except SmartSimError as e:
             logger.error(e)
@@ -302,7 +316,8 @@ class Experiment:
             raise
 
 
-    def create_ensemble(self, name, params={}, run_settings={}, overwrite=False):
+    def create_ensemble(self, name, params={}, run_settings={}, overwrite=False,
+                        perm_strategy="all_perm", **kwargs):
         """Create an Ensemble entity
 
         :param name: name of the ensemble
@@ -705,16 +720,68 @@ class Experiment:
         return addresses
 
     def __str__(self):
-        experiment_str = "\n-- Experiment Summary --\n"
-        if len(self.ensembles) > 0:
-            experiment_str += "\n-- ensembles --\n"
-            for ensemble in self.ensembles:
-                experiment_str += str(ensemble)
-        if len(self.nodes) > 0:
-            experiment_str += "\n-- Nodes --\n"
-            for node in self.nodes:
-                experiment_str += str(node)
-        if self.orc:
-            experiment_str += "\n -- Orchestrator --\n"
-            experiment_str += str(self.orc)
-        return experiment_str
+        return self.name
+
+    def summary(self):
+        """Return a summary of the experiment
+        """
+        index = 0
+        df = pd.DataFrame(columns=["Name", "Entity-Type", "JobID",
+                                    "RunID", "Status", "Returncode",
+                                    "Output", "Error"])
+        for job in self._control._jobs.completed.values():
+            for run in range(job.history.runs + 1):
+                df.loc[index] = [job.entity.name, job.entity.type, job.history.jids[run],
+                                 run, job.history.statuses[run], job.history.returns[run],
+                                 job.history.outputs[run], job.history.errors[run]]
+                index += 1
+        return df
+
+    def _launch_summary(self, ensembles=[], nodes=[], orchestrator=[]):
+        print("\n")
+        ensembles = [] if not ensembles else ensembles
+        nodes = [] if not nodes else nodes
+        header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
+        exname = colorize("Experiment: " + self.name, color="green")
+        expath = colorize("Experiment Path: " + self.exp_path, color="green")
+        launch = colorize("Launching with: " + str(self._control._launcher), color="green")
+        numens = colorize("# of Ensembles: " + str(len(ensembles)), color="green")
+        nnodes = colorize("# of SmartSimNodes: " + str(len(nodes)), color="green")
+        has_orc = "yes" if orchestrator else "no"
+        orches = colorize("Database: " + has_orc, color="green")
+
+        def sprint(text, spacer=4):
+            spacer = " " * spacer
+            print(spacer + text)
+
+        print(f"{header}")
+        print(f"{exname}\n{expath}\n{launch}\n{numens}\n{nnodes}\n{orches}\n")
+
+        if ensembles:
+            print(colorize("=== ENSEMBLES ===", color="cyan", bold=True))
+            for ens in ensembles:
+                name = colorize(ens.name, color="green")
+                num_models = colorize("# of models in ensemble: " + str(len(ens)), color="green")
+                print(f"{name}")
+                print(f"{num_models}")
+            print("\n")
+        if nodes:
+            print(colorize("=== SMARTSIMNODES ===", color="cyan", bold=True))
+            for node in nodes:
+                name = colorize(node.name, color="green")
+                print(f"{name}")
+            print("\n")
+        if orchestrator:
+            print(colorize("=== DATABASE ===", color="cyan", bold=True))
+            size = colorize("# of database nodes: " + str(len(orchestrator)), color="green")
+            print(f"{size}")
+        print("\n")
+
+        wait, steps = 10, 100
+        prog_bar = trange(steps, desc='Launching in...',
+                            leave=False, ncols=80,
+                            mininterval=0.25,
+                            bar_format='{desc}: {bar}| {remaining} {elapsed}')
+        for _ in prog_bar:
+            time.sleep(wait/steps)
+

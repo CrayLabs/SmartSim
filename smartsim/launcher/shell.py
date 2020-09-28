@@ -5,6 +5,7 @@ from ..error import ShellError, LauncherError, SSConfigError
 from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
 from ..remote import CmdClient
 
+
 from ..utils import get_logger, get_env
 logger = get_logger(__name__)
 
@@ -13,6 +14,7 @@ try:
     verbose_shell = True if level == "developer" else False
 except SSConfigError:
     verbose_shell = False
+
 
 def is_remote():
     """Determine if a command should be sent to a CmdServer
@@ -99,7 +101,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
         output, errs = proc.communicate()
         logger.error("Timeout for command execution exceeded")
         raise ShellError("Failed to execute command: " + " ".join(cmd_list))
-    except CalledProcessError as e:
+    except OSError as e:
         logger.error("Exception while attempting to start a shell process")
         raise ShellError("Failed to execute command: " + " ".join(cmd_list))
 
@@ -124,7 +126,7 @@ def execute_async_cmd(cmd_list, cwd, remote=True):
     """
     global verbose_shell
     if verbose_shell:
-        logger.debug("Executing async shell cmd: %s" % " ".join(cmd_list))
+        logger.debug("Executing async Popen cmd: %s" % " ".join(cmd_list))
 
     if is_remote() and remote:
         client = CmdClient()
@@ -132,8 +134,8 @@ def execute_async_cmd(cmd_list, cwd, remote=True):
         return client.execute_remote_request(request)
 
     try:
-        popen_obj = Popen(cmd_list, cwd=cwd, shell=True)
+        # TODO change to if remote than pipe the output
+        popen_obj = Popen(cmd_list, cwd=cwd, stdout=PIPE, stderr=PIPE)
     except OSError as err:
-        logger.error(err)
-        return -1, "", ""
-    return 1, "", ""
+        return popen_obj, -1, "", ""
+    return popen_obj, 1, "", ""

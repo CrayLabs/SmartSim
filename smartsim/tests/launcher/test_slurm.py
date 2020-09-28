@@ -122,22 +122,14 @@ def test_get_alloc():
 
 def test_get_step_status():
     """test calling get_step_status for step that doesnt exist"""
-    status, returncode = slurm.get_step_status(11111.1)
-    assert(status == "NOTFOUND")
-    assert(returncode == "NAN")
+    status = slurm.get_step_status(11111.1)
+    assert(status.status == "NOTFOUND")
+    assert(status.returncode == "NAN")
+    assert(status.error == None)
+    assert(status.output == None)
 
 # ------------------------------------------------------------------
 # Error handling cases
-
-def test_bad_accept_alloc():
-    """test adding an allocation that doesnt exist"""
-    with pytest.raises(LauncherError):
-        slurm.accept_alloc(111111)
-
-def test_bad_stop():
-    """test calling stop a step that doesnt exist"""
-    with pytest.raises(LauncherError):
-        slurm.stop(111111.1)
 
 def test_bad_get_step_nodes():
     """test call of get_step_nodes with a step that doesnt exist"""

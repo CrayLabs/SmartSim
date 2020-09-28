@@ -22,8 +22,8 @@ exp = Experiment("test")
 ctrl = Controller()
 ctrl.init_launcher("local")
 run_settings = {
-    "executable": "python sleep.py",
-    "exe_args": "--time 2"
+    "executable": "python",
+    "exe_args": "sleep.py --time 2"
 }
 M1 = exp.create_model("m1", path=test_path, run_settings=run_settings)
 M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)

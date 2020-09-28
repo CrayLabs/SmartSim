@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "sleep.py", line 15, in <module>
+    sleep(args.time)
+  File "sleep.py", line 6, in sleep
+    time.sleep(time_to_sleep)
+KeyboardInterrupt
+slurmstepd: error: *** STEP 129973.0 ON nid00004 CANCELLED AT 2020-09-23T17:53:34 ***

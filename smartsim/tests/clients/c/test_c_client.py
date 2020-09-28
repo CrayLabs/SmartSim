@@ -4,13 +4,13 @@ from smartsim import Experiment
 from shutil import which
 from os import path
 
-if not which("srun"):
-    pytestmark = pytest.mark.skip()
+#if not which("srun"):
+pytestmark = pytest.mark.skip()
 
 test_dir=path.dirname(path.abspath(__file__))
 
-alloc_experiment = Experiment("alloc_retrieval")
-alloc = alloc_experiment.get_allocation(nodes=5, ppn=2)
+#alloc_experiment = Experiment("alloc_retrieval")
+#alloc = alloc_experiment.get_allocation(nodes=5, ppn=2)
 
 @compiled_client_test(test_dir=test_dir,
                  target_names=["client_test_scalar_put_get"])

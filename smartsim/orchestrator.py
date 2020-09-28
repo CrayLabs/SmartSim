@@ -1,7 +1,7 @@
 from .error import SSConfigError, SmartSimError
 from .junction import Junction
 from .entity import DBNode
-
+from .utils.helpers import get_env, expand_exe_path
 from os import path, getcwd, environ
 
 
@@ -55,14 +55,22 @@ class Orchestrator:
         else:
             dpn = 1
 
-        run_settings = {"nodes": 1, "ppn": dpn, **kwargs}
+        # Find database executable and configuration file
+        exe = self._find_db_exe()
+        db_conf = self._find_db_conf()
+
+        run_settings = {"executable": exe, "nodes": 1,
+                        "ppn": dpn, **kwargs}
+
         for node_id in range(db_nodes):
             node = DBNode(node_id,
                           self.path,
+                          db_conf,
                           run_settings,
                           port=self.port,
                           cluster=cluster)
             self.dbnodes.append(node)
+
 
     def get_connection_env_vars(self, entity):
         """Return the environment variables needed to launch an entity
@@ -78,15 +86,26 @@ class Orchestrator:
         """
         return self.junction.get_connections(entity)
 
-    def __str__(self):
-        """Return user-readable string form of Orchestrator
+    def _find_db_exe(self):
+        sshome = get_env("SMARTSIMHOME")
+        exe =  path.join(sshome, "third-party/KeyDB/src/keydb-server")
+        try:
+            full_exe = expand_exe_path(exe)
+            return full_exe
+        except SSConfigError as e:
+            msg = "Database not built/installed correctly. "
+            msg += "Could not locate database executable"
+            raise SSConfigError(msg) from None
 
-        :return: user-readable string of the Orchestrator object
-        :rtype: str
-        """
-        orc_str = "Name: Orchestrator \n"
-        orc_str += "Number of Databases: " + str(len(self.dbnodes)) + "\n"
-        return orc_str
+    def _find_db_conf(self):
+        sshome = get_env("SMARTSIMHOME")
+        conf_path = path.join(sshome, "smartsim/smartsimdb.conf")
+        if not path.isfile(conf_path):
+            msg = "Could not locate database configuration file.\n"
+            msg += f"looked at path {conf_path}"
+            raise SSConfigError(msg)
+        else:
+            return conf_path
 
     def set_path(self, new_path):
         """Set the path for logging db outputs when user calls the generator.
@@ -97,3 +116,16 @@ class Orchestrator:
         self.path = new_path
         for dbnode in self.dbnodes:
             dbnode.set_path(new_path)
+
+    def __str__(self):
+        """Return user-readable string form of Orchestrator
+
+        :return: user-readable string of the Orchestrator object
+        :rtype: str
+        """
+        orc_str = "Name: Orchestrator \n"
+        orc_str += "Number of Databases: " + str(len(self.dbnodes)) + "\n"
+        return orc_str
+
+    def __len__(self):
+        return len(self.dbnodes)

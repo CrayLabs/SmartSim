@@ -4,6 +4,7 @@ import os
 import atexit
 import sys
 import numpy as np
+import threading
 
 from shutil import which
 from ..launcher import Launcher
@@ -13,8 +14,11 @@ from .slurmAllocation import SlurmAllocation
 from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
 from .slurmParser import parse_salloc_error, parse_sstat_nodes, parse_step_id_from_sacct
 from .slurmStep import SlurmStep
+from .slurmConstants import SlurmConstants
 from .slurm import sstat, sacct, salloc, sinfo, scancel
 from ..shell import execute_cmd, execute_async_cmd, is_remote
+
+from ..taskManager import TaskManager, Status
 
 from ...utils import get_logger, get_env
 logger = get_logger(__name__)
@@ -26,10 +30,13 @@ class SlurmLauncher(Launcher):
     Slurm as a workload manager.
     """
 
+    constants = SlurmConstants()
+
     def __init__(self, *args, **kwargs):
         """Initialize a SlurmLauncher
         """
         super().__init__(*args, **kwargs)
+        self.task_manager = TaskManager()
 
     def validate(self, nodes=None, ppn=None, partition=None):
         """Check that there are sufficient resources in the provided Slurm partitions.
@@ -97,7 +104,6 @@ class SlurmLauncher(Launcher):
                 raise LauncherError(
                     f"Allocation {alloc_id} has not been obtained or added to SmartSim")
             else:
-                # increment the internal job per allocation counter
                 step_num = self.alloc_manager.add_step(str(alloc_id))
                 name = entity_name + '-' + str(np.base_repr(time.time_ns(), 36))
                 step = SlurmStep(name, run_settings, multi_prog)
@@ -108,6 +114,7 @@ class SlurmLauncher(Launcher):
     def get_step_status(self, step_id):
         """Get the status of a SlurmStep via the id of the step (e.g. 12345.0)
 
+        TODO update this docstring
         :param step_id: id of the step in form xxxxx.x
         :type step_id: str
         :return: status of the job and returncode
@@ -116,10 +123,21 @@ class SlurmLauncher(Launcher):
         step_id = str(step_id)
         sacct_out, sacct_error = sacct(["--noheader", "-p", "-b", "-j", step_id])
         if not sacct_out:
-            result = ("NOTFOUND","NAN")
-            return result
+            stat, returncode = "NOTFOUND", "NAN"
         else:
-            return parse_sacct(sacct_out, step_id)
+            stat, returncode = parse_sacct(sacct_out, step_id)
+        if step_id in self.task_manager.statuses:
+            task_ret_code, out, err = self.task_manager.get_task_status(step_id)
+
+            # if NOTFOUND then the command never made it to slurm
+            if stat == "NOTFOUND":
+                returncode = task_ret_code
+                stat = "FAILED"
+            status = Status(stat, returncode, out, err)
+        else:
+            status = Status(stat, returncode)
+        return status
+
 
     def get_step_nodes(self, step_id):
         """Return the compute nodes of a specific job or allocation
@@ -162,7 +180,13 @@ class SlurmLauncher(Launcher):
             raise LauncherError(
                 f"User provided allocation, {alloc_id}, could not be found")
 
-        nodes = len(self.get_step_nodes(alloc_id))
+        # try to use workload manager to find information
+        # about the job, but don't fail if we can't
+        try:
+            nodes = len(self.get_step_nodes(alloc_id))
+        except LauncherError:
+            nodes = None
+
         allocation = SlurmAllocation(nodes=nodes)
         self.alloc_manager.add(alloc_id, allocation)
 
@@ -190,12 +214,12 @@ class SlurmLauncher(Launcher):
 
         allocation = SlurmAllocation(nodes=nodes, ppn=ppn,
                                      duration=duration, **kwargs)
-        salloc = allocation.get_alloc_cmd()
-        debug_msg = " ".join(salloc[2:])
+        salloc_args = allocation.get_alloc_cmd()
+        debug_msg = " ".join(salloc_args[1:])
         logger.debug(f"Allocation settings: {debug_msg}")
 
         #TODO figure out why this goes to stderr
-        returncode, _, err = execute_cmd(salloc)
+        _, err = salloc(salloc_args)
         alloc_id = parse_salloc(err)
         if alloc_id:
             logger.info("Allocation successful with Job ID: %s" % alloc_id)
@@ -221,34 +245,51 @@ class SlurmLauncher(Launcher):
         :rtype: str
         """
         self._check_for_slurm()
+        if not self.task_manager.actively_monitoring:
+            self.task_manager.start()
 
         alloc_id = step.alloc_id
         if str(alloc_id) not in self.alloc_manager().keys():
             raise LauncherError("Could not find allocation with id: " + str(alloc_id))
         srun = step.build_cmd()
 
-        status, _, _ = execute_async_cmd([seq_to_str(srun)], cwd=step.cwd)
+        task, status, _, _ = execute_async_cmd(srun, cwd=step.cwd)
         if status == -1:
             raise LauncherError("Failed to run on allocation")
         else:
-            return self._get_slurm_step_id(step)
+            step_id = self._get_slurm_step_id(step)
+            self.task_manager.add_task(task, step_id)
+            return step_id
 
     def stop(self, step_id):
         """Stop a job step within an allocation.
 
+        TODO update this docstring
         :param step_id: id of the step to be stopped
         :type step_id: str
         :raises LauncherError: if unable to stop job step
         """
         self._check_for_slurm()
 
-        status, _ = self.get_step_status(step_id)
-        if status != "COMPLETE":
+        status = self.get_step_status(step_id)
+        if not self.is_finished(status.status):
+            # try to remove the task that launched the
+            # slurm process, but don't fail if its dead already
+            try:
+                task = self.task_manager[step_id]
+                self.task_manager.remove_task(task)
+            except KeyError:
+                logger.debug(
+                    f"Could not find task with step id {step_id} to stop")
+
             returncode, out, err = scancel([str(step_id)])
             if returncode != 0:
-                raise LauncherError(f"Unable to stop job {str(step_id)}")
+                logger.warning(f"Unable to stop job {str(step_id)}")
             else:
                 logger.info(f"Successfully stopped job {str(step_id)}")
+            status.status = "CANCELLED by user"
+        return status
+
 
     def is_finished(self, status):
         """Determine wether a job is finished by parsing slurm sacct
@@ -258,15 +299,12 @@ class SlurmLauncher(Launcher):
         :return: True/False wether job is finished
         :rtype: bool
         """
-
-        terminals = [
-            "PENDING", "COMPLETING", "PREEMPTED",
-            "RUNNING", "SUSPENDED", "STOPPED",
-            "NOTFOUND"]
-
-        if status in terminals:
-            return False
-        return True
+        # only take the first word in the status
+        # this handles the "CANCELLED by 3221" case
+        status = status.strip().split()[0]
+        if status in self.constants.terminals:
+            return True
+        return False
 
     def free_alloc(self, alloc_id):
         """Free an allocation from within the launcher
@@ -283,6 +321,7 @@ class SlurmLauncher(Launcher):
                 f"Allocation {str(alloc_id)} not found.")
 
         logger.info(f"Releasing allocation: {alloc_id}")
+        self._cleanup_tasks_with_allocid(alloc_id)
         returncode, _, err = scancel([str(alloc_id)])
 
         if returncode != 0:
@@ -294,7 +333,7 @@ class SlurmLauncher(Launcher):
         self.alloc_manager.remove(alloc_id)
         logger.info(f"Successfully freed allocation {alloc_id}")
 
-    def _get_slurm_step_id(self, step):
+    def _get_slurm_step_id(self, step, interval=1, trials=5):
         """Get the step_id of a step
         This function uses the sacct command to find the step_id of
         a step that has been launched by this SlurmLauncher instance.
@@ -302,15 +341,15 @@ class SlurmLauncher(Launcher):
         function performs a number of trials in case the slurm launcher
         takes a while to populate the Sacct database
 
+        TODO update this docstring
         :param step: step to find the id of
         :type step: SlurmStep
         :returns: if of the step
         :rtype: str
         """
-        time.sleep(1)
-        n_trials = 10
-        step_id = None
-        while n_trials > 0:
+        time.sleep(interval)
+        step_id = "unassigned"
+        while trials > 0:
             output, error = sacct(["--noheader", "-p",
                                    "--format=jobname,jobid",
                                    "--job=" + step.alloc_id])
@@ -318,8 +357,8 @@ class SlurmLauncher(Launcher):
             if step_id:
                 break
             else:
-                time.sleep(1)
-                n_trials -= 1
+                time.sleep(interval)
+                trials -= 1
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
         return step_id
@@ -387,3 +426,12 @@ class SlurmLauncher(Launcher):
             error += "Setup a Command Server, and initialize with"
             error += " SmartSim.remote.init_command_server()"
             raise LauncherError(error)
+
+    def _cleanup_tasks_with_allocid(self, alloc_id):
+        tasks_to_kill = [task for task in self.task_manager.tasks
+                         if task.step_id.startswith(alloc_id)]
+        for task in tasks_to_kill:
+            self.task_manager.remove_task(task)
+
+    def __str__(self):
+        return "Slurm Launcher"

@@ -4,14 +4,12 @@ import shutil
 from itertools import product
 from os import mkdir, getcwd, path, symlink
 from distutils import dir_util
-from copy import deepcopy
 
 from .modelwriter import ModelWriter
 from ..entity import NumModel, Ensemble, SmartSimNode
 from ..orchestrator import Orchestrator
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 from ..error import GenerationError, EntityExistsError
-from .strategies import create_all_permutations, random_permutations, step_values
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -44,11 +42,9 @@ class Generator():
         :type overwrite: bool, optional
         """
         self._writer = ModelWriter()
-        self.set_strategy("all_perm")
         self.overwrite = overwrite
 
-    def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None,
-                            **kwargs):
+    def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None):
         """Run ensemble and experiment file structure generation
 
            Generate the file structure for a SmartSim experiment. This
@@ -86,13 +82,12 @@ class Generator():
             raise TypeError(
                 f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
             )
-        self._generate_ensembles(ensembles, **kwargs)
         self._create_experiment_dir(exp_path)
         self._create_orchestrator_dir(exp_path, orchestrator)
         self._create_nodes(exp_path, nodes)
         self._create_ensembles(exp_path, ensembles)
 
-    def generate_ensemble(self, exp_path, ensembles, **kwargs):
+    def generate_ensemble(self, exp_path, ensembles):
         """Generate models and file structure for an ensemble
 
            Generate a single or a list of ensembles. This will
@@ -116,7 +111,6 @@ class Generator():
                 f"ensembles argument must be of type Ensemble or list of Ensemble"
             )
         self._create_experiment_dir(exp_path)
-        self._generate_ensembles(ensembles, **kwargs)
         self._create_ensembles(exp_path, ensembles)
 
     def generate_node(self, exp_path, nodes):
@@ -161,86 +155,6 @@ class Generator():
            :type tag: str
         """
         self._writer.set_tag(tag, regex)
-
-    def set_strategy(self, permutation_strategy):
-        """Set ensemble generation strategy
-
-           Load the strategy for generating model configurations
-           based on the values of the ensemble parameters.
-
-           "all_perm" creates all possible permutations of the
-           ensemble parameters as individual models. This is the
-           default strategy for the Generator module.
-
-           Calling with a callable function results in that
-           function being used asthe permutation strategy.
-
-           :param str permutation_strategy: Options are "all_perm", "step", "random",
-                                            or a callable function.
-           :raises SSUnsupportedError: if strategy is not supported by SmartSim
-
-        """
-        if permutation_strategy == "all_perm":
-            self._permutation_strategy = create_all_permutations
-        elif permutation_strategy == "step":
-            self._permutation_strategy = step_values
-        elif permutation_strategy == "random":
-            self._permutation_strategy = random_permutations
-        elif callable(permutation_strategy):
-            self._permutation_strategy = permutation_strategy
-        else:
-            raise SSUnsupportedError(
-                "Permutation Strategy given is not supported: " +
-                str(permutation_strategy))
-
-    def _generate_ensembles(self, ensembles, **kwargs):
-        """Populates instances of NumModel class for all ensemble models.
-           NumModels are created via the function that is set as the
-           `_permutation_strategy` attribute.  Users may supply their own
-           function (or choose from the available set) via the `set_strategy`
-           function.
-
-           By default, the all permutation function ("all_perm") is used.
-           This strategy takes all permutations of available configuration
-           values and creates a model for each one.
-
-           Returns list of models with configurations to be written
-        """
-
-        # collect all parameters, names, and settings
-        def read_model_parameters(ensemble):
-            param_names = []
-            parameters = []
-            for name, val in ensemble.params.items():
-                param_names.append(name)
-
-                if isinstance(val, list):
-                    parameters.append(val)
-                elif isinstance(val, str) or isinstance(val, int):
-                    parameters.append([val])
-                else:
-                    raise GenerationError(
-                        "Incorrect type for ensemble parameters\n" +
-                        "Must be list, int, or string.")
-            return param_names, parameters
-
-        for ensemble in ensembles:
-            # if read_model_parameters returns empty lists, we shouldn't continue.
-            # This is useful for empty ensembles where the user makes models.
-            names, values = read_model_parameters(ensemble)
-            if (len(names) != 0 and len(values) != 0):
-                all_configs = self._permutation_strategy(
-                    names, values, **kwargs)
-
-                # run_settings can be ignored in this case as all models
-                # will run with ensemble run_settings
-                for i, conf in enumerate(all_configs):
-                    model_name = "_".join((ensemble.name, str(i)))
-                    model = NumModel(model_name, conf, None, run_settings={})
-                    ensemble.add_model(model, overwrite=self.overwrite)
-                    if ensemble.files:
-                        model.files = deepcopy(ensemble.files)
-
 
     def _create_experiment_dir(self, exp_path):
         """Create the directory for an experiment if it does not
@@ -345,7 +259,6 @@ class Generator():
                 self._link_entity_files(model)
                 self._write_tagged_entity_files(model)
 
-        logger.info(f"Generated {len(ensemble)} models for ensemble: {ensemble.name}")
 
     def _write_tagged_entity_files(self, entity):
         """Read, configure and write the tagged input files for

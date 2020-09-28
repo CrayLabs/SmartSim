@@ -1,5 +1,7 @@
 
 from ..shell import execute_cmd
+from ...error import LauncherError, SSConfigError
+from ...utils.helpers import expand_exe_path
 
 def sstat(args):
     """Calls sstat with args
@@ -8,7 +10,8 @@ def sstat(args):
     :type args: List of str
     :returns: Output and error of sstat
     """
-    cmd = ["sstat"] + args
+    sstat = _find_slurm_command("sstat")
+    cmd = [sstat] + args
     returncode, out, error = execute_cmd(cmd)
     return out, error
 
@@ -19,7 +22,8 @@ def sacct(args):
     :type args: List of str
     :returns: Output and error of sacct
     """
-    cmd = ["sacct"] + args
+    sacct = _find_slurm_command("sacct")
+    cmd = [sacct] + args
     returncode, out, error = execute_cmd(cmd)
     return out, error
 
@@ -30,7 +34,8 @@ def salloc(args):
     :type args: List of str
     :returns: Output and error of salloc
     """
-    cmd = ["salloc"] + args
+    salloc = _find_slurm_command("salloc")
+    cmd = [salloc] + args
     returncode, out, error = execute_cmd(cmd)
     return out, error
 
@@ -41,7 +46,8 @@ def sinfo(args):
     :type args: List of str
     :returns: Output and error of sinfo
     """
-    cmd = ["sinfo"] + args
+    sinfo = _find_slurm_command("sinfo")
+    cmd = [sinfo] + args
     returncode, out, error = execute_cmd(cmd)
     return out, error
 
@@ -55,7 +61,16 @@ def scancel(args):
     :return: output and error
     :rtype: str
     """
-    cmd = ["scancel"] + args
+    scancel = _find_slurm_command("scancel")
+    cmd = [scancel] + args
     returncode, out, error = execute_cmd(cmd)
     return returncode, out, error
+
+def _find_slurm_command(cmd):
+    try:
+        full_cmd = expand_exe_path(cmd)
+        return full_cmd
+    except SSConfigError:
+        raise LauncherError(
+            f"Slurm Launcher could not find path of {cmd} command")
 

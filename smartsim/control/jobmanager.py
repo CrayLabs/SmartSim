@@ -1,19 +1,27 @@
 import time
+from threading import Thread
+
 from .job import Job
-from ..error import SmartSimError
+from ..error import SmartSimError, SSConfigError
 
 from ..entity import SmartSimEntity, Ensemble
 from ..orchestrator import Orchestrator
 from ..launcher.launcher import Launcher
+from ..launcher.taskManager import Status
+import numpy as np
 
-from ..utils import get_logger
+from ..utils import get_logger, get_env
 logger = get_logger(__name__)
+
 
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
        and the steps launched through the workload manager. The JobManager
        holds jobs according to entity type.
+
+       The JobManager is threaded and runs during the course of an experiment
+       to update the statuses of Jobs.
 
        The JobManager and Controller share a single instance of a launcher
        object that allows both the Controller and launcher access to the
@@ -26,10 +34,71 @@ class JobManager:
         :param launcher: a Launcher object to manage jobs
         :type: SmartSim.Launcher
         """
+        self.name = "JobManager" + '-' + str(np.base_repr(time.time_ns(), 36))
+        self.actively_monitoring = False
         self._launcher = launcher
         self.jobs = {}
         self.db_jobs = {}
         self.node_jobs = {}
+        self.completed = {}
+
+    def start(self, interval=5):
+        monitor = Thread(name=self.name, daemon=True, target=self.run)
+        monitor.start()
+
+    def run(self):
+        """Start the JobManager
+
+        :param interval: polling interval
+        :type interval: int
+        """
+        interval = 5
+        logger.debug("Starting Job Manager thread: " + self.name)
+
+        self.actively_monitoring = True
+        while self.actively_monitoring:
+            time.sleep(interval)
+            logger.debug(f"{self.name} - Active Jobs: {list(self().keys())}")
+
+            # check each task
+            for name, job in self().items():
+                self.check_job(name)
+
+                # if the job has errors then output the report
+                # this should only output once
+                if job.error:
+                    logger.warning(job)
+                    logger.warning(job.error_report())
+                    self.move_to_completed(job)
+
+                # Dont actively monitor completed jobs
+                if self._launcher.is_finished(job.status):
+                    logger.info(job)
+                    self.move_to_completed(job)
+
+            # if no more jobs left to actively monitor
+            if not self():
+                self.actively_monitoring = False
+                logger.debug(f"{self.name} - Sleeping, no jobs to monitor")
+
+    def move_to_completed(self, job):
+        """Move job to completed queue so that its no longer
+           actively monitored by the job manager
+
+        :param job: job instance we are transitioning
+        :type job: Job
+        """
+        self.completed[job.name] = job
+        job.record_history()
+
+        # remove from actively monitored jobs
+        if job.name in self.db_jobs.keys():
+            del self.db_jobs[job.name]
+        elif job.name in self.node_jobs.keys():
+            del self.node_jobs[job.name]
+        elif job.name in self.jobs.keys():
+            del self.jobs[job.name]
+
 
     def __getitem__(self, job_name):
         """Return the job associated with the job_name
@@ -45,6 +114,8 @@ class JobManager:
             return self.node_jobs[job_name]
         elif job_name in self.jobs.keys():
             return self.jobs[job_name]
+        elif job_name in self.completed.keys():
+            return self.completed[job_name]
         else:
             raise KeyError
 
@@ -122,9 +193,14 @@ class JobManager:
         :type entity_name: str
         """
         try:
-            job = self[entity_name]
-            status, returncode = self._launcher.get_step_status(job.jid)
-            job.set_status(status, returncode)
+            if entity_name not in self.completed.keys():
+                job = self[entity_name]
+                status = self._launcher.get_step_status(job.jid)
+
+                job.set_status(status.status,
+                            status.returncode,
+                            error=status.error,
+                            output=status.output)
         except SmartSimError:
             logger.warning(f"Could not retrieve status of {entity_name}")
 
@@ -138,58 +214,15 @@ class JobManager:
         :returns: tuple of status
         """
         try:
+            if entity.name in self.completed:
+                return self.completed[entity.name].status
+
             job = self[entity.name]
             self.check_job(entity.name)
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller")
         return job.status
-
-    def poll(self, ignore_db, verbose):
-        """Poll all simulations and return a boolean for
-           if all jobs are finished or not.
-
-        :param bool verbose: set verbosity
-        :param bool ignore_db: return true even if the orchestrator
-                                nodes are still running
-        :returns: True or False for if all models have finished
-        """
-        finished = True
-        for job in self().values():
-            if ignore_db and job.entity.type == "db":
-                continue
-            else:
-                self.check_job(job.entity.name)
-                if not self._launcher.is_finished(job.status):
-                    finished = False
-                if verbose:
-                    logger.info(job)
-        return finished
-
-    def finished(self, entity):
-        """Return a boolean indicating wether a job has finished or not
-
-        :param entity: object launched by SmartSim. One of the following:
-                          (SmartSimNode, NumModel, Ensemble)
-        :type entity: SmartSimEntity
-        :returns: bool
-        """
-        try:
-            if isinstance(entity, Orchestrator):
-                raise SmartSimError(
-                    "Finished() does not support Orchestrator instances")
-            if not isinstance(entity, SmartSimEntity):
-                raise SmartSimError(
-                    "Finished() only takes arguments of SmartSimEntity instances")
-            if isinstance(entity, Ensemble):
-                return all([self.finished(model) for model in entity.models.values()])
-
-            job = self[entity.name]
-            self.check_job(entity.name)
-            return self._launcher.is_finished(job.status)
-        except KeyError:
-            raise SmartSimError(
-                f"Entity by the name of {entity.name} has not been launched by this Controller")
 
     def _set_launcher(self, launcher):
         """Set the launcher of the job manager to a specific launcher instance
@@ -199,16 +232,19 @@ class JobManager:
         """
         self._launcher = launcher
 
-    def job_exists(self, entity):
-        """Return a boolean for existence of a job in the jobmanager
 
-        :param entity: Entity to check for job
-        :type entity: SmartSimEntity
-        :return: boolean indicating the existence of a job
-        :rtype: bool
-        """
-        try:
-            if self[entity.name]:
-                return True
-        except KeyError:
-            return False
+    def query_restart(self, job_name):
+        if job_name in self.completed:
+            return True
+        return False
+
+    def restart_job(self, job_name, new_job_id):
+        job = self.completed[job_name]
+        del self.completed[job_name]
+        job.reset(new_job_id)
+        if job.entity.type == "db":
+            self.db_jobs[job_name] = job
+        elif job.entity.type == "node":
+            self.node_jobs[job_name] = job
+        else:
+            self.jobs[job_name] = job

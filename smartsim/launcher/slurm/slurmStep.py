@@ -2,8 +2,10 @@
 import os
 
 from ...utils import get_env, get_config
-from ...error import SSConfigError
+from ...utils.helpers import expand_exe_path
+from ...error import SSConfigError, LauncherError
 from itertools import product
+
 
 class SlurmStep:
 
@@ -58,18 +60,19 @@ class SlurmStep:
         ntasks = ppn * self.run_settings["nodes"]
         out = self.run_settings["out_file"]
         err = self.run_settings["err_file"]
+        srun = self._find_srun_cmd()
 
-        srun = ["srun", "--nodes", str(nodes),
-                        "--ntasks", str(ntasks),
-                        "--ntasks-per-node", str(ppn),
-                        "--output", out,
-                        "--error", err,
-                        "--jobid", str(self.alloc_id),
-                        "--job-name", self.name]
+        step = [srun, "--nodes", str(nodes),
+                      "--ntasks", str(ntasks),
+                      "--ntasks-per-node", str(ppn),
+                      "--output", out,
+                      "--error", err,
+                      "--jobid", str(self.alloc_id),
+                      "--job-name", self.name]
 
         if "env_vars" in self.run_settings:
             env_var_str = self._format_env_vars(self.run_settings["env_vars"])
-            srun += ["--export", env_var_str]
+            step += ["--export", env_var_str]
 
         smartsim_args = ["ppn", "nodes", "executable", "env_vars",
                          "exe_args", "out_file", "err_file", "cwd",
@@ -79,12 +82,12 @@ class SlurmStep:
             if opt not in smartsim_args:
                 prefix = "-" if len(str(opt)) == 1 else "--"
                 if not value:
-                    srun += [prefix + opt]
+                    step += [prefix + opt]
                 else:
-                    srun += ["=".join((prefix+opt, str(value)))]
+                    step += ["=".join((prefix+opt, str(value)))]
 
-        srun += self._build_exe_cmd()
-        return srun
+        step += self._build_exe_cmd()
+        return step
 
 
     def _build_exe_cmd(self):
@@ -99,13 +102,21 @@ class SlurmStep:
             exe_args = get_config("exe_args", self.run_settings, none_ok=True)
             if self.multi_prog:
                 cmd =  self._build_multi_prog_exe(exe, exe_args)
-                return [" ".join(("--multi-prog", cmd))]
+                return ["--multi-prog", cmd]
             else:
-                if not exe_args:
-                    exe_args = ""
-                cmd = " ".join((exe, exe_args))
+                if exe_args:
+                    if isinstance(exe_args, str):
+                        exe_args = exe_args.split()
+                    elif isinstance(exe_args, list):
+                        correct_type = all([isinstance(arg, str) for arg in exe_args])
+                        if not correct_type:
+                            raise TypeError(
+                                "Executable arguments given were not of type list or str")
+                else:
+                    exe_args = [""]
+                cmd = [exe] + exe_args
 
-                return [cmd]
+                return cmd
 
         except KeyError as e:
             raise SSConfigError(
@@ -146,6 +157,13 @@ class SlurmStep:
                 f.write(" ".join((str(proc_num),  exe, arg, "\n")))
                 proc_num += 1
         return conf_path
+
+    def _find_srun_cmd(self):
+        try:
+            srun = expand_exe_path("srun")
+            return srun
+        except SSConfigError:
+            raise LauncherError(f"Slurm launcher could not find srun executable path")
 
     def _format_env_vars(self, env_vars):
         """Build environment variable string for Slurm

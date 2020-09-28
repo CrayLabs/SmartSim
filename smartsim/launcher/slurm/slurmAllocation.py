@@ -16,18 +16,17 @@ class SlurmAllocation(Allocation):
         """Return the command to request an allocation from Slurm with
            the class variables as the slurm options."""
 
-        salloc = ["salloc",
-                  "--no-shell",
-                  "-N", str(self.nodes),
-                  "--ntasks-per-node", str(self.ppn),
-                  "--time", self.duration,
-                  "-J", "SmartSim"]
+        salloc_args =  ["--no-shell",
+                        "-N", str(self.nodes),
+                        "--ntasks-per-node", str(self.ppn),
+                        "--time", self.duration,
+                        "-J", "SmartSim"]
 
         for opt, val in self.add_opts.items():
             prefix = "-" if len(str(opt)) == 1 else "--"
             if not val:
-                salloc += [prefix + opt]
+                salloc_args += [prefix + opt]
             else:
-                salloc += ["=".join((prefix+opt, str(val)))]
+                salloc_args += ["=".join((prefix+opt, str(val)))]
 
-        return salloc
+        return salloc_args

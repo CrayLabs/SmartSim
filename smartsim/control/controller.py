@@ -34,6 +34,7 @@ class Controller():
         self._jobs = JobManager()
         self.init_launcher(launcher)
 
+
     def start(self, ensembles=None, nodes=None, orchestrator=None):
         """Start the Controller instance
 
@@ -50,17 +51,18 @@ class Controller():
         :param orchestrator: Orchestrator object to be launched for entity communication
         :type orchestrator: Orchestrator object
         """
-        if isinstance(ensembles, Ensemble):
-            ensembles = [ensembles]
-        if isinstance(nodes, SmartSimNode):
-            nodes = [nodes]
-        if orchestrator and not isinstance(orchestrator, Orchestrator):
-            raise TypeError(
-                f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
-            )
-        self._sanity_check_launch(orchestrator)
-        models = self._update_models(ensembles)
+        self._sanity_check_launch(ensembles, nodes, orchestrator)
+        # TODO remove this, this is hacky
+        models = []
+        if ensembles:
+            for ensemble in ensembles:
+                models.extend(ensemble.get_models())
         self._launch(models, nodes, orchestrator)
+
+        # start the job manager thread if not already started
+        if not self._jobs.actively_monitoring:
+            self._jobs.start()
+
 
     def stop(self, ensembles=None, models=None, nodes=None, orchestrator=None):
         """Stop the Controller instance
@@ -176,19 +178,43 @@ class Controller():
         all_finished = False
         while not all_finished:
             time.sleep(interval)
-            ignore_db = not poll_db
-            all_finished = self._jobs.poll(ignore_db=ignore_db, verbose=verbose)
+            finished = []
+            for _, job in self._jobs().items():
+                if not poll_db and job.entity.type == "db":
+                    continue
+                else:
+                    finished.append(self._launcher.is_finished(job.status))
+                    if verbose:
+                        logger.info(job)
+            if all(finished):
+                all_finished = True
+
 
     def finished(self, entity):
-        """Return a boolean indicating wether a job has finished
+        """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim. One of the following:
                           (SmartSimNode, NumModel, Ensemble)
         :type entity: SmartSimEntity
-        :returns: boolean indicating if a job is finished
-        :rtype: bool
+        :returns: bool
         """
-        return self._jobs.finished(entity)
+        try:
+            if isinstance(entity, Orchestrator):
+                raise SmartSimError(
+                    "Finished() does not support Orchestrator instances")
+            if not isinstance(entity, SmartSimEntity):
+                raise SmartSimError(
+                    "Finished() only takes arguments of SmartSimEntity instances")
+            if isinstance(entity, Ensemble):
+                return all([self.finished(model) for model in entity.models.values()])
+
+            job = self._jobs[entity.name]
+            #self._jobs.check_job(entity.name) # shouldnt be necessary if jobmanager is running
+            return self._launcher.is_finished(job.status)
+        except KeyError:
+            raise SmartSimError(
+                f"Entity by the name of {entity.name} has not been launched by this Controller")
+
 
     def get_orchestrator_status(self, orchestrator):
         """Return the workload manager status of an Orchestrator
@@ -335,10 +361,14 @@ class Controller():
 
         for model in models:
             job = self._jobs[model.name]
-            self._jobs.check_job(model.name)
             logger.info(" ".join((
                 "Stopping model", model.name, "job", str(job.jid))))
-            self._launcher.stop(job.jid)
+            status = self._launcher.stop(job.jid)
+            job.set_status(status.status,
+                           status.returncode,
+                           error=status.error,
+                           output=status.output)
+            self._jobs.move_to_completed(job)
 
     def _stop_nodes(self, nodes):
         """Stops specified nodes.
@@ -360,10 +390,14 @@ class Controller():
 
         for node in nodes:
             job = self._jobs[node.name]
-            self._jobs.check_job(node.name)
             logger.info("Stopping node " + node.name + " job " +
                         job.jid)
-            self._launcher.stop(job.jid)
+            status = self._launcher.stop(job.jid)
+            job.set_status(status.status,
+                           status.returncode,
+                           error=status.error,
+                           output=status.output)
+            self._jobs.move_to_completed(job)
 
     def _stop_orchestrator(self, dbnodes):
         """Stops the orchestrator jobs that are currently running.
@@ -382,33 +416,14 @@ class Controller():
 
         for dbnode in dbnodes:
             job = self._jobs[dbnode.name]
-            self._jobs.check_job(dbnode.name)
             logger.debug("Stopping orchestrator on job " + job.jid)
-            self._launcher.stop(job.jid)
+            status = self._launcher.stop(job.jid)
+            job.set_status(status.status,
+                           status.returncode,
+                           error=status.error,
+                           output=status.output)
+            self._jobs.move_to_completed(job)
 
-    def _update_models(self, ensembles):
-        """Update the model run_settings of each ensemble
-
-        This function updates the run_settings of each
-        ensemble such that the default ensemble models all use
-        there own run_settings at launch.
-
-        :param ensembles: all ensembles passed to controller.start()
-        :type ensembles: list of Ensemble instances
-        :return: list of NumModel instances
-        :rtype: list
-        """
-        if not ensembles:
-            return []
-
-        models = []
-        for ensemble in ensembles:
-            run_settings = ensemble.run_settings
-            for model in ensemble.models.values():
-                if ensemble.name != "default":
-                    model.update_run_settings(run_settings)
-                models.append(model)
-        return models
 
     def _launch(self, models, nodes, orchestrator):
         """Launch provided entities
@@ -432,10 +447,9 @@ class Controller():
         if orchestrator:
             active_orc = False
             if not isinstance(self._launcher, LocalLauncher):
-                node_to_test = orchestrator.dbnodes[0]
-                if self._jobs.job_exists(node_to_test):
-                    # TODO change this to use self._jobs.finished()
-                    if self._jobs.get_status(node_to_test) == "RUNNING":
+                db_node = orchestrator.dbnodes[0]
+                if db_node.name in self._jobs.db_jobs:
+                    if not self.finished(db_node):
                         active_orc = True
 
             if not active_orc:
@@ -456,7 +470,6 @@ class Controller():
         model_steps = self._create_steps(models, orchestrator)
         self._launch_nodes(node_steps)
         self._launch_models(model_steps)
-        logger.info("All entities launched")
 
 
     def _create_steps(self, entities, orchestrator):
@@ -546,19 +559,23 @@ class Controller():
         :type orchestrator: Orchestrator
         :raises SmartSimError: if orchestrator launch fails
         """
-        logger.debug("Launching orchestrator...")
         for step_tuple in orc_steps:
             step, dbnode = step_tuple
             try:
                 job_id = self._launcher.run(step)
-                self._jobs.add_job(dbnode.name, job_id, dbnode)
+                if self._jobs.query_restart(dbnode.name):
+                    logger.debug(f"Restarting database node: {dbnode.name}")
+                    self._jobs.restart_job(dbnode.name, job_id)
+                else:
+                    logger.debug(f"Launching database node: {dbnode.name}")
+                    self._jobs.add_job(dbnode.name, job_id, dbnode)
 
                 job_nodes = self._jobs.get_job_nodes(dbnode.name)
                 orchestrator.junction.store_db_addr(job_nodes,
                                                     dbnode.ports)
             except LauncherError as e:
                 logger.error(
-                    "An error occured when launching the KeyDB nodes\n" +
+                    "An error occured when launching the database nodes\n" +
                     "Check database node output files for details.")
                 raise SmartSimError(
                     f"Database node {dbnode.name} failed to launch"
@@ -578,9 +595,14 @@ class Controller():
         for step_tuple in node_steps:
             step, node = step_tuple
             try:
-                logger.debug(f"Launching Node: {node.name}")
+
                 job_id = self._launcher.run(step)
-                self._jobs.add_job(node.name, job_id, node)
+                if self._jobs.query_restart(node.name):
+                    logger.debug(f"Restarting SmartSimNode: {node.name}")
+                    self._jobs.restart_job(node.name, job_id)
+                else:
+                    logger.debug(f"Launching SmartSimNode: {node.name}")
+                    self._jobs.add_job(node.name, job_id, node)
             except LauncherError as e:
                 logger.error(
                     "An error occured when launching SmartSimNodes\n" +
@@ -603,16 +625,20 @@ class Controller():
         for step_tuple in model_steps:
             step, model = step_tuple
             try:
-                logger.debug(f"Launching Model: {model.name}")
                 job_id = self._launcher.run(step)
-                self._jobs.add_job(model.name, job_id, model)
+                if self._jobs.query_restart(model.name):
+                    logger.debug(f"Restarting Model: {model.name}")
+                    self._jobs.restart_job(model.name, job_id)
+                else:
+                    logger.debug(f"Launching model: {model.name}")
+                    self._jobs.add_job(model.name, job_id, model)
             except LauncherError as e:
                 logger.error(
                     "An error occured when launching model ensembles.\n" +
                     "Check model output files for details.")
                 raise SmartSimError(
                     "Model %s failed to launch" % model.name
-                    ) from None
+                    ) from e
 
 
     def _create_orchestrator_cluster(self, orchestrator):
@@ -630,8 +656,8 @@ class Controller():
         create_cluster(db_nodes, all_ports)
         check_cluster_status(db_nodes, all_ports)
 
-    def _sanity_check_launch(self, orchestrator):
-        """Check the orchestrator settigns
+    def _sanity_check_launch(self, ensembles, nodes, orchestrator):
+        """Check the orchestrator settings
 
         Sanity check the orchestrator settings in case the
         user tries to do something silly. This function will
@@ -649,7 +675,7 @@ class Controller():
                     "Local launcher does not support launching multiple databases")
 
     def _save_orchestrator(self, orchestrator):
-        """Save the orchestartor object via pickle
+        """Save the orchestrator object via pickle
 
         This function saves the orchestrator information to a pickle
         file that can be imported by subsequent experiments to reconnect

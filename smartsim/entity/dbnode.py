@@ -12,13 +12,15 @@ class DBNode(SmartSimEntity):
        into the smartsimdb.conf.
     """
 
-    def __init__(self, dbnodenum, path, run_settings, port=6379, cluster=True, **kwargs):
+    def __init__(self, dbnodenum, path, db_conf, run_settings, port=6379, cluster=True):
         """Initialize a database node within an orchestrator.
 
         :param dbnodenum: database node id within orchestrator
         :type dbnodenum: int
         :param path: path to output and error files
         :type path: str
+        :param db_conf: location of the database configuration file
+        :type db_conf: str
         :param run_settings: how dbnode should be run, set by orchestrator
         :type run_settings: dict
         :param port: starting port of the node, incremented for each
@@ -28,11 +30,11 @@ class DBNode(SmartSimEntity):
         :type cluster: bool, optional
         """
         name = "orchestrator_" + str(dbnodenum)
-        super().__init__(name, path, "db", run_settings, **kwargs)
+        super().__init__(name, path, "db", run_settings)
         self.ports = []
-        self.setup_dbnodes(cluster, port)
+        self.setup_dbnodes(cluster, port, db_conf)
 
-    def setup_dbnodes(self, cluster, port):
+    def setup_dbnodes(self, cluster, port, db_conf):
         """Initialize and construct the database instances for this
            specific database node. If ppn in run_settings is > 1,
            multiple instances of a database will be created on the
@@ -47,12 +49,11 @@ class DBNode(SmartSimEntity):
         :type cluster: bool
         :param port: starting port of this node
         :type port: int
+        :param db_conf: path to the database configuration file
+        :type db_conf: str
         """
-        sshome = get_env("SMARTSIMHOME")
-        conf_path = os.path.join(sshome, "smartsim/smartsimdb.conf")
         db_args = ""
         exe_args = []
-
         db_per_node = self.run_settings["ppn"]
         for db_id in range(db_per_node):
             next_port = port + db_id
@@ -64,7 +65,7 @@ class DBNode(SmartSimEntity):
                 if not "alloc" in self.run_settings:
                     db_args = "--daemonize yes"
 
-            exe_args.append(" ".join((conf_path, "--port", str(next_port), db_args)))
+            exe_args.append(" ".join((db_conf, "--port", str(next_port), db_args)))
             self.ports.append(next_port)
 
         # if only one database to launch per node, were not launching
@@ -72,11 +73,7 @@ class DBNode(SmartSimEntity):
         if db_per_node == 1:
             exe_args = exe_args[0]
 
-        new_settings = {
-            "executable": os.path.join(sshome, "third-party/KeyDB/src/keydb-server"),
-            "exe_args": exe_args
-        }
-        self.update_run_settings(new_settings)
+        self.update_run_settings({"exe_args": exe_args})
 
 
     def _create_cluster_args(self, port):

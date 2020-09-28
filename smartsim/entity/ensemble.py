@@ -1,7 +1,12 @@
+
 from os import path, mkdir
-from ..error import EntityExistsError, SmartSimError
-from .entity import SmartSimEntity
+from copy import deepcopy
+
+from .model import NumModel
 from .files import EntityFiles
+from .entity import SmartSimEntity
+from ..error import EntityExistsError, SmartSimError, SSUnsupportedError
+from .strategies import create_all_permutations, random_permutations, step_values
 
 class Ensemble(SmartSimEntity):
     """Ensembles are groups of NumModels that can be used
@@ -13,8 +18,10 @@ class Ensemble(SmartSimEntity):
        will inherit the run_settings of that ensemble.
     """
 
-    def __init__(self, name, params, experiment, path, run_settings={}):
+    def __init__(self, name, params, experiment, path, run_settings={},
+                 perm_strat="all_perm", **kwargs):
         """Initialize an Ensemble of NumModel instances.
+        TODO update this docstring
 
         :param name: Name of the ensemble
         :type name: str
@@ -32,6 +39,55 @@ class Ensemble(SmartSimEntity):
         self.experiment = experiment
         self._key_prefixing_enabled = True
         self.models = {}
+        self._init_models(perm_strat, **kwargs)
+
+    def _init_models(self, perm_strat, **kwargs):
+        # TODO look into overwrite
+        strategy = self._set_strategy(perm_strat)
+        names, params = self._read_model_parameters()
+        if len(names) > 0 and len(params) > 0:
+            all_model_params = strategy(names, params, **kwargs)
+
+            for i, param_set in enumerate(all_model_params):
+                if not isinstance(param_set, dict):
+                    raise SmartSimError(f"Permutation strategy returned invalid values")
+
+                model_name = "_".join((self.name, str(i)))
+                model = NumModel(model_name, param_set, self.path, run_settings=self.run_settings)
+                self.add_model(model)
+
+    def _set_strategy(self, strategy):
+        if strategy == "all_perm":
+            return create_all_permutations
+        elif strategy == "step":
+            return step_values
+        elif strategy == "random":
+            return random_permutations
+        elif callable(strategy):
+            return strategy
+        else:
+            raise SSUnsupportedError(
+                f"Permutation strategy given is not supported: {strategy}")
+
+    def _read_model_parameters(self):
+        if not isinstance(self.params, dict):
+            raise TypeError(
+                "Ensemble initialization argument 'params' must be of type dict")
+        else:
+            param_names = []
+            parameters = []
+            for name, val in self.params.items():
+                param_names.append(name)
+
+                if isinstance(val, list):
+                    parameters.append(val)
+                elif isinstance(val, str) or isinstance(val, int):
+                    parameters.append([val])
+                else:
+                    raise TypeError(
+                        "Incorrect type for ensemble parameters\n" +
+                        "Must be list, int, or string.")
+            return param_names, parameters
 
     def add_model(self, model, overwrite=False):
         """Add a model to this ensemble
@@ -89,6 +145,19 @@ class Ensemble(SmartSimEntity):
         :rtype: dict
         """
         return all([model.query_key_prefixing() for model in self.models])
+
+    def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
+        super().attach_generator_files(to_copy=to_copy,
+                                       to_symlink=to_symlink,
+                                       to_configure=to_configure)
+        for model in self.models.values():
+            model.attach_generator_files(to_copy=to_copy,
+                                         to_symlink=to_symlink,
+                                         to_configure=to_configure)
+
+
+    def get_models(self):
+        return list(self.models.values())
 
     def __str__(self):
         ensemble_str = f"\nEnsemble: {self.name}"

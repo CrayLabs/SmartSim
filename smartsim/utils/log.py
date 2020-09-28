@@ -4,6 +4,10 @@ import coloredlogs
 from ..error import SSConfigError
 from ..utils.helpers import get_env
 
+# constants for logging
+coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
+coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
+
 
 def _get_log_level():
     """Get the logging level based on environment variable
@@ -47,6 +51,14 @@ def get_logger(name=None, log_level=None):
                           defined in the python logging module.
     """
     # if name is None, then logger is the root logger
+    # if not root logger, get the name of file without prefix.
+    if name:
+        try:
+            user_log_level = str(get_env("SMARTSIM_LOG_LEVEL"))
+            if user_log_level != "developer" and user_log_level != "debug":
+                name = "SmartSim"
+        except SSConfigError:
+            name = "SmartSim"
     logger = logging.getLogger(name)
     if log_level:
         logger.setLevel(log_level)

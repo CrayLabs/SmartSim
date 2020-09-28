@@ -21,11 +21,14 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = "NEW"
-        self.nodes = None
         self.returncode = None
+        self.output = None
+        self.error = None
+        self.nodes = None
+        self.history = History()
 
-    def set_status(self, new_status, returncode):
-        """Set the status of a job.
+    def set_status(self, new_status, returncode, error=None, output=None):
+        """Set the status  of a job.
 
         :param new_status: The new status of the job
         :type new_status: str
@@ -34,6 +37,32 @@ class Job:
         """
         self.status = new_status
         self.returncode = returncode
+        self.error = error
+        self.output = output
+
+    def record_history(self):
+        self.history.record(self.jid, self.status, self.returncode, self.error, self.output)
+
+    def reset(self, new_job_id):
+        self.jid = new_job_id
+        self.status = "NEW"
+        self.returncode = None
+        self.output = None
+        self.error = None
+        self.nodes = None
+        self.history.new_run()
+
+    def error_report(self):
+        warning = f"{self.name} failed. See below for details \n"
+        warning += f"{self.entity.type} {self.name} produced the following error \n"
+        warning += f"Error: {self.error} \n"
+        warning += f"Output: {self.output} \n"
+        warning += f"Job status at failure: {self.status} \n"
+        warning += f"Job returncode: {self.returncode} \n"
+        warning += f"For more information on the error, check the files below: \n"
+        warning += f"{self.entity.type} error file: {self.entity.get_run_setting('err_file')} \n"
+        warning += f"{self.entity.type} output file: {self.entity.get_run_setting('out_file')} \n"
+        return warning
 
     def __str__(self):
         """Return user-readable string of the Job
@@ -43,3 +72,24 @@ class Job:
         """
         job = ("{}({}): {}")
         return job.format(self.name, self.jid, self.status)
+
+
+class History:
+
+    def __init__(self, runs=0):
+        self.runs = runs
+        self.jids = dict()
+        self.statuses = dict()
+        self.returns = dict()
+        self.errors = dict()
+        self.outputs = dict()
+
+    def record(self, job_id, status, returncode, error, output):
+        self.jids[self.runs] = job_id
+        self.statuses[self.runs] = status
+        self.returns[self.runs] = returncode
+        self.errors[self.runs] = error
+        self.outputs[self.runs] = output
+
+    def new_run(self):
+        self.runs += 1

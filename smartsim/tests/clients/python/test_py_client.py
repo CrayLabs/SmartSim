@@ -7,12 +7,12 @@ from smartsim import Experiment
 # control wether the test runs with a database cluster or not
 CLUSTER=True
 
-if not which("srun"):
-    pytestmark = pytest.mark.skip()
+#if not which("srun"):
+pytestmark = pytest.mark.skip()
 
-test_dir=path.dirname(path.abspath(__file__)) + "/"
-alloc_experiment = Experiment("alloc_retrieval")
-alloc = alloc_experiment.get_allocation(nodes=5, ppn=1)
+#test_dir=path.dirname(path.abspath(__file__)) + "/"
+#alloc_experiment = Experiment("alloc_retrieval")
+#alloc = alloc_experiment.get_allocation(nodes=5, ppn=1)
 
 @python_client_test()
 def test_ndarray_put_get_wo_prefixing():

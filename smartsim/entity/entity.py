@@ -2,6 +2,7 @@ from os import getcwd
 from os.path import join
 from .files import EntityFiles
 from ..error import SSConfigError
+from ..utils.helpers import expand_exe_path
 
 class SmartSimEntity:
     def __init__(self, name, path, entity_type, run_settings):
@@ -53,6 +54,9 @@ class SmartSimEntity:
         new_path = getcwd()
         if init_path:
             new_path = init_path
+
+        # expand the executable path
+        self.run_settings["executable"] = self._expand_entity_exe()
 
         self.set_path(new_path)
         default_run_settings.update(self.run_settings)
@@ -158,6 +162,25 @@ class SmartSimEntity:
         :type to_configure: list, optional
         """
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
+
+    def _expand_entity_exe(self):
+        """Run at initialization, this function finds and expands
+           the executable for the entity.
+
+        :param run_settings: dictionary of run_settings
+        :type run_settings: dict
+        """
+        try:
+            exe = self.run_settings["executable"]
+            full_exe = expand_exe_path(exe)
+            return full_exe
+        except KeyError:
+            raise SSConfigError(
+                f"User did not provide an executable in the run settings for {self.name}")
+        except SSConfigError as e:
+            raise SSConfigError(
+                f"Failed to create entity, bad executable argument in run settings") from e
+
 
     def __repr__(self):
         return self.name
