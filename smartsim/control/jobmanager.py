@@ -1,31 +1,30 @@
 import time
+import numpy as np
 from threading import Thread
 
 from .job import Job
-from ..error import SmartSimError, SSConfigError
-
-from ..entity import SmartSimEntity, Ensemble
-from ..orchestrator import Orchestrator
+from ..database import Orchestrator
 from ..launcher.launcher import Launcher
 from ..launcher.taskManager import Status
-import numpy as np
+from ..entity import SmartSimEntity, Ensemble
+from ..error import SmartSimError, SSConfigError
 
 from ..utils import get_logger, get_env
-logger = get_logger(__name__)
 
+logger = get_logger(__name__)
 
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
-       and the steps launched through the workload manager. The JobManager
-       holds jobs according to entity type.
+    and the steps launched through the workload manager. The JobManager
+    holds jobs according to entity type.
 
-       The JobManager is threaded and runs during the course of an experiment
-       to update the statuses of Jobs.
+    The JobManager is threaded and runs during the course of an experiment
+    to update the statuses of Jobs.
 
-       The JobManager and Controller share a single instance of a launcher
-       object that allows both the Controller and launcher access to the
-       wlm to query information about jobs that the user requests.
+    The JobManager and Controller share a single instance of a launcher
+    object that allows both the Controller and launcher access to the
+    wlm to query information about jobs that the user requests.
     """
 
     def __init__(self, launcher=None):
@@ -34,24 +33,23 @@ class JobManager:
         :param launcher: a Launcher object to manage jobs
         :type: SmartSim.Launcher
         """
-        self.name = "JobManager" + '-' + str(np.base_repr(time.time_ns(), 36))
+        self.name = "JobManager" + "-" + str(np.base_repr(time.time_ns(), 36))
         self.actively_monitoring = False
         self._launcher = launcher
         self.jobs = {}
         self.db_jobs = {}
-        self.node_jobs = {}
         self.completed = {}
 
-    def start(self, interval=5):
+    def start(self):
+        """Start a thread for the job manager"""
         monitor = Thread(name=self.name, daemon=True, target=self.run)
         monitor.start()
 
     def run(self):
-        """Start the JobManager
-
-        :param interval: polling interval
-        :type interval: int
+        """Start the JobManager thread to continually check
+        the status of all jobs.
         """
+        # TODO a way to control this interval as a configuration
         interval = 5
         logger.debug("Starting Job Manager thread: " + self.name)
 
@@ -94,11 +92,8 @@ class JobManager:
         # remove from actively monitored jobs
         if job.name in self.db_jobs.keys():
             del self.db_jobs[job.name]
-        elif job.name in self.node_jobs.keys():
-            del self.node_jobs[job.name]
         elif job.name in self.jobs.keys():
             del self.jobs[job.name]
-
 
     def __getitem__(self, job_name):
         """Return the job associated with the job_name
@@ -110,8 +105,6 @@ class JobManager:
         """
         if job_name in self.db_jobs.keys():
             return self.db_jobs[job_name]
-        elif job_name in self.node_jobs.keys():
-            return self.node_jobs[job_name]
         elif job_name in self.jobs.keys():
             return self.jobs[job_name]
         elif job_name in self.completed.keys():
@@ -120,16 +113,12 @@ class JobManager:
             raise KeyError
 
     def __call__(self):
-        """ Returns dictionary all jobs for () operator
+        """Returns dictionary all jobs for () operator
 
         :returns: Dictionary of all jobs
         :rtype: dictionary
         """
-        all_jobs = {
-            **self.jobs,
-            **self.node_jobs,
-            **self.db_jobs
-            }
+        all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
     def get_job_nodes(self, name, wait=2):
@@ -168,8 +157,6 @@ class JobManager:
         job = Job(name, job_id, entity)
         if entity.type == "db":
             self.db_jobs[name] = job
-        elif entity.type == "node":
-            self.node_jobs[name] = job
         else:
             self.jobs[name] = job
 
@@ -197,19 +184,20 @@ class JobManager:
                 job = self[entity_name]
                 status = self._launcher.get_step_status(job.jid)
 
-                job.set_status(status.status,
-                            status.returncode,
-                            error=status.error,
-                            output=status.output)
+                job.set_status(
+                    status.status,
+                    status.returncode,
+                    error=status.error,
+                    output=status.output,
+                )
         except SmartSimError:
             logger.warning(f"Could not retrieve status of {entity_name}")
-
 
     def get_status(self, entity):
         """Return the workload manager given status of a job.
 
         :param entity: object launched by SmartSim. One of the following:
-                    (SmartSimNode, NumModel, Orchestrator, Ensemble)
+                    (SmartSimNode, Model, Orchestrator, Ensemble)
         :type entity: SmartSimEntity
         :returns: tuple of status
         """
@@ -221,7 +209,8 @@ class JobManager:
             self.check_job(entity.name)
         except KeyError:
             raise SmartSimError(
-                f"Entity by the name of {entity.name} has not been launched by this Controller")
+                f"Entity by the name of {entity.name} has not been launched by this Controller"
+            )
         return job.status
 
     def _set_launcher(self, launcher):
@@ -232,19 +221,31 @@ class JobManager:
         """
         self._launcher = launcher
 
-
     def query_restart(self, job_name):
+        """See if the job just started should be restarted or not.
+
+        :param job_name: name of the job
+        :type job_name: str
+        :return: if job should be restarted instead of started
+        :rtype: bool
+        """
         if job_name in self.completed:
             return True
         return False
 
     def restart_job(self, job_name, new_job_id):
+        """Function to reset a job to record history and be
+        ready to launch again.
+
+        :param job_name: name of the job
+        :type job_name: str
+        :param new_job_id: new job id from the launcher
+        :type new_job_id: str
+        """
         job = self.completed[job_name]
         del self.completed[job_name]
         job.reset(new_job_id)
         if job.entity.type == "db":
             self.db_jobs[job_name] = job
-        elif job.entity.type == "node":
-            self.node_jobs[job_name] = job
         else:
             self.jobs[job_name] = job

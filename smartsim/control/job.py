@@ -1,10 +1,8 @@
-
-
 class Job:
     """Keep track of various information for the controller.
-       In doing so, continuously add various fields of information
-       that is queryable by the user through interface methods in
-       the controller class.
+    In doing so, continuously add various fields of information
+    that is queryable by the user through interface methods in
+    the controller class.
     """
 
     def __init__(self, job_name, job_id, entity):
@@ -41,9 +39,17 @@ class Job:
         self.output = output
 
     def record_history(self):
-        self.history.record(self.jid, self.status, self.returncode, self.error, self.output)
+        """Record the launching history of a job."""
+        self.history.record(
+            self.jid, self.status, self.returncode, self.error, self.output
+        )
 
     def reset(self, new_job_id):
+        """Reset the job in order to be able to restart it.
+
+        :param new_job_id: new job id to launch under
+        :type new_job_id: str
+        """
         self.jid = new_job_id
         self.status = "NEW"
         self.returncode = None
@@ -53,6 +59,11 @@ class Job:
         self.history.new_run()
 
     def error_report(self):
+        """A descriptive error report based on job fields
+
+        :return: error report for display in terminal
+        :rtype: str
+        """
         warning = f"{self.name} failed. See below for details \n"
         warning += f"{self.entity.type} {self.name} produced the following error \n"
         warning += f"Error: {self.error} \n"
@@ -70,13 +81,21 @@ class Job:
         :returns: A user-readable string of the Job
         :rtype: str
         """
-        job = ("{}({}): {}")
+        job = "{}({}): {}"
         return job.format(self.name, self.jid, self.status)
 
 
 class History:
+    """History of a job instance. Holds various attributes based
+    on the previous launches of a job.
+    """
 
     def __init__(self, runs=0):
+        """Init a history object for a job
+
+        :param runs: number of runs so far, defaults to 0
+        :type runs: int, optional
+        """
         self.runs = runs
         self.jids = dict()
         self.statuses = dict()
@@ -85,6 +104,8 @@ class History:
         self.outputs = dict()
 
     def record(self, job_id, status, returncode, error, output):
+        """record the history of a job"""
+
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
         self.returns[self.runs] = returncode
@@ -92,4 +113,5 @@ class History:
         self.outputs[self.runs] = output
 
     def new_run(self):
+        """increment run total"""
         self.runs += 1

@@ -1,28 +1,12 @@
-import os
 import abc
-import time
-import atexit
-import zmq
-import pickle
-from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
-
-from .alloc import AllocManager
-from .launcherUtil import seq_to_str
-from ..error import LauncherError, SmartSimError
-from .shell import execute_cmd, is_remote
-
-
-from ..utils import get_logger, get_env
-logger = get_logger(__name__)
-
 
 class Launcher(abc.ABC):
 
     def __init__(self, *args, **kwargs):
-        self.alloc_manager = AllocManager()
         super().__init__()
 
     #-------------- Abstract Methods --------------
+    # currently not used
     @abc.abstractmethod
     def validate(self, nodes=None, ppn=None, partition=None):
         """Validate the functionality of the launcher and availability of
@@ -79,39 +63,6 @@ class Launcher(abc.ABC):
         """
         pass
 
-    @abc.abstractmethod
-    def accept_alloc(self):
-        """Accept a user provided and obtained allocation into the
-           Launcher for future launching of entities. Obtain as much
-           information about the allocation as possible by querying
-           the workload manager.
-
-        :param alloc_id: id of the allocation
-        :type alloc_id: str
-        :raises LauncherError: if the allocation cannot be found
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_alloc(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
-        """Request an allocation with the specified arguments. Anything
-           passed to the keywords args will be processed as a wlm
-           argument and appended to the allocation command with the appropriate
-           prefix (e.g. "-" or "--"). The requested allocation will be
-           added to the AllocManager for launching entities.
-
-           :param nodes: number of nodes for the allocation, defaults to 1
-           :type nodes: int, optional
-           :param ppn: number of tasks to run per node, defaults to 1
-           :type ppn: int, optional
-           :param duration: length of the allocation in HH:MM:SS format,
-                           defaults to "1:00:00"
-           :type duration: str, optional
-           :raises LauncherError: if the allocation is not successful
-           :return: the id of the allocation
-           :rtype: str
-        """
-        pass
 
     @abc.abstractmethod
     def run(self, step):
@@ -151,14 +102,7 @@ class Launcher(abc.ABC):
         """
         pass
 
-    @abc.abstractmethod
-    def free_alloc(self, alloc_id):
-        """Free an allocation from within the launcher so
-           that these resources can be used by other users.
 
-        :param alloc_id: allocation id
-        :type alloc_id: str
-        :raises LauncherError: if allocation not found within the AllocManager
-        :raises LauncherError: if allocation could not be freed
-        """
+    @abc.abstractmethod
+    def __str__(self):
         pass

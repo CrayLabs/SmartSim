@@ -2,23 +2,24 @@ from os import path
 
 from ..error import SSConfigError
 
+
 class EntityFiles:
     """EntityFiles are the files a user wishes to have available to
-       models and nodes within SmartSim. Each entity has a method
-       `entity.attach_generator_files()` that creates one of these
-       objects such that at generation time, each file type will be
-       present within the generated model or node directory.
+    models and nodes within SmartSim. Each entity has a method
+    `entity.attach_generator_files()` that creates one of these
+    objects such that at generation time, each file type will be
+    present within the generated model or node directory.
 
-       Tagged files are the configuration files for a model that
-       can be searched through and edited by the ModelWriter.
+    Tagged files are the configuration files for a model that
+    can be searched through and edited by the ModelWriter.
 
-       Copy files are files that a user wants to copy into the
-       model or node directory without searching through and
-       editing them for tags.
+    Copy files are files that a user wants to copy into the
+    model or node directory without searching through and
+    editing them for tags.
 
-       Lastly, symlink can be used for big datasets or input
-       files that a user just wants to have present in the directory
-       without necessary having to copy the entire file.
+    Lastly, symlink can be used for big datasets or input
+    files that a user just wants to have present in the directory
+    without necessary having to copy the entire file.
     """
 
     def __init__(self, tagged, copy, symlink):
@@ -80,11 +81,11 @@ class EntityFiles:
                     file_list = [file_list]
                 else:
                     raise TypeError(
-                        f"{file_type} files given were not of type list or str")
+                        f"{file_type} files given were not of type list or str"
+                    )
             else:
                 if not all(isinstance(f, str) for f in file_list):
-                    raise TypeError(
-                        f"Not all {file_type} files were of type str")
+                    raise TypeError(f"Not all {file_type} files were of type str")
         return file_list
 
     def _check_path(self, file_path):

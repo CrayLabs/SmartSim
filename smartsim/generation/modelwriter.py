@@ -2,15 +2,15 @@ import re
 import glob
 import os
 from os import path
-from ..error import GenerationError
+from ..error import ParameterWriterError
 
 from ..utils import get_logger
+
 logger = get_logger(__name__)
 logger.propagate = False
 
 
 class ModelWriter:
-
     def __init__(self):
         self.tag = ";"
         self.regex = "(;.+;)"
@@ -30,14 +30,14 @@ class ModelWriter:
             self.regex = regex
         else:
             self.tag = tag
-            self.regex = "".join(('(',tag,".+", tag, ')'))
+            self.regex = "".join(("(", tag, ".+", tag, ")"))
 
     def configure_tagged_model_files(self, model):
-        """Read, write and configure tagged files attached to a NumModel
+        """Read, write and configure tagged files attached to a Model
            instance.
 
         :param model: a model instance
-        :type model: NumModel
+        :type model: Model
         """
         logger.debug(f"Configuring model {model.name} with params {model.params}")
         for tagged_file in model.files.tagged:
@@ -50,29 +50,34 @@ class ModelWriter:
 
         :param file_path: path to the newly created and tagged file
         :type file_path: str
-        :raises GenerationError: if the newly created file cannot be read
+        :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
             fp = open(file_path, "r+")
             self.lines = fp.readlines()
             fp.close()
         except (IOError, OSError):
-            raise GenerationError(
-                f"Could not edit tagged file {file_path}")
+            raise ParameterWriterError(file_path)
 
     def _write_changes(self, file_path):
-        """Write the ensemble-specific changes"""
-        fp = open(file_path, "w+")
-        for line in self.lines:
-            fp.write(line)
-        fp.close()
+        """Write the ensemble-specific changes
+
+        :raises ParameterWriterError: if the newly created file cannot be read
+        """
+        try:
+            fp = open(file_path, "w+")
+            for line in self.lines:
+                fp.write(line)
+            fp.close()
+        except (IOError, OSError):
+            raise ParameterWriterError(file_path, read=False)
 
     def _replace_tags(self, model):
         """Replace the tagged within the tagged file attached to this
            model. The tag defaults to ";"
 
         :param model: The model instance
-        :type model: NumModel
+        :type model: Model
         """
         edited = []
         unused_tags = {}
@@ -92,14 +97,13 @@ class ModelWriter:
                     tag = tagged_line.split(self.tag)[1]
                     if tag not in unused_tags:
                         unused_tags[tag] = []
-                    unused_tags[tag].append(i+1)
+                    unused_tags[tag].append(i + 1)
                     edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
         for tag in unused_tags.keys():
             logger.warning(f"Unused tag {tag} on line(s): {str(unused_tags[tag])}")
         self.lines = edited
-
 
     def _is_ensemble_spec(self, tagged_line, model_params):
         split_tag = tagged_line.split(self.tag)
@@ -111,4 +115,3 @@ class ModelWriter:
     def _get_prev_value(self, tagged_line):
         split_tag = tagged_line.split(self.tag)
         return split_tag[1]
-

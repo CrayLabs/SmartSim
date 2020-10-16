@@ -38,7 +38,7 @@ class MPO():
                              parameters, defaults to {}
         :type model_params: dict, optional
         :return: model instance
-        :rtype: NumModel
+        :rtype: Model
         """
         # add allocation to model run_settings
         if self.alloc:

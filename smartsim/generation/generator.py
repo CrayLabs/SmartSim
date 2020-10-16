@@ -2,33 +2,36 @@ import sys
 import shutil
 
 from itertools import product
-from os import mkdir, getcwd, path, symlink
 from distutils import dir_util
+from os import mkdir, getcwd, path, symlink
 
+from ..database import Orchestrator
+from ..entity import Model, Ensemble
 from .modelwriter import ModelWriter
-from ..entity import NumModel, Ensemble, SmartSimNode
-from ..orchestrator import Orchestrator
+from ..error import EntityExistsError
+from ..utils.entityutils import seperate_entities
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
-from ..error import GenerationError, EntityExistsError
 
 from ..utils import get_logger
+
 logger = get_logger(__name__)
 logger.propagate = False
 
 
-class Generator():
+class Generator:
     """The primary job of the generator is to create, and configure models
-       for ensembles. When a user creates an ensemble with parameters, the
-       ensemble can be given to the generator for configuration of its model
-       files. For more information on model generation see
-       ``Generator.generate_experiment``.
+    for ensembles. When a user creates an ensemble with parameters, the
+    ensemble can be given to the generator for configuration of its model
+    files. For more information on model generation see
+    ``Generator.generate_experiment``.
 
-       The Generator also creates the file structure for a SmartSim
-       experiment. When called from experiment, all entities present
-       within SmartSim will have directories created for their error
-       and output files.
+    The Generator also creates the file structure for a SmartSim
+    experiment. When called from experiment, all entities present
+    within SmartSim will have directories created for their error
+    and output files.
     """
-    def __init__(self, overwrite=False):
+
+    def __init__(self, gen_path, overwrite=False):
         """Initialize a generator object
 
            if overwrite is true, replace any existing
@@ -42,140 +45,69 @@ class Generator():
         :type overwrite: bool, optional
         """
         self._writer = ModelWriter()
+        self.gen_path = gen_path
         self.overwrite = overwrite
 
-    def generate_experiment(self, exp_path, ensembles=[], nodes=[], orchestrator=None):
+    def generate_experiment(self, *args):
         """Run ensemble and experiment file structure generation
 
-           Generate the file structure for a SmartSim experiment. This
-           includes the writing and configuring of input files for a
-           model. Ensembles created with a 'params' argument will be
-           expanded into multiple models based on a generation strategy.
+         TODO update this docstring
+        Generate the file structure for a SmartSim experiment. This
+        includes the writing and configuring of input files for a
+        model.
 
-           To have files or directories present in the created entity
-           directories, such as datasets or input files, call
-           ``entity.attach_generator_files`` prior to generation. See
-           ``entity.attach_generator_files`` for more information on
-           what types of files can be included.
+        To have files or directories present in the created entity
+        directories, such as datasets or input files, call
+        ``entity.attach_generator_files`` prior to generation. See
+        ``entity.attach_generator_files`` for more information on
+        what types of files can be included.
 
-           Tagged model files are read, checked for input variables to
-           configure, and written. Input variables to configure are
-           specified with a tag within the input file itself.
-           The default tag is surronding an input value with semicolons.
-           e.g. ``THERMO=;90;``
-
-        :param exp_path: path to the experiment directory
-        :type exp_path: str
-        :param ensembles: list of Ensemble instances
-        :type ensembles: list
-        :param nodes: list of SmartSimNode instances
-        :type nodes: list
-        :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
-        :raises SmartSimError: if generation fails
+        Tagged model files are read, checked for input variables to
+        configure, and written. Input variables to configure are
+        specified with a tag within the input file itself.
+        The default tag is surronding an input value with semicolons.
+        e.g. ``THERMO=;90;``
         """
-        if isinstance(ensembles, Ensemble):
-            ensembles = [ensembles]
-        if isinstance(nodes, SmartSimNode):
-            nodes = [nodes]
-        if orchestrator and not isinstance(orchestrator, Orchestrator):
-            raise TypeError(
-                f"Argument given for orchestrator is of type {type(orchestrator)}, not Orchestrator"
-            )
-        self._create_experiment_dir(exp_path)
-        self._create_orchestrator_dir(exp_path, orchestrator)
-        self._create_nodes(exp_path, nodes)
-        self._create_ensembles(exp_path, ensembles)
-
-    def generate_ensemble(self, exp_path, ensembles):
-        """Generate models and file structure for an ensemble
-
-           Generate a single or a list of ensembles. This will
-           generate the underlying model objects as well as configure
-           and write their input files if attached.
-
-           A directory for the ensemble and it's models will be
-           created as a result of this function.
-
-        :param exp_path: path to the experiment directory
-        :type exp_path: str
-        :param ensembles: list of Ensembles
-        :type ensembles: list
-        :raises TypeError: if ensembles argument is not of type Ensemble
-                           or list of Ensembles
-        """
-        if isinstance(ensembles, Ensemble):
-            ensembles = [ensembles]
-        if not isinstance(ensembles[0], Ensemble):
-            raise TypeError(
-                f"ensembles argument must be of type Ensemble or list of Ensemble"
-            )
-        self._create_experiment_dir(exp_path)
-        self._create_ensembles(exp_path, ensembles)
-
-    def generate_node(self, exp_path, nodes):
-        """Generate file structure for a SmartSimNode(s)
-
-           Generate a single or list of SmartSimNodes.
-           A directory will be created in the experiment
-           directory for each model.
-
-        :param exp_path: path to the experiment
-        :type exp_path: str
-        :param nodes: list of SmartSimNodes
-        :type nodes: list
-        :raises TypeError: if nodes is not of type SmartSimNode or
-                           list of SmartSimNodes.
-        """
-        if isinstance(nodes, SmartSimNode):
-            nodes = [nodes]
-        if not isinstance(nodes[0], SmartSimNode):
-            raise TypeError(
-                f"nodes argument must be of type SmartSimNode or list of SmartSimNode"
-            )
-        self._create_experiment_dir(exp_path)
-        self._create_nodes(exp_path, nodes)
+        entities, entity_lists, orchestrator = seperate_entities(args)
+        self._gen_exp_dir()
+        self._gen_orc_dir(orchestrator)
+        self._gen_entity_list_dir(entity_lists)
+        self._gen_entity_dirs(entities)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files
 
-           Set a tag or a regular expression for the
-           generator to look for when configuring new models.
+        Set a tag or a regular expression for the
+        generator to look for when configuring new models.
 
-           For example, a tag might be ``;`` where the
-           expression being replaced in the model configuration
-           file would look like ``;expression;``
+        For example, a tag might be ``;`` where the
+        expression being replaced in the model configuration
+        file would look like ``;expression;``
 
-           A full regular expression might tag specific
-           model configurations such that the configuration
-           files don't need to be tagged manually.
+        A full regular expression might tag specific
+        model configurations such that the configuration
+        files don't need to be tagged manually.
 
-           :param tag: A string of characters that signify
-                       an string to be changed. Defaults to ``;``
-           :type tag: str
+        :param tag: A string of characters that signify
+                    an string to be changed. Defaults to ``;``
+        :type tag: str
         """
         self._writer.set_tag(tag, regex)
 
-    def _create_experiment_dir(self, exp_path):
+    def _gen_exp_dir(self):
         """Create the directory for an experiment if it does not
-           already exist.
-
-        :param exp_path: path to the experiment
-        :type exp_path: str
+        already exist.
         """
 
-        if not path.isdir(exp_path):
-            mkdir(exp_path)
+        if not path.isdir(self.gen_path):
+            mkdir(self.gen_path)
         else:
             logger.info("Working in previously created experiment")
 
-
-    def _create_orchestrator_dir(self, exp_path, orchestrator):
+    def _gen_orc_dir(self, orchestrator):
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
-        :param exp_path: path to the experiment
-        :type exp_path: str
         :param orchestrator: Orchestrator instance
         :type orchestrator: Orchestrator
         """
@@ -183,7 +115,7 @@ class Generator():
         if not orchestrator:
             return
 
-        orc_path = path.join(exp_path, "orchestrator")
+        orc_path = path.join(self.gen_path, "database")
         orchestrator.set_path(orc_path)
 
         # Always remove orchestrator files if present.
@@ -191,82 +123,55 @@ class Generator():
             shutil.rmtree(orc_path)
         mkdir(orc_path)
 
-    def _create_nodes(self, exp_path, nodes):
-        """Create the node directories and copy/symlink any listed
-           files
+    def _gen_entity_list_dir(self, entity_lists):
 
-        :param exp_path: path to the experiment
-        :type exp_path: str
-        :param nodes: nodes to generate directories for
-        :type nodes: SmartSimNode
-        :raises EntityExistsError: if node directory already exists
-        """
-
-        if not nodes:
+        if not entity_lists:
             return
 
-        for node in nodes:
-            error = f"Node directory for {node.name} " \
-                    f"already exists with {exp_path}"
+        for elist in entity_lists:
 
-            node_path = path.join(exp_path, node.name)
-            node.set_path(node_path)
-            if path.isdir(node_path):
-                if not self.overwrite:
-                    raise EntityExistsError(error)
-                shutil.rmtree(node_path)
-            mkdir(node_path)
-
-            self._copy_entity_files(node)
-            self._link_entity_files(node)
-
-    def _create_ensembles(self, exp_path, ensembles):
-        """Create the ensemble directories and the model directories
-           within each ensemble.
-
-        :param exp_path: path to the experiment
-        :type exp_path: str
-        :param ensembles: list of ensembles
-        :type ensembles: list
-        :raises EntityExistsError: if a model directory already exists
-        """
-
-        if not ensembles:
-            return
-
-        for ensemble in ensembles:
-
-            ensemble_dir = path.join(exp_path, ensemble.name)
-            if path.isdir(ensemble_dir):
+            elist_dir = path.join(self.gen_path, elist.name)
+            if path.isdir(elist_dir):
                 if self.overwrite:
-                    shutil.rmtree(ensemble_dir)
-                    mkdir(ensemble_dir)
+                    shutil.rmtree(elist_dir)
+                    mkdir(elist_dir)
             else:
-                mkdir(ensemble_dir)
+                mkdir(elist_dir)
 
-            for name, model in ensemble.models.items():
-                dst = path.join(exp_path, ensemble.name, name)
-                if path.isdir(dst):
-                    if self.overwrite:
-                        shutil.rmtree(dst)
-                    else:
-                        error = f"Model directory for {model.name} " \
-                                f"already exists with {exp_path}"
-                        raise EntityExistsError(error)
-                mkdir(dst)
-                model.set_path(dst)
-                self._copy_entity_files(model)
-                self._link_entity_files(model)
-                self._write_tagged_entity_files(model)
+            self._gen_entity_dirs(elist.entities, entity_list=elist)
 
+    def _gen_entity_dirs(self, entities, entity_list=None):
+        if not entities:
+            return
+
+        for entity in entities:
+            if entity_list:
+                dst = path.join(self.gen_path, entity_list.name, entity.name)
+            else:
+                dst = path.join(self.gen_path, entity.name)
+
+            if path.isdir(dst):
+                if self.overwrite:
+                    shutil.rmtree(dst)
+                else:
+                    error = (
+                        f"Directory for entity {entity.name} "
+                        f"already exists in path {dst}"
+                    )
+                    raise EntityExistsError(error)
+            mkdir(dst)
+            entity.set_path(dst)
+            self._copy_entity_files(entity)
+            self._link_entity_files(entity)
+            self._write_tagged_entity_files(entity)
 
     def _write_tagged_entity_files(self, entity):
         """Read, configure and write the tagged input files for
-           a NumModel instance within an ensemble. This function
+           a Model instance within an ensemble. This function
            specifically deals with the tagged files attached to
            an Ensemble.
 
-        :param entity: a SmartSimEntity, for now just NumModels
+        :param entity: a SmartSimEntity, for now just Models
         :type entity: SmartSimEntity
         """
         if entity.files:
@@ -280,12 +185,12 @@ class Generator():
                 self._writer.configure_tagged_model_files(entity)
 
     def _copy_entity_files(self, entity):
-         """Copy the entity files and directories attached to this entity.
+        """Copy the entity files and directories attached to this entity.
 
-         :param entity: SmartSimEntity
-         :type entity: SmartSimEntity
-         """
-         if entity.files:
+        :param entity: SmartSimEntity
+        :type entity: SmartSimEntity
+        """
+        if entity.files:
             for i, to_copy in enumerate(entity.files.copy):
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
@@ -298,9 +203,9 @@ class Generator():
     def _link_entity_files(self, entity):
         """Symlink the entity files attached to this entity.
 
-         :param entity: SmartSimEntity
-         :type entity: SmartSimEntity
-         """
+        :param entity: SmartSimEntity
+        :type entity: SmartSimEntity
+        """
         if entity.files:
             for i, to_link in enumerate(entity.files.link):
                 dst_path = path.join(entity.path, path.basename(to_link))

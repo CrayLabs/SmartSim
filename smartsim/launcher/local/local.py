@@ -119,3 +119,6 @@ class LocalLauncher:
             of.write(output)
         with open(err_file, "w+") as ef:
             ef.write(error)
+
+    def __str__(self):
+        return "local"

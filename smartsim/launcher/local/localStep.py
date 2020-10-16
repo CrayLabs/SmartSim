@@ -1,5 +1,4 @@
 import os
-from ...utils import get_config
 from ...error import SSConfigError
 
 class LocalStep:
@@ -19,11 +18,8 @@ class LocalStep:
         """
 
         try:
-            exe = get_config("executable", self.run_settings, none_ok=False)
-            exe_args = get_config("exe_args", self.run_settings, none_ok=True)
-            if not exe_args:
-                exe_args = ""
-
+            exe = self.run_settings.get("executable")
+            exe_args = self.run_settings.get("exe_args", "")
             cmd = " ".join((exe, exe_args))
 
             return [cmd]

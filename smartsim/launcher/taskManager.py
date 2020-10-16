@@ -5,6 +5,7 @@ from threading import Thread
 
 from ..error import SSConfigError
 from ..utils import get_logger, get_env
+
 logger = get_logger(__name__)
 
 try:
@@ -14,29 +15,45 @@ except SSConfigError:
     verbose_tm = False
 
 
-class TaskManager():
+class TaskManager:
     """The Task Manager watches the subprocesses launched through
-       the asyncronous shell interface. Each task is a wrapper
-       around the popen that links it to the id of the Job instance
-       it is connected to.
+    the asyncronous shell interface. Each task is a wrapper
+    around the popen that links it to the id of the Job instance
+    it is connected to.
+
+    The Task manager can be optionally added to any launcher interface
+    to have greater control over the entities that are launched.
+
+    The task manager connects to the job manager through the launcher
+    so as to not break encapsulation between the controller and launcher.
+
+    Each time a status is requested, a launcher can check the task
+    manager to ensure that the task is still alive and well.
     """
+
     # time to wait between status checks
     interval = 3
 
     def __init__(self):
-        """Start the TaskManager thread
-        """
-        self.name = "TaskManager" + '-' + str(np.base_repr(time.time_ns(), 36))
+        """Initialize a task manager thread."""
+        self.name = "TaskManager" + "-" + str(np.base_repr(time.time_ns(), 36))
         self.actively_monitoring = False
         self.statuses = dict()
         self.tasks = []
 
     def start(self):
+        """Start the task manager thread"""
         monitor = Thread(name=self.name, daemon=True, target=self.run)
         monitor.start()
 
     def run(self):
-        """Start the TaskManager"""
+        """Start the loop that continually checks tasks for status.
+
+        One piece to note is that if a command server is used, the
+        output and error of the task will not be propagated through
+        the command schema. This is because piped Popens cannot be
+        serialized.
+        """
         global verbose_tm
         if verbose_tm:
             logger.debug("Starting Task Manager thread: " + self.name)
@@ -46,7 +63,9 @@ class TaskManager():
             time.sleep(self.interval)
             if verbose_tm:
                 logger.debug(f"{self.name} - Active Tasks: {len(self.tasks)}")
-                logger.debug(f"{self.name} - Task Returncodes: {[task.returncode for task in self.tasks]}")
+                logger.debug(
+                    f"{self.name} - Task Returncodes: {[task.returncode for task in self.tasks]}"
+                )
 
             for task in self.tasks:
                 returncode = task.check_status()
@@ -64,7 +83,6 @@ class TaskManager():
                 self.actively_monitoring = False
                 if verbose_tm:
                     logger.debug(f"{self.name} - Sleeping, no tasks to monitor")
-
 
     def add_task(self, popen_process, step_id):
         """Create and add a task to the TaskManager
@@ -107,8 +125,8 @@ class TaskManager():
 
 class Task:
     """A Task is a wrapper around a Popen object that includes a reference
-       to the Job id created by the launcher. For the local launcher this
-       will just be the pid of the Popen object
+    to the Job id created by the launcher. For the local launcher this
+    will just be the pid of the Popen object
     """
 
     def __init__(self, popen_process, step_id):
@@ -120,7 +138,7 @@ class Task:
         :type step_id: str
         """
         self.process = popen_process
-        self.step_id = step_id # dependant on the launcher type
+        self.step_id = step_id  # dependant on the launcher type
 
     def has_piped_io(self):
         """When jobs are spawned using the command server they
@@ -166,11 +184,11 @@ class Task:
 
 class Status:
     """Status objects are created to hold the status of a task information
-       between the Task and Job managers. In order to communicate the job
-       information back to the JobManager, Status objects are created and
-       given to the Launcher that spawned the jobs. When the JobManager asks
-       for Job statuses, if an error has occured in the job, a Status object
-       will be waiting in the launcher.
+    between the Task and Job managers. In order to communicate the job
+    information back to the JobManager, Status objects are created and
+    given to the Launcher that spawned the jobs. When the JobManager asks
+    for Job statuses, if an error has occured in the job, a Status object
+    will be waiting in the launcher.
     """
 
     def __init__(self, status="", returncode=None, output=None, error=None):

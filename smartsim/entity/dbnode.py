@@ -5,100 +5,38 @@ import os
 
 class DBNode(SmartSimEntity):
     """DBNode objects are the entities that make up the orchestrator.
-       Each database node can be launched in a cluster configuration
-       and take launch multiple databases per node.
+    Each database node can be launched in a cluster configuration
+    and take launch multiple databases per node.
 
-       To configure how each instance of the database operates, look
-       into the smartsimdb.conf.
+    To configure how each instance of the database operates, look
+    into the smartsimdb.conf.
     """
 
-    def __init__(self, dbnodenum, path, db_conf, run_settings, port=6379, cluster=True):
+    def __init__(self, name, path, run_settings, ports):
         """Initialize a database node within an orchestrator.
 
-        :param dbnodenum: database node id within orchestrator
-        :type dbnodenum: int
+        :param name: identifier for dbnode
+        :type name: str
         :param path: path to output and error files
         :type path: str
-        :param db_conf: location of the database configuration file
-        :type db_conf: str
         :param run_settings: how dbnode should be run, set by orchestrator
         :type run_settings: dict
-        :param port: starting port of the node, incremented for each
-                     database per node, defaults to 6379
-        :type port: int, optional
-        :param cluster: toggle for cluster creation, defaults to True
-        :type cluster: bool, optional
+        :param ports: list of int ports for the dbnode (multiple if dpn > 1)
+        :type port: list
+
         """
-        name = "orchestrator_" + str(dbnodenum)
         super().__init__(name, path, "db", run_settings)
-        self.ports = []
-        self.setup_dbnodes(cluster, port, db_conf)
+        self.ports = ports
 
-    def setup_dbnodes(self, cluster, port, db_conf):
-        """Initialize and construct the database instances for this
-           specific database node. If ppn in run_settings is > 1,
-           multiple instances of a database will be created on the
-           same node.
-
-           If not creating a cluster, an no allocation is provided
-           by the user, assume this is a local launch and run the
-           database node as a daemon so that one entity and the
-           database can run simultaneously.
-
-        :param cluster: toggle for cluster creation
-        :type cluster: bool
-        :param port: starting port of this node
-        :type port: int
-        :param db_conf: path to the database configuration file
-        :type db_conf: str
-        """
-        db_args = ""
-        exe_args = []
-        db_per_node = self.run_settings["ppn"]
-        for db_id in range(db_per_node):
-            next_port = port + db_id
-
-            if cluster:
-                db_args = self._create_cluster_args(next_port)
-            else:
-                # if we are launching on an allocation dont daemonize
-                if not "alloc" in self.run_settings:
-                    db_args = "--daemonize yes"
-
-            exe_args.append(" ".join((db_conf, "--port", str(next_port), db_args)))
-            self.ports.append(next_port)
-
-        # if only one database to launch per node, were not launching
-        # in multi-prog mode so take the only element of the args list
-        if db_per_node == 1:
-            exe_args = exe_args[0]
-
-        self.update_run_settings({"exe_args": exe_args})
-
-
-    def _create_cluster_args(self, port):
-        """Create the arguments neccessary for cluster creation
-
-        :param port: port of a dbnode instance
-        :type port: int
-        :return: redis db arguments for cluster
-        :rtype: str
-        """
-        cluster_conf = self._get_dbnode_conf_fname(port)
-        db_args = " ".join(("--cluster-enabled yes",
-                            "--cluster-config-file ", cluster_conf))
-        return db_args
-
-    def _get_dbnode_conf_fname(self, port):
+    def _get_db_conf_filename(self, port):
         """Returns the .conf file name for the given port number
 
-        :param port: port of a dbnode instance
+        :param port: port number
         :type port: int
         :return: the dbnode configuration file name
         :rtype: str
         """
-
-        return "nodes-" + self.name + "-" + str(port) + ".conf"
+        return " ".join(("nodes-", self.name, "-", str(port), ".conf"))
 
     def remove_stale_dbnode_files(self):
         """This function removes the .conf, .err, and .out files that
@@ -107,7 +45,7 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            conf_file = "/".join((self.path, self._get_dbnode_conf_fname(port)))
+            conf_file = "/".join((self.path, self._get_db_conf_filename(port)))
             if os.path.exists(conf_file):
                 os.remove(conf_file)
 

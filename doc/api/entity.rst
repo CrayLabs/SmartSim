@@ -28,36 +28,15 @@ Model
 
 .. autosummary::
 
-   NumModel.__init__
-   NumModel.get_param_value
-   NumModel.attach_generator_files
-   NumModel.register_incoming_entity
-   NumModel.enable_key_prefixing
-   NumModel.disable_key_prefixing
-   NumModel.query_key_prefixing
+   Model.__init__
+   Model.get_param_value
+   Model.attach_generator_files
+   Model.register_incoming_entity
+   Model.enable_key_prefixing
+   Model.disable_key_prefixing
+   Model.query_key_prefixing
 
-.. autoclass:: NumModel
-   :members:
-   :show-inheritance:
-   :inherited-members:
-
-Node
-----
-
-.. currentmodule:: smartsim.entity.smartSimNode
-
-.. autosummary::
-
-   SmartSimNode.__init__
-   SmartSimNode.get_param_value
-   SmartSimNode.attach_generator_files
-   SmartSimNode.register_incoming_entity
-   SmartSimNode.enable_key_prefixing
-   SmartSimNode.disable_key_prefixing
-   SmartSimNode.query_key_prefixing
-
-
-.. autoclass:: SmartSimNode
+.. autoclass:: Model
    :members:
    :show-inheritance:
    :inherited-members:

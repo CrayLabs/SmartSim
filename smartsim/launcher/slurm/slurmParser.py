@@ -3,6 +3,7 @@ def parse_salloc(output):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
 
+
 def parse_salloc_error(output):
     """Parse and return error output of a failed salloc command
 
@@ -25,6 +26,7 @@ def parse_salloc_error(output):
     base_err = "Slurm allocation error"
     return base_err
 
+
 def parse_sacct_step(output):
     """Parse the number of job steps launched on an allocation
 
@@ -44,6 +46,7 @@ def parse_sacct_step(output):
         else:
             return int(step) + 1
 
+
 def parse_sacct(output, job_id):
     """Parse and return output of the sacct command
 
@@ -59,10 +62,11 @@ def parse_sacct(output, job_id):
         if line.strip().startswith(job_id):
             line = line.split("|")
             stat = line[1]
-            code = line[2].split(':')[0]
+            code = line[2].split(":")[0]
             result = (stat, code)
             break
     return result
+
 
 def parse_sstat_nodes(output):
     """Parse and return the sstat command
@@ -85,6 +89,7 @@ def parse_sstat_nodes(output):
             nodes.append(node)
     return list(set(nodes))
 
+
 def parse_step_id_from_sacct(output, step_name):
     """Parse and return the step id from a sacct command
 
@@ -99,7 +104,8 @@ def parse_step_id_from_sacct(output, step_name):
     step_id = None
     for line in output.split("\n"):
         sacct_string = line.split("|")
-        if len(sacct_string) < 2: continue
+        if len(sacct_string) < 2:
+            continue
         if sacct_string[0] == step_name:
             step_id = sacct_string[1]
     return step_id

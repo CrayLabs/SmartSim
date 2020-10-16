@@ -7,6 +7,7 @@ from ..remote import CmdClient
 
 
 from ..utils import get_logger, get_env
+
 logger = get_logger(__name__)
 
 try:
@@ -27,8 +28,9 @@ def is_remote():
     :rtype: bool
     """
     if "SMARTSIM_REMOTE" in os.environ:
-            return True
+        return True
     return False
+
 
 def ping_host(hostname):
     """Ping a hostname and get the IPv4 address of the node.
@@ -46,8 +48,9 @@ def ping_host(hostname):
         raise ShellError(f"Ping to {hostname} failed.") from e
 
 
-def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
-                timeout=None, remote=True):
+def execute_cmd(
+    cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None, remote=True
+):
     """Execute a command locally or remotely
 
     This function executes a command either locally or remotely depending
@@ -82,8 +85,13 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
     if is_remote() and remote:
         client = CmdClient()
         request = client.create_remote_request(
-            cmd_list, shell=shell, cwd=cwd, proc_input=proc_input,
-            env=env, timeout=timeout)
+            cmd_list,
+            shell=shell,
+            cwd=cwd,
+            proc_input=proc_input,
+            env=env,
+            timeout=timeout,
+        )
         return client.execute_remote_request(request)
 
     if verbose_shell:
@@ -91,8 +99,9 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
         logger.debug("Executing %s cmd: %s" % (source, " ".join(cmd_list)))
 
     # spawning the subprocess and connecting to its output
-    proc = Popen(cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE,
-                 cwd=cwd, shell=shell, env=env)
+    proc = Popen(
+        cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE, cwd=cwd, shell=shell, env=env
+    )
     try:
         proc_input = proc_input.encode("utf-8")
         out, err = proc.communicate(input=proc_input, timeout=timeout)
@@ -106,7 +115,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="",
         raise ShellError("Failed to execute command: " + " ".join(cmd_list))
 
     # decoding the output and err and return as a string tuple
-    return proc.returncode, out.decode('utf-8'), err.decode('utf-8')
+    return proc.returncode, out.decode("utf-8"), err.decode("utf-8")
 
 
 def execute_async_cmd(cmd_list, cwd, remote=True):

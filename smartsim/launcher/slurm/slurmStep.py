@@ -1,14 +1,12 @@
-
 import os
 
-from ...utils import get_env, get_config
+from ...utils import get_env
 from ...utils.helpers import expand_exe_path
 from ...error import SSConfigError, LauncherError
 from itertools import product
 
 
 class SlurmStep:
-
     def __init__(self, name, run_settings, multi_prog):
         """Initialize a job step for Slurm
 
@@ -27,27 +25,7 @@ class SlurmStep:
         self.run_settings = run_settings
         self.multi_prog = multi_prog
         self._set_cwd()
-        self.set_alloc()
-
-    def set_alloc(self, alloc_id=None):
-        """Set the allocation id of the job step
-
-        Read the run_settings of the entity provided by the
-        controller and search for "alloc" keyword for setting
-        the allocation
-
-        :param alloc_id: id of the allocation, defaults to None
-        :type alloc_id: str, optional
-        :raises SSConfigError: if no allocation specified by the
-                               user
-        """
-        if not alloc_id:
-            self.alloc_id = get_config("alloc", self.run_settings, none_ok=True)
-        else:
-            self.alloc_id = alloc_id
-        if not self.alloc_id:
-            raise SSConfigError(f"No allocation specified for step")
-
+        self._set_alloc()
 
     def build_cmd(self):
         """Build the command to run the step with Slurm.
@@ -55,28 +33,41 @@ class SlurmStep:
         :return: full srun command to run the job step
         :rtype: str
         """
-        nodes = self.run_settings["nodes"]
-        ppn = self.run_settings["ppn"]
-        ntasks = ppn * self.run_settings["nodes"]
+        nodes = self.run_settings.get("nodes", 1)
+        ppn = self.run_settings.get("ntasks-per-node", 1)
+        ntasks = ppn * self.run_settings.get("nodes", 1)
         out = self.run_settings["out_file"]
         err = self.run_settings["err_file"]
         srun = self._find_srun_cmd()
 
-        step = [srun, "--nodes", str(nodes),
-                      "--ntasks", str(ntasks),
-                      "--ntasks-per-node", str(ppn),
-                      "--output", out,
-                      "--error", err,
-                      "--jobid", str(self.alloc_id),
-                      "--job-name", self.name]
+        step = [
+            srun,
+            "--nodes", str(nodes),
+            "--ntasks", str(ntasks),
+            "--ntasks-per-node", str(ppn),
+            "--output", out,
+            "--error", err,
+            "--jobid", str(self.alloc_id),
+            "--job-name", self.name,
+        ]
 
         if "env_vars" in self.run_settings:
             env_var_str = self._format_env_vars(self.run_settings["env_vars"])
             step += ["--export", env_var_str]
 
-        smartsim_args = ["ppn", "nodes", "executable", "env_vars",
-                         "exe_args", "out_file", "err_file", "cwd",
-                         "alloc", "duration"]
+        # some kept here for deprecation sake
+        smartsim_args = [
+            "ppn",
+            "nodes",
+            "executable",
+            "env_vars",
+            "exe_args",
+            "out_file",
+            "err_file",
+            "cwd",
+            "alloc",
+            "duration",
+        ]
 
         for opt, value in self.run_settings.items():
             if opt not in smartsim_args:
@@ -84,11 +75,10 @@ class SlurmStep:
                 if not value:
                     step += [prefix + opt]
                 else:
-                    step += ["=".join((prefix+opt, str(value)))]
+                    step += ["=".join((prefix + opt, str(value)))]
 
         step += self._build_exe_cmd()
         return step
-
 
     def _build_exe_cmd(self):
         """Use smartsim arguments to construct executable portion of srun command.
@@ -98,10 +88,10 @@ class SlurmStep:
         :rtype: str
         """
         try:
-            exe = get_config("executable", self.run_settings)
-            exe_args = get_config("exe_args", self.run_settings, none_ok=True)
+            exe = self.run_settings["executable"]
+            exe_args = self.run_settings.get("exe_args", None)
             if self.multi_prog:
-                cmd =  self._build_multi_prog_exe(exe, exe_args)
+                cmd = self._build_multi_prog_exe(exe, exe_args)
                 return ["--multi-prog", cmd]
             else:
                 if exe_args:
@@ -111,7 +101,8 @@ class SlurmStep:
                         correct_type = all([isinstance(arg, str) for arg in exe_args])
                         if not correct_type:
                             raise TypeError(
-                                "Executable arguments given were not of type list or str")
+                                "Executable arguments given were not of type list or str"
+                            )
                 else:
                     exe_args = [""]
                 cmd = [exe] + exe_args
@@ -120,9 +111,8 @@ class SlurmStep:
 
         except KeyError as e:
             raise SSConfigError(
-                "SmartSim could not find following required field: %s" %
-                (e.args[0])) from None
-
+                "SmartSim could not find following required field: %s" % (e.args[0])
+            ) from None
 
     def _build_multi_prog_exe(self, executable, exe_args):
         """Build Slurm multi prog executable
@@ -143,7 +133,7 @@ class SlurmStep:
         :rtype: str
         """
         out = self.run_settings["out_file"]
-        ppn = self.run_settings["ppn"]
+        ppn = self.run_settings.get("ntasks-per-node", 1)
 
         conf_path = os.path.join(os.path.dirname(out), "run_orc.conf")
         if not isinstance(executable, list):
@@ -154,7 +144,7 @@ class SlurmStep:
         with open(conf_path, "w+") as f:
             proc_num = 0
             for exe, arg in launch_args:
-                f.write(" ".join((str(proc_num),  exe, arg, "\n")))
+                f.write(" ".join((str(proc_num), exe, arg, "\n")))
                 proc_num += 1
         return conf_path
 
@@ -176,15 +166,37 @@ class SlurmStep:
         :returns: the formatted string of environment variables
         :rtype: str
         """
-        format_str = "".join(("PATH=", get_env("PATH"), ",",
-                              "PYTHONPATH=", get_env("PYTHONPATH"), ","
-                              "LD_LIBRARY_PATH=", get_env("LD_LIBRARY_PATH")))
+        format_str = "".join(
+            (
+                "PATH=",
+                get_env("PATH"),
+                ",",
+                "PYTHONPATH=",
+                get_env("PYTHONPATH"),
+                "," "LD_LIBRARY_PATH=",
+                get_env("LD_LIBRARY_PATH"),
+            )
+        )
 
         for k, v in env_vars.items():
-            format_str += "," + "=".join((k,str(v)))
+            format_str += "," + "=".join((k, str(v)))
         return format_str
 
     def _set_cwd(self):
-        """Set the current working directory of the step
-        """
+        """Set the current working directory of the step"""
         self.cwd = self.run_settings["cwd"]
+
+    def _set_alloc(self):
+        """Set the allocation id of the job step
+
+        Read the run_settings of the entity provided by the
+        controller and search for "alloc" keyword for setting
+        the allocation
+
+        :raises SSConfigError: if no allocation specified by the user
+        """
+        alloc = self.run_settings.get("alloc", None)
+        if alloc:
+            self.alloc_id = alloc
+        else:
+            raise SSConfigError(f"No allocation specified for step")
