@@ -1,3 +1,5 @@
+import time
+
 class Job:
     """Keep track of various information for the controller.
     In doing so, continuously add various fields of information
@@ -23,6 +25,7 @@ class Job:
         self.output = None
         self.error = None
         self.nodes = None
+        self.start_time = time.time()
         self.history = History()
 
     def set_status(self, new_status, returncode, error=None, output=None):
@@ -40,8 +43,9 @@ class Job:
 
     def record_history(self):
         """Record the launching history of a job."""
+        job_time = time.time() - self.start_time
         self.history.record(
-            self.jid, self.status, self.returncode, self.error, self.output
+            self.jid, self.status, self.returncode, self.error, self.output, job_time
         )
 
     def reset(self, new_job_id):
@@ -56,6 +60,7 @@ class Job:
         self.output = None
         self.error = None
         self.nodes = None
+        self.start_time = time.time()
         self.history.new_run()
 
     def error_report(self):
@@ -102,15 +107,16 @@ class History:
         self.returns = dict()
         self.errors = dict()
         self.outputs = dict()
+        self.job_times = dict()
 
-    def record(self, job_id, status, returncode, error, output):
+    def record(self, job_id, status, returncode, error, output, job_time):
         """record the history of a job"""
-
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
         self.returns[self.runs] = returncode
         self.errors[self.runs] = error
         self.outputs[self.runs] = output
+        self.job_times[self.runs] = job_time
 
     def new_run(self):
         """increment run total"""

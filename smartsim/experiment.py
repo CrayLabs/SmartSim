@@ -171,7 +171,12 @@ class Experiment:
         """
         try:
             new_ensemble = Ensemble(
-                name, params, self.exp_path, run_settings=run_settings
+                name,
+                params,
+                self.exp_path,
+                run_settings=run_settings,
+                perm_strat=perm_strategy,
+                **kwargs,
             )
             return new_ensemble
         except SmartSimError as e:
@@ -384,6 +389,7 @@ class Experiment:
                 "Entity-Type",
                 "JobID",
                 "RunID",
+                "Time",
                 "Status",
                 "Returncode",
                 "Output",
@@ -398,6 +404,7 @@ class Experiment:
                     job.entity.type,
                     job.history.jids[run],
                     run,
+                    job.history.job_times[run],
                     job.history.statuses[run],
                     job.history.returns[run],
                     job.history.outputs[run],

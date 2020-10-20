@@ -119,3 +119,6 @@ def test_write_new_tag_configs():
 
     for written, correct in zip(written_files, correct_files):
         assert(filecmp.cmp(written, correct))
+
+
+
