@@ -4,7 +4,7 @@ from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
 from .shell import execute_cmd
-from ..error import ClusterLauncherError
+from ..error import LauncherError
 
 from .launcherUtil import get_ip_from_host
 from ..utils import get_logger, get_env
@@ -21,7 +21,7 @@ def create_cluster(nodes, ports):
     :type nodes: list of strings
     :param ports: ports the database nodes were launched on
     :type ports: list of ints
-    :raises: SmartSimError if cluster creation fails
+    :raises LauncherError: if cluster creation fails
     """
     cluster_str = ""
     for node in nodes:
@@ -40,7 +40,7 @@ def create_cluster(nodes, ports):
 
     if returncode != 0:
         logger.error(err)
-        raise ClusterLauncherError("Database '--cluster create' command failed")
+        raise LauncherError("Database '--cluster create' command failed")
     else:
         logger.debug(out)
         logger.info("Database cluster has been created with %s nodes" % str(len(nodes)))
@@ -55,7 +55,7 @@ def check_cluster_status(nodes, ports):
     :type nodes: list of str
     :param ports: ports of each database per node
     :type ports: list of ints
-    :raises ClusterLauncherError: if cluster check fails
+    :raises LauncherError: if cluster check fails
     """
     node_list = []
     for node in nodes:
@@ -77,4 +77,4 @@ def check_cluster_status(nodes, ports):
             time.sleep(5)
             trials -= 1
     if trials == 0:
-        raise ClusterLauncherError("Cluster setup could not be verified")
+        raise LauncherError("Cluster setup could not be verified")
