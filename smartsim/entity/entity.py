@@ -52,5 +52,14 @@ class SmartSimEntity:
         self.run_settings["out_file"] = join(self.path, self.name + ".out")
         self.run_settings["err_file"] = join(self.path, self.name + ".err")
 
+    def get_run_setting(self, setting):
+        """Retrieve a setting from entity.run_settings
+
+        :param setting: key for run_setting
+        :type setting: str
+        :return: run_setting value
+        """
+        return self.run_settings.get(setting)
+
     def __repr__(self):
         return self.name

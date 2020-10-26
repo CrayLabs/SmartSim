@@ -105,6 +105,7 @@ class Orchestrator(EntityList):
         """
         exe = self._find_db_exe()
         run_settings = {"executable": exe, **kwargs}
+        return run_settings
 
     def remove_stale_files(self):
         """Remove old database files that may crash launch"""
@@ -164,11 +165,6 @@ class Orchestrator(EntityList):
             db_args = " ".join(
                 ("--cluster-enabled yes", "--cluster-config-file ", cluster_conf)
             )
-        else:
-            # dont daemonize if we are on an allocation
-            if not on_alloc:
-                db_args = "--daemonize yes"
-
         return db_args
 
     def _get_dbnode_conf_fname(self, port, db_id):

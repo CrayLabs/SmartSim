@@ -391,10 +391,8 @@ class Experiment:
                 "RunID",
                 "Time",
                 "Status",
-                "Returncode",
-                "Output",
-                "Error",
-            ]
+                "Returncode"
+                ]
         )
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
@@ -406,9 +404,7 @@ class Experiment:
                     run,
                     job.history.job_times[run],
                     job.history.statuses[run],
-                    job.history.returns[run],
-                    job.history.outputs[run],
-                    job.history.errors[run],
+                    job.history.returns[run]
                 ]
                 index += 1
         return df
@@ -451,13 +447,13 @@ class Experiment:
             for model in models:
                 model_name = colorize(model.name, color="green", bold=True)
                 parameters = colorize(
-                    "Model Parameters: \n" + pformat(ens.run_settings), color="green"
+                    "Model Parameters: \n" + pformat(model.params), color="green"
                 )
                 run_settng = colorize(
-                    "Ensemble Run Settings: \n" + pformat(ens.run_settings),
+                    "Model Run Settings: \n" + pformat(model.run_settings),
                     color="green",
                 )
-                print(f"{name}")
+                print(f"{model.name}")
                 print(f"{parameters}")
                 print(f"{run_settng}")
             print("\n")

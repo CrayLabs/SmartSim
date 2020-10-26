@@ -2,6 +2,7 @@ import datetime
 import time
 import numpy as np
 from threading import Thread
+import psutil
 
 from ..error import SSConfigError
 from ..utils import get_logger, get_env
@@ -32,13 +33,13 @@ class TaskManager:
     """
 
     # time to wait between status checks
-    interval = 3
+    interval = 2
 
     def __init__(self):
         """Initialize a task manager thread."""
         self.name = "TaskManager" + "-" + str(np.base_repr(time.time_ns(), 36))
         self.actively_monitoring = False
-        self.statuses = dict()
+        self.task_history = dict()
         self.tasks = []
 
     def start(self):
@@ -48,38 +49,23 @@ class TaskManager:
 
     def run(self):
         """Start the loop that continually checks tasks for status.
-
-        One piece to note is that if a command server is used, the
-        output and error of the task will not be propagated through
-        the command schema. This is because piped Popens cannot be
-        serialized.
         """
         global verbose_tm
         if verbose_tm:
-            logger.debug("Starting Task Manager thread: " + self.name)
+            logger.debug(f"Starting Task Manager thread: {self.name}")
 
         self.actively_monitoring = True
         while self.actively_monitoring:
             time.sleep(self.interval)
-            if verbose_tm:
-                logger.debug(f"{self.name} - Active Tasks: {len(self.tasks)}")
-                logger.debug(
-                    f"{self.name} - Task Returncodes: {[task.returncode for task in self.tasks]}"
-                )
 
             for task in self.tasks:
-                returncode = task.check_status()
-                if returncode and returncode != 0:
-                    # TODO set this up for the command server so users know
-                    output, error = "", ""
-                    if task.has_piped_io:
-                        output, error = task.get_io()
-                    self.statuses[task.step_id] = (returncode, output, error)
-                    self.remove_task(task)
-                elif returncode == 0:
-                    self.remove_task(task)
+                returncode = task.check_status() # poll and set returncode
+                if returncode != None:
+                    output, error = task.get_io()
+                    self.add_task_history(task.step_id, returncode, output, error)
+                    self.remove_task(task.step_id)
 
-            if len(self.tasks) == 0:
+            if len(self) == 0:
                 self.actively_monitoring = False
                 if verbose_tm:
                     logger.debug(f"{self.name} - Sleeping, no tasks to monitor")
@@ -88,7 +74,7 @@ class TaskManager:
         """Create and add a task to the TaskManager
 
         :param popen_process: Popen object
-        :type popen_process: subprocess.Popen
+        :type popen_process: psutil.Popen
         :param step_id: id gleaned from the launcher
         :type step_id: str
         """
@@ -96,25 +82,51 @@ class TaskManager:
         if verbose_tm:
             logger.debug(f"{self.name}: Adding Task {task.pid}")
         self.tasks.append(task)
+        self.task_history[step_id] = (None, None, None)
 
-    def remove_task(self, task):
+    def remove_task(self, step_id):
         """Remove a task from the TaskManager
 
-        :param task: The instance of the Task
-        :type task: Task
+        :param step_id: step_id of the task to remove
+        :type step_id: str
         """
         if verbose_tm:
-            logger.debug(f"{self.name}: Removing Task {task.pid}")
-        self.tasks.remove(task)
-        task.kill()
+            logger.debug(f"{self.name}: Removing Task {step_id}")
+        try:
+            task = self[step_id]
+            if task.is_alive:
+                task.kill()
+                returncode = task.check_status()
+                self.add_task_history(task.step_id, returncode)
+            self.tasks.remove(task)
+        except (psutil.NoSuchProcess, KeyError):
+            logger.warning("Failed to remove a dead task")
 
-    def get_task_status(self, step_id):
-        """Get the task status by step_id
+    def check_error(self, step_id):
+        """Check to see if the job has an error
 
         :param step_id: step_id of the job
         :type step_id: str
         """
-        return self.statuses[step_id]
+        try:
+            history = self.task_history[step_id]
+            # task is still running
+            if history[0] == None:
+                return False
+            # task recorded non-zero exit code
+            elif history[0] != 0:
+                return True
+            return False
+        # Task hasnt been added yet (unlikely)
+        except KeyError:
+            return False
+
+    def get_task_history(self, step_id):
+        history = self.task_history[step_id]
+        return history
+
+    def add_task_history(self, step_id, returncode, out=None, err=None):
+        self.task_history[step_id] = (returncode, out, err)
 
     def __getitem__(self, step_id):
         for task in self.tasks:
@@ -122,6 +134,8 @@ class TaskManager:
                 return task
         raise KeyError
 
+    def __len__(self):
+        return len(self.tasks)
 
 class Task:
     """A Task is a wrapper around a Popen object that includes a reference
@@ -133,7 +147,7 @@ class Task:
         """Initialize a task
 
         :param popen_process: Popen object
-        :type popen_process: subprocess.Popen
+        :type popen_process: psutil.Popen
         :param step_id: Id from the launcher
         :type step_id: str
         """
@@ -167,7 +181,11 @@ class Task:
         :rtype: str, str
         """
         output, error = self.process.communicate()
-        return output.decode("utf-8"), error.decode("utf-8")
+        if output:
+            output = output.decode("utf-8")
+        if error:
+            error = error.decode("utf-8")
+        return output, error
 
     def kill(self):
         """Kill the subprocess"""
@@ -175,24 +193,19 @@ class Task:
 
     @property
     def pid(self):
-        return self.process.pid
+        return str(self.process.pid)
 
     @property
     def returncode(self):
         return self.process.returncode
 
+    @property
+    def is_alive(self):
+        return self.process.is_running()
 
-class Status:
-    """Status objects are created to hold the status of a task information
-    between the Task and Job managers. In order to communicate the job
-    information back to the JobManager, Status objects are created and
-    given to the Launcher that spawned the jobs. When the JobManager asks
-    for Job statuses, if an error has occured in the job, a Status object
-    will be waiting in the launcher.
-    """
+    @property
+    def status(self):
+        return self.process.status()
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
-        self.status = status
-        self.returncode = returncode
-        self.output = output
-        self.error = error
+    def __repr__(self):
+        return self.step_id

@@ -4,6 +4,9 @@ from shutil import which
 from smartsim.launcher.slurm.slurmStep import SlurmStep
 from smartsim.error.errors import LauncherError, SSConfigError
 
+if not which("srun"):
+    pytestmark = pytest.mark.skip
+
 cwd = os.path.dirname(os.path.abspath(__file__))
 run_settings = {
     "nodes": 1,

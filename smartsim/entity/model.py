@@ -70,15 +70,6 @@ class Model(SmartSimEntity):
 
         self.incoming_entities.append(incoming_entity)
 
-    def get_run_setting(self, setting):
-        """Retrieve a setting from entity.run_settings
-
-        :param setting: key for run_setting
-        :type setting: str
-        :return: run_setting value
-        """
-        return self.run_settings.get(setting)
-
     def enable_key_prefixing(self):
         """If called, the entity will prefix its keys with its own model name"""
         self._key_prefixing_enabled = True

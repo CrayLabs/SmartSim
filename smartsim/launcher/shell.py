@@ -1,6 +1,7 @@
 import os
 import zmq
 import pickle
+import psutil
 from ..error import ShellError, LauncherError, SSConfigError
 from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
 from ..remote import CmdClient
@@ -118,7 +119,7 @@ def execute_cmd(
     return proc.returncode, out.decode("utf-8"), err.decode("utf-8")
 
 
-def execute_async_cmd(cmd_list, cwd, remote=True):
+def execute_async_cmd(cmd_list, cwd, remote=True, env=None, out=PIPE, err=PIPE):
     """Execute an asynchronous command
 
     This function executes an asynchronous command either
@@ -130,6 +131,8 @@ def execute_async_cmd(cmd_list, cwd, remote=True):
     :type cwd: str
     :param remote: disable remote(for CmdServer), defaults to True
     :type remote: bool, optional
+    :param env: environment variables to set
+    :type env: dict
     :return: returncode and placeholders for output and error
     :rtype: tuple of (int, str, str)
     """
@@ -144,7 +147,9 @@ def execute_async_cmd(cmd_list, cwd, remote=True):
 
     try:
         # TODO change to if remote than pipe the output
-        popen_obj = Popen(cmd_list, cwd=cwd, stdout=PIPE, stderr=PIPE)
+        popen_obj = psutil.Popen(
+            cmd_list, cwd=cwd, stdout=out, stderr=err, env=env, close_fds=True
+        )
     except OSError as err:
         return popen_obj, -1, "", ""
     return popen_obj, 1, "", ""

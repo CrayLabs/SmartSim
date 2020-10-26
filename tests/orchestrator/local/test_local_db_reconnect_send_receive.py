@@ -12,13 +12,16 @@ test_path = path.join(getcwd(),  "./orchestrator_test/")
 
 # --- database reconnect ----------------------------------------------
 
+@pytest.mark.skip(reason="Requires client libraries to be installed")
 @orchestrator_test_local
 def test_db_reconnect_send_receive_local():
 
     exp_1_dir = "/".join((test_path,"exp_1"))
     exp_2_dir = "/".join((test_path,"exp_2"))
 
-    sim_dict = {"executable": "python reconnect_sim.py" }
+    sim_dict = {
+        "executable": "python",
+        "exe_args": "reconnect_sim.py" }
     exp_1 = Experiment("exp_1", launcher="local")
     O1 = exp_1.create_orchestrator(path=exp_1_dir)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)

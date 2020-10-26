@@ -5,7 +5,6 @@ from threading import Thread
 from .job import Job
 from ..database import Orchestrator
 from ..launcher.launcher import Launcher
-from ..launcher.taskManager import Status
 from ..entity import SmartSimEntity, Ensemble
 from ..error import SmartSimError, SSConfigError
 
@@ -50,13 +49,13 @@ class JobManager:
         the status of all jobs.
         """
         # TODO a way to control this interval as a configuration
-        interval = 5
+        interval = 1
         logger.debug("Starting Job Manager thread: " + self.name)
 
         self.actively_monitoring = True
         while self.actively_monitoring:
             time.sleep(interval)
-            logger.debug(f"{self.name} - Active Jobs: {list(self().keys())}")
+            #logger.debug(f"{self.name} - Active Jobs: {len(self)}")
 
             # check each task
             for name, job in self().items():
@@ -64,13 +63,13 @@ class JobManager:
 
                 # if the job has errors then output the report
                 # this should only output once
-                if job.error:
+                if job.returncode and job.returncode != 0:
                     logger.warning(job)
                     logger.warning(job.error_report())
                     self.move_to_completed(job)
 
                 # Dont actively monitor completed jobs
-                if self._launcher.is_finished(job.status):
+                if self._launcher.is_finished(job.jid):
                     logger.info(job)
                     self.move_to_completed(job)
 
@@ -249,3 +248,7 @@ class JobManager:
             self.db_jobs[job_name] = job
         else:
             self.jobs[job_name] = job
+
+    def __len__(self):
+        # number of active jobs
+        return len(self.db_jobs) + len(self.jobs)

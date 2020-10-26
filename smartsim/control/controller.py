@@ -21,7 +21,6 @@ from ..utils import get_logger
 
 logger = get_logger(__name__)
 
-
 class Controller:
     """The controller module provides an interface between the
     numerical model that is the subject of Smartsim and the
@@ -75,7 +74,7 @@ class Controller:
                 if not poll_db and job.entity.type == "db":
                     continue
                 else:
-                    finished.append(self._launcher.is_finished(job.status))
+                    finished.append(self._launcher.is_finished(job.jid))
                     if verbose:
                         logger.info(job)
             if all(finished):
@@ -102,7 +101,7 @@ class Controller:
                 )
 
             job = self._jobs[entity.name]
-            return self._launcher.is_finished(job.status)
+            return self._launcher.is_finished(job.jid)
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"

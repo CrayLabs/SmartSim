@@ -19,10 +19,18 @@ class LocalStep:
 
         try:
             exe = self.run_settings.get("executable")
-            exe_args = self.run_settings.get("exe_args", "")
-            cmd = " ".join((exe, exe_args))
-
-            return [cmd]
+            exe_args = self.run_settings.get("exe_args", [])
+            if exe_args:
+                if isinstance(exe_args, str):
+                    exe_args = exe_args.split()
+                elif isinstance(exe_args, list):
+                    correct_type = all([isinstance(arg, str) for arg in exe_args])
+                    if not correct_type:
+                        raise TypeError(
+                            "Executable arguments given were not of type list or str"
+                        )
+            cmd = [exe] + exe_args
+            return cmd
 
         except KeyError as e:
             raise SSConfigError(

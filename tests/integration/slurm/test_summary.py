@@ -1,9 +1,14 @@
-from os import environ
+import pytest
 import os.path as osp
-from shutil import rmtree
+from os import environ
+from shutil import rmtree, which
+
 from smartsim import slurm
 from smartsim import Experiment
 
+
+if not which("srun"):
+    pytestmark = pytest.mark.skip
 
 def test_summary():
 

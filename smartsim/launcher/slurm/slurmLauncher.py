@@ -16,8 +16,8 @@ from .slurmCommands import sstat, sacct, salloc, sinfo, scancel
 from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
 from ..launcherUtil import seq_to_str, write_to_bash, ComputeNode, Partition
 from .slurmParser import parse_salloc_error, parse_sstat_nodes, parse_step_id_from_sacct
-
-from ..taskManager import TaskManager, Status
+from ..stepInfo import StepInfo
+from ..taskManager import TaskManager
 
 from ...utils import get_logger, get_env
 
@@ -133,9 +133,9 @@ class SlurmLauncher(Launcher):
             if stat == "NOTFOUND":
                 returncode = task_ret_code
                 stat = "FAILED"
-            status = Status(stat, returncode, out, err)
+            status = StepInfo(stat, returncode, out, err)
         else:
-            status = Status(stat, returncode)
+            status = StepInfo(stat, returncode)
         return status
 
     def get_step_nodes(self, step_id):

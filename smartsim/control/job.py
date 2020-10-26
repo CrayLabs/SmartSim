@@ -45,7 +45,7 @@ class Job:
         """Record the launching history of a job."""
         job_time = time.time() - self.start_time
         self.history.record(
-            self.jid, self.status, self.returncode, self.error, self.output, job_time
+            self.jid, self.status, self.returncode, job_time
         )
 
     def reset(self, new_job_id):
@@ -70,9 +70,11 @@ class Job:
         :rtype: str
         """
         warning = f"{self.name} failed. See below for details \n"
-        warning += f"{self.entity.type} {self.name} produced the following error \n"
-        warning += f"Error: {self.error} \n"
-        warning += f"Output: {self.output} \n"
+        if self.error:
+            warning += f"{self.entity.type} {self.name} produced the following error \n"
+            warning += f"Error: {self.error} \n"
+        if self.output:
+            warning += f"Output: {self.output} \n"
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Job returncode: {self.returncode} \n"
         warning += f"For more information on the error, check the files below: \n"
@@ -105,17 +107,13 @@ class History:
         self.jids = dict()
         self.statuses = dict()
         self.returns = dict()
-        self.errors = dict()
-        self.outputs = dict()
         self.job_times = dict()
 
-    def record(self, job_id, status, returncode, error, output, job_time):
+    def record(self, job_id, status, returncode, job_time):
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
         self.returns[self.runs] = returncode
-        self.errors[self.runs] = error
-        self.outputs[self.runs] = output
         self.job_times[self.runs] = job_time
 
     def new_run(self):
