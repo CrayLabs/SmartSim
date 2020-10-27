@@ -410,8 +410,10 @@ class Experiment:
         return df
 
     def _launch_summary(self, *args):
+        def sprint(p):
+            print(p, flush=True)
+        sprint("\n")
         models, ensembles, orchestrator = seperate_entities(args)
-        print("\n")
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)
@@ -424,11 +426,11 @@ class Experiment:
         has_orc = "yes" if orchestrator else "no"
         orches = colorize("Database: " + has_orc, color="green")
 
-        print(f"{header}")
-        print(f"{exname}\n{expath}\n{launch}\n{numens}\n{numods}\n{orches}\n")
+        sprint(f"{header}")
+        sprint(f"{exname}\n{expath}\n{launch}\n{numens}\n{numods}\n{orches}\n")
 
         if ensembles:
-            print(colorize("=== ENSEMBLES ===", color="cyan", bold=True))
+            sprint(colorize("=== ENSEMBLES ===", color="cyan", bold=True))
             for ens in ensembles:
                 name = colorize(ens.name, color="green", bold=True)
                 num_models = colorize(
@@ -438,12 +440,12 @@ class Experiment:
                     "Ensemble Run Settings: \n" + pformat(ens.run_settings),
                     color="green",
                 )
-                print(f"{name}")
-                print(f"{num_models}")
-                print(f"{run_settng}")
-            print("\n")
+                sprint(f"{name}")
+                sprint(f"{num_models}")
+                sprint(f"{run_settng}")
+            sprint("\n")
         if models:
-            print(colorize("=== MODELS ===", color="cyan", bold=True))
+            sprint(colorize("=== MODELS ===", color="cyan", bold=True))
             for model in models:
                 model_name = colorize(model.name, color="green", bold=True)
                 parameters = colorize(
@@ -453,18 +455,18 @@ class Experiment:
                     "Model Run Settings: \n" + pformat(model.run_settings),
                     color="green",
                 )
-                print(f"{model.name}")
-                print(f"{parameters}")
-                print(f"{run_settng}")
-            print("\n")
+                sprint(f"{model.name}")
+                sprint(f"{parameters}")
+                sprint(f"{run_settng}")
+            sprint("\n")
         if orchestrator:
-            print(colorize("=== DATABASE ===", color="cyan", bold=True))
+            sprint(colorize("=== DATABASE ===", color="cyan", bold=True))
             size = colorize(
                 "# of database nodes: " + str(len(orchestrator)), color="green"
             )
-            print(f"{size}")
+            sprint(f"{size}")
 
-        print("\n")
+        sprint("\n")
 
         wait, steps = 10, 100
         prog_bar = trange(

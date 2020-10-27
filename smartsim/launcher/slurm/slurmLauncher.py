@@ -138,6 +138,30 @@ class SlurmLauncher(Launcher):
             status = StepInfo(stat, returncode)
         return status
 
+
+    def get_step_update(self, step_ids):
+        step_str = _create_step_id_str(step_ids)
+        sacct_out, sacct_err = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
+        # (status, returncode)
+        stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
+
+        # create StepInfo objects to return
+        updates = []
+        for stat_tuple, step_id in zip(stat_tuples, step_ids):
+            info = StepInfo(stat_tuple[0], stat_tuple[1])
+            if self.task_manager.check_error(step_id):
+                rc, out, err = self.task_manager.get_task_history(step_id)
+                info.output = out
+                info.error = err
+
+                # command never made it to slurm, return Popen returncode
+                if info.status == "NOTFOUND":
+                    info.returncode = rc
+                    info.status = "FAILED"
+            updates.append(info)
+        return updates
+
+
     def get_step_nodes(self, step_id):
         """Return the compute nodes of a specific job or allocation
 
@@ -307,3 +331,11 @@ class SlurmLauncher(Launcher):
 
     def __str__(self):
         return "slurm"
+
+
+def _create_step_id_str(step_ids):
+    step_str = ""
+    for step_id in step_ids:
+        step_str += str(step_id) + ","
+    step_str = step_str.strip(",")
+    return step_str

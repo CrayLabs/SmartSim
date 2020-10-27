@@ -57,9 +57,9 @@ class JobManager:
             time.sleep(interval)
             #logger.debug(f"{self.name} - Active Jobs: {len(self)}")
 
-            # check each task
+            # update all job statuses at once
+            self.check_jobs()
             for name, job in self().items():
-                self.check_job(name)
 
                 # if the job has errors then output the report
                 # this should only output once
@@ -192,11 +192,28 @@ class JobManager:
         except SmartSimError:
             logger.warning(f"Could not retrieve status of {entity_name}")
 
+    def check_jobs(self):
+        """Update all jobs in jobmanager
+
+        Update all jobs returncode, status, error and output
+        through one call to the launcher.
+        """
+        jobs = self().values()
+        jids = [job.jid for job in jobs]
+        statuses = self._launcher.get_step_update(jids)
+        for status, job in zip(statuses, jobs):
+            job.set_status(
+                status.status,
+                status.returncode,
+                error=status.error,
+                output=status.output
+            )
+
     def get_status(self, entity):
         """Return the workload manager given status of a job.
 
         :param entity: object launched by SmartSim. One of the following:
-                    (SmartSimNode, Model, Orchestrator, Ensemble)
+                    (Model, DBNode)
         :type entity: SmartSimEntity
         :returns: tuple of status
         """

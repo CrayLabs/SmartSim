@@ -1,4 +1,6 @@
 import abc
+from .stepInfo import StepInfo
+from ..error import LauncherError
 
 class Launcher(abc.ABC):
 
@@ -45,9 +47,19 @@ class Launcher(abc.ABC):
         :param step_id: id of the step in the form of xxxxxx.x
         :type step_id: str
         :return: status of the job step and returncode
-        :rtype: tuple of (str, str)
+        :rtype: StepInfo
         """
         pass
+
+    @abc.abstractmethod
+    def get_step_update(self, step_ids):
+        """Get status updates of all steps at once
+
+        :param step_ids: list of step_ids (str)
+        :type step_ids: list
+        :return: list of StepInfo for update
+        :rtype: list
+        """
 
     @abc.abstractmethod
     def get_step_nodes(self, step_id):
@@ -87,6 +99,8 @@ class Launcher(abc.ABC):
         :param step_id: id of the step to be stopped
         :type step_id: str
         :raises LauncherError: if unable to stop job step
+        :return: a StepInfo instance
+        :rtype: StepInfo
         """
         pass
 
