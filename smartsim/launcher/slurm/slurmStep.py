@@ -197,6 +197,6 @@ class SlurmStep:
         """
         alloc = self.run_settings.get("alloc", None)
         if alloc:
-            self.alloc_id = alloc
+            self.alloc_id = str(alloc)
         else:
             raise SSConfigError(f"No allocation specified for step")

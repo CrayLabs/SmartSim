@@ -173,7 +173,7 @@ class Experiment:
             new_ensemble = Ensemble(
                 name,
                 params,
-                self.exp_path,
+                getcwd(),
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
                 **kwargs,
@@ -206,7 +206,7 @@ class Experiment:
         """
         try:
             if not path:
-                path = self.exp_path
+                path = getcwd()
             new_model = Model(name, params, path, run_settings)
             if enable_key_prefixing:
                 model._key_prefixing_enabled = True

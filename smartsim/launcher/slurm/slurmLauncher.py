@@ -126,8 +126,8 @@ class SlurmLauncher(Launcher):
             stat, returncode = "NOTFOUND", "NAN"
         else:
             stat, returncode = parse_sacct(sacct_out, step_id)
-        if step_id in self.task_manager.statuses:
-            task_ret_code, out, err = self.task_manager.get_task_status(step_id)
+        if self.task_manager.check_error(step_id):
+            task_ret_code, out, err = self.task_manager.get_task_history(step_id)
 
             # if NOTFOUND then the command never made it to slurm
             if stat == "NOTFOUND":
@@ -197,14 +197,8 @@ class SlurmLauncher(Launcher):
         self.check_for_slurm()
 
         status = self.get_step_status(step_id)
-        if not self.is_finished(status.status):
-            # try to remove the task that launched the
-            # slurm process, but don't fail if its dead already
-            try:
-                task = self.task_manager[step_id]
-                self.task_manager.remove_task(task)
-            except KeyError:
-                logger.debug(f"Could not find task with step id {step_id} to stop")
+        if not self.is_finished(step_id):
+            self.task_manager.remove_task(step_id)
 
             returncode, out, err = scancel([str(step_id)])
             if returncode != 0:
@@ -214,20 +208,16 @@ class SlurmLauncher(Launcher):
             status.status = "CANCELLED by user"
         return status
 
-    def is_finished(self, status):
+    def is_finished(self, step_id):
         """Determine wether a job is finished by parsing slurm sacct
 
-        :param status: status returned from sacct command
-        :type status: str
         :return: True/False wether job is finished
         :rtype: bool
         """
-        # only take the first word in the status
-        # this handles the "CANCELLED by 3221" case
-        status = status.strip().split()[0]
-        if status in self.constants.terminals:
-            return True
-        return False
+        returncode = self.task_manager.task_history[step_id][0]
+        if returncode == None:
+            return False
+        return True
 
     def _get_slurm_step_id(self, step, interval=1, trials=5):
         """Get the step_id of a step

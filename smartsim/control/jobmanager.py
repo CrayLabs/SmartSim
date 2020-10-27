@@ -49,7 +49,7 @@ class JobManager:
         the status of all jobs.
         """
         # TODO a way to control this interval as a configuration
-        interval = 1
+        interval = 5
         logger.debug("Starting Job Manager thread: " + self.name)
 
         self.actively_monitoring = True
@@ -63,7 +63,7 @@ class JobManager:
 
                 # if the job has errors then output the report
                 # this should only output once
-                if job.returncode and job.returncode != 0:
+                if job.returncode and int(job.returncode) != 0:
                     logger.warning(job)
                     logger.warning(job.error_report())
                     self.move_to_completed(job)

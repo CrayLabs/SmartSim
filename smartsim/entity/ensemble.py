@@ -60,7 +60,7 @@ class Ensemble(EntityList):
 
                 model_name = "_".join((self.name, str(i)))
                 model = Model(
-                    model_name, param_set, self.path, run_settings=self.run_settings
+                    model_name, param_set, self.path, run_settings=self.run_settings.copy()
                 )
                 model.enable_key_prefixing()
                 self.add_model(model)
