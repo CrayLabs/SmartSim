@@ -75,12 +75,9 @@ class LocalLauncher:
         out_file = open(step.run_settings["out_file"], "w+")
         err_file = open(step.run_settings["err_file"], "w+")
         cmd = step.build_cmd()
-        task, status, _, _ = execute_async_cmd(cmd, step.cwd, env=step.env, out=out_file, err=err_file)
-        if status == -1:
-            raise LauncherError("Failed to run local task")
-        else:
-            self.task_manager.add_task(task, str(task.pid))
-            return str(task.pid)
+        task = execute_async_cmd(cmd, step.cwd, env=step.env, out=out_file, err=err_file)
+        self.task_manager.add_task(task, str(task.pid))
+        return str(task.pid)
 
     def stop(self, step_id):
         self.task_manager.remove_task(step_id)

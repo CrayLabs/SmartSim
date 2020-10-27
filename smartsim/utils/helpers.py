@@ -3,7 +3,7 @@ A file of helper functions for SmartSim
 """
 import os
 from shutil import which
-from os import environ, unsetenv
+from os import environ
 
 from ..error import SSConfigError
 
@@ -41,21 +41,6 @@ def get_env(env_var):
         raise SSConfigError("SmartSim environment not set up!")
 
 
-def remove_env(env_var):
-    """Remove a variable from the environment.
-
-    :param env_var: variable to remote
-    :type env_var: string
-    """
-
-    try:
-        unsetenv(env_var)
-        del environ[env_var]
-        return
-    except KeyError:
-        return
-
-
 color2num = dict(
     gray=30,
     red=31,
@@ -67,7 +52,6 @@ color2num = dict(
     white=37,
     crimson=38,
 )
-
 
 def colorize(string, color, bold=False, highlight=False):
     """

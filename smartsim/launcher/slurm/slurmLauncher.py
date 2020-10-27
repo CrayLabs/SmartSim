@@ -11,7 +11,7 @@ from ..launcher import Launcher
 from .slurmStep import SlurmStep
 from .slurmConstants import SlurmConstants
 from ...error import LauncherError, SSConfigError
-from ..shell import execute_cmd, execute_async_cmd, is_remote
+from ..shell import execute_cmd, execute_async_cmd
 from .slurmCommands import sstat, sacct, salloc, sinfo, scancel
 from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
 from ..launcherUtil import seq_to_str, write_to_bash, ComputeNode, Partition
@@ -178,13 +178,10 @@ class SlurmLauncher(Launcher):
             self.task_manager.start()
 
         srun = step.build_cmd()
-        task, status, _, _ = execute_async_cmd(srun, cwd=step.cwd)
-        if status == -1:
-            raise LauncherError("Failed to run on allocation")
-        else:
-            step_id = self._get_slurm_step_id(step)
-            self.task_manager.add_task(task, step_id)
-            return step_id
+        task = execute_async_cmd(srun, cwd=step.cwd)
+        step_id = self._get_slurm_step_id(step)
+        self.task_manager.add_task(task, step_id)
+        return step_id
 
     def stop(self, step_id):
         """Stop a job step within an allocation.
@@ -299,17 +296,13 @@ class SlurmLauncher(Launcher):
     def check_for_slurm():
         """Check if slurm is available
 
-        This function checks for slurm if not using a remote
-        Command Server and return an error if the user has not
-        initalized the remote launcher.
+        This function checks for slurm commands where the experiment
+        is bring run
 
-        :raises LauncherError: if no access to slurm and no remote Command
-                               Server has been initialized.
+        :raises LauncherError: if no access to slurm
         """
-        if not which("salloc") and not is_remote():
+        if not which("srun") and not which("salloc") and not which("sacct"):
             error = "User attempted Slurm methods without access to Slurm at the call site.\n"
-            error += "Setup a Command Server, and initialize with"
-            error += " SmartSim.remote.init_command_server()"
             raise LauncherError(error)
 
     def __str__(self):

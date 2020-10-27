@@ -14,7 +14,6 @@ from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherEr
 from .job import Job
 from .junction import Junction
 from .jobmanager import JobManager
-from ..utils import remove_env
 from ..utils.entityutils import seperate_entities
 
 from ..utils import get_logger
@@ -165,10 +164,6 @@ class Controller:
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
-        Remove SMARTSIM_REMOTE env var if set as we are creating
-        a new launcher that should not be effected by previous
-        launcher settings in the environment
-
         Since the JobManager and the controller share a launcher
         instance, set the JobManager launcher if we create a new
         launcher instance here.
@@ -179,7 +174,6 @@ class Controller:
                                     a supported slurm launcher
         :raises SSConfigError: if no launcher argument is provided.
         """
-        remove_env("SMARTSIM_REMOTE")
 
         if launcher is not None:
             # Init Slurm Launcher wrapper
@@ -214,7 +208,6 @@ class Controller:
         # create all steps prior to launch
         steps = []
         if entity_lists:
-            # TODO replace with create_batch_step
             for elist in entity_lists:
                 steps.extend(self._create_steps(elist.entities))
         if entities:
@@ -266,10 +259,10 @@ class Controller:
 
         except LauncherError as e:
             logger.error(
-                f"An error occured when launching {entity} \n"
+                f"An error occurred when launching {entity} \n"
                 + "Check error and output files for details."
             )
-            raise SmartSimError("Job step %s failed to launch" % entity.name) from e
+            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
 
     def _create_steps(self, entities):
         """Create job steps for all entities with the launcher
@@ -317,10 +310,6 @@ class Controller:
         except LauncherError as e:
             error = f"Failed to create job step for {entity.name}"
             raise SmartSimError("\n".join((error, e.msg))) from None
-
-    def _create_entity_batch_step(self):
-        # TODO implement when slurm batching is available
-        raise NotImplementedError
 
     def _set_entity_env_vars(self, entity):
         """Set connection environment variables
