@@ -54,6 +54,19 @@ class LocalLauncher:
         else:
             return StepInfo(psutil_status, psutil_rc)
 
+    def get_step_update(self, step_ids):
+        """Get status updates of all steps at once
+
+        :param step_ids: list of step_ids (str)
+        :type step_ids: list
+        :return: list of StepInfo for update
+        :rtype: list
+        """
+        # these return relatively quick, no need to do anything
+        # special here like slurm
+        updates = [self.get_step_status(step_id) for step_id in step_ids]
+        return updates
+
     def get_step_nodes(self, step_id):
         """Return the address of nodes assigned to the step
 

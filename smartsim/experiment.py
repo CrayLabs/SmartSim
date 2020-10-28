@@ -1,5 +1,4 @@
 import sys
-import zmq
 import time
 import pickle
 import pandas as pd

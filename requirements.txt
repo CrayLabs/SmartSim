@@ -5,9 +5,11 @@ decorator==4.4.2
 redis==3.0.1
 redis-py-cluster==2.0.0
 protobuf==3.11.3
-pyzmq==18.1.0
 breathe==4.19.2
 sphinx==3.1.1
 numpy>=1.18.2
 sphinx_rtd_theme>=0.5.0
-tqdm
+tqdm>=4.50.2
+psutil>=5.7.2
+black==20.8b1
+pandas>=1.1.3

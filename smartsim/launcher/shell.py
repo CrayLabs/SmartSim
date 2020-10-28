@@ -1,5 +1,4 @@
 import os
-import zmq
 import pickle
 import psutil
 from ..error import ShellError, LauncherError, SSConfigError
