@@ -1,17 +1,20 @@
 import time
 import numpy as np
+import threading
 from threading import Thread
 
 from .job import Job
+from ..entity import DBNode
 from ..database import Orchestrator
 from ..launcher.launcher import Launcher
+from ..launcher import SlurmLauncher, LocalLauncher
 from ..entity import SmartSimEntity, Ensemble
 from ..error import SmartSimError, SSConfigError
-
 from ..utils import get_logger, get_env
+from ..constants import LOCAL_JM_INTERVAL, WLM_JM_INTERVAL
+from ..constants import TERMINAL_STATUSES
 
 logger = get_logger(__name__)
-
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
@@ -39,23 +42,21 @@ class JobManager:
         self.db_jobs = {}
         self.completed = {}
 
-    def start(self):
+    def start(self, daemon=True):
         """Start a thread for the job manager"""
-        monitor = Thread(name=self.name, daemon=True, target=self.run)
-        monitor.start()
+        self.monitor = Thread(name=self.name, daemon=daemon, target=self.run)
+        self.monitor.start()
 
     def run(self):
         """Start the JobManager thread to continually check
         the status of all jobs.
         """
-        # TODO a way to control this interval as a configuration
-        interval = 5
-        logger.debug("Starting Job Manager thread: " + self.name)
+        logger.debug("Starting Job Manager")
 
         self.actively_monitoring = True
         while self.actively_monitoring:
-            time.sleep(interval)
-            #logger.debug(f"{self.name} - Active Jobs: {len(self)}")
+            self._thread_sleep()
+            #logger.debug(f"Active Jobs: {len(self)}")
 
             # update all job statuses at once
             self.check_jobs()
@@ -63,20 +64,20 @@ class JobManager:
 
                 # if the job has errors then output the report
                 # this should only output once
-                if job.returncode and int(job.returncode) != 0:
-                    logger.warning(job)
-                    logger.warning(job.error_report())
-                    self.move_to_completed(job)
-
-                # Dont actively monitor completed jobs
-                if self._launcher.is_finished(job.jid):
-                    logger.info(job)
-                    self.move_to_completed(job)
+                if job.returncode != None and job.status in TERMINAL_STATUSES:
+                    if int(job.returncode) != 0:
+                        logger.warning(job)
+                        logger.warning(job.error_report())
+                        self.move_to_completed(job)
+                    else:
+                        # job completed without error
+                        logger.info(job)
+                        self.move_to_completed(job)
 
             # if no more jobs left to actively monitor
             if not self():
                 self.actively_monitoring = False
-                logger.debug(f"{self.name} - Sleeping, no jobs to monitor")
+                logger.debug(f"Sleeping, no jobs to monitor")
 
     def move_to_completed(self, job):
         """Move job to completed queue so that its no longer
@@ -171,6 +172,13 @@ class JobManager:
             nodes.extend(db_job.nodes)
         return nodes
 
+    def is_finished(self, entity):
+        job = self[entity.name]
+        if entity.name in self.completed:
+            if job.status in TERMINAL_STATUSES:
+                return True
+        return False
+
     def check_job(self, entity_name):
         """Update job properties by querying the launcher
 
@@ -222,7 +230,6 @@ class JobManager:
                 return self.completed[entity.name].status
 
             job = self[entity.name]
-            self.check_job(entity.name)
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"
@@ -265,6 +272,15 @@ class JobManager:
             self.db_jobs[job_name] = job
         else:
             self.jobs[job_name] = job
+
+    def _thread_sleep(self):
+        """Sleep the job manager for a specific constant
+        set for the launcher type.
+        """
+        if isinstance(self._launcher, SlurmLauncher):
+            time.sleep(WLM_JM_INTERVAL)
+        else:
+            time.sleep(LOCAL_JM_INTERVAL)
 
     def __len__(self):
         # number of active jobs

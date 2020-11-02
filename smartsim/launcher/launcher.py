@@ -78,15 +78,11 @@ class Launcher(abc.ABC):
 
     @abc.abstractmethod
     def run(self, step):
-        """Run a job step on an allocation through the workload manager
-           A constructed job step is required such that the argument
-           translation from SmartSimEntity to Step has been completed
-           and an allocation has been assigned to the step.
+        """Run a job step through a launcher
 
         :param step: Step instance
         :type step: Step
-        :raises LauncherError: If the allocation cannot be found or the
-                               job step failed to launch.
+        :raises LauncherError: If error in launch process
         :return: job_step id
         :rtype: str
         """
@@ -94,7 +90,7 @@ class Launcher(abc.ABC):
 
     @abc.abstractmethod
     def stop(self, step_id):
-        """Stop a job step within an allocation.
+        """Stop a job step
 
         :param step_id: id of the step to be stopped
         :type step_id: str
@@ -103,19 +99,6 @@ class Launcher(abc.ABC):
         :rtype: StepInfo
         """
         pass
-
-    @abc.abstractmethod
-    def is_finished(self, status):
-        """Based on the statuses gleaned from the workload manager
-           determine wether a job is finished or not.
-
-        :param status: status parsed from the wlm
-        :type status: str
-        :returns: True/False wether job is finished
-        :rtype: bool
-        """
-        pass
-
 
     @abc.abstractmethod
     def __str__(self):

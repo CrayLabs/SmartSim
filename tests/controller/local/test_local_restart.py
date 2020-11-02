@@ -4,6 +4,7 @@ from os import path, getcwd
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test_local
+from smartsim import constants
 
 test_path = path.join(getcwd(),  "./controller_test/")
 
@@ -23,26 +24,35 @@ def test_restart():
 
     # start all entities for the first time
     local_ctrl.start(M1, M2, O1)
-    local_ctrl.poll(3, False, True)
     model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = local_ctrl.get_entity_list_status(O1)
     statuses = orc_status + model_statuses
-    assert("failed" not in statuses)
+    assert(constants.STATUS_FAILED not in statuses)
 
     local_ctrl.stop_entity(M1)
     local_ctrl.stop_entity(M2)
     local_ctrl.stop_entity_list(O1)
 
-
-    # restart all entities
-    local_ctrl.start(M1, M2, O1)
-    local_ctrl.poll(3, False, True)
+    # ensure they all become cancelled jobs
     model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = local_ctrl.get_entity_list_status(O1)
     statuses = orc_status + model_statuses
-    assert("failed" not in statuses)
+    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+
+    # restart all entities
+    local_ctrl.start(M1, M2, O1)
+    model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
+    orc_status = local_ctrl.get_entity_list_status(O1)
+    statuses = orc_status + model_statuses
+    assert(constants.STATUS_FAILED not in statuses)
 
     # TODO: add job history check here
     local_ctrl.stop_entity(M1)
     local_ctrl.stop_entity(M2)
     local_ctrl.stop_entity_list(O1)
+
+    # ensure they all become cancelled jobs
+    model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
+    orc_status = local_ctrl.get_entity_list_status(O1)
+    statuses = orc_status + model_statuses
+    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))

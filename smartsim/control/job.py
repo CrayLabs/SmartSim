@@ -1,4 +1,6 @@
 import time
+from ..constants import STATUS_NEW
+
 
 class Job:
     """Keep track of various information for the controller.
@@ -20,7 +22,7 @@ class Job:
         self.name = job_name
         self.jid = job_id
         self.entity = entity
-        self.status = "NEW"
+        self.status = STATUS_NEW
         self.returncode = None
         self.output = None
         self.error = None
@@ -44,9 +46,7 @@ class Job:
     def record_history(self):
         """Record the launching history of a job."""
         job_time = time.time() - self.start_time
-        self.history.record(
-            self.jid, self.status, self.returncode, job_time
-        )
+        self.history.record(self.jid, self.status, self.returncode, job_time)
 
     def reset(self, new_job_id):
         """Reset the job in order to be able to restart it.

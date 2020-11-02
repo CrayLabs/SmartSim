@@ -5,6 +5,7 @@ from os import path, getcwd
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test_local
+from smartsim import constants
 # --- Setup ---------------------------------------------------
 
 # Path to test outputs
@@ -27,12 +28,11 @@ def test_multiple_runs():
     O1 = exp.create_orchestrator(path=test_path)
 
     ctrl.start(M1, M2)
-    ctrl.poll(3, False, True)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
-    assert("failed" not in statuses)
+    assert(constants.STATUS_FAILED not in statuses)
 
     ctrl.start(O1)
-    time.sleep(5)
+    time.sleep(3)
     statuses = ctrl.get_entity_list_status(O1)
-    assert(all([x == "running" for x in statuses]))
+    assert(all([x == constants.STATUS_RUNNING for x in statuses]))
     ctrl.stop_entity_list(O1)

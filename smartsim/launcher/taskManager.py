@@ -6,6 +6,7 @@ import psutil
 
 from ..error import SSConfigError
 from ..utils import get_logger, get_env
+from ..constants import TM_INTERVAL
 
 logger = get_logger(__name__)
 
@@ -32,9 +33,6 @@ class TaskManager:
     manager to ensure that the task is still alive and well.
     """
 
-    # time to wait between status checks
-    interval = 2
-
     def __init__(self):
         """Initialize a task manager thread."""
         self.name = "TaskManager" + "-" + str(np.base_repr(time.time_ns(), 36))
@@ -52,14 +50,15 @@ class TaskManager:
         """
         global verbose_tm
         if verbose_tm:
-            logger.debug(f"Starting Task Manager thread: {self.name}")
+            logger.debug(f"Starting Task Manager")
 
         self.actively_monitoring = True
         while self.actively_monitoring:
-            time.sleep(self.interval)
+            time.sleep(TM_INTERVAL)
 
             for task in self.tasks:
                 returncode = task.check_status() # poll and set returncode
+                # has to be != None because returncode can be 0
                 if returncode != None:
                     output, error = task.get_io()
                     self.add_task_history(task.step_id, returncode, output, error)
@@ -68,7 +67,7 @@ class TaskManager:
             if len(self) == 0:
                 self.actively_monitoring = False
                 if verbose_tm:
-                    logger.debug(f"{self.name} - Sleeping, no tasks to monitor")
+                    logger.debug(f"Sleeping, no tasks to monitor")
 
     def add_task(self, popen_process, step_id):
         """Create and add a task to the TaskManager
@@ -80,7 +79,7 @@ class TaskManager:
         """
         task = Task(popen_process, step_id)
         if verbose_tm:
-            logger.debug(f"{self.name}: Adding Task {task.pid}")
+            logger.debug(f"Adding Task {task.pid}")
         self.tasks.append(task)
         self.task_history[step_id] = (None, None, None)
 
@@ -91,7 +90,7 @@ class TaskManager:
         :type step_id: str
         """
         if verbose_tm:
-            logger.debug(f"{self.name}: Removing Task {step_id}")
+            logger.debug(f"Removing Task {step_id}")
         try:
             task = self[step_id]
             if task.is_alive:
@@ -99,8 +98,10 @@ class TaskManager:
                 returncode = task.check_status()
                 self.add_task_history(task.step_id, returncode)
             self.tasks.remove(task)
-        except (psutil.NoSuchProcess, KeyError):
-            logger.warning("Failed to remove a dead task")
+        except psutil.NoSuchProcess as e:
+            logger.debug("Failed to kill a task during removal")
+        except KeyError as e:
+            logger.debug("Failed to remove a task, task was already removed")
 
     def check_error(self, step_id):
         """Check to see if the job has an error

@@ -47,24 +47,35 @@ class Experiment:
             self.exp_path = path.join(getcwd(), name)
         self._control = Controller(launcher=launcher)
 
-    def start(self, *args, summary=False):
+    def start(self, *args, block=True, summary=False):
         """Start the SmartSim Experiment
 
         Start the experiment by turning all entities into jobs
-        for the underlying launcher specified at experiment
-        initialization. All entities in the experiment will be
-        launched if arguments are not passed.
+        for the underlying launcher and launching them.
+
+        Arguments to start are SmartSimEntity or EntityList
+        objects created through the Experiment interface.
+
+        :param block: block execution until all non-database
+                      jobs are finished, defaults to True
+        :type block: bool, optional
+        :param summary: print a launch summary prior to launch,
+                        defaults to False
+        :type summary: bool, optional
         """
         try:
             if summary:
                 self._launch_summary(*args)
-            self._control.start(*args)
+            self._control.start(*args, block=block)
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def stop(self, *args):
         """Stop specific entities launched through SmartSim.
+
+        Arguments to stop are SmartSimEntity or EntityList
+        objects created through the Experiment interface.
 
         :raises TypeError:
         :raises SmartSimError:
@@ -84,6 +95,25 @@ class Experiment:
             raise
 
     def generate(self, *args, tag=None, overwrite=False):
+        """Generate the file structure for an experiment
+
+        Generate creates directories for each entity passed
+        as well as copies and writes files for each entity.
+
+        If model objects are provided with generator files,
+        those files are written into according to the parameters
+        provided at model initialization.
+
+        Arguments to generate are SmartSimEntity or EntityList
+        objects created through the Experiment interface.
+
+        :param tag: tag used in `to_configure` generator files,
+                    defaults to None
+        :type tag: str, optional
+        :param overwrite: overwrite existing folders and contents,
+                          defaults to False
+        :type overwrite: bool, optional
+        """
         try:
             generator = Generator(self.exp_path, overwrite=overwrite)
             if tag:
@@ -97,7 +127,7 @@ class Experiment:
         """Monitor jobs through logging to stdout.
 
         Poll the running jobs and receive logging output
-        with the status of the job. If polling the database,
+        with the status of the jobs. If polling the database,
         jobs will continue until database is manually shutdown.
 
         :param interval: number of seconds to wait before polling again
@@ -158,9 +188,15 @@ class Experiment:
     ):
         """Create an Ensemble entity
 
+        Ensembles will create underlying Model objects based on the
+        params argument and the perm_strategy argument.
+
+        Extra arguments to custom generation stategies can be
+        passed through the kwargs argument
+
         :param name: name of the ensemble
         :type name: str
-        :param params: model parameters for generation strategies
+        :param params: model parameters for permutation strategy
         :type params: dict, optional
         :param run_settings: define how the model should be run,
         :type run_settings: dict, optional
@@ -185,13 +221,13 @@ class Experiment:
     def create_model(
         self, name, run_settings, params={}, path=None, enable_key_prefixing=False
     ):
-        """Create a Model belonging to a specific ensemble.
+        """Create a Model
 
         :param name: name of the model
         :type name: str
         :param run_settings: defines how the model should be run,
         :type run_settings: dict
-        :param params: model parameters for generation strategies
+        :param params: model parameters for writing into configuration files
         :type params: dict, optional
         :param path: path to where the model should be executed at runtime
         :type path: str, optional
@@ -222,13 +258,11 @@ class Experiment:
         Launched entities can communicate with the orchestrator through use
         of one of the Python, C, C++ or Fortran clients.
 
-        With the default settings, this function can be used to create
-        a local orchestrator that will run in parallel with other
-        entities running serially in an experiment. If launching the
-        orchestrator on a machine with a workload manager, include
-        "alloc" as a kwarg to launch the orchestrator on a specified
-        compute resource allocation.  For creating
-        clustered orchestrators accross multiple compute nodes,
+        If launching the orchestrator on a machine with a workload manager,
+        include "alloc" as a kwarg to launch the orchestrator on a specified
+        compute resource allocation.
+
+        For creating clustered orchestrators across multiple compute nodes,
         set db_nodes to 3 or larger.  Additionally, the kwarg "dpn"
         can be used to launch multiple databases per compute node.
 
@@ -236,7 +270,7 @@ class Experiment:
         :type path: str, optional
         :param port: port orchestrator should run on, defaults to 6379
         :type port: int, optional
-        :param overwrite: flag to indicate that existing orcestrator files
+        :param overwrite: flag to indicate that existing orchestrator files
                           in the experiment directory should be overwritten
         :type overwrite: bool, optional
         :param db_nodes: number of database nodes in the cluster, defaults to 3
@@ -380,7 +414,11 @@ class Experiment:
         return addresses
 
     def summary(self):
-        """Return a summary of the experiment"""
+        """Return a summary of the experiment
+
+        :return: Dataframe of experiment history
+        :rtype: pd.DataFrame
+        """
         index = 0
         df = pd.DataFrame(
             columns=[
@@ -390,8 +428,8 @@ class Experiment:
                 "RunID",
                 "Time",
                 "Status",
-                "Returncode"
-                ]
+                "Returncode",
+            ]
         )
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
@@ -403,14 +441,17 @@ class Experiment:
                     run,
                     job.history.job_times[run],
                     job.history.statuses[run],
-                    job.history.returns[run]
+                    job.history.returns[run],
                 ]
                 index += 1
         return df
 
     def _launch_summary(self, *args):
+        """Experiment pre-launch summary of entities that will be launched"""
+
         def sprint(p):
             print(p, flush=True)
+
         sprint("\n")
         models, ensembles, orchestrator = seperate_entities(args)
 

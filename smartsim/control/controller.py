@@ -1,6 +1,7 @@
 import sys
 import time
 import subprocess
+import threading
 import pickle
 from os import listdir
 from os.path import isdir, basename, join
@@ -20,9 +21,10 @@ from ..utils import get_logger
 
 logger = get_logger(__name__)
 
+
 class Controller:
     """The controller module provides an interface between the
-    numerical model that is the subject of Smartsim and the
+    smartsim entities created in the experiment and the
     underlying workload manager or run framework.
     """
 
@@ -36,14 +38,14 @@ class Controller:
         self._cons = Junction()
         self.init_launcher(launcher)
 
-    def start(self, *args):
-        """Start the Controller instance
+    def start(self, *args, block=True):
+        """Start the passed SmartSim entities
 
-        The function starts the computation of a ensemble, nodes, and
-        optionally facilitate communication between entities via an
-        orchestrator.  Controller.start() expects objects to be passed
-        to the ensembles, nodes, and orchestrator objects. These are
-        usually provided by Experiment when calling Experiment.start().
+        This function should not be called directly, but rather
+        through the experiment interface.
+
+        The controller will start the job-manager thread upon
+        execution of all jobs.
         """
         entities, entity_lists, orchestrator = seperate_entities(args)
         self._sanity_check_launch(orchestrator)
@@ -53,6 +55,10 @@ class Controller:
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
+
+        # block until all non-database jobs are complete
+        if block:
+            self.poll(5, False, True)
 
     def poll(self, interval, poll_db, verbose):
         """Poll running simulations and receive logging output of job status
@@ -65,19 +71,19 @@ class Controller:
         :param verbose: set verbosity
         :type verbose: bool
         """
-        all_finished = False
-        while not all_finished:
+        # fine to not lock here, nothing about the jobs
+        # are being mutated in any way.
+        to_monitor = self._jobs.jobs
+        if poll_db:
+            to_monitor = self._jobs()
+            msg = "Monitoring database will loop infinitely as long"
+            msg += "as database is alive.\n Ctrl+C to stop execution."
+            logger.warning(msg)
+        while len(to_monitor) > 0:
             time.sleep(interval)
-            finished = []
-            for _, job in self._jobs().items():
-                if not poll_db and job.entity.type == "db":
-                    continue
-                else:
-                    finished.append(self._launcher.is_finished(job.jid))
-                    if verbose:
-                        logger.info(job)
-            if all(finished):
-                all_finished = True
+            for job in to_monitor.values():
+                if verbose:
+                    logger.info(job)
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -99,8 +105,7 @@ class Controller:
                     f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
                 )
 
-            job = self._jobs[entity.name]
-            return self._launcher.is_finished(job.jid)
+            return self._jobs.is_finished(entity)
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"
@@ -108,6 +113,9 @@ class Controller:
 
     def stop_entity(self, entity):
         """Stop an instance of an entity
+
+        This function will also update the status of the job in
+        the jobmanager so that the job appears as "cancelled".
 
         :param entity: entity to be stopped
         :type entity: SmartSimEntity
@@ -315,7 +323,7 @@ class Controller:
         """Set connection environment variables
 
         Retrieve the connections registered by the user for
-        each entity and utilize the orchestrator for turning
+        each entity and utilize the junction for turning
         those connections into environment variables to launch
         with the step.
 

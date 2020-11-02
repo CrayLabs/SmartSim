@@ -5,7 +5,7 @@ from ..error import SSConfigError
 from ..utils.helpers import get_env
 
 # constants for logging
-coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
+coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
 coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
 
 
