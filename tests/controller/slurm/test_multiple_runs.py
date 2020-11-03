@@ -3,10 +3,10 @@ import pytest
 from shutil import which
 from os import getcwd, path, environ
 
+from smartsim import constants
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
-
 
 # --- Setup ---------------------------------------------------
 
@@ -25,7 +25,7 @@ def test_multiple_runs():
     exp = Experiment("Multiple-Run-Tests")
     alloc = get_alloc_id()
     run_settings = {
-        "ppn": 1,
+        "ntasks": 1,
         "nodes": 1,
         "executable": "python",
         "exe_args": "sleep.py",
@@ -36,15 +36,16 @@ def test_multiple_runs():
     O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
 
     ctrl.start(M1, M2)
-    ctrl.poll(3, False, True)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
-    assert("FAILED" not in statuses)
+    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
 
-    ctrl.start(O1)
-    time.sleep(5)
+    ctrl.start(O1, block=False)
+    time.sleep(10)
     statuses = ctrl.get_entity_list_status(O1)
-    assert(all([x == "RUNNING" for x in statuses]))
+    assert(all([x == constants.STATUS_RUNNING for x in statuses]))
     ctrl.stop_entity_list(O1)
+    statuses = ctrl.get_entity_list_status(O1)
+    assert(all([x == constants.STATUS_CANCELLED for x in statuses]))
 
 
 # ------ Helper Functions ------------------------------------------

@@ -3,10 +3,10 @@ import pytest
 from shutil import which
 from os import getcwd, path, environ
 
+from smartsim import constants
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
-
 
 # --- Setup ---------------------------------------------------
 
@@ -20,10 +20,10 @@ ctrl = Controller()
 exp = Experiment("test")
 
 run_settings = {
-    "ppn": 1,
+    "ntasks": 1,
     "nodes": 1,
     "executable": "python",
-    "exe_args": "sleep.py"
+    "exe_args": "sleep.py --time=10"
 }
 
 @controller_test
@@ -35,9 +35,8 @@ def test_models():
     M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)
 
     ctrl.start(M1, M2)
-    ctrl.poll(3, False, True)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
-    assert("FAILED" not in statuses)
+    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
 
 @controller_test
 def test_orchestrator():
@@ -46,10 +45,12 @@ def test_orchestrator():
     O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
 
     ctrl.start(O1)
-    time.sleep(5)
+    time.sleep(10)
     statuses = ctrl.get_entity_list_status(O1)
-    assert("FAILED" not in statuses)
+    assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
     ctrl.stop_entity_list(O1)
+    statuses = ctrl.get_entity_list_status(O1)
+    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
 
 
 @controller_test
@@ -61,11 +62,8 @@ def test_ensemble():
     ensemble.add_model(M3)
 
     ctrl.start(ensemble)
-    time.sleep(5)
     statuses = ctrl.get_entity_list_status(ensemble)
-    assert("FAILED" not in statuses)
-    ctrl.stop_entity_list(ensemble)
-
+    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
 # ------ Helper Functions ------------------------------------------
 
 def get_alloc_id():

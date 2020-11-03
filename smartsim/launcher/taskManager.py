@@ -79,7 +79,7 @@ class TaskManager:
         """
         task = Task(popen_process, step_id)
         if verbose_tm:
-            logger.debug(f"Adding Task {task.pid}")
+            logger.debug(f"Adding Task {step_id}")
         self.tasks.append(task)
         self.task_history[step_id] = (None, None, None)
 

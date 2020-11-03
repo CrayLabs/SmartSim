@@ -3,6 +3,7 @@ import pytest
 from shutil import which
 from os import getcwd, path, environ
 
+from smartsim import constants
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
@@ -25,12 +26,13 @@ def test_cluster_orchestrator():
     alloc = get_alloc_id()
     C1 = exp.create_orchestrator(path=test_path, db_nodes=3, alloc=alloc)
 
-    ctrl.start(C1)
+    ctrl.start(C1, block=False)
     time.sleep(10)
     statuses = ctrl.get_entity_list_status(C1)
-    assert("FAILED" not in statuses)
+    assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
     ctrl.stop_entity_list(C1)
-
+    statuses = ctrl.get_entity_list_status(C1)
+    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
 
 # ------ Helper Functions ------------------------------------------
 

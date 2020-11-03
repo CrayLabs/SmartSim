@@ -82,7 +82,6 @@ class Launcher(abc.ABC):
 
         :param step: Step instance
         :type step: Step
-        :raises LauncherError: If error in launch process
         :return: job_step id
         :rtype: str
         """

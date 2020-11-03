@@ -33,11 +33,12 @@ def test_restart():
     local_ctrl.stop_entity(M2)
     local_ctrl.stop_entity_list(O1)
 
-    # ensure they all become cancelled jobs
+    # model statuses should not be changed to cancelled as they should
+    # finish before stop is called
     model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = local_ctrl.get_entity_list_status(O1)
-    statuses = orc_status + model_statuses
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert(all([stat == constants.STATUS_COMPLETED for stat in model_statuses]))
+    assert(all([stat == constants.STATUS_CANCELLED for stat in orc_status]))
 
     # restart all entities
     local_ctrl.start(M1, M2, O1)
@@ -54,5 +55,5 @@ def test_restart():
     # ensure they all become cancelled jobs
     model_statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = local_ctrl.get_entity_list_status(O1)
-    statuses = orc_status + model_statuses
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert(all([stat == constants.STATUS_COMPLETED for stat in model_statuses]))
+    assert(all([stat == constants.STATUS_CANCELLED for stat in orc_status]))

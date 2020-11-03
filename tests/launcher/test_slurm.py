@@ -1,8 +1,10 @@
 import os
 import pytest
 from shutil import which
+from smartsim import constants
 from smartsim.launcher import SlurmLauncher
 from smartsim.error.errors import LauncherError
+from smartsim.launcher.stepInfo import SlurmStepInfo
 
 # skip if not on a slurm system
 if not which("srun"):
@@ -120,7 +122,8 @@ def test_validate_fail_ppn_one_partition():
 def test_get_step_status():
     """test calling get_step_status for step that doesnt exist"""
     status = slurm.get_step_status(11111.1)
-    assert(status.status == "NOTFOUND")
+    assert(isinstance(status, SlurmStepInfo))
+    assert(status.status == constants.STATUS_FAILED)
     assert(status.returncode == "NAN")
     assert(status.error == None)
     assert(status.output == None)
@@ -136,7 +139,6 @@ def test_no_alloc_create_step():
     cwd = os.path.dirname(os.path.abspath(__file__))
     run_settings = {
         "nodes": 1,
-        "ppn": 1,
         "out_file": cwd + "/out.txt",
         "err_file": cwd + "/err.txt",
         "cwd": cwd,

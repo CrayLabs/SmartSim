@@ -13,6 +13,8 @@ class StepInfo:
 
 class LocalStepInfo(StepInfo):
 
+    # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
+    # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
     mapping = {
         psutil.STATUS_RUNNING: STATUS_RUNNING,
         psutil.STATUS_SLEEPING: STATUS_RUNNING, # sleeping thread is still alive
@@ -34,9 +36,52 @@ class LocalStepInfo(StepInfo):
         super().__init__(smartsim_status, returncode, output=output, error=error)
 
     def _get_smartsim_status(self, status):
-        # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
-        # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
+        if status in SMARTSIM_STATUS:
+            return SMARTSIM_STATUS[status]
+        elif status in self.mapping:
+            return self.mapping[status]
+        else:
+            # we don't know what happened so return failed to be safe
+            return STATUS_FAILED
 
+class SlurmStepInfo(StepInfo):
+
+    # see https://slurm.schedmd.com/squeue.html#lbAG
+    mapping = {
+        "RUNNING": STATUS_RUNNING,
+        "CONFIGURING": STATUS_RUNNING,
+        "STAGE_OUT": STATUS_RUNNING,
+
+        "COMPLETED": STATUS_COMPLETED,
+        "DEADLINE": STATUS_COMPLETED,
+        "TIMEOUT": STATUS_COMPLETED,
+
+        "BOOT_FAIL": STATUS_FAILED,
+        "FAILED": STATUS_FAILED,
+        "NODE_FAIL": STATUS_FAILED,
+        "OUT_OF_MEMORY": STATUS_FAILED,
+
+        "CANCELLED": STATUS_CANCELLED,
+        "REVOKED": STATUS_CANCELLED,
+
+        "PENDING": STATUS_PAUSED,
+        "PREEMPTED": STATUS_PAUSED,
+        "RESV_DEL_HOLD": STATUS_PAUSED,
+        "REQUEUE_FED": STATUS_PAUSED,
+        "REQUEUE_HOLD": STATUS_PAUSED,
+        "REQUEUED": STATUS_PAUSED,
+        "RESIZING": STATUS_PAUSED,
+        "SIGNALING": STATUS_PAUSED,
+        "SPECIAL_EXIT": STATUS_PAUSED,
+        "STOPPED": STATUS_PAUSED,
+        "SUSPENDED": STATUS_PAUSED
+    }
+
+    def __init__(self, status="", returncode=None, output=None, error=None):
+        smartsim_status = self._get_smartsim_status(status)
+        super().__init__(smartsim_status, returncode, output=output, error=error)
+
+    def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:

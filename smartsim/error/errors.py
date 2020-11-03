@@ -82,11 +82,3 @@ class ShellError(LauncherError):
         msg += f"Error from shell: {shell_error}"
         return msg
 
-
-
-class CommandServerError(LauncherError):
-    """Raised when there is a error when communicating with the command server"""
-
-    def __init__(self, message):
-        super().__init__(message)
-

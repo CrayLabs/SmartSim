@@ -3,10 +3,10 @@ import pytest
 from shutil import which
 from os import getcwd, path, environ
 
+from smartsim import constants
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
-
 
 # --- Setup ---------------------------------------------------
 
@@ -23,7 +23,7 @@ def test_restart():
     exp = Experiment("Restart-Test")
     alloc = get_alloc_id()
     run_settings = {
-        "ppn": 1,
+        "ntasks": 1,
         "nodes": 1,
         "executable": "python",
         "exe_args": "sleep.py",
@@ -35,29 +35,34 @@ def test_restart():
 
     # start all entities for the first time
     ctrl.start(M1, M2, O1)
-    ctrl.poll(3, False, True)
     model_statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = ctrl.get_entity_list_status(O1)
     statuses = orc_status + model_statuses
-    assert("FAILED" not in statuses)
+    assert(constants.STATUS_FAILED not in statuses)
 
-    ctrl.stop_entity(M1)
-    ctrl.stop_entity(M2)
-    ctrl.stop_entity_list(O1)
-
+    ctrl.stop_entity(M1) # should not change the status
+    ctrl.stop_entity(M2) # should not change the status
+    ctrl.stop_entity_list(O1) # should change status to cancelled
+    model_statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
+    orc_status = ctrl.get_entity_list_status(O1)
+    assert(all(stat == constants.STATUS_COMPLETED for stat in model_statuses))
+    assert(all(stat == constants.STATUS_CANCELLED for stat in orc_status))
 
     # restart all entities
     ctrl.start(M1, M2, O1)
-    ctrl.poll(3, False, True)
     model_statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
     orc_status = ctrl.get_entity_list_status(O1)
     statuses = orc_status + model_statuses
-    assert("FAILED" not in statuses)
+    assert(constants.STATUS_FAILED not in statuses)
 
     # TODO: add job history check here
     ctrl.stop_entity(M1)
     ctrl.stop_entity(M2)
     ctrl.stop_entity_list(O1)
+    model_statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
+    orc_status = ctrl.get_entity_list_status(O1)
+    assert(all(stat == constants.STATUS_COMPLETED for stat in model_statuses))
+    assert(all(stat == constants.STATUS_CANCELLED for stat in orc_status))
 
 # ------ Helper Functions ------------------------------------------
 

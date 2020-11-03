@@ -10,7 +10,6 @@ if not which("srun"):
 cwd = os.path.dirname(os.path.abspath(__file__))
 run_settings = {
     "nodes": 1,
-    "ppn": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
@@ -48,7 +47,6 @@ def test_multi_prog():
 
 run_settings_with_opts = {
     "nodes": 1,
-    "ppn": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
@@ -78,7 +76,6 @@ def test_build_cmd_with_opts():
 
 run_settings_err_alloc = {
     "nodes": 1,
-    "ppn": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
@@ -93,7 +90,6 @@ def test_no_alloc_given():
 
 run_settings_err_exe = {
     "nodes": 1,
-    "ppn": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,

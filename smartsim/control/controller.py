@@ -6,6 +6,7 @@ import pickle
 from os import listdir
 from os.path import isdir, basename, join
 
+from ..constants import TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..launcher import SlurmLauncher, LocalLauncher
 from ..entity import SmartSimEntity, DBNode, Ensemble, Model, EntityList
@@ -121,12 +122,13 @@ class Controller:
         :type entity: SmartSimEntity
         """
         job = self._jobs[entity.name]
-        logger.info(" ".join(("Stopping model", entity.name, "job", str(job.jid))))
-        status = self._launcher.stop(job.jid)
-        job.set_status(
-            status.status, status.returncode, error=status.error, output=status.output
-        )
-        self._jobs.move_to_completed(job)
+        if job.status not in TERMINAL_STATUSES:
+            logger.info(" ".join(("Stopping model", entity.name, "job", str(job.jid))))
+            status = self._launcher.stop(job.jid)
+            job.set_status(
+                status.status, status.returncode, error=status.error, output=status.output
+            )
+            self._jobs.move_to_completed(job)
 
     def stop_entity_list(self, entity_list):
         """Stop an instance of an entity list

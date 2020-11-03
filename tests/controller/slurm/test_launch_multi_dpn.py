@@ -3,6 +3,7 @@ import pytest
 from shutil import which
 from os import getcwd, path, environ
 
+from smartsim import constants
 from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
@@ -23,12 +24,13 @@ def test_dpn():
     alloc = get_alloc_id()
     Orc = exp.create_orchestrator(path=test_path, db_nodes=1, dpn=3, alloc=alloc)
 
-    ctrl.start(Orc)
-    time.sleep(5)
+    ctrl.start(Orc, block=False)
+    time.sleep(10)
     statuses = ctrl.get_entity_list_status(Orc)
-    assert("FAILED" not in statuses)
+    assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
     ctrl.stop_entity_list(Orc)
-
+    statuses = ctrl.get_entity_list_status(Orc)
+    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
 
 # ------ Helper Functions ------------------------------------------
 

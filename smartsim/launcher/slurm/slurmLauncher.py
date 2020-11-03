@@ -9,6 +9,8 @@ from shutil import which
 
 from ..launcher import Launcher
 from .slurmStep import SlurmStep
+from ..stepInfo import SlurmStepInfo
+from ..taskManager import TaskManager
 from .slurmConstants import SlurmConstants
 from ...error import LauncherError, SSConfigError
 from ..shell import execute_cmd, execute_async_cmd
@@ -16,11 +18,8 @@ from .slurmCommands import sstat, sacct, salloc, sinfo, scancel
 from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
 from ..launcherUtil import seq_to_str, write_to_bash, ComputeNode, Partition
 from .slurmParser import parse_salloc_error, parse_sstat_nodes, parse_step_id_from_sacct
-from ..stepInfo import StepInfo
-from ..taskManager import TaskManager
 
 from ...utils import get_logger, get_env
-
 logger = get_logger(__name__)
 
 
@@ -114,28 +113,23 @@ class SlurmLauncher(Launcher):
     def get_step_status(self, step_id):
         """Get the status of a SlurmStep via the id of the step (e.g. 12345.0)
 
-        TODO update this docstring
-        :param step_id: id of the step in form xxxxx.x
+        :param step_id: id of the step in the form of xxxxxx.x
         :type step_id: str
-        :return: status of the job and returncode
-        :rtype: tuple of (str, str)
+        :return: status of the job step and returncode
+        :rtype: SlurmStepInfo
         """
         step_id = str(step_id)
         sacct_out, sacct_error = sacct(["--noheader", "-p", "-b", "-j", step_id])
-        if not sacct_out:
-            stat, returncode = "NOTFOUND", "NAN"
-        else:
-            stat, returncode = parse_sacct(sacct_out, step_id)
+        stat, returncode = parse_sacct(sacct_out, step_id)
         if self.task_manager.check_error(step_id):
             task_ret_code, out, err = self.task_manager.get_task_history(step_id)
 
-            # if NOTFOUND then the command never made it to slurm
             if stat == "NOTFOUND":
                 returncode = task_ret_code
-                stat = "FAILED"
-            status = StepInfo(stat, returncode, out, err)
+                stat = "Failed"
+            status = SlurmStepInfo(stat, returncode, out, err)
         else:
-            status = StepInfo(stat, returncode)
+            status = SlurmStepInfo(stat, returncode)
         return status
 
 
@@ -145,10 +139,10 @@ class SlurmLauncher(Launcher):
         # (status, returncode)
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 
-        # create StepInfo objects to return
+        # create SlurmStepInfo objects to return
         updates = []
         for stat_tuple, step_id in zip(stat_tuples, step_ids):
-            info = StepInfo(stat_tuple[0], stat_tuple[1])
+            info = SlurmStepInfo(stat_tuple[0], stat_tuple[1])
             if self.task_manager.check_error(step_id):
                 rc, out, err = self.task_manager.get_task_history(step_id)
                 info.output = out
@@ -157,7 +151,7 @@ class SlurmLauncher(Launcher):
                 # command never made it to slurm, return Popen returncode
                 if info.status == "NOTFOUND":
                     info.returncode = rc
-                    info.status = "FAILED"
+                    info.status = "Failed"
             updates.append(info)
         return updates
 
@@ -208,37 +202,23 @@ class SlurmLauncher(Launcher):
         return step_id
 
     def stop(self, step_id):
-        """Stop a job step within an allocation.
+        """Stop a job step
 
-        TODO update this docstring
         :param step_id: id of the step to be stopped
         :type step_id: str
-        :raises LauncherError: if unable to stop job step
+        :return: a SlurmStepInfo instance
+        :rtype: SlurmStepInfo
         """
         self.check_for_slurm()
-
-        status = self.get_step_status(step_id)
-        if not self.is_finished(step_id):
-            self.task_manager.remove_task(step_id)
-
-            returncode, out, err = scancel([str(step_id)])
-            if returncode != 0:
-                logger.warning(f"Unable to stop job {str(step_id)}")
-            else:
-                logger.info(f"Successfully stopped job {str(step_id)}")
-            status.status = "CANCELLED by user"
-        return status
-
-    def is_finished(self, step_id):
-        """Determine wether a job is finished by parsing slurm sacct
-
-        :return: True/False wether job is finished
-        :rtype: bool
-        """
-        returncode = self.task_manager.task_history[step_id][0]
-        if returncode == None:
-            return False
-        return True
+        scancel_rc, out, err = scancel([str(step_id)])
+        self.task_manager.remove_task(step_id)
+        if scancel_rc != 0:
+            logger.warning(f"Unable to stop job {str(step_id)}")
+        else:
+            logger.info(f"Successfully stopped job {str(step_id)}")
+        returncode, out, err = self.task_manager.get_task_history(step_id)
+        info = SlurmStepInfo("Cancelled", returncode, out, err)
+        return info
 
     def _get_slurm_step_id(self, step, interval=1, trials=5):
         """Get the step_id of a step

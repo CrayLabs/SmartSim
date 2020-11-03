@@ -7,6 +7,8 @@ from smartsim import Experiment, slurm
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
 from smartsim.error import SmartSimError
+from smartsim import constants
+
 # --- Setup ---------------------------------------------------
 
 # create some entities for testing
@@ -23,7 +25,7 @@ def test_failed_status():
     alloc = get_alloc_id()
 
     run_settings_report_failure = {
-        "ppn": 1,
+        "ntasks": 1,
         "nodes": 1,
         "executable": "python",
         "exe_args": "bad.py --time 10",
@@ -33,11 +35,11 @@ def test_failed_status():
                             path=test_path,
                             run_settings=run_settings_report_failure)
 
-    ctrl.start(model)
+    ctrl.start(model, block=False)
     while not ctrl.finished(model):
         time.sleep(3)
     status = ctrl.get_entity_status(model)
-    assert(status == "FAILED")
+    assert(status == constants.STATUS_FAILED)
 
 @controller_test
 def test_start_no_allocs():
@@ -46,7 +48,6 @@ def test_start_no_allocs():
     exp = Experiment("test_no_alloc")
 
     run_settings_no_alloc = {
-        "ppn": 1,
         "nodes": 1,
         "executable": "python",
         "exe_args": "bad.py --time 10"

@@ -5,7 +5,7 @@ from shutil import rmtree, which
 
 from smartsim import slurm
 from smartsim import Experiment
-
+from smartsim import constants
 
 if not which("srun"):
     pytestmark = pytest.mark.skip
@@ -14,11 +14,14 @@ def test_summary():
 
     exp = Experiment("summary_test", launcher="slurm")
 
+    if osp.isdir(exp.exp_path):
+        rmtree(exp.exp_path)
+
     alloc = slurm.get_slurm_allocation(nodes=2)
 
     run_settings = {
         "executable": "python",
-        "exe_args": "sleep.py",
+        "exe_args": "sleep.py --time 10",
         "nodes": 1,
         "alloc": alloc,
     }
@@ -35,7 +38,8 @@ def test_summary():
 
     # start and poll
     exp.start(sleep_model, bad_model)
-    exp.poll()
+    assert(exp.get_status(bad_model)[0] == constants.STATUS_FAILED)
+    assert(exp.get_status(sleep_model)[0] == constants.STATUS_COMPLETED)
 
     summary_df = exp.summary()
     print(summary_df)
@@ -45,8 +49,6 @@ def test_summary():
     assert sleep_model.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
-    assert None == row["Error"]
-    assert None == row["Output"]
 
     row_1 = summary_df.loc[0]
 
@@ -54,7 +56,6 @@ def test_summary():
     assert bad_model.type == row_1["Entity-Type"]
     assert 0 == int(row_1["RunID"])
     assert 0 != int(row_1["Returncode"])
-    assert row_1["Error"]
 
     if osp.isdir(exp.exp_path):
         rmtree(exp.exp_path)
