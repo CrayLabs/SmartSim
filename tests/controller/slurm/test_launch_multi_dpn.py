@@ -25,7 +25,7 @@ def test_dpn():
     Orc = exp.create_orchestrator(path=test_path, db_nodes=1, dpn=3, alloc=alloc)
 
     ctrl.start(Orc, block=False)
-    time.sleep(10)
+    time.sleep(15)
     statuses = ctrl.get_entity_list_status(Orc)
     assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
     ctrl.stop_entity_list(Orc)

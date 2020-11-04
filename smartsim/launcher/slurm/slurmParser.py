@@ -1,3 +1,5 @@
+from shutil import which
+
 def parse_salloc(output):
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
@@ -12,19 +14,19 @@ def parse_salloc_error(output):
     :return: error message
     :rtype: str
     """
+    salloc = which("salloc")
     # look for error first
     for line in output.split("\n"):
-        if line.startswith("salloc: error:"):
+        if line.startswith(salloc + ": error:") or line.startswith("salloc: error:"):
             error = line.split("error:")[1]
             return error.strip()
     # if no error line, take first line
     for line in output.split("\n"):
-        if line.startswith("salloc: "):
+        if line.startswith(salloc + ": ") or line.startswith("salloc: "):
             error = " ".join((line.split()[1:]))
             return error.strip()
-    # if neither, present a base error message
-    base_err = "Slurm allocation error"
-    return base_err
+    # return None if we cant find error
+    return None
 
 
 def parse_sacct_step(output):

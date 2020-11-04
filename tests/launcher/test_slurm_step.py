@@ -10,6 +10,8 @@ if not which("srun"):
 cwd = os.path.dirname(os.path.abspath(__file__))
 run_settings = {
     "nodes": 1,
+    "ntasks": 1,
+    "ntasks-per-node": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
@@ -24,10 +26,11 @@ def test_build_cmd():
     cmd = step.build_cmd()
     print(cmd)
     srun = which("srun")
-    result = [srun, '--nodes', '1', '--ntasks', '1', '--ntasks-per-node', '1',
+    result = [srun,
               '--output', cwd + '/out.txt',
               '--error', cwd + '/err.txt',
-              '--jobid', '111111', '--job-name', 'test-1111.0', 'a.out', '--input']
+              '--jobid', '111111', '--job-name', 'test-1111.0',
+              '--nodes=1', '--ntasks=1', '--ntasks-per-node=1', 'a.out', '--input']
     assert(cmd == result)
 
 def test_multi_prog():
@@ -35,18 +38,20 @@ def test_multi_prog():
     cmd = step.build_cmd()
     print(cmd)
     srun = which("srun")
-    result = [srun, '--nodes', '1', '--ntasks', '1', '--ntasks-per-node', '1',
+    result = [srun,
               '--output', cwd + '/out.txt',
               '--error', cwd + '/err.txt',
-              '--jobid', '111111',
-              '--job-name', 'test-1111.0',
-              '--multi-prog', cwd + '/run_orc.conf']
+              '--jobid', '111111', '--job-name', 'test-1111.0',
+              '--nodes=1', '--ntasks=1', '--ntasks-per-node=1',
+              '--multi-prog', cwd + '/run_orc.conf'
+                ]
     assert(cmd == result)
     assert(os.path.isfile(cwd + "/run_orc.conf"))
     os.remove(cwd + "/run_orc.conf")
 
 run_settings_with_opts = {
     "nodes": 1,
+    "n": 1,
     "out_file": cwd + "/out.txt",
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
@@ -69,6 +74,12 @@ def test_build_cmd_with_opts():
               '--error', cwd + '/err.txt',
               '--jobid', '111111', '--job-name', 'test-1111.0',
               '--exclusive', '--qos=interactive', '-Q', 'a.out', '--input']
+    result = [srun,
+              '--output', cwd + '/out.txt',
+              '--error', cwd + '/err.txt',
+              '--jobid', '111111', '--job-name', 'test-1111.0',
+              '--nodes=1', '-n', '1', '--exclusive', '--qos=interactive',
+              '-Q', 'a.out', '--input']
     assert(cmd == result)
 
 # ---------------------------------------------------------------

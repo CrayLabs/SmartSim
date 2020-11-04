@@ -8,7 +8,7 @@ from ...utils import get_logger, get_env
 logger = get_logger(__name__)
 
 
-def get_slurm_allocation(nodes=1, ppn=1, time="1:00:00", add_opts={}):
+def get_slurm_allocation(nodes=1, add_opts={}):
     """Request an allocation
 
     This function requests an allocation with the specified arguments.
@@ -26,10 +26,6 @@ def get_slurm_allocation(nodes=1, ppn=1, time="1:00:00", add_opts={}):
 
     :param nodes: number of nodes for the allocation, defaults to 1
     :type nodes: int, optional
-    :param ppn: processes per node
-    :type ppn: int
-    :param time: time for the allocation to last
-    :type time: str
     :param add_opts: additional options for the slurm wlm
     :type add_opts: dict
     :raises LauncherError: if the allocation is not successful
@@ -38,7 +34,7 @@ def get_slurm_allocation(nodes=1, ppn=1, time="1:00:00", add_opts={}):
     """
     SlurmLauncher.check_for_slurm()
 
-    salloc_args = _get_alloc_cmd(nodes, ppn, time, add_opts=add_opts)
+    salloc_args = _get_alloc_cmd(nodes, add_opts=add_opts)
     debug_msg = " ".join(salloc_args[1:])
     logger.debug(f"Allocation settings: {debug_msg}")
 
@@ -49,7 +45,11 @@ def get_slurm_allocation(nodes=1, ppn=1, time="1:00:00", add_opts={}):
         logger.info("Allocation successful with Job ID: %s" % alloc_id)
     else:
         error = parse_salloc_error(err)
-        raise LauncherError(error)
+        if not error:
+            logger.error(err)
+            raise LauncherError("Slurm allocation error")
+        else:
+            raise LauncherError(error)
     return str(alloc_id)
 
 
@@ -76,7 +76,7 @@ def release_slurm_allocation(alloc_id):
     logger.info(f"Successfully freed allocation {alloc_id}")
 
 
-def _get_alloc_cmd(nodes, ppn, time, add_opts={}):
+def _get_alloc_cmd(nodes, add_opts={}):
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options."""
 
@@ -84,19 +84,19 @@ def _get_alloc_cmd(nodes, ppn, time, add_opts={}):
         "--no-shell",
         "-N",
         str(nodes),
-        "--ntasks-per-node",
-        str(ppn),
-        "--time",
-        time,
         "-J",
         "SmartSim",
     ]
 
     for opt, val in add_opts.items():
-        prefix = "-" if len(str(opt)) == 1 else "--"
+        short_arg = True if len(str(opt)) == 1 else False
+        prefix = "-" if short_arg else "--"
         if not val:
             salloc_args += [prefix + opt]
         else:
-            salloc_args += ["=".join((prefix + opt, str(val)))]
+            if short_arg:
+                salloc_args += [prefix+opt, str(val)]
+            else:
+                salloc_args += ["=".join((prefix + opt, str(val)))]
 
     return salloc_args

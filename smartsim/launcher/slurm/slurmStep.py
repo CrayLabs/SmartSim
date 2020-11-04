@@ -33,18 +33,14 @@ class SlurmStep:
         :return: full srun command to run the job step
         :rtype: str
         """
-        nodes = self.run_settings.get("nodes", 1)
-        ppn = self.run_settings.get("ntasks-per-node", 1)
-        ntasks = ppn * self.run_settings.get("nodes", 1)
         out = self.run_settings["out_file"]
         err = self.run_settings["err_file"]
         srun = self._find_srun_cmd()
 
+        # start srun command creation.
+        # add job information and output files
         step = [
             srun,
-            "--nodes", str(nodes),
-            "--ntasks", str(ntasks),
-            "--ntasks-per-node", str(ppn),
             "--output", out,
             "--error", err,
             "--jobid", str(self.alloc_id),
@@ -58,7 +54,6 @@ class SlurmStep:
         # some kept here for deprecation sake
         smartsim_args = [
             "ppn",
-            "nodes",
             "executable",
             "env_vars",
             "exe_args",
@@ -69,13 +64,18 @@ class SlurmStep:
             "duration",
         ]
 
+        # add additional slurm arguments based on key length
         for opt, value in self.run_settings.items():
             if opt not in smartsim_args:
-                prefix = "-" if len(str(opt)) == 1 else "--"
+                short_arg = True if len(str(opt)) == 1 else False
+                prefix = "-" if short_arg else "--"
                 if not value:
                     step += [prefix + opt]
                 else:
-                    step += ["=".join((prefix + opt, str(value)))]
+                    if short_arg:
+                        step += [prefix+opt, str(value)]
+                    else:
+                        step += ["=".join((prefix + opt, str(value)))]
 
         step += self._build_exe_cmd()
         return step

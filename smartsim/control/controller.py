@@ -22,6 +22,8 @@ from ..utils import get_logger
 
 logger = get_logger(__name__)
 
+# job manager lock
+JM_LOCK = threading.RLock()
 
 class Controller:
     """The controller module provides an interface between the
@@ -35,7 +37,7 @@ class Controller:
         :param launcher: the type of launcher being used
         :type launcher: str
         """
-        self._jobs = JobManager()
+        self._jobs = JobManager(JM_LOCK)
         self._cons = Junction()
         self.init_launcher(launcher)
 
@@ -121,14 +123,18 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: SmartSimEntity
         """
-        job = self._jobs[entity.name]
-        if job.status not in TERMINAL_STATUSES:
-            logger.info(" ".join(("Stopping model", entity.name, "job", str(job.jid))))
-            status = self._launcher.stop(job.jid)
-            job.set_status(
-                status.status, status.returncode, error=status.error, output=status.output
-            )
-            self._jobs.move_to_completed(job)
+        JM_LOCK.acquire()
+        try:
+            job = self._jobs[entity.name]
+            if job.status not in TERMINAL_STATUSES:
+                logger.info(" ".join(("Stopping model", entity.name, "job", str(job.jid))))
+                status = self._launcher.stop(job.jid)
+                job.set_status(
+                    status.status, status.returncode, error=status.error, output=status.output
+                )
+                self._jobs.move_to_completed(job)
+        finally:
+            JM_LOCK.release()
 
     def stop_entity_list(self, entity_list):
         """Stop an instance of an entity list
@@ -406,3 +412,4 @@ class Controller:
         orc_data = {"orc": orchestrator, "db_jobs": self._jobs.db_jobs}
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
+

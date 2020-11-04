@@ -96,7 +96,7 @@ class Orchestrator(EntityList):
         """
         exe = self._find_db_exe()
 
-        run_settings = {"executable": exe, "nodes": 1, "ntasks-per-node": dpn, **kwargs}
+        run_settings = {"executable": exe, "nodes": 1, "ntasks": dpn, **kwargs}
         return run_settings
 
     def _build_local_run_settings(self, **kwargs):

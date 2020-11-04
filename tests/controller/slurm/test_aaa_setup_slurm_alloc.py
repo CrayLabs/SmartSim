@@ -10,7 +10,8 @@ def test_setup_alloc_for_tests():
    """
    if not which("srun"):
       pytest.skip()
-   alloc = slurm.get_slurm_allocation(nodes=5, ppn=3)
+   add_opts = {"ntasks-per-node": 3}
+   alloc = slurm.get_slurm_allocation(nodes=5, add_opts=add_opts)
    environ["TEST_ALLOCATION_ID"] = str(alloc)
    assert("TEST_ALLOCATION_ID" in environ)
 

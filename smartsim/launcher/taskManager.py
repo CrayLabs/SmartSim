@@ -1,7 +1,7 @@
 import datetime
 import time
 import numpy as np
-from threading import Thread
+from threading import Thread, RLock
 import psutil
 
 from ..error import SSConfigError
@@ -39,6 +39,7 @@ class TaskManager:
         self.actively_monitoring = False
         self.task_history = dict()
         self.tasks = []
+        self._lock = RLock()
 
     def start(self):
         """Start the task manager thread"""
@@ -77,6 +78,7 @@ class TaskManager:
         :param step_id: id gleaned from the launcher
         :type step_id: str
         """
+        # should all be atomic
         task = Task(popen_process, step_id)
         if verbose_tm:
             logger.debug(f"Adding Task {step_id}")
@@ -89,6 +91,7 @@ class TaskManager:
         :param step_id: step_id of the task to remove
         :type step_id: str
         """
+        self._lock.acquire()
         if verbose_tm:
             logger.debug(f"Removing Task {step_id}")
         try:
@@ -102,6 +105,8 @@ class TaskManager:
             logger.debug("Failed to kill a task during removal")
         except KeyError as e:
             logger.debug("Failed to remove a task, task was already removed")
+        finally:
+            self._lock.release()
 
     def check_error(self, step_id):
         """Check to see if the job has an error
@@ -109,6 +114,7 @@ class TaskManager:
         :param step_id: step_id of the job
         :type step_id: str
         """
+        self._lock.acquire()
         try:
             history = self.task_history[step_id]
             # task is still running
@@ -121,22 +127,34 @@ class TaskManager:
         # Task hasnt been added yet (unlikely)
         except KeyError:
             return False
+        finally:
+            self._lock.release()
 
     def get_task_history(self, step_id):
+        # dictionary access is atomic
         history = self.task_history[step_id]
         return history
 
     def add_task_history(self, step_id, returncode, out=None, err=None):
+        # setting dictionary attributes is atomic
         self.task_history[step_id] = (returncode, out, err)
 
     def __getitem__(self, step_id):
-        for task in self.tasks:
-            if task.step_id == step_id:
-                return task
-        raise KeyError
+        self._lock.acquire()
+        try:
+            for task in self.tasks:
+                if task.step_id == step_id:
+                    return task
+            raise KeyError
+        finally:
+            self._lock.release()
 
     def __len__(self):
-        return len(self.tasks)
+        self._lock.acquire()
+        try:
+            return len(self.tasks)
+        finally:
+            self._lock.release()
 
 class Task:
     """A Task is a wrapper around a Popen object that includes a reference
