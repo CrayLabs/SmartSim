@@ -9,7 +9,7 @@ from ..database import Orchestrator
 from ..entity import Model, Ensemble
 from .modelwriter import ModelWriter
 from ..error import EntityExistsError
-from ..utils.entityutils import seperate_entities
+from ..utils.entityutils import separate_entities
 from ..error import SmartSimError, SSUnsupportedError, SSConfigError
 
 from ..utils import get_logger
@@ -68,7 +68,7 @@ class Generator:
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
         """
-        entities, entity_lists, orchestrator = seperate_entities(args)
+        entities, entity_lists, orchestrator = separate_entities(args)
         self._gen_exp_dir()
         self._gen_orc_dir(orchestrator)
         self._gen_entity_list_dir(entity_lists)

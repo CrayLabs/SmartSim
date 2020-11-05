@@ -17,12 +17,18 @@ def parse_salloc_error(output):
     salloc = which("salloc")
     # look for error first
     for line in output.split("\n"):
-        if line.startswith(salloc + ": error:") or line.startswith("salloc: error:"):
+        if salloc and line.startswith(salloc + ": error:"):
+            error = line.split("error:")[1]
+            return error.strip()
+        elif line.startswith("salloc: error:"):
             error = line.split("error:")[1]
             return error.strip()
     # if no error line, take first line
     for line in output.split("\n"):
-        if line.startswith(salloc + ": ") or line.startswith("salloc: "):
+        if salloc and line.startswith(salloc + ": "):
+            error = " ".join((line.split()[1:]))
+            return error.strip()
+        elif line.startswith("salloc: "):
             error = " ".join((line.split()[1:]))
             return error.strip()
     # return None if we cant find error

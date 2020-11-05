@@ -16,7 +16,7 @@ from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherEr
 from .job import Job
 from .junction import Junction
 from .jobmanager import JobManager
-from ..utils.entityutils import seperate_entities
+from ..utils.entityutils import separate_entities
 
 from ..utils import get_logger
 
@@ -50,7 +50,7 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        entities, entity_lists, orchestrator = seperate_entities(args)
+        entities, entity_lists, orchestrator = separate_entities(args)
         self._sanity_check_launch(orchestrator)
 
         self._launch(entities, entity_lists, orchestrator)

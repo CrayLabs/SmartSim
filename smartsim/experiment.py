@@ -13,7 +13,7 @@ from .database import Orchestrator
 from .entity import SmartSimEntity, Model, Ensemble, EntityList
 from .error import SmartSimError, SSConfigError, EntityExistsError
 
-from .utils.entityutils import seperate_entities
+from .utils.entityutils import separate_entities
 from .utils.helpers import colorize
 from .utils import get_logger
 
@@ -453,7 +453,7 @@ class Experiment:
             print(p, flush=True)
 
         sprint("\n")
-        models, ensembles, orchestrator = seperate_entities(args)
+        models, ensembles, orchestrator = separate_entities(args)
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)

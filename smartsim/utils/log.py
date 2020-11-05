@@ -4,10 +4,6 @@ import coloredlogs
 from ..error import SSConfigError
 from ..utils.helpers import get_env
 
-# constants for logging
-coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
-coloredlogs.DEFAULT_DATE_FORMAT = '%H:%M:%S'
-
 
 def _get_log_level():
     """Get the logging level based on environment variable
