@@ -9,10 +9,10 @@ Ensemble
 .. autosummary::
 
    Ensemble.__init__
+   Ensemble.add_model
    Ensemble.attach_generator_files
    Ensemble.register_incoming_entity
    Ensemble.enable_key_prefixing
-   Ensemble.disable_key_prefixing
    Ensemble.query_key_prefixing
 
 .. autoclass:: Ensemble

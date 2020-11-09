@@ -26,6 +26,20 @@ to the ``Experiment`` initialization.
     exp = Experiment("name-of-experiment", launcher="local") # local backend
 
 
+Local
+=====
+
+The Local launcher uses the ``Subprocess`` library in Python to
+execute multiple entities in parallel. Each process is tracked
+and the output of each entity is written to file.
+
+As with all launchers in SmartSim, the local launcher supports
+asynchronous execution meaning once entities have been launched
+the main thread of execution is not blocked. Daemon threads
+that manage currently running jobs will be created when active
+jobs are present within SmartSim.
+
+
 Slurm
 =====
 
@@ -36,80 +50,61 @@ SmartSim provides an interface to obtain allocations programmatically
 so that each script will contain the exact configuration upon which
 it was launched including the allocation information.
 
-To obtain an allocation in SmartSim, we use the ``Experiment.get_allocation()``
-method.
+The slurm allocation interface is importable through the main module
+and allocations can be obtained through a call to ``slurm.get_slurm_allocation``
+as follows:
 
 .. code-block:: python
 
-    alloc = experiment.get_allocation(nodes=1, partition="gpu")
+    from smartsim import slurm
+    alloc = slurm.get_slurm_allocation(nodes=1)
 
 The id of the allocation is returned as a string to the user so that
 they can specify what entities should run on which allocations
 obtained by SmartSim.
 
-The keyword arguments to the ``get_allocation`` method mimic the exact naming
-of Slurm arguments that one would normally include in the ``salloc`` command
-as arguments. This includes command line arguments that do not have a value
-associated with them. In such cases, users can place a value of ``None`` for
-that argument. An example of a more complicated allocation is given below:
+Additional arguments that would have been passed to the ``salloc``
+command can be passed through the ``add_opts`` argument in a dictionary.
 
 .. code-block:: python
 
+    from smartsim import slurm
+    salloc_options = {
+        "C": "haswell",
+        "partition": "debug",
+        "time": "10:00:00",
+        "exclusive": None
+    }
+    alloc_id = slurm.get_slurm_allocation(nodes=5, add_opts=salloc_options)
 
-    from smartsim import Experiment
-    experiment = Experiment("Slurm-Experiment", launcher="slurm")
-    experiment.get_allocation(nodes=5, constraint="haswell", partition="debug",
-                              exclusive=None, time="10:00:00")
+The above code would generate a salloc command like:
 
+.. code-block:: bash
 
-Adding Existing Allocations
----------------------------
+    salloc -N 5 -C haswell --parition debug --time 10:00:00 --exclusive
 
-Existing allocations can also be added to SmartSim. If you already obtained
-the allocation to be used for your SmartSim experiment, it can be added to
-the Experiment as follows:
-
-.. code-block:: python
-
-    from smartsim import Experiment
-    experiment = Experiment("Slurm-Experiment", launcher="slurm")
-    experiment.add_allocation(alloc_id)
-
-Where ``alloc_id`` is the id of the allocation in Slurm.
 
 
 Releasing Allocations
 ---------------------
 
-SmartSim can release the allocations it has obtained through
-``Experiment.release()``. If an id of the allocation is not provided as an
-argument, all allocations in the experiment will be released. Below is an
-example of obtaining and releasing an allocation.
+The ``smartsim.slurm`` interface also supports releasing allocations
+obtained in an experiment.
+
+The example below releases a the allocation in the example above.
 
 .. code-block:: python
 
-    from smartsim import Experiment
-    experiment = Experiment("Slurm-Experiment", launcher="slurm")
-    experiment.get_allocation(nodes=5, constraint="haswell", partition="debug",
-                              exclusive=None, time="10:00:00")
+    from smartsim import slurm
+    salloc_options = {
+        "C": "haswell",
+        "partition": "debug",
+        "time": "10:00:00",
+        "exclusive": None
+    }
+    alloc_id = slurm.get_slurm_allocation(nodes=5, add_opts=salloc_options)
 
-    # < experiment code goes here>
+    # <experiment code goes here>
 
-    experiment.release()
+    slurm.release_slurm_allocation(alloc_id)
 
-
-Local
-=====
-
-The local launcher in SmartSim is mainly meant for prototyping and testing
-workflows on a laptop. The following Experiment methods will raise exceptions
-when called with the local launcher: ``release``, ``get_allocation``, ``add_allocation``
-``stop``, ``stop_all``, ``get_status``, ``poll``, ``finished``.
-
-In future releases, the local launcher will support more of the Experiment interface.
-
-
-Capsules (experimental)
------------------------
-
-Documentation to come.

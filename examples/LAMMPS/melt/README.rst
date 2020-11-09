@@ -3,6 +3,10 @@
 Extracting Data from Compiled Simulations
 *****************************************
 
+.. note::
+   This example works with the 0.1.0-alpha release of SmartSim
+   and should not be relied on moving forward.
+
 This tutorial shows how to extract simulation data from a compiled
 application using SmartSim client capabilities.  To demonstrate the
 process in sufficient and concrete detail, the widely used molecular

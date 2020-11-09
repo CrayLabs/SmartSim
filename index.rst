@@ -11,45 +11,47 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
-
-   doc/examples/basic
-   examples/LAMMPS/crack/README
-   examples/MOM6/double-gyre-ensembles/README
-   examples/MPO/README
-   examples/LAMMPS/melt/README
-   examples/MOM6/jupyter/README
-
-.. toctree::
-   :maxdepth: 2
    :caption: SmartSim
 
    doc/experiment
-   doc/generate
-   doc/MPO
-   doc/launchers
-   doc/cmdservers
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Clients
-
+   doc/orchestrator
    doc/clients
-   doc/clients/python
-   doc/clients/c
-   doc/clients/c-plus
-   doc/clients/fortran
+   doc/launchers
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Interface
+   :caption: Using SmartSim
+
+   doc/using-smartsim/create
+   doc/using-smartsim/start
+   doc/using-smartsim/monitor
+   doc/using-smartsim/stop
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   examples/LAMMPS/crack/README
+   examples/MOM6/double-gyre-ensembles/README
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API
 
    doc/api/experiment
    doc/api/entity
-   doc/api/MPO
-   doc/api/generator
-   doc/api/remote
+   doc/api/slurm
+   doc/api/errors
+
+.. toctree::
+   :maxdepth: 2
+   :caption: SILC API
+
+   third-party/silc/doc/clients/c-plus
+   third-party/silc/doc/clients/python
+   third-party/silc/doc/clients/c
+   third-party/silc/doc/clients/fortran
 
 
 .. toctree::
@@ -58,7 +60,6 @@
 
    doc/developer/git
    doc/developer/python
-   tools/README
    doc/developer/editor
    doc/developer/documentation
 

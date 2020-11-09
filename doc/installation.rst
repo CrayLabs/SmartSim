@@ -25,7 +25,7 @@ Most SmartSim library requirements can be installed via Python's
 package manager ``pip`` with the following command executed in the
 top level directory of SmartSim.
 
-.. code-block:: console
+.. code-block:: bash
 
   pip install -r requirements.txt
 
@@ -40,34 +40,28 @@ and runtime errors.
 - decorator==4.4.2
 - redis==3.0.1
 - redis-py-cluster==2.0.0
-- protobuf==3.11.3
-- pyzmq==18.1.0
 - breathe==4.19.2
 - sphinx==3.1.1
 - numpy>=1.18.2
+- sphinx_rtd_theme>=0.5.0
+- tqdm>=4.50.2
+- psutil>=5.7.2
+- pandas>=1.1.3
 
-
-After installing the SmartSim Python requirements, the SmartSim
-Python package can be installed with the following command in
-the top level directory:
-
-.. code-block:: console
-
-		python setup.py install
 
 Third Party Libraries
 ---------------------
 
-KeyDB_, `Google Protobuf`_, and Redis-plus-plus_ are also required
+KeyDB_, `Redis`_, and RedisAI_ are also required
 in order to use all features of SmartSim.  These packages
 can be downloaded, compiled, and installed by executing the
 following command in the top level of the SmartSim project:
 
 .. _KeyDB: https://github.com/JohnSully/KeyDB
-.. _Google Protobuf: https://github.com/protocolbuffers/protobuf
-.. _Redis-plus-plus: https://github.com/sewenew/redis-plus-plus
+.. _Redis: https://github.com/redis/redis
+.. _RedisAI: https://github.com/RedisAI/RedisAI
 
-.. code-block:: console
+.. code-block:: bash
 
   ./setup_env.sh
 

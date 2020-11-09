@@ -10,10 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+import sys
+sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +21,7 @@ copyright = '2020, Cray, a Hewlett Packard Enterprise company'
 author = 'HPE AI & Advanced Productivity'
 
 # The full version, including alpha/beta/rc tags
-release = 'internal_release'
+release = '0.2.0-alpha'
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,9 +51,9 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 breathe_projects = {
-        "c_client":"doc/c_client/xml",
-        "fortran_client":"doc/fortran_client/xml",
-        "cpp_client":"doc/cpp_client/xml"
+        "c_client":"third-party/silc/doc/c_client/xml",
+        "fortran_client":"third-party/silc/doc/fortran_client/xml",
+        "cpp_client":"third-party/silc/doc/cpp_client/xml"
         }
 
 # -- Options for HTML output -------------------------------------------------
@@ -67,3 +66,6 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+add_module_names = False

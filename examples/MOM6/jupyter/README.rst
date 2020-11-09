@@ -3,6 +3,9 @@
 Interacting with Fortran Simulations in Jupyter
 ***********************************************
 
+.. note::
+   This example works with the 0.1.0-alpha release of SmartSim
+   and should not be relied on moving forward.
 
 Users can interact with a SmartSim experiment via Jupyter notebooks for online
 analysis and visualization. Simulations written in Fortran, C, C++ or Python
