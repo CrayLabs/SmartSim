@@ -47,12 +47,13 @@ class Orchestrator(EntityList):
         on_alloc = True if "alloc" in kwargs else False
 
         db_conf = self._find_db_conf()
+        ai_module = self._find_AI_module()
 
         for db_id in range(db_nodes):
             # get correct run_settings for dbnode based on launcher type
             if self.launcher == "slurm":
                 run_settings = self._build_slurm_run_settings(dpn, **kwargs)
-            elif self.launcher == "local":
+            else:
                 run_settings = self._build_local_run_settings(**kwargs)
 
             # create the exe_args list for launching multiple databases
@@ -63,7 +64,7 @@ class Orchestrator(EntityList):
                 next_port = int(self.port) + port_offset
                 db_args = self._get_db_args(cluster, on_alloc, next_port, db_id)
 
-                exe_args.append(" ".join((db_conf, "--port", str(next_port), db_args)))
+                exe_args.append(" ".join((db_conf, ai_module, "--port", str(next_port), db_args)))
                 ports.append(next_port)
 
             # if only one database per node we only need one exe_args
@@ -112,7 +113,8 @@ class Orchestrator(EntityList):
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
 
-    def _find_db_exe(self):
+    @staticmethod
+    def _find_db_exe():
         """Find the database executable for the orchestrator
 
         :raises SSConfigError: if env not setup for SmartSim
@@ -120,7 +122,7 @@ class Orchestrator(EntityList):
         :rtype: str
         """
         sshome = get_env("SMARTSIMHOME")
-        exe = path.join(sshome, "third-party/KeyDB/src/keydb-server")
+        exe = path.join(sshome, "third-party/redis/src/redis-server")
         try:
             full_exe = expand_exe_path(exe)
             return full_exe
@@ -129,7 +131,18 @@ class Orchestrator(EntityList):
             msg += "Could not locate database executable"
             raise SSConfigError(msg) from None
 
-    def _find_db_conf(self):
+    @staticmethod
+    def _find_AI_module():
+        sshome = get_env("SMARTSIMHOME")
+        module = path.join(sshome, "third-party/RedisAI/install-cpu/redisai.so")
+        if not path.isfile(module):
+            raise SSConfigError("Could not find RedisAI module")
+        else:
+            load_line = " ".join(("--loadmodule", module))
+            return load_line
+
+    @staticmethod
+    def _find_db_conf():
         """Find the database configuration file on the filesystem
 
         :raises SSConfigError: if env not setup for SmartSim

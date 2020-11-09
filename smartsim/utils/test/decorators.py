@@ -97,8 +97,6 @@ def orchestrator_test_local(test_function):
     exp_2_dir = "./orchestrator_test/exp_2/"
 
     def wrapper(*args, **kwargs):
-        if which("srun"):
-            pytest.skip()
 
         if path.isdir(exp_base_path):
             rmtree(exp_base_path)

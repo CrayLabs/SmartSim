@@ -31,7 +31,7 @@ class Model(SmartSimEntity):
         self._init_run_settings()
 
     def _init_run_settings(self):
-        """intialize the run_settings for the model"""
+        """Initialize the run_settings for the model"""
 
         # set the path to the error, output, and runtime dir
         self.set_path(self.path)
@@ -103,7 +103,7 @@ class Model(SmartSimEntity):
         :type to_copy: list, optional
         :param to_symlink: files to symlink, defaults to []
         :type to_symlink: list, optional
-        :param to_configure: [description], defaults to []
+        :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
         self.files = EntityFiles(to_configure, to_copy, to_symlink)

@@ -191,7 +191,7 @@ class Experiment:
         Ensembles will create underlying Model objects based on the
         params argument and the perm_strategy argument.
 
-        Extra arguments to custom generation stategies can be
+        Extra arguments to custom generation strategies can be
         passed through the kwargs argument
 
         :param name: name of the ensemble

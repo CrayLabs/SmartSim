@@ -1,11 +1,7 @@
-from os import path, mkdir
-from copy import deepcopy
-
 from .model import Model
-from .files import EntityFiles
 from .entityList import EntityList
 from ..error import UserStrategyError
-from ..error import EntityExistsError, SmartSimError, SSUnsupportedError
+from ..error import EntityExistsError,  SSUnsupportedError
 from .strategies import create_all_permutations, random_permutations, step_values
 
 
@@ -23,7 +19,9 @@ class Ensemble(EntityList):
         self, name, params, path, run_settings={}, perm_strat="all_perm", **kwargs
     ):
         """Initialize an Ensemble of Model instances.
-        TODO update this docstring
+
+        The kwargs argument can be used to pass custom input
+        parameters to the permutation strategy.
 
         :param name: Name of the ensemble
         :type name: str
@@ -33,6 +31,10 @@ class Ensemble(EntityList):
         :type path: str
         :param run_settings: settings for the launcher, defaults to {}
         :type run_settings: dict, optional
+        :param perm_strat: permutation strategy for model creation,
+                           options are "all_perm", "stepped", "random"
+                           or a callable function
+        :type perm_strat: str
         """
         self.params = params
         self._key_prefixing_enabled = True
@@ -76,6 +78,10 @@ class Ensemble(EntityList):
         if model in self.entities:
             raise EntityExistsError(
                 f"Model {model.name} already exists in ensemble {self.name}"
+            )
+        if not isinstance(model, Model):
+            raise TypeError(
+                f"Argument to add_model was of type {type(model)}, not Model"
             )
         else:
             self.entities.append(model)

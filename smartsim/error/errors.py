@@ -23,7 +23,8 @@ class SSConfigError(SmartSimError):
 
 
 class UserStrategyError(SmartSimError):
-    """Raised when there is an error in user ensemble generation"""
+    """Raised when there is an error with model creation inside an ensemble
+    that is from a user provided permutation strategy"""
 
     def __init__(self, perm_strat):
         message = self.create_message(perm_strat)
@@ -36,6 +37,9 @@ class UserStrategyError(SmartSimError):
 
 
 class ParameterWriterError(SmartSimError):
+    """Raised in the event that input parameter files for a model
+    could not be written.
+    """
     def __init__(self, file_path, read=True):
         message = self.create_message(file_path, read)
         super().__init__(message)
