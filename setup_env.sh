@@ -49,7 +49,7 @@ else
     if [[ ! -d "./redis" ]]; then
 	git clone https://github.com/redis/redis.git redis
 	cd redis
-	git checkout tags/v6.0.8
+	git checkout tags/6.0.8
 	cd ..
     else
 	echo "Redis downloaded"

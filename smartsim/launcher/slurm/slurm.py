@@ -44,6 +44,7 @@ def get_slurm_allocation(nodes=1, add_opts={}):
     if alloc_id:
         logger.info("Allocation successful with Job ID: %s" % alloc_id)
     else:
+        logger.debug(err)
         error = parse_salloc_error(err)
         if not error:
             logger.error(err)

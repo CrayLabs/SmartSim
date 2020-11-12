@@ -25,7 +25,7 @@ def expand_exe_path(exe):
         else:
             raise SSConfigError(f"Could not locate executable {exe}")
     else:
-        return in_path
+        return os.path.abspath(in_path)
 
 
 def get_env(env_var):
