@@ -74,8 +74,6 @@ class Controller:
         :param verbose: set verbosity
         :type verbose: bool
         """
-        # fine to not lock here, nothing about the jobs
-        # are being mutated in any way.
         to_monitor = self._jobs.jobs
         if poll_db:
             to_monitor = self._jobs()
@@ -84,9 +82,17 @@ class Controller:
             logger.warning(msg)
         while len(to_monitor) > 0:
             time.sleep(interval)
-            for job in to_monitor.values():
-                if verbose:
-                    logger.info(job)
+
+            # acquire lock to avoid "dictionary changed during iteration" error
+            # without having to copy dictionary each time.
+            if verbose:
+                JM_LOCK.acquire()
+                try:
+                    for job in to_monitor.values():
+                        logger.info(job)
+                finally:
+                    JM_LOCK.release()
+
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
