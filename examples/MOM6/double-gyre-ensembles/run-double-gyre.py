@@ -1,14 +1,21 @@
 from smartsim import Experiment
-from smartsim.generation import Generator
+from smartsim import slurm
 
 # intialize our Experiment and obtain
-# an allocation for our ensemble suite
-experiment = Experiment("double_gyre")
-iv24_alloc = experiment.get_allocation(nodes=16, ppn=48,
-                                       partition="iv24", exclusive=None)
-knl_alloc = experiment.get_allocation(nodes=8, ppn=96,
-                                      partition="knl", exclusive=None)
+# allocations for our ensemble suite
+experiment = Experiment("double_gyre", launcher="slurm")
 
+iv24_opts = {
+    "partition": "iv24",
+    "ntasks-per-node": 48
+}
+iv24_alloc = slurm.get_slurm_allocation(nodes=16, add_opts=iv24_opts)
+
+knl_opts = {
+    "partition": "knl",
+    "ntasks-per-node": 48
+}
+knl_alloc = slurm.get_slurm_allocation(nodes=8, add_opts=knl_opts)
 
 high_res_model_params = {
     "KH": [250, 500, 750, 1000],
@@ -20,14 +27,14 @@ high_res_model_params = {
 
 iv24_run_settings = {
     "nodes": 2,
-    "ppn": 48,
+    "ntasks-per-node": 48,
     "executable": "MOM6",
     "alloc": iv24_alloc
 }
 
 knl_run_settings = {
     "nodes": 1,
-    "ppn": 96,
+    "ntasks-per-node": 96,
     "executable": "MOM6",
     "alloc": knl_alloc
 }
@@ -56,29 +63,6 @@ high_res_knl.attach_generator_files(
                   "./MOM6_base_config/MOM_input"]
     )
 
-# intialize a Generator instance for greater control
-# over when and where generation happens
-generator = Generator()
-generator.generate_ensemble(experiment.exp_path,
-                            [high_res_knl, high_res_iv24])
-
-# start the two high resolution models on the IV24 and KNL
-# partitions.
-experiment.start(ensembles=[high_res_knl, high_res_iv24])
-experiment.poll(verbose=False)
-
-# print out the statuses of the model we just ran
-iv24_statuses = experiment.get_status(high_res_iv24)
-print(f"Statuses of IV24 Models: {iv24_statuses}")
-
-knl_statuses = experiment.get_status(high_res_knl)
-print(f"Statuses of KNL Models: {knl_statuses}")
-
-# Release the KNL partition because we dont need it anymore
-experiment.release(alloc_id=knl_alloc)
-
-
-
 # configure and create the low resolution
 # double gyre ensemble
 low_res_model_params = {
@@ -90,10 +74,11 @@ low_res_model_params = {
 }
 low_res_run_settings = {
     "nodes": 1,
-    "ppn": 48,
+    "ntasks-per-node": 48,
     "executable": "MOM6",
     "alloc": iv24_alloc
 }
+
 low_res_iv24 = experiment.create_ensemble(
     "low-res-iv24",
     params=low_res_model_params,
@@ -103,13 +88,27 @@ low_res_iv24.attach_generator_files(
     to_copy=["./MOM6_base_config"],
     to_configure=["./MOM6_base_config/input.nml",
                   "./MOM6_base_config/MOM_input"])
-generator.generate_ensemble(experiment.exp_path, low_res_iv24)
 
+# generate the files needed for all of our models
+experiment.generate(high_res_knl, high_res_iv24, low_res_iv24)
+
+# start the two high resolution models on the IV24 and KNL
+# partitions.
+experiment.start(high_res_knl, high_res_iv24, block=True, summary=True)
+
+# print out the statuses of the model we just ran
+iv24_statuses = experiment.get_status(high_res_iv24)
+print(f"Statuses of IV24 Models: {iv24_statuses}")
+
+knl_statuses = experiment.get_status(high_res_knl)
+print(f"Statuses of KNL Models: {knl_statuses}")
+
+# Release the KNL partition because we dont need it anymore
+slurm.release_slurm_allocation(knl_alloc)
 
 # start the low resolution simulation on the same
 # allocation as the IV24 high resolution model
-experiment.start(ensembles=low_res_iv24)
-experiment.poll(verbose=False)
+experiment.start(low_res_iv24, block=True, summary=False)
 
 # print the statuses of the low resolution ensemble
 # after it has completed.
@@ -117,4 +116,4 @@ iv24_low_res_statuses = experiment.get_status(low_res_iv24)
 print(f"Statuses of IV24 Models (low res): {iv24_low_res_statuses}")
 
 # Release the iv24 partition
-experiment.release(alloc_id=iv24_alloc)
+slurm.release_slurm_allocation(iv24_alloc)
