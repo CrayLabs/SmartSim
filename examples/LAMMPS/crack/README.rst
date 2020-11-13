@@ -1,7 +1,7 @@
 
-********************
-Generating Ensembles
-********************
+***************************************
+Tagging Input Files to Create Ensembles
+***************************************
 
 In this experiment we will demonstate how to use SmartSim
 to generate and run ensembles of LAMMPS models. The model
@@ -11,23 +11,29 @@ We will show how to tag the input file, ``in.crack``, so that
 multiple simulations with different configurations can be
 run in the same python script.
 
-
 .. note::
-   To run the example as it is, you will need to have the
+
+   There are two versions of this script, one for the
+   local launcher and one for Slurm. The following
+   will show the example for the local launcher.
+
+   For the local example, LAMMPS must be installed as
+   the ``lmp_mpi`` executable easily installed on OSX
+   through brew ``brew install lammps``. If you are not
+   working on OSX, then download and compile LAMMPS
+   from source.
+
+   To run the slurm example, you will need to have the
    LAMMPS executable, ``lmp`` compiled with MPI available
    on system that uses Slurm as the workload manager.
 
-Experiment Setup
-================
-
 Tagging Input Files
--------------------
+===================
 
-The first step in creating ensembles within SmartSim is to
+The first step creating a model parameter space in SmartSim is to
 take the input file(s) that you wish to edit the configuration
 of and "tag" the specific configuration values with a user-settable
 character. The default tag is a semi-colon (e.g. ``;``).
-For more information on tags, see the `ensembles documentation <../../../doc/generate.html>`_
 
 The input file below is the ``in.crack`` file before we have
 tagged any of the configuration values. This file was taken
@@ -201,7 +207,7 @@ in place of the values for readability sake. We do this below:
 
    run		;STEPS;
 
-Our input files are now read to be included in a SmartSim
+Our input files are now ready to be included in a SmartSim
 experiment.
 
 Setting up the Experiment
@@ -211,44 +217,30 @@ Now that we have tagged our configuration file for the LAMMPS
 model we can start to write the script that will run our
 ensemble.
 
-First, we need to initialize an ``Experiment`` and obtain an
-allocation for our ensemble. The experiment will end up running
-a total of 8 models with 1 node, 48 processors per model. We
-can specify this to our experiment as follows:
+First, we need to initialize an ``Experiment``.
 
 .. code-block:: python
 
    from smartsim import Experiment
 
    # Create the Experiment object
-   experiment = Experiment("lammps_crack", launcher="slurm")
+   experiment = Experiment("lammps_crack", launcher="local")
 
-   # get an 8 node allocation with 48 processors per node
-   # in exclusive mode
-   alloc = experiment.get_allocation(nodes=8, ppn=48, exclusive=None)
-
-Each of our models will run on 1 node with 48 MPI tasks per simulation.
+Each of our models will run with 2 MPI tasks per simulation.
 We will specify exactly how we want each model in the ensemble to
-run by creating a dictionary ``run_settings`` that will hold the
-workload manager arguments. Since we give the ``run_settings`` the
-allocation id under the ``alloc`` key, each model will run on the
-allocation we obtained earlier.
+run by creating a dictionary ``run_settings``.
+
+When using a launch command like ``mpirun``, you can place
+the model executable in the ``exe_args``.
 
 .. code-block:: python
 
-      # Set the run settings for each member of the
-      # ensemble. This includes the allocation id
-      # that we just obtained.
-      run_settings = {
-         "executable": "lmp",
-         "exe_args": "-i in.crack",
-         "nodes": 1,
-         "ppn": 48,
-         "env_vars": {
-            "OMP_NUM_THREADS": 1
-         },
-         "alloc": alloc
-      }
+   # Set the run settings for each member of the
+   # ensemble.
+   run_settings = {
+      "executable": "mpirun",
+      "exe_args": "-np 2 lmp_mpi -i in.crack"
+   }
 
 
 Generating an Ensemble
@@ -272,15 +264,21 @@ generation process is provided below.
 
 .. code-block:: python
 
+   # Set the run settings for each member of the
+   # ensemble.
+   run_settings = {
+      "executable": "mpirun",
+      "exe_args": "-np 2 lmp_mpi -i in.crack"
+   }
+
    # Set the parameter space for the ensemble
-   # The default strategy is to generate all permuatations
+   # The default strategy is to generate all permutations
    # so all permutations of STEPS and THERMO will
    # be generated as a single model
    model_params = {
-      "STEPS": [10000, 20000],
-      "THERMO": [150, 200, 250, 300]
+      "STEPS": [20000, 40000],
+      "THERMO": [150, 250]
    }
-
    # Create ensemble with the model params and
    # run settings defined
    ensemble = experiment.create_ensemble("crack",
@@ -291,36 +289,69 @@ generation process is provided below.
    # in each model directory where the executable
    # will be invoked
    ensemble.attach_generator_files(to_configure="./in.crack")
-   experiment.generate()
+   experiment.generate(ensemble, overwrite=True)
 
 
 As the above code snippet states, the default generation strategy of SmartSim
-is to generate all permuations of the input parameter arrays given to the
+is to generate all permutations of the input parameter arrays given to the
 ``params`` argument of the ``Experiment.create_ensemble()`` method. Given that
-there are 2 values for ``STEPS`` and 4 values of ``THERMO``, a total of 8
+there are 2 values for ``STEPS`` and 2 values of ``THERMO``, a total of 4
 models will be generated.
 
 SmartSim has multiple generation strategies, and supports custom generation
 strategies as well. For more information on this, see the
-`ensembles documentation <../../../doc/generate.html>`_
+`experiment creation tutorial <../../../doc/using-smartsim/create.html>`_
 
 Starting and Monitoring the Experiment
 --------------------------------------
 
 Now that our ensemble has been generated and configured, we will
-run the experiment and monitor the progress. We also release the
-allocation we obtained.
+run the experiment and monitor the progress. We also print out a
+summary of the experiment prior to launch to review our launch
+parameters before execution.
+
+``Experiment.summary()`` returns a Pandas DataFrame that details
+the entities that have run and completed (or failed) in the current
+experiment.
 
 .. code-block:: python
 
    # Start the experiment
-   experiment.start()
+   experiment.start(ensemble, summary=True)
 
-   # Poll the models as they run
-   experiment.poll()
+   # show what happened in the experiment
+   print(experiment.summary())
 
-   # release the allocation obtained for this experiment
-   experiment.release()
+After running the local launcher example, the generated file structure
+should look as follows with all input, output, and data from each model
+in the ensemble.
+
+.. code-block:: text
+
+   lammps_crack
+   └── crack
+      ├── crack_0
+      │   ├── crack_0.err
+      │   ├── crack_0.out
+      │   ├── in.crack
+      │   └── log.lammps
+      ├── crack_1
+      │   ├── crack_1.err
+      │   ├── crack_1.out
+      │   ├── in.crack
+      │   └── log.lammps
+      ├── crack_2
+      │   ├── crack_2.err
+      │   ├── crack_2.out
+      │   ├── in.crack
+      │   └── log.lammps
+      └── crack_3
+         ├── crack_3.err
+         ├── crack_3.out
+         ├── in.crack
+         └── log.lammps
+
+   5 directories, 16 files
 
 
 
@@ -333,37 +364,24 @@ The full script for the previously described experiment
 
    from smartsim import Experiment
 
-
    # Create the Experiment object
-   experiment = Experiment("lammps_crack", launcher="slurm")
-
-   # get an 8 node allocation with 48 processors per node
-   # in exclusive mode
-   alloc = experiment.get_allocation(nodes=8, ppn=48, exclusive=None)
+   experiment = Experiment("lammps_crack", launcher="local")
 
    # Set the run settings for each member of the
-   # ensemble. This includes the allocation id
-   # that we just obtained.
+   # ensemble.
    run_settings = {
-      "executable": "lmp",
-      "exe_args": "-i in.crack",
-      "nodes": 1,
-      "ppn": 48,
-      "env_vars": {
-         "OMP_NUM_THREADS": 1
-      },
-      "alloc": alloc
+      "executable": "mpirun",
+      "exe_args": "-np 2 lmp_mpi -i in.crack"
    }
 
    # Set the parameter space for the ensemble
-   # The default strategy is to generate all permuatations
+   # The default strategy is to generate all permutations
    # so all permutations of STEPS and THERMO will
    # be generated as a single model
    model_params = {
-      "STEPS": [10000, 20000],
-      "THERMO": [150, 200, 250, 300]
+      "STEPS": [20000, 40000],
+      "THERMO": [150, 250]
    }
-
    # Create ensemble with the model params and
    # run settings defined
    ensemble = experiment.create_ensemble("crack",
@@ -374,13 +392,10 @@ The full script for the previously described experiment
    # in each model directory where the executable
    # will be invoked
    ensemble.attach_generator_files(to_configure="./in.crack")
-   experiment.generate()
+   experiment.generate(ensemble, overwrite=True)
 
    # Start the experiment
-   experiment.start()
+   experiment.start(ensemble, summary=True)
 
-   # Poll the models as they run
-   experiment.poll()
-
-   # release the allocation obtained for this experiment
-   experiment.release()
+   # show what happened in the experiment
+   print(experiment.summary())

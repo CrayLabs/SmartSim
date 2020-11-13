@@ -1,7 +1,7 @@
 from smartsim import Experiment
 from smartsim import slurm
 
-# intialize our Experiment and obtain
+# initialize our Experiment and obtain
 # allocations for our ensemble suite
 experiment = Experiment("double_gyre", launcher="slurm")
 
