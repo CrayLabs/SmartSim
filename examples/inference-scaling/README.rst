@@ -1,16 +1,47 @@
 
-***********************
-MNIST Inference Scaling
-***********************
+*************************
+Inference Scaling Example
+*************************
 
 The example within this directory performs a batch of parallel inference
-tests with a Pytorch MNIST model and a single MNIST image.
+tests with a Pytorch model (either MNIST or Resnet) with a single
+image corresponding to the dataset on which the model was trained
 
 The test currently runs the clients as a C++ MPI program using the
 C++ SILC client to perform the tensor commands to the Redis Database.
 
 The script can launch multiple sequential inference sessions on the
 same allocations.
+
+Note that the following examples are written to be run on a Slurm
+system equipped with GPUs.
+
+Training the Models
+===================
+
+There are two models in the inference scaling example section:
+
+  1. Resnet50 trained on Imagenet
+  2. CNN trained on the MNIST dataset
+
+To train the MNIST model, use the script ``mnist.py``
+
+.. code-block:: bash
+
+    python mnist.py
+    cp mnist_cnn.pt mnist_data
+
+To obtain the trained Resnet model, call the following
+
+.. code-block:: bash
+
+    python model_saver.py
+    cp resnet50.pt imagenet
+
+Both of these scripts are currently written to run on a GPU
+with the CUDA libraries installed. Both examples can be
+changed to run on CPU by adapting these scripts.
+
 
 Running the Scaling Tests
 =========================
@@ -42,6 +73,8 @@ Building the Scaling Tests
 Next, we build the scaling tests themselves with SILC C++ client
 included.
 
+This will build both the Resnet and MNIST examples
+
 .. code-block:: bash
 
     cd examples/inference-scaling/
@@ -49,7 +82,6 @@ included.
     cd build
     CC=cc CXX=CC cmake .. # for Cray machines
     make
-
 
 Set the Experiment Parameters
 -----------------------------
@@ -97,3 +129,22 @@ post-processing script that collects the results into a single CSV that includes
 the experiemnt summary.
 
 The inference statistics will be under <NAME>.csv after a successful run.
+
+Execution
+=========
+
+To submit the inference scaling tests to slurm (or pbs if you change the launcher),
+simply run the SmartSim script corresponding to the model you would
+like the scaling results of.
+
+For example, for MNIST
+
+.. code-block:: bash
+
+    python run-inference-session.py
+
+or for Resnet
+
+.. code-block:: bash
+
+    python run-inference-session-resnet.py

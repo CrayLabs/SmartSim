@@ -56,17 +56,29 @@ else
     fi
     cd redis
     echo "Downloading redis dependencies"
-    CC=gcc CXX=g++ make
+    CC=gcc CXX=g++ make MALLOC=libc
     export REDIS_INSTALL_PATH="$(pwd)/src"
     echo "Finished installing redis"
     cd ../
 fi
 
-#Install RedisAI CPU
-if [[ -f ./RedisAI/install-cpu/redisai.so ]]; then
-    echo "RedisAI CPU has already been downloaded and installed"
-    export REDISAI_CPU_INSTALL_PATH="$(pwd)/RedisAI/install-cpu"
+
+
+#Install RedisAI
+if [[ -f ./RedisAI/install-gpu/redisai.so ]]; then
+    echo "RedisAI GPU has already been downloaded and installed"
+    export REDISAI_GPU_INSTALL_PATH="$(pwd)/RedisAI/install-gpu"
 else
+    if [ -z "$CUDNN_INCLUDE_DIR" ]
+    then
+        echo "\$CUDNN_INCLUDE_DIR is not set, dependencies will likely fail to build"
+    fi
+
+    if [ -z "$CUDNN_LIBRARY" ]
+    then
+        echo "\$CUDNN_LIBRARY is not set, dependencies will likely fail to build"
+    fi
+
     if [[ ! -d "./RedisAI" ]]; then
 	git clone https://github.com/RedisAI/RedisAI.git RedisAI
 	cd RedisAI
@@ -77,9 +89,10 @@ else
     fi
     cd RedisAI
     echo "Downloading RedisAI dependencies"
-    CC=gcc CXX=g++ bash get_deps.sh cpu
-    CC=gcc CXX=g++ ALL=1 make -C opt clean build
-    export REDISAI_CPU_INSTALL_PATH="$(pwd)/install-cpu"
+    CC=gcc CXX=g++ bash get_deps.sh gpu
+    # TODO: enable TF and ONNX builds.
+    CC=gcc CXX=g++ ALL=1 make -C opt clean build GPU=1 WITH_TF=0 WITH_TFLITE=0 WITH_ORT=0
+    export REDISAI_GPU_INSTALL_PATH="$(pwd)/install-gpu"
     echo "Finished installing RedisAI"
     cd ../
 fi

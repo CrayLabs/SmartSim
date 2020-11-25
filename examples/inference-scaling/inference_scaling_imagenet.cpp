@@ -2,24 +2,18 @@
 #include "client_test_utils.h"
 #include <mpi.h>
 
-void load_mnist_image_to_array(float**** img)
+void load_mnist_image_to_array(float*& img)
 {
-  std::string image_file = "./one.raw";
+  std::string image_file = "./cat.raw";
   std::ifstream fin(image_file, std::ios::binary);
   std::ostringstream ostream;
   ostream << fin.rdbuf();
   fin.close();
-
   const std::string tmp = ostream.str();
   const char *image_buf = tmp.data();
   int image_buf_length = tmp.length();
-
-  int position = 0;
-  for(int i=0; i<28; i++) {
-    for(int j=0; j<28; j++) {
-      img[0][0][i][j] = ((float*)image_buf)[position++];
-    }
-  }
+  std::memcpy(img, image_buf,
+              image_buf_length*sizeof(char));
 }
 
 void run_mnist(const std::string& model_name,
@@ -42,44 +36,42 @@ void run_mnist(const std::string& model_name,
   MPI_Barrier(MPI_COMM_WORLD);
 
   //Allocate a continugous memory to make bcast easier
-  float* p = (float*)malloc(28*28*sizeof(float));
-
-  float**** array = (float****)malloc(1*sizeof(float***));
-  array[0] = (float***)malloc(1*sizeof(float**));
-  array[0][0] = (float**)malloc(28*sizeof(float*));
-  int pos = 0;
-  for(int i=0; i<28; i++) {
-    array[0][0][i] = &p[pos];
-    pos+=28;
-  }
+  float* p = (float*)malloc(224*224*3*sizeof(float));
+  if(rank == 0)
+    load_mnist_image_to_array(p);
+  MPI_Bcast(&(p[0]), 224*224*3, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  float*** array = allocate_3D_array<float>(224, 224, 3);
+  int c = 0;
+  for(int i=0; i<224; i++)
+    for(int j=0; j<224; j++)
+      for(int k=0; k<3; k++) {
+        array[i][j][k] = p[c];
+        c++;
+      }
 
   //float**** array = allocate_4D_array<float>(1,1,28,28);
-  float** result = allocate_2D_array<float>(1, 10);
+  float** result = allocate_2D_array<float>(1, 1000);
 
-  if(rank == 0)
-    load_mnist_image_to_array(array);
-
-  MPI_Bcast(&(p[0]), 28*28, MPI_FLOAT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   if(!rank)
-    std::cout<<"All ranks have MNIST image"<<std::endl;
+    std::cout<<"All ranks have Resnet image"<<std::endl;
 
   double loop_start = MPI_Wtime();
-  for (int i=0; i<50; i++) {
+  for (int i=0; i<10; i++) {
 
-    std::string in_key = "mnist_input_rank_" + std::to_string(rank) + "_" + std::to_string(i);
-    std::string script_out_key = "mnist_processed_input_rank_" + std::to_string(rank) + "_" + std::to_string(i);
-    std::string out_key = "mnist_output_rank_" + std::to_string(rank) + "_" + std::to_string(i);
+    std::string in_key = "resnet_input_rank_" + std::to_string(rank) + "_" + std::to_string(i);
+    std::string script_out_key = "resnet_processed_input_rank_" + std::to_string(rank) + "_" + std::to_string(i);
+    std::string out_key = "resnet_output_rank_" + std::to_string(rank) + "_" + std::to_string(i);
 
     double put_tensor_start = MPI_Wtime();
-    client.put_tensor(in_key, "FLOAT", array, {1,1,28,28});
+    client.put_tensor(in_key, "FLOAT", array, {224, 224, 3});
     double put_tensor_end = MPI_Wtime();
     delta_t = put_tensor_end - put_tensor_start;
     timing_file << rank << "," << "put_tensor" << ","
                 << delta_t << std::endl << std::flush;
 
     double run_script_start = MPI_Wtime();
-    client.run_script(script_name, "pre_process", {in_key}, {script_out_key});
+    client.run_script(script_name, "pre_process_3ch", {in_key}, {script_out_key});
     double run_script_end = MPI_Wtime();
     delta_t = run_script_end - run_script_start;
     timing_file << rank << "," << "run_script" << ","
@@ -93,7 +85,7 @@ void run_mnist(const std::string& model_name,
                 << delta_t << std::endl << std::flush;
 
     double get_tensor_start = MPI_Wtime();
-    client.get_tensor(out_key, "FLOAT", result, {1,10});
+    client.get_tensor(out_key, "FLOAT", result, {1,1000});
     double get_tensor_end = MPI_Wtime();
     delta_t = get_tensor_end - get_tensor_start;
     timing_file << rank << "," << "get_tensor" << ","
@@ -104,7 +96,7 @@ void run_mnist(const std::string& model_name,
   timing_file << rank << "," << "loop_time" << ","
                 << delta_t << std::endl << std::flush;
 
-  free(p);
+  free_3D_array(array, 3, 224);
   free_2D_array(result, 1);
   return;
 }
@@ -133,16 +125,16 @@ int main(int argc, char* argv[]) {
                 << delta_t << std::endl << std::flush;
 
 
-    std::string model_key = "mnist_model";
-    std::string model_file = "./mnist_cnn.pt";
+    std::string model_key = "resnet_model";
+    std::string model_file = "./resnet50.pt";
     double model_set_start = MPI_Wtime();
-    client.set_model_from_file(model_key, model_file, "TORCH", "GPU", 10);
+    client.set_model_from_file(model_key, model_file, "TORCH", "GPU", 25);
     double model_set_end = MPI_Wtime();
     delta_t = model_set_end - model_set_start;
     timing_file << rank << "," << "model_set" << ","
                 << delta_t << std::endl << std::flush;
 
-    std::string script_key = "mnist_script";
+    std::string script_key = "resnet_script";
     std::string script_file = "./data_processing_script.txt";
 
     double script_set_start = MPI_Wtime();
@@ -169,10 +161,10 @@ int main(int argc, char* argv[]) {
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  run_mnist("mnist_model", "mnist_script", timing_file);
+  run_mnist("resnet_model", "resnet_script", timing_file);
 
   if(rank==0)
-    std::cout<<"Finished MNIST test."<<std::endl;
+    std::cout<<"Finished Resnet test."<<std::endl;
 
   double main_end = MPI_Wtime();
   double delta_t = main_end - main_start;

@@ -74,3 +74,12 @@ target_link_libraries(run_mnist_inference
 	MPI::MPI_CXX
 	${CLIENT_LIBRARIES}
 )
+
+add_executable(run_resnet_inference
+	inference_scaling_imagenet.cpp
+	${CLIENT_SRC}
+)
+target_link_libraries(run_resnet_inference
+	MPI::MPI_CXX
+	${CLIENT_LIBRARIES}
+)

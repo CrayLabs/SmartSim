@@ -15,23 +15,28 @@ from smartsim import Experiment
 """
 
 # Constants
-DB_NODES = 3                  # number of database nodes
-DPN = 1                       # number of databases per node
-CLIENT_ALLOC = 40             # number of nodes in client alloc
-CLIENT_NODES = [20, 40]       # list of node sizes to run clients within client alloc
-CPN = [80]                    # clients per node
-NAME = "infer-mnist-gpu"      # name of experiment directory
+DB_NODES = 3                 # number of database nodes
+DPN = 1                      # number of databases per node
+CLIENT_ALLOC = 200           # number of nodes in client alloc
+CLIENT_NODES = [10, 20]      # list of node sizes to run clients within client alloc
+CPN = [80]                   # clients per node
+NAME = "infer-resnet"        # name of experiment directory
+
 
 # get allocations
 add_opts = {
     "ntasks-per-node": DPN,
-    "nodelist": "nid00[148-155,196-199,224-231]"
+    "nodelist": "nid00[152-155,196-199,224-231]",
+    "mem": "60GB",
+    "C": "P100",
+    "exclusive": None
 }
 orc_alloc = slurm.get_slurm_allocation(nodes=DB_NODES, add_opts=add_opts)
 
 client_add_opts = {
     "ntasks-per-node": 96,
-    "time": "1:00:00"
+    "time": "1:00:00",
+    "exclusive": None
 }
 client_alloc = slurm.get_slurm_allocation(nodes=CLIENT_ALLOC, add_opts=client_add_opts)
 
@@ -45,15 +50,25 @@ def setup_run(nodes, tasks):
     run_settings = {
         "nodes": nodes,
         "ntasks-per-node": tasks,
-        "executable": "./build/run_mnist_inference",
+        "executable": "./build/run_resnet_inference",
         "alloc": client_alloc,
     }
     name = "-".join(("infer-sess", str(nodes), str(tasks)))
     model = exp.create_model(name, run_settings)
-    model.attach_generator_files(to_copy=["./mnist_data", "./process_results.py"])
-    exp.generate(model)
+    model.attach_generator_files(to_copy=["./imagenet", "./process_results.py"])
+    exp.generate(model, overwrite=True)
     return model
 
+def start_database():
+    """Create a empty database for each run b/c resnet images take up alot of space"""
+
+    db = exp.create_orchestrator(
+        port=6780, overwrite=True, db_nodes=DB_NODES, dpn=DPN, alloc=orc_alloc
+    )
+    exp.generate(db)
+    exp.start(db)
+    print("DB created and up")
+    return db
 
 def setup_post_process(model_path, name):
     """Post Process the results of the inference session
@@ -91,23 +106,21 @@ def get_stats(data_locations):
     return all_data
 
 
-# create database
-db = exp.create_orchestrator(
-    port=6780, overwrite=True, db_nodes=DB_NODES, dpn=DPN, alloc=orc_alloc
-)
-exp.generate(db)
-exp.start(db)
-print("DB created and up")
-
 # run all permutations of nodes and clients per node listed
 perms = list(product(CLIENT_NODES, CPN))
 data_locations = []
 for perm in perms:
+    # start a new database
+    db = start_database()
+    # setup a an instance of the C++ driver and start it
     infer_session = setup_run(*perm)
     exp.start(infer_session, summary=True)
+
+    # get the statistics from the run
     post = setup_post_process(infer_session.path, infer_session.name)
     data_locations.append((infer_session.path, infer_session.name, perm))
     exp.start(post)
+    exp.stop(db)
 
 try:
     # get the statistics from post processing
@@ -120,12 +133,8 @@ try:
     print(final_df)
     final_df.to_csv(NAME + ".csv")
 
-
 except Exception:
     print("Could not preprocess results")
-
-# stop the database
-exp.stop(db)
 
 slurm.release_slurm_allocation(client_alloc)
 slurm.release_slurm_allocation(orc_alloc)

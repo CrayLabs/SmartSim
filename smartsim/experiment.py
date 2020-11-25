@@ -244,7 +244,7 @@ class Experiment:
                 path = getcwd()
             new_model = Model(name, params, path, run_settings)
             if enable_key_prefixing:
-                model._key_prefixing_enabled = True
+                new_model._key_prefixing_enabled = True
             return new_model
         except SmartSimError as e:
             logger.error(e)
