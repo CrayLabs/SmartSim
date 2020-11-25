@@ -134,7 +134,7 @@ class Orchestrator(EntityList):
     @staticmethod
     def _find_AI_module():
         sshome = get_env("SMARTSIMHOME")
-        module = path.join(sshome, "third-party/RedisAI/install-cpu/redisai.so")
+        module = path.join(sshome, "third-party/RedisAI/install-gpu/redisai.so")
         if not path.isfile(module):
             raise SSConfigError("Could not find RedisAI module")
         else:
