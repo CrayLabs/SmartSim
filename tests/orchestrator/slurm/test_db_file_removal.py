@@ -1,7 +1,4 @@
 import time
-import pytest
-import filecmp
-from shutil import which
 from os import path, getcwd, environ
 
 from smartsim import Experiment
@@ -22,7 +19,7 @@ def test_db_file_removal():
     """
     db_test_alloc = environ["TEST_ALLOCATION_ID"]
     exp = Experiment("DB-File-Remove-Test")
-    O3 = exp.create_orchestrator(path=test_path, db_nodes=3, dpn=3, alloc=db_test_alloc)
+    O3 = exp.create_orchestrator(path=test_path, port=6780, db_nodes=3, dpn=3, alloc=db_test_alloc)
 
     for dbnode in O3.entities:
         for port in dbnode.ports:

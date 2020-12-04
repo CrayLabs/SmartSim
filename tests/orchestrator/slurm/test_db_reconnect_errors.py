@@ -1,6 +1,4 @@
 import pytest
-import filecmp
-from shutil import which
 from os import path, getcwd, environ
 
 from smartsim import Experiment
@@ -29,7 +27,7 @@ def test_db_reconnection_not_running_failure():
         "nodes": 1,
         "alloc": db_test_alloc
     }
-    O1 = exp_1.create_orchestrator(path=exp_1_dir, alloc=db_test_alloc)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir, port=6780, alloc=db_test_alloc)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
     exp_1.start(O1, M1)
     exp_1.poll()

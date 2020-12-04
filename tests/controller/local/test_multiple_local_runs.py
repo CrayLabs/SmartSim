@@ -25,14 +25,14 @@ def test_multiple_runs():
     }
     M1 = exp.create_model("m1", path=test_path, run_settings=run_settings)
     M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)
-    O1 = exp.create_orchestrator(path=test_path)
+    O1 = exp.create_orchestrator(path=test_path, port=6780)
 
     ctrl.start(M1, M2)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
     assert(constants.STATUS_FAILED not in statuses)
 
     ctrl.start(O1)
-    time.sleep(3)
+    time.sleep(10)
     statuses = ctrl.get_entity_list_status(O1)
     assert(all([x == constants.STATUS_RUNNING for x in statuses]))
     ctrl.stop_entity_list(O1)

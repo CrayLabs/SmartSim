@@ -1,6 +1,4 @@
 import time
-import pytest
-from shutil import which
 from os import getcwd, path, environ
 
 from smartsim import constants
@@ -42,7 +40,7 @@ def test_models():
 def test_orchestrator():
     # setup allocation and orchestrator
     alloc = get_alloc_id()
-    O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
+    O1 = exp.create_orchestrator(path=test_path, alloc=alloc, port=6780)
 
     ctrl.start(O1)
     time.sleep(10)

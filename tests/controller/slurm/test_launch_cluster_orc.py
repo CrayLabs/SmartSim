@@ -1,6 +1,4 @@
 import time
-import pytest
-from shutil import which
 from os import getcwd, path, environ
 
 from smartsim import constants
@@ -24,7 +22,7 @@ def test_cluster_orchestrator():
 
     exp = Experiment("Clustered-Orchestrator-Test")
     alloc = get_alloc_id()
-    C1 = exp.create_orchestrator(path=test_path, db_nodes=3, alloc=alloc)
+    C1 = exp.create_orchestrator(path=test_path, port=6780, db_nodes=3, alloc=alloc)
 
     ctrl.start(C1, block=False)
     time.sleep(10)

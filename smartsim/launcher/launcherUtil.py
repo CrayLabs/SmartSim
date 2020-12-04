@@ -1,7 +1,5 @@
-import os
-from subprocess import Popen, PIPE, CalledProcessError
+import socket
 from datetime import datetime
-from .shell import ping_host
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -76,14 +74,8 @@ def get_ip_from_host(host):
     :returns: ip of host
     :rtype: str
     """
-    ping_out = ping_host(host)
-    found = False
-
-    for item in ping_out.split():
-        if found:
-            return item.split("(")[1].split(")")[0]
-        if item == host:
-            found = True
+    ip_address = socket.gethostbyname(host)
+    return ip_address
 
 
 def seq_to_str(seq, to_byte=False, encoding="utf-8", add_equal=False):

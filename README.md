@@ -75,4 +75,13 @@
       > cd Smart-Sim && source setup_env.sh gpu 1 1 1 1
 
 
+## Build SILC (optional)
 
+  In order to build the scaling tests, use the SILC clients,
+  or build the documentation, the SILC library must be installed
+
+   - Get the SILC library
+     > git clone #clone link to SILC#
+     > git checkout develop
+   - build the dependencies
+     > source build_deps.sh

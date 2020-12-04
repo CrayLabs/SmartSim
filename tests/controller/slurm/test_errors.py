@@ -1,9 +1,8 @@
 import pytest
 import time
-from shutil import which
 from os import getcwd, path, environ
 
-from smartsim import Experiment, slurm
+from smartsim import Experiment
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
 from smartsim.error import SmartSimError

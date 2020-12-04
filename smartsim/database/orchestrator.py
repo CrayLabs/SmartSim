@@ -1,10 +1,12 @@
-from os import path, getcwd, environ
+from os import path
 
 from ..entity import DBNode
 from ..entity import EntityList
-from ..error import SSConfigError, SmartSimError
+from ..error import SSConfigError
 from ..utils.helpers import get_env, expand_exe_path
 
+from ..utils import get_logger
+logger = get_logger(__name__)
 
 class Orchestrator(EntityList):
     """The Orchestrator is an in-memory database that can be launched
@@ -134,12 +136,17 @@ class Orchestrator(EntityList):
     @staticmethod
     def _find_AI_module():
         sshome = get_env("SMARTSIMHOME")
-        module = path.join(sshome, "third-party/RedisAI/install-gpu/redisai.so")
-        if not path.isfile(module):
-            raise SSConfigError("Could not find RedisAI module")
+        gpu_module = path.join(sshome, "third-party/RedisAI/install-gpu/redisai.so")
+        cpu_module = path.join(sshome, "third-party/RedisAI/install-cpu/redisai.so")
+        # if built for GPU
+        if path.isfile(gpu_module):
+            logger.debug("Orchestrator using RedisAI GPU")
+            return " ".join(("--loadmodule", gpu_module))
+        elif path.isfile(cpu_module):
+            logger.debug("Orchestrator using RedisAI CPU")
+            return " ".join(("--loadmodule", cpu_module))
         else:
-            load_line = " ".join(("--loadmodule", module))
-            return load_line
+            raise SSConfigError("Could not find RedisAI module")
 
     @staticmethod
     def _find_db_conf():

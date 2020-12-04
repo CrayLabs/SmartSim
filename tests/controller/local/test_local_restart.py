@@ -20,7 +20,7 @@ def test_restart():
     }
     M1 = exp.create_model("m1", path=test_path, run_settings=run_settings)
     M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)
-    O1 = exp.create_orchestrator(path=test_path)
+    O1 = exp.create_orchestrator(path=test_path, port=6780)
 
     # start all entities for the first time
     local_ctrl.start(M1, M2, O1)

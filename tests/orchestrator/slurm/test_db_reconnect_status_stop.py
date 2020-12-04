@@ -36,7 +36,7 @@ def test_db_cluster_reconnect_status_and_stop():
         "alloc": db_test_alloc,
         "exe_args":"reconnect_sim.py --cluster"
     }
-    O1 = exp_1.create_orchestrator(path=exp_1_dir, db_nodes=3, dpn=2, alloc=db_test_alloc)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir, port=6780, db_nodes=3, dpn=2, alloc=db_test_alloc)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
 
     # start first experiment
@@ -69,7 +69,7 @@ def test_db_reconnect_status_and_stop():
         "nodes": 1,
         "alloc": db_test_alloc
     }
-    O1 = exp_1.create_orchestrator(path=exp_1_dir, alloc=db_test_alloc)
+    O1 = exp_1.create_orchestrator(path=exp_1_dir, port=6780, alloc=db_test_alloc)
     M1 = exp_1.create_model("M1", path=exp_1_dir, run_settings=sim_dict)
 
     # start first experiment

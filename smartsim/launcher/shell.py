@@ -16,22 +16,6 @@ except SSConfigError:
     verbose_shell = False
 
 
-def ping_host(hostname):
-    """Ping a hostname and get the IPv4 address of the node.
-
-    :param hostname: hostname of the node
-    :type hostname: str
-    :raises ShellError: if ping to host fails
-    :return: output of ping command
-    :rtype: str
-    """
-    try:
-        returncode, out, err = execute_cmd(["ping -c 1 " + hostname], shell=True)
-        return out
-    except LauncherError as e:
-        raise ShellError(f"Ping to {hostname} failed.") from e
-
-
 def execute_cmd(
     cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None
 ):

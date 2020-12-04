@@ -44,7 +44,7 @@ def test_stop_entity():
 def test_stop_entity_list():
     # setup allocation and orchestrator
     alloc = get_alloc_id()
-    O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
+    O1 = exp.create_orchestrator(path=test_path, alloc=alloc, port=6780)
 
     ctrl.start(O1, block=False)
     time.sleep(5)

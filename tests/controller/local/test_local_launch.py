@@ -33,7 +33,7 @@ def test_models():
 
 @controller_test_local
 def test_orchestrator():
-    O1 = exp.create_orchestrator(path=test_path)
+    O1 = exp.create_orchestrator(path=test_path, port=6780)
 
     local_ctrl.start(O1, block=False)
     statuses = local_ctrl.get_entity_list_status(O1)

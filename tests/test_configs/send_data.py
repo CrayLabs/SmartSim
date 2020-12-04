@@ -2,10 +2,9 @@ import redis
 import argparse
 import numpy as np
 import pickle
-import time
 
 def send_data(key):
-    client = redis.Redis(host="localhost", port=6379)
+    client = redis.Redis(host="localhost", port=6780)
     data = np.random.uniform(0.0, 10.0, size=(5000))
     serialized_data = pickle.dumps(data)
     client.set(key, serialized_data)

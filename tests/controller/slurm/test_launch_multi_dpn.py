@@ -1,6 +1,4 @@
 import time
-import pytest
-from shutil import which
 from os import getcwd, path, environ
 
 from smartsim import constants
@@ -22,7 +20,7 @@ def test_dpn():
     """test launching multiple databases per node"""
     exp = Experiment("Multi-DPN-Test")
     alloc = get_alloc_id()
-    Orc = exp.create_orchestrator(path=test_path, db_nodes=1, dpn=3, alloc=alloc)
+    Orc = exp.create_orchestrator(path=test_path, port=6780, db_nodes=1, dpn=3, alloc=alloc)
 
     ctrl.start(Orc, block=False)
     time.sleep(15)

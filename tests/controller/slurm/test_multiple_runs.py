@@ -33,7 +33,7 @@ def test_multiple_runs():
     }
     M1 = exp.create_model("m1", path=test_path, run_settings=run_settings)
     M2 = exp.create_model("m2", path=test_path, run_settings=run_settings)
-    O1 = exp.create_orchestrator(path=test_path, alloc=alloc)
+    O1 = exp.create_orchestrator(path=test_path, alloc=alloc, port=6780)
 
     ctrl.start(M1, M2)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]

@@ -1,7 +1,5 @@
 
-
 import redis
-import numpy as np
 import pickle
 import os.path as osp
 from shutil import rmtree
@@ -9,7 +7,7 @@ from shutil import rmtree
 from smartsim import Experiment
 from smartsim import constants
 
-REDIS_PORT = 6379
+REDIS_PORT = 6780
 
 def _get_data(name, iters):
     client = redis.Redis(host="localhost", port=REDIS_PORT)
