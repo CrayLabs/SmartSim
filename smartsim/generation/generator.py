@@ -1,17 +1,10 @@
-import sys
 import shutil
-
-from itertools import product
 from distutils import dir_util
-from os import mkdir, getcwd, path, symlink
+from os import mkdir, path, symlink
 
-from ..database import Orchestrator
-from ..entity import Model, Ensemble
 from .modelwriter import ModelWriter
 from ..error import EntityExistsError
 from ..utils.entityutils import separate_entities
-from ..error import SmartSimError, SSUnsupportedError, SSConfigError
-
 from ..utils import get_logger
 
 logger = get_logger(__name__)
@@ -19,27 +12,20 @@ logger.propagate = False
 
 
 class Generator:
-    """The primary job of the generator is to create, and configure models
-    for ensembles. When a user creates an ensemble with parameters, the
-    ensemble can be given to the generator for configuration of its model
-    files. For more information on model generation see
-    ``Generator.generate_experiment``.
-
-    The Generator also creates the file structure for a SmartSim
-    experiment. When called from experiment, all entities present
-    within SmartSim will have directories created for their error
-    and output files.
+    """The primary job of the generator is to create the file structure
+    for a SmartSim experiment. The Generator is responsible for reading
+    and writing into configuration files as well.
     """
 
     def __init__(self, gen_path, overwrite=False):
         """Initialize a generator object
 
-           if overwrite is true, replace any existing
-           configured models within an ensemble if there
-           is a name collision. Also replace any and all directories
-           for the experiment with fresh copies. Otherwise, if overwrite
-           is false, raises EntityExistsError when there is a name
-           collision between entities.
+        if overwrite is true, replace any existing
+        configured models within an ensemble if there
+        is a name collision. Also replace any and all directories
+        for the experiment with fresh copies. Otherwise, if overwrite
+        is false, raises EntityExistsError when there is a name
+        collision between entities.
 
         :param overwrite: toggle entity replacement, defaults to False
         :type overwrite: bool, optional
@@ -51,7 +37,6 @@ class Generator:
     def generate_experiment(self, *args):
         """Run ensemble and experiment file structure generation
 
-         TODO update this docstring
         Generate the file structure for a SmartSim experiment. This
         includes the writing and configuring of input files for a
         model.
@@ -124,6 +109,11 @@ class Generator:
         mkdir(orc_path)
 
     def _gen_entity_list_dir(self, entity_lists):
+        """Generate directories for EntityList instances
+
+        :param entity_lists: list of EntityList instances
+        :type entity_lists: list
+        """
 
         if not entity_lists:
             return
@@ -141,6 +131,15 @@ class Generator:
             self._gen_entity_dirs(elist.entities, entity_list=elist)
 
     def _gen_entity_dirs(self, entities, entity_list=None):
+        """Generate directories for Entity instances
+
+        :param entities: list of Entity instances
+        :type entities: list
+        :param entity_list: EntityList instance, defaults to None
+        :type entity_list: EntityList, optional
+        :raises EntityExistsError: if a directory already exists for an
+                                   entity by that name
+        """
         if not entities:
             return
 

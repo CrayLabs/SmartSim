@@ -4,7 +4,7 @@ from .localStep import LocalStep
 from ..stepInfo import LocalStepInfo
 from ..taskManager import TaskManager
 from ..shell import execute_async_cmd
-from ...error.errors import LauncherError, SSUnsupportedError
+from ...error.errors import SSUnsupportedError
 
 from ...utils import get_logger
 logger = get_logger(__name__)

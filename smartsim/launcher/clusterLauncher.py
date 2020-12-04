@@ -13,8 +13,8 @@ logger = get_logger(__name__)
 
 
 def create_cluster(nodes, ports):
-    """Create a KeyDB cluster on the specifed nodes at port. This method
-    is called using the KeyDB-cli tool and is called after all of the
+    """Create a database cluster on the specified nodes at port. This method
+    is called using the redis-cli tool and is called after all of the
     database nodes have been launched.
 
     :param nodes: the nodes the database instances were launched on
@@ -32,9 +32,9 @@ def create_cluster(nodes, ports):
 
     # call cluster command
     smartsimhome = get_env("SMARTSIMHOME")
-    keydb_cli = os.path.join(smartsimhome, "third-party/KeyDB/src/keydb-cli")
+    redis_cli = os.path.join(smartsimhome, "third-party/redis/src/redis-cli")
     cmd = " ".join(
-        (keydb_cli, "--cluster create", cluster_str, "--cluster-replicas", "0")
+        (redis_cli, "--cluster create", cluster_str, "--cluster-replicas", "0")
     )
     returncode, out, err = execute_cmd([cmd], proc_input="yes", shell=True)
 

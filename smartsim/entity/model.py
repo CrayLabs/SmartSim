@@ -1,7 +1,5 @@
-from os import getcwd
-from os.path import join
 from .files import EntityFiles
-from ..error import SSConfigError, SmartSimError
+from ..error import SSConfigError
 from .entity import SmartSimEntity
 from ..utils.helpers import expand_exe_path
 

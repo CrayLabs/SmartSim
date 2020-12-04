@@ -1,20 +1,16 @@
 import time
 import numpy as np
-import threading
 from threading import Thread
 
 from .job import Job
-from ..entity import DBNode
-from ..database import Orchestrator
-from ..launcher.launcher import Launcher
-from ..launcher import SlurmLauncher, LocalLauncher
-from ..entity import SmartSimEntity, Ensemble
-from ..error import SmartSimError, SSConfigError
-from ..utils import get_logger, get_env
+from ..launcher import SlurmLauncher
+from ..error import SmartSimError
+from ..utils import get_logger
 from ..constants import LOCAL_JM_INTERVAL, WLM_JM_INTERVAL
 from ..constants import TERMINAL_STATUSES
 
 logger = get_logger(__name__)
+
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
@@ -43,21 +39,27 @@ class JobManager:
         self.completed = {}
         self._lock = lock
 
-    def start(self, daemon=True):
+    def start(self):
         """Start a thread for the job manager"""
-        self.monitor = Thread(name=self.name, daemon=daemon, target=self.run)
+
+        self.monitor = Thread(name=self.name, daemon=True, target=self.run)
         self.monitor.start()
 
     def run(self):
         """Start the JobManager thread to continually check
-        the status of all jobs.
+        the status of all jobs. Whichever launcher is selected
+        by the user will be responsible for returning statuses
+        that progress the state of the job.
+
+        The job manager thread will exit when no jobs are left
+        or when the main thread dies
         """
         logger.debug("Starting Job Manager")
 
         self.actively_monitoring = True
         while self.actively_monitoring:
             self._thread_sleep()
-            #logger.debug(f"Active Jobs: {len(self)}")
+            # logger.debug(f"Active Jobs: {len(self)}")
 
             # update all job statuses at once
             self.check_jobs()
@@ -157,7 +159,6 @@ class JobManager:
         finally:
             self._lock.release()
 
-
     def add_job(self, name, job_id, entity):
         """Add a job to the job manager which holds specific jobs by type.
 
@@ -192,9 +193,16 @@ class JobManager:
             self._lock.release()
 
     def is_finished(self, entity):
+        """Detect if a job has completed
+
+        :param entity: entity to check
+        :type entity: SmartSimEntity
+        :return: True if finished
+        :rtype: bool
+        """
         self._lock.acquire()
         try:
-            job = self[entity.name] # locked operation
+            job = self[entity.name]  # locked operation
             if entity.name in self.completed:
                 if job.status in TERMINAL_STATUSES:
                     return True
@@ -218,7 +226,7 @@ class JobManager:
                     status.status,
                     status.returncode,
                     error=status.error,
-                    output=status.output
+                    output=status.output,
                 )
         finally:
             self._lock.release()
@@ -236,7 +244,7 @@ class JobManager:
             if entity.name in self.completed:
                 return self.completed[entity.name].status
 
-            job = self[entity.name] # locked
+            job = self[entity.name]  # locked
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"

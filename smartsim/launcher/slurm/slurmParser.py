@@ -1,5 +1,6 @@
 from shutil import which
 
+
 def parse_salloc(output):
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):

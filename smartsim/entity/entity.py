@@ -1,17 +1,13 @@
-from os import getcwd
 from os.path import join
-from .files import EntityFiles
-from ..error import SSConfigError
-from ..utils.helpers import expand_exe_path
 
 
 class SmartSimEntity:
     def __init__(self, name, path, entity_type, run_settings):
         """Initialize a SmartSim entity.
 
-           Each entity must have a name, path, type, and
-           run_settings. All entities within SmartSim
-           share these attributes.
+        Each entity must have a name, path, type, and
+        run_settings. All entities within SmartSim
+        share these attributes.
 
         :param name: Name of the entity
         :type name: str
@@ -31,8 +27,8 @@ class SmartSimEntity:
     def update_run_settings(self, updated_run_settings):
         """Update the run settings of an entity.
 
-           This is commonly used with the Generator and
-           Controller classes for changing the entity run_settings.
+        This is commonly used with the Generator and
+        Controller classes for changing the entity run_settings.
 
         :param updated_run_settings: new run settings
         :type updated_run_settings: dict

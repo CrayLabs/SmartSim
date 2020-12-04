@@ -1,29 +1,24 @@
-import sys
 import time
-import subprocess
 import threading
 import pickle
-from os import listdir
-from os.path import isdir, basename, join
 
 from ..constants import TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..launcher import SlurmLauncher, LocalLauncher
-from ..entity import SmartSimEntity, DBNode, Ensemble, Model, EntityList
+from ..entity import SmartSimEntity, DBNode, EntityList
 from ..launcher.clusterLauncher import create_cluster, check_cluster_status
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError, LauncherError
 
-from .job import Job
 from .junction import Junction
 from .jobmanager import JobManager
 from ..utils.entityutils import separate_entities
-
 from ..utils import get_logger
 
 logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
+
 
 class Controller:
     """The controller module provides an interface between the
@@ -93,7 +88,6 @@ class Controller:
                 finally:
                     JM_LOCK.release()
 
-
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
 
@@ -133,10 +127,15 @@ class Controller:
         try:
             job = self._jobs[entity.name]
             if job.status not in TERMINAL_STATUSES:
-                logger.info(" ".join(("Stopping model", entity.name, "job", str(job.jid))))
+                logger.info(
+                    " ".join(("Stopping model", entity.name, "job", str(job.jid)))
+                )
                 status = self._launcher.stop(job.jid)
                 job.set_status(
-                    status.status, status.returncode, error=status.error, output=status.output
+                    status.status,
+                    status.returncode,
+                    error=status.error,
+                    output=status.output,
                 )
                 self._jobs.move_to_completed(job)
         finally:
@@ -418,4 +417,3 @@ class Controller:
         orc_data = {"orc": orchestrator, "db_jobs": self._jobs.db_jobs}
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
-

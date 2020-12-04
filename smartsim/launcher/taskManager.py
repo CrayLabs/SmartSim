@@ -1,12 +1,11 @@
-import datetime
 import time
+import psutil
 import numpy as np
 from threading import Thread, RLock
-import psutil
 
 from ..error import SSConfigError
-from ..utils import get_logger, get_env
 from ..constants import TM_INTERVAL
+from ..utils import get_logger, get_env
 
 logger = get_logger(__name__)
 

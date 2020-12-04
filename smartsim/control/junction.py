@@ -1,5 +1,4 @@
 from itertools import product
-from ..error import SSConfigError
 
 
 class Junction:

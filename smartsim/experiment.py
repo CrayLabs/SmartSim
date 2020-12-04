@@ -1,17 +1,16 @@
-import sys
 import time
 import pickle
 import pandas as pd
 from tqdm import trange
 from pprint import pformat
-from os import path, mkdir, listdir, getcwd, environ
+from os import path, getcwd
 
 from .control import Controller
 from .generation import Generator
 from .launcher import LocalLauncher
 from .database import Orchestrator
 from .entity import SmartSimEntity, Model, Ensemble, EntityList
-from .error import SmartSimError, SSConfigError, EntityExistsError
+from .error import SmartSimError, EntityExistsError
 
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize

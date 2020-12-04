@@ -1,7 +1,7 @@
 from .model import Model
 from .entityList import EntityList
 from ..error import UserStrategyError
-from ..error import EntityExistsError,  SSUnsupportedError
+from ..error import EntityExistsError, SSUnsupportedError
 from .strategies import create_all_permutations, random_permutations, step_values
 
 
@@ -62,7 +62,10 @@ class Ensemble(EntityList):
 
                 model_name = "_".join((self.name, str(i)))
                 model = Model(
-                    model_name, param_set, self.path, run_settings=self.run_settings.copy()
+                    model_name,
+                    param_set,
+                    self.path,
+                    run_settings=self.run_settings.copy(),
                 )
                 model.enable_key_prefixing()
                 self.add_model(model)

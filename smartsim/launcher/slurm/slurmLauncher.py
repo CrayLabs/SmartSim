@@ -1,25 +1,19 @@
-import calendar
 import time
-import os
-import atexit
-import sys
 import numpy as np
-import threading
 from shutil import which
 
 from ..launcher import Launcher
 from .slurmStep import SlurmStep
+from .slurmParser import parse_sacct
 from ..stepInfo import SlurmStepInfo
+from ..shell import execute_async_cmd
 from ..taskManager import TaskManager
-from .slurmConstants import SlurmConstants
 from ...error import LauncherError, SSConfigError
-from ..shell import execute_cmd, execute_async_cmd
-from .slurmCommands import sstat, sacct, salloc, sinfo, scancel
-from .slurmParser import parse_sacct, parse_sacct_step, parse_salloc
-from ..launcherUtil import seq_to_str, write_to_bash, ComputeNode, Partition
-from .slurmParser import parse_salloc_error, parse_sstat_nodes, parse_step_id_from_sacct
+from .slurmCommands import sstat, sacct, sinfo, scancel
+from ..launcherUtil import ComputeNode, Partition
+from .slurmParser import parse_sstat_nodes, parse_step_id_from_sacct
 
-from ...utils import get_logger, get_env
+from ...utils import get_logger
 logger = get_logger(__name__)
 
 
@@ -28,8 +22,6 @@ class SlurmLauncher(Launcher):
     to manager allocations and launch jobs on systems that use
     Slurm as a workload manager.
     """
-
-    constants = SlurmConstants()
 
     def __init__(self, *args, **kwargs):
         """Initialize a SlurmLauncher"""
@@ -134,6 +126,13 @@ class SlurmLauncher(Launcher):
 
 
     def get_step_update(self, step_ids):
+        """Get updates for a list of step ids
+
+        :param step_ids: list of step ids
+        :type step_ids: list
+        :return: list of SlurmStepInfo instances
+        :rtype: list
+        """
         step_str = _create_step_id_str(step_ids)
         sacct_out, sacct_err = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
         # (status, returncode)

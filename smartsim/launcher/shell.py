@@ -1,10 +1,7 @@
-import os
-import pickle
 import psutil
-from ..error import ShellError, LauncherError, SSConfigError
-from subprocess import PIPE, Popen, CalledProcessError, TimeoutExpired, run
+from subprocess import PIPE, Popen, TimeoutExpired
 
-
+from ..error import ShellError, SSConfigError
 from ..utils import get_logger, get_env
 
 logger = get_logger(__name__)
@@ -16,9 +13,7 @@ except SSConfigError:
     verbose_shell = False
 
 
-def execute_cmd(
-    cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None
-):
+def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None):
     """Execute a command locally
 
     :param cmd_list: list of command with arguments
@@ -55,10 +50,11 @@ def execute_cmd(
     except TimeoutExpired as e:
         proc.kill()
         output, errs = proc.communicate()
-        raise ShellError("Failed to execute command, timeout reached", e,  cmd_list)
+        raise ShellError("Failed to execute command, timeout reached", e, cmd_list)
     except OSError as e:
-        raise ShellError("Exception while attempting to start a shell process",
-                         e, cmd_list)
+        raise ShellError(
+            "Exception while attempting to start a shell process", e, cmd_list
+        )
 
     # decoding the output and err and return as a string tuple
     return proc.returncode, out.decode("utf-8"), err.decode("utf-8")

@@ -1,5 +1,4 @@
 from .entity import SmartSimEntity
-from ..utils.helpers import get_env
 import os
 
 

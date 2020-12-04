@@ -1,9 +1,9 @@
 import os
+from itertools import product
 
 from ...utils import get_env
 from ...utils.helpers import expand_exe_path
 from ...error import SSConfigError, LauncherError
-from itertools import product
 
 
 class SlurmStep:
