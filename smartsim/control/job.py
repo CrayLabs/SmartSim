@@ -23,6 +23,7 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
+        self.raw_status = None
         self.returncode = None
         self.output = None
         self.error = None
@@ -30,7 +31,7 @@ class Job:
         self.start_time = time.time()
         self.history = History()
 
-    def set_status(self, new_status, returncode, error=None, output=None):
+    def set_status(self, new_status, raw_status, returncode, error=None, output=None):
         """Set the status  of a job.
 
         :param new_status: The new status of the job
@@ -39,6 +40,7 @@ class Job:
         :type return_code: str
         """
         self.status = new_status
+        self.raw_status = raw_status
         self.returncode = returncode
         self.error = error
         self.output = output
@@ -76,6 +78,7 @@ class Job:
         if self.output:
             warning += f"Output: {self.output} \n"
         warning += f"Job status at failure: {self.status} \n"
+        warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
         warning += f"For more information on the error, check the files below: \n"
         warning += f"{self.entity.type} error file: {self.entity.get_run_setting('err_file')} \n"

@@ -133,6 +133,7 @@ class Controller:
                 status = self._launcher.stop(job.jid)
                 job.set_status(
                     status.status,
+                    status.launcher_status,
                     status.returncode,
                     error=status.error,
                     output=status.output,

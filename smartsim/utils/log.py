@@ -73,4 +73,4 @@ def log_to_file(filename, log_level=None):
                           to allow the file to store more or less verbose
                           logging information.
     """
-    coloredlogs.install(stream=open(filename, "w+"), log_level=log_level)
+    coloredlogs.install(stream=open(filename, "w+"), level=log_level)

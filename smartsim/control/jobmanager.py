@@ -58,7 +58,6 @@ class JobManager:
 
         self.actively_monitoring = True
         while self.actively_monitoring:
-            self._thread_sleep()
             # logger.debug(f"Active Jobs: {len(self)}")
 
             # update all job statuses at once
@@ -77,6 +76,7 @@ class JobManager:
                         logger.info(job)
                         self.move_to_completed(job)
 
+            self._thread_sleep()
             # if no more jobs left to actively monitor
             if not self():
                 self.actively_monitoring = False
@@ -224,6 +224,7 @@ class JobManager:
             for status, job in zip(statuses, jobs):
                 job.set_status(
                     status.status,
+                    status.launcher_status,
                     status.returncode,
                     error=status.error,
                     output=status.output,

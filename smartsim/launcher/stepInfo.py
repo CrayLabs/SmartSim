@@ -5,8 +5,9 @@ from ..constants import STATUS_NEW, STATUS_PAUSED, STATUS_RUNNING, SMARTSIM_STAT
 
 class StepInfo:
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(self, status="", launcher_status="", returncode=None, output=None, error=None):
         self.status = status
+        self.launcher_status = launcher_status
         self.returncode = returncode
         self.output = output
         self.error = error
@@ -33,7 +34,7 @@ class LocalStepInfo(StepInfo):
 
     def __init__(self, status="", returncode=None, output=None, error=None):
         smartsim_status = self._get_smartsim_status(status)
-        super().__init__(smartsim_status, returncode, output=output, error=error)
+        super().__init__(smartsim_status, status, returncode, output=output, error=error)
 
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
@@ -79,7 +80,7 @@ class SlurmStepInfo(StepInfo):
 
     def __init__(self, status="", returncode=None, output=None, error=None):
         smartsim_status = self._get_smartsim_status(status)
-        super().__init__(smartsim_status, returncode, output=output, error=error)
+        super().__init__(smartsim_status, status, returncode, output=output, error=error)
 
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
