@@ -24,6 +24,8 @@
       - Python >= 3.7
       - GCC >= 5.0.0
       - Cmake >= 3.0.0
+  - Tested on OSX, and many flavors of linux
+  - Windows not supported.
 
 ### Get the Source
 
@@ -88,3 +90,39 @@
      - git checkout develop
    - build the dependencies
      - source build_deps.sh
+
+## Running the test suite
+
+
+### Local
+
+  If you are running the test suite locally on a laptop
+  or workstation you can call pytest as follows
+
+  ```bash
+  export SMARTSIM_LOG_LEVEL=debug # optional, "develeper" is more verbose
+  py.test -vv -o log_cli=true
+  ```
+
+  Stop pytest after the first failure to obtain the error and output files
+  of the test by adding ``-x`` to the ``pytest`` command
+
+### Slurm
+
+  Users should usually obtain an allocation on a compute node
+  so as to not take up space on the head node as the test suite
+  runs a fair amount of tests.
+
+  Obtain an allocation with 1 node and 1 process
+
+  ```bash
+  salloc -N 1 -n 1 -t 00:10:00
+  ```
+
+  run the test suite as follows
+  ```bash
+  conda activate smartsim-env # (optional) activate conda env
+  srun -n 1 python -m pytest -vv --cov=../smartsim -o log_cli=true
+  ```
+
+
