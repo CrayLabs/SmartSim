@@ -46,7 +46,7 @@ if [ $? != 0 ]; then
 fi
 
 
-if [ $RAI_BUILD_TYPE == "gpu" ]; then
+if [[ $RAI_BUILD_TYPE == "gpu" ]]; then
     echo "Building RedisAI for GPU..."
     source ../build-scripts/build-redisai-gpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
     if [ $? != 0 ]; then
