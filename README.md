@@ -20,23 +20,26 @@
 ## Build SmartSim
 
   - The following will describe how to build SmartSim in multiple settings.
-  - SmartSim requires Python >= 3.7
+  - General requirements
+      - Python >= 3.7
+      - GCC >= 5.0.0
+      - Cmake >= 3.0.0
 
 ### Get the Source
 
    - Clone the git repository
-      > git clone {insert git address} Smart-Sim
+      - git clone {insert git address} Smart-Sim
 
 ### Get Python and Requirements
 
    - Install conda - https://docs.conda.io/en/latest/miniconda.html
    - Create a new conda environment
-      > conda create --name py38 python=3.8
+      - conda create --name py38 python=3.8
    - Activate the conda environment
-      > conda activate py38
+      - conda activate py38
    - Install Dependencies
-      > pip install -r requirements.txt
-      > pip install -r requirements-dev.txt (for all requirements)
+      - pip install -r requirements.txt
+      - pip install -r requirements-dev.txt (for all requirements)
 
 ### GPU Install Requirements
 
@@ -48,13 +51,13 @@
    CUDA will be installed somewhere like `/usr/local/cuda`
 
    - Install CUDA requirements
-      > conda install cudatoolkit=10.2 cudnn=7.6.5
+      - conda install cudatoolkit=10.2 cudnn=7.6.5
    - (optional) Load CUDA module instead of using conda
-      > module load cudatoolkit
+      - module load cudatoolkit
    - Set CUDA environment variables
-      > export CUDNN_LIBRARY=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/lib
-      > export CUDNN_INCLUDE_DIR=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/include
-      > export CUDATOOLKIT_HOME=/path/to/miniconda3/pkgs/cudatoolkit-10.2.89-hfd86e86_1/
+      - export CUDNN_LIBRARY=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/lib
+      - export CUDNN_INCLUDE_DIR=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/include
+      - export CUDATOOLKIT_HOME=/path/to/miniconda3/pkgs/cudatoolkit-10.2.89-hfd86e86_1/
 
 ### Building SmartSim with Dependencies
 
@@ -66,13 +69,13 @@
    By default, the Pytorch and TensorFlow backends are built for CPU
 
    - Build default for CPU
-      > cd Smart-Sim && source setup_env.sh
+      - cd Smart-Sim && source setup_env.sh
    - Build defaults for GPU
-      > cd Smart-Sim && source setup_env.sh gpu
+      - cd Smart-Sim && source setup_env.sh gpu
    - Build all backends for CPU
-      > cd Smart-Sim && source setup_env.sh cpu 1 1 1 1
+      - cd Smart-Sim && source setup_env.sh cpu 1 1 1 1
    - Build all backends for GPU
-      > cd Smart-Sim && source setup_env.sh gpu 1 1 1 1
+      - cd Smart-Sim && source setup_env.sh gpu 1 1 1 1
 
 
 ## Build SILC (optional)
@@ -81,7 +84,7 @@
   or build the documentation, the SILC library must be installed
 
    - Get the SILC library
-     > git clone #clone link to SILC#
-     > git checkout develop
+     - git clone #clone link to SILC#
+     - git checkout develop
    - build the dependencies
-     > source build_deps.sh
+     - source build_deps.sh
