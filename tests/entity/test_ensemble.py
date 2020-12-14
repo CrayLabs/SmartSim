@@ -1,7 +1,12 @@
 import pytest
+
 from smartsim.entity import Ensemble, Model
-from smartsim.error import UserStrategyError, SSConfigError
-from smartsim.error import EntityExistsError, SSUnsupportedError
+from smartsim.error import (
+    EntityExistsError,
+    SSConfigError,
+    SSUnsupportedError,
+    UserStrategyError,
+)
 
 # ----- Test ------------------------------------------------
 

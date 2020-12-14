@@ -2,6 +2,7 @@
 
 from itertools import product
 
+
 # create permutations of all parameters
 # single model if parameters only have one value
 def create_all_permutations(param_names, param_values):

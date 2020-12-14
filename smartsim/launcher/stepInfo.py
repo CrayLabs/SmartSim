@@ -1,6 +1,14 @@
 import psutil
-from ..constants import STATUS_CANCELLED, STATUS_COMPLETED, STATUS_FAILED
-from ..constants import STATUS_NEW, STATUS_PAUSED, STATUS_RUNNING, SMARTSIM_STATUS
+
+from ..constants import (
+    SMARTSIM_STATUS,
+    STATUS_CANCELLED,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_NEW,
+    STATUS_PAUSED,
+    STATUS_RUNNING,
+)
 
 
 class StepInfo:

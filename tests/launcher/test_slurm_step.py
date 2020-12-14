@@ -1,8 +1,10 @@
 import os
-import pytest
 from shutil import which
-from smartsim.launcher.slurm.slurmStep import SlurmStep
+
+import pytest
+
 from smartsim.error.errors import LauncherError, SSConfigError
+from smartsim.launcher.slurm.slurmStep import SlurmStep
 
 if not which("srun"):
     pytestmark = pytest.mark.skip

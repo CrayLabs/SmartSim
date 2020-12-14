@@ -3,8 +3,9 @@ Test the running of replicate models with the local launcher
 """
 import os.path as osp
 from shutil import rmtree
-from smartsim import Experiment
-from smartsim import constants
+
+from smartsim import Experiment, constants
+
 
 def test_replicates():
     exp = Experiment("replicates-local", launcher="local")

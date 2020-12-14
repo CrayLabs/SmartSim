@@ -1,5 +1,6 @@
+from os import environ, getcwd, path
+
 import pytest
-from os import path, getcwd, environ
 
 from smartsim import Experiment
 from smartsim.error import SmartSimError

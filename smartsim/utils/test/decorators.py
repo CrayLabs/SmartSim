@@ -1,11 +1,13 @@
 
-import pytest
+from os import mkdir, path
+from shutil import copyfile, rmtree, which
+from subprocess import PIPE, Popen, run
 
-from os import path, mkdir
+import pytest
 from decorator import decorator
-from shutil import rmtree, which, copyfile
-from subprocess import Popen, PIPE, run
+
 from smartsim.utils import get_logger
+
 logger = get_logger()
 
 

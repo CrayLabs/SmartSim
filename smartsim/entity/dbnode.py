@@ -1,5 +1,6 @@
-from .entity import SmartSimEntity
 import os
+
+from .entity import SmartSimEntity
 
 
 class DBNode(SmartSimEntity):

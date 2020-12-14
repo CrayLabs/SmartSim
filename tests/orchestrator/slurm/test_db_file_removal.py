@@ -1,9 +1,8 @@
 import time
-from os import path, getcwd, environ
+from os import environ, getcwd, path
 
 from smartsim import Experiment
 from smartsim.utils.test.decorators import orchestrator_test_slurm
-
 
 # --- Setup ---------------------------------------------------
 

@@ -1,10 +1,11 @@
-import pytest
 import time
-from os import path, getcwd
-from smartsim import Experiment
+from os import getcwd, path
+
+import pytest
+
+from smartsim import Experiment, constants
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test_local
-from smartsim import constants
 
 test_path = path.join(getcwd(),  "./controller_test/")
 

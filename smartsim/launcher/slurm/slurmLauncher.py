@@ -1,19 +1,19 @@
 import time
-import numpy as np
 from shutil import which
 
-from ..launcher import Launcher
-from .slurmStep import SlurmStep
-from .slurmParser import parse_sacct
-from ..stepInfo import SlurmStepInfo
-from ..shell import execute_async_cmd
-from ..taskManager import TaskManager
-from ...error import LauncherError, SSConfigError
-from .slurmCommands import sstat, sacct, sinfo, scancel
-from ..launcherUtil import ComputeNode, Partition
-from .slurmParser import parse_sstat_nodes, parse_step_id_from_sacct
+import numpy as np
 
+from ...error import LauncherError, SSConfigError
 from ...utils import get_logger
+from ..launcher import Launcher
+from ..launcherUtil import ComputeNode, Partition
+from ..shell import execute_async_cmd
+from ..stepInfo import SlurmStepInfo
+from ..taskManager import TaskManager
+from .slurmCommands import sacct, scancel, sinfo, sstat
+from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
+from .slurmStep import SlurmStep
+
 logger = get_logger(__name__)
 
 

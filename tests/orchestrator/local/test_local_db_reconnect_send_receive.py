@@ -1,12 +1,12 @@
 
-import pytest
 import filecmp
-from os import path, getcwd
+from os import getcwd, path
+
+import pytest
 
 from smartsim import Experiment
 from smartsim.error import SmartSimError
 from smartsim.utils.test.decorators import orchestrator_test_local
-
 
 test_path = path.join(getcwd(),  "./orchestrator_test/")
 

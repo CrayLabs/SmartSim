@@ -1,6 +1,8 @@
-import sys
 import logging
+import sys
+
 import coloredlogs
+
 from ..error import SSConfigError
 from ..utils.helpers import get_env
 

@@ -1,4 +1,5 @@
 import numpy as np
+
 from smartsim import Client
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
 import time
-import pytest
+from os import environ, getcwd, path
 from shutil import which
-from os import getcwd, path, environ
 
-from smartsim import constants
-from smartsim import Experiment
+import pytest
+
+from smartsim import Experiment, constants
 from smartsim.control import Controller
 from smartsim.utils.test.decorators import controller_test
 

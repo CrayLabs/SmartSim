@@ -1,13 +1,13 @@
 import time
-import numpy as np
 from threading import Thread
 
-from .job import Job
-from ..launcher import SlurmLauncher
+import numpy as np
+
+from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
 from ..error import SmartSimError
+from ..launcher import SlurmLauncher
 from ..utils import get_logger
-from ..constants import LOCAL_JM_INTERVAL, WLM_JM_INTERVAL
-from ..constants import TERMINAL_STATUSES
+from .job import Job
 
 logger = get_logger(__name__)
 

@@ -1,6 +1,6 @@
 
-import time
 import argparse
+import time
 
 
 def divide_by_zero(time_to_wait):

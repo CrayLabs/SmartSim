@@ -1,5 +1,7 @@
 import os
+
 from ...error import SSConfigError
+
 
 class LocalStep:
 

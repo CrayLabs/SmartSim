@@ -1,8 +1,9 @@
-import psutil
 from subprocess import PIPE, Popen, TimeoutExpired
 
+import psutil
+
 from ..error import ShellError, SSConfigError
-from ..utils import get_logger, get_env
+from ..utils import get_env, get_logger
 
 logger = get_logger(__name__)
 

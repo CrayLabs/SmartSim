@@ -1,8 +1,8 @@
 import filecmp
-from os import path, environ
-from glob import glob
-from shutil import rmtree
 from distutils import dir_util
+from glob import glob
+from os import environ, path
+from shutil import rmtree
 
 from smartsim import Experiment
 from smartsim.entity import Model

@@ -1,13 +1,13 @@
 import os
 import time
+
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
-from .shell import execute_cmd
 from ..error import LauncherError
-
+from ..utils import get_env, get_logger
 from .launcherUtil import get_ip_from_host
-from ..utils import get_logger, get_env
+from .shell import execute_cmd
 
 logger = get_logger(__name__)
 

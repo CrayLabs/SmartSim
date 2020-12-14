@@ -1,11 +1,12 @@
 import time
+from os import getcwd, path
+
 import pytest
-from os import path, getcwd
-from smartsim import Experiment
+
+from smartsim import Experiment, constants
 from smartsim.control import Controller
-from smartsim.error import SSUnsupportedError, SmartSimError
+from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.utils.test.decorators import controller_test_local
-from smartsim import constants
 
 # create some entities for testing
 test_path = path.join(getcwd(),  "./controller_test/")

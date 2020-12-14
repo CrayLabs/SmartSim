@@ -2,8 +2,8 @@
 A file of helper functions for SmartSim
 """
 import os
-from shutil import which
 from os import environ
+from shutil import which
 
 from ..error import SSConfigError
 

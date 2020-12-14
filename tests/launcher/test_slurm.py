@@ -1,9 +1,11 @@
 import os
-import pytest
 from shutil import which
+
+import pytest
+
 from smartsim import constants
-from smartsim.launcher import SlurmLauncher
 from smartsim.error.errors import LauncherError
+from smartsim.launcher import SlurmLauncher
 from smartsim.launcher.stepInfo import SlurmStepInfo
 
 # skip if not on a slurm system

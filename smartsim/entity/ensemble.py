@@ -1,7 +1,6 @@
-from .model import Model
+from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from .entityList import EntityList
-from ..error import UserStrategyError
-from ..error import EntityExistsError, SSUnsupportedError
+from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
 
 

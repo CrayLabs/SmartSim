@@ -1,7 +1,9 @@
-import redis
 import argparse
-import numpy as np
 import pickle
+
+import numpy as np
+import redis
+
 
 def send_data(key):
     client = redis.Redis(host="localhost", port=6780)

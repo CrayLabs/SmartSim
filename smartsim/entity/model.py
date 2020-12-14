@@ -1,7 +1,7 @@
-from .files import EntityFiles
 from ..error import SSConfigError
-from .entity import SmartSimEntity
 from ..utils.helpers import expand_exe_path
+from .entity import SmartSimEntity
+from .files import EntityFiles
 
 
 class Model(SmartSimEntity):

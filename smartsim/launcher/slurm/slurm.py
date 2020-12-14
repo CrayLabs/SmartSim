@@ -1,9 +1,8 @@
 from ...error import LauncherError
+from ...utils import get_env, get_logger
+from .slurmCommands import salloc, scancel
 from .slurmLauncher import SlurmLauncher
-from .slurmCommands import scancel, salloc
 from .slurmParser import parse_salloc, parse_salloc_error
-
-from ...utils import get_logger, get_env
 
 logger = get_logger(__name__)
 

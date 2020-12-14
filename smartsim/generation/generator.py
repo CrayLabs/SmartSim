@@ -2,10 +2,10 @@ import shutil
 from distutils import dir_util
 from os import mkdir, path, symlink
 
-from .modelwriter import ModelWriter
 from ..error import EntityExistsError
-from ..utils.entityutils import separate_entities
 from ..utils import get_logger
+from ..utils.entityutils import separate_entities
+from .modelwriter import ModelWriter
 
 logger = get_logger(__name__)
 logger.propagate = False

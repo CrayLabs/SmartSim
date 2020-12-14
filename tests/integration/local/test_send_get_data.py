@@ -1,11 +1,11 @@
 
-import redis
-import pickle
 import os.path as osp
+import pickle
 from shutil import rmtree
 
-from smartsim import Experiment
-from smartsim import constants
+import redis
+
+from smartsim import Experiment, constants
 
 REDIS_PORT = 6780
 

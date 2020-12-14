@@ -1,11 +1,10 @@
 from os import path
 
-from ..entity import DBNode
-from ..entity import EntityList
+from ..entity import DBNode, EntityList
 from ..error import SSConfigError
-from ..utils.helpers import get_env, expand_exe_path
-
 from ..utils import get_logger
+from ..utils.helpers import expand_exe_path, get_env
+
 logger = get_logger(__name__)
 
 class Orchestrator(EntityList):

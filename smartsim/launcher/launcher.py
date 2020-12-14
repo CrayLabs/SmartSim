@@ -1,6 +1,8 @@
 import abc
-from .stepInfo import StepInfo
+
 from ..error import LauncherError
+from .stepInfo import StepInfo
+
 
 class Launcher(abc.ABC):
 

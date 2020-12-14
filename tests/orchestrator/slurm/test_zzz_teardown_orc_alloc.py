@@ -1,7 +1,10 @@
-import pytest
 from os import environ
 from shutil import which
+
+import pytest
+
 from smartsim import slurm
+
 
 def test_teardown_alloc_for_tests():
    """Not a test, just releasing the slurm allocation

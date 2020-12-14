@@ -1,10 +1,11 @@
-import pytest
-from smartsim.error import SmartSimError
-from smartsim.utils.entityutils import separate_entities
-from smartsim import Experiment
-from smartsim.utils import entityutils
 from copy import deepcopy
 
+import pytest
+
+from smartsim import Experiment
+from smartsim.error import SmartSimError
+from smartsim.utils import entityutils
+from smartsim.utils.entityutils import separate_entities
 
 # ---- create entities for testing --------
 

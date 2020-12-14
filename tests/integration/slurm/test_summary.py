@@ -1,11 +1,10 @@
-import pytest
 import os.path as osp
 from os import environ
 from shutil import rmtree, which
 
-from smartsim import slurm
-from smartsim import Experiment
-from smartsim import constants
+import pytest
+
+from smartsim import Experiment, constants, slurm
 
 if not which("srun"):
     pytestmark = pytest.mark.skip

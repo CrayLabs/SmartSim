@@ -1,5 +1,7 @@
 import numpy as np
+
 from smartsim import Client
+
 
 def create_data(seed, size):
 

@@ -1,5 +1,6 @@
-import time
 import argparse
+import time
+
 
 def sleep(time_to_sleep):
     print("Starting sleep.py", flush=True)

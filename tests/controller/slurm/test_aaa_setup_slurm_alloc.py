@@ -1,6 +1,8 @@
-import pytest
 from os import environ
 from shutil import which
+
+import pytest
+
 from smartsim import slurm
 
 

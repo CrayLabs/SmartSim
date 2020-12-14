@@ -1,13 +1,13 @@
-import pytest
-from os import path, environ, getcwd
-from shutil import rmtree
 import json
+from os import environ, getcwd, path
+from shutil import rmtree
+
+import pytest
 
 from smartsim import Experiment
 from smartsim.error import SmartSimError, SSConfigError
 from smartsim.generation import Generator
 from smartsim.utils.test.decorators import generator_test
-
 
 test_path = path.join(getcwd(), "./generator_test/")
 exp = Experiment("test")

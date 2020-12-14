@@ -1,20 +1,20 @@
-import time
 import pickle
+import time
+from os import getcwd, path
+from pprint import pformat
+
 import pandas as pd
 from tqdm import trange
-from pprint import pformat
-from os import path, getcwd
 
 from .control import Controller
+from .database import Orchestrator
+from .entity import Ensemble, EntityList, Model, SmartSimEntity
+from .error import EntityExistsError, SmartSimError
 from .generation import Generator
 from .launcher import LocalLauncher
-from .database import Orchestrator
-from .entity import SmartSimEntity, Model, Ensemble, EntityList
-from .error import SmartSimError, EntityExistsError
-
+from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize
-from .utils import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,7 +1,7 @@
 
 
 from ..database import Orchestrator
-from ..entity import SmartSimEntity, Ensemble, Model, DBNode, EntityList
+from ..entity import DBNode, Ensemble, EntityList, Model, SmartSimEntity
 from ..error import SmartSimError
 
 

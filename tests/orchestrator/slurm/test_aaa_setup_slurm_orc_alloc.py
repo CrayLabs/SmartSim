@@ -1,7 +1,10 @@
-import pytest
 from os import environ
 from shutil import which
+
+import pytest
+
 from smartsim import slurm
+
 
 def test_setup_alloc_for_tests():
    """Not actually a test. Sets up the allocation on slurm

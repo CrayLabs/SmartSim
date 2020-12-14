@@ -1,7 +1,8 @@
-import pytest
 import filecmp
+from os import environ, getcwd, path
 from shutil import which
-from os import path, getcwd, environ
+
+import pytest
 
 from smartsim import Experiment
 from smartsim.utils.test.decorators import orchestrator_test_slurm

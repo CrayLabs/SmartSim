@@ -1,11 +1,12 @@
 
-from smartsim import Experiment
-from os import path, environ, getcwd
+from os import environ, getcwd, path
 from shutil import rmtree
-from smartsim.error import SmartSimError, LauncherError
-from smartsim.entity import Ensemble, Model
+
 import pytest
 
+from smartsim import Experiment
+from smartsim.entity import Ensemble, Model
+from smartsim.error import LauncherError, SmartSimError
 
 # --- Simple Entity Creation ----------------------------------------------
 
