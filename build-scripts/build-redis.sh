@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Install Redis
 if [[ -f ./redis/src/redis-server ]]; then

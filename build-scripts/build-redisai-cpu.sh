@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Install RedisAI
 if [[ -f ./RedisAI/install-cpu/redisai.so ]]; then

@@ -1,21 +1,139 @@
-# Minimal makefile for Sphinx documentation
-#
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+MAKEFLAGS += --no-print-directory
 
-# Put it first so that "make" without argument is like "make help".
+# Do not remove this block. It is used by the 'help' rule when
+# constructing the help output.
+# help:
+# help: SmartSim Makefile help
+# help:
+
+# help: help                           - display this makefile's help information
+.PHONY: help
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@grep "^# help\:" Makefile | grep -v grep | sed 's/\# help\: //' | sed 's/\# help\://'
 
-.PHONY: help Makefile
+# help:
+# help: Build
+# help: -------
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	#(cd doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran)
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+# help: silc                           - Make SILC python client and setup SILC library
+.PHONY: silc
+silc: SHELL:=/bin/bash
+silc:
+	@bash ./build-scripts/build-silc.sh
+
+# help: deps                           - Make SmartSim dependencies (CPU builds, TF and PT)
+.PHONY: deps
+deps: SHELL:=/bin/bash
+deps:
+	@bash ./build-scripts/build_deps.sh
+
+# help: deps-cpu-all                   - Make SmartSim dependencies (CPU builds, TF, PT, TFL, ONNX)
+.PHONY: deps-cpu-all
+deps-cpu-all: SHELL:=/bin/bash
+deps-cpu-all:
+	@bash ./build-scripts/build_deps.sh cpu 1 1 1 1
+
+# help: deps-gpu                       - Make SmartSim dependencies (GPU builds, TF, PT)
+.PHONY: deps-gpu
+deps-gpu: SHELL:=/bin/bash
+deps-gpu:
+	@bash ./build-scripts/build_deps.sh gpu
+
+# help: deps-gpu-all                   - Make SmartSim dependencies (GPU builds, TF, PT, TFL, ONNX)
+.PHONY: deps-gpu-all
+deps-gpu-all: SHELL:=/bin/bash
+deps-gpu-all:
+	@bash ./build-scripts/build_deps.sh gpu 1 1 1 1
+
+
+# help: clean-deps                     - remove third-party deps
+.PHONY: clean-deps
+clean-deps:
+	@rm -rf ./third-party
+
+
+# help: clean                          - remove builds, pyc files, .gitignore rules
+.PHONY: clean
+clean:
+	@git clean -X -f -d
+
+
+# help: clobber                        - clean, remove deps, builds, (be careful)
+.PHONY: clobber
+clobber: clean clean-deps
+
+
+# help:
+# help: Style
+# help: -------
+
+# help: style                          - Sort imports and format with black
+.PHONY: style
+style: sort-imports format
+
+
+# help: check-style                    - check code style compliance
+.PHONY: check-style
+check-style: check-sort-imports check-format
+
+
+# help: format                         - perform code style format
+.PHONY: format
+format:
+	@black ./smartsim ./tests/
+
+
+# help: check-format                   - check code format compliance
+.PHONY: check-format
+check-format:
+	@black --check ./smartsim ./tests/
+
+
+# help: sort-imports                   - apply import sort ordering
+.PHONY: sort-imports
+sort-imports:
+	@isort ./smartsim ./tests/ --profile black
+
+
+# help: check-sort-imports             - check imports are sorted
+.PHONY: check-sort-imports
+check-sort-imports:
+	@isort ./smartsim ./tests/ --check-only --profile black
+
+
+# help: check-lint                     - run static analysis checks
+.PHONY: check-lint
+check-lint:
+	@pylint --rcfile=.pylintrc ./smartsim ./tests/
+
+
+# help:
+# help: Documentation
+# help: -------
+
+# help: docs                           - generate project documentation
+.PHONY: docs
+docs:
+	@cd doc; make html
+
+
+# help:
+# help: Test
+# help: -------
+
+# help: test                           - Build and run all tests (C, C++, Fortran, Python)
+.PHONY: test
+test:
+	@cd ./tests/; python -m pytest
+
+# help: test-verbose                   - Build and run all tests [verbosely]
+.PHONY: test-verbose
+test-verbose:
+	@cd ./tests/; python -m pytest -vv
+
+# help: test-cov                       - run python tests with coverage
+.PHONY: test-cov
+test-cov:
+	@cd ./tests/; python -m pytest --cov=../smartsim -vv
+
