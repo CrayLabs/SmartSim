@@ -40,6 +40,7 @@ class ParameterWriterError(SmartSimError):
     """Raised in the event that input parameter files for a model
     could not be written.
     """
+
     def __init__(self, file_path, read=True):
         message = self.create_message(file_path, read)
         super().__init__(message)
@@ -85,4 +86,3 @@ class ShellError(LauncherError):
         msg += f"Command: {command_list}"
         msg += f"Error from shell: {shell_error}"
         return msg
-

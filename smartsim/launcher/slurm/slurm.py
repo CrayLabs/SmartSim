@@ -95,7 +95,7 @@ def _get_alloc_cmd(nodes, add_opts={}):
             salloc_args += [prefix + opt]
         else:
             if short_arg:
-                salloc_args += [prefix+opt, str(val)]
+                salloc_args += [prefix + opt, str(val)]
             else:
                 salloc_args += ["=".join((prefix + opt, str(val)))]
 

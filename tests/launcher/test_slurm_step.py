@@ -19,8 +19,9 @@ run_settings = {
     "cwd": cwd,
     "alloc": 111111,
     "executable": "a.out",
-    "exe_args": "--input"
+    "exe_args": "--input",
 }
+
 
 def test_build_cmd():
     """Test building the srun command"""
@@ -28,28 +29,50 @@ def test_build_cmd():
     cmd = step.build_cmd()
     print(cmd)
     srun = which("srun")
-    result = [srun,
-              '--output', cwd + '/out.txt',
-              '--error', cwd + '/err.txt',
-              '--jobid', '111111', '--job-name', 'test-1111.0',
-              '--nodes=1', '--ntasks=1', '--ntasks-per-node=1', 'a.out', '--input']
-    assert(cmd == result)
+    result = [
+        srun,
+        "--output",
+        cwd + "/out.txt",
+        "--error",
+        cwd + "/err.txt",
+        "--jobid",
+        "111111",
+        "--job-name",
+        "test-1111.0",
+        "--nodes=1",
+        "--ntasks=1",
+        "--ntasks-per-node=1",
+        "a.out",
+        "--input",
+    ]
+    assert cmd == result
+
 
 def test_multi_prog():
     step = SlurmStep("test-1111.0", run_settings, True)
     cmd = step.build_cmd()
     print(cmd)
     srun = which("srun")
-    result = [srun,
-              '--output', cwd + '/out.txt',
-              '--error', cwd + '/err.txt',
-              '--jobid', '111111', '--job-name', 'test-1111.0',
-              '--nodes=1', '--ntasks=1', '--ntasks-per-node=1',
-              '--multi-prog', cwd + '/run_orc.conf'
-                ]
-    assert(cmd == result)
-    assert(os.path.isfile(cwd + "/run_orc.conf"))
+    result = [
+        srun,
+        "--output",
+        cwd + "/out.txt",
+        "--error",
+        cwd + "/err.txt",
+        "--jobid",
+        "111111",
+        "--job-name",
+        "test-1111.0",
+        "--nodes=1",
+        "--ntasks=1",
+        "--ntasks-per-node=1",
+        "--multi-prog",
+        cwd + "/run_orc.conf",
+    ]
+    assert cmd == result
+    assert os.path.isfile(cwd + "/run_orc.conf")
     os.remove(cwd + "/run_orc.conf")
+
 
 run_settings_with_opts = {
     "nodes": 1,
@@ -60,10 +83,11 @@ run_settings_with_opts = {
     "alloc": 111111,
     "executable": "a.out",
     "exe_args": "--input",
-    "exclusive": None,    # --exclusive flag
-    "qos": "interactive", # --qos flag
-    "Q": None             # -Q
+    "exclusive": None,  # --exclusive flag
+    "qos": "interactive",  # --qos flag
+    "Q": None,  # -Q
 }
+
 
 def test_build_cmd_with_opts():
     """Test building the srun command with extra options"""
@@ -71,18 +95,49 @@ def test_build_cmd_with_opts():
     cmd = step.build_cmd()
     srun = which("srun")
     print(cmd)
-    result = [srun, '--nodes', '1', '--ntasks', '1', '--ntasks-per-node', '1',
-              '--output', cwd + '/out.txt',
-              '--error', cwd + '/err.txt',
-              '--jobid', '111111', '--job-name', 'test-1111.0',
-              '--exclusive', '--qos=interactive', '-Q', 'a.out', '--input']
-    result = [srun,
-              '--output', cwd + '/out.txt',
-              '--error', cwd + '/err.txt',
-              '--jobid', '111111', '--job-name', 'test-1111.0',
-              '--nodes=1', '-n', '1', '--exclusive', '--qos=interactive',
-              '-Q', 'a.out', '--input']
-    assert(cmd == result)
+    result = [
+        srun,
+        "--nodes",
+        "1",
+        "--ntasks",
+        "1",
+        "--ntasks-per-node",
+        "1",
+        "--output",
+        cwd + "/out.txt",
+        "--error",
+        cwd + "/err.txt",
+        "--jobid",
+        "111111",
+        "--job-name",
+        "test-1111.0",
+        "--exclusive",
+        "--qos=interactive",
+        "-Q",
+        "a.out",
+        "--input",
+    ]
+    result = [
+        srun,
+        "--output",
+        cwd + "/out.txt",
+        "--error",
+        cwd + "/err.txt",
+        "--jobid",
+        "111111",
+        "--job-name",
+        "test-1111.0",
+        "--nodes=1",
+        "-n",
+        "1",
+        "--exclusive",
+        "--qos=interactive",
+        "-Q",
+        "a.out",
+        "--input",
+    ]
+    assert cmd == result
+
 
 # ---------------------------------------------------------------
 # error handling cases
@@ -93,8 +148,10 @@ run_settings_err_alloc = {
     "err_file": cwd + "/err.txt",
     "cwd": cwd,
     "executable": "a.out",
-    "exe_args": "--input"
+    "exe_args": "--input",
 }
+
+
 def test_no_alloc_given():
     """Test when the user fails to provide a step with an allocation"""
     with pytest.raises(SSConfigError):

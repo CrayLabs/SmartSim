@@ -8,7 +8,7 @@ from smartsim.utils.test.decorators import controller_test
 # --- Setup ---------------------------------------------------
 
 # Path to test outputs
-test_path = path.join(getcwd(),  "./controller_test/")
+test_path = path.join(getcwd(), "./controller_test/")
 ctrl = Controller()
 
 # --- Tests  -----------------------------------------------
@@ -20,8 +20,9 @@ run_settings = {
     "ntasks": 1,
     "nodes": 1,
     "executable": "python",
-    "exe_args": "sleep.py --time=10"
+    "exe_args": "sleep.py --time=10",
 }
+
 
 @controller_test
 def test_models():
@@ -33,7 +34,8 @@ def test_models():
 
     ctrl.start(M1, M2)
     statuses = [ctrl.get_entity_status(m) for m in [M1, M2]]
-    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
+    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+
 
 @controller_test
 def test_orchestrator():
@@ -44,10 +46,10 @@ def test_orchestrator():
     ctrl.start(O1)
     time.sleep(10)
     statuses = ctrl.get_entity_list_status(O1)
-    assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
+    assert all([stat == constants.STATUS_RUNNING for stat in statuses])
     ctrl.stop_entity_list(O1)
     statuses = ctrl.get_entity_list_status(O1)
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert all([stat == constants.STATUS_CANCELLED for stat in statuses])
 
 
 @controller_test
@@ -60,8 +62,11 @@ def test_ensemble():
 
     ctrl.start(ensemble)
     statuses = ctrl.get_entity_list_status(ensemble)
-    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
+    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+
+
 # ------ Helper Functions ------------------------------------------
+
 
 def get_alloc_id():
     alloc_id = environ["TEST_ALLOCATION_ID"]

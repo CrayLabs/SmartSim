@@ -4,7 +4,6 @@ from ...error import SSConfigError
 
 
 class LocalStep:
-
     def __init__(self, run_settings):
         self.run_settings = run_settings
         self._set_cwd()
@@ -36,8 +35,8 @@ class LocalStep:
 
         except KeyError as e:
             raise SSConfigError(
-                "SmartSim could not find following required field: %s" %
-                (e.args[0])) from None
+                "SmartSim could not find following required field: %s" % (e.args[0])
+            ) from None
 
     def _set_cwd(self):
         """return the cwd directory of a smartsim entity and set

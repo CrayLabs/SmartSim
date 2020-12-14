@@ -26,7 +26,7 @@ def test_ensemble():
     ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(ensemble)
 
-    assert(len(ensemble) == 9)
+    assert len(ensemble) == 9
     assert path.isdir("./generator_test/test/")
     for i in range(9):
         assert path.isdir("./generator_test/test/test_" + str(i))
@@ -49,12 +49,12 @@ def test_ensemble_random():
         params=param_dict,
         perm_strategy="random",
         run_settings=gen_run_settings,
-        n_models=10
+        n_models=10,
     )
     ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(ensemble)
 
-    assert(len(ensemble) == 10)
+    assert len(ensemble) == 10
     assert path.isdir("./generator_test/random/")
     for i in range(n_models):
         assert path.isdir("./generator_test/random/random_" + str(i))
@@ -71,7 +71,7 @@ def test_ensemble_stepped():
     ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(ensemble)
 
-    assert(len(ensemble) == 3)
+    assert len(ensemble) == 3
     assert path.isdir("./generator_test/step/")
     for i in range(3):
         assert path.isdir("./generator_test/step/step_" + str(i))
@@ -94,7 +94,7 @@ def test_user_strategy():
     ensemble.attach_generator_files(to_configure="./test_configs/in.atm")
     gen.generate_experiment(ensemble)
 
-    assert(len(ensemble) == 3)
+    assert len(ensemble) == 3
     assert path.isdir("./generator_test/user/")
     for i in range(3):
         assert path.isdir("./generator_test/user/user_" + str(i))
@@ -187,4 +187,4 @@ def test_model_generation():
     with open("./generator_test/model/sample.json", "r") as read_file:
         config = json.load(read_file)
 
-    assert(config["param1"] == 30)
+    assert config["param1"] == 30

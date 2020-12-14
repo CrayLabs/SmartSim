@@ -8,7 +8,7 @@ from smartsim.utils.test.decorators import controller_test
 # --- Setup ---------------------------------------------------
 
 # Path to test outputs
-test_path = path.join(getcwd(),  "./controller_test/")
+test_path = path.join(getcwd(), "./controller_test/")
 ctrl = Controller()
 
 
@@ -26,12 +26,14 @@ def test_cluster_orchestrator():
     ctrl.start(C1, block=False)
     time.sleep(10)
     statuses = ctrl.get_entity_list_status(C1)
-    assert(all([stat == constants.STATUS_RUNNING for stat in statuses]))
+    assert all([stat == constants.STATUS_RUNNING for stat in statuses])
     ctrl.stop_entity_list(C1)
     statuses = ctrl.get_entity_list_status(C1)
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert all([stat == constants.STATUS_CANCELLED for stat in statuses])
+
 
 # ------ Helper Functions ------------------------------------------
+
 
 def get_alloc_id():
     alloc_id = environ["TEST_ALLOCATION_ID"]

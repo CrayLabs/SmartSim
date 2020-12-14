@@ -9,6 +9,7 @@ from smartsim import Experiment, constants, slurm
 if not which("srun"):
     pytestmark = pytest.mark.skip
 
+
 def test_summary():
 
     exp = Experiment("summary_test", launcher="slurm")
@@ -37,8 +38,8 @@ def test_summary():
 
     # start and poll
     exp.start(sleep_model, bad_model)
-    assert(exp.get_status(bad_model)[0] == constants.STATUS_FAILED)
-    assert(exp.get_status(sleep_model)[0] == constants.STATUS_COMPLETED)
+    assert exp.get_status(bad_model)[0] == constants.STATUS_FAILED
+    assert exp.get_status(sleep_model)[0] == constants.STATUS_COMPLETED
 
     summary_df = exp.summary()
     print(summary_df)

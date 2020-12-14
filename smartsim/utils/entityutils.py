@@ -1,5 +1,3 @@
-
-
 from ..database import Orchestrator
 from ..entity import DBNode, Ensemble, EntityList, Model, SmartSimEntity
 from ..error import SmartSimError
@@ -7,10 +5,10 @@ from ..error import SmartSimError
 
 def separate_entities(args):
     """Given multiple entities to launch, separate
-       by Class type
+    by Class type
 
-       :returns: entities, entity list, and orchestrator
-       :rtype: tuple
+    :returns: entities, entity list, and orchestrator
+    :rtype: tuple
     """
     _check_names(args)
     entities = []
@@ -28,9 +26,11 @@ def separate_entities(args):
             entity_lists.append(arg)
         else:
             raise TypeError(
-                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList")
+                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
+            )
 
     return entities, entity_lists, db
+
 
 def _check_names(args):
     used = []
@@ -38,7 +38,8 @@ def _check_names(args):
         name = getattr(arg, "name", None)
         if not name:
             raise TypeError(
-                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList")
+                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
+            )
         elif name in used:
             raise SmartSimError("User provided two entities with the same name")
         else:

@@ -7,6 +7,7 @@ from ..utils.helpers import expand_exe_path, get_env
 
 logger = get_logger(__name__)
 
+
 class Orchestrator(EntityList):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
@@ -65,7 +66,9 @@ class Orchestrator(EntityList):
                 next_port = int(self.port) + port_offset
                 db_args = self._get_db_args(cluster, on_alloc, next_port, db_id)
 
-                exe_args.append(" ".join((db_conf, ai_module, "--port", str(next_port), db_args)))
+                exe_args.append(
+                    " ".join((db_conf, ai_module, "--port", str(next_port), db_args))
+                )
                 ports.append(next_port)
 
             # if only one database per node we only need one exe_args

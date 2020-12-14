@@ -10,7 +10,7 @@ from smartsim.utils.test.decorators import controller_test_local
 # --- Setup ---------------------------------------------------
 
 # Path to test outputs
-test_path = path.join(getcwd(),  "./controller_test/")
+test_path = path.join(getcwd(), "./controller_test/")
 local_ctrl = Controller()
 local_ctrl.init_launcher("local")
 
@@ -19,10 +19,8 @@ local_ctrl.init_launcher("local")
 # experiment with non-clustered orchestrator
 exp = Experiment("test")
 
-run_settings = {
-    "executable": "python",
-    "exe_args": "sleep.py --time 10"
-}
+run_settings = {"executable": "python", "exe_args": "sleep.py --time 10"}
+
 
 @controller_test_local
 def test_models():
@@ -31,7 +29,8 @@ def test_models():
 
     local_ctrl.start(M1, M2)
     statuses = [local_ctrl.get_entity_status(m) for m in [M1, M2]]
-    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
+    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+
 
 @controller_test_local
 def test_orchestrator():
@@ -39,10 +38,10 @@ def test_orchestrator():
 
     local_ctrl.start(O1, block=False)
     statuses = local_ctrl.get_entity_list_status(O1)
-    assert(constants.STATUS_FAILED not in statuses)
+    assert constants.STATUS_FAILED not in statuses
     local_ctrl.stop_entity_list(O1)
     statuses = local_ctrl.get_entity_list_status(O1)
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert all([stat == constants.STATUS_CANCELLED for stat in statuses])
 
 
 @controller_test_local
@@ -54,7 +53,7 @@ def test_ensemble():
 
     local_ctrl.start(ensemble, block=False)
     statuses = local_ctrl.get_entity_list_status(ensemble)
-    assert(all([stat in constants.LIVE_STATUSES for stat in statuses]))
+    assert all([stat in constants.LIVE_STATUSES for stat in statuses])
     local_ctrl.stop_entity_list(ensemble)
     statuses = local_ctrl.get_entity_list_status(ensemble)
-    assert(all([stat == constants.STATUS_CANCELLED for stat in statuses]))
+    assert all([stat == constants.STATUS_CANCELLED for stat in statuses])

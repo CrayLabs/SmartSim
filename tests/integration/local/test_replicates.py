@@ -14,10 +14,7 @@ def test_replicates():
         rmtree(exp.exp_path)
 
     # create some models with an ensemble
-    run_settings = {
-        "executable": "python",
-        "exe_args": "sleep.py --time 10"
-    }
+    run_settings = {"executable": "python", "exe_args": "sleep.py --time 10"}
     models = []
     for i in range(6):
         model = exp.create_model(f"Model_{i}", run_settings)
@@ -32,13 +29,13 @@ def test_replicates():
 
     # get and confirm statuses
     statuses = exp.get_status(*models)
-    assert(all([stat == constants.STATUS_COMPLETED for stat in statuses]))
+    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
 
     # get summary and confirm exit_codes
     summary = exp.summary()
     for i in range(6):
         row = summary.loc[i]
-        assert(int(row["Returncode"]) == 0)
+        assert int(row["Returncode"]) == 0
 
     if osp.isdir(exp.exp_path):
         rmtree(exp.exp_path)

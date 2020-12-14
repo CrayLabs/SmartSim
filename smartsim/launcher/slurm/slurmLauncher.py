@@ -124,7 +124,6 @@ class SlurmLauncher(Launcher):
             status = SlurmStepInfo(stat, returncode)
         return status
 
-
     def get_step_update(self, step_ids):
         """Get updates for a list of step ids
 
@@ -153,7 +152,6 @@ class SlurmLauncher(Launcher):
                     info.status = "Failed"
             updates.append(info)
         return updates
-
 
     def get_step_nodes(self, step_id):
         """Return the compute nodes of a specific job or allocation

@@ -38,4 +38,4 @@ coloredlogs.DEFAULT_LOG_FORMAT = (
     "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
 # optional thread name logging for debugging
-#coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
+# coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'

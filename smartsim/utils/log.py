@@ -65,6 +65,7 @@ def get_logger(name=None, log_level=None):
     coloredlogs.install(level=log_level, logger=logger, stream=sys.stdout)
     return logger
 
+
 def log_to_file(filename, log_level=None):
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.

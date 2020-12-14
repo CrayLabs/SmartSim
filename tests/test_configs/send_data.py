@@ -11,6 +11,7 @@ def send_data(key):
     serialized_data = pickle.dumps(data)
     client.set(key, serialized_data)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--iters", type=int, default=10)

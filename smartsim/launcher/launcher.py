@@ -5,11 +5,10 @@ from .stepInfo import StepInfo
 
 
 class Launcher(abc.ABC):
-
     def __init__(self, *args, **kwargs):
         super().__init__()
 
-    #-------------- Abstract Methods --------------
+    # -------------- Abstract Methods --------------
     # currently not used
     @abc.abstractmethod
     def validate(self, nodes=None, ppn=None, partition=None):
@@ -76,7 +75,6 @@ class Launcher(abc.ABC):
         :rtype: list of str
         """
         pass
-
 
     @abc.abstractmethod
     def run(self, step):

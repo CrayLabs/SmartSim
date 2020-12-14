@@ -53,6 +53,7 @@ color2num = dict(
     crimson=38,
 )
 
+
 def colorize(string, color, bold=False, highlight=False):
     """
     Colorize a string.

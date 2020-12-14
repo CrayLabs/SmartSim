@@ -47,8 +47,7 @@ class TaskManager:
         monitor.start()
 
     def run(self):
-        """Start the loop that continually checks tasks for status.
-        """
+        """Start the loop that continually checks tasks for status."""
         global verbose_tm
         if verbose_tm:
             logger.debug(f"Starting Task Manager")
@@ -58,7 +57,7 @@ class TaskManager:
             time.sleep(TM_INTERVAL)
 
             for task in self.tasks:
-                returncode = task.check_status() # poll and set returncode
+                returncode = task.check_status()  # poll and set returncode
                 # has to be != None because returncode can be 0
                 if returncode != None:
                     output, error = task.get_io()
@@ -155,6 +154,7 @@ class TaskManager:
             return len(self.tasks)
         finally:
             self._lock.release()
+
 
 class Task:
     """A Task is a wrapper around a Popen object that includes a reference

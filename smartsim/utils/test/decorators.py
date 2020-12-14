@@ -1,4 +1,3 @@
-
 from os import mkdir, path
 from shutil import copyfile, rmtree, which
 from subprocess import PIPE, Popen, run
@@ -24,10 +23,8 @@ def controller_test(test_function):
         if path.isdir(experiment_dir):
             rmtree(experiment_dir)
         mkdir(experiment_dir)
-        copyfile('./test_configs/sleep.py',
-                 experiment_dir + "sleep.py")
-        copyfile('./test_configs/bad.py',
-                 experiment_dir + "bad.py")
+        copyfile("./test_configs/sleep.py", experiment_dir + "sleep.py")
+        copyfile("./test_configs/bad.py", experiment_dir + "bad.py")
 
         test_function()
 
@@ -37,6 +34,7 @@ def controller_test(test_function):
         return
 
     return decorator(wrapper, test_function)
+
 
 def controller_test_local(test_function):
     """Decorator for local controller tests"""
@@ -48,10 +46,8 @@ def controller_test_local(test_function):
         if path.isdir(experiment_dir):
             rmtree(experiment_dir)
         mkdir(experiment_dir)
-        copyfile('./test_configs/sleep.py',
-                 experiment_dir + "sleep.py")
-        copyfile('./test_configs/bad.py',
-                 experiment_dir + "bad.py")
+        copyfile("./test_configs/sleep.py", experiment_dir + "sleep.py")
+        copyfile("./test_configs/bad.py", experiment_dir + "bad.py")
 
         test_function()
 
@@ -61,6 +57,7 @@ def controller_test_local(test_function):
         return
 
     return decorator(wrapper, test_function)
+
 
 def orchestrator_test_slurm(test_function):
 
@@ -78,10 +75,8 @@ def orchestrator_test_slurm(test_function):
         mkdir(exp_1_dir)
         mkdir(exp_2_dir)
 
-        copyfile('./test_configs/reconnect_sim.py',
-                 exp_1_dir + "reconnect_sim.py")
-        copyfile('./test_configs/reconnect_node.py',
-                 exp_2_dir + "reconnect_node.py")
+        copyfile("./test_configs/reconnect_sim.py", exp_1_dir + "reconnect_sim.py")
+        copyfile("./test_configs/reconnect_node.py", exp_2_dir + "reconnect_node.py")
 
         test_function()
 
@@ -91,6 +86,7 @@ def orchestrator_test_slurm(test_function):
         return
 
     return decorator(wrapper, test_function)
+
 
 def orchestrator_test_local(test_function):
 
@@ -106,10 +102,8 @@ def orchestrator_test_local(test_function):
         mkdir(exp_1_dir)
         mkdir(exp_2_dir)
 
-        copyfile('./test_configs/reconnect_sim.py',
-                 exp_1_dir + "reconnect_sim.py")
-        copyfile('./test_configs/reconnect_node.py',
-                 exp_2_dir + "reconnect_node.py")
+        copyfile("./test_configs/reconnect_sim.py", exp_1_dir + "reconnect_sim.py")
+        copyfile("./test_configs/reconnect_node.py", exp_2_dir + "reconnect_node.py")
 
         test_function()
 
@@ -119,6 +113,7 @@ def orchestrator_test_local(test_function):
         return
 
     return decorator(wrapper, test_function)
+
 
 def generator_test(test_function):
     """Decorator for generator tests"""

@@ -41,10 +41,14 @@ class SlurmStep:
         # add job information and output files
         step = [
             srun,
-            "--output", out,
-            "--error", err,
-            "--jobid", str(self.alloc_id),
-            "--job-name", self.name,
+            "--output",
+            out,
+            "--error",
+            err,
+            "--jobid",
+            str(self.alloc_id),
+            "--job-name",
+            self.name,
         ]
 
         if "env_vars" in self.run_settings:
@@ -73,7 +77,7 @@ class SlurmStep:
                     step += [prefix + opt]
                 else:
                     if short_arg:
-                        step += [prefix+opt, str(value)]
+                        step += [prefix + opt, str(value)]
                     else:
                         step += ["=".join((prefix + opt, str(value)))]
 
