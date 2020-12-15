@@ -17,6 +17,9 @@ The prerequisites to begin building SmartSim are:
 - C compiler
 - C++ compiler
 - CMake 3.10.x (or later)
+- GCC > 5
+
+Windows is not supported and there are currently no plans to support windows.
 
 Python libraries
 ----------------
@@ -27,55 +30,77 @@ top level directory of SmartSim.
 
 .. code-block:: bash
 
+  conda activate env # optionally activate virtual env (recommended)
   pip install -r requirements.txt
+  pip install -r requirements-dex.txt (optionally download all dev requirements)
 
 If users wish to install these requirements manually, the packages
 installed by the previous *pip* command are shown below.  Care
 should be taken to match package version numbers to avoid build
 and runtime errors.
 
-- coloredlogs==10.0
-- pytest==5.0.1
-- toolz==0.10.0
-- decorator==4.4.2
-- redis==3.0.1
-- redis-py-cluster==2.0.0
-- breathe==4.19.2
-- sphinx==3.1.1
-- numpy>=1.18.2
-- sphinx_rtd_theme>=0.5.0
-- tqdm>=4.50.2
-- psutil>=5.7.2
-- pandas>=1.1.3
+
+GPU Dependencies
+----------------
+
+If you plan to run SmartSim's architecture on GPU you will need
+to follow the steps below. Otherwise if you plan to run solely
+on CPU, feel free to skip these steps
+
+For this portion you will want CUDA to be installed. Most likely,
+CUDA will be installed somewhere like `/usr/local/cuda`
+
+.. code-block:: bash
+
+  # Install CUDA requirements
+  conda install cudatoolkit=10.2 cudnn=7.6.5
+
+  # (optional) Load CUDA module instead of using conda
+  module load cudatoolkit
+
+  # set cuda and cudnn environment variables
+  export CUDNN_LIBRARY=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/lib
+  export CUDNN_INCLUDE_DIR=/path/to/miniconda3/pkgs/cudnn-7.6.5-cuda10.2_0/include
+  export CUDATOOLKIT_HOME=/path/to/miniconda3/pkgs/cudatoolkit-10.2.89-hfd86e86_1/
 
 
 Third Party Libraries
 ---------------------
 
 KeyDB_, `Redis`_, and RedisAI_ are also required
-in order to use all features of SmartSim.  These packages
-can be downloaded, compiled, and installed by executing the
-following command in the top level of the SmartSim project:
+in order to use all features of SmartSim. These packages
+do not require many dependencies, but it is worth checking that
+your system meets the prerequisites listed on the project
+github page.
+
+There are 4 built-in builds for different types of systems.
+
+	1. default (builds SmartSim backends for Pytorch and TF on CPU)
+	2. GPU     (builds SmartSim backends for Pytorch and TF on GPU)
+	3. CPU all (builds SmartSim backends for Pytorch, TF, TF-Lite, and Onnx for CPU)
+	4. GPU all (builds SmartSim backends for Pytorch, TF, TF-Lite, and Onnx for GPU)
 
 .. _KeyDB: https://github.com/JohnSully/KeyDB
 .. _Redis: https://github.com/redis/redis
 .. _RedisAI: https://github.com/RedisAI/RedisAI
 
+These packages can be downloaded, compiled, and installed
+by executing the following command in the top level of the SmartSim project:
+
+
 .. code-block:: bash
 
-  ./setup_env.sh
+  # in the top level of the SmartSim directory
+  # perform only one of the following
+  make deps          # default
+  make deps-gpu      # gpu default
+  make deps-cpu-all  # all cpu backends
+  make deps-gpu-all  # all gpu backends
 
-The ``setup_env.sh`` script will install the three packages into
+
+The ``make deps`` command will install the three packages into
 the ``third-party`` directory in the top level directory of
-SmartSim.  The ``setup_env.sh`` script will print all build and
-and installation output to the terminal, and any failures
-will be evident there.  These packages do not require
-many dependencies, but it is worth checking that
-your system meets the prerequisites
-listed on each project GitHub page.  It is not recommended
-that users install these packages without using ``setup_env.sh``
-because specific versions and build settings
-have been selected for SmartSim.
+SmartSim.
 
 In addition to installing packages, ``setup_env.sh`` sets
 system environment variables that are used by SmartSim
@@ -86,6 +111,41 @@ SmartSim clients into applications is discussed in the client
 documentation. The user should source ``setup_env.sh`` whenever
 beginning a new session to ensure that environment
 variables are properly set.
+
+.. code-block:: bash
+
+  source setup_env.sh
+
+
+Building SILC from Source
+=========================
+
+Building the client libraries (SILC) is straightforward from
+an existing SmartSim installation. Follow these steps
+from the top level of the SmartSim directory
+
+.. code-block:: bash
+
+  # get the source code
+  git clone #link to SILC repo#	silc
+  git checkout develop # or a release branch
+
+  # build the dependencies
+  cd silc
+  make deps
+
+  # build the python client (still in top level of silc directory)
+  make pyclient
+
+Lastly, after SILC is installed, make sure to reset SmartSim
+so that it is aware that the clients have been installed.
+Perform this step from the top level of the SmartSim
+directory.
+
+.. code-block:: bash
+
+  # in the terminal you are working in
+  source setup_env.sh
 
 
 Suggested Environments for Cray Systems

@@ -49,6 +49,7 @@
    :maxdepth: 2
    :caption: Developer
 
+   developer/testing
    developer/git
    developer/python
    developer/editor
