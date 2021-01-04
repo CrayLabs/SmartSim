@@ -70,6 +70,5 @@ and analysis workloads. The inclusion of an in-memory database
 provides data persistence so that the data can be accessed at any time
 during or after the SmartSim experiment.
 
-The database can be scaled, on larger systems, to multiple nodes to support
-higher throughput and lower latency. Databases are constructed, configured
-, and launched by SmartSim with little effort required from the user.
+For more information on the Orchestrator, please see the Orchestrator
+documentation section.

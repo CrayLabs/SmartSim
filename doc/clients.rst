@@ -37,25 +37,7 @@ within a Redis database.
      - In Development
    * - Fortran
      - Fortran 2003 +
-     - Awaiting Development
+     - In Development
 
 
-Simulation and data analytics codes communicate with the database using
-SmartSim clients written in the native language of the codebase. These
-clients perform two essential tasks (both of which are opaque to the application):
-
- 1. Serialization/deserialization of data
- 2. Communication with the database
-
-The API for these clients are designed so that implementation within
-simulation and analysis codes requires minimal modification to the underlying
-codebase.
-
-
-.. |SmartSim Clients| image:: images/Smartsim_Client_Communication.png
-  :width: 500
-  :alt: Alternative text
-
-|SmartSim Clients|
-
-
+For more information on the SILC clients, please refer to the SILC documentation

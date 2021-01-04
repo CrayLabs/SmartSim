@@ -7,6 +7,11 @@ SmartSim interfaces with a number of "launchers", i.e workload managers like
 Slurm that can obtain allocations(or equivalent), and launch jobs onto
 various machine architectures.
 
+The Launchers have been designed for several scenarios in mind, but the most
+important is that it allows scientists to interact with the most common workload managers
+in code. Because of this, SmartSim users don’t have to leave the Jupyter Notebook,
+Python REPL, or Python script to launch, query, and interact with their jobs.
+
 Currently, SmartSim supports launching on Slurm, and locally. Support for
 PBS, and Kubernetes is under development.
 
@@ -23,6 +28,7 @@ to the ``Experiment`` initialization.
     from smartsim import Experiment
 
     exp = Experiment("name-of-experiment", launcher="slurm") # Slurm backend
+    exp = Experiment("name-of-experiment", launcher="pbs") # PBS backend
     exp = Experiment("name-of-experiment", launcher="local") # local backend
 
 
@@ -33,6 +39,12 @@ The Local launcher uses the ``Subprocess`` library in Python to
 execute multiple entities in parallel. Each process is tracked
 and the output of each entity is written to file.
 
+The local launcher can be used on laptops as well as supercomputers
+for constructing workflows local to a single compute node. Through
+launching locally, users can prototype workflows and quickly scale
+them to a supercomputer by changing launch parameters and the
+SmartSim Experiment launcher to Slurm or PBS.
+
 As with all launchers in SmartSim, the local launcher supports
 asynchronous execution meaning once entities have been launched
 the main thread of execution is not blocked. Daemon threads
@@ -42,6 +54,15 @@ jobs are present within SmartSim.
 
 Slurm
 =====
+
+The Slurm and PBS launchers work directly with the workload managers (WLM)
+themselves to launch, query, and stop applications.
+During the course of an Experiment, launched entities can be queried for status,
+completion, and errors. The amount of communication between Smartsim and the WLM can
+be tuned for specific guidelines of different sites. For example, if you are
+launching one Model that will run for 10 hours, the IL should not ping the
+WLM every 10 seconds (the default) for status updates. Instead, users can set the
+``smartsim.constants.JM_INTERVAL`` to 3600 seconds update the Model status every hour.
 
 Getting Allocations
 -------------------
@@ -108,3 +129,8 @@ The example below releases a the allocation in the example above.
 
     slurm.release_slurm_allocation(alloc_id)
 
+
+PBS/Cobalt
+==========
+
+Development of the PBS launcher that is compatible with Cobalt is underway.

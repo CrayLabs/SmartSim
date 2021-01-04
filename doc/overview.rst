@@ -4,20 +4,35 @@
 Introduction
 ************
 
-SmartSim is a Cray/HPE library that enables the convergence of
-large scale simulations and AI workloads on heterogeneous architectures.
-SmartSim enables a data science first approach to simulation research by
-overcoming systemic impediments including lack of inter-operability between
-programming languages and dependence on file I/O. SmartSim shares data
-between C, C++, Fortran, and Python clients using an in-memory, distributed
-database cluster.
+SmartSim is an HPE library that enables the convergence of numerical simulations
+and AI workloads on heterogeneous architectures. SmartSim enables a data-science
+first approach to simulation research by overcoming systemic impediments; including
+lack of inter-operability between programming languages and dependence on file I/O.
+SmartSim is portable and can be run on various platforms from local development on OSX/Linux
+to large cluster and supercomputer systems with Slurm or PBS workload managers.
 
-Furthermore, SmartSim is capable of co-locating AI/ML models in popular
-Deep Learning frameworks like PyTorch, TensorFlow with a simulation model.
-SmartSim provides client APIs to be able to send tensors between AI
-and simulation models. The framework is portable and can be run on
-various platforms from local development on OSX/linux to large
-cluster and supercomputer systems with Slurm or PBS workload managers.
+The primary user-facing object within the SmartSim library is the SmartSim Experiment,
+encompassing all external entities (e.g. numerical simulations, data analysis tools,
+or machine learning packages), as well as internal SmartSim objects that coordinate
+the setup and execution of the SmartSim Experiment. SmartSim Experiment entities
+share data through communication with an in-memory key-value store (Redis or KeyDB)
+referred to as the Orchestrator. SmartSim includes clients in Python, C, C++, and Fortran
+so that applications written in these languages can connect to the orchestrator at runtime.
+The Orchestrator can be distributed on compute plane nodes (scaled horizontally) and
+replicated on-node (scaled vertically) to increase throughput.
+
+Furthermore, SmartSim is capable of co-locating inference-ready AI/ML models in popular
+Deep Learning frameworks like Pytorch and TensorFlow with a simulation model or HPC workload.
+AI models can be stored inside the Orchestrator and queried with the aforementioned clients.
+The clients utilize a custom Tensor and Dataset format that allows for batches of n-dimensional
+tensors to be sent to and from the Orchestrator for inference. Thus, the Orchestrator is
+capable of providing distributed, online inference at runtime in C, C++, Fortran, and Python.
+
+The figure below shows how a SmartSim experiment can connect single models as well as ensembles
+to the Orchestrator for data storage and online inference. In addition to simulations, additional
+applications can be launched together with simulations at the start of or during runtime for
+online analysis, training, and visualization. Users configure the SmartSim Experiment
+in Python, either in a script or with a Jupyter notebook.
 
 .. |SmartSim Architecture| image:: images/SmartSim_Architecture.png
   :width: 700
@@ -32,7 +47,7 @@ Library Design
 There are two core components of the SmartSim library:
 
   1. Infrastructure Library
-  2. Client libraries
+  2. Client libraries (SILC)
 
 The two libraries can either be used in conjunction, or separately depending
 on the needs of the user.
@@ -41,9 +56,12 @@ on the needs of the user.
 Infrastructure Library
 ----------------------
 
-The infrastructure library (IL) provides a single API to automate the process of deploying the infrastructure
-necessary to run complex experiments on a number of different platforms. This includes interaction with the file
-system, workload manager, system level APIs, operating system, external libraries, and simulation models.
+The infrastructure library (IL) provides an API to automate the process of
+deploying the infrastructure necessary to run complex experiments on a number
+of different platforms. This includes interaction with the file system, workload
+manager, system level APIs, operating system, external libraries, and simulation
+models. The easiest way to conceptualize the IL is as a constructor of microservices
+that facilitate coupling HPC workloads to modern data science tooling.
 
 The IL is responsible for communicating with the operating system and optionally
 a workload manager (like Slurm and PBS), if it's running on a supercomputer or
@@ -51,63 +69,44 @@ cluster system. This includes but is not limited to: obtaining, tracking and
 releasing allocations; launching, stopping and monitoring jobs; and creating
 communication channels between jobs.
 
-The primary reason for implementing the IL is that many workflows in the HPC
-space require complex configuration that reduces reproducibility and
-productivity. The abstractions of the IL provide a simple mechanism in Python
-for workflow configuration which enables reproducibility across users,
-machines, and sites as well as decreases time to solution.
-
-With the infrastructure library, users can setup complex workflows with
-simple python code. The IL does not require the constant writing of
-configuration files, folder duplication, bash scripting, or any of the
-other tedious activies previously performed to execute custom workflows.
+The primary reason for implementing the IL is that many workflows in the HPC space
+require complex configuration that reduces reproducibility and productivity.
+The abstractions of the IL provide a simple mechanism for workflow configuration
+which enables reproducibility across users, machines, and sites as well as increases productivity.
 
 Clients
 -------
 
-Traditional workflows on an HPC system lack flexibility and lock applications
-into using only packages that are compatible with the software stack being
-used. We recognized this when conducting research on how to connect simulation
-models to tools and libraries more commonly used in the space of Data Science.
-A user with a traditional MPI workload was forced to either make their application
-work with MPI, configure inflexible, complex RDMA communication, or even worse,
-write their output to the file system.
+Traditional workflows on an HPC system often lack flexibility and lock applications
+into using only packages that are compatible with the software stack being used.
+The SmartSim development team recognized this when conducting research on how to
+connect simulation models to tools and libraries more commonly used in the domain
+space of Data Science. A user with a traditional MPI workload was forced to either
+make their application work with MPI, configure inflexible, complex RDMA communication,
+or write output to the file system.
 
-We are not the first library in the HPC space to aide with these inflexible
-application coupling and communication paradigms. Libraries like SENSEI and
-GLEAN, and DataSpaces offer useful methods to mitigate this inflexibility
-especially for large scale visualization. These libraries, however, often
-lock users into using specific data models or formats that are not helpful
-when conducting analysis or data processing for machine learning. They are
-also not as portable making local development and prototyping difficult.
+SmartSim is not the first library in the HPC space to aide with these inflexible application
+coupling and communication paradigms. Libraries like SENSEI and GLEAN, and DataSpaces offer
+useful methods to mitigate this inflexibility especially for large scale visualization.
+SENSEI, in particular, offers adaptors that can hook into visualization tools like Paraview
+for in-situ or in-transit visualization. These libraries, however, often force applications
+into specific data formats (VTK, PNetCDF) that, while beneficial for visualization,
+are not conducive for coupling simulations and machine learning.
 
-For the above reasons, we decided to create our own client libraries that
-would loosely integrate with the IL and tightly integrate with the
-simulations themselves. The client libraries allow users to stream their
-data out of their simulations, and receive that data in an environment
-and data format that is suited for the type of analytical and processing
-workflows done for machine learning. Our clients use a Tensor format that
-supports n-dimensions and associated metadata.
+For the above reasons, SmartSim has its own clients that loosely integrate with the IL
+and tightly integrate with the simulations or HPC workloads themselves. The client
+libraries allow users to stream their data out of their workload and receive that data
+in an environment and data format that is suited for the type of analytical and processing
+workflows done for machine learning. In addition, the clients enable remote execution
+of AI/ML models in popular frameworks like TensorFlow, and Pytorch. The clients were
+designed to be minimally intrusive to the simulation codebase requiring few function
+calls to perform data transmission, and inference.
 
-A user of the SmartSim clients can decide where in their model data is to be communicated without changing
-their data format internally and with only a few function
-calls. The clients were designed to be minimally intrusive to the simulation
-codebase and flexible enough to be fully integrated if need be.
-
-In addition to supporting the transfer of n-dimensional tensors, our clients
-support the remote execution of PyTorch, TensorFlow, and ONNX models that
-are stored within the in-memory database (Orchestrator). Our clients can
-be embedded into simulations with the goal of being able to augment simulations
-with machine learning models co-located in an in-memory database reachable
-over the network.
-
-In a nutshell, the clients make it possible to have a Fortran, C, or C++ program
-communicating with a Python environment while the simulation is running. Combining
-the IL with the clients, users don't ever have to leave a Jupyter notebook to
-configure, launch, monitor, analyze and create learning systems from their
-simulations.
-
-
+An important aspect of SmartSim in general is that it was not designed to be a replacement
+of traditional I/O like ADIOS or GLEAN Rather, SmartSim was created as an augmentation
+that allows for users couple their workloads with AI/ML techniques and send only the
+data that needs to be analyzed, processed, visualized (in the sense of matplotlib rather than Paraview),
+or inferred from.
 
 Using SmartSim
 ==============
