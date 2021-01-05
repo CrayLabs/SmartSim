@@ -40,9 +40,10 @@ class Orchestrator(EntityList):
         kwarg "dpn", the port is incremented by 1 starting at the
         port listed in the orchestrator initialization.
 
-        #TODO update this docstring
         :raises SmartSimError: if invalid db_nodes is requested
         """
+        #TODO [PSD-835] Clean up Orchestrator initialization
+
         dpn = kwargs.pop("dpn", 1)
         db_nodes = kwargs.pop("db_nodes", 1)
         cluster = False if db_nodes < 3 else True

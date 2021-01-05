@@ -215,6 +215,8 @@ class JobManager:
 
         Update all jobs returncode, status, error and output
         through one call to the launcher.
+
+        TODO: [PSD-834] Remove launcher dependance on WLM for updates.
         """
         self._lock.acquire()
         try:

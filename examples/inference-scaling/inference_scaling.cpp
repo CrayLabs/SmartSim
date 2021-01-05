@@ -2,6 +2,8 @@
 #include "client_test_utils.h"
 #include <mpi.h>
 
+// TODO: [PSD-836] Update inference examples with client additions
+
 void load_mnist_image_to_array(float**** img)
 {
   std::string image_file = "./one.raw";
