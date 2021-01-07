@@ -25,7 +25,7 @@ class DBNode(SmartSimEntity):
         :type port: list
 
         """
-        super().__init__(name, path, "db", run_settings)
+        super().__init__(name, path, run_settings)
         self.ports = ports
 
     def _get_db_conf_filename(self, port):

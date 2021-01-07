@@ -2,6 +2,7 @@ import shutil
 from distutils import dir_util
 from os import mkdir, path, symlink
 
+from ..entity import Model
 from ..error import EntityExistsError
 from ..utils import get_logger
 from ..utils.entityutils import separate_entities
@@ -180,7 +181,7 @@ class Generator:
                 entity.files.tagged[i] = dst_path
 
             # write in changes to configurations
-            if entity.type == "model":
+            if isinstance(entity, Model):
                 self._writer.configure_tagged_model_files(entity)
 
     def _copy_entity_files(self, entity):

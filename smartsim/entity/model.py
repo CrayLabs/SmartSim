@@ -1,5 +1,5 @@
 from ..error import SSConfigError
-from ..utils.helpers import expand_exe_path
+from ..utils.helpers import expand_exe_path, init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
@@ -17,11 +17,7 @@ class Model(SmartSimEntity):
         :param run_settings: launcher settings specified in the experiment
         :type run_settings: dict
         """
-        super().__init__(name, path, "model", run_settings)
-        if not isinstance(params, dict):
-            raise TypeError(
-                "Model initialization argument 'params' must be of type dict"
-            )
+        super().__init__(name, path, run_settings)
         self.params = params
         self.incoming_entities = []
         self._key_prefixing_enabled = False
@@ -80,22 +76,22 @@ class Model(SmartSimEntity):
         """Inquire as to whether this entity will prefix its keys with its name"""
         return self._key_prefixing_enabled
 
-    def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
+    def attach_generator_files(self, to_copy=None, to_symlink=None, to_configure=None):
         """Attach files to an entity for generation
 
-           Attach files needed for the entity that, upon generation,
-           will be located in the path of the entity.
+        Attach files needed for the entity that, upon generation,
+        will be located in the path of the entity.
 
-           During generation files "to_copy" are just copied into
-           the path of the entity, and files "to_symlink" are
-           symlinked into the path of the entity.
+        During generation files "to_copy" are just copied into
+        the path of the entity, and files "to_symlink" are
+        symlinked into the path of the entity.
 
-           Files "to_configure" are text based model input files where
-           parameters for the model are set. Note that only models
-           support the "to_configure" field. These files must have
-           fields tagged that correspond to the values the user
-           would like to change. The tag is settable but defaults
-           to a semicolon e.g. THERMO = ;10;
+        Files "to_configure" are text based model input files where
+        parameters for the model are set. Note that only models
+        support the "to_configure" field. These files must have
+        fields tagged that correspond to the values the user
+        would like to change. The tag is settable but defaults
+        to a semicolon e.g. THERMO = ;10;
 
         :param to_copy: files to copy, defaults to []
         :type to_copy: list, optional
@@ -104,6 +100,9 @@ class Model(SmartSimEntity):
         :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
+        to_copy = init_default([], to_copy, (list, str))
+        to_symlink = init_default([], to_symlink, (list, str))
+        to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
     def _expand_entity_exe(self):
@@ -120,21 +119,11 @@ class Model(SmartSimEntity):
         except KeyError:
             raise SSConfigError(
                 f"User did not provide an executable in the run settings for {self.name}"
-            )
+            ) from None
         except SSConfigError as e:
             raise SSConfigError(
-                f"Failed to create entity, bad executable argument in run settings"
+                "Failed to create entity, bad executable argument in run settings"
             ) from e
-
-    def get_param_value(self, param):
-        """Get a value of a model parameter
-
-        :param param: parameter name
-        :type param: str
-        :return: value of the model parameter
-        :rtype: str
-        """
-        return self.params[param]
 
     def __eq__(self, other):
         if self.name == other.name:

@@ -1,6 +1,7 @@
 import pickle
 import time
-from os import getcwd, path
+from os import getcwd
+import os.path as osp
 from pprint import pformat
 
 import pandas as pd
@@ -14,7 +15,7 @@ from .generation import Generator
 from .launcher import LocalLauncher
 from .utils import get_logger
 from .utils.entityutils import separate_entities
-from .utils.helpers import colorize
+from .utils.helpers import colorize, init_default
 
 logger = get_logger(__name__)
 
@@ -40,10 +41,7 @@ class Experiment:
         """
         self.name = name
         self.orc = None
-        if exp_path:
-            self.exp_path = exp_path
-        else:
-            self.exp_path = path.join(getcwd(), name)
+        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
         self._control = Controller(launcher=launcher)
 
     def start(self, *args, block=True, summary=False):
@@ -183,7 +181,7 @@ class Experiment:
             raise
 
     def create_ensemble(
-        self, name, params={}, run_settings={}, perm_strategy="all_perm", **kwargs
+        self, name, params=None, run_settings=None, perm_strategy="all_perm", **kwargs
     ):
         """Create an Ensemble entity
 
@@ -203,11 +201,12 @@ class Experiment:
         :return: the created Ensemble
         :rtype: Ensemble
         """
+        params = init_default({}, params, dict)
+        run_settings = init_default({}, run_settings, dict)
         try:
             new_ensemble = Ensemble(
                 name,
                 params,
-                getcwd(),
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
                 **kwargs,
@@ -218,7 +217,7 @@ class Experiment:
             raise
 
     def create_model(
-        self, name, run_settings, params={}, path=None, enable_key_prefixing=False
+        self, name, run_settings, params=None, path=None, enable_key_prefixing=False
     ):
         """Create a Model
 
@@ -234,16 +233,16 @@ class Experiment:
                                      prefixed with the model's name.
                                      Optional, defaults to False
         :type enable_key_prefixing: bool
-        :raises SmartSimError: if ensemble name provided doesn't exist
+        :raises SmartSimError: if Model initialization fails
         :return: the created model
         :rtype: Model
         """
+        path = init_default(getcwd(), path, str)
+        params = init_default({}, params, dict)
         try:
-            if not path:
-                path = getcwd()
             new_model = Model(name, params, path, run_settings)
             if enable_key_prefixing:
-                new_model._key_prefixing_enabled = True
+                new_model.enable_key_prefixing()
             return new_model
         except SmartSimError as e:
             logger.error(e)
@@ -292,9 +291,7 @@ class Experiment:
                 error += "Call with overwrite=True to replace the current orchestrator"
                 raise EntityExistsError(error)
 
-            orcpath = getcwd()
-            if path:
-                orcpath = path
+            orcpath = init_default(getcwd(), path, str)
 
             if db_nodes == 2:
                 raise SmartSimError(
@@ -323,7 +320,6 @@ class Experiment:
         :rtype: Orchestrator
         """
         try:
-            # TODO clean this up
             if isinstance(self._control._launcher, LocalLauncher):
                 raise SmartSimError(
                     "Local launcher does not support " "reconnecting to a database."
@@ -335,7 +331,7 @@ class Experiment:
                 )
 
             db_file = "/".join((previous_orc_dir, "smartsim_db.dat"))
-            if not path.exists(db_file):
+            if not osp.exists(db_file):
                 raise SmartSimError(
                     f"The SmartSim database config file " f"{db_file} cannot be found."
                 )
@@ -344,7 +340,8 @@ class Experiment:
                 with open(db_file, "rb") as pickle_file:
                     db_config = pickle.load(pickle_file)
             except (OSError, IOError) as e:
-                raise SmartSimError(str(e))
+                msg = "Could not retrieve saved database configuration"
+                raise SmartSimError(msg) from e
 
             err_message = "The SmartSim database config file is incomplete.  "
             if not "orc" in db_config:
@@ -494,7 +491,7 @@ class Experiment:
                     "Model Run Settings: \n" + pformat(model.run_settings),
                     color="green",
                 )
-                sprint(f"{model.name}")
+                sprint(f"{model_name}")
                 sprint(f"{parameters}")
                 sprint(f"{run_settng}")
             sprint("\n")

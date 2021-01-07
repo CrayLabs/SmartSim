@@ -44,28 +44,6 @@ class Junction:
                 connections["SSKEYOUT"] = entity.name
         return connections
 
-    def __str__(self):
-        """Return user-readable string form of Junction
-
-        :returns: a user-readable string of Junction
-        :rtype: str
-        """
-        junction_str = "\n   Connections \n"
-        for sender, receivers in self.senders.items():
-            receive_str = ", ".join(receivers)
-            junction_str += " ".join(("    ", sender, " => ", receive_str, "\n"))
-        junction_str += "\n"
-        return junction_str
-
-    def __repr__(self):
-        """Return the representation value of Junction
-
-        :returns: representation value of Junction
-        :rtype: dict
-        """
-        return {"database_instances": self.database_instances}
-
-
 def _env_safe_string(string):
     """Format a string to safely set as an environment variable
 

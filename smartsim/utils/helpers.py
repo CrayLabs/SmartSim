@@ -8,6 +8,13 @@ from shutil import which
 from ..error import SSConfigError
 
 
+def init_default(default, init_value, expected_type=None):
+    if init_value is None:
+        return default
+    if expected_type is not None and not isinstance(init_value, expected_type):
+        raise TypeError(f"Argument was of type {type(init_value)}, not {expected_type}")
+    return init_value
+
 def expand_exe_path(exe):
     """Takes an executable and returns the full path to that executable
 

@@ -29,7 +29,6 @@ Model
 .. autosummary::
 
    Model.__init__
-   Model.get_param_value
    Model.attach_generator_files
    Model.register_incoming_entity
    Model.enable_key_prefixing

@@ -81,9 +81,9 @@ class Job:
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
-        warning += f"For more information on the error, check the files below: \n"
-        warning += f"{self.entity.type} error file: {self.entity.get_run_setting('err_file')} \n"
-        warning += f"{self.entity.type} output file: {self.entity.get_run_setting('out_file')} \n"
+        warning += "For more information on the error, check the files below: \n"
+        warning += f"{self.entity.type} error file: {self.entity.run_settings.get('err_file')} \n"
+        warning += f"{self.entity.type} output file: {self.entity.run_settings.get('out_file')} \n"
         return warning
 
     def __str__(self):

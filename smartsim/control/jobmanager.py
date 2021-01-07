@@ -2,7 +2,7 @@ import time
 from threading import Thread
 
 import numpy as np
-
+from ..entity import DBNode
 from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
 from ..error import SmartSimError
 from ..launcher import SlurmLauncher
@@ -33,10 +33,10 @@ class JobManager:
         """
         self.name = "JobManager" + "-" + str(np.base_repr(time.time_ns(), 36))
         self.actively_monitoring = False
-        self._launcher = launcher
         self.jobs = {}
         self.db_jobs = {}
         self.completed = {}
+        self._launcher = launcher
         self._lock = lock
 
     def start(self):
@@ -62,11 +62,11 @@ class JobManager:
 
             # update all job statuses at once
             self.check_jobs()
-            for name, job in self().items():
+            for _, job in self().items():
 
                 # if the job has errors then output the report
                 # this should only output once
-                if job.returncode != None and job.status in TERMINAL_STATUSES:
+                if job.returncode is not None and job.status in TERMINAL_STATUSES:
                     if int(job.returncode) != 0:
                         logger.warning(job)
                         logger.warning(job.error_report())
@@ -80,7 +80,7 @@ class JobManager:
             # if no more jobs left to actively monitor
             if not self():
                 self.actively_monitoring = False
-                logger.debug(f"Sleeping, no jobs to monitor")
+                logger.debug("Sleeping, no jobs to monitor")
 
     def move_to_completed(self, job):
         """Move job to completed queue so that its no longer
@@ -114,12 +114,11 @@ class JobManager:
         try:
             if job_name in self.db_jobs.keys():
                 return self.db_jobs[job_name]
-            elif job_name in self.jobs.keys():
+            if job_name in self.jobs.keys():
                 return self.jobs[job_name]
-            elif job_name in self.completed.keys():
+            if job_name in self.completed.keys():
                 return self.completed[job_name]
-            else:
-                raise KeyError
+            raise KeyError
         finally:
             self._lock.release()
 
@@ -151,11 +150,10 @@ class JobManager:
             job = self[name]
             if job.nodes:
                 return job.nodes
-            else:
-                time.sleep(wait)
-                nodes = self._launcher.get_step_nodes(job.jid)
-                job.nodes = nodes
-                return nodes
+            time.sleep(wait)
+            nodes = self._launcher.get_step_nodes(job.jid)
+            job.nodes = nodes
+            return nodes
         finally:
             self._lock.release()
 
@@ -171,7 +169,7 @@ class JobManager:
         """
         # all operations here should be atomic
         job = Job(name, job_id, entity)
-        if entity.type == "db":
+        if isinstance(entity, DBNode):
             self.db_jobs[name] = job
         else:
             self.jobs[name] = job
@@ -251,12 +249,12 @@ class JobManager:
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"
-            )
+            ) from None
         finally:
             self._lock.release()
         return job.status
 
-    def _set_launcher(self, launcher):
+    def set_launcher(self, launcher):
         """Set the launcher of the job manager to a specific launcher instance
 
         :param launcher: child of Launcher
@@ -290,7 +288,7 @@ class JobManager:
             job = self.completed[job_name]
             del self.completed[job_name]
             job.reset(new_job_id)
-            if job.entity.type == "db":
+            if isinstance(job.entity, DBNode):
                 self.db_jobs[job_name] = job
             else:
                 self.jobs[job_name] = job

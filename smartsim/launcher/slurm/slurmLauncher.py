@@ -170,8 +170,7 @@ class SlurmLauncher(Launcher):
         output, error = sstat([step_id, "-i", "-n", "-p", "-a"])
         if "error:" in error.split(" "):
             raise LauncherError("Could not find allocation for job: " + step_id)
-        else:
-            return parse_sstat_nodes(output)
+        return parse_sstat_nodes(output)
 
     def run(self, step):
         """Run a job step

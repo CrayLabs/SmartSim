@@ -105,7 +105,7 @@ check-sort-imports:
 # help: check-lint                     - run static analysis checks
 .PHONY: check-lint
 check-lint:
-	@pylint --rcfile=.pylintrc ./smartsim ./tests/
+	@pylint --rcfile=.pylintrc ./smartsim
 
 
 # help:

@@ -1,10 +1,5 @@
 import socket
 
-from ..utils import get_logger
-
-logger = get_logger(__name__)
-
-
 class ComputeNode:
     """The ComputeNode class holds resource information
     about a physical compute node

@@ -1,11 +1,9 @@
-import json
-from os import environ, getcwd, path
-from shutil import rmtree
 
-import pytest
+import json
+import numpy as np
+from os import getcwd, path
 
 from smartsim import Experiment
-from smartsim.error import SmartSimError, SSConfigError
 from smartsim.generation import Generator
 from smartsim.utils.test.decorators import generator_test
 
@@ -37,8 +35,6 @@ def test_ensemble_random():
     """test generation of an ensemble using the random generation strategy"""
 
     n_models = 10  # number of models to generate
-
-    import numpy as np
 
     steps = np.random.randint(10, 20, size=(50))
     thermo = np.random.randint(20, 200, size=(50))

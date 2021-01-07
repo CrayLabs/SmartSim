@@ -111,7 +111,7 @@ class Controller:
         except KeyError:
             raise SmartSimError(
                 f"Entity by the name of {entity.name} has not been launched by this Controller"
-            )
+            ) from None
 
     def stop_entity(self, entity):
         """Stop an instance of an entity
@@ -200,11 +200,11 @@ class Controller:
             # Init Slurm Launcher wrapper
             if launcher == "slurm":
                 self._launcher = SlurmLauncher()
-                self._jobs._set_launcher(self._launcher)
+                self._jobs.set_launcher(self._launcher)
             # Run all ensembles locally
             elif launcher == "local":
                 self._launcher = LocalLauncher()
-                self._jobs._set_launcher(self._launcher)
+                self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
         else:
@@ -279,10 +279,9 @@ class Controller:
                 self._cons.store_db_addr(job_nodes, entity.ports)
 
         except LauncherError as e:
-            logger.error(
-                f"An error occurred when launching {entity} \n"
-                + "Check error and output files for details."
-            )
+            msg = f"An error occurred when launching {entity} \n"
+            msg += "Check error and output files for details."
+            logger.error(msg)
             raise SmartSimError(f"Job step {entity.name} failed to launch") from e
 
     def _create_steps(self, entities):
@@ -330,7 +329,7 @@ class Controller:
             return step
         except LauncherError as e:
             error = f"Failed to create job step for {entity.name}"
-            raise SmartSimError("\n".join((error, e.msg))) from None
+            raise SmartSimError("\n".join((error, str(e)))) from None
 
     def _set_entity_env_vars(self, entity):
         """Set connection environment variables
@@ -345,12 +344,10 @@ class Controller:
         """
         if not isinstance(entity, DBNode):
             env_vars = self._cons.get_connections(entity)
-            existing_env_vars = entity.get_run_setting("env_vars")
-            final_env_vars = {"env_vars": env_vars}
-            if existing_env_vars:
-                existing_env_vars.update(env_vars)
-                final_env_vars["env_vars"] = existing_env_vars
-            entity.update_run_settings(final_env_vars)
+            user_env_vars = entity.run_settings.get("env_vars", {})
+            user_env_vars.update(env_vars)
+            combined_env_vars = {"env_vars": user_env_vars}
+            entity.update_run_settings(combined_env_vars)
 
     def _create_orchestrator_cluster(self, orchestrator):
         """Create an orchestrator cluster

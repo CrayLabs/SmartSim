@@ -13,7 +13,8 @@ suggestion-mode=yes
 
 [MESSAGES CONTROL]
 
-disable=print-statement,
+disable=logging-fstring-interpolation,
+        print-statement,
         parameter-unpacking,
         unpacking-in-except,
         old-raise-syntax,

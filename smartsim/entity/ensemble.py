@@ -1,8 +1,8 @@
+from os import getcwd
 from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
-
 
 class Ensemble(EntityList):
     """Ensembles are groups of Models that can be used
@@ -15,7 +15,7 @@ class Ensemble(EntityList):
     """
 
     def __init__(
-        self, name, params, path, run_settings={}, perm_strat="all_perm", **kwargs
+        self, name, params, run_settings, perm_strat="all_perm", **kwargs
     ):
         """Initialize an Ensemble of Model instances.
 
@@ -38,7 +38,7 @@ class Ensemble(EntityList):
         self.params = params
         self._key_prefixing_enabled = True
         self.run_settings = run_settings
-        super().__init__(name, path, perm_strat=perm_strat, **kwargs)
+        super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     def _initialize_entities(self, **kwargs):
         """Initialize all the models within the ensemble based
@@ -85,8 +85,7 @@ class Ensemble(EntityList):
             raise TypeError(
                 f"Argument to add_model was of type {type(model)}, not Model"
             )
-        else:
-            self.entities.append(model)
+        self.entities.append(model)
 
     def register_incoming_entity(self, incoming_entity, receiving_client_type):
         """Register future communication between entities.
@@ -103,14 +102,14 @@ class Ensemble(EntityList):
                                       this object. Can be cpp, fortran, python
         :param receiving_client_type: str
         """
-        for model in self.models:
+        for model in self.entities:
             model.register_incoming_entity(incoming_entity, receiving_client_type)
 
     def enable_key_prefixing(self):
         """If called, all models within this ensemble will prefix their keys with its
         own model name.
         """
-        for model in self.models:
+        for model in self.entities:
             model.enable_key_prefixing()
 
     def query_key_prefixing(self):
@@ -119,16 +118,16 @@ class Ensemble(EntityList):
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: dict
         """
-        return all([model.query_key_prefixing() for model in self.models])
+        return all([model.query_key_prefixing() for model in self.entities])
 
-    def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
+    def attach_generator_files(self, to_copy=None, to_symlink=None, to_configure=None):
         for model in self.entities:
             model.attach_generator_files(
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
     def _set_strategy(self, strategy):
-        """Set the permuation strategy for generating models within
+        """Set the permutation strategy for generating models within
         the ensemble
 
         :param strategy: name of the strategy or callable function
@@ -139,16 +138,15 @@ class Ensemble(EntityList):
         """
         if strategy == "all_perm":
             return create_all_permutations
-        elif strategy == "step":
+        if strategy == "step":
             return step_values
-        elif strategy == "random":
+        if strategy == "random":
             return random_permutations
-        elif callable(strategy):
+        if callable(strategy):
             return strategy
-        else:
-            raise SSUnsupportedError(
-                f"Permutation strategy given is not supported: {strategy}"
-            )
+        raise SSUnsupportedError(
+            f"Permutation strategy given is not supported: {strategy}"
+        )
 
     def _read_model_parameters(self):
         """Take in the parameters given to the ensemble and prepare to
@@ -162,19 +160,18 @@ class Ensemble(EntityList):
             raise TypeError(
                 "Ensemble initialization argument 'params' must be of type dict"
             )
-        else:
-            param_names = []
-            parameters = []
-            for name, val in self.params.items():
-                param_names.append(name)
+        param_names = []
+        parameters = []
+        for name, val in self.params.items():
+            param_names.append(name)
 
-                if isinstance(val, list):
-                    parameters.append(val)
-                elif isinstance(val, str) or isinstance(val, int):
-                    parameters.append([val])
-                else:
-                    raise TypeError(
-                        "Incorrect type for ensemble parameters\n"
-                        + "Must be list, int, or string."
-                    )
-            return param_names, parameters
+            if isinstance(val, list):
+                parameters.append(val)
+            elif isinstance(val, (int, str)):
+                parameters.append([val])
+            else:
+                raise TypeError(
+                    "Incorrect type for ensemble parameters\n"
+                    + "Must be list, int, or string."
+                )
+        return param_names, parameters

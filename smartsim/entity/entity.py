@@ -2,10 +2,10 @@ from os.path import join
 
 
 class SmartSimEntity:
-    def __init__(self, name, path, entity_type, run_settings):
+    def __init__(self, name, path, run_settings):
         """Initialize a SmartSim entity.
 
-        Each entity must have a name, path, type, and
+        Each entity must have a name, path, and
         run_settings. All entities within SmartSim
         share these attributes.
 
@@ -13,14 +13,11 @@ class SmartSimEntity:
         :type name: str
         :param path: path to output, error, and configuration files
         :type path: str
-        :param entity_type: type of the entity
-        :type entity_type: str
         :param run_settings: Launcher settings specified in the experiment
                              entity
         :type run_settings: dict
         """
         self.name = name
-        self.type = entity_type
         self.run_settings = run_settings
         self.set_path(path)
 
@@ -48,14 +45,11 @@ class SmartSimEntity:
         self.run_settings["out_file"] = join(self.path, self.name + ".out")
         self.run_settings["err_file"] = join(self.path, self.name + ".err")
 
-    def get_run_setting(self, setting):
-        """Retrieve a setting from entity.run_settings
-
-        :param setting: key for run_setting
-        :type setting: str
-        :return: run_setting value
+    @property
+    def type(self):
+        """Return the name of the class
         """
-        return self.run_settings.get(setting)
+        return type(self).__name__
 
     def __repr__(self):
         return self.name

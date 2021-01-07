@@ -14,7 +14,7 @@ rs = {"executable": "python"}
 
 
 def test_empty_ensemble():
-    ensemble = Ensemble("empty", {}, "/", run_settings=rs)
+    ensemble = Ensemble("empty", {}, rs)
     assert len(ensemble) == 0
 
 
@@ -23,9 +23,8 @@ def test_all_perm():
     ensemble = Ensemble(
         "all_perm",
         params,
-        "/",  # path not needed
+        rs,
         perm_strat="all_perm",
-        run_settings=rs,
     )
     assert len(ensemble) == 2
     assert ensemble.entities[0].params["h"] == 5
@@ -35,7 +34,10 @@ def test_all_perm():
 def test_step():
     params = {"h": [5, 6], "g": [7, 8]}
     ensemble = Ensemble(
-        "step", params, "/", perm_strat="step", run_settings=rs  # path not needed
+        "step",
+        params,
+        rs,
+        perm_strat="step",
     )
     assert len(ensemble) == 2
 
@@ -52,9 +54,8 @@ def test_random():
     ensemble = Ensemble(
         "random_test",
         params,
-        "/",  # path not needed
+        rs,
         perm_strat="random",
-        run_settings=rs,
         n_models=len(random_ints),
     )
     assert len(ensemble) == len(random_ints)
@@ -72,7 +73,10 @@ def step_values(param_names, param_values):
 def test_user_strategy():
     params = {"h": [5, 6], "g": [7, 8]}
     ensemble = Ensemble(
-        "step", params, "/", perm_strat=step_values, run_settings=rs  # path not needed
+        "step",
+        params,
+        rs,
+        perm_strat=step_values,
     )
     assert len(ensemble) == 2
 
@@ -88,7 +92,7 @@ def test_user_strategy():
 # add model that already exists
 def test_add_existing_model():
     m = Model("model", {}, "/", rs)
-    ensemble = Ensemble("ensemble", {}, "/", run_settings=rs)
+    ensemble = Ensemble("ensemble", {}, rs)
     ensemble.add_model(m)
     with pytest.raises(EntityExistsError):
         ensemble.add_model(m)
@@ -98,7 +102,7 @@ def test_add_existing_model():
 def test_unknown_perm_strat():
     bad_strat = "not-a-strategy"
     with pytest.raises(SSUnsupportedError):
-        e = Ensemble("ensemble", {}, "/", run_settings=rs, perm_strat=bad_strat)
+        e = Ensemble("ensemble", {}, rs, perm_strat=bad_strat)
 
 
 # bad permuation strategy that doesnt return
@@ -110,7 +114,7 @@ def bad_strategy(names, values):
 def test_bad_perm_strat():
     params = {"h": [2, 3]}
     with pytest.raises(UserStrategyError):
-        e = Ensemble("ensemble", params, "/", run_settings=rs, perm_strat=bad_strategy)
+        e = Ensemble("ensemble", params, rs, perm_strat=bad_strategy)
 
 
 # test bad perm strat that returns a list but of lists
@@ -123,7 +127,7 @@ def test_bad_perm_strat_2():
     params = {"h": [2, 3]}
     with pytest.raises(UserStrategyError):
         e = Ensemble(
-            "ensemble", params, "/", run_settings=rs, perm_strat=bad_strategy_2
+            "ensemble", params, rs, perm_strat=bad_strategy_2
         )
 
 
@@ -132,19 +136,19 @@ def test_incorrect_param_type():
     # can either be a list, str, or int
     params = {"h": {"h": [5]}}
     with pytest.raises(TypeError):
-        e = Ensemble("ensemble", params, "/", run_settings=rs)
+        e = Ensemble("ensemble", params, rs)
 
 
 # no exe
 def test_no_executable():
     params = {"h": [2, 3]}
     with pytest.raises(SSConfigError):
-        e = Ensemble("ensemble", params, "/", {})
+        e = Ensemble("ensemble", params, {})
 
 
 # invalid/non-existant exe
 def test_bad_executable():
-    run_set = {"executable": "not-an-exe"}
+    run_settings = {"executable": "not-an-exe"}
     params = {"h": [2, 3]}
     with pytest.raises(SSConfigError):
-        e = Ensemble("ensemble", params, "/", run_settings=run_set)
+        e = Ensemble("ensemble", params, run_settings)
