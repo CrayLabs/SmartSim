@@ -10,6 +10,7 @@ class ModelWriter:
     def __init__(self):
         self.tag = ";"
         self.regex = "(;.+;)"
+        self.lines = []
 
     def set_tag(self, tag, regex=None):
         """Set the tag for the modelwriter to search for within
@@ -52,8 +53,8 @@ class ModelWriter:
             fp = open(file_path, "r+")
             self.lines = fp.readlines()
             fp.close()
-        except (IOError, OSError):
-            raise ParameterWriterError(file_path)
+        except (IOError, OSError) as e:
+            raise ParameterWriterError(file_path) from e
 
     def _write_changes(self, file_path):
         """Write the ensemble-specific changes
@@ -65,8 +66,8 @@ class ModelWriter:
             for line in self.lines:
                 fp.write(line)
             fp.close()
-        except (IOError, OSError):
-            raise ParameterWriterError(file_path, read=False)
+        except (IOError, OSError) as e:
+            raise ParameterWriterError(file_path, read=False) from e
 
     def _replace_tags(self, model):
         """Replace the tagged within the tagged file attached to this
@@ -97,7 +98,7 @@ class ModelWriter:
                     edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
-        for tag in unused_tags.keys():
+        for tag in unused_tags:
             logger.warning(f"Unused tag {tag} on line(s): {str(unused_tags[tag])}")
         self.lines = edited
 

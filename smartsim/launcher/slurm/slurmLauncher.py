@@ -6,11 +6,10 @@ import numpy as np
 from ...error import LauncherError, SSConfigError
 from ...utils import get_logger
 from ..launcher import Launcher
-from ..launcherUtil import ComputeNode, Partition
 from ..shell import execute_async_cmd
 from ..stepInfo import SlurmStepInfo
 from ..taskManager import TaskManager
-from .slurmCommands import sacct, scancel, sinfo, sstat
+from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 from .slurmStep import SlurmStep
 
@@ -27,51 +26,6 @@ class SlurmLauncher(Launcher):
         """Initialize a SlurmLauncher"""
         super().__init__(*args, **kwargs)
         self.task_manager = TaskManager()
-
-    def validate(self, nodes=None, ppn=None, partition=None):
-        """Check that there are sufficient resources in the provided Slurm partitions.
-
-        :param str partition: partition to validate
-        :param nodes: Override the default node count to validate
-        :type nodes: int
-        :param ppn: Override the default processes per node to validate
-        :type ppn: int
-        :raises: LauncherError
-        """
-        sys_partitions = self._get_system_partition_info()
-
-        n_avail_nodes = 0
-        avail_nodes = set()
-
-        if not nodes:
-            nodes = 1
-        if not ppn:
-            ppn = 1
-
-        p_name = partition
-        if p_name is None or p_name == "default":
-            p_name = self._get_default_partition()
-
-        if not p_name in sys_partitions:
-            raise LauncherError(
-                "Partition {0} is not found on this system".format(p_name)
-            )
-
-        for node in sys_partitions[p_name].nodes:
-            if node.ppn >= ppn:
-                avail_nodes.add(node)
-
-        n_avail_nodes = len(avail_nodes)
-        logger.debug(
-            "Found {0} nodes that match the constraints provided".format(n_avail_nodes)
-        )
-        if n_avail_nodes < nodes:
-            raise LauncherError(
-                "{0} nodes are not available on the specified partitions.  Only "
-                "{1} nodes available.".format(nodes, n_avail_nodes)
-            )
-
-        logger.info("Successfully validated Slurm with sufficient resources")
 
     def create_step(self, entity_name, run_settings, multi_prog=False):
         """Convert a smartsim entity run_settings into a Slurm step
@@ -95,12 +49,11 @@ class SlurmLauncher(Launcher):
             if "alloc" not in run_settings:
                 raise SSConfigError(f"User provided no allocation for {entity_name}")
 
-            else:
-                name = entity_name + "-" + str(np.base_repr(time.time_ns(), 36))
-                step = SlurmStep(name, run_settings, multi_prog)
-                return step
+            name = entity_name + "-" + str(np.base_repr(time.time_ns(), 36))
+            step = SlurmStep(name, run_settings, multi_prog)
+            return step
         except SSConfigError as e:
-            raise LauncherError("Job step creation failed: " + e.msg) from None
+            raise LauncherError("Job step creation failed: " + str(e)) from None
 
     def get_step_status(self, step_id):
         """Get the status of a SlurmStep via the id of the step (e.g. 12345.0)
@@ -111,7 +64,7 @@ class SlurmLauncher(Launcher):
         :rtype: SlurmStepInfo
         """
         step_id = str(step_id)
-        sacct_out, sacct_error = sacct(["--noheader", "-p", "-b", "-j", step_id])
+        sacct_out, _ = sacct(["--noheader", "-p", "-b", "-j", step_id])
         stat, returncode = parse_sacct(sacct_out, step_id)
         if self.task_manager.check_error(step_id):
             task_ret_code, out, err = self.task_manager.get_task_history(step_id)
@@ -133,7 +86,7 @@ class SlurmLauncher(Launcher):
         :rtype: list
         """
         step_str = _create_step_id_str(step_ids)
-        sacct_out, sacct_err = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
+        sacct_out, _ = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
         # (status, returncode)
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 
@@ -233,7 +186,7 @@ class SlurmLauncher(Launcher):
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:
-            output, error = sacct(
+            output, _ = sacct(
                 ["--noheader", "-p", "--format=jobname,jobid", "--job=" + step.alloc_id]
             )
             step_id = parse_step_id_from_sacct(output, step.name)
@@ -245,52 +198,6 @@ class SlurmLauncher(Launcher):
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
         return step_id
-
-    def _get_system_partition_info(self):
-        """Build a dictionary of slurm partitions
-        :returns: dict of Partition objects
-        :rtype: dict
-        """
-
-        sinfo_output, sinfo_error = sinfo(["--noheader", "--format", "%R %n %c"])
-
-        partitions = {}
-        for line in sinfo_output.split("\n"):
-            line = line.strip()
-            if line == "":
-                continue
-
-            p_info = line.split(" ")
-            p_name = p_info[0]
-            p_node = p_info[1]
-            p_ppn = int(p_info[2])
-
-            if not p_name in partitions:
-                partitions.update({p_name: Partition()})
-
-            partitions[p_name].name = p_name
-            partitions[p_name].nodes.add(ComputeNode(node_name=p_node, node_ppn=p_ppn))
-
-        return partitions
-
-    def _get_default_partition(self):
-        """Returns the default partition from slurm which
-
-        This default partition is assumed to be the partition with
-        a star following its partition name in sinfo output
-        :returns: the name of the default partition
-        :rtype: str
-        """
-        sinfo_output, sinfo_error = sinfo(["--noheader", "--format", "%P"])
-
-        default = None
-        for line in sinfo_output.split("\n"):
-            if line.endswith("*"):
-                default = line.strip("*")
-
-        if not default:
-            raise LauncherError("Could not find default partition!")
-        return default
 
     @staticmethod
     def check_for_slurm():

@@ -71,7 +71,7 @@ class SlurmStep:
         # add additional slurm arguments based on key length
         for opt, value in self.run_settings.items():
             if opt not in smartsim_args:
-                short_arg = True if len(str(opt)) == 1 else False
+                short_arg = bool(len(str(opt)) == 1)
                 prefix = "-" if short_arg else "--"
                 if not value:
                     step += [prefix + opt]
@@ -96,17 +96,17 @@ class SlurmStep:
             exe_args = self.run_settings.get("exe_args", None)
             if self.multi_prog:
                 cmd = self._build_multi_prog_exe(exe, exe_args)
-                return ["--multi-prog", cmd]
-            else:
-                if exe_args:
-                    if isinstance(exe_args, str):
-                        exe_args = exe_args.split()
-                    elif isinstance(exe_args, list):
-                        correct_type = all([isinstance(arg, str) for arg in exe_args])
-                        if not correct_type:
-                            raise TypeError(
-                                "Executable arguments given were not of type list or str"
-                            )
+                mp_cmd = ["--multi-prog", cmd]
+                return mp_cmd
+            if exe_args:
+                if isinstance(exe_args, str):
+                    exe_args = exe_args.split()
+                elif isinstance(exe_args, list):
+                    correct_type = all([isinstance(arg, str) for arg in exe_args])
+                    if not correct_type:
+                        raise TypeError(
+                            "Executable arguments given were not of type list or str"
+                        )
                 else:
                     exe_args = [""]
                 cmd = [exe] + exe_args
@@ -115,7 +115,7 @@ class SlurmStep:
 
         except KeyError as e:
             raise SSConfigError(
-                "SmartSim could not find following required field: %s" % (e.args[0])
+                f"SmartSim could not find following required field: {e.args[0]}"
             ) from None
 
     def _build_multi_prog_exe(self, executable, exe_args):
@@ -137,7 +137,6 @@ class SlurmStep:
         :rtype: str
         """
         out = self.run_settings["out_file"]
-        ppn = self.run_settings.get("ntasks-per-node", 1)
 
         conf_path = os.path.join(os.path.dirname(out), "run_orc.conf")
         if not isinstance(executable, list):
@@ -157,7 +156,7 @@ class SlurmStep:
             srun = expand_exe_path("srun")
             return srun
         except SSConfigError:
-            raise LauncherError(f"Slurm launcher could not find srun executable path")
+            raise LauncherError(f"Slurm launcher could not find srun executable path") from None
 
     def _format_env_vars(self, env_vars):
         """Build environment variable string for Slurm
@@ -177,7 +176,8 @@ class SlurmStep:
                 ",",
                 "PYTHONPATH=",
                 get_env("PYTHONPATH"),
-                "," "LD_LIBRARY_PATH=",
+                ",",
+                "LD_LIBRARY_PATH=",
                 get_env("LD_LIBRARY_PATH"),
             )
         )

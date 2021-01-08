@@ -16,11 +16,11 @@ class LocalLauncher:
     def __init__(self):
         self.task_manager = TaskManager()
 
-    def create_step(self, name, run_settings, multi_prog=False):
+    def create_step(self, entity_name, run_settings, multi_prog=False):
         """Create a job step to launch an entity locally
 
-        :param name: name of the step to be launch, usually entity.name
-        :type name: str
+        :param entity_name: name of the step to be launch, usually entity.name
+        :type entity_name: str
         :param run_settings: smartsim run_settings for an entity
         :type run_settings: dict
         :param multi_prog: create a multi-program step (not supported),
@@ -50,8 +50,7 @@ class LocalLauncher:
         if self.task_manager.check_error(step_id):
             returncode, out, err = self.task_manager.get_task_history(step_id)
             return LocalStepInfo(psutil_status, returncode, out, err)
-        else:
-            return LocalStepInfo(psutil_status, psutil_rc)
+        return LocalStepInfo(psutil_status, psutil_rc)
 
     def get_step_update(self, step_ids):
         """Get status updates of all steps at once
@@ -127,8 +126,7 @@ class LocalLauncher:
             returncode, _, _ = self.task_manager.get_task_history(step_id)
             if returncode != 0:
                 return "Failed", returncode
-            else:
-                return "Completed", returncode
+            return "Completed", returncode
 
     def __str__(self):
         return "local"

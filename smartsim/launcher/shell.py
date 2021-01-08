@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 try:
     level = get_env("SMARTSIM_LOG_LEVEL")
-    verbose_shell = True if level == "developer" else False
+    verbose_shell = bool(level == "developer")
 except SSConfigError:
     verbose_shell = False
 
@@ -39,7 +39,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
 
     if verbose_shell:
         source = "shell" if shell else "Popen"
-        logger.debug("Executing %s cmd: %s" % (source, " ".join(cmd_list)))
+        logger.debug(f"Executing {source} cmd: {' '.join(cmd_list)}")
 
     # spawning the subprocess and connecting to its output
     proc = Popen(
@@ -50,12 +50,13 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
         out, err = proc.communicate(input=proc_input, timeout=timeout)
     except TimeoutExpired as e:
         proc.kill()
-        output, errs = proc.communicate()
-        raise ShellError("Failed to execute command, timeout reached", e, cmd_list)
+        _, errs = proc.communicate()
+        logger.error(errs)
+        raise ShellError("Failed to execute command, timeout reached", e, cmd_list) from None
     except OSError as e:
         raise ShellError(
             "Exception while attempting to start a shell process", e, cmd_list
-        )
+        ) from None
 
     # decoding the output and err and return as a string tuple
     return proc.returncode, out.decode("utf-8"), err.decode("utf-8")
@@ -78,12 +79,12 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
     """
     global verbose_shell
     if verbose_shell:
-        logger.debug("Executing async Popen cmd: %s" % " ".join(cmd_list))
+        logger.debug(f"Executing async Popen cmd: {' '.join(cmd_list)}")
 
     try:
         popen_obj = psutil.Popen(
             cmd_list, cwd=cwd, stdout=out, stderr=err, env=env, close_fds=True
         )
-    except OSError as err:
-        raise ShellError("Failed to run async shell command", err, cmd_list)
+    except OSError as e:
+        raise ShellError("Failed to run async shell command", e, cmd_list) from None
     return popen_obj

@@ -1,36 +1,20 @@
 import abc
 
-from ..error import LauncherError
-from .stepInfo import StepInfo
-
-
 class Launcher(abc.ABC):
     def __init__(self, *args, **kwargs):
         super().__init__()
 
     # -------------- Abstract Methods --------------
-    # currently not used
-    @abc.abstractmethod
-    def validate(self, nodes=None, ppn=None, partition=None):
-        """Validate the functionality of the launcher and availability of
-           resources on the system
-
-        :param nodes: Override the number of nodes to validate
-        :param ppn: Override the processes per node to validate
-        :param partition: Override the partition to validate
-        :return:
-        """
-        pass
 
     @abc.abstractmethod
-    def create_step(self, name, run_settings, multi_prog=False):
+    def create_step(self, entity_name, run_settings, multi_prog=False):
         """Convert a smartsim entity run_settings into a job step
            to be launched on an allocation. An entity must have an
            allocation assigned to it in the running settings or
            create_step will throw a LauncherError
 
-        :param name: name of the step to be launch, usually entity.name
-        :type name: str
+        :param entity_name: name of the step to be launch, usually entity.name
+        :type entity_name: str
         :param run_settings: smartsim run_settings for an entity
         :type run_settings: dict
         :param multi_prog: create a multi-program step, defaults to False
@@ -38,7 +22,6 @@ class Launcher(abc.ABC):
         :raises LauncherError: if step creation fails
         :return: Step object
         """
-        pass
 
     @abc.abstractmethod
     def get_step_status(self, step_id):
@@ -50,7 +33,6 @@ class Launcher(abc.ABC):
         :return: status of the job step and returncode
         :rtype: StepInfo
         """
-        pass
 
     @abc.abstractmethod
     def get_step_update(self, step_ids):
@@ -74,7 +56,6 @@ class Launcher(abc.ABC):
         :return: list of compute nodes the job was launched on
         :rtype: list of str
         """
-        pass
 
     @abc.abstractmethod
     def run(self, step):
@@ -85,7 +66,6 @@ class Launcher(abc.ABC):
         :return: job_step id
         :rtype: str
         """
-        pass
 
     @abc.abstractmethod
     def stop(self, step_id):
@@ -97,8 +77,3 @@ class Launcher(abc.ABC):
         :return: a StepInfo instance
         :rtype: StepInfo
         """
-        pass
-
-    @abc.abstractmethod
-    def __str__(self):
-        pass

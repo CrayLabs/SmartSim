@@ -25,15 +25,14 @@ def _get_log_level():
         log_level = str(get_env("SMARTSIM_LOG_LEVEL"))
         if log_level == "quiet":
             return "warning"
-        elif log_level == "info":
+        if log_level == "info":
             return "info"
-        elif log_level == "debug":
+        if log_level == "debug":
             return "debug"
         # extremely verbose logging used internally
-        elif log_level == "developer":
+        if log_level == "developer":
             return "debug"
-        else:
-            return "info"
+        return "info"
     except SSConfigError:
         return "info"
 
@@ -53,7 +52,7 @@ def get_logger(name=None, log_level=None):
     if name:
         try:
             user_log_level = str(get_env("SMARTSIM_LOG_LEVEL"))
-            if user_log_level != "developer" and user_log_level != "debug":
+            if user_log_level not in ("developer", "debug"):
                 name = "SmartSim"
         except SSConfigError:
             name = "SmartSim"

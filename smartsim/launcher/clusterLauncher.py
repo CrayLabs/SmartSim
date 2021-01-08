@@ -41,9 +41,8 @@ def create_cluster(nodes, ports):
     if returncode != 0:
         logger.error(err)
         raise LauncherError("Database '--cluster create' command failed")
-    else:
-        logger.debug(out)
-        logger.info("Database cluster has been created with %s nodes" % str(len(nodes)))
+    logger.debug(out)
+    logger.info(f"Database cluster has been created with {str(len(nodes))} nodes")
 
 
 def check_cluster_status(nodes, ports):

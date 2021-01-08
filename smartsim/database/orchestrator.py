@@ -46,8 +46,8 @@ class Orchestrator(EntityList):
 
         dpn = kwargs.pop("dpn", 1)
         db_nodes = kwargs.pop("db_nodes", 1)
-        cluster = False if db_nodes < 3 else True
-        on_alloc = True if "alloc" in kwargs else False
+        cluster = not bool(db_nodes < 3)
+        on_alloc = bool("alloc" in kwargs)
 
         db_conf = self._find_db_conf()
         ai_module = self._find_AI_module()
@@ -131,7 +131,7 @@ class Orchestrator(EntityList):
         try:
             full_exe = expand_exe_path(exe)
             return full_exe
-        except SSConfigError as e:
+        except SSConfigError:
             msg = "Database not built/installed correctly. "
             msg += "Could not locate database executable"
             raise SSConfigError(msg) from None
@@ -145,11 +145,10 @@ class Orchestrator(EntityList):
         if path.isfile(gpu_module):
             logger.debug("Orchestrator using RedisAI GPU")
             return " ".join(("--loadmodule", gpu_module))
-        elif path.isfile(cpu_module):
+        if path.isfile(cpu_module):
             logger.debug("Orchestrator using RedisAI CPU")
             return " ".join(("--loadmodule", cpu_module))
-        else:
-            raise SSConfigError("Could not find RedisAI module")
+        raise SSConfigError("Could not find RedisAI module")
 
     @staticmethod
     def _find_db_conf():
@@ -165,8 +164,7 @@ class Orchestrator(EntityList):
             msg = "Could not locate database configuration file.\n"
             msg += f"looked at path {conf_path}"
             raise SSConfigError(msg)
-        else:
-            return conf_path
+        return conf_path
 
     def _get_db_args(self, cluster, on_alloc, port, db_id):
         """Create the arguments neccessary for cluster creation

@@ -29,8 +29,7 @@ def expand_exe_path(exe):
             return os.path.abspath(exe)
         if os.path.isfile(exe) and not os.access(exe, os.X_OK):
             raise SSConfigError(f"File, {exe}, is not an executable")
-        else:
-            raise SSConfigError(f"Could not locate executable {exe}")
+        raise SSConfigError(f"Could not locate executable {exe}")
     else:
         return os.path.abspath(in_path)
 
@@ -44,8 +43,8 @@ def get_env(env_var):
     try:
         value = environ[env_var]
         return value
-    except KeyError:
-        raise SSConfigError("SmartSim environment not set up!")
+    except KeyError as e:
+        raise SSConfigError("SmartSim environment not set up!") from e
 
 
 color2num = dict(

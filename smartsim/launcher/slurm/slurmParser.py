@@ -21,7 +21,7 @@ def parse_salloc_error(output):
         if salloc and line.startswith(salloc + ": error:"):
             error = line.split("error:")[1]
             return error.strip()
-        elif line.startswith("salloc: error:"):
+        if line.startswith("salloc: error:"):
             error = line.split("error:")[1]
             return error.strip()
     # if no error line, take first line
@@ -29,7 +29,7 @@ def parse_salloc_error(output):
         if salloc and line.startswith(salloc + ": "):
             error = " ".join((line.split()[1:]))
             return error.strip()
-        elif line.startswith("salloc: "):
+        if line.startswith("salloc: "):
             error = " ".join((line.split()[1:]))
             return error.strip()
     # return None if we cant find error
@@ -48,12 +48,11 @@ def parse_sacct_step(output):
     job_id = line.split("|")[0]
     if "." not in job_id:
         return 0
-    else:
-        job, step = job_id.split(".")
-        if step.startswith("ext"):
-            return 0
-        else:
-            return int(step) + 1
+
+    _, step = job_id.split(".")
+    if step.startswith("ext"):
+        return 0
+    return int(step) + 1
 
 
 def parse_sacct(output, job_id):

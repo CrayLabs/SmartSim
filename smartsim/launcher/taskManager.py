@@ -59,7 +59,7 @@ class TaskManager:
             for task in self.tasks:
                 returncode = task.check_status()  # poll and set returncode
                 # has to be != None because returncode can be 0
-                if returncode != None:
+                if returncode is not None:
                     output, error = task.get_io()
                     self.add_task_history(task.step_id, returncode, output, error)
                     self.remove_task(task.step_id)
@@ -100,9 +100,9 @@ class TaskManager:
                 returncode = task.check_status()
                 self.add_task_history(task.step_id, returncode)
             self.tasks.remove(task)
-        except psutil.NoSuchProcess as e:
+        except psutil.NoSuchProcess:
             logger.debug("Failed to kill a task during removal")
-        except KeyError as e:
+        except KeyError:
             logger.debug("Failed to remove a task, task was already removed")
         finally:
             self._lock.release()
@@ -117,10 +117,10 @@ class TaskManager:
         try:
             history = self.task_history[step_id]
             # task is still running
-            if history[0] == None:
+            if history[0] is None:
                 return False
             # task recorded non-zero exit code
-            elif history[0] != 0:
+            if history[0] != 0:
                 return True
             return False
         # Task hasnt been added yet (unlikely)

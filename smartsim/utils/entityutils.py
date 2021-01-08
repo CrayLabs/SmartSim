@@ -40,7 +40,6 @@ def _check_names(args):
             raise TypeError(
                 f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
             )
-        elif name in used:
+        if name in used:
             raise SmartSimError("User provided two entities with the same name")
-        else:
-            used.append(name)
+        used.append(name)

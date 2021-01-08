@@ -1,6 +1,5 @@
 from os import mkdir, path
 from shutil import copyfile, rmtree, which
-from subprocess import PIPE, Popen, run
 
 import pytest
 from decorator import decorator

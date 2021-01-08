@@ -5,7 +5,6 @@ from ..constants import (
     STATUS_CANCELLED,
     STATUS_COMPLETED,
     STATUS_FAILED,
-    STATUS_NEW,
     STATUS_PAUSED,
     STATUS_RUNNING,
 )
@@ -50,11 +49,10 @@ class LocalStepInfo(StepInfo):
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
-        elif status in self.mapping:
+        if status in self.mapping:
             return self.mapping[status]
-        else:
-            # we don't know what happened so return failed to be safe
-            return STATUS_FAILED
+        # we don't know what happened so return failed to be safe
+        return STATUS_FAILED
 
 
 class SlurmStepInfo(StepInfo):
@@ -95,8 +93,7 @@ class SlurmStepInfo(StepInfo):
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
-        elif status in self.mapping:
+        if status in self.mapping:
             return self.mapping[status]
-        else:
-            # we don't know what happened so return failed to be safe
-            return STATUS_FAILED
+        # we don't know what happened so return failed to be safe
+        return STATUS_FAILED
