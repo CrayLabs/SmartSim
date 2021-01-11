@@ -7,6 +7,8 @@ MAKEFLAGS += --no-print-directory
 # help: SmartSim Makefile help
 # help:
 
+SHELL:=/bin/bash
+
 # help: help                           - display this makefile's help information
 .PHONY: help
 help:
@@ -18,33 +20,28 @@ help:
 
 # help: silc                           - Make SILC python client and setup SILC library
 .PHONY: silc
-silc: SHELL:=/bin/bash
 silc:
 	@bash ./build-scripts/build-silc.sh
 
 # help: deps                           - Make SmartSim dependencies (CPU builds, TF and PT)
 .PHONY: deps
-deps: SHELL:=/bin/bash
 deps:
-	@bash ./build-scripts/build_deps.sh
+	@bash ./build-scripts/build-deps.sh
 
 # help: deps-cpu-all                   - Make SmartSim dependencies (CPU builds, TF, PT, TFL, ONNX)
 .PHONY: deps-cpu-all
-deps-cpu-all: SHELL:=/bin/bash
 deps-cpu-all:
-	@bash ./build-scripts/build_deps.sh cpu 1 1 1 1
+	@bash ./build-scripts/build-deps.sh cpu 1 1 1 1
 
 # help: deps-gpu                       - Make SmartSim dependencies (GPU builds, TF, PT)
 .PHONY: deps-gpu
-deps-gpu: SHELL:=/bin/bash
 deps-gpu:
-	@bash ./build-scripts/build_deps.sh gpu
+	@bash ./build-scripts/build-deps.sh gpu
 
 # help: deps-gpu-all                   - Make SmartSim dependencies (GPU builds, TF, PT, TFL, ONNX)
 .PHONY: deps-gpu-all
-deps-gpu-all: SHELL:=/bin/bash
 deps-gpu-all:
-	@bash ./build-scripts/build_deps.sh gpu 1 1 1 1
+	@bash ./build-scripts/build-deps.sh gpu 1 1 1 1
 
 
 # help: clean-deps                     - remove third-party deps

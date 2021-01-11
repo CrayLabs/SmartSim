@@ -33,7 +33,7 @@ fi
 # Build RedisAI
 if [[ $RAI_BUILD_TYPE == "gpu" ]]; then
     echo "Building RedisAI for GPU..."
-    ../build-scripts/build-redisai-gpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
+    source ../build-scripts/build-redisai-gpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
     if [ $? != 0 ]; then
         echo "ERROR: RedisAI GPU failed to build"
         cd ..
@@ -41,7 +41,7 @@ if [[ $RAI_BUILD_TYPE == "gpu" ]]; then
     fi
 else
     echo "Building RedisAI for CPU..."
-    ../build-scripts/build-redisai-cpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
+    source ../build-scripts/build-redisai-cpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
     if [ $? != 0 ]; then
         echo "ERROR: RedisAI GPU failed to build"
         cd ..
