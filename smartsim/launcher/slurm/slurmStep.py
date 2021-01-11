@@ -110,8 +110,8 @@ class SlurmStep:
                 else:
                     exe_args = [""]
                 cmd = [exe] + exe_args
-
                 return cmd
+            return [exe]
 
         except KeyError as e:
             raise SSConfigError(

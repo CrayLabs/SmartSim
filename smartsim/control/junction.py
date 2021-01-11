@@ -1,6 +1,5 @@
 from itertools import product
 
-
 class Junction:
     """A Junction manages all the data endpoints of a SmartSim
     experiment and the database cluster that serves as the
@@ -35,28 +34,9 @@ class Junction:
         """
         connections = {}
         if self.database_instances:
-            connections["SSDB"] = _env_safe_string(";".join(self.database_instances))
+            connections["SSDB"] = ",".join(self.database_instances)
             if entity.incoming_entities:
-                connections["SSKEYIN"] = _env_safe_string(
-                    ";".join([in_entity.name for in_entity in entity.incoming_entities])
-                )
+                connections["SSKEYIN"] = ",".join([in_entity.name for in_entity in entity.incoming_entities])
             if entity.query_key_prefixing():
                 connections["SSKEYOUT"] = entity.name
         return connections
-
-def _env_safe_string(string):
-    """Format a string to safely set as an environment variable
-
-    This function formats a string that can be safely set
-    as an environment variable by enclosing it in double quotation
-    marks.
-
-    :param string: The string value of an environment variable
-    :type string:  str
-    :returns string: The original string enclosed in double quotes
-    """
-    if string[0] != '"':
-        string = '"' + string
-    if string[-1] != '"':
-        string += '"'
-    return string
