@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from smartsim import Client
+from silc import Client, Dataset
 
 if __name__ == "__main__":
 
@@ -41,17 +41,18 @@ if __name__ == "__main__":
     # associated with each MPI rank at a given time step.
     # Each variable is saved in a separate list.
     for i in range(n_ranks):
-        key = f"atoms_rank_{i}_tstep_{t_step}_atom_id"
-        print(f"loking for key {key}")
-        atom_id.extend(client.get_array_nd_int64(key, wait=True))
-        key = f"atoms_rank_{i}_tstep_{t_step}_atom_type"
-        atom_type.extend(client.get_array_nd_int64(key, wait=True))
-        key = f"atoms_rank_{i}_tstep_{t_step}_atom_x"
-        atom_x.extend(client.get_array_nd_float64(key, wait=True))
-        key = f"atoms_rank_{i}_tstep_{t_step}_atom_y"
-        atom_y.extend(client.get_array_nd_float64(key, wait=True))
-        key = f"atoms_rank_{i}_tstep_{t_step}_atom_z"
-        atom_z.extend(client.get_array_nd_float64(key, wait=True))
+
+        dataset_key = f"atoms_rank_{i}_tstep_{t_step}"
+
+        print(f"Retrieving DataSet {dataset_key}")
+
+        dataset = client.get_dataset(dataset_key)
+
+        atom_id.extend(dataset.get_tensor("atom_id"))
+        atom_type.extend(dataset.get_tensor("atom_type"))
+        atom_x.extend(dataset.get_tensor("atom_x"))
+        atom_y.extend(dataset.get_tensor("atom_y"))
+        atom_z.extend(dataset.get_tensor("atom_z"))
 
     # We print the atom position data to check the accuracy of our results.
     # The printed data will be piped by SmartSim to an output file
