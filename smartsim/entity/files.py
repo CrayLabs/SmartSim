@@ -101,7 +101,6 @@ class EntityFiles:
         full_path = path.abspath(file_path)
         if path.isfile(full_path):
             return full_path
-        elif path.isdir(full_path):
+        if path.isdir(full_path):
             return full_path
-        else:
-            raise SSConfigError(f"File or Directory {file_path} not found")
+        raise SSConfigError(f"File or Directory {file_path} not found")

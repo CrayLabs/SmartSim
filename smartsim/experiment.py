@@ -41,7 +41,14 @@ class Experiment:
         """
         self.name = name
         self.orc = None
-        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+        if exp_path:
+            if not isinstance(exp_path, str):
+                raise TypeError("exp_path argument was not of type str")
+            if not osp.isdir(osp.abspath(exp_path)):
+                raise NotADirectoryError("Experiment path provided does not exist")
+            exp_path = osp.abspath(exp_path)
+        self.exp_path = init_default(osp.join(getcwd(), name),
+                                     exp_path, str)
         self._control = Controller(launcher=launcher)
 
     def start(self, *args, block=True, summary=False):

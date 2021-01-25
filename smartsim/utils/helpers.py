@@ -30,8 +30,7 @@ def expand_exe_path(exe):
         if os.path.isfile(exe) and not os.access(exe, os.X_OK):
             raise SSConfigError(f"File, {exe}, is not an executable")
         raise SSConfigError(f"Could not locate executable {exe}")
-    else:
-        return os.path.abspath(in_path)
+    return os.path.abspath(in_path)
 
 
 def get_env(env_var):

@@ -1,5 +1,5 @@
 from subprocess import PIPE, Popen, TimeoutExpired
-
+import time
 import psutil
 
 from ..error import ShellError, SSConfigError
@@ -79,12 +79,18 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
     """
     global verbose_shell
     if verbose_shell:
-        logger.debug(f"Executing async Popen cmd: {' '.join(cmd_list)}")
+        logger.debug(f"Executing command: {' '.join(cmd_list)}")
 
     try:
         popen_obj = psutil.Popen(
             cmd_list, cwd=cwd, stdout=out, stderr=err, env=env, close_fds=True
         )
+        time.sleep(.2)
+        popen_obj.poll()
+        if not popen_obj.is_running() and popen_obj.returncode != 0:
+            _, error = popen_obj.communicate()
+            error = error.decode("utf-8")
+            raise ShellError("Command failed immediately", error, cmd_list)
     except OSError as e:
-        raise ShellError("Failed to run async shell command", e, cmd_list) from None
+        raise ShellError("Failed to run command", e, cmd_list) from None
     return popen_obj

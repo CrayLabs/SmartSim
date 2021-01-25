@@ -60,6 +60,25 @@ def test_start_no_allocs():
     with pytest.raises(SmartSimError):
         ctrl.start(model)
 
+@controller_test
+def test_bad_slurm_args():
+    """Should fail because of bad slurm arguments.
+    """
+    exp = Experiment("test_bad_args")
+
+    run_settings = {
+        "not-an-arg": None,
+        "executable": "python",
+        "exe_args": "bad.py --time 10"
+    }
+
+    model = exp.create_model(
+        "model_bad_args", path=test_path, run_settings=run_settings
+    )
+
+    with pytest.raises(SmartSimError):
+        ctrl.start(model)
+
 
 # ------ Helper Functions ------------------------------------------
 

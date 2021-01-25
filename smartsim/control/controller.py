@@ -267,22 +267,24 @@ class Controller:
         step, entity = entity_step
         try:
             job_id = self._launcher.run(step)
-            if self._jobs.query_restart(entity.name):
-                logger.debug(f"Restarting {entity.name}")
-                self._jobs.restart_job(entity.name, job_id)
-            else:
-                logger.debug(f"Launching {entity.name}")
-                self._jobs.add_job(entity.name, job_id, entity)
-
-            if isinstance(entity, DBNode):
-                job_nodes = self._jobs.get_job_nodes(entity.name)
-                self._cons.store_db_addr(job_nodes, entity.ports)
-
         except LauncherError as e:
-            msg = f"An error occurred when launching {entity} \n"
-            msg += "Check error and output files for details."
+            msg = f"An error occurred when launching {entity.name} \n"
+            msg += "Check error and output files for details.\n"
+            msg += f"{entity}"
             logger.error(msg)
             raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+
+        if self._jobs.query_restart(entity.name):
+            logger.debug(f"Restarting {entity.name}")
+            self._jobs.restart_job(entity.name, job_id)
+        else:
+            logger.debug(f"Launching {entity.name}")
+            self._jobs.add_job(entity.name, job_id, entity)
+
+        if isinstance(entity, DBNode):
+            job_nodes = self._jobs.get_job_nodes(entity.name)
+            self._cons.store_db_addr(job_nodes, entity.ports)
+
 
     def _create_steps(self, entities):
         """Create job steps for all entities with the launcher
