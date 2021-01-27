@@ -72,8 +72,8 @@ experiment.start(m2, summary=True)
 # When the model and node are complete, stop the
 # orchestrator with the stop() call which will
 # stop all running jobs when no entities are specified
-#experiment.stop(orc)
+experiment.stop(orc)
 
 # Release our system compute allocation
 # experiment.release()
-#slurm.release_slurm_allocation(alloc)
+slurm.release_slurm_allocation(alloc)

@@ -59,7 +59,7 @@ option(DISABLE_CXX11_REQUIREMENT "Disable check that requires C++11 for compilin
 if(DISABLE_CXX11_REQUIREMENT)
   add_definitions(-DLAMMPS_CXX98)
  else()
-  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # GNU compiler features
@@ -169,32 +169,6 @@ if(PKG_USER-ADIOS)
   enable_language(C)
   find_package(ADIOS2 REQUIRED)
   list(APPEND LAMMPS_LINK_LIBS adios2::adios2)
-endif()
-
-if(PKG_USER-SMARTSIM)
-  if(DEFINED ENV{HIREDIS_INSTALL_PATH})
-	   string(CONCAT HIREDIS_LIB_PATH $ENV{HIREDIS_INSTALL_PATH} "/lib")
-	   find_library(HIREDIS_LIB hiredis PATHS ${HIREDIS_LIB_PATH} NO_DEFAULT_PATH)
-	   string(CONCAT HIREDIS_INCLUDE_PATH $ENV{HIREDIS_INSTALL_PATH} "/include/")
-  endif()
-  if(DEFINED ENV{PROTOBUF_INSTALL_PATH})
-	   string(CONCAT PROTOBUF_LIB_PATH $ENV{PROTOBUF_INSTALL_PATH} "/lib")
-	   find_library(PROTOBUF_LIB protobuf PATHS ${PROTOBUF_LIB_PATH} NO_DEFAULT_PATH)
-	   string(CONCAT PROTOBUF_INCLUDE_PATH $ENV{PROTOBUF_INSTALL_PATH} "/include/")
-  endif()
-  if(DEFINED ENV{REDISPP_INSTALL_PATH})
-	   string(CONCAT REDISPP_LIB_PATH $ENV{REDISPP_INSTALL_PATH} "/lib")
-	   find_library(REDISPP_LIB redis++ PATHS ${REDISPP_LIB_PATH} )
-	   string(CONCAT REDISPP_INCLUDE_PATH $ENV{REDISPP_INSTALL_PATH} "/include/")
-  endif()
-  list(APPEND LAMMPS_LINK_LIBS ${REDISPP_LIB})
-  list(APPEND LAMMPS_LINK_LIBS ${HIREDIS_LIB})
-  list(APPEND LAMMPS_LINK_LIBS ${PROTOBUF_LIB})
-  include_directories(${HIREDIS_INCLUDE_PATH})
-  include_directories(${REDISPP_INCLUDE_PATH})
-  include_directories(${PROTOBUF_INCLUDE_PATH})
-  include_directories($ENV{SMARTSIMHOME}/smartsim/clients/)
-  include_directories($ENV{SMARTSIMHOME}/smartsim/utils/protobuf/)
 endif()
 
 # do MPI detection after language activation, if MPI for these language is required
@@ -363,6 +337,7 @@ include(Packages/LATTE)
 include(Packages/MESSAGE)
 include(Packages/MSCG)
 include(Packages/COMPRESS)
+include(Packages/USER-SMARTSIM)
 
 # the windows version of LAMMPS requires a couple extra libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -405,16 +380,9 @@ RegisterStyles(${LAMMPS_SOURCE_DIR})
 ############################################
 foreach(PKG ${DEFAULT_PACKAGES})
   set(${PKG}_SOURCES_DIR ${LAMMPS_SOURCE_DIR}/${PKG})
-  
+
   file(GLOB ${PKG}_SOURCES ${${PKG}_SOURCES_DIR}/[^.]*.cpp)
   file(GLOB ${PKG}_HEADERS ${${PKG}_SOURCES_DIR}/[^.]*.h)
-
-  if("PKG_${PKG}" STREQUAL "PKG_USER-SMARTSIM")
-    list(APPEND ${PKG}_SOURCES $ENV{SMARTSIMHOME}/smartsim/clients/client.cc)
-    list(APPEND ${PKG}_HEADERS $ENV{SMARTSIMHOME}/smartsim/clients/client.h)
-    list(APPEND ${PKG}_SOURCES $ENV{SMARTSIMHOME}/smartsim/utils/protobuf/smartsim_protobuf.pb.cc)
-    list(APPEND ${PKG}_HEADERS $ENV{SMARTSIMHOME}/smartsim/utils/protobuf/smartsim_protobuf.pb.h)
-  endif()
 
   # check for package files in src directory due to old make system
   DetectBuildSystemConflict(${LAMMPS_SOURCE_DIR} ${${PKG}_SOURCES} ${${PKG}_HEADERS})

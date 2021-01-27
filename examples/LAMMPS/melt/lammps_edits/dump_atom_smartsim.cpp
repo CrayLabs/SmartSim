@@ -42,49 +42,49 @@ DumpAtomSmartSim::~DumpAtomSmartSim()
 
 void DumpAtomSmartSim::write()
 {
-  SmartSimClient client(true);
+  /* Construct SILC Client object
+  */
+  SILC::Client client(true);
 
-  int rank;
-  std::string key;
-  int* array_dims = new int[1];
-  MPI_Comm_rank(world, &rank);
+  /* Construct DataSet object with unique
+  name based on user prefix, MPI rank, and
+  timestep
+  */
+  SILC::DataSet dataset(this->_make_dataset_key());
 
-  double* box_dims;
-  int n_dims;
-    if (domain->triclinic == 0) {
-      n_dims = 6;
-      box_dims = new double[n_dims];
-      box_dims[0] = domain->boxlo[0];
-      box_dims[1] = domain->boxhi[0];
-      box_dims[2] = domain->boxlo[1];
-      box_dims[3] = domain->boxhi[1];
-      box_dims[4] = domain->boxlo[2];
-      box_dims[5] = domain->boxhi[2];
-    } else {
-      n_dims = 9;
-      box_dims = new double[n_dims];
-      box_dims[0] = domain->boxlo_bound[0];
-      box_dims[1] = domain->boxhi_bound[0];
-      box_dims[2] = domain->boxlo_bound[1];
-      box_dims[3] = domain->boxhi_bound[1];
-      box_dims[4] = domain->boxlo_bound[2];
-      box_dims[5] = domain->boxhi_bound[2];
-      box_dims[6] = domain->xy;
-      box_dims[7] = domain->xz;
-      box_dims[8] = domain->yz;
-    }
-    key = this->_make_key("domain", rank);
-    array_dims[0] = n_dims;
-    client.put_array_double(key.c_str(), box_dims, array_dims, 1);
-    delete[] box_dims;
+  /* Add a "domain" metadata field to the DataSet to hold information
+  about the simulation domain.
+  */
+  dataset.add_meta_scalar("domain", &(domain->boxlo[0]), SILC::MetaDataType::dbl);
+  dataset.add_meta_scalar("domain", &(domain->boxhi[0]), SILC::MetaDataType::dbl);
+  dataset.add_meta_scalar("domain", &(domain->boxlo[1]), SILC::MetaDataType::dbl);
+  dataset.add_meta_scalar("domain", &(domain->boxhi[1]), SILC::MetaDataType::dbl);
+  dataset.add_meta_scalar("domain", &(domain->boxlo[2]), SILC::MetaDataType::dbl);
+  dataset.add_meta_scalar("domain", &(domain->boxhi[2]), SILC::MetaDataType::dbl);
 
-    key = this->_make_key("triclinic", rank);
-    client.put_scalar_int64(key.c_str(), domain->triclinic);
-    key = this->_make_key("scale_flag", rank);
-    client.put_scalar_int64(key.c_str(), scale_flag);
+  /* Add a "triclinic" metadata field to the DataSet to indicate
+  if the triclinic boolean is true in the simulation.
+  */
+  dataset.add_meta_scalar("triclinic", &(domain->triclinic), SILC::MetaDataType::int64);
 
-    int n_local = atom->nlocal;
-    int n_cols = (image_flag == 1) ? 8 : 5;
+  /* If the triclinic boolean is true, add triclinic metadata
+  fields to the DataSet.
+  */
+  if(domain->triclinic) {
+    dataset.add_meta_scalar("triclinic_xy", &(domain->xy), SILC::MetaDataType::dbl);
+    dataset.add_meta_scalar("triclinic_xz", &(domain->xz), SILC::MetaDataType::dbl);
+    dataset.add_meta_scalar("triclinic_yz", &(domain->yz), SILC::MetaDataType::dbl);
+  }
+
+  /* Add a "scale_flag" metadata field ot the DataSet to indicate
+  if the simulation scale_flag is true or false.
+  */
+  dataset.add_meta_scalar("scale_flag", &scale_flag, SILC::MetaDataType::int64);
+
+  /* Perform internal LAMMPS output preprocessing.
+  */
+  int n_local = atom->nlocal;
+  int n_cols = (image_flag == 1) ? 8 : 5;
 
     nme = count();
     if (nme > maxbuf) {
@@ -105,49 +105,67 @@ void DumpAtomSmartSim::write()
     if (sort_flag)
         sort();
 
-    array_dims[0] = n_local;
     int* data_int = new int[n_local];
     double* data_dbl = new double[n_local];
     int buf_len = n_cols*n_local;
-    //Atom ID
-    this->_pack_buf_into_array<int>(data_int, buf_len, 0, n_cols);
-    key = this->_make_key("atom_id", rank);
-    client.put_array_int64(key.c_str(), data_int, array_dims, 1);
-    //Atom Type
-    this->_pack_buf_into_array<int>(data_int, buf_len, 1, n_cols);
-    key = this->_make_key("atom_type", rank);
-    client.put_array_int64(key.c_str(), data_int, array_dims, 1);
-    //Atom x position
-    this->_pack_buf_into_array<double>(data_dbl, buf_len, 2, n_cols);
-    key = this->_make_key("atom_x", rank);
-    client.put_array_double(key.c_str(), data_dbl, array_dims, 1);
-    //Atom y position
-    this->_pack_buf_into_array<double>(data_dbl, buf_len, 3, n_cols);
-    key = this->_make_key("atom_y", rank);
-    client.put_array_double(key.c_str(), data_dbl, array_dims, 1);
-    //Atom z position
-    this->_pack_buf_into_array<double>(data_dbl, buf_len, 4, n_cols);
-    key = this->_make_key("atom_z", rank);
-    client.put_array_double(key.c_str(), data_dbl, array_dims, 1);
 
+    std::vector<size_t> tensor_length;
+    tensor_length.push_back(n_local);
+
+    //Add atom ID tensor to the DataSet
+    this->_pack_buf_into_array<int>(data_int, buf_len, 0, n_cols);
+    dataset.add_tensor("atom_id", data_int, tensor_length,
+                       SILC::TensorType::int64, SILC::MemoryLayout::contiguous);
+
+    //Add atom type tensor to the DataSet
+    this->_pack_buf_into_array<int>(data_int, buf_len, 1, n_cols);
+    dataset.add_tensor("atom_type", data_int, tensor_length,
+                       SILC::TensorType::int64, SILC::MemoryLayout::contiguous);
+
+    //Add atom x position  tensor to the DataSet
+    this->_pack_buf_into_array<double>(data_dbl, buf_len, 2, n_cols);
+    dataset.add_tensor("atom_x", data_dbl, tensor_length,
+                       SILC::TensorType::dbl, SILC::MemoryLayout::contiguous);
+
+    //Add atom y position  tensor to the DataSet
+    this->_pack_buf_into_array<double>(data_dbl, buf_len, 3, n_cols);
+    dataset.add_tensor("atom_y", data_dbl, tensor_length,
+                       SILC::TensorType::dbl, SILC::MemoryLayout::contiguous);
+
+    //Add atom z position tensor to the DataSet
+    this->_pack_buf_into_array<double>(data_dbl, buf_len, 4, n_cols);
+    dataset.add_tensor("atom_z", data_dbl, tensor_length,
+                       SILC::TensorType::dbl, SILC::MemoryLayout::contiguous);
+
+    /*Add "image_flag" metadata field to the DataSet to indicate
+    if the image_flag boolean is true of false in the simulation.
+    */
+    dataset.add_meta_scalar("image_flag", &image_flag, SILC::MetaDataType::int64);
     if (image_flag == 1) {
-      //Atom ix image
+      //Add atom ix image tensor to the DataSet
       this->_pack_buf_into_array<int>(data_int, buf_len, 5, n_cols);
-      key = this->_make_key("atom_ix", rank);
-      client.put_array_int64(key.c_str(), data_int, array_dims, 1);
-      //Atom iy image
+      dataset.add_tensor("atom_ix", data_int, tensor_length,
+                         SILC::TensorType::int64, SILC::MemoryLayout::contiguous);
+
+      //Add atom iy image tensor to the DataSet
       this->_pack_buf_into_array<int>(data_int, buf_len, 6, n_cols);
-      key = this->_make_key("atom_iy", rank);
-      client.put_array_int64(key.c_str(), data_int, array_dims, 1);
-      //Atom iz image
+      dataset.add_tensor("atom_iy", data_int, tensor_length,
+                         SILC::TensorType::int64, SILC::MemoryLayout::contiguous);
+
+      //Add atom iz image tensor to the DataSet
       this->_pack_buf_into_array<int>(data_int, buf_len, 7, n_cols);
-      key = this->_make_key("atom_iz", rank);
-      client.put_array_int64(key.c_str(), data_int, array_dims, 1);
+      dataset.add_tensor("atom_iz", data_int, tensor_length,
+                         SILC::TensorType::int64, SILC::MemoryLayout::contiguous);
     }
 
+    /* Send the DataSet to the SmartSim experiment database
+    */
+    client.put_dataset(dataset);
+
+    /* Free temporary memory neeed to preprocess LAMMPS output
+    */
     delete[] data_int;
     delete[] data_dbl;
-    delete[] array_dims;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -169,13 +187,16 @@ void DumpAtomSmartSim::init_style()
         pack_choice = &DumpAtomSmartSim::pack_noscale_image;
 }
 
-std::string DumpAtomSmartSim::_make_key(std::string var_name, int rank)
+std::string DumpAtomSmartSim::_make_dataset_key()
 {
   // create database key using the var_name
+
+  int rank;
+  MPI_Comm_rank(world, &rank);
+
   std::string prefix(filename);
   std::string key = prefix + "_rank_" + std::to_string(rank) +
-    "_tstep_" + std::to_string(update->ntimestep) + "_" +
-    var_name;
+    "_tstep_" + std::to_string(update->ntimestep);
   return key;
 }
 
@@ -189,4 +210,3 @@ void DumpAtomSmartSim::_pack_buf_into_array(T* data, int length,
     data[c++] = buf[i];
   }
 }
-
