@@ -5,7 +5,7 @@ Extracting Data from Compiled Simulations
 
 .. note::
    This example uses API functionality in the 0.3.0-beta
-   release of SmartSim and 0.1.0-alpha relase of SILC.
+   release of SmartSim and 0.1.0-alpha release of SILC.
 
 This tutorial shows how to extract simulation data from a compiled
 application using SILC client capabilities.  To demonstrate the
@@ -16,7 +16,8 @@ LAMMPS simulation (written in C++) to a data processing
 Python script.  In the following sections, the process of
 embedding the client into the compiled application,
 building a data processing script to retrieve simulation data,
-and writing a SmartSim experiment script will be described.
+and writing a SmartSim experiment script to execute this workflow
+will be described.
 
 Embedding the C++ client
 ========================
@@ -42,7 +43,11 @@ required to execute data, script, and ML/AI model
 tasks.  The ``DataSet`` object provides the user with
 a nested data structure that encapsulates tensors and
 metadata, and the ``DataSet`` tensors can be used in the
-aforementioned ``Client`` tasks.
+aforementioned ``Client`` tasks.  It is worth noting
+that all of the capabilities of the library can be
+accomplished with just the ``Client`` object, but the
+``DataSet`` object is a convenient and efficient
+structure for moving and storing complex data.
 
 The Python, C++, C, and Fortran client source and header
 files can be found in the ``SILC`` repository.  For the C++
@@ -51,7 +56,9 @@ and ``client.cpp``.  Similarly, the C++ ``DataSet`` object
 is defined in ``dataset.h`` and ``dataset.cpp``.  Since
 LAMMPS is written in C++, the C++ interface in the
 aforementioned files will be the focus of this tutorial.
-However,
+However, the same workflow shown in this example
+can be reproduced in all of the
+supported languages with slightly different API function alls.
 
 For LAMMPS, an effort was made to conform to LAMMPS developer
 conventions.  Specifically, LAMMPS allows for developers to add
@@ -61,7 +68,7 @@ to LAMMPS to enable the ``atom/smartsim`` dump style.
 The ``atom/smartsim`` dump style sends atom ID, atom type, atom
 position, and other simulation metadata to the
 SmartSim experiment database using the
-aforementioned ``SmartSimClient`` object.  The default ``atom``
+aforementioned ``Client`` object.  The default ``atom``
 dump style in LAMMPS would normally send this information to
 output files.
 
@@ -75,17 +82,17 @@ The majority of code in ``dump_atom_smartsim.cpp``
 is devoted to placing atom information from
 LAMMPS data structures into arrays that can be sent to
 the SmartSim database.  Aside from that data manipulation,
-there are only four unique client API calls needed
+there are only five unique SILC API calls needed
 to send all of the tensor and metadata to the SmartSim
 experiment database:
 
 1) ``Client`` constructor to create the ``Client`` object
 2) ``DataSet`` constructor to create the ``DataSet`` object
-2) ``DataSet.add_tensor()`` to add the atom ID and atom type
-   tensors to the DataSet
-3) ``DataSet.add_meta_scalar()`` to add simulation metadata
+3) ``DataSet.add_tensor()`` to add the atom ID, atom type,
+   and atom position tensors to the DataSet
+4) ``DataSet.add_meta_scalar()`` to add simulation metadata
    to the DataSet
-4) ``Client.put_dataset()`` to send the ``DataSet`` to the
+5) ``Client.put_dataset()`` to send the ``DataSet`` to the
    SmartSim experiment database.
 
 For completeness, the code snippet below has been extracted from
@@ -330,8 +337,8 @@ into an application called ``my_application``.
   include_directories($ENV{SILC_INSTALL_PATH}/include)
   include_directories($ENV{SILC_INSTALL_PATH}/utils/protobuf)
 
-  # Add the SILC static libarary using the SILC_INSTALL_PATH
-  # enviroment variable
+  # Add the SILC static library using the SILC_INSTALL_PATH
+  # environment variable
   string(CONCAT SILC_LIB_PATH $ENV{SILC_INSTALL_PATH} "/build")
   find_library(SILC_LIB silc PATHS ${SILC_LIB_PATH} REQUIRED)
 
@@ -369,7 +376,7 @@ into an application called ``my_application``.
   )
 
   # Link my application with the additional CLIENT_LIBRARIES
-  # libaries
+  # libraries
   target_link_libraries(my_application
   	${CLIENT_LIBRARIES}
   )
@@ -380,17 +387,23 @@ programming practices, adaptations of the above instructions
 were made for the LAMMPS integration.  These adaptations
 are not necessarily instructive for applications beyond LAMMPS,
 so they are only briefly described herein.  In the list below,
-the line nubmers corresponding to changes in the LAMMPS
+the line numbers corresponding to changes in the LAMMPS
 CMakeLists.txt file are given so that these adaptations
 can be easily referenced.  However, the same basic compiling
-structured described above is followed.
+structure described above is followed.
 
 1) ``USER-SMARTSIM`` was added as an optional build package
    `(line 136)`
 2) Include the ``USER-SMARTSIM`` package CMAKE file
-   (line 340)`.  This CMAKE file will include the SILC
+   `(line 340)`.  This CMAKE file will include the SILC
    libraries and header files if the USER-SMARTSIM
    package is requested by the user.
+
+The CMAKE instructions to link the SILC library
+and include the SILC header files were put in
+``USER-SMARTSIM.cmake``.  This file should be placed
+in the ``cmake/Modules/Packages`` directory, which is in
+the LAMMPS top-level directory.
 
 It is worth reiterating that the CMAKE examples presented here
 rely on environment variables set by
@@ -399,7 +412,7 @@ the SILC ``setup_env.sh`` script.  Therefore,
 with the SILC client.
 
 To build LAMMPS with the aforementioned
-``USER-SMARTSIM`` package and MPI capabitlies,
+``USER-SMARTSIM`` package and MPI capabilities,
 the following cmake command can be used:
 
 .. code-block:: bash
@@ -418,7 +431,7 @@ Experiment Setup
 
 In this tutorial, the SmartSim experiment consists of a
 SmartSim model entity for the LAMMPS simulation and a
-SmartSim mdoel entity to intake and plot atom position
+SmartSim model entity to intake and plot atom position
 information from the SmartSim database.  The experiment
 is configured to utilize the Slurm launcher
 and a 3 node KeyDB redis cluster database.  The
@@ -428,91 +441,90 @@ It is worth noting that the inclusion of the
 SILC client in LAMMPS does not alter the
 typical experiment flow that has been described in
 other tutorials.  In fact, no details of the
-C++ client utiliation in LAMMPS are necessary
+C++ client utilization in LAMMPS are necessary
 in the SmartSim experiment script.
 
 
 .. code-block:: python
 
-from smartsim import Experiment, slurm
-from os import environ
-import os
+  from smartsim import Experiment, slurm
+  import os
 
-# Define resource variables for models,
-# scripts, and orchestrator
-lammps_compute_nodes = 2
-lammps_ppn = 2
-db_compute_nodes = 3
-analysis_compute_nodes = 1
+  # Define resource variables for models,
+  # scripts, and orchestrator
+  lammps_compute_nodes = 2
+  lammps_ppn = 2
+  db_compute_nodes = 3
+  analysis_compute_nodes = 1
 
-total_nodes = lammps_compute_nodes + \
-              db_compute_nodes + \
-              analysis_compute_nodes
+  total_nodes = lammps_compute_nodes + \
+                db_compute_nodes + \
+                analysis_compute_nodes
 
-# Retrieve Slurm allocation for the experiment
-alloc = slurm.get_slurm_allocation(nodes=total_nodes)
+  # Retrieve Slurm allocation for the experiment
+  alloc = slurm.get_slurm_allocation(nodes=total_nodes)
 
-# Create a SmartSim Experiment using the default
-# Slurm launcher backend
-experiment = Experiment("lammps_experiment")
+  # Create a SmartSim Experiment using the default
+  # Slurm launcher backend
+  experiment = Experiment("lammps_experiment")
 
-# Define the run settings for the LAMMPS model that will
-# be subsequently created.
-lammps_settings = {
-    "nodes": lammps_compute_nodes,
-    "ntasks-per-node" : lammps_ppn,
-    "executable": "lmp",
-    "exe_args": "-i in.melt",
-    "alloc": alloc}
+  # Define the run settings for the LAMMPS model that will
+  # be subsequently created.
+  lammps_settings = {
+      "nodes": lammps_compute_nodes,
+      "ntasks-per-node" : lammps_ppn,
+      "executable": "lmp",
+      "exe_args": "-i in.melt",
+      "alloc": alloc}
 
-# Define the run settings for the Python analysis script
-# that will be subsequently created
-analysis_settings = {
-    "nodes": analysis_compute_nodes,
-    "executable": "python",
-    "exe_args": f"data_analysis.py --ranks={lammps_compute_nodes*lammps_ppn} --time=250",
-    "alloc": alloc}
+  # Define the run settings for the Python analysis script
+  # that will be subsequently created
+  analysis_settings = {
+      "nodes": analysis_compute_nodes,
+      "executable": "python",
+      "exe_args": f"data_analysis.py --ranks={lammps_compute_nodes*lammps_ppn} --time=250",
+      "alloc": alloc}
 
-# Create the LAMMPS SmartSim model entity with the previously
-# defined run settings
-m1 = experiment.create_model("lammps_model", run_settings=lammps_settings)
+  # Create the LAMMPS SmartSim model entity with the previously
+  # defined run settings
+  m1 = experiment.create_model("lammps_model", run_settings=lammps_settings)
 
-# Attach the simulation input file in.melt to the entity so that
-# the input file is copied into the experiment directory when it is created
-m1.attach_generator_files(to_copy=["./in.melt"])
+  # Attach the simulation input file in.melt to the entity so that
+  # the input file is copied into the experiment directory when it is created
+  m1.attach_generator_files(to_copy=["./in.melt"])
 
-# Create the analysis SmartSim entity with the
-# previously defined run settings
-m2 = experiment.create_model("lammps_data_processor",run_settings=analysis_settings)
+  # Create the analysis SmartSim entity with the
+  # previously defined run settings
+  m2 = experiment.create_model("lammps_data_processor",run_settings=analysis_settings)
 
-# Attach the analysis script to the SmartSim node entity so that
-# the script is copied into the experiment directory when the
-# experiment is generated.
-m2.attach_generator_files(to_copy=["./data_analysis.py"])
+  # Attach the analysis script to the SmartSim model entity so that
+  # the script is copied into the experiment directory when the
+  # experiment is generated.
+  m2.attach_generator_files(to_copy=["./data_analysis.py"])
 
-# Create the SmartSim orchestrator object and database using the default
-# database cluster setting of three database nodes
-orc = experiment.create_orchestrator(db_nodes=db_compute_nodes,
-                                     overwrite=True, alloc=alloc)
+  # Create the SmartSim orchestrator object and database using the default
+  # database cluster setting of three database nodes
+  orc = experiment.create_orchestrator(db_nodes=db_compute_nodes,
+                                      overwrite=True, alloc=alloc)
 
-# Generate the experiment directory structure and copy the files
-# attached to SmartSim entities into that folder structure.
-experiment.generate(m1, m2, orc, overwrite=True)
+  # Generate the experiment directory structure and copy the files
+  # attached to SmartSim entities into that folder structure.
+  experiment.generate(m1, m2, orc, overwrite=True)
 
-# Start the model and orchestrator
-experiment.start(m1, orc, summary=True)
+  # Start the model and orchestrator
+  experiment.start(m1, orc, summary=True)
 
-# Start the data analysis script after the model is complete
-experiment.start(m2, summary=True)
+  # Start the data analysis script after the model is complete
+  experiment.start(m2, summary=True)
 
-# When the model and node are complete, stop the
-# orchestrator with the stop() call which will
-# stop all running jobs when no entities are specified
-experiment.stop(orc)
+  # When the model and analysis script are complete, stop the
+  # orchestrator with the stop() call which will
+  # stop all running jobs when no entities are specified
+  experiment.stop(orc)
 
-# Release our system compute allocation
-# experiment.release()
-slurm.release_slurm_allocation(alloc)
+  # Release our system compute allocation
+  # experiment.release()
+  slurm.release_slurm_allocation(alloc)
 
 LAMMPS input file
 -----------------
@@ -567,15 +579,16 @@ LAMMPS data analysis in Python
 The analysis script that retrieves the atom position information
 from the SmartSim database is shown below.  In this analysis
 script, SILC Python client API functions are used to retrieve
-data from the database.  Specifically, ```get_dataset`` and
-``get_tensor`` are used to retreive the data. It is worth
+data from the database.  Specifically, ``get_dataset`` and
+``get_tensor`` are used to retrieve the data. It is worth
 noting that the function names in the Python client are nearly
 identical to the C, Fortran, and C++ client function names,
 but the function parameters may differ.
 
 The important steps in the analysis script below
 that are applicable to all Python scripts that send and receive
-data from the SmartSim database are as follows:
+data from the SmartSim database using SILC ``DataSet`` are
+as follows:
 
 1)  Import the SILC ``Client`` and ``DataSet``
     object for use in the script with
@@ -587,12 +600,12 @@ data from the SmartSim database are as follows:
     or not a cluster of database nodes is being used.  The
     SmartSim experiment database address is typically
     determined through the environment variable ``SSDB``,
-    but it can be specifically manually in the ``Client``
+    but it can be specified manually in the ``Client``
     constructor.
 3)  Retrieve each LAMMPS ``DataSet`` that was saved
     in the SmartSim experiment database with
     ``Client.get_dataset()``.
-3)  Use SILC ``DataSet`` member function ``get_tensor``
+4)  Use SILC ``DataSet`` member function ``get_tensor``
     to retrieve each ``DataSet`` tensor corresponding
     to atom ID, atom type, and atom position.
 In this particular example, the atom positions that are
@@ -603,78 +616,78 @@ distributed in the domain.
 .. code-block:: python
 
   import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from silc import Client, Dataset
+  import matplotlib.pyplot as plt
+  from mpl_toolkits.mplot3d import Axes3D
+  from silc import Client, Dataset
 
-if __name__ == "__main__":
+  if __name__ == "__main__":
 
-    # The command line argument "ranks" is used to
-    # know how many MPI ranks were used to run the
-    # LAMMPS simulation because each MPI rank will send
-    # a unique key to the database.  This command line
-    # argument is provided programmatically as a
-    # run setting in the SmartSim experiment script.
-    # Similarly, the command line argument "time"
-    # is used to set which time step data will be
-    # pulled from the database.  This is also set
-    # programmatically as a run setting in the SmartSim
-    # experiment script
-    import argparse
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument("--ranks", type=int, default=1)
-    argparser.add_argument("--time", type=int, default=0)
-    args = argparser.parse_args()
+      # The command line argument "ranks" is used to
+      # know how many MPI ranks were used to run the
+      # LAMMPS simulation because each MPI rank will send
+      # a unique key to the database.  This command line
+      # argument is provided programmatically as a
+      # run setting in the SmartSim experiment script.
+      # Similarly, the command line argument "time"
+      # is used to set which time step data will be
+      # pulled from the database.  This is also set
+      # programmatically as a run setting in the SmartSim
+      # experiment script
+      import argparse
+      argparser = argparse.ArgumentParser()
+      argparser.add_argument("--ranks", type=int, default=1)
+      argparser.add_argument("--time", type=int, default=0)
+      args = argparser.parse_args()
 
-    n_ranks = args.ranks
-    t_step = args.time
+      n_ranks = args.ranks
+      t_step = args.time
 
-    # Initialize the SmartSim client object and indicate
-    # that a database cluster is being used with
-    # cluster = True
-    client = Client(cluster=True)
+      # Initialize the SmartSim client object and indicate
+      # that a database cluster is being used with
+      # cluster = True
+      client = Client(cluster=True)
 
-    # Create empty lists that we will fill with simulation data
-    atom_id = []
-    atom_type = []
-    atom_x = []
-    atom_y = []
-    atom_z = []
+      # Create empty lists that we will fill with simulation data
+      atom_id = []
+      atom_type = []
+      atom_x = []
+      atom_y = []
+      atom_z = []
 
-    # We will loop over MPI ranks and fetch the data
-    # associated with each MPI rank at a given time step.
-    # Each variable is saved in a separate list.
-    for i in range(n_ranks):
+      # We will loop over MPI ranks and fetch the data
+      # associated with each MPI rank at a given time step.
+      # Each variable is saved in a separate list.
+      for i in range(n_ranks):
 
-        dataset_key = f"atoms_rank_{i}_tstep_{t_step}"
+          dataset_key = f"atoms_rank_{i}_tstep_{t_step}"
 
-        print(f"Retrieving DataSet {dataset_key}")
+          print(f"Retrieving DataSet {dataset_key}")
 
-        dataset = client.get_dataset(dataset_key)
+          dataset = client.get_dataset(dataset_key)
 
-        atom_id.extend(dataset.get_tensor("atom_id"))
-        atom_type.extend(dataset.get_tensor("atom_type"))
-        atom_x.extend(dataset.get_tensor("atom_x"))
-        atom_y.extend(dataset.get_tensor("atom_y"))
-        atom_z.extend(dataset.get_tensor("atom_z"))
+          atom_id.extend(dataset.get_tensor("atom_id"))
+          atom_type.extend(dataset.get_tensor("atom_type"))
+          atom_x.extend(dataset.get_tensor("atom_x"))
+          atom_y.extend(dataset.get_tensor("atom_y"))
+          atom_z.extend(dataset.get_tensor("atom_z"))
 
-    # We print the atom position data to check the accuracy of our results.
-    # The printed data will be piped by SmartSim to an output file
-    # in the experiment directory.
-    n_atoms = len(atom_id)
-    for i in range(n_atoms):
-        print(f"{atom_id[i]} {atom_type[i]} {atom_x[i]} {atom_y[i]} {atom_z[i]}")
+      # We print the atom position data to check the accuracy of our results.
+      # The printed data will be piped by SmartSim to an output file
+      # in the experiment directory.
+      n_atoms = len(atom_id)
+      for i in range(n_atoms):
+          print(f"{atom_id[i]} {atom_type[i]} {atom_x[i]} {atom_y[i]} {atom_z[i]}")
 
-    # We plot the atom positions to check that the atom position distribution
-    # is uniform, as expected.
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-    ax.set_title('Atom position')
-    ax.scatter(atom_x, atom_y, atom_z)
-    plt.savefig('atom_position.pdf')
+      # We plot the atom positions to check that the atom position distribution
+      # is uniform, as expected.
+      fig = plt.figure()
+      ax = fig.add_subplot(111, projection='3d')
+      ax.set_xlabel('x')
+      ax.set_ylabel('y')
+      ax.set_zlabel('z')
+      ax.set_title('Atom position')
+      ax.scatter(atom_x, atom_y, atom_z)
+      plt.savefig('atom_position.pdf')
 
 
 Running the Experiment

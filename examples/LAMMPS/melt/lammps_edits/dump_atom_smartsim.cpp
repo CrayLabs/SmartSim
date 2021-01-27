@@ -162,7 +162,7 @@ void DumpAtomSmartSim::write()
     */
     client.put_dataset(dataset);
 
-    /* Free temporary memory neeed to preprocess LAMMPS output
+    /* Free temporary memory needed to preprocess LAMMPS output
     */
     delete[] data_int;
     delete[] data_dbl;

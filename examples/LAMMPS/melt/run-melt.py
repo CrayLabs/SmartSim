@@ -1,5 +1,4 @@
 from smartsim import Experiment, slurm
-from os import environ
 import os
 
 # Define resource variables for models,
@@ -49,7 +48,7 @@ m1.attach_generator_files(to_copy=["./in.melt"])
 # previously defined run settings
 m2 = experiment.create_model("lammps_data_processor",run_settings=analysis_settings)
 
-# Attach the analysis script to the SmartSim node entity so that
+# Attach the analysis script to the SmartSim model entity so that
 # the script is copied into the experiment directory when the
 # experiment is generated.
 m2.attach_generator_files(to_copy=["./data_analysis.py"])
@@ -69,7 +68,7 @@ experiment.start(m1, orc, summary=True)
 # Start the data analysis script after the model is complete
 experiment.start(m2, summary=True)
 
-# When the model and node are complete, stop the
+# When the model and analysis script are complete, stop the
 # orchestrator with the stop() call which will
 # stop all running jobs when no entities are specified
 experiment.stop(orc)
