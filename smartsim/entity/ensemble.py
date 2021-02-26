@@ -97,10 +97,10 @@ class Ensemble(EntityList):
         Only python clients can have multiple incoming connections
 
         :param incoming_entity: The entity that data will be received from
-        :param incoming_entity: SmartSimEntity
+        :type incoming_entity: SmartSimEntity
         :param receiving_client_type: The language of the SmartSim client used by
                                       this object. Can be cpp, fortran, python
-        :param receiving_client_type: str
+        :type receiving_client_type: str
         """
         for model in self.entities:
             model.register_incoming_entity(incoming_entity, receiving_client_type)
@@ -164,7 +164,7 @@ class Ensemble(EntityList):
         parameters = []
         for name, val in self.params.items():
             param_names.append(name)
-
+            
             if isinstance(val, list):
                 parameters.append(val)
             elif isinstance(val, (int, str)):
