@@ -11,7 +11,7 @@ REDIS_PORT = 6780
 
 
 def test_send_and_get_data():
-    exp = Experiment("send_get_data", launcher="local")
+    exp = Experiment("silc_ensemble", launcher="local")
 
     if osp.isdir(exp.exp_path):
         rmtree(exp.exp_path)
@@ -30,8 +30,11 @@ def test_send_and_get_data():
             perm_strat="step"
         )
 
-    ensemble.entities[1].register_incoming_entity(ensemble.entities[0], 'python')
     ensemble.entities[0].register_incoming_entity(ensemble.entities[1], 'python')
+    ensemble.entities[1].register_incoming_entity(ensemble.entities[0], 'python')
+    ensemble.attach_generator_files(to_copy="./test_configs/model_methods_torch.py")
+
+    exp.generate(ensemble, overwrite=True)
 
     # start the models
     exp.start(ensemble, summary=True)
