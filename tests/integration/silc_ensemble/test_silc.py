@@ -1,14 +1,24 @@
 import os.path as osp
 import pickle
 from shutil import rmtree
+import sys
+import pytest
 
 import redis
 
 from smartsim import Experiment, constants
 from smartsim.entity import Ensemble
 
+
 REDIS_PORT = 6780
 
+try:
+    import silc
+except ImportError:
+    pass
+
+@pytest.mark.skipif('silc' not in sys.modules,
+                    reason="requires SILC")
 
 def test_send_and_get_data():
     exp = Experiment("silc_ensemble", launcher="local")
