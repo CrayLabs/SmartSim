@@ -32,7 +32,7 @@ class Model(SmartSimEntity):
         # expand the executable path
         self.run_settings["executable"] = self._expand_entity_exe()
 
-    def register_incoming_entity(self, incoming_entity, receiving_client_type):
+    def register_incoming_entity(self, incoming_entity):
         """Register future communication between entities.
 
         Registers the named data sources that this entity
@@ -43,17 +43,7 @@ class Model(SmartSimEntity):
 
         :param incoming_entity: The entity that data will be received from
         :param incoming_entity: SmartSimEntity
-        :param receiving_client_type: The language of the SmartSim client used by
-                                      this object. Can be cpp, fortran, python
-        :param receiving_client_type: str
         """
-        # Update list as clients are developed
-        multiple_conn_supported = receiving_client_type in ["python"]
-        if not multiple_conn_supported and self.incoming_entities:
-            raise SSConfigError(
-                f"Receiving client of type '{receiving_client_type}'"
-                + " does not support multiple incoming connections"
-            )
         if incoming_entity.name in [
             in_entity.name for in_entity in self.incoming_entities
         ]:
