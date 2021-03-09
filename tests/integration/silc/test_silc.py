@@ -59,8 +59,8 @@ def test_exchange():
 
     print(exp.summary())
 
-    #if osp.isdir(exp.exp_path):
-    #    rmtree(exp.exp_path)
+    if osp.isdir(exp.exp_path):
+        rmtree(exp.exp_path)
 
 def test_consumer():
     exp = Experiment("silc_ensemble", launcher="local")

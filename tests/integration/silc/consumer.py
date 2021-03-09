@@ -7,7 +7,7 @@ import torch.nn as nn
 
 import argparse
 
-from silc import Client, EntityType
+from silc import Client
 
 
 if __name__ == "__main__":
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     for key in data_sources:
         c.set_data_source(key)
 
-        input_exists = c.poll_entity("torch_cnn_input", EntityType.tensor, 100, 100)
+        input_exists = c.poll_tensor("torch_cnn_input", 100, 100)
         assert input_exists
         input_sum += c.get_tensor("torch_cnn_input")
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     for key in data_sources:
         c.set_data_source(key)
-        output_exists = c.poll_entity("torch_cnn_output", EntityType.tensor, 100, 100)
+        output_exists = c.poll_tensor("torch_cnn_output", 100, 100)
         assert output_exists
 
         out_data = c.get_tensor("torch_cnn_output")
