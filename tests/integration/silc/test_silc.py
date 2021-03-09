@@ -48,7 +48,7 @@ def test_exchange():
     exp.generate(ensemble, overwrite=True)
 
     # start the models
-    exp.start(ensemble, summary=True)
+    exp.start(ensemble, summary=False)
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
@@ -59,8 +59,8 @@ def test_exchange():
 
     print(exp.summary())
 
-    if osp.isdir(exp.exp_path):
-        rmtree(exp.exp_path)
+    #if osp.isdir(exp.exp_path):
+    #    rmtree(exp.exp_path)
 
 def test_consumer():
     exp = Experiment("silc_ensemble", launcher="local")
@@ -96,7 +96,7 @@ def test_consumer():
     exp.generate(ensemble, overwrite=True)
 
     # start the models
-    exp.start(ensemble, summary=True)
+    exp.start(ensemble, summary=False)
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)

@@ -7,7 +7,7 @@ import torch.nn as nn
 
 import argparse
 
-from silc import Client
+from silc import Client, EntityType
 
 # taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html
 class Net(nn.Module):
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     c.put_tensor("torch_cnn_input", data)
 
 
-    input_exists = c.poll_key("torch_cnn_input", 100, 100)
+    input_exists = c.poll_entity("torch_cnn_input", EntityType.tensor, 100, 100)
     assert input_exists
 
     other_input = c.get_tensor("torch_cnn_input")
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     # run model and get output
     c.run_model("torch_cnn", inputs=["torch_cnn_input"], outputs=["torch_cnn_output"])
-    output_exists = c.poll_key("torch_cnn_output", 100, 100)
+    output_exists = c.poll_entity("torch_cnn_output", EntityType.tensor, 100, 100)
     assert output_exists
 
     out_data = c.get_tensor("torch_cnn_output")
