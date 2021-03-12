@@ -1,4 +1,4 @@
-import socket
+
 
 class ComputeNode:
     """The ComputeNode class holds resource information
@@ -62,14 +62,3 @@ class Partition:
                 return False
 
         return True
-
-
-def get_ip_from_host(host):
-    """Return the IP address for the interconnect.
-
-    :param str host: hostname of the compute node e.g. nid00004
-    :returns: ip of host
-    :rtype: str
-    """
-    ip_address = socket.gethostbyname(host)
-    return ip_address

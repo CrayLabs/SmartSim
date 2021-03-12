@@ -1,19 +1,19 @@
+import os
 import time
 from threading import RLock, Thread
-
+from subprocess import PIPE
 import numpy as np
 import psutil
-
+from .util.shell import execute_async_cmd, execute_cmd
 from ..constants import TM_INTERVAL
-from ..error import SSConfigError
-from ..utils import get_env, get_logger
+from ..utils import get_logger
 
 logger = get_logger(__name__)
 
 try:
-    level = get_env("SMARTSIM_LOG_LEVEL")
+    level = os.environ["SMARTSIM_LOG_LEVEL"]
     verbose_tm = True if level == "developer" else False
-except SSConfigError:
+except KeyError:
     verbose_tm = False
 
 
@@ -50,7 +50,7 @@ class TaskManager:
         """Start the loop that continually checks tasks for status."""
         global verbose_tm
         if verbose_tm:
-            logger.debug(f"Starting Task Manager")
+            logger.debug("Starting Task Manager")
 
         self.actively_monitoring = True
         while self.actively_monitoring:
@@ -61,44 +61,51 @@ class TaskManager:
                 # has to be != None because returncode can be 0
                 if returncode is not None:
                     output, error = task.get_io()
-                    self.add_task_history(task.step_id, returncode, output, error)
-                    self.remove_task(task.step_id)
+                    self.add_task_history(task.pid, returncode, output, error)
+                    self.remove_task(task.pid)
 
             if len(self) == 0:
                 self.actively_monitoring = False
                 if verbose_tm:
-                    logger.debug(f"Sleeping, no tasks to monitor")
+                    logger.debug("Sleeping, no tasks to monitor")
 
-    def add_task(self, popen_process, step_id):
-        """Create and add a task to the TaskManager
+    def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+        self._lock.acquire()
+        try:
+            proc = execute_async_cmd(cmd_list, cwd, env=env, out=out, err=err)
+            task = Task(proc)
+            if verbose_tm:
+                logger.debug(f"Starting Task {task.pid}")
+            self.tasks.append(task)
+            self.task_history[task.pid] = (None, None, None)
+            return task.pid
 
-        :param popen_process: Popen object
-        :type popen_process: psutil.Popen
-        :param step_id: id gleaned from the launcher
-        :type step_id: str
-        """
-        # should all be atomic
-        task = Task(popen_process, step_id)
+        finally:
+            self._lock.release()
+
+    def start_and_wait(self, cmd_list, cwd, env=None, timeout=None):
+        returncode, out, err = execute_cmd(cmd_list, cwd=cwd, env=env, timeout=timeout)
         if verbose_tm:
-            logger.debug(f"Adding Task {step_id}")
-        self.tasks.append(task)
-        self.task_history[step_id] = (None, None, None)
+            logger.debug("Ran and waited on task")
+        return returncode, out, err
 
-    def remove_task(self, step_id):
+    def remove_task(self, task_id):
         """Remove a task from the TaskManager
 
-        :param step_id: step_id of the task to remove
-        :type step_id: str
+        :param task_id: id of the task to remove
+        :type task_id: str
         """
         self._lock.acquire()
         if verbose_tm:
-            logger.debug(f"Removing Task {step_id}")
+            logger.debug(f"Removing Task {task_id}")
         try:
-            task = self[step_id]
+            task = self[task_id]
             if task.is_alive:
                 task.kill()
+                task.wait()
                 returncode = task.check_status()
-                self.add_task_history(task.step_id, returncode)
+                out, err = task.get_io()
+                self.add_task_history(task_id, returncode, out, err)
             self.tasks.remove(task)
         except psutil.NoSuchProcess:
             logger.debug("Failed to kill a task during removal")
@@ -107,42 +114,35 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def check_error(self, step_id):
-        """Check to see if the job has an error
-
-        :param step_id: step_id of the job
-        :type step_id: str
-        """
+    def get_task_update(self, task_id):
         self._lock.acquire()
         try:
-            history = self.task_history[step_id]
-            # task is still running
-            if history[0] is None:
-                return False
-            # task recorded non-zero exit code
-            if history[0] != 0:
-                return True
-            return False
-        # Task hasnt been added yet (unlikely)
-        except KeyError:
-            return False
+            rc, out, err = self.task_history[task_id]
+            # has to be == None because rc can be 0
+            if rc == None:
+                try:
+                    task = self[task_id]
+                    return task.status, rc, out, err
+                # removed forcefully either by OS or us, no returncode set
+                except KeyError:
+                    return "Completed", rc, out, err
+            # process has completed, status set manually as we don't
+            # save task statuses during runtime.
+            else:
+                if rc != 0:
+                    return "Failed", rc, out, err
+                return "Completed", rc, out, err
         finally:
             self._lock.release()
 
-    def get_task_history(self, step_id):
-        # dictionary access is atomic
-        history = self.task_history[step_id]
-        return history
+    def add_task_history(self, task_id, returncode, out=None, err=None):
+        self.task_history[task_id] = (returncode, out, err)
 
-    def add_task_history(self, step_id, returncode, out=None, err=None):
-        # setting dictionary attributes is atomic
-        self.task_history[step_id] = (returncode, out, err)
-
-    def __getitem__(self, step_id):
+    def __getitem__(self, task_id):
         self._lock.acquire()
         try:
             for task in self.tasks:
-                if task.step_id == step_id:
+                if task.pid == task_id:
                     return task
             raise KeyError
         finally:
@@ -157,33 +157,15 @@ class TaskManager:
 
 
 class Task:
-    """A Task is a wrapper around a Popen object that includes a reference
-    to the Job id created by the launcher. For the local launcher this
-    will just be the pid of the Popen object
-    """
 
-    def __init__(self, popen_process, step_id):
+    def __init__(self, popen_process):
         """Initialize a task
 
         :param popen_process: Popen object
         :type popen_process: psutil.Popen
-        :param step_id: Id from the launcher
-        :type step_id: str
         """
         self.process = popen_process
-        self.step_id = step_id  # dependant on the launcher type
-
-    def has_piped_io(self):
-        """When jobs are spawned using the command server they
-           will not have any IO as you cannot serialize a Popen
-           object with open PIPEs
-
-        :return: boolean for if Popen has PIPEd IO
-        :rtype: bool
-        """
-        if self.process.stdout or self.process.stderr:
-            return True
-        return False
+        self.pid = str(self.process.pid)
 
     def check_status(self):
         """Ping the job and return the returncode if finished
@@ -210,9 +192,8 @@ class Task:
         """Kill the subprocess"""
         self.process.kill()
 
-    @property
-    def pid(self):
-        return str(self.process.pid)
+    def wait(self):
+        self.process.wait()
 
     @property
     def returncode(self):
@@ -226,5 +207,3 @@ class Task:
     def status(self):
         return self.process.status()
 
-    def __repr__(self):
-        return self.step_id

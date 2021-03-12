@@ -16,6 +16,28 @@ class EntityList(abc.ABC):
         """Initialize the SmartSimEntity objects in the container"""
         pass
 
+    @property
+    def batch(self):
+        try:
+            if self.batch_settings:
+                return True
+            else:
+                return False
+        # local orchestrator cannot launch with batches
+        except AttributeError:
+            return False
+
+    @property
+    def type(self):
+        """Return the name of the class
+        """
+        return type(self).__name__
+
+    def set_path(self, new_path):
+        self.path = new_path
+        for entity in self.entities:
+            entity.path = new_path
+
     def __getitem__(self, name):
         for entity in self.entities:
             if entity.name == name:

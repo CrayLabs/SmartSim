@@ -2,8 +2,8 @@ from subprocess import PIPE, Popen, TimeoutExpired
 import time
 import psutil
 
-from ..error import ShellError, SSConfigError
-from ..utils import get_env, get_logger
+from ...error import ShellError, SSConfigError
+from ...utils import get_env, get_logger
 
 logger = get_logger(__name__)
 
@@ -42,7 +42,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
         logger.debug(f"Executing {source} cmd: {' '.join(cmd_list)}")
 
     # spawning the subprocess and connecting to its output
-    proc = Popen(
+    proc = psutil.Popen(
         cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE, cwd=cwd, shell=shell, env=env
     )
     try:
@@ -88,9 +88,13 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
         time.sleep(.2)
         popen_obj.poll()
         if not popen_obj.is_running() and popen_obj.returncode != 0:
-            _, error = popen_obj.communicate()
-            error = error.decode("utf-8")
-            raise ShellError("Command failed immediately", error, cmd_list)
+            output, error = popen_obj.communicate()
+            err_msg = ""
+            if output:
+                err_msg += output.decode("utf-8") + " "
+            if error:
+                err_msg += error.decode("utf-8")
+            raise ShellError("Command failed immediately", err_msg, cmd_list)
     except OSError as e:
         raise ShellError("Failed to run command", e, cmd_list) from None
     return popen_obj

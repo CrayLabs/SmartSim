@@ -4,7 +4,7 @@ from ...utils.helpers import init_default
 from .slurmCommands import salloc, scancel, sinfo
 from .slurmLauncher import SlurmLauncher
 from .slurmParser import parse_salloc, parse_salloc_error
-from ..launcherUtil import ComputeNode, Partition
+from ..util.launcherUtil import ComputeNode, Partition
 
 logger = get_logger(__name__)
 

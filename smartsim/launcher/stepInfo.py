@@ -20,8 +20,13 @@ class StepInfo:
         self.output = output
         self.error = error
 
+    def __str__(self):
+        info_str = f"Status: {self.status}"
+        info_str += f" | Launcher Status {self.launcher_status}"
+        info_str += f" | Returncode {str(self.returncode)}"
+        return info_str
 
-class LocalStepInfo(StepInfo):
+class UnmanagedStepInfo(StepInfo):
 
     # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
     # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
@@ -70,6 +75,7 @@ class SlurmStepInfo(StepInfo):
         "NODE_FAIL": STATUS_FAILED,
         "OUT_OF_MEMORY": STATUS_FAILED,
         "CANCELLED": STATUS_CANCELLED,
+        "CANCELLED+": STATUS_CANCELLED,
         "REVOKED": STATUS_CANCELLED,
         "PENDING": STATUS_PAUSED,
         "PREEMPTED": STATUS_PAUSED,
@@ -96,4 +102,43 @@ class SlurmStepInfo(StepInfo):
         if status in self.mapping:
             return self.mapping[status]
         # we don't know what happened so return failed to be safe
+        return STATUS_FAILED
+
+class PBSStepInfo(StepInfo):
+
+    # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
+    mapping = {
+        "R": STATUS_RUNNING,
+        "B": STATUS_RUNNING,
+
+        "H": STATUS_PAUSED,
+        "M": STATUS_PAUSED, # Actually means that it was moved to another server, TODO: understand what this implies
+        "Q": STATUS_PAUSED,
+        "S": STATUS_PAUSED,
+        "T": STATUS_PAUSED, # This means in transition, see above for comment
+        "U": STATUS_PAUSED,
+        "W": STATUS_PAUSED,
+
+        "E": STATUS_COMPLETED,
+        "F": STATUS_COMPLETED,
+        "X": STATUS_COMPLETED
+    }
+
+    def __init__(self, status="", returncode=None, output=None, error=None):
+        if status == "NOTFOUND":
+            if returncode is not None:
+                smartsim_status = "Completed" if returncode == 0 else "Failed"
+            else:
+                # if PBS job history isnt available, and job isnt in queue
+                smartsim_status = "Completed"
+                returncode = 0
+        else:
+            smartsim_status = self._get_smartsim_status(status)
+        super().__init__(smartsim_status, status, returncode, output=output, error=error)
+
+    def _get_smartsim_status(self, status):
+        if status in SMARTSIM_STATUS:
+            return SMARTSIM_STATUS[status]
+        elif status in self.mapping:
+            return self.mapping[status]
         return STATUS_FAILED
