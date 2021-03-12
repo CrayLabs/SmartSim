@@ -88,7 +88,7 @@ def test_parse_sstat_nodes():
     """
     output = "118594.extern|nid00028|38671|\n" "118594.0|nid00028|38703|"
     nodes = ["nid00028"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output)
+    parsed_nodes = slurmParser.parse_sstat_nodes(output, "118594")
     assert nodes == parsed_nodes
 
 
@@ -98,7 +98,7 @@ def test_parse_sstat_nodes_1():
     """
     output = "22942.0|prod76-0006|354345|"
     nodes = ["prod76-0006"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output)
+    parsed_nodes = slurmParser.parse_sstat_nodes(output, "22942.0")
     assert nodes == parsed_nodes
 
 
@@ -108,7 +108,7 @@ def test_parse_sstat_nodes_2():
     """
     output = "29917893.extern|nid00034|44860|\n" "29917893.0|nid00034|44887|\n"
     nodes = ["nid00034"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output)
+    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.0")
     assert nodes == parsed_nodes
 
 
@@ -124,7 +124,25 @@ def test_parse_sstat_nodes_3():
         "29917893.2|nid00034|45174|\n"
     )
     nodes = ["nid00034"]
-    parsed_nodes = slurmParser.parse_sstat_nodes(output)
+    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.2")
+    assert nodes == parsed_nodes
+
+def test_parse_sstat_nodes_4():
+    """Parse nodes from sstat called with args -i -a -p -n
+
+    with extra steps
+
+    PrologFlags=Alloc,Contain
+    """
+    output = (
+        "30000.extern|nid00034|44860|\n"
+        "30000.batch|nid00034|42352"
+        "30000.0|nid00034|44887,45151,45152,45153,45154,45155|\n"
+        "30000.1|nid00035|45174|\n"
+        "30000.2|nid00036|45174,32435|\n"
+    )
+    nodes = set(["nid00034", "nid00035", "nid00036"])
+    parsed_nodes = set(slurmParser.parse_sstat_nodes(output, "30000"))
     assert nodes == parsed_nodes
 
 
