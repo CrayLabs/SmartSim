@@ -128,6 +128,7 @@ class Generator:
                     mkdir(elist_dir)
             else:
                 mkdir(elist_dir)
+            elist.path = elist_dir
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
 
@@ -160,7 +161,7 @@ class Generator:
                     )
                     raise EntityExistsError(error)
             mkdir(dst)
-            entity.set_path(dst)
+            entity.path = dst
             self._copy_entity_files(entity)
             self._link_entity_files(entity)
             self._write_tagged_entity_files(entity)
@@ -178,6 +179,7 @@ class Generator:
             for i, tagged_file in enumerate(entity.files.tagged):
                 dst_path = path.join(entity.path, path.basename(tagged_file))
                 shutil.copyfile(tagged_file, dst_path)
+                #TODO remove mutation
                 entity.files.tagged[i] = dst_path
 
             # write in changes to configurations
@@ -191,14 +193,12 @@ class Generator:
         :type entity: SmartSimEntity
         """
         if entity.files:
-            for i, to_copy in enumerate(entity.files.copy):
+            for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
                     dir_util.copy_tree(to_copy, entity.path)
-                    entity.files.copy[i] = entity.path
                 else:
                     shutil.copyfile(to_copy, dst_path)
-                    entity.files.copy[i] = dst_path
 
     def _link_entity_files(self, entity):
         """Symlink the entity files attached to this entity.
@@ -207,7 +207,6 @@ class Generator:
         :type entity: SmartSimEntity
         """
         if entity.files:
-            for i, to_link in enumerate(entity.files.link):
+            for to_link in entity.files.link:
                 dst_path = path.join(entity.path, path.basename(to_link))
                 symlink(to_link, dst_path)
-                entity.files.link[i] = dst_path
