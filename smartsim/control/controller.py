@@ -1,4 +1,5 @@
 import pickle
+from smartsim.launcher.launcher import Launcher
 import threading
 import time
 
@@ -6,13 +7,11 @@ from ..constants import TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import LocalLauncher, SlurmLauncher
-from ..launcher.clusterLauncher import check_cluster_status, create_cluster
-from ..utils import get_logger
+from ..launcher import LocalLauncher, SlurmLauncher, PBSLauncher
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
-from .junction import Junction
 
+from ..utils import get_logger
 logger = get_logger(__name__)
 
 # job manager lock
@@ -32,7 +31,6 @@ class Controller:
         :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
-        self._cons = Junction()
         self.init_launcher(launcher)
 
     def start(self, *args, block=True):
@@ -45,7 +43,7 @@ class Controller:
         execution of all jobs.
         """
         entities, entity_lists, orchestrator = separate_entities(args)
-        self._sanity_check_launch(orchestrator)
+        self._sanity_check_launch(orchestrator, entity_lists)
 
         self._launch(entities, entity_lists, orchestrator)
 
@@ -58,7 +56,7 @@ class Controller:
             self.poll(5, False, True)
 
     def poll(self, interval, poll_db, verbose):
-        """Poll running simulations and receive logging output of job status
+        """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
@@ -90,9 +88,8 @@ class Controller:
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
 
-        :param entity: object launched by SmartSim. One of the following:
-                          (Entity, EntityList)
-        :type entity: SmartSimEntity
+        :param entity: object launched by SmartSim.
+        :type entity: SmartSimEntity | EntityList
         :returns: bool
         """
         try:
@@ -129,7 +126,8 @@ class Controller:
                 logger.info(
                     " ".join(("Stopping model", entity.name, "job", str(job.jid)))
                 )
-                status = self._launcher.stop(job.jid)
+                status = self._launcher.stop(job.name)
+
                 job.set_status(
                     status.status,
                     status.launcher_status,
@@ -147,8 +145,11 @@ class Controller:
         :param entity_list: entity list to be stopped
         :type entity_list: EntityList
         """
-        for entity in entity_list.entities:
-            self.stop_entity(entity)
+        if entity_list.batch:
+            self.stop_entity(entity_list)
+        else:
+            for entity in entity_list.entities:
+                self.stop_entity(entity)
 
     def get_entity_status(self, entity):
         """Get the status of an entity
@@ -159,9 +160,9 @@ class Controller:
         :return: status of entity
         :rtype: str
         """
-        if not isinstance(entity, SmartSimEntity):
+        if not isinstance(entity, (SmartSimEntity, EntityList)):
             raise TypeError(
-                f"Argument was of type {type(entity)} not of type SmartSimEntity"
+                f"Argument must be of type SmartSimEntity or EntityList, not {type(entity)}"
             )
         return self._jobs.get_status(entity)
 
@@ -177,6 +178,8 @@ class Controller:
         """
         if not isinstance(entity_list, EntityList):
             raise TypeError(f"Argument was of type {type(entity_list)} not EntityList")
+        if entity_list.batch:
+            return [self.get_entity_status(entity_list)]
         statuses = []
         for entity in entity_list.entities:
             statuses.append(self.get_entity_status(entity))
@@ -185,6 +188,8 @@ class Controller:
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
+        SmartSim currently supports slurm, pbs(pro), and local launching
+
         Since the JobManager and the controller share a launcher
         instance, set the JobManager launcher if we create a new
         launcher instance here.
@@ -192,18 +197,22 @@ class Controller:
         :param launcher: which launcher to initialize
         :type launcher: str
         :raises SSUnsupportedError: if a string is passed that is not
-                                    a supported slurm launcher
+                                    a supported launcher
         :raises SSConfigError: if no launcher argument is provided.
         """
-
+        launcher = launcher.lower()
         if launcher is not None:
-            # Init Slurm Launcher wrapper
+            # Init Slurm Launcher
             if launcher == "slurm":
                 self._launcher = SlurmLauncher()
                 self._jobs.set_launcher(self._launcher)
             # Run all ensembles locally
             elif launcher == "local":
                 self._launcher = LocalLauncher()
+                self._jobs.set_launcher(self._launcher)
+            # Init PBSPro launcher
+            elif launcher == "pbs":
+                self._launcher = PBSLauncher()
                 self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
@@ -230,43 +239,92 @@ class Controller:
         steps = []
         if entity_lists:
             for elist in entity_lists:
-                steps.extend(self._create_steps(elist.entities))
+                if elist.batch:
+                    batch_step = self._create_batch_job_step(elist)
+                    steps.append((batch_step, elist))
+                else:
+                    # if ensemble is to be run as seperate job steps, aka not in a batch
+                    job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                    steps.extend(job_steps)
         if entities:
-            steps.extend(self._create_steps(entities))
+            # models themselves cannot be batch steps
+            job_steps = [(self._create_job_step(e), e) for e in entities]
+            steps.extend(job_steps)
 
         # launch steps
-        for step in steps:
-            self._launch_entity(step)
+        for job_step in steps:
+            self._launch_step(*job_step)
 
     def _launch_orchestrator(self, orchestrator):
         """Launch an Orchestrator instance
+
+        This function will launch the Orchestrator instance and
+        if on WLM, find the nodes where it was launched and
+        set them in the JobManager
 
         :param orchestrator: orchestrator to launch
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
-        database_steps = self._create_steps(orchestrator.entities)
 
-        for orc_step in database_steps:
-            self._launch_entity(orc_step)
+        # if the orchestrator was launched as a batch workload
+        if orchestrator.batch:
+            orc_batch_step = self._create_batch_job_step(orchestrator)
+            self._launch_step(orc_batch_step, orchestrator)
+
+            logger.debug("Waiting for orchestrator instances to spin up...")
+            time.sleep(5)
+            try:
+                nodelist = self._launcher.get_step_nodes([orc_batch_step.name])
+                orchestrator._hosts = nodelist[0]
+
+            # catch if it fails or launcher doesn't support it
+            except (LauncherError, SSUnsupportedError):
+                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+
+        # if orchestrator was run on existing allocation, locally, or in allocation
+        else:
+            db_steps = [(self._create_job_step(db),db) for db in orchestrator]
+            for db_step in db_steps:
+                self._launch_step(*db_step)
+
+            # sleep for 1 second per orchestrator instance
+            logger.debug("Waiting for orchestrator instances to spin up...")
+            time.sleep(5)
+            try:
+                db_step_names = [db_step[0].name for db_step in db_steps]
+                nodes = self._launcher.get_step_nodes(db_step_names)
+                logger.debug(nodes)
+                for db, node in zip(orchestrator, nodes):
+                    db._host = node[0]
+
+            # catch if it fails or launcher doesn't support it
+            except (LauncherError, SSUnsupportedError):
+                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+
+        # set the jobs in the job manager to provide SSDB variable to entities
+        # if _host isnt set within each
+        self._jobs.set_db_hosts(orchestrator)
 
         # create the database cluster
-        if len(orchestrator.entities) > 2:
-            self._create_orchestrator_cluster(orchestrator)
+        if len(orchestrator) > 2:
+            orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
-        logger.debug(f"Orchestrator launched on nodes: {self._jobs.get_db_hostnames()}")
+        logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-    def _launch_entity(self, entity_step):
-        """Launch an entity using initialized launcher
 
-        :param entity_step: Step object dependant on launcher
-        :type entity_step: Step object
-        :raises SmartSimError: If launching fails
+    def _launch_step(self, job_step, entity):
+        """Use the launcher to launch a job stop
+
+        :param job_step: a job step instance
+        :type job_step: Step
+        :param entity: entity instance
+        :type entity: SmartSimEntity
+        :raises SmartSimError: if launch fails
         """
 
-        step, entity = entity_step
         try:
-            job_id = self._launcher.run(step)
+            job_id = self._launcher.run(job_step)
         except LauncherError as e:
             msg = f"An error occurred when launching {entity.name} \n"
             msg += "Check error and output files for details.\n"
@@ -276,17 +334,29 @@ class Controller:
 
         if self._jobs.query_restart(entity.name):
             logger.debug(f"Restarting {entity.name}")
-            self._jobs.restart_job(entity.name, job_id)
+            self._jobs.restart_job(job_step.name, job_id, entity.name)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(entity.name, job_id, entity)
+            self._jobs.add_job(job_step.name, job_id, entity)
 
-        if isinstance(entity, DBNode):
-            job_nodes = self._jobs.get_job_nodes(entity.name)
-            self._cons.store_db_addr(job_nodes, entity.ports)
+    def _create_batch_job_step(self, entity_list):
+        """Use launcher to create batch job step
 
+        :param entity_list: EntityList to launch as batch
+        :type entity_list: EntityList
+        :return: job step instance
+        :rtype: Step
+        """
+        batch_step = self._launcher.create_step(
+                entity_list.name, entity_list.path, entity_list.batch_settings)
+        for entity in entity_list.entities:
+            # tells step creation not to look for an allocation
+            entity.run_settings.in_batch = True
+            step = self._create_job_step(entity)
+            batch_step.add_to_batch(step)
+        return batch_step
 
-    def _create_steps(self, entities):
+    def _create_job_step(self, entity):
         """Create job steps for all entities with the launcher
 
         :param entities: list of all entities to create steps for
@@ -294,79 +364,34 @@ class Controller:
         :return: list of tuples of (launcher_step, entity)
         :rtype: list of tuples
         """
-        steps = []
-        if entities:
-            steps = [(self._create_entity_step(entity), entity) for entity in entities]
-        return steps
-
-    def _create_entity_step(self, entity):
-        """Create a step for a single entity
-
-         Steps are defined on the launcher level and are abstracted
-         away from the Controller. Steps determine exactly how the
-         entity is to be run and provide the input to Launcher.run().
-
-        Optionally create a step that utilizes multiple programs
-        within a single step as some workload managers like
-        Slurm allow for. Currently this is only supported for
-        launching multiple databases per node.
-
-        :param entity: entity to create step for
-        :type entity: SmartSimEntity
-        :raises SmartSimError: if job step creation failed
-        :return: the created job step
-        :rtype: Step object (e.g. for Slurm its a SlurmStep)
-        """
-        multi_prog = False
-        try:
-            # launch in MPMD mode if database per node > 1
-            if isinstance(entity, DBNode):
-                if len(entity.ports) > 1:
-                    multi_prog = True
-
-            self._set_entity_env_vars(entity)
-            step = self._launcher.create_step(
-                entity.name, entity.run_settings, multi_prog=multi_prog
-            )
-            return step
-        except LauncherError as e:
-            error = f"Failed to create job step for {entity.name}"
-            raise SmartSimError("\n".join((error, str(e)))) from None
-
-    def _set_entity_env_vars(self, entity):
-        """Set connection environment variables
-
-        Retrieve the connections registered by the user for
-        each entity and utilize the junction for turning
-        those connections into environment variables to launch
-        with the step.
-
-        :param entity: entity to find connections for
-        :type entity: SmartSimEntity
-        """
+        # get SSDB, SSIN, SSOUT and add to entity run settings
         if not isinstance(entity, DBNode):
-            env_vars = self._cons.get_connections(entity)
-            user_env_vars = entity.run_settings.get("env_vars", {})
-            user_env_vars.update(env_vars)
-            combined_env_vars = {"env_vars": user_env_vars}
-            entity.update_run_settings(combined_env_vars)
+            self._prep_entity_client_env(entity)
 
-    def _create_orchestrator_cluster(self, orchestrator):
-        """Create an orchestrator cluster
+        step = self._launcher.create_step(
+            entity.name, entity.path, entity.run_settings
+        )
+        return step
 
-        If the number of database nodes is greater than 2
-        we create a clustered orchestrator using this function.
+    def _prep_entity_client_env(self, entity):
+        """Retrieve all connections registered to this entity
 
-        :param orchestrator: orchestrator instance
-        :type orchestrator: Orchestrator
+        :param entity: The entity to retrieve connections from
+        :type entity:  SmartSimEntity
+        :returns: Dictionary whose keys are environment variables to be set
+        :rtype: dict
         """
-        logger.debug("Constructing Orchestrator cluster...")
-        all_ports = orchestrator.entities[0].ports
-        db_nodes = self._jobs.get_db_hostnames()
-        create_cluster(db_nodes, all_ports)
-        check_cluster_status(db_nodes, all_ports)
+        client_env = {}
+        addresses = self._jobs.get_db_host_addresses()
+        if addresses:
+            client_env["SSDB"] = ",".join(addresses)
+            if entity.incoming_entities:
+                client_env["SSKEYIN"] = ",".join([in_entity.name for in_entity in entity.incoming_entities])
+            if entity.query_key_prefixing():
+                client_env["SSKEYOUT"] = entity.name
+        entity.run_settings.update_env(client_env)
 
-    def _sanity_check_launch(self, orchestrator):
+    def _sanity_check_launch(self, orchestrator, entity_lists):
         """Check the orchestrator settings
 
         Sanity check the orchestrator settings in case the
@@ -384,6 +409,10 @@ class Controller:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases"
                 )
+        # check for empty ensembles
+        for elist in entity_lists:
+            if len(elist) < 1:
+                raise SSConfigError("User attempted to run an empty ensemble")
 
     def _active_orc(self, orchestrator):
         """Detect if orchestrator is running already

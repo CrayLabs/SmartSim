@@ -13,24 +13,29 @@ class Job:
     def __init__(self, job_name, job_id, entity):
         """Initialize a Job.
 
-        :param job_name: The name of the job
+        :param job_name: Name of the job step
         :type job_name: str
         :param job_id: The id associated with the job
         :type job_id: str
         :param entity: The SmartSim entity associated with the job
-        :type entity: SmartSim Entity
+        :type entity: SmartSimEntity
         """
         self.name = job_name
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status = None
+        self.raw_status = None # status before smartsim status mapping is applied
         self.returncode = None
-        self.output = None
-        self.error = None
-        self.nodes = None
+        self.output = None # only populated if it's system related (e.g. a command failed immediately)
+        self.error = None # same as output
+        self.hosts = []   # currently only used for DB jobs
         self.start_time = time.time()
         self.history = History()
+
+    @property
+    def ename(self):
+        """Return the name of the entity this job was created from"""
+        return self.entity.name
 
     def set_status(self, new_status, raw_status, returncode, error=None, output=None):
         """Set the status  of a job.
@@ -51,18 +56,21 @@ class Job:
         job_time = time.time() - self.start_time
         self.history.record(self.jid, self.status, self.returncode, job_time)
 
-    def reset(self, new_job_id):
+    def reset(self, new_job_name, new_job_id):
         """Reset the job in order to be able to restart it.
 
+        :param new_job_name: name of the new job step
+        :type new_job_name: str
         :param new_job_id: new job id to launch under
         :type new_job_id: str
         """
+        self.name = new_job_name
         self.jid = new_job_id
-        self.status = "NEW"
+        self.status = STATUS_NEW
         self.returncode = None
         self.output = None
         self.error = None
-        self.nodes = None
+        self.hosts = []
         self.start_time = time.time()
         self.history.new_run()
 
@@ -72,18 +80,16 @@ class Job:
         :return: error report for display in terminal
         :rtype: str
         """
-        warning = f"{self.name} failed. See below for details \n"
+        warning = f"{self.ename} failed. See below for details \n"
         if self.error:
-            warning += f"{self.entity.type} {self.name} produced the following error \n"
+            warning += f"{self.entity.type} {self.ename} produced the following error \n"
             warning += f"Error: {self.error} \n"
         if self.output:
             warning += f"Output: {self.output} \n"
         warning += f"Job status at failure: {self.status} \n"
         warning += f"Launcher status at failure: {self.raw_status} \n"
         warning += f"Job returncode: {self.returncode} \n"
-        warning += "For more information on the error, check the files below: \n"
-        warning += f"{self.entity.type} error file: {self.entity.run_settings.get('err_file')} \n"
-        warning += f"{self.entity.type} output file: {self.entity.run_settings.get('out_file')} \n"
+        warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
     def __str__(self):
@@ -92,8 +98,13 @@ class Job:
         :returns: A user-readable string of the Job
         :rtype: str
         """
-        job = "{}({}): {}"
-        return job.format(self.name, self.jid, self.status)
+        if self.jid:
+            job = "{}({}): {}"
+            return job.format(self.ename, self.jid, self.status)
+        else:
+            job = "{}: {}"
+            return job.format(self.ename, self.status)
+
 
 
 class History:
