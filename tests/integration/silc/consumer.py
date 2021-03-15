@@ -19,7 +19,6 @@ if __name__ == "__main__":
     c = Client(False)
 
     keyin = os.getenv("SSKEYIN")
-    print(keyin)
     data_sources = keyin.split(',')
     data_sources.sort()
 
