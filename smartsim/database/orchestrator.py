@@ -1,6 +1,6 @@
 import os
 import time
-
+import sys
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
@@ -183,7 +183,8 @@ class Orchestrator(EntityList):
         :rtype: str
         """
         sshome = get_env("SMARTSIMHOME")
-        module_path = osp.join(sshome, "third-party/RedisIP/build/libredisip.so")
+        suffix = ".dylib" if sys.platform == "darwin" else ".so"
+        module_path = osp.join(sshome, "third-party/RedisIP/build/libredisip" + suffix)
         if not osp.isfile(module_path):
             msg = "Could not locate RedisIP module.\n"
             msg += f"looked at path {module_path}"
