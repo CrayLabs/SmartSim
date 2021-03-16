@@ -56,12 +56,15 @@ if __name__ == "__main__":
     if keyout == 'producer_0':
         c.set_data_source('producer_1' if args.exchange else 'producer_0')
         m = 1
+        m_other = -1
     elif keyout == 'producer_1':
         c.set_data_source('producer_0' if args.exchange else 'producer_1')
-        m = -10
+        m = -1
+        m_other = 1
 
     # setup input tensor
     data = torch.ones(1, 1, 3, 3).numpy()*m
+    data_other = torch.ones(1, 1, 3, 3).numpy()*m_other
     c.put_tensor("torch_cnn_input", data)
 
 
@@ -72,7 +75,7 @@ if __name__ == "__main__":
 
     # One process will send 1s, the other -10s. Sum is -9s.
     if args.exchange:
-        assert np.sum(other_input+data)==-9.0*data.size
+        assert np.all(other_input==data_other)
     else:
         assert np.all(other_input==data)
 

@@ -24,17 +24,16 @@ if __name__ == "__main__":
 
     assert data_sources == ['producer_0', 'producer_1']
 
-    input_sum = np.zeros((1,1,3,3))
+    inputs = {data_sources[0]: np.ones((1, 1, 3, 3)),
+              data_sources[1]: -np.ones((1, 1, 3, 3))}
 
     for key in data_sources:
         c.set_data_source(key)
 
         input_exists = c.poll_tensor("torch_cnn_input", 100, 100)
         assert input_exists
-        input_sum += c.get_tensor("torch_cnn_input")
-
-    # One process will send 1s, the other -10s. Sum is -9s.
-    assert np.sum(input_sum)==-9.0*input_sum.size
+        db_tensor = c.get_tensor("torch_cnn_input")
+        assert np.all(db_tensor == inputs[key])
 
     for key in data_sources:
         c.set_data_source(key)
