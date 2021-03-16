@@ -112,7 +112,7 @@ class SrunStep(Step):
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            env_var_str = self._format_env_vars(self.run_settings.env_vars)
+            env_var_str = self.run_settings.format_env_vars()
             srun_cmd += ["--export", env_var_str]
 
         srun_cmd += self.run_settings.format_run_args()
@@ -165,27 +165,4 @@ class SrunStep(Step):
                 proc_num += 1
         return mpmd_file
 
-    def _format_env_vars(self, env_vars):
-        """Build environment variable string for Slurm
-
-        Slurm takes exports in comma seperated lists
-        the list starts with all as to not disturb the rest of the environment
-        for more information on this, see the slurm documentation for srun
-
-        :param env_vars: additional environment variables to add
-        :type env_vars: list of str, optional
-        :returns: the formatted string of environment variables
-        :rtype: str
-        """
-        format_str = "".join(
-            (
-                "PATH=",os.environ["PATH"], ",",
-                "PYTHONPATH=", os.environ["PYTHONPATH"], ",",
-                "LD_LIBRARY_PATH=", os.environ["LD_LIBRARY_PATH"],
-            )
-        )
-
-        for k, v in env_vars.items():
-            format_str += "," + "=".join((k, str(v)))
-        return format_str
 

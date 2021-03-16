@@ -4,6 +4,7 @@ from threading import RLock, Thread
 from subprocess import PIPE
 import numpy as np
 import psutil
+from ..error import LauncherError
 from .util.shell import execute_async_cmd, execute_cmd
 from ..constants import TM_INTERVAL
 from ..utils import get_logger
@@ -89,6 +90,19 @@ class TaskManager:
             logger.debug("Ran and waited on task")
         return returncode, out, err
 
+    def add_existing(self, task_id):
+        self._lock.acquire()
+        try:
+            process = psutil.Process(pid=task_id)
+            task = Task(process)
+            self.tasks.append(task)
+            self.task_history[task.pid] = (None, None, None)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            raise LauncherError(
+                f"Process provided {task_id} does not exist") from None
+        finally:
+            self._lock.release()
+
     def remove_task(self, task_id):
         """Remove a task from the TaskManager
 
@@ -158,13 +172,13 @@ class TaskManager:
 
 class Task:
 
-    def __init__(self, popen_process):
+    def __init__(self, process):
         """Initialize a task
 
-        :param popen_process: Popen object
-        :type popen_process: psutil.Popen
+        :param process: Popen object
+        :type process: psutil.Popen
         """
-        self.process = popen_process
+        self.process = process
         self.pid = str(self.process.pid)
 
     def check_status(self):
@@ -173,7 +187,11 @@ class Task:
         :return: returncode if finished otherwise None
         :rtype: int
         """
-        return self.process.poll()
+        if self.owned:
+            return self.process.poll()
+        # we can't manage Processed we don't own
+        # have to rely on .kill() to stop.
+        return self.returncode
 
     def get_io(self):
         """Get the IO from the subprocess
@@ -181,6 +199,9 @@ class Task:
         :return: output and error from the Popen
         :rtype: str, str
         """
+        # Process class does not implement communicate
+        if not self.owned:
+            return None, None
         output, error = self.process.communicate()
         if output:
             output = output.decode("utf-8")
@@ -197,7 +218,11 @@ class Task:
 
     @property
     def returncode(self):
-        return self.process.returncode
+        if self.owned:
+            return self.process.returncode
+        if self.is_alive:
+            return None
+        return 0
 
     @property
     def is_alive(self):
@@ -207,3 +232,8 @@ class Task:
     def status(self):
         return self.process.status()
 
+    @property
+    def owned(self):
+        if isinstance(self.process, psutil.Popen):
+            return True
+        return False

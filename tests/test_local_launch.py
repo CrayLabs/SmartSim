@@ -15,7 +15,7 @@ def test_models(fileutils):
     M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
 
-    exp.start(M1, M2, block=True)
+    exp.start(M1, M2, block=True, summary=True)
     statuses = exp.get_status(M1, M2)
     assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
 
@@ -31,7 +31,7 @@ def test_ensemble(fileutils):
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
     ensemble.set_path(test_dir)
 
-    exp.start(ensemble, block=True)
+    exp.start(ensemble, block=True, summary=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
 

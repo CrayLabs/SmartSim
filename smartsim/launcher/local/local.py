@@ -5,6 +5,7 @@ from ..taskManager import TaskManager
 from ..step import LocalStep
 from ...settings import RunSettings
 from ...error import LauncherError
+from ..stepMapping import StepMapping
 
 logger = get_logger(__name__)
 
@@ -14,7 +15,7 @@ class LocalLauncher:
 
     def __init__(self):
         self.task_manager = TaskManager()
-        self.step_mapping = {} # maps step_name to task_id
+        self.step_mapping = StepMapping() # only used for consistency
 
     def create_step(self, name, cwd, step_settings):
         """Create a job step to launch an entity locally
@@ -38,20 +39,20 @@ class LocalLauncher:
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
         updates = []
-        step_ids = [self.step_mapping[name] for name in step_names]
+        step_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_id in step_ids:
             status, rc, out, err = self.task_manager.get_task_update(step_id)
             update = UnmanagedStepInfo(status, rc, out, err)
             updates.append(update)
         return updates
 
-    def get_step_nodes(self, step_name):
+    def get_step_nodes(self, step_names):
         """Return the address of nodes assigned to the step
 
         TODO: Use socket to find the actual Lo address?
         :return: a list containing the local host address
         """
-        return ["127.0.0.1"]
+        return [["127.0.0.1"]*len(step_names)]
 
     def run(self, step):
         """Run a local step created by this launcher. Utilize the shell
@@ -71,7 +72,7 @@ class LocalLauncher:
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=step.env, out=output, err=error
         )
-        self.step_mapping[step.name] = task_id
+        self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
 
     def stop(self, step_name):
@@ -82,10 +83,10 @@ class LocalLauncher:
         :return: a LocalStepInfo instance
         :rtype: LocalStepInfo
         """
-        step_id = self.step_mapping[step_name]
+        # step_id is task_id for local. Naming for consistency
+        step_id = self.step_mapping[step_name].task_id
         self.task_manager.remove_task(step_id)
         status, rc, out, err = self.task_manager.get_task_update(step_id)
-        logger.debug(f"status on stop {status} , rc= {str(rc)}")
         status = UnmanagedStepInfo("Cancelled", rc, out, err)
         return status
 

@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 from itertools import product
+from re import I
 from ...error import SSConfigError
 from .step import Step
 
@@ -33,13 +34,8 @@ class AprunStep(Step):
         :rtype: list[str]
         """
         aprun = self.run_settings.run_command
-
         aprun_cmd = [aprun, "--wdir", self.cwd]
-
-        if self.run_settings.env_vars:
-            for name, value in self.run_settings.env_vars.items():
-                aprun_cmd += ["-e", name + "=" + str(value)]
-
+        aprun_cmd += self.run_settings.format_env_vars()
         aprun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to

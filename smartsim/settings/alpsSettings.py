@@ -22,7 +22,7 @@ class AprunSettings(RunSettings):
     def set_cpus_per_task(self, num_cpus):
         """Set the number of cpus to use per task
 
-        This sets ``--cpus_per_task``
+        This sets ``--cpus-per-pe``
 
         :param num_cpus: number of cpus to use per task
         :type num_cpus: int
@@ -32,7 +32,7 @@ class AprunSettings(RunSettings):
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
 
-        This sets ``--ntasks``
+        This sets ``--pes``
 
         :param num_tasks: number of tasks
         :type num_tasks: int
@@ -42,7 +42,7 @@ class AprunSettings(RunSettings):
     def set_tasks_per_node(self, num_tpn):
         """Set the number of tasks for this job
 
-        This sets ``--ntasks-per-node``
+        This sets ``--pes-per-node``
 
         :param num_tpn: number of tasks per node
         :type num_tpn: int
@@ -55,15 +55,31 @@ class AprunSettings(RunSettings):
         :return: list PBSPro arguments for these settings
         :rtype: list[str]
         """
+        # args launcher uses
         args = []
+        restricted = ["wdir"]
+
         for opt, value in self.run_args.items():
-            short_arg = bool(len(str(opt)) == 1)
-            prefix = "-" if short_arg else "--"
-            if not value:
-                args += [prefix + opt]
-            else:
-                if short_arg:
-                    args += [prefix + opt, str(value)]
+            if opt not in restricted:
+                short_arg = bool(len(str(opt)) == 1)
+                prefix = "-" if short_arg else "--"
+                if not value:
+                    args += [prefix + opt]
                 else:
-                    args += ["=".join((prefix + opt, str(value)))]
+                    if short_arg:
+                        args += [prefix + opt, str(value)]
+                    else:
+                        args += ["=".join((prefix + opt, str(value)))]
         return args
+
+    def format_env_vars(self):
+        """Format the environment variables for aprun
+
+        :return: list of env vars
+        :rtype: list[str]
+        """
+        formatted = []
+        if self.env_vars:
+            for name, value in self.env_vars.items():
+                formatted += ["-e", name + "=" + str(value)]
+        return formatted

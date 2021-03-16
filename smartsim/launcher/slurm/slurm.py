@@ -1,3 +1,4 @@
+from shutil import which
 from ...error import LauncherError
 from ...utils import get_logger
 from ...utils.helpers import init_default
@@ -5,19 +6,18 @@ from .slurmCommands import salloc, scancel, sinfo
 from .slurmLauncher import SlurmLauncher
 from .slurmParser import parse_salloc, parse_salloc_error
 from ..util.launcherUtil import ComputeNode, Partition
-
 logger = get_logger(__name__)
 
 
-def get_slurm_allocation(nodes=1, add_opts=None):
+def get_allocation(nodes=1, time=None, account=None, options=None):
     """Request an allocation
 
     This function requests an allocation with the specified arguments.
-    Anything passed to the add_opts will be processed as a Slurm
+    Anything passed to the options will be processed as a Slurm
     argument and appended to the salloc command with the appropriate
     prefix (e.g. "-" or "--").
 
-    The add_opts can be used to pass extra settings to the
+    The options can be used to pass extra settings to the
     workload manager such as the following for Slurm:
         - nodelist="nid00004"
 
@@ -27,16 +27,23 @@ def get_slurm_allocation(nodes=1, add_opts=None):
 
     :param nodes: number of nodes for the allocation, defaults to 1
     :type nodes: int, optional
-    :param add_opts: additional options for the slurm wlm
-    :type add_opts: dict
+    :param time: wall time of the allocation, HH:MM:SS format
+    :type time: str
+    :param account: account id for allocation
+    :type account: str
+    :param options: additional options for the slurm wlm
+    :type options: dict[str, str]
     :raises LauncherError: if the allocation is not successful
     :return: the id of the allocation
     :rtype: str
     """
-    add_opts = init_default({}, add_opts, dict)
-    SlurmLauncher.check_for_slurm()
+    if not which("salloc"):
+        raise LauncherError(
+            "Attempted slurm function without access to slurm(salloc) at the call site")
 
-    salloc_args = _get_alloc_cmd(nodes, add_opts=add_opts)
+    options = init_default({}, options, dict)
+
+    salloc_args = _get_alloc_cmd(nodes, time, account, options=options)
     debug_msg = " ".join(salloc_args[1:])
     logger.debug(f"Allocation settings: {debug_msg}")
 
@@ -54,14 +61,16 @@ def get_slurm_allocation(nodes=1, add_opts=None):
     return str(alloc_id)
 
 
-def release_slurm_allocation(alloc_id):
+def release_allocation(alloc_id):
     """Free an allocations resources
 
     :param alloc_id: allocation id
     :type alloc_id: str
     :raises LauncherError: if allocation could not be freed
     """
-    SlurmLauncher.check_for_slurm()
+    if not which("scancel"):
+        raise LauncherError(
+            "Attempted slurm function without access to slurm(salloc) at the call site")
 
     logger.info(f"Releasing allocation: {alloc_id}")
     returncode, _, _ = scancel([str(alloc_id)])
@@ -173,7 +182,7 @@ def _get_system_partition_info():
     return partitions
 
 
-def _get_alloc_cmd(nodes, add_opts=None):
+def _get_alloc_cmd(nodes, time, account, options=None):
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options."""
 
@@ -184,16 +193,22 @@ def _get_alloc_cmd(nodes, add_opts=None):
         "-J",
         "SmartSim",
     ]
+    # TODO check format here
+    if time:
+        salloc_args.extend(["-t", time])
+    if account:
+        salloc_args.extend(["-A", str(account)])
 
-    for opt, val in add_opts.items():
-        short_arg = bool(len(str(opt)) == 1)
-        prefix = "-" if short_arg else "--"
-        if not val:
-            salloc_args += [prefix + opt]
-        else:
-            if short_arg:
-                salloc_args += [prefix + opt, str(val)]
+    for opt, val in options.items():
+        if opt not in ["t", "time", "N", "nodes", "A", "account"]:
+            short_arg = bool(len(str(opt)) == 1)
+            prefix = "-" if short_arg else "--"
+            if not val:
+                salloc_args += [prefix + opt]
             else:
-                salloc_args += ["=".join((prefix + opt, str(val)))]
+                if short_arg:
+                    salloc_args += [prefix + opt, str(val)]
+                else:
+                    salloc_args += ["=".join((prefix + opt, str(val)))]
 
     return salloc_args

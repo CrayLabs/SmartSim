@@ -1,6 +1,7 @@
 
 from ..utils.helpers import expand_exe_path, init_default
 from pprint import pformat
+from ..error import SSConfigError
 
 from ..utils import get_logger
 logger = get_logger(__name__)
@@ -23,12 +24,28 @@ class RunSettings:
         """
         self.exe = [expand_exe_path(exe)]
         self.exe_args = self._set_exe_args(exe_args)
-        self.run_command = init_default("", run_command, str)
-        if self.run_command:
-            self.run_command = expand_exe_path(self.run_command)
         self.run_args = init_default({}, run_args, (dict, list))
         self.env_vars = init_default({}, env_vars, (dict, list))
+        self._run_command = run_command
         self.in_batch = False
+
+    @property
+    def run_command(self):
+        """Return the batch command
+
+        Tests to see if we can expand the batch command
+        path, and if not, returns the batch command
+        as is
+        :returns: batch command
+        :type: str
+        """
+        try:
+            if self._run_command:
+                cmd = expand_exe_path(self._run_command)
+                return cmd
+            return None
+        except SSConfigError:
+            return self._run_command
 
     def update_env(self, env_vars):
         """update the environment variables a job is launched with"""
@@ -49,32 +66,47 @@ class RunSettings:
             self.exe_args.append(arg)
 
     def _set_exe_args(self, exe_args):
-        args = []
         if exe_args:
             if isinstance(exe_args, str):
-                args = exe_args.split()
-            elif isinstance(exe_args, list):
+                return exe_args.split()
+            if isinstance(exe_args, list):
                 correct_type = all([isinstance(arg, (str)) for arg in exe_args])
                 if not correct_type:
-                    raise TypeError(
-                        "Executable arguments were not list of str or str"
-                    )
-                args = exe_args
-        return args
+                    raise TypeError("Executable arguments were not list of str or str")
+                return exe_args
+            raise TypeError("Executable arguments were not list of str or str")
+        else:
+            return []
 
     def __str__(self):
-        string = f"Executable: {self.exe}\n"
+        string = f"Executable: {self.exe[0]}\n"
         string += f"Executable arguments: {self.exe_args}\n"
         if self.run_command:
-            string += f"Run Command: {self.run_command}\n"
+            string += f"Run Command: {self._run_command}\n"
         if self.run_args:
             string += f"Run arguments: {pformat(self.run_args)}"
         return string
 
 class BatchSettings:
     def __init__(self, batch_cmd, batch_args=None):
-        self.batch_cmd = expand_exe_path(batch_cmd)
+        self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
+
+    @property
+    def batch_cmd(self):
+        """Return the batch command
+
+        Tests to see if we can expand the batch command
+        path, and if not, returns the batch command
+        as is
+        :returns: batch command
+        :type: str
+        """
+        try:
+            cmd = expand_exe_path(self._batch_cmd)
+            return cmd
+        except SSConfigError:
+            return self._batch_cmd
 
     def set_nodes(self, num_nodes):
         raise NotImplementedError
@@ -89,11 +121,10 @@ class BatchSettings:
         raise NotImplementedError
 
     def set_batch_command(self, command):
-        cmd = expand_exe_path(command)
-        self.batch_cmd = cmd
+        self._batch_cmd = command
 
     def __str__(self):
-        string = f"Batch Command: {self.batch_cmd}\n"
+        string = f"Batch Command: {self._batch_cmd}\n"
         if self.batch_args:
             string += f"Batch arguments: {pformat(self.batch_args)}"
         return string

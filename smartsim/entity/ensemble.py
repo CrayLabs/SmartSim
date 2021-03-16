@@ -119,13 +119,13 @@ class Ensemble(EntityList):
         :raises EntityExistsError: if model already exists in this ensemble
         """
         # "in" operator uses model name for __eq__
-        if model in self.entities:
-            raise EntityExistsError(
-                f"Model {model.name} already exists in ensemble {self.name}"
-            )
         if not isinstance(model, Model):
             raise TypeError(
                 f"Argument to add_model was of type {type(model)}, not Model"
+            )
+        if model in self.entities:
+            raise EntityExistsError(
+                f"Model {model.name} already exists in ensemble {self.name}"
             )
         self.entities.append(model)
 

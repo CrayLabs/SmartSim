@@ -125,7 +125,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def poll(self, interval=10, poll_db=False, verbose=True):
+    def poll(self, interval=10, verbose=True):
         """Monitor jobs through logging to stdout.
 
         Poll the running jobs and receive logging output
@@ -134,15 +134,12 @@ class Experiment:
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
-        :param poll_db: poll dbnodes for status as well and see
-                        it in the logging output
-        :type poll_db: bool
         :param verbose: set verbosity
         :type verbose: bool
         :raises SmartSimError:
         """
         try:
-            self._control.poll(interval, poll_db, verbose)
+            self._control.poll(interval, verbose)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -268,74 +265,12 @@ class Experiment:
             logger.error(e)
             raise
 
-    def reconnect_orchestrator(self, previous_orc_dir):
-        """Reconnect to an orchestrator that was created in a separate
-        SmartSim experiment.
-
-        :param previous_orc_dir: Dir where previous experiment db files are located.
-        :type orc_dir: str
-        :raises SmartSimError: if config file is missing, or corrupted
-        :return: Orchestrator instance
-        :rtype: Orchestrator
+    def reconnect_orchestrator(self, checkpoint):
+        """Reconnect to running orchestator
         """
         try:
-            if isinstance(self._control._launcher, LocalLauncher):
-                raise SmartSimError(
-                    "Local launcher does not support " "reconnecting to a database."
-                )
-
-            if self.orc:
-                raise SmartSimError(
-                    "Only one orchestrator can exist within a experiment."
-                )
-
-            db_file = "/".join((previous_orc_dir, "smartsim_db.dat"))
-            if not osp.exists(db_file):
-                raise SmartSimError(
-                    f"The SmartSim database config file " f"{db_file} cannot be found."
-                )
-
-            try:
-                with open(db_file, "rb") as pickle_file:
-                    db_config = pickle.load(pickle_file)
-            except (OSError, IOError) as e:
-                msg = "Could not retrieve saved database configuration"
-                raise SmartSimError(msg) from e
-
-            err_message = "The SmartSim database config file is incomplete.  "
-            if not "orc" in db_config:
-                raise SmartSimError(
-                    err_message + "Could not find the orchestrator object."
-                )
-
-            if not db_config["orc"].port:
-                raise SmartSimError(
-                    err_message + "The orchestrator is missing db port " "information."
-                )
-
-            if not db_config["orc"].entities:
-                raise SmartSimError(
-                    err_message + "The orchestrator is missing db node " "information."
-                )
-
-            if not "db_jobs" in db_config:
-                raise SmartSimError(
-                    err_message + "Could not find database job objects."
-                )
-
-            for db_job in db_config["db_jobs"].values():
-                self._control._jobs.db_jobs[db_job.name] = db_job
-
-            self.orc = db_config["orc"]
-
-            if not isinstance(self._control._launcher, LocalLauncher):
-                if self.finished(self.orc):
-                    raise SmartSimError(
-                        "The specified database is no " "longer running"
-                    )
-
-            return self.orc
-
+            orc = self._control.reload_saved_db(checkpoint)
+            return orc
         except SmartSimError as e:
             logger.error(e)
             raise

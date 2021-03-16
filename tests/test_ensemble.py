@@ -112,3 +112,10 @@ def test_incorrect_param_type():
     params = {"h": {"h": [5]}}
     with pytest.raises(TypeError):
         e = Ensemble("ensemble", params, run_settings=rs)
+
+def test_add_model_type():
+    params = {"h": 5}
+    e = Ensemble("ensemble", params, run_settings=rs)
+    with pytest.raises(TypeError):
+        # should be a Model not string
+        e.add_model("model")

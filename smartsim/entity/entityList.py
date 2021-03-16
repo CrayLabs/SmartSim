@@ -1,20 +1,17 @@
-import abc
 
-
-class EntityList(abc.ABC):
+class EntityList():
     """Abstract class for containers for SmartSimEntities"""
 
     def __init__(self, name, path, **kwargs):
-        super().__init__()
         self.name = name
         self.path = path
         self.entities = []
         self._initialize_entities(**kwargs)
 
-    @abc.abstractmethod
     def _initialize_entities(self, **kwargs):
         """Initialize the SmartSimEntity objects in the container"""
-        pass
+        raise NotImplementedError
+
 
     @property
     def batch(self):

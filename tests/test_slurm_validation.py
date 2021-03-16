@@ -4,11 +4,9 @@ import pytest
 from smartsim.error.errors import LauncherError
 from smartsim.launcher.slurm.slurm import validate, _get_system_partition_info, get_default_partition
 
-# skip if not on a slurm system
-if not which("srun"):
-    pytestmark = pytest.mark.skip()
-
-
+# retrieved from pytest fixtures
+if pytest.test_launcher != "slurm":
+    pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 def test_get_system_partition_info():
     """This test ensures that _get_system_partition_info

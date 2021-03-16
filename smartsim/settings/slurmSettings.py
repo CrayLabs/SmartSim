@@ -1,4 +1,6 @@
+import os
 from .settings import RunSettings, BatchSettings
+
 
 class SrunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None):
@@ -32,7 +34,7 @@ class SrunSettings(RunSettings):
     def set_cpus_per_task(self, num_cpus):
         """Set the number of cpus to use per task
 
-        This sets ``--cpus_per_task``
+        This sets ``--cpus-per-task``
 
         :param num_cpus: number of cpus to use per task
         :type num_cpus: int
@@ -78,6 +80,36 @@ class SrunSettings(RunSettings):
                 else:
                     opts += ["=".join((prefix + opt, str(value)))]
         return opts
+
+    def format_env_vars(self):
+        """Build environment variable string for Slurm
+
+        Slurm takes exports in comma seperated lists
+        the list starts with all as to not disturb the rest of the environment
+        for more information on this, see the slurm documentation for srun
+
+        :returns: the formatted string of environment variables
+        :rtype: str
+        """
+        #TODO make these overridable by user
+        presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
+        def add_env_var(var, format_str):
+            try:
+                value = os.environ[var]
+                format_str += "=".join((var, value)) + ","
+                return format_str
+            except KeyError:
+                return format_str
+        format_str = ""
+
+        # add env var presets due to slurm weirdness
+        for preset in presets:
+            format_str = add_env_var(preset, format_str)
+
+        # add user supplied variables
+        for k, v in self.env_vars.items():
+            format_str += "=".join((k, str(v))) + ","
+        return format_str.rstrip(",")
 
 
 

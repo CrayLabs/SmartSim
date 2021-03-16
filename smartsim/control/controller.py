@@ -1,8 +1,7 @@
-import pickle
-from smartsim.launcher.launcher import Launcher
-import threading
 import time
-
+import pickle
+import threading
+import os.path as osp
 from ..constants import TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
@@ -24,7 +23,7 @@ class Controller:
     underlying workload manager or run framework.
     """
 
-    def __init__(self, launcher="slurm"):
+    def __init__(self, launcher="local"):
         """Initialize a Controller
 
         :param launcher: the type of launcher being used
@@ -53,25 +52,27 @@ class Controller:
 
         # block until all non-database jobs are complete
         if block:
-            self.poll(5, False, True)
+            self.poll(5, True)
 
-    def poll(self, interval, poll_db, verbose):
+    @property
+    def orchestrator_active(self):
+        JM_LOCK.acquire()
+        try:
+            if len(self._jobs.db_jobs) > 0:
+                return True
+            return False
+        finally:
+            JM_LOCK.release()
+
+    def poll(self, interval, verbose):
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
-        :param poll_db: poll dbnodes for status as well and see
-                            it in the logging output
-        :type poll_db: bool
         :param verbose: set verbosity
         :type verbose: bool
         """
         to_monitor = self._jobs.jobs
-        if poll_db:
-            to_monitor = self._jobs()
-            msg = "Monitoring database will loop infinitely as long"
-            msg += "as database is alive.\n Ctrl+C to stop execution."
-            logger.warning(msg)
         while len(to_monitor) > 0:
             time.sleep(interval)
 
@@ -89,19 +90,19 @@ class Controller:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
-        :type entity: SmartSimEntity | EntityList
+        :type entity: Model | Ensemble
         :returns: bool
         """
         try:
             if isinstance(entity, Orchestrator):
-                raise SmartSimError(
+                raise TypeError(
                     "Finished() does not support Orchestrator instances"
                 )
             if isinstance(entity, EntityList):
                 return all([self.finished(ent) for ent in entity.entities])
             if not isinstance(entity, SmartSimEntity):
-                raise SmartSimError(
-                    f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
+                raise TypeError(
+                    f"Argument was of type {type(entity)} not Model or Ensemble"
                 )
 
             return self._jobs.is_finished(entity)
@@ -200,8 +201,8 @@ class Controller:
                                     a supported launcher
         :raises SSConfigError: if no launcher argument is provided.
         """
-        launcher = launcher.lower()
         if launcher is not None:
+            launcher = launcher.lower()
             # Init Slurm Launcher
             if launcher == "slurm":
                 self._launcher = SlurmLauncher()
@@ -232,7 +233,11 @@ class Controller:
         :param orchestrator: orchestrator to launch
         :type orchestrator: Orchestrator
         """
-        if orchestrator and not self._active_orc(orchestrator):
+        if orchestrator:
+            if self.orchestrator_active:
+                msg = "Attempted to launch a second Orchestrator instance. "
+                msg += "Only 1 Orchestrator can be active at a time"
+                raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
         # create all steps prior to launch
@@ -294,7 +299,6 @@ class Controller:
             try:
                 db_step_names = [db_step[0].name for db_step in db_steps]
                 nodes = self._launcher.get_step_nodes(db_step_names)
-                logger.debug(nodes)
                 for db, node in zip(orchestrator, nodes):
                     db._host = node[0]
 
@@ -414,22 +418,6 @@ class Controller:
             if len(elist) < 1:
                 raise SSConfigError("User attempted to run an empty ensemble")
 
-    def _active_orc(self, orchestrator):
-        """Detect if orchestrator is running already
-
-        :param orchestrator: Orchestrator instance
-        :type orchestrator: Orchestrator
-        :return: if orchestrator is running or not
-        :rtype: bool
-        """
-        active_orc = False
-        if not isinstance(self._launcher, LocalLauncher):
-            db_node = orchestrator.entities[0]
-            if db_node.name in self._jobs.db_jobs:
-                if not self.finished(db_node):
-                    active_orc = True
-        return active_orc
-
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle
 
@@ -442,6 +430,67 @@ class Controller:
         """
 
         dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
-        orc_data = {"orc": orchestrator, "db_jobs": self._jobs.db_jobs}
+        db_jobs = self._jobs.db_jobs
+        orc_data = {"db": orchestrator,
+                    "db_jobs": db_jobs}
+        steps = []
+        for db_job in db_jobs.values():
+            steps.append(self._launcher.step_mapping[db_job.name])
+        orc_data["steps"] = steps
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
+
+    def reload_saved_db(self, checkpoint_file):
+        JM_LOCK.acquire()
+        try:
+            if self.orchestrator_active:
+                raise SmartSimError("Orchestrator exists and is active")
+
+            if not osp.exists(checkpoint_file):
+                raise FileNotFoundError(
+                    f"The SmartSim database config file {checkpoint_file} cannot be found."
+                )
+
+            try:
+                with open(checkpoint_file, "rb") as pickle_file:
+                    db_config = pickle.load(pickle_file)
+            except (OSError, IOError) as e:
+                msg = "Database checkpoint corrupted"
+                raise SmartSimError(msg) from e
+
+            err_message = "The SmartSim database checkpoint is incomplete or corrupted. "
+            if not "db" in db_config:
+                raise SmartSimError(
+                    err_message + "Could not find the orchestrator object."
+                )
+
+            if not "db_jobs" in db_config:
+                raise SmartSimError(
+                    err_message + "Could not find database job objects."
+                )
+
+            if not "steps" in db_config:
+                raise SmartSimError(
+                    err_message + "Could not find database job objects."
+                )
+            orc = db_config["db"]
+
+            # TODO check that each db_object is running
+
+            job_steps = zip(db_config["db_jobs"].values(), db_config["steps"])
+            try:
+                for db_job, step in job_steps:
+                    self._jobs.db_jobs[db_job.ename] = db_job
+                    self._launcher.step_mapping[db_job.name] = step
+                    if step.task_id:
+                        self._launcher.task_manager.add_existing(int(step.task_id))
+            except LauncherError as e:
+                raise SmartSimError("Failed to reconnect orchestrator") from e
+
+            # start job manager if not already started
+            if not self._jobs.actively_monitoring:
+                self._jobs.start()
+
+            return orc
+        finally:
+            JM_LOCK.release()
