@@ -1,39 +1,15 @@
-from os import environ, getcwd, path
-from shutil import rmtree
-
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Ensemble, Model
-from smartsim.error import LauncherError, SmartSimError
-
-# --- Simple Entity Creation ----------------------------------------------
-
-rs = {"executable": "python"}
+from smartsim.entity import Model
+from smartsim.settings import RunSettings
+from smartsim.error import SmartSimError
 
 
-def test_create_model():
+def test_model_prefix():
     exp = Experiment("test")
-    model = exp.create_model("test-model", run_settings=rs)
-    assert type(model) == Model
-    assert model.query_key_prefixing() == False
-
-
-def test_create_model_in_ensemble():
-    exp = Experiment("test")
-    ensemble = exp.create_ensemble("test-ensemble", run_settings=rs)
-    model = exp.create_model("test-model", run_settings=rs)
-    ensemble.add_model(model)
-    assert ensemble.entities[0] == model
-
-
-def test_create_empty_ensemble():
-    experiment = Experiment("test")
-    ensemble = experiment.create_ensemble("test-ensemble", run_settings=rs)
-    assert len(ensemble) == 0
-
-
-# --- Error Handling ---------------------------------------------------
+    model = exp.create_model("model", RunSettings("python"), enable_key_prefixing=True)
+    assert(model._key_prefixing_enabled == True)
 
 def test_bad_exp_path():
     with pytest.raises(NotADirectoryError):
@@ -43,28 +19,47 @@ def test_type_exp_path():
     with pytest.raises(TypeError):
         exp = Experiment("test", ["this-is-a-list-dummy"])
 
+def test_stop_type():
+    """Wrong argument type given to stop"""
+    exp = Experiment("name")
+    with pytest.raises(TypeError):
+        exp.stop("model")
 
-def test_duplicate_orchestrator_error():
-    experiment = Experiment("test")
-    experiment.create_orchestrator()
-
+def test_finished_type():
+    model = Model("name", {}, "./", RunSettings("python"))
+    exp = Experiment("test")
     with pytest.raises(SmartSimError):
-        experiment.create_orchestrator()
+        exp.finished(model)
 
+def test_status_type():
+    exp = Experiment("test")
+    with pytest.raises(TypeError):
+        exp.get_status([])
 
-def test_invalid_num_orc():
-    """test creating an orchestrator with 2 nodes"""
-    experiment = Experiment("test")
+def test_status_pre_launch():
+    model = Model("name", {}, "./", RunSettings("python"))
+    exp = Experiment("test")
     with pytest.raises(SmartSimError):
-        experiment.create_orchestrator(db_nodes=2)
+        exp.get_status(model)
 
-
-# --- Local Launcher Experiment -------------------------------------
-
-
-def test_bad_cluster_orc():
-    """test when a user creates an experiment with a local launcher
-    but requests a clusted orchestrator"""
-    experiment = Experiment("test", launcher="local")
+def test_bad_ensemble_init_no_rs():
+    """params supplied without run settings"""
+    exp = Experiment("test")
     with pytest.raises(SmartSimError):
-        experiment.create_orchestrator(db_nodes=3)
+        exp.create_ensemble("name", {"param1": 1})
+
+def test_bad_ensemble_init_no_params():
+    """params supplied without run settings"""
+    exp = Experiment("test")
+    with pytest.raises(SmartSimError):
+        exp.create_ensemble("name", run_settings=RunSettings("python"))
+
+def test_bad_ensemble_init_no_rs_bs():
+    """ensemble init without run settings or batch settings"""
+    exp = Experiment("test")
+    with pytest.raises(SmartSimError):
+        exp.create_ensemble("name")
+
+
+
+

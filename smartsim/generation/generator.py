@@ -1,4 +1,5 @@
 import shutil
+import pathlib
 from distutils import dir_util
 from os import mkdir, path, symlink
 
@@ -85,8 +86,11 @@ class Generator:
         already exist.
         """
 
+        if path.isfile(self.gen_path):
+            raise FileExistsError(f"Experiment directory could not be created. {self.gen_path} exists")
         if not path.isdir(self.gen_path):
-            mkdir(self.gen_path)
+            # keep exists ok for race conditions on NFS
+            pathlib.Path(self.gen_path).mkdir(exist_ok=True)
         else:
             logger.info("Working in previously created experiment")
 
@@ -107,7 +111,7 @@ class Generator:
         # Always remove orchestrator files if present.
         if path.isdir(orc_path):
             shutil.rmtree(orc_path)
-        mkdir(orc_path)
+        pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists):
         """Generate directories for EntityList instances
@@ -128,6 +132,7 @@ class Generator:
                     mkdir(elist_dir)
             else:
                 mkdir(elist_dir)
+            elist.path = elist_dir
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
 
@@ -158,9 +163,9 @@ class Generator:
                         f"Directory for entity {entity.name} "
                         f"already exists in path {dst}"
                     )
-                    raise EntityExistsError(error)
-            mkdir(dst)
-            entity.set_path(dst)
+                    raise FileExistsError(error)
+            pathlib.Path(dst).mkdir(exist_ok=True)
+            entity.path = dst
             self._copy_entity_files(entity)
             self._link_entity_files(entity)
             self._write_tagged_entity_files(entity)
@@ -175,14 +180,16 @@ class Generator:
         :type entity: SmartSimEntity
         """
         if entity.files:
-            for i, tagged_file in enumerate(entity.files.tagged):
+            to_write = []
+            for tagged_file in entity.files.tagged:
                 dst_path = path.join(entity.path, path.basename(tagged_file))
                 shutil.copyfile(tagged_file, dst_path)
-                entity.files.tagged[i] = dst_path
+                to_write.append(dst_path)
 
             # write in changes to configurations
             if isinstance(entity, Model):
-                self._writer.configure_tagged_model_files(entity)
+                logger.debug(f"Configuring model {entity.name} with params {entity.params}")
+                self._writer.configure_tagged_model_files(to_write, entity.params)
 
     def _copy_entity_files(self, entity):
         """Copy the entity files and directories attached to this entity.
@@ -191,14 +198,12 @@ class Generator:
         :type entity: SmartSimEntity
         """
         if entity.files:
-            for i, to_copy in enumerate(entity.files.copy):
+            for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
                     dir_util.copy_tree(to_copy, entity.path)
-                    entity.files.copy[i] = entity.path
                 else:
                     shutil.copyfile(to_copy, dst_path)
-                    entity.files.copy[i] = dst_path
 
     def _link_entity_files(self, entity):
         """Symlink the entity files attached to this entity.
@@ -207,7 +212,6 @@ class Generator:
         :type entity: SmartSimEntity
         """
         if entity.files:
-            for i, to_link in enumerate(entity.files.link):
+            for to_link in entity.files.link:
                 dst_path = path.join(entity.path, path.basename(to_link))
                 symlink(to_link, dst_path)
-                entity.files.link[i] = dst_path

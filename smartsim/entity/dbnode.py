@@ -1,7 +1,7 @@
 import os
-
+import os.path as osp
+from smartsim.error.errors import SmartSimError
 from .entity import SmartSimEntity
-
 
 class DBNode(SmartSimEntity):
     """DBNode objects are the entities that make up the orchestrator.
@@ -14,29 +14,16 @@ class DBNode(SmartSimEntity):
 
     def __init__(self, name, path, run_settings, ports):
         """Initialize a database node within an orchestrator.
-
-        :param name: identifier for dbnode
-        :type name: str
-        :param path: path to output and error files
-        :type path: str
-        :param run_settings: how dbnode should be run, set by orchestrator
-        :type run_settings: dict
-        :param ports: list of int ports for the dbnode (multiple if dpn > 1)
-        :type port: list
-
         """
-        super().__init__(name, path, run_settings)
         self.ports = ports
+        self._host = None
+        super().__init__(name, path, run_settings)
 
-    def _get_db_conf_filename(self, port):
-        """Returns the .conf file name for the given port number
-
-        :param port: port number
-        :type port: int
-        :return: the dbnode configuration file name
-        :rtype: str
-        """
-        return " ".join(("nodes-", self.name, "-", str(port), ".conf"))
+    @property
+    def host(self):
+        if not self._host:
+            self._host = self._parse_db_host()
+        return self._host
 
     def remove_stale_dbnode_files(self):
         """This function removes the .conf, .err, and .out files that
@@ -45,16 +32,37 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            conf_file = "/".join((self.path, self._get_db_conf_filename(port)))
-            if os.path.exists(conf_file):
+            conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
+            if osp.exists(conf_file):
                 os.remove(conf_file)
 
-        if "out_file" in self.run_settings:
-            out_file = self.run_settings["out_file"]
-            if os.path.exists(out_file):
-                os.remove(out_file)
+        for file_ending in [".err", ".out", ".mpmd"]:
+            file_name = osp.join(self.path, self.name + file_ending)
+            if osp.exists(file_name):
+                os.remove(file_name)
 
-        if "err_file" in self.run_settings:
-            err_file = self.run_settings["err_file"]
-            if os.path.exists(err_file):
-                os.remove(err_file)
+    def _get_cluster_conf_filename(self, port):
+        """Returns the .conf file name for the given port number
+
+        :param port: port number
+        :type port: int
+        :return: the dbnode configuration file name
+        :rtype: str
+        """
+        return "".join(("nodes-", self.name, "-", str(port), ".conf"))
+
+    def _parse_db_host(self):
+        filepath = osp.join(self.path, self.name + ".out")
+        host = None
+        try:
+            with open(filepath, "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    content = line.split()
+                    if "Hostname:" in content:
+                        host = content[-1]
+                        break
+        except FileNotFoundError:
+            raise SmartSimError(
+                "Failed to obtain database hostname") from None
+        return host

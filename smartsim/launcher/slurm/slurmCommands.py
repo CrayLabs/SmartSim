@@ -1,6 +1,6 @@
 from ...error import LauncherError, SSConfigError
 from ...utils.helpers import expand_exe_path
-from ..shell import execute_cmd
+from ..util.shell import execute_cmd
 
 
 def sstat(args):

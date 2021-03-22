@@ -1,11 +1,11 @@
-import psutil
 
-from ...error.errors import SSUnsupportedError
 from ...utils import get_logger
-from ..shell import execute_async_cmd
-from ..stepInfo import LocalStepInfo
+from ..stepInfo import UnmanagedStepInfo
 from ..taskManager import TaskManager
-from .localStep import LocalStep
+from ..step import LocalStep
+from ...settings import RunSettings
+from ...error import LauncherError
+from ..stepMapping import StepMapping
 
 logger = get_logger(__name__)
 
@@ -15,62 +15,44 @@ class LocalLauncher:
 
     def __init__(self):
         self.task_manager = TaskManager()
+        self.step_mapping = StepMapping() # only used for consistency
 
-    def create_step(self, entity_name, run_settings, multi_prog=False):
+    def create_step(self, name, cwd, step_settings):
         """Create a job step to launch an entity locally
 
-        :param entity_name: name of the step to be launch, usually entity.name
-        :type entity_name: str
-        :param run_settings: smartsim run_settings for an entity
-        :type run_settings: dict
-        :param multi_prog: create a multi-program step (not supported),
-                           but retained for consistency with other launchers
-        :type multi_prog: bool, optional
-        :raises SSUnsupportedError: if multi_prog is True
         :return: Step object
         """
-        if multi_prog:
-            raise SSUnsupportedError(
-                "Local Launcher does not support multiple program jobs"
-            )
-        step = LocalStep(run_settings)
+        if not isinstance(step_settings, RunSettings):
+            raise TypeError(
+                f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}")
+        step = LocalStep(name, cwd, step_settings)
         return step
 
-    def get_step_status(self, step_id):
-        """Return the status of a job step from either the OS or
-           the workload manager.
-
-        :param step_id: id of the step (process id for local)
-        :type step_id: str
-        :return: status, and returncode (error and output if available)
-        :rtype: LocalStepInfo
-        """
-        # get status from task manager
-        psutil_status, psutil_rc = self._get_process_status(step_id)
-        if self.task_manager.check_error(step_id):
-            returncode, out, err = self.task_manager.get_task_history(step_id)
-            return LocalStepInfo(psutil_status, returncode, out, err)
-        return LocalStepInfo(psutil_status, psutil_rc)
-
-    def get_step_update(self, step_ids):
+    def get_step_update(self, step_names):
         """Get status updates of all steps at once
 
-        :param step_ids: list of step_ids (str)
-        :type step_ids: list
+        :param step_names: list of step_names
+        :type step_names: list[str]
         :return: list of LocalStepInfo for update
         :rtype: list
         """
-        # these return relatively quick, no need to do anything
-        # special here like slurm
-        updates = [self.get_step_status(step_id) for step_id in step_ids]
+        # step ids are process ids of the tasks
+        # as there is no WLM intermediary
+        updates = []
+        step_ids = self.step_mapping.get_ids(step_names, managed=False)
+        for step_id in step_ids:
+            status, rc, out, err = self.task_manager.get_task_update(step_id)
+            update = UnmanagedStepInfo(status, rc, out, err)
+            updates.append(update)
         return updates
 
-    def get_step_nodes(self, step_id):
+    def get_step_nodes(self, step_names):
         """Return the address of nodes assigned to the step
 
+        TODO: Use socket to find the actual Lo address?
         :return: a list containing the local host address
         """
-        return ["127.0.0.1"]
+        return [["127.0.0.1"]*len(step_names)]
 
     def run(self, step):
         """Run a local step created by this launcher. Utilize the shell
@@ -83,50 +65,30 @@ class LocalLauncher:
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
 
-        out_file = open(step.run_settings["out_file"], "w+")
-        err_file = open(step.run_settings["err_file"], "w+")
-        cmd = step.build_cmd()
-        task = execute_async_cmd(
-            cmd, step.cwd, env=step.env, out=out_file, err=err_file
+        out, err = step.get_output_files()
+        output = open(out, "w+")
+        error = open(err, "w+")
+        cmd = step.get_launch_cmd()
+        task_id = self.task_manager.start_task(
+            cmd, step.cwd, env=step.env, out=output, err=error
         )
-        self.task_manager.add_task(task, str(task.pid))
-        return str(task.pid)
+        self.step_mapping.add(step.name, task_id=task_id, managed=False)
+        return task_id
 
-    def stop(self, step_id):
+    def stop(self, step_name):
         """Stop a job step
 
-        :param step_id: id of the step to be stopped
-        :type step_id: str
-        :raises LauncherError: if unable to stop job step
+        :param step_name: name of the step to be stopped
+        :type step_name: str
         :return: a LocalStepInfo instance
         :rtype: LocalStepInfo
         """
+        # step_id is task_id for local. Naming for consistency
+        step_id = self.step_mapping[step_name].task_id
         self.task_manager.remove_task(step_id)
-        rc, _, _ = self.task_manager.get_task_history(step_id)
-        status = LocalStepInfo("Cancelled", rc)
+        status, rc, out, err = self.task_manager.get_task_update(step_id)
+        status = UnmanagedStepInfo("Cancelled", rc, out, err)
         return status
-
-    def _get_process_status(self, step_id):
-        """Utilize psutil to get the job status of a
-        locally running job.
-
-        :param step_id: id of the job
-        :type step_id: str
-        :return: status and returncode
-        :rtype: tuple
-        """
-        try:
-            task = self.task_manager[step_id]
-            return task.status, task.returncode
-        # either task manager removed the task already
-        # or task has died while still in task manager
-        except (psutil.NoSuchProcess, KeyError):
-            # we don't know what happened so make a guess based
-            # on the returncode of the job
-            returncode, _, _ = self.task_manager.get_task_history(step_id)
-            if returncode != 0:
-                return "Failed", returncode
-            return "Completed", returncode
 
     def __str__(self):
         return "local"

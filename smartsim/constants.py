@@ -6,7 +6,7 @@ import coloredlogs
 # Intervals for Job Manager that depend on launcher
 # For WLM, we don't want to ping the wlm too much
 LOCAL_JM_INTERVAL = 3
-WLM_JM_INTERVAL = 10
+WLM_JM_INTERVAL = 15
 
 # Task Manager Interval
 TM_INTERVAL = 2
@@ -38,4 +38,4 @@ coloredlogs.DEFAULT_LOG_FORMAT = (
     "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
 # optional thread name logging for debugging
-# coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
+#coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'

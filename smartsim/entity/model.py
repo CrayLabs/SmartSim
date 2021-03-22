@@ -1,5 +1,5 @@
 from ..error import SSConfigError
-from ..utils.helpers import expand_exe_path, init_default
+from ..utils.helpers import init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
@@ -22,15 +22,6 @@ class Model(SmartSimEntity):
         self.incoming_entities = []
         self._key_prefixing_enabled = False
         self.files = None
-        self._init_run_settings()
-
-    def _init_run_settings(self):
-        """Initialize the run_settings for the model"""
-
-        # set the path to the error, output, and runtime dir
-        self.set_path(self.path)
-        # expand the executable path
-        self.run_settings["executable"] = self._expand_entity_exe()
 
     def register_incoming_entity(self, incoming_entity, receiving_client_type):
         """Register future communication between entities.
@@ -105,25 +96,6 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def _expand_entity_exe(self):
-        """Run at initialization, this function finds and expands
-           the executable for the entity.
-
-        :param run_settings: dictionary of run_settings
-        :type run_settings: dict
-        """
-        try:
-            exe = self.run_settings["executable"]
-            full_exe = expand_exe_path(exe)
-            return full_exe
-        except KeyError:
-            raise SSConfigError(
-                f"User did not provide an executable in the run settings for {self.name}"
-            ) from None
-        except SSConfigError as e:
-            raise SSConfigError(
-                "Failed to create entity, bad executable argument in run settings"
-            ) from e
 
     def __eq__(self, other):
         if self.name == other.name:
@@ -136,11 +108,5 @@ class Model(SmartSimEntity):
     def __str__(self):
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
-        entity_str += "run_settings = {\n"
-        for param, value in self.run_settings.items():
-            param = '"' + param + '"'
-            if isinstance(value, str):
-                value = '"' + value + '"'
-            entity_str += " ".join((" ", str(param), ":", str(value), "\n"))
-        entity_str += "}"
+        entity_str += str(self.run_settings)
         return entity_str

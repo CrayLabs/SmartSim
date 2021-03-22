@@ -49,4 +49,13 @@ else
     fi
 fi
 
+# build RedisIP
+../build-scripts/build-redis-ip.sh
+if [ $? != 0 ]; then
+    echo "ERROR: RedisIP failed to build"
+    cd ..
+    exit 1
+fi
+
+
 cd ../

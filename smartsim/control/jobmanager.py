@@ -1,20 +1,24 @@
 import time
 from threading import Thread
+import itertools
 
 import numpy as np
 from ..entity import DBNode
+from ..database import Orchestrator
 from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
 from ..error import SmartSimError
-from ..launcher import SlurmLauncher
+from ..launcher import SlurmLauncher, PBSLauncher
 from ..utils import get_logger
 from .job import Job
+from ..database.orchestrator import get_ip_from_host
+
 
 logger = get_logger(__name__)
 
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
-    and the steps launched through the workload manager. The JobManager
+    and the steps launched through the launcher. The JobManager
     holds jobs according to entity type.
 
     The JobManager is threaded and runs during the course of an experiment
@@ -51,6 +55,10 @@ class JobManager:
         by the user will be responsible for returning statuses
         that progress the state of the job.
 
+        The interval of the checks is controlled by
+        smartsim.constats.TM_INTERVAL and should be set to values
+        above 20 for congested, multi-user systems
+
         The job manager thread will exit when no jobs are left
         or when the main thread dies
         """
@@ -58,10 +66,9 @@ class JobManager:
 
         self.actively_monitoring = True
         while self.actively_monitoring:
-            # logger.debug(f"Active Jobs: {len(self)}")
 
-            # update all job statuses at once
-            self.check_jobs()
+            self._thread_sleep()
+            self.check_jobs() # update all job statuses at once
             for _, job in self().items():
 
                 # if the job has errors then output the report
@@ -76,7 +83,6 @@ class JobManager:
                         logger.info(job)
                         self.move_to_completed(job)
 
-            self._thread_sleep()
             # if no more jobs left to actively monitor
             if not self():
                 self.actively_monitoring = False
@@ -91,33 +97,34 @@ class JobManager:
         """
         self._lock.acquire()
         try:
-            self.completed[job.name] = job
+            self.completed[job.ename] = job
             job.record_history()
 
             # remove from actively monitored jobs
-            if job.name in self.db_jobs.keys():
-                del self.db_jobs[job.name]
-            elif job.name in self.jobs.keys():
-                del self.jobs[job.name]
+            if job.ename in self.db_jobs.keys():
+                del self.db_jobs[job.ename]
+            elif job.ename in self.jobs.keys():
+                del self.jobs[job.ename]
         finally:
             self._lock.release()
 
-    def __getitem__(self, job_name):
-        """Return the job associated with the job_name
+    def __getitem__(self, entity_name):
+        """Return the job associated with the name of the entity
+        from which it was created.
 
-        :param job_name: The name of the job
-        :type job_name: str
-        :returns: the Job associated with the job_name
+        :param entity_name: The name of the entity of a job
+        :type entity_name: str
+        :returns: the Job associated with the entity_name
         :rtype: Job
         """
         self._lock.acquire()
         try:
-            if job_name in self.db_jobs.keys():
-                return self.db_jobs[job_name]
-            if job_name in self.jobs.keys():
-                return self.jobs[job_name]
-            if job_name in self.completed.keys():
-                return self.completed[job_name]
+            if entity_name in self.db_jobs.keys():
+                return self.db_jobs[entity_name]
+            if entity_name in self.jobs.keys():
+                return self.jobs[entity_name]
+            if entity_name in self.completed.keys():
+                return self.completed[entity_name]
             raise KeyError
         finally:
             self._lock.release()
@@ -131,64 +138,22 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def get_job_nodes(self, name, wait=2):
-        """Get the hostname(s) of a job from the allocation
-
-        Wait time is necessary because Slurm take about 3 seconds to
-        register that a job has been submitted.
-
-        :param name: name of the launched entity
-        :type name: str
-        :param wait: time to wait before finding the hostname
-                     aides in slow wlm launch times, defaults to 2
-        :type wait: int, optional
-        :return: hostnames of the job nodes where the entity was launched
-        :rtype: list of str
-        """
-        self._lock.acquire()
-        try:
-            job = self[name]
-            if job.nodes:
-                return job.nodes
-            time.sleep(wait)
-            nodes = self._launcher.get_step_nodes(job.jid)
-            job.nodes = nodes
-            return nodes
-        finally:
-            self._lock.release()
-
-    def add_job(self, name, job_id, entity):
+    def add_job(self, job_name, job_id, entity):
         """Add a job to the job manager which holds specific jobs by type.
 
-        :param name: job name (usually the entity name)
-        :type name: str
+        :param job_name: name of the job step
+        :type job_name: str
         :param job_id: job step id created by launcher
         :type job_id: str
         :param entity: entity that was launched on job step
         :type entity: SmartSimEntity
         """
         # all operations here should be atomic
-        job = Job(name, job_id, entity)
-        if isinstance(entity, DBNode):
-            self.db_jobs[name] = job
+        job = Job(job_name, job_id, entity)
+        if isinstance(entity, (DBNode, Orchestrator)):
+            self.db_jobs[entity.name] = job
         else:
-            self.jobs[name] = job
-
-    def get_db_hostnames(self):
-        """Return a list of database nodes for cluster creation
-
-        :return: list of hostnames that the database was
-                 launched on.
-        :rtype: list of strings
-        """
-        self._lock.acquire()
-        try:
-            nodes = []
-            for db_job in self.db_jobs.values():
-                nodes.extend(db_job.nodes)
-            return nodes
-        finally:
-            self._lock.release()
+            self.jobs[entity.name] = job
 
     def is_finished(self, entity):
         """Detect if a job has completed
@@ -214,14 +179,14 @@ class JobManager:
         Update all jobs returncode, status, error and output
         through one call to the launcher.
 
-        TODO: [PSD-834] Remove launcher dependance on WLM for updates.
         """
         self._lock.acquire()
         try:
             jobs = self().values()
-            jids = [job.jid for job in jobs]
-            statuses = self._launcher.get_step_update(jids)
+            job_names = [job.name for job in jobs]
+            statuses = self._launcher.get_step_update(job_names)
             for status, job in zip(statuses, jobs):
+                # uses abstract step interface
                 job.set_status(
                     status.status,
                     status.launcher_status,
@@ -235,9 +200,8 @@ class JobManager:
     def get_status(self, entity):
         """Return the workload manager given status of a job.
 
-        :param entity: object launched by SmartSim. One of the following:
-                    (Model, DBNode)
-        :type entity: SmartSimEntity
+        :param entity: SmartSimEntity or EntityList instance
+        :type entity: SmartSimEntity | EntityList
         :returns: tuple of status
         """
         self._lock.acquire()
@@ -262,44 +226,77 @@ class JobManager:
         """
         self._launcher = launcher
 
-    def query_restart(self, job_name):
+    def query_restart(self, entity_name):
         """See if the job just started should be restarted or not.
 
-        :param job_name: name of the job
-        :type job_name: str
+        :param entity_name: name of entity to check for a job for
+        :type entity_name: str
         :return: if job should be restarted instead of started
         :rtype: bool
         """
-        if job_name in self.completed:
+        if entity_name in self.completed:
             return True
         return False
 
-    def restart_job(self, job_name, new_job_id):
+    def restart_job(self, job_name, job_id, entity_name):
         """Function to reset a job to record history and be
         ready to launch again.
 
-        :param job_name: name of the job
+        :param job_name: new job step name
         :type job_name: str
-        :param new_job_id: new job id from the launcher
-        :type new_job_id: str
+        :param job_id: new job id
+        :type job_id: str
+        :param entity_name: name of the entity of the job
+        :type entity_name: str
         """
         self._lock.acquire()
         try:
-            job = self.completed[job_name]
-            del self.completed[job_name]
-            job.reset(new_job_id)
-            if isinstance(job.entity, DBNode):
-                self.db_jobs[job_name] = job
+            job = self.completed[entity_name]
+            del self.completed[entity_name]
+            job.reset(job_name, job_id)
+            if isinstance(job.entity, (DBNode, Orchestrator)):
+                self.db_jobs[entity_name] = job
             else:
-                self.jobs[job_name] = job
+                self.jobs[entity_name] = job
         finally:
             self._lock.release()
+
+    def get_db_host_addresses(self):
+        """Retrieve the list of hosts for the database
+
+        :return: list of host ip addresses
+        :rtype: list[str]
+        """
+        addresses = []
+        for db_job in self.db_jobs.values():
+            for combine in itertools.product(db_job.hosts, db_job.entity.ports):
+                ip_addr = get_ip_from_host(combine[0])
+                addresses.append(":".join((ip_addr, str(combine[1]))))
+        return addresses
+
+    def set_db_hosts(self, orchestrator):
+        """Set the DB hosts in db_jobs so future entities can query this
+
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        """
+        # should only be called during launch in the controller
+        self._lock.acquire()
+        try:
+            if orchestrator.batch:
+                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+            else:
+                for dbnode in orchestrator:
+                    self.db_jobs[dbnode.name].hosts = [dbnode.host]
+        finally:
+            self._lock.release()
+
 
     def _thread_sleep(self):
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
-        if isinstance(self._launcher, SlurmLauncher):
+        if isinstance(self._launcher, (SlurmLauncher, PBSLauncher)):
             time.sleep(WLM_JM_INTERVAL)
         else:
             time.sleep(LOCAL_JM_INTERVAL)
