@@ -17,7 +17,7 @@ def test_local_orchestrator(fileutils):
     test_dir = fileutils.make_test_dir(exp_name)
     first_dir = test_dir
 
-    orc = Orchestrator(start_port=6780)
+    orc = Orchestrator(port=6780)
     orc.set_path(test_dir)
 
     exp.start(orc)

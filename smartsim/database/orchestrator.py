@@ -25,11 +25,11 @@ class Orchestrator(EntityList):
     within an entity.
     """
 
-    def __init__(self, start_port=6379, db_nodes=1, **kwargs):
+    def __init__(self, port=6379, db_nodes=1, **kwargs):
         """Initialize an Orchestrator reference for local launch
 
-        :param start_port: TCP/IP port
-        :type start_port: int
+        :param port: TCP/IP port
+        :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
 
@@ -54,7 +54,7 @@ class Orchestrator(EntityList):
         super().__init__("orchestrator",
                          self.path,
                          db_nodes=db_nodes,
-                         port=start_port,
+                         port=port,
                          **kwargs)
 
     @property

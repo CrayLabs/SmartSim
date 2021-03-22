@@ -12,6 +12,9 @@ class SlurmOrchestrator(Orchestrator):
         and batch=False, at launch, the orchestrator will look for an interactive
         allocation to launch on.
 
+        The SlurmOrchestrator port provided will be incremented if multiple
+        databases per node are launched.
+
         :param port: TCP/IP port
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
@@ -103,7 +106,7 @@ class SlurmOrchestrator(Orchestrator):
     def _build_batch_settings(self, db_nodes, alloc, batch, **kwargs):
         batch_settings = None
         dpn = kwargs.get("dpn", 1)
-        # enter this conditional if user has specified an allocation to run
+        # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
             batch_args = {"nodes": db_nodes, "ntasks-per-node": dpn}

@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from os import path as osp
 
@@ -36,6 +37,46 @@ def test_ensemble(fileutils):
     for i in range(9):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
 
+def test_ensemble_overwrite(fileutils):
+    exp = Experiment("gen-test-overwrite", launcher="local")
+    test_dir = fileutils.get_test_dir("test_gen_overwrite")
+    gen = Generator(test_dir, overwrite=True)
+
+    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
+    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
+
+    config = fileutils.get_test_conf_path("in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
+
+    # re generate without overwrite
+    config = fileutils.get_test_conf_path("in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
+
+    assert len(ensemble) == 9
+    assert osp.isdir(osp.join(test_dir, "test"))
+    for i in range(9):
+        assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
+
+
+def test_ensemble_overwrite_error(fileutils):
+    exp = Experiment("gen-test-overwrite-error", launcher="local")
+    test_dir = fileutils.get_test_dir("test_gen_overwrite_error")
+    gen = Generator(test_dir)
+
+    params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
+    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
+
+    config = fileutils.get_test_conf_path("in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    gen.generate_experiment(ensemble)
+
+    # re generate without overwrite
+    config = fileutils.get_test_conf_path("in.atm")
+    ensemble.attach_generator_files(to_configure=[config])
+    with pytest.raises(FileExistsError):
+        gen.generate_experiment(ensemble)
 
 def test_full_exp(fileutils):
 

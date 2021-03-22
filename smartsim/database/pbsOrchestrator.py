@@ -60,7 +60,7 @@ class PBSOrchestrator(Orchestrator):
         Some commonly used arguments such as -e are used
         by SmartSim and will not be allowed to be set.
 
-        :param arg: batch argument to set e.g. "exclusive"
+        :param arg: batch argument to set e.g. "A" for account
         :type arg: str
         :param value: batch param - set to None if no param value
         :type value: str | None

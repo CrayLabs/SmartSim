@@ -107,7 +107,7 @@ class Experiment:
         provided at model initialization.
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
-        can all be passed as arguments to the start method.
+        can all be passed as arguments to the generate method.
 
         :param tag: tag used in `to_configure` generator files,
                     defaults to None

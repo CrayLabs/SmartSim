@@ -28,9 +28,9 @@ def test_orchestrator_relaunch(fileutils):
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir(exp_name)
 
-    orc = Orchestrator(start_port=6780)
+    orc = Orchestrator(port=6780)
     orc.set_path(test_dir)
-    orc_1 = Orchestrator(start_port=6790)
+    orc_1 = Orchestrator(port=6790)
     orc_1.set_path(test_dir)
 
 
