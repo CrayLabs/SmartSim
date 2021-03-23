@@ -5,7 +5,6 @@ import sys
 import pytest
 
 from smartsim import Experiment, constants
-from smartsim.generation import Generator
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.settings import RunSettings
@@ -40,14 +39,14 @@ def test_exchange(fileutils):
     """
 
     test_dir = fileutils.make_test_dir("silc_ensemble_exchange_test")
-    exp = Experiment("silc_ensemble_exchange", launcher="local")
+    exp = Experiment("silc_ensemble_exchange", exp_path=test_dir, launcher="local")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    gen = Generator(test_dir)
+    # gen = Generator(test_dir)
 
     rs = RunSettings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
@@ -65,7 +64,7 @@ def test_exchange(fileutils):
     config = fileutils.get_test_conf_path('silc')
     ensemble.attach_generator_files(to_copy=[config])
 
-    gen.generate_experiment(ensemble)
+    exp.generate(ensemble)
 
     # start the models
     exp.start(ensemble, summary=False)
@@ -87,15 +86,13 @@ def test_consumer(fileutils):
         Finally, the tensor is used to run a model by each producer
         and the consumer accesses the two results.
     """
-    exp = Experiment("silc_ensemble_consumer", launcher="local")
     test_dir = fileutils.make_test_dir("silc_ensemble_consumer_test")
+    exp = Experiment("silc_ensemble_consumer", exp_path=test_dir, launcher="local")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
     exp.generate(orc)
     exp.start(orc, block=False)
-
-    gen = Generator(test_dir)
 
     rs_prod = RunSettings("python", "producer.py")
     rs_consumer = RunSettings("python", "consumer.py")
@@ -116,7 +113,7 @@ def test_consumer(fileutils):
     config = fileutils.get_test_conf_path('silc')
     ensemble.attach_generator_files(to_copy=[config])
 
-    gen.generate_experiment(ensemble)
+    exp.generate(ensemble)
 
     # start the models
     exp.start(ensemble, summary=False)

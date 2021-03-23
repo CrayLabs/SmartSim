@@ -203,7 +203,7 @@ class Ensemble(EntityList):
         parameters = []
         for name, val in self.params.items():
             param_names.append(name)
-            
+
             if isinstance(val, list):
                 parameters.append(val)
             elif isinstance(val, (int, str)):
