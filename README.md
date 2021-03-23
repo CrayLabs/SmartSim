@@ -1,25 +1,69 @@
-# Smart-Sim Library
 
-    A library of tools dedicated to accelerating the convergence of AI and numerical
-    simulation models. SmartSim can connect models written in Fortran, C, C++ and
-    Python to the modern data science stack. Integration with workload managers like
-    Slurm make it easy to run multiple jobs for simulation, analysis, and visualization
-    all within a single allocation. Generate configurations and run ensembles of
-    simulations all within the comfort of a jupyter notebook.
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## Current Features
+------------
 
-   - Clients in Python, C, C++ and Fortran (SILC)
-   - Allocation management interface through Slurm
-   - Ensembling through text-based configuration generation for models
-   - Works on compute nodes for rapid prototyping and preprocessing
-   - Runs inside Jupyter lab/notebook
-   - Distributed, in-memory database
-   - Pytorch, Tensorflow, and ONNX based inference suppport with RedisAI
+# SmartSim
+
+SmartSim makes it easier to use common Machine Learning (ML) libraries
+like PyTorch and TensorFlow, on numerical simulations at scale.
+
+Essentially, SmartSim provides an API to connect HPC (MPI + X) simulations
+written in Fortran, C, C++, and Python to an in-memory database called
+the Orchestrator. The Orchestrator is built on Redis, a popular caching
+database written in C. This connection between simulation and database
+is the fundamental paradigm of SmartSim. Simulations in the aforementioned
+languages can stream data to the Orchestrator and pull the data out
+in Python for online analysis, visualization, and training.
+
+In addition, the Orchestrator is equipped with ML inference runtimes:
+PyTorch, TensorFlow, and ONNX. From inside a simulation, users can
+store and execute trained models and retrieve the result.
 
 
-## Documentation
+### Supported ML Libraries
 
-   - To build the documentation, clone the repo, install the ``requirements-dev.txt``
-     and execute ``make docs``. Then open ``doc/_build/html/index.html`` in a browser.
+SmartSim 0.3.0 uses Redis 6.0.8 and RedisAI 1.2
+
+| Library    | Supported Version |
+|------------|:-----------------:|
+| PyTorch    |       1.7.0       |
+| TensorFlow |       1.15.0      |
+| TFLite     |       2.0.0       |
+| ONNX       |       1.2.0       |
+
+At this time, PyTorch is the most tested within SmartSim and we recommend
+users use PyTorch at this time if possible.
+
+
+
+SmartSim is made up of two parts
+  1. SmartSim Infrastructure Library
+  2. SmartSim Infrastructure Library Clients (SILC)
+
+## SmartSim Infrastructure Library
+
+The Infrastructure Library (IL) helps users get the Orchestrator running
+on HPC systems. In addition, the IL provides mechanisms for creating, configuring,
+executing and monitoring simulations. Users can launch everything needed
+to run converged ML and simulation worklaods right from a jupyter
+notebook using the IL Python interface.
+
+## SILC
+
+The SmartSim Infrastructure Library Clients are implementations of Redis
+clients that implement the RedisAI API with a few additions specific to
+HPC simulations.
+
+SILC clients are available in Fortran, C, C++, and Python. Users can seemlessly
+pull and push data from the Orchestrator from different langauges.
+
+| Language 	| Version/Standard 	|
+|----------	|:----------------:	|
+| Python   	|    3.7 - 3.8.5   	|
+| Fortran  	|       2003       	|
+| C        	|        C99       	|
+| C++      	|       C++11      	|
+
+The SILC clients are cluster compatible and work with the OSS Redis/RedisAI stack.
 
