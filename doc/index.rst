@@ -18,15 +18,11 @@
    clients
    launchers
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Using SmartSim
 
    using-smartsim/create
-   using-smartsim/start
-   using-smartsim/monitor
-   using-smartsim/stop
 
 .. toctree::
    :maxdepth: 2
@@ -40,9 +36,10 @@
    :caption: API
 
    api/experiment
+   api/settings
+   api/orchestrator
    api/entity
    api/slurm
-   api/errors
 
 
 .. toctree::

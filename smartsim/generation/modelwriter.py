@@ -29,17 +29,18 @@ class ModelWriter:
             self.tag = tag
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
-    def configure_tagged_model_files(self, model):
+    def configure_tagged_model_files(self, tagged_files, params):
         """Read, write and configure tagged files attached to a Model
            instance.
 
-        :param model: a model instance
-        :type model: Model
+        :param tagged_files: list of paths to tagged files
+        :type model: list[str]
+        :param params: model parameters
+        :type params: dict[str, str]
         """
-        logger.debug(f"Configuring model {model.name} with params {model.params}")
-        for tagged_file in model.files.tagged:
+        for tagged_file in tagged_files:
             self._set_lines(tagged_file)
-            self._replace_tags(model)
+            self._replace_tags(params)
             self._write_changes(tagged_file)
 
     def _set_lines(self, file_path):
@@ -69,7 +70,7 @@ class ModelWriter:
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
-    def _replace_tags(self, model):
+    def _replace_tags(self, params):
         """Replace the tagged within the tagged file attached to this
            model. The tag defaults to ";"
 
@@ -83,8 +84,8 @@ class ModelWriter:
             if search:
                 tagged_line = search.group(0)
                 previous_value = self._get_prev_value(tagged_line)
-                if self._is_ensemble_spec(tagged_line, model.params):
-                    new_val = str(model.params[previous_value])
+                if self._is_ensemble_spec(tagged_line, params):
+                    new_val = str(params[previous_value])
                     new_line = re.sub(self.regex, new_val, line)
                     edited.append(new_line)
 

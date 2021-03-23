@@ -4,16 +4,19 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.error import SmartSimError
-from smartsim.utils import entityutils
 from smartsim.utils.entityutils import separate_entities
+from smartsim.database import Orchestrator
+from smartsim.settings import RunSettings
 
 # ---- create entities for testing --------
 
+rs = RunSettings("python", "sleep.py")
+
 exp = Experiment("util-test", launcher="local")
-model = exp.create_model("model_1", {"executable": "python"})
-model_2 = exp.create_model("model_1", {"executable": "python"})
-ensemble = exp.create_ensemble("ensemble")
-orc = exp.create_orchestrator()
+model = exp.create_model("model_1", run_settings=rs)
+model_2 = exp.create_model("model_1", run_settings=rs)
+ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
+orc = Orchestrator()
 orc_1 = deepcopy(orc)
 
 

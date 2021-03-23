@@ -1,8 +1,15 @@
 from os import getcwd
+from smartsim.error.errors import SmartSimError
 from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
+from ..utils.helpers import init_default
+from ..settings.settings import BatchSettings, RunSettings
+from copy import deepcopy
+from ..utils import get_logger
+logger = get_logger(__name__)
+
 
 class Ensemble(EntityList):
     """Ensembles are groups of Models that can be used
@@ -15,7 +22,7 @@ class Ensemble(EntityList):
     """
 
     def __init__(
-        self, name, params, run_settings, perm_strat="all_perm", **kwargs
+        self, name, params, batch_settings=None, run_settings=None, perm_strat="all_perm", **kwargs
     ):
         """Initialize an Ensemble of Model instances.
 
@@ -26,8 +33,6 @@ class Ensemble(EntityList):
         :type name: str
         :param params: model parameters for Model generation
         :type params: dict
-        :param path: path to output, error and conf files
-        :type path: str
         :param run_settings: settings for the launcher, defaults to {}
         :type run_settings: dict, optional
         :param perm_strat: permutation strategy for model creation,
@@ -35,10 +40,16 @@ class Ensemble(EntityList):
                            or a callable function
         :type perm_strat: str
         """
-        self.params = params
+        self.params = init_default({}, params, dict)
         self._key_prefixing_enabled = True
-        self.run_settings = run_settings
+        self.batch_settings = init_default({}, batch_settings, BatchSettings)
+        self.run_settings = init_default({}, run_settings, RunSettings)
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
+
+    @property
+    def models(self):
+        return self.entities
+
 
     def _initialize_entities(self, **kwargs):
         """Initialize all the models within the ensemble based
@@ -47,27 +58,58 @@ class Ensemble(EntityList):
 
         :raises UserStrategyError: if user generation strategy fails
         """
-        # TODO look into overwrite
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
-        names, params = self._read_model_parameters()
-        if len(names) > 0 and len(params) > 0:
-            all_model_params = strategy(names, params, **kwargs)
-            if not isinstance(all_model_params, list):
-                raise UserStrategyError(strategy)
-
-            for i, param_set in enumerate(all_model_params):
-                if not isinstance(param_set, dict):
+        replicas = kwargs.pop("replicas", None)
+        # if a ensemble has parameters and run settings, create
+        # the ensemble and copy run_settings to each member
+        if self.params:
+            if self.run_settings:
+                names, params = self._read_model_parameters()
+                all_model_params = strategy(names, params, **kwargs)
+                if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
-                model_name = "_".join((self.name, str(i)))
-                model = Model(
-                    model_name,
-                    param_set,
-                    self.path,
-                    run_settings=self.run_settings.copy(),
-                )
-                model.enable_key_prefixing()
-                self.add_model(model)
+                for i, param_set in enumerate(all_model_params):
+                    if not isinstance(param_set, dict):
+                        raise UserStrategyError(strategy)
+
+                    model_name = "_".join((self.name, str(i)))
+                    model = Model(
+                        model_name,
+                        param_set,
+                        self.path,
+                        run_settings=deepcopy(self.run_settings),
+                    )
+                    model.enable_key_prefixing()
+                    self.add_model(model)
+            # cannot generate models without run settings
+            else:
+                raise SmartSimError(
+                    "Ensembles supplied with 'params' argument must be provided run settings")
+        else:
+            if self.run_settings:
+                if replicas:
+                    for i in range(replicas):
+                        model_name = "_".join((self.name, str(i)))
+                        model = Model(
+                            model_name,
+                            {},
+                            self.path,
+                            run_settings=deepcopy(self.run_settings),
+                        )
+                        model.enable_key_prefixing()
+                        logger.debug(f"Created ensemble member: {model_name} in {self.name}")
+                        self.add_model(model)
+                else:
+                    raise SmartSimError(
+                        "Ensembles without 'params' to expand into members cannot be given run settings")
+            # if no params, no run settings and no batch settings, error because we
+            # don't know how to run the ensemble
+            elif not self.batch_settings:
+                raise SmartSimError(
+                    "Ensemble must be provided batch settings or run settings")
+            else:
+                logger.info("Empty ensemble created for batch launch")
 
     def add_model(self, model):
         """Add a model to this ensemble
@@ -76,14 +118,14 @@ class Ensemble(EntityList):
         :type model: Model
         :raises EntityExistsError: if model already exists in this ensemble
         """
+        if not isinstance(model, Model):
+            raise TypeError(
+                f"Argument to add_model was of type {type(model)}, not Model"
+            )
         # "in" operator uses model name for __eq__
         if model in self.entities:
             raise EntityExistsError(
                 f"Model {model.name} already exists in ensemble {self.name}"
-            )
-        if not isinstance(model, Model):
-            raise TypeError(
-                f"Argument to add_model was of type {type(model)}, not Model"
             )
         self.entities.append(model)
 

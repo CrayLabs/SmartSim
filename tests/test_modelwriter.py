@@ -1,19 +1,16 @@
 import filecmp
 from distutils import dir_util
 from glob import glob
-from os import environ, path
-from shutil import rmtree
+from os import path
 
-from smartsim import Experiment
-from smartsim.entity import Model
 from smartsim.generation.modelwriter import ModelWriter
-from smartsim.utils.test.decorators import modelwriter_test
+from smartsim.settings import RunSettings
 
-mw_run_settings = {"executable": "python"}
+mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
+def test_write_easy_configs(fileutils):
 
-@modelwriter_test
-def test_write_easy_configs():
+    test_dir = fileutils.make_test_dir("easy_modelwriter_test")
 
     param_dict = {
         "5": 10,  # MOM_input
@@ -24,30 +21,26 @@ def test_write_easy_configs():
         "1200": "120",  # input.nml
     }
 
-    conf_path = "./test_configs/easy/marked/"
-    gen_path = "./modelwriter_test/"
-    correct_path = "./test_configs/easy/correct/"
-    model = Model("easy", param_dict, gen_path, run_settings=mw_run_settings)
+    conf_path = fileutils.get_test_dir_path("easy/marked/")
+    correct_path = fileutils.get_test_dir_path("easy/correct/")
     # copy confs to gen directory
-    dir_util.copy_tree(conf_path, gen_path)
-    assert path.isdir(gen_path)
-
-    # attach tagged files to model
-    model.attach_generator_files(to_configure=glob(gen_path + "*"))
+    dir_util.copy_tree(conf_path, test_dir)
+    assert path.isdir(test_dir)
 
     # init modelwriter
     writer = ModelWriter()
-    writer.configure_tagged_model_files(model)
+    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
 
-    written_files = sorted(glob(gen_path + "*"))
+    written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
 
     for written, correct in zip(written_files, correct_files):
         assert filecmp.cmp(written, correct)
 
 
-@modelwriter_test
-def test_write_med_configs():
+def test_write_med_configs(fileutils):
+
+    test_dir = fileutils.make_test_dir("med_modelwriter_test")
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -58,33 +51,29 @@ def test_write_med_configs():
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    gen_path = "./modelwriter_test/"
-    conf_path = "./test_configs/med/marked/"
-    correct_path = "./test_configs/med/correct/"
-    model = Model("med", param_dict, gen_path, mw_run_settings)
+    conf_path = fileutils.get_test_dir_path("med/marked/")
+    correct_path = fileutils.get_test_dir_path("med/correct/")
 
     # copy confs to gen directory
-    dir_util.copy_tree(conf_path, gen_path)
-    assert path.isdir(gen_path)
-
-    # attach tagged files to model
-    model.attach_generator_files(to_configure=glob(gen_path + "*"))
+    dir_util.copy_tree(conf_path, test_dir)
+    assert path.isdir(test_dir)
 
     # init modelwriter
     writer = ModelWriter()
-    writer.configure_tagged_model_files(model)
+    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
 
-    written_files = sorted(glob(gen_path + "*"))
+    written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
 
     for written, correct in zip(written_files, correct_files):
         assert filecmp.cmp(written, correct)
 
 
-@modelwriter_test
-def test_write_new_tag_configs():
+def test_write_new_tag_configs(fileutils):
     """sets the tag to the dollar sign"""
 
+    test_dir = fileutils.make_test_dir("new_tag_modelwriter_test")
+
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
         "'noleap'": "'leap'",  # input.nml
@@ -94,24 +83,19 @@ def test_write_new_tag_configs():
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    gen_path = "./modelwriter_test/"
-    conf_path = "./test_configs/new-tag/marked/"
-    correct_path = "./test_configs/new-tag/correct/"
-    model = Model("newtag", param_dict, gen_path, run_settings=mw_run_settings)
+    conf_path = fileutils.get_test_dir_path("new-tag/marked/")
+    correct_path = fileutils.get_test_dir_path("new-tag/correct/")
 
     # copy confs to gen directory
-    dir_util.copy_tree(conf_path, gen_path)
-    assert path.isdir(gen_path)
-
-    # attach tagged files to model
-    model.attach_generator_files(to_configure=glob(gen_path + "*"))
+    dir_util.copy_tree(conf_path, test_dir)
+    assert path.isdir(test_dir)
 
     # init modelwriter
     writer = ModelWriter()
     writer.set_tag("@")
-    writer.configure_tagged_model_files(model)
+    writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
 
-    written_files = sorted(glob(gen_path + "*"))
+    written_files = sorted(glob(test_dir + "/*"))
     correct_files = sorted(glob(correct_path + "*"))
 
     for written, correct in zip(written_files, correct_files):

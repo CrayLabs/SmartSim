@@ -60,6 +60,7 @@ class ShellError(LauncherError):
         if isinstance(command_list, list):
             command_list = " ".join(command_list)
         msg = message + "\n"
-        msg += f"Command: {command_list}\n\n"
-        msg += f"Error from shell: {shell_error}"
+        msg += f"\nCommand: {command_list}"
+        if shell_error:
+            msg += f"\nError from shell: {shell_error}"
         return msg

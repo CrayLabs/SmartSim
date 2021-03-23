@@ -22,6 +22,7 @@ DumpStyle(atom/smartsim, DumpAtomSmartSim)
 
 #include "dump_atom.h"
 #include "client.h"
+#include "dataset.h"
 
 namespace LAMMPS_NS
 {
@@ -36,7 +37,7 @@ protected:
     virtual void write();
     virtual void init_style();
 private:
-  std::string _make_key(std::string var_name, int rank);
+  std::string _make_dataset_key();
   template <typename T>
   void _pack_buf_into_array(T* data, int length,
 			    int start_pos, int stride);

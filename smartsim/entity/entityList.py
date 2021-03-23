@@ -1,20 +1,39 @@
-import abc
 
-
-class EntityList(abc.ABC):
+class EntityList():
     """Abstract class for containers for SmartSimEntities"""
 
     def __init__(self, name, path, **kwargs):
-        super().__init__()
         self.name = name
         self.path = path
         self.entities = []
         self._initialize_entities(**kwargs)
 
-    @abc.abstractmethod
     def _initialize_entities(self, **kwargs):
         """Initialize the SmartSimEntity objects in the container"""
-        pass
+        raise NotImplementedError
+
+
+    @property
+    def batch(self):
+        try:
+            if self.batch_settings:
+                return True
+            else:
+                return False
+        # local orchestrator cannot launch with batches
+        except AttributeError:
+            return False
+
+    @property
+    def type(self):
+        """Return the name of the class
+        """
+        return type(self).__name__
+
+    def set_path(self, new_path):
+        self.path = new_path
+        for entity in self.entities:
+            entity.path = new_path
 
     def __getitem__(self, name):
         for entity in self.entities:

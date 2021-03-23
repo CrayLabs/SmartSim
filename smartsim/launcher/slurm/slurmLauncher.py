@@ -1,193 +1,202 @@
+from smartsim.error.errors import SSUnsupportedError
 import time
 from shutil import which
 
-import numpy as np
 
+from ...settings import SrunSettings, SbatchSettings
 from ...error import LauncherError, SSConfigError
-from ...utils import get_logger
 from ..launcher import Launcher
-from ..shell import execute_async_cmd
-from ..stepInfo import SlurmStepInfo
+from ..stepInfo import SlurmStepInfo, UnmanagedStepInfo
 from ..taskManager import TaskManager
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
-from .slurmStep import SlurmStep
+from ..step import SbatchStep, SrunStep
+from ..stepMapping import StepMapping
 
+from ...utils import get_logger
 logger = get_logger(__name__)
 
 
 class SlurmLauncher(Launcher):
     """This class encapsulates the functionality needed
-    to manager allocations and launch jobs on systems that use
-    Slurm as a workload manager.
+    to launch jobs on systems that use Slurm as a workload manager.
+
+    All WLM launchers are capable of launching managed and unmanaged
+    jobs. Managed jobs are queried through interaction with with WLM,
+    in this case Slurm. Unmanaged jobs are held in the TaskManager
+    and are managed through references to their launching process ID
+    i.e. a psutil.Popen object
     """
 
-    def __init__(self, *args, **kwargs):
-        """Initialize a SlurmLauncher"""
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        """Initialize a SlurmLauncher
+        """
+        super().__init__()
         self.task_manager = TaskManager()
+        self.step_mapping = StepMapping()
 
-    def create_step(self, entity_name, run_settings, multi_prog=False):
-        """Convert a smartsim entity run_settings into a Slurm step
+    def create_step(self, name, cwd, step_settings):
+        """Create a Slurm job step
 
-        This function convert a smartsim entity run_settings
-        into a Slurm stepto be launched on an allocation. An entity
-        must have an allocation assigned to it in the running settings
-        or create_step will throw a LauncherError
-
-        :param entity_name: name of the entity to create a step for
-        :type entity_name: str
-        :param run_settings: smartsim run settings for an entity
-        :type run_settings: dict
-        :param multi_prog: Create step with slurm --multi-prog, defaults to False
-        :type multi_prog: bool, optional
-        :raises LauncherError: if no allocation specified for the step
-        :return: slurm job step
-        :rtype: SlurmStep
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param step_settings: batch or run settings for entity
+        :type step_settings: BatchSettings | RunSettings
+        :raises SSUnsupportedError: if batch or run settings type isnt supported
+        :raises LauncherError: if step creation fails
+        :return: step instance
+        :rtype: Step
         """
         try:
-            if "alloc" not in run_settings:
-                raise SSConfigError(f"User provided no allocation for {entity_name}")
-
-            name = entity_name + "-" + str(np.base_repr(time.time_ns(), 36))
-            step = SlurmStep(name, run_settings, multi_prog)
-            return step
+            if isinstance(step_settings, SrunSettings):
+                step = SrunStep(name, cwd, step_settings)
+                return step
+            if isinstance(step_settings, SbatchSettings):
+                step = SbatchStep(name, cwd, step_settings)
+                return step
+            raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
-            raise LauncherError("Job step creation failed: " + str(e)) from None
+            raise LauncherError("Step creation failed: " + str(e)) from None
 
-    def get_step_status(self, step_id):
-        """Get the status of a SlurmStep via the id of the step (e.g. 12345.0)
 
-        :param step_id: id of the step in the form of xxxxxx.x
-        :type step_id: str
-        :return: status of the job step and returncode
-        :rtype: SlurmStepInfo
+
+    def get_step_update(self, step_names):
+        """Get update for a list of job steps
+
+        :param step_names: list of job steps to get updates for
+        :type step_names: list[str]
+        :return: list of job updates
+        :rtype: list[StepInfo]
         """
-        step_id = str(step_id)
-        sacct_out, _ = sacct(["--noheader", "-p", "-b", "-j", step_id])
-        stat, returncode = parse_sacct(sacct_out, step_id)
-        if self.task_manager.check_error(step_id):
-            task_ret_code, out, err = self.task_manager.get_task_history(step_id)
-
-            if stat == "NOTFOUND":
-                returncode = task_ret_code
-                stat = "Failed"
-            status = SlurmStepInfo(stat, returncode, out, err)
-        else:
-            status = SlurmStepInfo(stat, returncode)
-        return status
-
-    def get_step_update(self, step_ids):
-        """Get updates for a list of step ids
-
-        :param step_ids: list of step ids
-        :type step_ids: list
-        :return: list of SlurmStepInfo instances
-        :rtype: list
-        """
-        step_str = _create_step_id_str(step_ids)
-        sacct_out, _ = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
-        # (status, returncode)
-        stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
-
-        # create SlurmStepInfo objects to return
         updates = []
-        for stat_tuple, step_id in zip(stat_tuples, step_ids):
-            info = SlurmStepInfo(stat_tuple[0], stat_tuple[1])
-            if self.task_manager.check_error(step_id):
-                rc, out, err = self.task_manager.get_task_history(step_id)
-                info.output = out
-                info.error = err
 
-                # command never made it to slurm, return Popen returncode
-                if info.status == "NOTFOUND":
-                    info.returncode = rc
-                    info.status = "Failed"
-            updates.append(info)
+        # get updates of jobs managed by slurm (SrunStep, SbatchStep, MpiexecStep)
+        step_ids = self.step_mapping.get_ids(step_names, managed=True)
+        if len(step_ids) > 0:
+            updates.extend(self._get_managed_step_update(step_ids))
+
+        # get process managed updates (MpirunStep, non-slurm mpieexec, or when
+        # facilities like sacct, and sstat are unavailable or slow)
+        task_ids = self.step_mapping.get_ids(step_names, managed=False)
+        if len(task_ids) > 0:
+            updates.extend(self._get_unmanaged_step_update(task_ids))
+
         return updates
 
-    def get_step_nodes(self, step_id):
+    def get_step_nodes(self, step_names):
         """Return the compute nodes of a specific job or allocation
 
         This function returns the compute nodes of a specific job or allocation
         in a list with the duplicates removed.
 
-        :param step_id: job step id or allocation id
-        :type step_id: str
-        :raises LauncherError: if allocation or job step cannot be
-                               found
-        :return: list of compute nodes the job was launched on
-        :rtype: list of str
+        Output gleaned from sstat e.g. the following
+
+        29917893.extern|nid00034|44860|
+        29917893.0|nid00034|44887,45151,45152,45153,45154,45155|
+        29917893.2|nid00034|45174|
+
+        would return nid00034
+
+        :param step_names: list of job step names
+        :type step_names: list[str]
+        :raises LauncherError: if nodelist aquisition fails
+        :return: list of hostnames
+        :rtype: list[str]
         """
-        step_id = str(step_id)
-        output, error = sstat([step_id, "-i", "-n", "-p", "-a"])
+        step_ids = self.step_mapping.get_ids(step_names, managed=True)
+        step_str = _create_step_id_str(step_ids)
+        output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
+
         if "error:" in error.split(" "):
-            raise LauncherError("Could not find allocation for job: " + step_id)
-        return parse_sstat_nodes(output)
+            raise LauncherError("Failed to retrieve nodelist from stat")
+
+        # parse node list for each step
+        node_lists = []
+        for step_id in step_ids:
+            node_lists.append(parse_sstat_nodes(output, step_id))
+
+        if len(node_lists) < 1:
+            raise LauncherError("Failed to retrieve nodelist from stat")
+        return node_lists
+
 
     def run(self, step):
-        """Run a job step
+        """Run a job step through Slurm
 
-        This function runs a job step on an allocation through the
-        slurm launcher. A constructed job step is required such that
-        the argument translation from SmartSimEntity to SlurmStep has
-        been completed and an allocation has been assigned to the step.
-
-        :param step: Job step to be launched
-        :type step: SlurmStep
-        :raises LauncherError: If the allocation cannot be found or the
-                               job step failed to launch.
-        :return: job_step id
+        :param step: a job step instance
+        :type step: Step
+        :raises LauncherError: if launch fails
+        :return: job step id if job is managed
         :rtype: str
         """
         self.check_for_slurm()
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
 
-        srun = step.build_cmd()
-        task = execute_async_cmd(srun, cwd=step.cwd)
-        step_id = self._get_slurm_step_id(step)
-        self.task_manager.add_task(task, step_id)
+        cmd_list = step.get_launch_cmd()
+        step_id = None
+        task_id = None
+        if isinstance(step, SbatchStep):
+            # wait for batch step to submit successfully
+            rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
+            if rc != 0:
+                raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
+            if out:
+                step_id = out.strip()
+                logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+        else:
+            task_id = self.task_manager.start_task(cmd_list, step.cwd)
+
+        if not step_id and step.managed:
+            step_id = self._get_slurm_step_id(step)
+        self.step_mapping.add(step.name, step_id, task_id, step.managed)
+
+        # give slurm a rest
+        # TODO make this configurable
+        time.sleep(1)
+
         return step_id
 
-    def stop(self, step_id):
-        """Stop a job step
+    def stop(self, step_name):
+        """Step a job step
 
-        :param step_id: id of the step to be stopped
-        :type step_id: str
-        :return: a SlurmStepInfo instance
-        :rtype: SlurmStepInfo
+        :param step_name: name of the job to stop
+        :type step_name: str
+        :return: update for job due to cancel
+        :rtype: StepInfo
         """
-        self.check_for_slurm()
-        scancel_rc, out, err = scancel([str(step_id)])
-        self.task_manager.remove_task(step_id)
-        if scancel_rc != 0:
-            logger.warning(f"Unable to stop job {str(step_id)}")
+        stepmap = self.step_mapping[step_name]
+        if stepmap.managed:
+            scancel_rc, _, err = scancel([str(stepmap.step_id)])
+            if scancel_rc != 0:
+                logger.warning(f"Unable to cancel job step {step_name}\n {err}")
+            if stepmap.task_id:
+                self.task_manager.remove_task(stepmap.task_id)
         else:
-            logger.info(f"Successfully stopped job {str(step_id)}")
-        returncode, out, err = self.task_manager.get_task_history(step_id)
-        info = SlurmStepInfo("Cancelled", returncode, out, err)
-        return info
+            self.task_manager.remove_task(stepmap.task_id)
+
+        step_info = self.get_step_update([step_name])[0]
+        step_info.status = "Cancelled" # set status to cancelled instead of failed
+        return step_info
 
     def _get_slurm_step_id(self, step, interval=1, trials=5):
-        """Get the step_id of a step
-        This function uses the sacct command to find the step_id of
-        a step that has been launched by this SlurmLauncher instance.
-        Use the step name to find the corresponding step_id.  This
-        function performs a number of trials in case the slurm launcher
-        takes a while to populate the Sacct database
+        """Get the step_id of a step from sacct
 
-        TODO update this docstring
-        :param step: step to find the id of
-        :type step: SlurmStep
-        :returns: if of the step
-        :rtype: str
+        Parses sacct output by looking for the step name
+        e.g. the following
+
+        SmartSim|119225|
+        extern|119225.extern|
+        m1-119225.0|119225.0|
+        m2-119225.1|119225.1|
         """
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:
             output, _ = sacct(
-                ["--noheader", "-p", "--format=jobname,jobid", "--job=" + step.alloc_id]
+                ["--noheader", "-p", "--format=jobname,jobid"]
             )
             step_id = parse_step_id_from_sacct(output, step.name)
             if step_id:
@@ -199,6 +208,53 @@ class SlurmLauncher(Launcher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
+
+    def _get_managed_step_update(self, step_ids):
+        """Get step updates for WLM managed jobs
+
+        :param step_ids: list of job step ids
+        :type step_ids: list[str]
+        :return: list of updates for managed jobs
+        :rtype: list[StepInfo]
+        """
+        step_str = _create_step_id_str(step_ids)
+        sacct_out, _ = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
+        # (status, returncode)
+        stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
+
+        # create SlurmStepInfo objects to return
+        updates = []
+        for stat_tuple, step_id in zip(stat_tuples, step_ids):
+            info = SlurmStepInfo(stat_tuple[0], stat_tuple[1])
+
+            task_id = self.step_mapping.get_task_id(step_id)
+            if task_id:
+            # we still check the task manager for jobs that didn't ever
+            # become a fully managed job (e.g. error in slurm arguments)
+                _, rc, out, err = self.task_manager.get_task_update(task_id)
+                if rc and rc != 0:
+                    # tack on Popen error and output to status update.
+                    info.output = out
+                    info.error = err
+
+            updates.append(info)
+        return updates
+
+    def _get_unmanaged_step_update(self, task_ids):
+        """Get step updates for Popen managed jobs
+
+        :param task_ids: task id to check
+        :type task_ids: list[str]
+        :return: list of step updates
+        :rtype: list[StepInfo]
+        """
+        updates = []
+        for task_id in task_ids:
+            stat, rc, out, err = self.task_manager.get_task_update(task_id)
+            update = UnmanagedStepInfo(stat, rc, out, err)
+            updates.append(update)
+        return updates
+
     @staticmethod
     def check_for_slurm():
         """Check if slurm is available
@@ -208,7 +264,7 @@ class SlurmLauncher(Launcher):
 
         :raises LauncherError: if no access to slurm
         """
-        if not which("srun") and not which("salloc") and not which("sacct"):
+        if not which("srun") and not which("sbatch") and not which("sacct"):
             error = "User attempted Slurm methods without access to Slurm at the call site.\n"
             raise LauncherError(error)
 
@@ -222,3 +278,4 @@ def _create_step_id_str(step_ids):
         step_str += str(step_id) + ","
     step_str = step_str.strip(",")
     return step_str
+
