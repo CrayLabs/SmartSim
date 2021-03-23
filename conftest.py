@@ -17,6 +17,8 @@ def get_launcher():
             test_launcher = "slurm"
         elif launcher == "pbs":
             test_launcher = "pbs"
+        elif launcher == "cobalt":
+            test_launcher = "cobalt"
         else:
             test_launcher = "local"
     return test_launcher
@@ -35,7 +37,7 @@ def print_test_configuration():
 def pytest_configure():
     launcher = get_launcher()
     pytest.test_launcher = launcher
-    pytest.wlm_options = ["slurm", "pbs"]
+    pytest.wlm_options = ["slurm", "pbs", "cobalt"]
 
 def pytest_sessionstart(session):
     """
@@ -78,6 +80,12 @@ class WLMUtils:
             settings = SrunSettings(exe, args, run_args=run_args)
             return settings
         elif test_launcher == "pbs":
+            run_args = {"pes": ntasks}
+            run_args.update(kwargs)
+            settings = AprunSettings(exe, args, run_args=run_args)
+            return settings
+        # TODO allow user to pick aprun vs MPIrun
+        elif test_launcher == "cobalt":
             run_args = {"pes": ntasks}
             run_args.update(kwargs)
             settings = AprunSettings(exe, args, run_args=run_args)

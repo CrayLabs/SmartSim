@@ -2,6 +2,7 @@
 A file of helper functions for SmartSim
 """
 import os
+import stat
 from os import environ
 from shutil import which
 
