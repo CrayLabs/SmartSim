@@ -214,3 +214,6 @@ class Ensemble(EntityList):
                     + "Must be list, int, or string."
                 )
         return param_names, parameters
+
+    def __getitem__(self, index):
+        return self.entities[index]

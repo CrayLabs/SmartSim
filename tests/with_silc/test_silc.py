@@ -5,6 +5,7 @@ import sys
 import pytest
 
 from smartsim import Experiment, constants
+from smartsim.generation import Generator
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.settings import RunSettings
@@ -32,21 +33,21 @@ except ImportError:
                     reason="requires SILC and PyTorch")
 
 
-def test_exchange():
+def test_exchange(fileutils):
     """ Run two processes, each process puts a tensor on
         the DB, then accesses the other process's tensor.
         Finally, the tensor is used to run a model.
     """
 
-    exp = Experiment("silc_ensemble", launcher="local")
-
-    if osp.isdir(exp.exp_path):
-        rmtree(exp.exp_path)
+    test_dir = fileutils.make_test_dir("silc_ensemble_exchange_test")
+    exp = Experiment("silc_ensemble_exchange", launcher="local")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
     exp.generate(orc)
     exp.start(orc, block=False)
+
+    gen = Generator(test_dir)
 
     rs = RunSettings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
@@ -54,15 +55,17 @@ def test_exchange():
             name="producer",
             params=params,
             run_settings=rs,
-            perm_strat="step"
+            perm_strat="step",
         )
 
-    ensemble.register_incoming_entity(ensemble.entities[0])
-    ensemble.register_incoming_entity(ensemble.entities[1])
 
-    ensemble.attach_generator_files(to_copy="./integration/silc/producer.py")
+    ensemble.register_incoming_entity(ensemble[0])
+    ensemble.register_incoming_entity(ensemble[1])
 
-    exp.generate(ensemble, overwrite=True)
+    config = fileutils.get_test_conf_path('silc')
+    ensemble.attach_generator_files(to_copy=[config])
+
+    gen.generate_experiment(ensemble)
 
     # start the models
     exp.start(ensemble, summary=False)
@@ -76,26 +79,23 @@ def test_exchange():
 
     print(exp.summary())
 
-    if osp.isdir(exp.exp_path):
-        rmtree(exp.exp_path)
 
-
-def test_consumer():
+def test_consumer(fileutils):
     """ Run three processes, each one of the first two processes
         puts a tensor on the DB; the third process accesses the 
         tensors put by the two producers.
         Finally, the tensor is used to run a model by each producer
         and the consumer accesses the two results.
     """
-    exp = Experiment("silc_ensemble", launcher="local")
-
-    if osp.isdir(exp.exp_path):
-        rmtree(exp.exp_path)
+    exp = Experiment("silc_ensemble_consumer", launcher="local")
+    test_dir = fileutils.make_test_dir("silc_ensemble_consumer_test")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
     exp.generate(orc)
     exp.start(orc, block=False)
+
+    gen = Generator(test_dir)
 
     rs_prod = RunSettings("python", "producer.py")
     rs_consumer = RunSettings("python", "consumer.py")
@@ -109,15 +109,14 @@ def test_consumer():
 
     consumer = Model("consumer", params={}, path=ensemble.path, run_settings=rs_consumer)
     ensemble.add_model(consumer)
-    print(ensemble.entities)
 
-    ensemble.register_incoming_entity(ensemble.entities[0])
-    ensemble.register_incoming_entity(ensemble.entities[1])
+    ensemble.register_incoming_entity(ensemble[0])
+    ensemble.register_incoming_entity(ensemble[1])
 
-    ensemble.attach_generator_files(to_copy=["./integration/silc/producer.py",
-                                             "./integration/silc/consumer.py"])
+    config = fileutils.get_test_conf_path('silc')
+    ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble, overwrite=True)
+    gen.generate_experiment(ensemble)
 
     # start the models
     exp.start(ensemble, summary=False)
@@ -131,5 +130,3 @@ def test_consumer():
 
     print(exp.summary())
 
-    if osp.isdir(exp.exp_path):
-        rmtree(exp.exp_path)
