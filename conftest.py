@@ -7,7 +7,7 @@ from smartsim.settings import RunSettings
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_dir = os.path.join(test_path, "tests", "test_output")
-test_launcher = "slurm"
+test_launcher = "local"
 
 def get_launcher():
     global test_launcher
