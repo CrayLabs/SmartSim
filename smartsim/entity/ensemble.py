@@ -129,7 +129,7 @@ class Ensemble(EntityList):
             )
         self.entities.append(model)
 
-    def register_incoming_entity(self, incoming_entity, receiving_client_type):
+    def register_incoming_entity(self, incoming_entity):
         """Register future communication between entities.
 
         Registers the named data sources that this entity
@@ -139,13 +139,10 @@ class Ensemble(EntityList):
         Only python clients can have multiple incoming connections
 
         :param incoming_entity: The entity that data will be received from
-        :param incoming_entity: SmartSimEntity
-        :param receiving_client_type: The language of the SmartSim client used by
-                                      this object. Can be cpp, fortran, python
-        :param receiving_client_type: str
+        :type incoming_entity: SmartSimEntity
         """
         for model in self.entities:
-            model.register_incoming_entity(incoming_entity, receiving_client_type)
+            model.register_incoming_entity(incoming_entity)
 
     def enable_key_prefixing(self):
         """If called, all models within this ensemble will prefix their keys with its
@@ -217,3 +214,6 @@ class Ensemble(EntityList):
                     + "Must be list, int, or string."
                 )
         return param_names, parameters
+
+    def __getitem__(self, index):
+        return self.entities[index]
