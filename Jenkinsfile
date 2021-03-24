@@ -68,7 +68,7 @@ node('cicero') {
     STAGE = 'Package'
     stage "${STAGE}"
     // TODO SET FOR WORKFLOWS
-    sh "mkdir build_rpm_dir && cd build_rpm_dir && ../build_rpm"
+    sh "mkdir -p build_rpm_dir && cd build_rpm_dir && ../build_rpm"
 
     //
     // Archive
