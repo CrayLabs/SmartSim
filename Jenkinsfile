@@ -29,6 +29,14 @@ node('cicero') {
     checkout scm
 
     //
+    // Fetch Artifact
+    //
+    STAGE = 'Fetch Artifact'
+    stage "${STAGE}"
+
+    copyArtifacts filter: 'build_common.shrc', fingerprintArtifacts: true, projectName: '/multibranch-athena-build-common/master', selector: lastSuccessful(), target: './build'
+
+    //
     // Build
     // 
     STAGE = 'Build'
