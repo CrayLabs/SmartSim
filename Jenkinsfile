@@ -34,7 +34,7 @@ node('cicero') {
     STAGE = 'Fetch Artifact'
     stage "${STAGE}"
 
-    copyArtifacts filter: 'build_common.shrc', fingerprintArtifacts: true, projectName: '/multibranch-athena-build-common/master', selector: lastSuccessful(), target: './build'
+    copyArtifacts filter: 'build_common.shrc', fingerprintArtifacts: true, projectName: '/multibranch-athena-build-common/master', selector: lastSuccessful(), target: './build_rpm_dir'
 
     //
     // Build
