@@ -1,6 +1,6 @@
 #!groovy
 
-node('cicero') {
+node('horizon') {
   def STAGE = ''
 
   try {
