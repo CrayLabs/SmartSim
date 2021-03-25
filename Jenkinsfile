@@ -9,7 +9,7 @@ node('cicero') {
     //env.NAME = ""
     //env.IYUM_REPO_NAME = "${env.NAME}"
     env.IYUM_REPO_NAME = "analytics"
-    env.IYUM_REPO_PREFIX = "poseidon"
+    env.IYUM_REPO_PREFIX = "poseidon-"
 
     //
     // Stage Prep
