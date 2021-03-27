@@ -142,3 +142,41 @@ class PBSStepInfo(StepInfo):
         elif status in self.mapping:
             return self.mapping[status]
         return STATUS_FAILED
+
+
+
+class CobaltStepInfo(StepInfo):
+
+    mapping = {
+        "running": STATUS_RUNNING,
+
+        "queued": STATUS_PAUSED,
+        "starting": STATUS_PAUSED,
+        "dep_hold": STATUS_PAUSED,
+        "user_hold": STATUS_PAUSED,
+        "admin_hold": STATUS_PAUSED,
+
+        "dep_fail": STATUS_FAILED, # unsure of this one
+
+        "terminating": STATUS_COMPLETED,
+        "killing": STATUS_COMPLETED,
+        "exiting": STATUS_COMPLETED
+    }
+
+    def __init__(self, status="", returncode=None, output=None, error=None):
+        if status == "NOTFOUND":
+            # returncode not logged by Cobalt
+            # if job has exited the queue then we consider it "completed"
+            # this should only be hit in the case when job exits abnormally fast
+            smartsim_status = "Completed"
+            returncode = 0
+        else:
+            smartsim_status = self._get_smartsim_status(status)
+        super().__init__(smartsim_status, status, returncode, output=output, error=error)
+
+    def _get_smartsim_status(self, status):
+        if status in SMARTSIM_STATUS:
+            return SMARTSIM_STATUS[status]
+        elif status in self.mapping:
+            return self.mapping[status]
+        return STATUS_FAILED

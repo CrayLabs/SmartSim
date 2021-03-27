@@ -2,11 +2,12 @@ import time
 import pickle
 import threading
 import os.path as osp
-from ..constants import TERMINAL_STATUSES
+from ..constants import TERMINAL_STATUSES, WLM_JM_INTERVAL
+from ..constants import STATUS_RUNNING, STATUS_FAILED
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import LocalLauncher, SlurmLauncher, PBSLauncher
+from ..launcher import LocalLauncher, SlurmLauncher, PBSLauncher, CobaltLauncher
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
 
@@ -125,7 +126,7 @@ class Controller:
             job = self._jobs[entity.name]
             if job.status not in TERMINAL_STATUSES:
                 logger.info(
-                    " ".join(("Stopping model", entity.name, "job", str(job.jid)))
+                    " ".join(("Stopping model", entity.name, "with job name", str(job.name)))
                 )
                 status = self._launcher.stop(job.name)
 
@@ -215,6 +216,9 @@ class Controller:
             elif launcher == "pbs":
                 self._launcher = PBSLauncher()
                 self._jobs.set_launcher(self._launcher)
+            elif launcher == "cobalt":
+                self._launcher = CobaltLauncher()
+                self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
         else:
@@ -276,16 +280,16 @@ class Controller:
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
             self._launch_step(orc_batch_step, orchestrator)
-
-            logger.debug("Waiting for orchestrator instances to spin up...")
-            time.sleep(5)
+            self._orchestrator_launch_wait(orchestrator)
             try:
                 nodelist = self._launcher.get_step_nodes([orc_batch_step.name])
                 orchestrator._hosts = nodelist[0]
 
             # catch if it fails or launcher doesn't support it
-            except (LauncherError, SSUnsupportedError):
+            except LauncherError:
                 logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+            except SSUnsupportedError:
+                logger.debug("WLM node aquisition unsupported, moving to RedisIP fallback")
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -293,9 +297,8 @@ class Controller:
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
-            # sleep for 1 second per orchestrator instance
-            logger.debug("Waiting for orchestrator instances to spin up...")
-            time.sleep(5)
+            # wait for orchestrator to spin up
+            self._orchestrator_launch_wait(orchestrator)
             try:
                 db_step_names = [db_step[0].name for db_step in db_steps]
                 nodes = self._launcher.get_step_nodes(db_step_names)
@@ -303,8 +306,10 @@ class Controller:
                     db._host = node[0]
 
             # catch if it fails or launcher doesn't support it
-            except (LauncherError, SSUnsupportedError):
+            except LauncherError:
                 logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+            except SSUnsupportedError:
+                logger.debug("WLM node aquisition unsupported, moving to RedisIP fallback")
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
@@ -439,6 +444,48 @@ class Controller:
         orc_data["steps"] = steps
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
+
+    def _orchestrator_launch_wait(self, orchestrator):
+        """Wait for the orchestrator instances to run
+
+        In the case where the orchestrator is launched as a batch
+        through a WLM, we wait for the orchestrator to exit the
+        queue before proceeding so new launched entities can
+        be launched with SSDB address
+
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        :raises SmartSimError: if launch fails or manually stopped by user
+        """
+        if orchestrator.batch:
+            logger.info("Orchestrator launched as a batch")
+            logger.info("While queued, SmartSim will wait for Orchestrator to run")
+            logger.info("CTRL+C interrupt to abort and cancel launch")
+
+        ready = False
+        while not ready:
+            time.sleep(WLM_JM_INTERVAL)
+            try:
+                # manually trigger job update if JM not running
+                if not self._jobs.actively_monitoring:
+                    self._jobs.check_jobs()
+
+                # _jobs.get_status aquires JM lock for main thread, no need for locking
+                statuses = self.get_entity_list_status(orchestrator)
+                if all([stat == STATUS_RUNNING for stat in statuses]):
+                    ready = True
+                elif any([stat == STATUS_FAILED for stat in statuses]):
+                    self.stop_entity_list(orchestrator)
+                    msg = "Orchestrator failed during startup"
+                    msg += f" See {orchestrator.path} for details"
+                    raise SmartSimError(msg)
+                else:
+                    logger.debug("Waiting for orchestrator instances to spin up...")
+            except KeyboardInterrupt as e:
+                logger.info("Orchestrator launch cancelled - requesting to stop")
+                self.stop_entity_list(orchestrator)
+                raise SmartSimError("Orchestrator launch manually stopped") from e
+                # TODO stop all running jobs here?
 
     def reload_saved_db(self, checkpoint_file):
         JM_LOCK.acquire()

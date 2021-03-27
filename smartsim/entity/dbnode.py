@@ -1,7 +1,12 @@
 import os
 import os.path as osp
+import time
 from smartsim.error.errors import SmartSimError
 from .entity import SmartSimEntity
+
+from ..utils import get_logger
+logger = get_logger(__name__)
+
 
 class DBNode(SmartSimEntity):
     """DBNode objects are the entities that make up the orchestrator.
@@ -52,17 +57,48 @@ class DBNode(SmartSimEntity):
         return "".join(("nodes-", self.name, "-", str(port), ".conf"))
 
     def _parse_db_host(self):
+        """Parse the database host/IP from the output file
+
+        this uses the RedisIP module that is built as a dependency
+        The IP address is preferred, but if hostname is only present
+        then a lookup to /etc/hosts is done through the socket library
+
+        :raises SmartSimError: if host/ip could not be found
+        :return: ip address | hostname
+        :rtype: str
+        """
         filepath = osp.join(self.path, self.name + ".out")
+        trials = 5
         host = None
-        try:
-            with open(filepath, "r") as f:
-                lines = f.readlines()
-                for line in lines:
-                    content = line.split()
-                    if "Hostname:" in content:
-                        host = content[-1]
-                        break
-        except FileNotFoundError:
+        ip = None
+
+        # try a few times to give the database files time to
+        # populate on busy systems.
+        while not host and trials > 0:
+            try:
+                with open(filepath, "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        content = line.split()
+                        if "Hostname:" in content:
+                            host = content[-1]
+                        if "IP:" in content:
+                            ip = content[-1]
+                            break
+            except FileNotFoundError:
+                logger.debug("Waiting for RedisIP files to populate...")
+                trials -= 1
+                time.sleep(5)
+            logger.debug("Waiting for RedisIP files to populate...")
+            trials -= 1
+            time.sleep(5)
+
+        if not host and not ip:
+            logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError(
-                "Failed to obtain database hostname") from None
+                "Failed to obtain database hostname")
+
+        # prefer the ip address if present
+        if host and ip:
+            host = ip
         return host

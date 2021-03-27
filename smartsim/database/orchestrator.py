@@ -9,12 +9,12 @@ from os import getcwd
 import os.path as osp
 from ..entity import DBNode, EntityList
 from ..error import SSConfigError, SmartSimError
-from ..utils import get_logger
 from ..utils.helpers import get_env
 from ..utils.helpers import expand_exe_path
 from ..settings.settings import RunSettings
 from ..launcher.util.shell import execute_cmd
 
+from ..utils import get_logger
 logger = get_logger(__name__)
 
 

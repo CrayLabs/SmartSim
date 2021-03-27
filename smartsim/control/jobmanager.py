@@ -1,18 +1,16 @@
 import time
-from threading import Thread
 import itertools
+from threading import Thread
 
-import numpy as np
-from ..entity import DBNode
-from ..database import Orchestrator
-from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
-from ..error import SmartSimError
-from ..launcher import SlurmLauncher, PBSLauncher
-from ..utils import get_logger
 from .job import Job
+from ..entity import DBNode
+from ..error import SmartSimError
+from ..database import Orchestrator
+from ..launcher import SlurmLauncher, PBSLauncher
 from ..database.orchestrator import get_ip_from_host
+from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
 
-
+from ..utils import get_logger
 logger = get_logger(__name__)
 
 
@@ -35,18 +33,20 @@ class JobManager:
         :param launcher: a Launcher object to manage jobs
         :type: SmartSim.Launcher
         """
-        self.name = "JobManager" + "-" + str(np.base_repr(time.time_ns(), 36))
-        self.actively_monitoring = False
+        # active jobs
         self.jobs = {}
         self.db_jobs = {}
+
+        # completed jobs
         self.completed = {}
-        self._launcher = launcher
-        self._lock = lock
+
+        self.actively_monitoring = False  # on/off flag
+        self._launcher = launcher         # reference to launcher
+        self._lock = lock                 # thread lock
 
     def start(self):
         """Start a thread for the job manager"""
-
-        self.monitor = Thread(name=self.name, daemon=True, target=self.run)
+        self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
 
     def run(self):
@@ -198,7 +198,7 @@ class JobManager:
             self._lock.release()
 
     def get_status(self, entity):
-        """Return the workload manager given status of a job.
+        """Return the status of a job.
 
         :param entity: SmartSimEntity or EntityList instance
         :type entity: SmartSimEntity | EntityList
@@ -304,3 +304,5 @@ class JobManager:
     def __len__(self):
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
+
+

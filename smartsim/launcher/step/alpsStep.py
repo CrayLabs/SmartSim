@@ -53,7 +53,11 @@ class AprunStep(Step):
         if "PBS_JOBID" in os.environ:
             self.alloc = os.environ["PBS_JOBID"]
             logger.debug(
-                f"Running on allocation {self.alloc} gleaned from user environment")
+                f"Running on PBS allocation {self.alloc} gleaned from user environment")
+        if "COBALT_JOBID" in os.environ:
+            self.alloc = os.environ["COBALT_JOBID"]
+            logger.debug(
+                f"Running on Cobalt allocation {self.alloc} gleaned from user environment")
         else:
             raise SSConfigError(
                 "No allocation specified or found and not running in batch")

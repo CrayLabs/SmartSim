@@ -55,8 +55,8 @@ def parse_qstat_jobid(output, job_id):
 
 
 def parse_qstat_nodes(output):
-    """Parse and return the qstat command run with 
-    options to obtain node list. 
+    """Parse and return the qstat command run with
+    options to obtain node list.
 
     This function parses and returns the nodes of
     a job in a list with the duplicates removed.
@@ -83,7 +83,7 @@ def parse_qstat_nodes(output):
     return list(sorted(set(nodes)))
 
 def parse_step_id_from_qstat(output, step_name):
-    """Parse and return the step id from a sacct command
+    """Parse and return the step id from a qstat command
 
     :param output: output qstat
     :type output: str
