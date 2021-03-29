@@ -1,6 +1,6 @@
-from .slurmSettings import SrunSettings, SbatchSettings
 from .alpsSettings import AprunSettings
-from .pbsSettings import QsubBatchSettings
 from .cobaltSettings import CobaltBatchSettings
-from .settings import RunSettings
 from .mpirunSettings import MpirunSettings
+from .pbsSettings import QsubBatchSettings
+from .settings import RunSettings
+from .slurmSettings import SbatchSettings, SrunSettings

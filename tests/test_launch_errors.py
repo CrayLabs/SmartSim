@@ -1,11 +1,14 @@
 import pytest
+
 from smartsim import Experiment, constants
-from smartsim.settings import RunSettings
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
+from smartsim.settings import RunSettings
+
 """
 Test the launch errors with local launcher
 """
+
 
 def test_model_failure(fileutils):
     exp_name = "test-model-failure"
@@ -32,7 +35,6 @@ def test_orchestrator_relaunch(fileutils):
     orc.set_path(test_dir)
     orc_1 = Orchestrator(port=6790)
     orc_1.set_path(test_dir)
-
 
     exp.start(orc)
     with pytest.raises(SmartSimError):

@@ -1,15 +1,15 @@
 import os
 import os.path as osp
 from itertools import product
+
 from ...error import SSConfigError
+from ...utils import get_logger
 from .step import Step
 
-from ...utils import get_logger
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-
     def __init__(self, name, cwd, batch_settings):
         """Initialize a Slurm Sbatch step
 
@@ -66,15 +66,13 @@ class SbatchStep(Step):
             for i, cmd in enumerate(self.step_cmds):
                 f.write("\n")
                 f.write(f"{' '.join((cmd))} &\n")
-                if i == len(self.step_cmds)-1:
+                if i == len(self.step_cmds) - 1:
                     f.write("\n")
                     f.write("wait\n")
         return batch_script
 
 
-
 class SrunStep(Step):
-
     def __init__(self, name, cwd, run_settings):
         """Initialize a srun job step
 
@@ -101,12 +99,7 @@ class SrunStep(Step):
         srun = self.run_settings.run_command
         output, error = self.get_output_files()
 
-        srun_cmd = [
-            srun,
-            "--output", output,
-            "--error", error,
-            "--job-name",self.name
-        ]
+        srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -129,9 +122,13 @@ class SrunStep(Step):
         else:
             if "SLURM_JOB_ID" in os.environ:
                 self.alloc = os.environ["SLURM_JOB_ID"]
-                logger.debug(f"Running on allocation {self.alloc} gleaned from user environment")
+                logger.debug(
+                    f"Running on allocation {self.alloc} gleaned from user environment"
+                )
             else:
-                raise SSConfigError("No allocation specified or found and not running in batch")
+                raise SSConfigError(
+                    "No allocation specified or found and not running in batch"
+                )
 
     def _build_exe(self):
         """Build the executable for this step
@@ -164,5 +161,3 @@ class SrunStep(Step):
                 f.write(" ".join((str(proc_num), exe, e_args, "\n")))
                 proc_num += 1
         return mpmd_file
-
-

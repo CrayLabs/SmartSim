@@ -1,9 +1,11 @@
 import pytest
+
 from smartsim import Experiment, constants
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
+
 
 def test_restart(fileutils, wlmutils):
 

@@ -1,11 +1,10 @@
-
 from smartsim import Experiment, constants
 from smartsim.settings import RunSettings
-
 
 """
 Test restarting ensembles and models.
 """
+
 
 def test_restart(fileutils):
 

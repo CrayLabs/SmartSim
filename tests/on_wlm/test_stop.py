@@ -1,4 +1,5 @@
 import time
+
 import pytest
 
 from smartsim import Experiment, constants
@@ -40,6 +41,4 @@ def test_stop_entity_list(fileutils, wlmutils):
     exp.stop(ensemble)
     statuses = exp.get_status(ensemble)
     assert all([stat == constants.STATUS_CANCELLED for stat in statuses])
-    assert(all([m.name in exp._control._jobs.completed for m in ensemble]))
-
-
+    assert all([m.name in exp._control._jobs.completed for m in ensemble])

@@ -1,20 +1,20 @@
 import os
-import time
+import os.path as osp
+import socket
 import sys
+import time
+from os import getcwd
+
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
-import socket
-from os import getcwd
-import os.path as osp
 from ..entity import DBNode, EntityList
-from ..error import SSConfigError, SmartSimError
-from ..utils.helpers import get_env
-from ..utils.helpers import expand_exe_path
-from ..settings.settings import RunSettings
+from ..error import SmartSimError, SSConfigError
 from ..launcher.util.shell import execute_cmd
-
+from ..settings.settings import RunSettings
 from ..utils import get_logger
+from ..utils.helpers import expand_exe_path, get_env
+
 logger = get_logger(__name__)
 
 
@@ -48,10 +48,7 @@ class Orchestrator(EntityList):
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
-        super().__init__("orchestrator",
-                         self.path,
-                         port=port,
-                         **kwargs)
+        super().__init__("orchestrator", self.path, port=port, **kwargs)
 
     @property
     def hosts(self):
@@ -63,7 +60,7 @@ class Orchestrator(EntityList):
         :return: hostnames
         :rtype: list[str]
         """
-        #TODO test if active?
+        # TODO test if active?
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
@@ -81,8 +78,8 @@ class Orchestrator(EntityList):
         needs to occur manually.
         :raises SmartSimError: if cluster creation fails
         """
-        #TODO check for cluster already being created.
-        #TODO do non-cluster status check on each instance
+        # TODO check for cluster already being created.
+        # TODO do non-cluster status check on each instance
         ip_list = []
         for host in self.hosts:
             ip = get_ip_from_host(host)
@@ -96,7 +93,7 @@ class Orchestrator(EntityList):
         redis_cli = os.path.join(smartsimhome, "third-party/redis/src/redis-cli")
         cmd = [redis_cli, "--cluster", "create"]
         cmd += ip_list
-        cmd +=["--cluster-replicas", "0"]
+        cmd += ["--cluster-replicas", "0"]
         returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
 
         if returncode != 0:
@@ -109,13 +106,12 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
 
-
     def check_cluster_status(self):
         """Check that a cluster is up and running
 
         :raises SmartSimError: If cluster status cannot be verified
         """
-        #TODO use silc for this, then we don't have to create host dictionary
+        # TODO use silc for this, then we don't have to create host dictionary
         host_list = []
         for host in self.hosts:
             for port in self.ports:
@@ -188,7 +184,6 @@ class Orchestrator(EntityList):
             raise SSConfigError(msg)
         return " ".join(("--loadmodule", module_path))
 
-
     @staticmethod
     def _get_db_config_path():
         """Find the database configuration file on the filesystem
@@ -211,7 +206,8 @@ class Orchestrator(EntityList):
         dpn = kwargs.get("dpn", 1)
         if dpn > 1:
             raise SmartSimError(
-                "Local Orchestrator does not support multiple databases per node (MPMD)")
+                "Local Orchestrator does not support multiple databases per node (MPMD)"
+            )
         db_nodes = kwargs.get("db_nodes", 1)
         if db_nodes > 1:
             raise SmartSimError(
@@ -234,7 +230,6 @@ class Orchestrator(EntityList):
         self.entities.append(node)
         self.ports = [port]
 
-
     @staticmethod
     def _find_db_exe():
         """Find the database executable for the orchestrator
@@ -254,10 +249,9 @@ class Orchestrator(EntityList):
             raise SSConfigError(msg) from None
 
     @staticmethod
-    def _get_cluster_args( name, port):
-        """Create the arguments neccessary for cluster creation
-        """
-        cluster_conf =  "".join(("nodes-", name, "-", str(port), ".conf"))
+    def _get_cluster_args(name, port):
+        """Create the arguments neccessary for cluster creation"""
+        cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args
 

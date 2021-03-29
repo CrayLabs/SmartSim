@@ -1,21 +1,24 @@
 from smartsim.error.errors import SmartSimError
-from ..settings import CobaltBatchSettings, AprunSettings, MpirunSettings
-from .orchestrator import Orchestrator
-from ..error import SSUnsupportedError
+
 from ..entity import DBNode
+from ..error import SSUnsupportedError
+from ..settings import AprunSettings, CobaltBatchSettings, MpirunSettings
+from .orchestrator import Orchestrator
+
 
 class CobaltOrchestrator(Orchestrator):
-
-    def __init__(self,
-                 port=6379,
-                 db_nodes=1,
-                 batch=True,
-                 hosts=None,
-                 run_command="aprun",
-                 account=None,
-                 queue=None,
-                 time=None,
-                 **kwargs):
+    def __init__(
+        self,
+        port=6379,
+        db_nodes=1,
+        batch=True,
+        hosts=None,
+        run_command="aprun",
+        account=None,
+        queue=None,
+        time=None,
+        **kwargs,
+    ):
         """Initialize an Orchestrator reference for Cobalt based systems
 
         The orchestrator launches as a batch by default. If batch=False,
@@ -31,18 +34,18 @@ class CobaltOrchestrator(Orchestrator):
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
         """
-        super().__init__(port,
-                         db_nodes=db_nodes,
-                         batch=batch,
-                         run_command=run_command,
-                         **kwargs)
+        super().__init__(
+            port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
+        )
         self.batch_settings = self._build_batch_settings(
-            db_nodes, batch, account, queue, time)
+            db_nodes, batch, account, queue, time
+        )
         if hosts:
             self.set_hosts(hosts)
         elif not hosts and run_command == "mpirun":
             raise SmartSimError(
-                "hosts argument is required when launching CobaltOrchestrator with OpenMPI")
+                "hosts argument is required when launching CobaltOrchestrator with OpenMPI"
+            )
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -68,7 +71,6 @@ class CobaltOrchestrator(Orchestrator):
         if not self.batch:
             raise SmartSimError("Not running in batch, cannot set walltime")
         self.batch_settings.set_walltime(walltime)
-
 
     def set_hosts(self, host_list):
         if isinstance(host_list, str):
@@ -113,7 +115,8 @@ class CobaltOrchestrator(Orchestrator):
         if run_command == "mpirun":
             return self._build_mpirun_settings(exe, exe_args, **kwargs)
         raise SSUnsupportedError(
-            f"CobaltOrchestrator does not support {run_command} as a launch binary")
+            f"CobaltOrchestrator does not support {run_command} as a launch binary"
+        )
 
     def _build_aprun_settings(self, exe, exe_args, **kwargs):
         run_args = kwargs.get("run_args", {})
@@ -132,16 +135,18 @@ class CobaltOrchestrator(Orchestrator):
         batch_settings = None
         if batch:
             batch_settings = CobaltBatchSettings(
-                nodes=db_nodes, time=time, queue=queue, account=account)
+                nodes=db_nodes, time=time, queue=queue, account=account
+            )
         return batch_settings
 
     def _initialize_entities(self, **kwargs):
-        """Initialize DBNode instances for the orchestrator.
-        """
+        """Initialize DBNode instances for the orchestrator."""
         db_nodes = kwargs.get("db_nodes", 1)
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
-            raise SSUnsupportedError("CobaltOrchestrator does not support clusters of size 2")
+            raise SSUnsupportedError(
+                "CobaltOrchestrator does not support clusters of size 2"
+            )
         port = kwargs.get("port", 6379)
 
         db_conf = self._get_db_config_path()

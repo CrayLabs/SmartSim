@@ -1,12 +1,18 @@
 from shutil import which
 
 import pytest
+
 from smartsim.error.errors import LauncherError
-from smartsim.launcher.slurm.slurm import validate, _get_system_partition_info, get_default_partition
+from smartsim.launcher.slurm.slurm import (
+    _get_system_partition_info,
+    get_default_partition,
+    validate,
+)
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
+
 
 def test_get_system_partition_info():
     """This test ensures that _get_system_partition_info
@@ -90,7 +96,7 @@ def test_validate_fail_nodes_one_partition():
         if node.ppn >= desired_ppn:
             n_ppn_nodes += 1
 
-    assert( not validate(nodes=n_ppn_nodes + 1, ppn=desired_ppn, partition=p_name))
+    assert not validate(nodes=n_ppn_nodes + 1, ppn=desired_ppn, partition=p_name)
 
 
 def test_validate_fail_ppn_one_partition():
@@ -109,5 +115,4 @@ def test_validate_fail_ppn_one_partition():
         if node.ppn >= max_ppn:
             max_ppn = node.ppn
 
-    assert(not validate(nodes=1, ppn=max_ppn + 1, partition=p_name))
-
+    assert not validate(nodes=1, ppn=max_ppn + 1, partition=p_name)

@@ -1,13 +1,13 @@
 import os
+
 from ...error import SSConfigError
+from ...utils import get_logger
 from .step import Step
 
-from ...utils import get_logger
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-
     def __init__(self, name, cwd, run_settings):
         """Initialize a ALPS aprun job step
 
@@ -50,14 +50,17 @@ class AprunStep(Step):
         if "PBS_JOBID" in os.environ:
             self.alloc = os.environ["PBS_JOBID"]
             logger.debug(
-                f"Running on PBS allocation {self.alloc} gleaned from user environment")
+                f"Running on PBS allocation {self.alloc} gleaned from user environment"
+            )
         if "COBALT_JOBID" in os.environ:
             self.alloc = os.environ["COBALT_JOBID"]
             logger.debug(
-                f"Running on Cobalt allocation {self.alloc} gleaned from user environment")
+                f"Running on Cobalt allocation {self.alloc} gleaned from user environment"
+            )
         else:
             raise SSConfigError(
-                "No allocation specified or found and not running in batch")
+                "No allocation specified or found and not running in batch"
+            )
 
     def _build_exe(self):
         """Build the executable for this step
@@ -66,7 +69,7 @@ class AprunStep(Step):
         :rtype: list[str]
         """
         if self.run_settings.mpmd:
-           return self._make_mpmd()
+            return self._make_mpmd()
         else:
             cmd = self.run_settings.format_run_args()
             cmd += self.run_settings.exe
@@ -74,8 +77,7 @@ class AprunStep(Step):
             return cmd
 
     def _make_mpmd(self):
-        """Build Aprun (MPMD) executable
-        """
+        """Build Aprun (MPMD) executable"""
         cmd = self.run_settings.format_run_args()
         cmd += self.run_settings.exe
         cmd += self.run_settings.exe_args
@@ -85,4 +87,3 @@ class AprunStep(Step):
             cmd += mpmd.exe
             cmd += mpmd.exe_args
         return cmd
-

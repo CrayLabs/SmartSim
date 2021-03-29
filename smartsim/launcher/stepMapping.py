@@ -2,8 +2,8 @@ from collections import namedtuple
 
 StepMap = namedtuple("StepMap", ["step_id", "task_id", "managed"])
 
-class StepMapping:
 
+class StepMapping:
     def __init__(self):
         # step_name : wlm_id, pid, wlm_managed?
         self.mapping = {}

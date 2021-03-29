@@ -1,10 +1,12 @@
 import os
 import os.path as osp
 import time
+
 from smartsim.error.errors import SmartSimError
-from .entity import SmartSimEntity
 
 from ..utils import get_logger
+from .entity import SmartSimEntity
+
 logger = get_logger(__name__)
 
 
@@ -18,8 +20,7 @@ class DBNode(SmartSimEntity):
     """
 
     def __init__(self, name, path, run_settings, ports):
-        """Initialize a database node within an orchestrator.
-        """
+        """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
         super().__init__(name, path, run_settings)
@@ -98,8 +99,7 @@ class DBNode(SmartSimEntity):
 
         if not host and not ip:
             logger.error("RedisIP address lookup strategy failed.")
-            raise SmartSimError(
-                "Failed to obtain database hostname")
+            raise SmartSimError("Failed to obtain database hostname")
 
         # prefer the ip address if present
         # TODO do socket lookup and ensure IP address matches

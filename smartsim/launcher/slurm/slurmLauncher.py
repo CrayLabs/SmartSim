@@ -1,19 +1,17 @@
 import time
 from shutil import which
 
-
-from ...settings import SrunSettings, SbatchSettings, MpirunSettings
-from ...error import LauncherError, SSConfigError
+from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...settings import MpirunSettings, SbatchSettings, SrunSettings
+from ...utils import get_logger
 from ..launcher import Launcher
+from ..step import MpirunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo, UnmanagedStepInfo
+from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
-from ..step import SbatchStep, SrunStep, MpirunStep
-from ..stepMapping import StepMapping
-from ...error import SSUnsupportedError
 
-from ...utils import get_logger
 logger = get_logger(__name__)
 
 
@@ -29,8 +27,7 @@ class SlurmLauncher(Launcher):
     """
 
     def __init__(self):
-        """Initialize a SlurmLauncher
-        """
+        """Initialize a SlurmLauncher"""
         super().__init__()
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
@@ -62,7 +59,6 @@ class SlurmLauncher(Launcher):
             raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
-
 
     def get_step_update(self, step_names):
         """Get update for a list of job steps
@@ -123,7 +119,6 @@ class SlurmLauncher(Launcher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-
     def run(self, step):
         """Run a job step through Slurm
 
@@ -160,8 +155,9 @@ class SlurmLauncher(Launcher):
                 out, err = step.get_output_files()
                 output = open(out, "w+")
                 error = open(err, "w+")
-                task_id = self.task_manager.start_task(cmd_list, step.cwd, out=output, err=error)
-
+                task_id = self.task_manager.start_task(
+                    cmd_list, step.cwd, out=output, err=error
+                )
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
@@ -192,7 +188,7 @@ class SlurmLauncher(Launcher):
             self.task_manager.remove_task(stepmap.task_id)
 
         step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled" # set status to cancelled instead of failed
+        step_info.status = "Cancelled"  # set status to cancelled instead of failed
         return step_info
 
     def _get_slurm_step_id(self, step, interval=2, trials=5):
@@ -209,9 +205,7 @@ class SlurmLauncher(Launcher):
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:
-            output, _ = sacct(
-                ["--noheader", "-p", "--format=jobname,jobid"]
-            )
+            output, _ = sacct(["--noheader", "-p", "--format=jobname,jobid"])
             step_id = parse_step_id_from_sacct(output, step.name)
             if step_id:
                 break
@@ -221,7 +215,6 @@ class SlurmLauncher(Launcher):
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
         return step_id
-
 
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
@@ -243,8 +236,8 @@ class SlurmLauncher(Launcher):
 
             task_id = self.step_mapping.get_task_id(step_id)
             if task_id:
-            # we still check the task manager for jobs that didn't ever
-            # become a fully managed job (e.g. error in slurm arguments)
+                # we still check the task manager for jobs that didn't ever
+                # become a fully managed job (e.g. error in slurm arguments)
                 _, rc, out, err = self.task_manager.get_task_update(task_id)
                 if rc and rc != 0:
                     # tack on Popen error and output to status update.
@@ -292,4 +285,3 @@ def _create_step_id_str(step_ids):
         step_str += str(step_id) + ","
     step_str = step_str.strip(",")
     return step_str
-

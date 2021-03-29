@@ -1,5 +1,6 @@
-from subprocess import PIPE, Popen, TimeoutExpired
 import time
+from subprocess import PIPE, Popen, TimeoutExpired
+
 import psutil
 
 from ...error import ShellError, SSConfigError
@@ -52,7 +53,9 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
         proc.kill()
         _, errs = proc.communicate()
         logger.error(errs)
-        raise ShellError("Failed to execute command, timeout reached", e, cmd_list) from None
+        raise ShellError(
+            "Failed to execute command, timeout reached", e, cmd_list
+        ) from None
     except OSError as e:
         raise ShellError(
             "Exception while attempting to start a shell process", e, cmd_list
@@ -85,7 +88,7 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
         popen_obj = psutil.Popen(
             cmd_list, cwd=cwd, stdout=out, stderr=err, env=env, close_fds=True
         )
-        time.sleep(.2)
+        time.sleep(0.2)
         popen_obj.poll()
         if not popen_obj.is_running() and popen_obj.returncode != 0:
             output, error = popen_obj.communicate()

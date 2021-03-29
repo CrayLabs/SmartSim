@@ -4,10 +4,12 @@ from shutil import which
 Parsers for various slurm functions.
 """
 
+
 def parse_salloc(output):
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
+
 
 def parse_salloc_error(output):
     """Parse and return error output of a failed salloc command
@@ -37,23 +39,6 @@ def parse_salloc_error(output):
     # return None if we cant find error
     return None
 
-def parse_sacct_step(output):
-    """Parse the number of job steps launched on an allocation
-
-    :param output: output of the sacct command
-    :type output: str
-    :return: number of job steps
-    :rtype: int
-    """
-    line = output.strip().split("\n")[-1]
-    job_id = line.split("|")[0]
-    if "." not in job_id:
-        return 0
-
-    _, step = job_id.split(".")
-    if step.startswith("ext"):
-        return 0
-    return int(step) + 1
 
 def parse_sacct(output, job_id):
     """Parse and return output of the sacct command
@@ -74,6 +59,7 @@ def parse_sacct(output, job_id):
             result = (stat, code)
             break
     return result
+
 
 def parse_sstat_nodes(output, job_id):
     """Parse and return the sstat command
@@ -96,6 +82,7 @@ def parse_sstat_nodes(output, job_id):
                 node = sstat_string[1]
                 nodes.append(node)
     return list(set(nodes))
+
 
 def parse_step_id_from_sacct(output, step_name):
     """Parse and return the step id from a sacct command
