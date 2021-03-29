@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='SmartSim',
-    version='0.1.0',
-    author=['Sam Partee', "Matt Ellis", "Andrew Shao", "Audrey Pratt", "Alex Heye"],
+    version='0.3.0',
+    author=['Sam Partee', "Matt Ellis", "Andrew Shao", "Alessandro Rigazzi"],
     author_email="spartee@hpe.com",
     packages=find_packages(),
     long_description=open('README.md').read(),
