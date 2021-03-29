@@ -1,17 +1,17 @@
-from smartsim.error.errors import SSUnsupportedError
 import time
 from shutil import which
 
 
-from ...settings import SrunSettings, SbatchSettings
+from ...settings import SrunSettings, SbatchSettings, MpirunSettings
 from ...error import LauncherError, SSConfigError
 from ..launcher import Launcher
 from ..stepInfo import SlurmStepInfo, UnmanagedStepInfo
 from ..taskManager import TaskManager
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
-from ..step import SbatchStep, SrunStep
+from ..step import SbatchStep, SrunStep, MpirunStep
 from ..stepMapping import StepMapping
+from ...error import SSUnsupportedError
 
 from ...utils import get_logger
 logger = get_logger(__name__)
@@ -56,10 +56,12 @@ class SlurmLauncher(Launcher):
             if isinstance(step_settings, SbatchSettings):
                 step = SbatchStep(name, cwd, step_settings)
                 return step
+            if isinstance(step_settings, MpirunSettings):
+                step = MpirunStep(name, cwd, step_settings)
+                return step
             raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
-
 
 
     def get_step_update(self, step_names):
@@ -138,6 +140,8 @@ class SlurmLauncher(Launcher):
         cmd_list = step.get_launch_cmd()
         step_id = None
         task_id = None
+
+        # Launch a batch step with Slurm
         if isinstance(step, SbatchStep):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
@@ -146,8 +150,18 @@ class SlurmLauncher(Launcher):
             if out:
                 step_id = out.strip()
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
+
+        # Launch a in-allocation or on-allocation (if srun) command
         else:
-            task_id = self.task_manager.start_task(cmd_list, step.cwd)
+            if isinstance(step, SrunStep):
+                task_id = self.task_manager.start_task(cmd_list, step.cwd)
+            else:
+                # Mpirun doesn't direct output for us like srun does
+                out, err = step.get_output_files()
+                output = open(out, "w+")
+                error = open(err, "w+")
+                task_id = self.task_manager.start_task(cmd_list, step.cwd, out=output, err=error)
+
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
@@ -181,7 +195,7 @@ class SlurmLauncher(Launcher):
         step_info.status = "Cancelled" # set status to cancelled instead of failed
         return step_info
 
-    def _get_slurm_step_id(self, step, interval=1, trials=5):
+    def _get_slurm_step_id(self, step, interval=2, trials=5):
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -264,7 +278,7 @@ class SlurmLauncher(Launcher):
 
         :raises LauncherError: if no access to slurm
         """
-        if not which("srun") and not which("sbatch") and not which("sacct"):
+        if not which("sbatch") and not which("sacct"):
             error = "User attempted Slurm methods without access to Slurm at the call site.\n"
             raise LauncherError(error)
 

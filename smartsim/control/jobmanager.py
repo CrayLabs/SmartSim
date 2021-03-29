@@ -6,7 +6,7 @@ from .job import Job
 from ..entity import DBNode
 from ..error import SmartSimError
 from ..database import Orchestrator
-from ..launcher import SlurmLauncher, PBSLauncher
+from ..launcher import SlurmLauncher, PBSLauncher, CobaltLauncher
 from ..database.orchestrator import get_ip_from_host
 from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
 
@@ -296,7 +296,7 @@ class JobManager:
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
-        if isinstance(self._launcher, (SlurmLauncher, PBSLauncher)):
+        if isinstance(self._launcher, (SlurmLauncher, PBSLauncher, CobaltLauncher)):
             time.sleep(WLM_JM_INTERVAL)
         else:
             time.sleep(LOCAL_JM_INTERVAL)

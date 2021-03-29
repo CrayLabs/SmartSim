@@ -31,6 +31,15 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodes"] = int(num_nodes)
 
+    def set_hostlist(self, host_list):
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["nodelist"] = ",".join(host_list)
+
     def set_cpus_per_task(self, num_cpus):
         """Set the number of cpus to use per task
 
@@ -170,6 +179,23 @@ class SbatchSettings(BatchSettings):
         """
         self.batch_args["account"] = acct
 
+    def set_partition(self, partition):
+        """Set the partition for the batch job
+
+        :param partition: partition name
+        :type partition: str
+        """
+        self.batch_args["partition"] = str(partition)
+
+    def set_hostlist(self, host_list):
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self.batch_args["nodelist"] = ",".join(host_list)
+
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
@@ -177,6 +203,7 @@ class SbatchSettings(BatchSettings):
         :rtype: list[str]
         """
         opts = []
+        # TODO add restricted here
         for opt, value in self.batch_args.items():
             # attach "-" prefix if argument is 1 character otherwise "--"
             short_arg = bool(len(str(opt)) == 1)

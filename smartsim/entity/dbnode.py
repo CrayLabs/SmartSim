@@ -30,6 +30,9 @@ class DBNode(SmartSimEntity):
             self._host = self._parse_db_host()
         return self._host
 
+    def set_host(self, host):
+        self._host = str(host)
+
     def remove_stale_dbnode_files(self):
         """This function removes the .conf, .err, and .out files that
         have the same names used by this dbnode that may have been
@@ -99,6 +102,9 @@ class DBNode(SmartSimEntity):
                 "Failed to obtain database hostname")
 
         # prefer the ip address if present
+        # TODO do socket lookup and ensure IP address matches
+        # in the case where compute node returns 127.0.0.1 for its
+        # own IP address
         if host and ip:
             host = ip
         return host

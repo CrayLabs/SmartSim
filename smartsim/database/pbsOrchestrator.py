@@ -1,10 +1,20 @@
-from smartsim.error.errors import SmartSimError
-from ..settings import QsubBatchSettings, AprunSettings
+from ..error import SSUnsupportedError, SmartSimError
+from ..settings import QsubBatchSettings, AprunSettings, MpirunSettings
 from .orchestrator import Orchestrator
+from ..entity import DBNode
+
 
 class PBSOrchestrator(Orchestrator):
 
-    def __init__(self, port, db_nodes=1, batch=True, **kwargs):
+    def __init__(self, port=6379,
+                 db_nodes=1,
+                 batch=True,
+                 hosts=None,
+                 run_command="aprun",
+                 account=None,
+                 time=None,
+                 queue=None,
+                 **kwargs):
         """Initialize an Orchestrator reference for PBSPro based systems
 
         The orchestrator launches as a batch by default. If batch=False,
@@ -19,12 +29,20 @@ class PBSOrchestrator(Orchestrator):
         :type db_nodes: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
+        #TODO update this
         """
         super().__init__(port,
                          db_nodes=db_nodes,
                          batch=batch,
+                         run_command=run_command,
                          **kwargs)
-        self.batch_settings = self._build_batch_settings(db_nodes, batch)
+        self.batch_settings = self._build_batch_settings(db_nodes, batch,
+                                                         account, time, queue)
+        if hosts:
+            self.set_hosts(hosts)
+        elif not hosts and run_command == "mpirun":
+            raise SmartSimError(
+                "hosts argument is required when launching PBSOrchestrator with OpenMPI")
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -54,6 +72,26 @@ class PBSOrchestrator(Orchestrator):
             raise SmartSimError("Not running in batch, cannot set walltime")
         self.batch_settings.set_walltime(walltime)
 
+    def set_hosts(self, host_list):
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        # TODO check length
+        if self.batch:
+            self.batch_settings.set_hostlist(host_list)
+        for host, db in zip(host_list, self.entities):
+            db.set_host(host)
+
+            # Aprun doesn't like settings hosts in batch launch
+            if isinstance(db.run_settings, AprunSettings):
+                if not self.batch:
+                    db.run_settings.set_hostlist([host])
+            else:
+                db.run_settings.set_hostlist([host])
+
     def set_batch_arg(self, arg, value):
         """Set a Qsub argument the orchestrator should launch with
 
@@ -72,22 +110,59 @@ class PBSOrchestrator(Orchestrator):
         self.batch_settings.batch_args[arg] = value
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
+        run_command = kwargs.get("run_command", "aprun")
+        if run_command == "aprun":
+            return self._build_aprun_settings(exe, exe_args, **kwargs)
+        if run_command == "mpirun":
+            return self._build_mpirun_settings(exe, exe_args, **kwargs)
+        raise SSUnsupportedError(
+            f"PBSOrchestrator does not support {run_command} as a launch binary")
+
+    def _build_aprun_settings(self, exe, exe_args, **kwargs):
         run_args = kwargs.get("run_args", {})
-        batch = kwargs.get("batch", True)
+        run_settings = AprunSettings(exe, exe_args, run_args=run_args)
+        run_settings.set_tasks(1)
+        run_settings.set_tasks_per_node(1)
+        return run_settings
 
-        if not batch:
-            run_args["pes"] = 1
-            run_args["pes-per-node"] = 1 # 1 database per node
-            run_settings = AprunSettings(exe, exe_args, run_args=run_args)
-            return run_settings
-        else:
-            run_args = {"pes": 1, "pes-per-node": 1}
-            run_settings = AprunSettings(exe, exe_args, run_args=run_args)
-            return run_settings
+    def _build_mpirun_settings(self, exe, exe_args, **kwargs):
+        run_args = kwargs.get("run_args", {})
+        run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
+        run_settings.set_tasks(1)
+        return run_settings
 
-    def _build_batch_settings(self, db_nodes, batch):
+    def _build_batch_settings(self, db_nodes, batch, account, time, queue):
         batch_settings = None
         if batch:
-            # not possible to launch multiple DPN with Aprun
-            batch_settings = QsubBatchSettings(nodes=db_nodes, ncpus=1)
+            batch_settings = QsubBatchSettings(nodes=db_nodes,
+                                               ncpus=1,
+                                               time=time,
+                                               queue=queue,
+                                               account=account)
         return batch_settings
+
+    def _initialize_entities(self, **kwargs):
+        """Initialize DBNode instances for the orchestrator.
+        """
+        db_nodes = kwargs.get("db_nodes", 1)
+        cluster = not bool(db_nodes < 3)
+        if int(db_nodes) == 2:
+            raise SSUnsupportedError("PBSOrchestrator does not support clusters of size 2")
+        port = kwargs.get("port", 6379)
+
+        db_conf = self._get_db_config_path()
+        ip_module = self._get_IP_module_path()
+        ai_module = self._get_AI_module()
+        exe = self._find_db_exe()
+
+        # Build DBNode instance for each node listed
+        for db_id in range(db_nodes):
+            db_node_name = "_".join((self.name, str(db_id)))
+            node_exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
+            if cluster:
+                node_exe_args += self._get_cluster_args(db_node_name, port)
+
+            run_settings = self._build_run_settings(exe, node_exe_args, **kwargs)
+            node = DBNode(db_node_name, self.path, run_settings, [port])
+            self.entities.append(node)
+        self.ports = [port]

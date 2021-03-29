@@ -6,10 +6,10 @@ from ...utils import get_logger
 logger = get_logger(__name__)
 
 
-class AprunStep(Step):
+class MpirunStep(Step):
 
     def __init__(self, name, cwd, run_settings):
-        """Initialize a ALPS aprun job step
+        """Initialize a OpenMPI mpirun job step
 
         :param name: name of the entity to be launched
         :type name: str
@@ -30,17 +30,17 @@ class AprunStep(Step):
         :return: launch command
         :rtype: list[str]
         """
-        aprun = self.run_settings.run_command
-        aprun_cmd = [aprun, "--wdir", self.cwd]
-        aprun_cmd += self.run_settings.format_env_vars()
-        aprun_cmd += self._build_exe()
+        mpirun = self.run_settings.run_command
+        mpirun_cmd = [mpirun, "-wdir", self.cwd]
+        mpirun_cmd += self.run_settings.format_env_vars()
+        mpirun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to
         # file in the cwd.
         if self.run_settings.in_batch:
             output = self.get_step_file(ending=".out")
-            aprun_cmd += [">", output]
-        return aprun_cmd
+            mpirun_cmd += [">", output]
+        return mpirun_cmd
 
     def _set_alloc(self):
         """Set the id of the allocation
@@ -51,10 +51,14 @@ class AprunStep(Step):
             self.alloc = os.environ["PBS_JOBID"]
             logger.debug(
                 f"Running on PBS allocation {self.alloc} gleaned from user environment")
-        if "COBALT_JOBID" in os.environ:
+        elif "COBALT_JOBID" in os.environ:
             self.alloc = os.environ["COBALT_JOBID"]
             logger.debug(
                 f"Running on Cobalt allocation {self.alloc} gleaned from user environment")
+        elif "SLURM_JOBID" in os.environ:
+            self.alloc = os.environ["SLURM_JOBID"]
+            logger.debug(
+                f"Running on Slurm allocation {self.alloc} gleaned from user environment")
         else:
             raise SSConfigError(
                 "No allocation specified or found and not running in batch")
@@ -74,7 +78,7 @@ class AprunStep(Step):
             return cmd
 
     def _make_mpmd(self):
-        """Build Aprun (MPMD) executable
+        """Build mpirun (MPMD) executable
         """
         cmd = self.run_settings.format_run_args()
         cmd += self.run_settings.exe
@@ -82,6 +86,7 @@ class AprunStep(Step):
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
+            cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
             cmd += mpmd.exe_args
         return cmd

@@ -59,6 +59,16 @@ class CobaltBatchSettings(BatchSettings):
         #TODO catch existing "n" in batch_args
         self.batch_args["nodecount"] = int(num_nodes)
 
+    def set_hostlist(self, host_list):
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        hosts = ",".join(host_list)
+        self.batch_args["attrs"] = f"location={hosts}"
+
     def set_tasks(self, num_tasks):
         """Set total number of processes to start
 
@@ -114,5 +124,5 @@ class CobaltBatchSettings(BatchSettings):
                     if short_arg:
                         opts += [prefix + opt, str(value)]
                     else:
-                        opts += ["=".join((prefix + opt, str(value)))]
+                        opts += [" ".join((prefix + opt, str(value)))]
         return opts

@@ -1,9 +1,9 @@
 import os
 import time
+import psutil
 from threading import RLock, Thread
 from subprocess import PIPE
-import numpy as np
-import psutil
+
 from ..error import LauncherError
 from .util.shell import execute_async_cmd, execute_cmd
 from ..constants import TM_INTERVAL
@@ -114,7 +114,7 @@ class TaskManager:
         try:
             task = self[task_id]
             if task.is_alive:
-                task.terminate()
+                task.kill()
                 returncode = task.check_status()
                 out, err = task.get_io()
                 self.add_task_history(task_id, returncode, out, err)
@@ -207,37 +207,47 @@ class Task:
             error = error.decode("utf-8")
         return output, error
 
-    def kill(self):
+    def kill(self, timeout=10):
         """Kill the subprocess"""
-        self.process.kill()
-
-    def terminate(self, timeout=10):
-        def terminate_callback(proc):
-            logger.debug(f"Cleanly terminated task {proc.pid}")
 
         def kill_callback(proc):
-            logger.debug(f"SIGTERM failed, SIGKILL used to stop task {proc.pid}")
+            logger.debug(f"Process terminated with kill {proc.pid}")
 
         children = self.process.children(recursive=True)
         children.append(self.process) # add parent process to be killed
+
+        for child in children:
+            child.kill()
+
+        _, alive = psutil.wait_procs(children,
+                                    timeout=timeout,
+                                    callback=kill_callback)
+        if alive:
+            for proc in alive:
+                logger.warning(f"Unable to kill emitted process {proc.pid}")
+
+    def terminate(self, timeout=10):
+
+        def terminate_callback(proc):
+            logger.debug(f"Cleanly terminated task {proc.pid}")
+
+        children = self.process.children(recursive=True)
+        children.append(self.process) # add parent process to be killed
+
         # try SIGTERM first for clean exit
         for child in children:
+            logger.debug(child)
             child.terminate()
+
         # wait for termination
         _, alive = psutil.wait_procs(children,
                                     timeout=timeout,
                                     callback=terminate_callback)
 
-        # if SIGTERM doesn't work, use SIGKILL
         if alive:
-            for proc in alive:
-                proc.kill()
-            _, alive = psutil.wait_procs(alive,
-                                        timeout=timeout,
-                                        callback=kill_callback)
-            if alive:
-                for proc in alive:
-                    logger.warning(f"Unable to kill emitted process {proc.pid}")
+            logger.debug(f"SIGTERM failed, using SIGKILL")
+            self.process.kill()
+
 
     def wait(self):
         self.process.wait()

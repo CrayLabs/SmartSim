@@ -25,13 +25,11 @@ class Orchestrator(EntityList):
     within an entity.
     """
 
-    def __init__(self, port=6379, db_nodes=1, **kwargs):
+    def __init__(self, port=6379, **kwargs):
         """Initialize an Orchestrator reference for local launch
 
         :param port: TCP/IP port
         :type port: int
-        :param db_nodes: number of database shards, defaults to 1
-        :type db_nodes: int, optional
 
         Extra configurations for RedisAI
 
@@ -44,7 +42,6 @@ class Orchestrator(EntityList):
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int
         """
-        # TODO take out DbNodes here..
         self.ports = []
         self._hosts = []
         self.path = getcwd()
@@ -53,7 +50,6 @@ class Orchestrator(EntityList):
         self.intra_threads = kwargs.get("intra_op_threads", None)
         super().__init__("orchestrator",
                          self.path,
-                         db_nodes=db_nodes,
                          port=port,
                          **kwargs)
 
@@ -86,6 +82,7 @@ class Orchestrator(EntityList):
         :raises SmartSimError: if cluster creation fails
         """
         #TODO check for cluster already being created.
+        #TODO do non-cluster status check on each instance
         ip_list = []
         for host in self.hosts:
             ip = get_ip_from_host(host)
@@ -208,41 +205,35 @@ class Orchestrator(EntityList):
             raise SSConfigError(msg)
         return conf_path
 
-
     def _initialize_entities(self, **kwargs):
-        """Initialize DBNode instances for the orchestrator.
-        """
-        dpn = kwargs.get("dpn", 1)
-        db_nodes = kwargs.get("db_nodes", 1)
         port = kwargs.get("port", 6379)
-        cluster = not bool(db_nodes < 3)
 
+        dpn = kwargs.get("dpn", 1)
+        if dpn > 1:
+            raise SmartSimError(
+                "Local Orchestrator does not support multiple databases per node (MPMD)")
+        db_nodes = kwargs.get("db_nodes", 1)
+        if db_nodes > 1:
+            raise SmartSimError(
+                "Local Orchestrator does not support multiple database shards"
+            )
+
+        # collect database launch command information
         db_conf = self._get_db_config_path()
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
         exe = self._find_db_exe()
 
-        for db_id in range(db_nodes):
-            db_node_name = "_".join((self.name, str(db_id)))
-            # create the exe_args list for launching multiple databases
-            # per node. also collect port range for dbnode
-            ports = []
-            exe_args = []
-            for port_offset in range(dpn):
-                next_port = int(port) + port_offset
-                node_exe_args = [db_conf, ai_module, ip_module, "--port", str(next_port)]
-                if cluster:
-                    node_exe_args += self._get_cluster_args(db_node_name, next_port)
-                exe_args.append(node_exe_args)
-                ports.append(next_port)
+        # create single DBNode instance for Local Orchestrator
+        exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
+        run_settings = RunSettings(exe, exe_args)
+        db_node_name = self.name + "_0"
+        node = DBNode(db_node_name, self.path, run_settings, [port])
 
-            # if only launching 1 dpn, we don't need a list of exe args lists
-            if dpn == 1:
-                exe_args = exe_args[0]
-            run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-            node = DBNode(db_node_name, self.path, run_settings, ports)
-            self.entities.append(node)
-        self.ports = ports
+        # add DBNode to Orchestrator
+        self.entities.append(node)
+        self.ports = [port]
+
 
     @staticmethod
     def _find_db_exe():
@@ -269,17 +260,6 @@ class Orchestrator(EntityList):
         cluster_conf =  "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args
-
-    def _build_run_settings(self, exe, exe_args, **kwargs):
-        """Build run settings for the orchestrator when launching with
-        the local launcher
-        """
-        dpn = kwargs.get("dpn", 1)
-        if dpn > 1:
-            raise SSConfigError(
-                "Local launching does not support multiple databases per node (MPMD)")
-        run_settings = RunSettings(exe, exe_args)
-        return run_settings
 
     def _get_db_hosts(self):
         hosts = []
