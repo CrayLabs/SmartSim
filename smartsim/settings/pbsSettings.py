@@ -5,7 +5,7 @@ from ..error import SSConfigError
 from ..utils.helpers import init_default
 
 class QsubBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, ncpus=None, time=None, account=None, resources=None, batch_args=None, **kwargs):
+    def __init__(self, nodes=None, ncpus=None, time=None, queue=None, account=None, resources=None, batch_args=None, **kwargs):
         """Create a Qsub batch setting for an entity
 
         :param nodes: number of nodes for batch, defaults to None
@@ -26,8 +26,11 @@ class QsubBatchSettings(BatchSettings):
         self._nodes = nodes
         self._time = time
         self._ncpus = ncpus
+        self._hosts = None
         if account:
             self.set_account(account)
+        if queue:
+            self.set_queue(queue)
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -39,6 +42,15 @@ class QsubBatchSettings(BatchSettings):
         :type num_nodes: int
         """
         self._nodes = int(num_nodes)
+
+    def set_hostlist(self, host_list):
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self._hosts = host_list
 
     def set_walltime(self, walltime):
         """Set the walltime of the job
@@ -53,14 +65,22 @@ class QsubBatchSettings(BatchSettings):
         """
         self._time = walltime
 
+    def set_queue(self, queue):
+        """Set the queue for the batch job
+
+        :param queue: queue name
+        :type queue: str
+        """
+        self.batch_args["q"] = str(queue)
+
     def set_ncpus(self, num_cpus):
         """Set the number of cpus obtained in each node.
 
-        If a select argument is provided in QsubBatchSEttings.resources
+        If a select argument is provided in QsubBatchSettings.resources
         this value will be overridden
 
-        :param num_cpus: [description]
-        :type num_cpus: [type]
+        :param num_cpus: number of cpus per node in select
+        :type num_cpus: int
         """
         self._ncpus = int(num_cpus)
 
@@ -108,16 +128,23 @@ class QsubBatchSettings(BatchSettings):
         if "select" in self.resources:
             res += [f"-l select={str(self.resources['select'])}"]
         else:
-            if self._nodes and self._ncpus:
-                res += [f"-l select={str(self._nodes)}:ncpus={str(self._ncpus)}"]
-            elif self._nodes:
-                res += [f"-l select={str(self._nodes)}"]
+            select = "-l select="
+            if self._nodes:
+                select += str(self._nodes)
             else:
                 raise SmartSimError(
                     "Insufficient resource specification: no nodes or select statement")
+            if self._ncpus:
+                select += f":ncpus={self._ncpus}"
+            if self._hosts:
+                hosts = ["=".join(("host", str(host))) for host in self._hosts]
+                select += f":{'+'.join(hosts)}"
+            res += [select]
 
-        # TODO open user option path for placement
-        res += ["-l place=scatter"]
+        if "place" in self.resources:
+            res += [f"-l place={str(self.resources['place'])}"]
+        else:
+            res += ["-l place=scatter"]
 
         # get time from resources or kwargs
         if "walltime" in self.resources:
@@ -127,7 +154,7 @@ class QsubBatchSettings(BatchSettings):
                 res += [f"-l walltime={self._time}"]
 
         for resource, value in self.resources.items():
-            if resource not in ["select", "walltime"]:
+            if resource not in ["select", "walltime", "place"]:
                 res += [f"-l {resource}={str(value)}"]
         return res
 

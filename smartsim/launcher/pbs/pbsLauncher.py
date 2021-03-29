@@ -1,14 +1,16 @@
 import time
+import psutil
+
+
 from ...error import SSUnsupportedError
 from ..stepInfo import PBSStepInfo, UnmanagedStepInfo
 from ..launcher import Launcher
 from ..taskManager import TaskManager
 from ...error import LauncherError, SSConfigError
-from .pbsParser import parse_qstat_nodes
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
 from .pbsCommands import qstat, qdel
-from ..step import AprunStep, QsubBatchStep
-from ...settings import AprunSettings, QsubBatchSettings
+from ..step import AprunStep, QsubBatchStep, MpirunStep
+from ...settings import AprunSettings, QsubBatchSettings, MpirunSettings
 from ..stepMapping import StepMapping
 from ...constants import STATUS_COMPLETED
 
@@ -33,7 +35,6 @@ class PBSLauncher(Launcher):
         self.task_manager = TaskManager()
         self.step_mapping  = StepMapping()
 
-
     def create_step(self, name, cwd, step_settings):
         """Create a PBSpro job step
 
@@ -54,6 +55,9 @@ class PBSLauncher(Launcher):
                 return step
             elif isinstance(step_settings, QsubBatchSettings):
                 step = QsubBatchStep(name, cwd, step_settings)
+                return step
+            elif isinstance(step_settings, MpirunSettings):
+                step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by PBSPro")
@@ -80,8 +84,6 @@ class PBSLauncher(Launcher):
         if len(task_ids) > 0:
             updates.extend(self._get_unmanaged_step_update(task_ids))
 
-        for update in updates:
-            logger.debug(update)
         return updates
 
     def get_step_nodes(self, step_name):
@@ -158,6 +160,7 @@ class PBSLauncher(Launcher):
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name
+        TODO: change this to use ``qstat -a -u user``
         """
         time.sleep(interval)
         step_id = "unassigned"
@@ -184,13 +187,12 @@ class PBSLauncher(Launcher):
         :return: list of updates for managed jobs
         :rtype: list[StepInfo]
         """
-        # TODO detect wether job history is available.
         qstat_out, _ = qstat(step_ids)
 
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
         # create PBSStepInfo objects to return
         updates = []
-        for stat, step_id in zip(stats, step_ids):
+        for stat, _ in zip(stats, step_ids):
             info = PBSStepInfo(stat, None)
             # account for case where job history is not logged by PBS
             if info.status == STATUS_COMPLETED:

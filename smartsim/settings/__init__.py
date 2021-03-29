@@ -3,3 +3,4 @@ from .alpsSettings import AprunSettings
 from .pbsSettings import QsubBatchSettings
 from .cobaltSettings import CobaltBatchSettings
 from .settings import RunSettings
+from .mpirunSettings import MpirunSettings
