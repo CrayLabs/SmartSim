@@ -7,18 +7,18 @@ assignees: ''
 
 ---
 
-**Description**
+# Description
 A clear and concise description of what the bug is.
 
-**How to reproduce**
+# How to reproduce
 steps to reproduce the bug
 
-**Expected behavior**
+# Expected behavior
 A clear and concise description of what you expected to happen.
 
-**System**
+# System
  - OS:
  - OS version:
  - Commit/version of library:
- - Workload manager (e.g. PBS, Slurm): 
+ - Workload manager (e.g. PBS, Slurm):
  - Workload manager version:
