@@ -1,12 +1,13 @@
 import os
 import stat
-from .step import Step
+
 from ...utils import get_logger
+from .step import Step
+
 logger = get_logger(__name__)
 
 
 class CobaltBatchStep(Step):
-
     def __init__(self, name, cwd, batch_settings):
         """Initialize a Cobalt qsub step
 
@@ -65,7 +66,7 @@ class CobaltBatchStep(Step):
             for i, cmd in enumerate(self.step_cmds):
                 f.write("\n")
                 f.write(f"{' '.join((cmd))} &\n")
-                if i == len(self.step_cmds)-1:
+                if i == len(self.step_cmds) - 1:
                     f.write("\n")
                     f.write("wait\n")
         os.chmod(batch_script, stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)

@@ -1,13 +1,14 @@
-import time
 import os.path as osp
-from smartsim import Experiment
+import time
+
+from smartsim import Experiment, constants
 from smartsim.database import Orchestrator
-from smartsim import constants
 
 first_dir = ""
 
 # TODO ensure database is shutdown
 # use https://stackoverflow.com/questions/22627659/run-code-before-and-after-each-test-in-py-test
+
 
 def test_local_orchestrator(fileutils):
     """Test launching orchestrator locally"""
@@ -22,9 +23,9 @@ def test_local_orchestrator(fileutils):
 
     exp.start(orc)
     statuses = exp.get_status(orc)
-    assert([stat != constants.STATUS_FAILED for stat in statuses])
+    assert [stat != constants.STATUS_FAILED for stat in statuses]
 
-    #simulate user shutting down main thread
+    # simulate user shutting down main thread
     exp._control._jobs.actively_monitoring = False
     exp._control._launcher.task_manager.actively_monitoring = False
 
@@ -46,5 +47,5 @@ def test_reconnect_local_orc():
     for stat in statuses:
         if stat == constants.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
-            assert(False)
+            assert False
     exp_2.stop(reloaded_orc)

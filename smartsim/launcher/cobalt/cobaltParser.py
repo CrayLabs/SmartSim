@@ -1,4 +1,3 @@
-
 def parse_cobalt_step_status(output, step_id):
     status = "NOTFOUND"
     for line in output.split("\n"):
@@ -7,6 +6,7 @@ def parse_cobalt_step_status(output, step_id):
             status = line[1]
             break
     return status
+
 
 def parse_cobalt_step_id(output, step_name):
     """Parse and return the step id from a cobalt qstat command
@@ -25,6 +25,7 @@ def parse_cobalt_step_id(output, step_name):
             step_id = line[1]
             break
     return step_id
+
 
 def parse_qsub_out(output):
     step_id = None

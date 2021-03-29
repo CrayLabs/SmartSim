@@ -1,14 +1,16 @@
-
-from ..utils.helpers import expand_exe_path, init_default
 from pprint import pformat
-from ..error import SSConfigError
 
+from ..error import SSConfigError
 from ..utils import get_logger
+from ..utils.helpers import expand_exe_path, init_default
+
 logger = get_logger(__name__)
 
 
 class RunSettings:
-    def __init__(self, exe, exe_args=None, run_command="", run_args=None, env_vars=None):
+    def __init__(
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None
+    ):
         """RunSettings represent how an entity or job should be run
 
         :param exe: executable
@@ -87,6 +89,7 @@ class RunSettings:
             string += f"Run arguments: {pformat(self.run_args)}"
         return string
 
+
 class BatchSettings:
     def __init__(self, batch_cmd, batch_args=None):
         self._batch_cmd = batch_cmd
@@ -128,5 +131,3 @@ class BatchSettings:
         if self.batch_args:
             string += f"Batch arguments: {pformat(self.batch_args)}"
         return string
-
-

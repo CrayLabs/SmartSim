@@ -1,4 +1,5 @@
 import pytest
+
 from smartsim import Experiment, constants
 from smartsim.settings import SbatchSettings
 
@@ -39,13 +40,11 @@ def test_batch_ensemble_replicas(fileutils, wlmutils):
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
 
     batch = SbatchSettings(nodes=2, time="00:01:00")
-    ensemble = exp.create_ensemble("batch-ens-replicas",
-                                   batch_settings=batch,
-                                   run_settings=settings,
-                                   replicas=2)
+    ensemble = exp.create_ensemble(
+        "batch-ens-replicas", batch_settings=batch, run_settings=settings, replicas=2
+    )
     ensemble.set_path(test_dir)
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
-

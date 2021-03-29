@@ -1,19 +1,21 @@
 import time
-import psutil
-from ...error import SSUnsupportedError
-from ..stepInfo import CobaltStepInfo, UnmanagedStepInfo
-from ..launcher import Launcher
-from ..taskManager import TaskManager
-from ...error import LauncherError, SSConfigError
-from ..pbs.pbsCommands import qdel, qstat
-from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
-from ..step import AprunStep, CobaltBatchStep, MpirunStep
-from ...settings import AprunSettings, CobaltBatchSettings, MpirunSettings
-from ..stepMapping import StepMapping
-from ...constants import STATUS_COMPLETED
 
+import psutil
+
+from ...constants import STATUS_COMPLETED
+from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...settings import AprunSettings, CobaltBatchSettings, MpirunSettings
 from ...utils import get_logger
+from ..launcher import Launcher
+from ..pbs.pbsCommands import qdel, qstat
+from ..step import AprunStep, CobaltBatchStep, MpirunStep
+from ..stepInfo import CobaltStepInfo, UnmanagedStepInfo
+from ..stepMapping import StepMapping
+from ..taskManager import TaskManager
+from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
+
 logger = get_logger(__name__)
+
 
 class CobaltLauncher(Launcher):
     """This class encapsulates the functionality needed
@@ -27,11 +29,10 @@ class CobaltLauncher(Launcher):
     """
 
     def __init__(self):
-        """Initialize a PBSLauncher
-        """
+        """Initialize a PBSLauncher"""
         super().__init__()
         self.task_manager = TaskManager()
-        self.step_mapping  = StepMapping()
+        self.step_mapping = StepMapping()
         self.user = psutil.Process().username()
 
     def create_step(self, name, cwd, step_settings):
@@ -59,7 +60,8 @@ class CobaltLauncher(Launcher):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
-                f"RunSettings type {type(step_settings)} not supported by Cobalt")
+                f"RunSettings type {type(step_settings)} not supported by Cobalt"
+            )
         except SSConfigError as e:
             raise LauncherError("Job step creation failed: " + str(e)) from None
 
@@ -116,7 +118,9 @@ class CobaltLauncher(Launcher):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if rc != 0:
-                raise LauncherError(f"Cobalt qsub batch submission failed\n {out}\n {err}")
+                raise LauncherError(
+                    f"Cobalt qsub batch submission failed\n {out}\n {err}"
+                )
             if out:
                 step_id = parse_qsub_out(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
@@ -125,7 +129,9 @@ class CobaltLauncher(Launcher):
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
-            task_id = self.task_manager.start_task(cmd_list, step.cwd, out=output, err=error)
+            task_id = self.task_manager.start_task(
+                cmd_list, step.cwd, out=output, err=error
+            )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
@@ -152,7 +158,7 @@ class CobaltLauncher(Launcher):
             self.task_manager.remove_task(stepmap.task_id)
 
         step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled" # set status to cancelled instead of failed
+        step_info.status = "Cancelled"  # set status to cancelled instead of failed
         return step_info
 
     def _get_cobalt_step_id(self, step, interval=4, trials=5):
@@ -185,11 +191,13 @@ class CobaltLauncher(Launcher):
         args.extend(step_ids)
         qstat_out, _ = qstat(args)
 
-        stats = [parse_cobalt_step_status(qstat_out, str(step_id)) for step_id in step_ids]
+        stats = [
+            parse_cobalt_step_status(qstat_out, str(step_id)) for step_id in step_ids
+        ]
         # create CobaltStepInfo objects to return
         updates = []
         for stat, _ in zip(stats, step_ids):
-            info = CobaltStepInfo(stat, None) # returncode not logged by Cobalt
+            info = CobaltStepInfo(stat, None)  # returncode not logged by Cobalt
 
             if info.status == STATUS_COMPLETED:
                 info.returncode = 0
@@ -213,5 +221,5 @@ class CobaltLauncher(Launcher):
         return updates
 
     def __str__(self):
-        #TODO get the version here
+        # TODO get the version here
         return "Cobalt"

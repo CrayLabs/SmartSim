@@ -119,7 +119,7 @@ docs:
 # help: Test
 # help: -------
 
-# help: test                           - Build and run all tests (C, C++, Fortran, Python)
+# help: test                           - Build and run all tests
 .PHONY: test
 test:
 	@cd ./tests/; python -m pytest

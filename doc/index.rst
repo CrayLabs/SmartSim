@@ -1,7 +1,6 @@
 .. SmartSim documentation master file, created by
    sphinx-quickstart on Sat Sep 14 15:07:14 2019.
 
-
 .. toctree::
    :maxdepth: 2
    :caption: General
@@ -15,21 +14,7 @@
 
    experiment
    orchestrator
-   clients
    launchers
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Using SmartSim
-
-   using-smartsim/create
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples
-
-   example-stubs/crack
-   example-stubs/double-gyre
 
 .. toctree::
    :maxdepth: 2
@@ -41,17 +26,22 @@
    api/entity
    api/slurm
 
+.. toctree::
+   :maxdepth: 2
+   :caption: SmartSim Clients (SILC)
+
+   silc-overview
+   api/python-client
+   api/cpp-client
+   api/c-client
+   api/fortran-client
+
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer
+   :caption: Reference
 
-   developer/testing
-   developer/git
-   developer/python
-   developer/editor
-   developer/documentation
-
+   developer
 
 
 Indices and tables

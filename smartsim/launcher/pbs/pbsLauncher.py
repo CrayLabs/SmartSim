@@ -1,21 +1,21 @@
 import time
+
 import psutil
 
-
-from ...error import SSUnsupportedError
-from ..stepInfo import PBSStepInfo, UnmanagedStepInfo
-from ..launcher import Launcher
-from ..taskManager import TaskManager
-from ...error import LauncherError, SSConfigError
-from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
-from .pbsCommands import qstat, qdel
-from ..step import AprunStep, QsubBatchStep, MpirunStep
-from ...settings import AprunSettings, QsubBatchSettings, MpirunSettings
-from ..stepMapping import StepMapping
 from ...constants import STATUS_COMPLETED
-
+from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from ...utils import get_logger
+from ..launcher import Launcher
+from ..step import AprunStep, MpirunStep, QsubBatchStep
+from ..stepInfo import PBSStepInfo, UnmanagedStepInfo
+from ..stepMapping import StepMapping
+from ..taskManager import TaskManager
+from .pbsCommands import qdel, qstat
+from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
+
 logger = get_logger(__name__)
+
 
 class PBSLauncher(Launcher):
     """This class encapsulates the functionality needed
@@ -29,11 +29,10 @@ class PBSLauncher(Launcher):
     """
 
     def __init__(self):
-        """Initialize a PBSLauncher
-        """
+        """Initialize a PBSLauncher"""
         super().__init__()
         self.task_manager = TaskManager()
-        self.step_mapping  = StepMapping()
+        self.step_mapping = StepMapping()
 
     def create_step(self, name, cwd, step_settings):
         """Create a PBSpro job step
@@ -60,7 +59,8 @@ class PBSLauncher(Launcher):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
-                f"RunSettings type {type(step_settings)} not supported by PBSPro")
+                f"RunSettings type {type(step_settings)} not supported by PBSPro"
+            )
         except SSConfigError as e:
             raise LauncherError("Job step creation failed: " + str(e)) from None
 
@@ -113,7 +113,7 @@ class PBSLauncher(Launcher):
         cmd_list = step.get_launch_cmd()
         step_id = None
         task_id = None
-        if isinstance(step, QsubBatchStep): # make this QsubBatchStep
+        if isinstance(step, QsubBatchStep):  # make this QsubBatchStep
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if rc != 0:
@@ -126,7 +126,9 @@ class PBSLauncher(Launcher):
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
-            task_id = self.task_manager.start_task(cmd_list, step.cwd, out=output, err=error)
+            task_id = self.task_manager.start_task(
+                cmd_list, step.cwd, out=output, err=error
+            )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
@@ -153,7 +155,7 @@ class PBSLauncher(Launcher):
             self.task_manager.remove_task(stepmap.task_id)
 
         step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled" # set status to cancelled instead of failed
+        step_info.status = "Cancelled"  # set status to cancelled instead of failed
         return step_info
 
     def _get_pbs_step_id(self, step, interval=2, trials=5):
@@ -165,9 +167,7 @@ class PBSLauncher(Launcher):
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:
-            output, _ = qstat(
-                ["-f", "-F", "json"]
-            )
+            output, _ = qstat(["-f", "-F", "json"])
             step_id = parse_step_id_from_qstat(output, step.name)
             if step_id:
                 break
@@ -177,7 +177,6 @@ class PBSLauncher(Launcher):
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
         return step_id
-
 
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
@@ -217,5 +216,5 @@ class PBSLauncher(Launcher):
         return updates
 
     def __str__(self):
-        #TODO get the version here
+        # TODO get the version here
         return "PBSPro"

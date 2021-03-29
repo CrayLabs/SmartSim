@@ -1,13 +1,16 @@
+from copy import deepcopy
 from os import getcwd
+
 from smartsim.error.errors import SmartSimError
+
 from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError
+from ..settings.settings import BatchSettings, RunSettings
+from ..utils import get_logger
+from ..utils.helpers import init_default
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
-from ..utils.helpers import init_default
-from ..settings.settings import BatchSettings, RunSettings
-from copy import deepcopy
-from ..utils import get_logger
+
 logger = get_logger(__name__)
 
 
@@ -22,7 +25,13 @@ class Ensemble(EntityList):
     """
 
     def __init__(
-        self, name, params, batch_settings=None, run_settings=None, perm_strat="all_perm", **kwargs
+        self,
+        name,
+        params,
+        batch_settings=None,
+        run_settings=None,
+        perm_strat="all_perm",
+        **kwargs,
     ):
         """Initialize an Ensemble of Model instances.
 
@@ -49,7 +58,6 @@ class Ensemble(EntityList):
     @property
     def models(self):
         return self.entities
-
 
     def _initialize_entities(self, **kwargs):
         """Initialize all the models within the ensemble based
@@ -85,7 +93,8 @@ class Ensemble(EntityList):
             # cannot generate models without run settings
             else:
                 raise SmartSimError(
-                    "Ensembles supplied with 'params' argument must be provided run settings")
+                    "Ensembles supplied with 'params' argument must be provided run settings"
+                )
         else:
             if self.run_settings:
                 if replicas:
@@ -98,16 +107,20 @@ class Ensemble(EntityList):
                             run_settings=deepcopy(self.run_settings),
                         )
                         model.enable_key_prefixing()
-                        logger.debug(f"Created ensemble member: {model_name} in {self.name}")
+                        logger.debug(
+                            f"Created ensemble member: {model_name} in {self.name}"
+                        )
                         self.add_model(model)
                 else:
                     raise SmartSimError(
-                        "Ensembles without 'params' to expand into members cannot be given run settings")
+                        "Ensembles without 'params' to expand into members cannot be given run settings"
+                    )
             # if no params, no run settings and no batch settings, error because we
             # don't know how to run the ensemble
             elif not self.batch_settings:
                 raise SmartSimError(
-                    "Ensemble must be provided batch settings or run settings")
+                    "Ensemble must be provided batch settings or run settings"
+                )
             else:
                 logger.info("Empty ensemble created for batch launch")
 

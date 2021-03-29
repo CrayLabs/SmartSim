@@ -76,4 +76,6 @@ def _find_slurm_command(cmd):
         full_cmd = expand_exe_path(cmd)
         return full_cmd
     except SSConfigError as e:
-        raise LauncherError(f"Slurm Launcher could not find path of {cmd} command") from e
+        raise LauncherError(
+            f"Slurm Launcher could not find path of {cmd} command"
+        ) from e

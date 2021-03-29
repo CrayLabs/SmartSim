@@ -1,5 +1,6 @@
 from .settings import RunSettings
 
+
 class AprunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
         """Settings to run job with ``aprun`` command
@@ -13,7 +14,9 @@ class AprunSettings(RunSettings):
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
-        super().__init__(exe, exe_args, run_command="aprun", run_args=run_args, env_vars=env_vars)
+        super().__init__(
+            exe, exe_args, run_command="aprun", run_args=run_args, env_vars=env_vars
+        )
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):

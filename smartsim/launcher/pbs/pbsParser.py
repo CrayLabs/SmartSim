@@ -1,5 +1,6 @@
 import json
 
+
 def parse_qsub(output):
     """Parse qsub output and return job id. For PBS, the
     output is the job id itself.
@@ -27,7 +28,7 @@ def parse_qsub_error(output):
             return error.strip()
     # if no error line, take first line
     for line in output.split("\n"):
-            return line.strip()
+        return line.strip()
     # if neither, present a base error message
     base_err = "PBS run error"
     return base_err
@@ -76,11 +77,12 @@ def parse_qstat_nodes(output):
     job = jobs[list(jobs.keys())[0]]
     vnodes = job["exec_vnode"]
     for vnode in vnodes.split("+"):
-        vnode = vnode.strip('()')
+        vnode = vnode.strip("()")
         vnode = vnode.split(":")[0]
         nodes.append(vnode)
 
     return list(sorted(set(nodes)))
+
 
 def parse_step_id_from_qstat(output, step_name):
     """Parse and return the step id from a qstat command
@@ -105,8 +107,9 @@ def parse_step_id_from_qstat(output, step_name):
 
     return step_id
 
+
 def load_and_clean_json(out):
-    if len(out.strip())==0:
+    if len(out.strip()) == 0:
         return ""
     try:
         json_out = json.loads(out)
@@ -115,6 +118,6 @@ def load_and_clean_json(out):
         out_arr = out.split("\n")
         new_out = ""
         for lineno in range(len(out_arr)):
-            if lineno!=e.lineno-1:
+            if lineno != e.lineno - 1:
                 new_out = new_out + "\n" + out_arr[lineno]
         return load_and_clean_json(new_out)

@@ -86,7 +86,6 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-
     def __eq__(self, other):
         if self.name == other.name:
             return True

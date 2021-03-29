@@ -1,14 +1,12 @@
-import os
+import argparse
 import io
+import os
 
 import numpy as np
 import torch
 import torch.nn as nn
 
-import argparse
-
 from silc import Client
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='SILC ensemble producer process.')

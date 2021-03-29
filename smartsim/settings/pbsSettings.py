@@ -1,11 +1,22 @@
-
 from smartsim.error.errors import SmartSimError
-from .settings import BatchSettings
+
 from ..error import SSConfigError
 from ..utils.helpers import init_default
+from .settings import BatchSettings
+
 
 class QsubBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, ncpus=None, time=None, queue=None, account=None, resources=None, batch_args=None, **kwargs):
+    def __init__(
+        self,
+        nodes=None,
+        ncpus=None,
+        time=None,
+        queue=None,
+        account=None,
+        resources=None,
+        batch_args=None,
+        **kwargs,
+    ):
         """Create a Qsub batch setting for an entity
 
         :param nodes: number of nodes for batch, defaults to None
@@ -103,8 +114,8 @@ class QsubBatchSettings(BatchSettings):
         :param value: value
         :type value: str
         """
-        #TODO add error checking here
-        #TODO include option to overwrite place (warning for orchestrator?)
+        # TODO add error checking here
+        # TODO include option to overwrite place (warning for orchestrator?)
         self.resources[resource_name] = value
 
     def format_batch_args(self):
@@ -133,7 +144,8 @@ class QsubBatchSettings(BatchSettings):
                 select += str(self._nodes)
             else:
                 raise SmartSimError(
-                    "Insufficient resource specification: no nodes or select statement")
+                    "Insufficient resource specification: no nodes or select statement"
+                )
             if self._ncpus:
                 select += f":ncpus={self._ncpus}"
             if self._hosts:
@@ -157,4 +169,3 @@ class QsubBatchSettings(BatchSettings):
             if resource not in ["select", "walltime", "place"]:
                 res += [f"-l {resource}={str(value)}"]
         return res
-

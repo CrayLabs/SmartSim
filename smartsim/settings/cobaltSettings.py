@@ -1,10 +1,9 @@
-
-
-
 from smartsim.error.errors import SmartSimError
-from .settings import BatchSettings
+
 from ..error import SSConfigError
 from ..utils.helpers import init_default
+from .settings import BatchSettings
+
 
 class CobaltBatchSettings(BatchSettings):
     def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
@@ -46,7 +45,7 @@ class CobaltBatchSettings(BatchSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        #TODO check for formatting errors here
+        # TODO check for formatting errors here
         # TODO catch existing "t" in batch_args
         self.batch_args["time"] = walltime
 
@@ -56,7 +55,7 @@ class CobaltBatchSettings(BatchSettings):
         :param num_nodes: number of nodes
         :type num_nodes: int
         """
-        #TODO catch existing "n" in batch_args
+        # TODO catch existing "n" in batch_args
         self.batch_args["nodecount"] = int(num_nodes)
 
     def set_hostlist(self, host_list):
@@ -103,13 +102,13 @@ class CobaltBatchSettings(BatchSettings):
         """
         restricted = [
             "o",
-            "output", # output is determined by interface
+            "output",  # output is determined by interface
             "O",
-            "outputprefix", # step name is output prefix
+            "outputprefix",  # step name is output prefix
             "e",
-            "error", # error is determined by interface
-            "cwd", # cwd is determined by interface
-            "jobname" # step name is jobname
+            "error",  # error is determined by interface
+            "cwd",  # cwd is determined by interface
+            "jobname",  # step name is jobname
         ]
         opts = []
         for opt, value in self.batch_args.items():

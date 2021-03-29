@@ -1,20 +1,22 @@
-from ..error import SSUnsupportedError, SmartSimError
-from ..settings import QsubBatchSettings, AprunSettings, MpirunSettings
-from .orchestrator import Orchestrator
 from ..entity import DBNode
+from ..error import SmartSimError, SSUnsupportedError
+from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
+from .orchestrator import Orchestrator
 
 
 class PBSOrchestrator(Orchestrator):
-
-    def __init__(self, port=6379,
-                 db_nodes=1,
-                 batch=True,
-                 hosts=None,
-                 run_command="aprun",
-                 account=None,
-                 time=None,
-                 queue=None,
-                 **kwargs):
+    def __init__(
+        self,
+        port=6379,
+        db_nodes=1,
+        batch=True,
+        hosts=None,
+        run_command="aprun",
+        account=None,
+        time=None,
+        queue=None,
+        **kwargs,
+    ):
         """Initialize an Orchestrator reference for PBSPro based systems
 
         The orchestrator launches as a batch by default. If batch=False,
@@ -31,18 +33,18 @@ class PBSOrchestrator(Orchestrator):
         :type batch: bool, optional
         #TODO update this
         """
-        super().__init__(port,
-                         db_nodes=db_nodes,
-                         batch=batch,
-                         run_command=run_command,
-                         **kwargs)
-        self.batch_settings = self._build_batch_settings(db_nodes, batch,
-                                                         account, time, queue)
+        super().__init__(
+            port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
+        )
+        self.batch_settings = self._build_batch_settings(
+            db_nodes, batch, account, time, queue
+        )
         if hosts:
             self.set_hosts(hosts)
         elif not hosts and run_command == "mpirun":
             raise SmartSimError(
-                "hosts argument is required when launching PBSOrchestrator with OpenMPI")
+                "hosts argument is required when launching PBSOrchestrator with OpenMPI"
+            )
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -116,7 +118,8 @@ class PBSOrchestrator(Orchestrator):
         if run_command == "mpirun":
             return self._build_mpirun_settings(exe, exe_args, **kwargs)
         raise SSUnsupportedError(
-            f"PBSOrchestrator does not support {run_command} as a launch binary")
+            f"PBSOrchestrator does not support {run_command} as a launch binary"
+        )
 
     def _build_aprun_settings(self, exe, exe_args, **kwargs):
         run_args = kwargs.get("run_args", {})
@@ -134,20 +137,19 @@ class PBSOrchestrator(Orchestrator):
     def _build_batch_settings(self, db_nodes, batch, account, time, queue):
         batch_settings = None
         if batch:
-            batch_settings = QsubBatchSettings(nodes=db_nodes,
-                                               ncpus=1,
-                                               time=time,
-                                               queue=queue,
-                                               account=account)
+            batch_settings = QsubBatchSettings(
+                nodes=db_nodes, ncpus=1, time=time, queue=queue, account=account
+            )
         return batch_settings
 
     def _initialize_entities(self, **kwargs):
-        """Initialize DBNode instances for the orchestrator.
-        """
+        """Initialize DBNode instances for the orchestrator."""
         db_nodes = kwargs.get("db_nodes", 1)
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
-            raise SSUnsupportedError("PBSOrchestrator does not support clusters of size 2")
+            raise SSUnsupportedError(
+                "PBSOrchestrator does not support clusters of size 2"
+            )
         port = kwargs.get("port", 6379)
 
         db_conf = self._get_db_config_path()

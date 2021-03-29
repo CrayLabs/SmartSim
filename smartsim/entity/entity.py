@@ -23,8 +23,7 @@ class SmartSimEntity:
 
     @property
     def type(self):
-        """Return the name of the class
-        """
+        """Return the name of the class"""
         return type(self).__name__
 
     def __repr__(self):

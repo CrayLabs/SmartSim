@@ -7,11 +7,11 @@ assignees: ''
 
 ---
 
-**Description**
+# Description
 What is the point of this feature? Why include it?
 
-**Justification**
-Who will benefit from this feature? 
+# Justification
+Who will benefit from this feature?
 
-**Implementation Strategy**
+# Implementation Strategy
 How should this feature be implemented? What will need to be done/included?

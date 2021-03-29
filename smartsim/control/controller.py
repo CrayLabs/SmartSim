@@ -1,17 +1,17 @@
-import time
+import os.path as osp
 import pickle
 import threading
-import os.path as osp
-from ..constants import TERMINAL_STATUSES, WLM_JM_INTERVAL
-from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
+import time
+
+from ..constants import STATUS_RUNNING, TERMINAL_STATUSES, WLM_JM_INTERVAL
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import LocalLauncher, SlurmLauncher, PBSLauncher, CobaltLauncher
+from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
+from ..utils import get_logger
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
 
-from ..utils import get_logger
 logger = get_logger(__name__)
 
 # job manager lock
@@ -96,9 +96,7 @@ class Controller:
         """
         try:
             if isinstance(entity, Orchestrator):
-                raise TypeError(
-                    "Finished() does not support Orchestrator instances"
-                )
+                raise TypeError("Finished() does not support Orchestrator instances")
             if isinstance(entity, EntityList):
                 return all([self.finished(ent) for ent in entity.entities])
             if not isinstance(entity, SmartSimEntity):
@@ -126,7 +124,9 @@ class Controller:
             job = self._jobs[entity.name]
             if job.status not in TERMINAL_STATUSES:
                 logger.info(
-                    " ".join(("Stopping model", entity.name, "with job name", str(job.name)))
+                    " ".join(
+                        ("Stopping model", entity.name, "with job name", str(job.name))
+                    )
                 )
                 status = self._launcher.stop(job.name)
 
@@ -289,11 +289,13 @@ class Controller:
             except LauncherError:
                 logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
-                logger.debug("WLM node aquisition unsupported, moving to RedisIP fallback")
+                logger.debug(
+                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db),db) for db in orchestrator]
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator]
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -309,7 +311,9 @@ class Controller:
             except LauncherError:
                 logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
-                logger.debug("WLM node aquisition unsupported, moving to RedisIP fallback")
+                logger.debug(
+                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                )
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
@@ -320,7 +324,6 @@ class Controller:
             orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
-
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop
@@ -357,7 +360,8 @@ class Controller:
         :rtype: Step
         """
         batch_step = self._launcher.create_step(
-                entity_list.name, entity_list.path, entity_list.batch_settings)
+            entity_list.name, entity_list.path, entity_list.batch_settings
+        )
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
             entity.run_settings.in_batch = True
@@ -377,9 +381,7 @@ class Controller:
         if not isinstance(entity, DBNode):
             self._prep_entity_client_env(entity)
 
-        step = self._launcher.create_step(
-            entity.name, entity.path, entity.run_settings
-        )
+        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
         return step
 
     def _prep_entity_client_env(self, entity):
@@ -395,7 +397,9 @@ class Controller:
         if addresses:
             client_env["SSDB"] = ",".join(addresses)
             if entity.incoming_entities:
-                client_env["SSKEYIN"] = ",".join([in_entity.name for in_entity in entity.incoming_entities])
+                client_env["SSKEYIN"] = ",".join(
+                    [in_entity.name for in_entity in entity.incoming_entities]
+                )
             if entity.query_key_prefixing():
                 client_env["SSKEYOUT"] = entity.name
         entity.run_settings.update_env(client_env)
@@ -436,8 +440,7 @@ class Controller:
 
         dat_file = "/".join((orchestrator.path, "smartsim_db.dat"))
         db_jobs = self._jobs.db_jobs
-        orc_data = {"db": orchestrator,
-                    "db_jobs": db_jobs}
+        orc_data = {"db": orchestrator, "db_jobs": db_jobs}
         steps = []
         for db_job in db_jobs.values():
             steps.append(self._launcher.step_mapping[db_job.name])
@@ -474,7 +477,9 @@ class Controller:
                 statuses = self.get_entity_list_status(orchestrator)
                 if all([stat == STATUS_RUNNING for stat in statuses]):
                     ready = True
-                    time.sleep(WLM_JM_INTERVAL) # TODO remove in favor of by node status check
+                    time.sleep(
+                        WLM_JM_INTERVAL
+                    )  # TODO remove in favor of by node status check
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
                     self.stop_entity_list(orchestrator)
                     msg = "Orchestrator failed during startup"
@@ -506,7 +511,9 @@ class Controller:
                 msg = "Database checkpoint corrupted"
                 raise SmartSimError(msg) from e
 
-            err_message = "The SmartSim database checkpoint is incomplete or corrupted. "
+            err_message = (
+                "The SmartSim database checkpoint is incomplete or corrupted. "
+            )
             if not "db" in db_config:
                 raise SmartSimError(
                     err_message + "Could not find the orchestrator object."
