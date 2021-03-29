@@ -18,16 +18,6 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: SmartSim Clients (SILC)
-
-   silc-overview
-   api/python-client
-   api/cpp-client
-   api/c-client
-   api/fortran-client
-
-.. toctree::
-   :maxdepth: 2
    :caption: API
 
    api/experiment
@@ -36,17 +26,22 @@
    api/entity
    api/slurm
 
+.. toctree::
+   :maxdepth: 2
+   :caption: SmartSim Clients (SILC)
+
+   silc-overview
+   api/python-client
+   api/cpp-client
+   api/c-client
+   api/fortran-client
+
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer
+   :caption: Reference
 
-   developer/testing
-   developer/git
-   developer/python
-   developer/editor
-   developer/documentation
-
+   developer
 
 
 Indices and tables
