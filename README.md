@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/CrayLabs/SmartSim/blob/cleanup/doc/images/ss-green-logo.png" width="40%"><img>
+  <img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/ss-green-logo.png" width="50%"><img>
 </div>
 
 
