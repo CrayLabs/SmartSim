@@ -1,12 +1,7 @@
-import coloredlogs
-
 # Constants for SmartSim
-# Do not change these unless you know what you are doing. :)
 
-# Intervals for Job Manager that depend on launcher
-# For WLM, we don't want to ping the wlm too much
+# Interval for Job Manager
 LOCAL_JM_INTERVAL = 3
-WLM_JM_INTERVAL = 15
 
 # Task Manager Interval
 TM_INTERVAL = 2
@@ -31,11 +26,3 @@ SMARTSIM_STATUS = {
 # Status groupings
 TERMINAL_STATUSES = (STATUS_CANCELLED, STATUS_COMPLETED, STATUS_FAILED)
 LIVE_STATUSES = (STATUS_RUNNING, STATUS_PAUSED, STATUS_NEW)
-
-# constants for logging
-coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"
-coloredlogs.DEFAULT_LOG_FORMAT = (
-    "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
-)
-# optional thread name logging for debugging
-# coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'

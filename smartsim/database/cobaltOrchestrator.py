@@ -1,10 +1,9 @@
-from smartsim.error.errors import SmartSimError
 
 from ..entity import DBNode
-from ..error import SSUnsupportedError
+from ..error import SSUnsupportedError, SmartSimError
 from ..settings import AprunSettings, CobaltBatchSettings, MpirunSettings
 from .orchestrator import Orchestrator
-
+from ..config import CONFIG
 
 class CobaltOrchestrator(Orchestrator):
     def __init__(
@@ -149,10 +148,10 @@ class CobaltOrchestrator(Orchestrator):
             )
         port = kwargs.get("port", 6379)
 
-        db_conf = self._get_db_config_path()
+        db_conf = CONFIG.redis_conf
+        exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
-        exe = self._find_db_exe()
 
         # Build DBNode instance for each node listed
         for db_id in range(db_nodes):

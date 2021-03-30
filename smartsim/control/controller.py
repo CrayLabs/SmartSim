@@ -3,11 +3,12 @@ import pickle
 import threading
 import time
 
-from ..constants import STATUS_RUNNING, TERMINAL_STATUSES, WLM_JM_INTERVAL
+from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
 from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
+from ..config import CONFIG
 from ..utils import get_logger
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
@@ -468,7 +469,7 @@ class Controller:
         ready = False
         while not ready:
             try:
-                time.sleep(WLM_JM_INTERVAL)
+                time.sleep(CONFIG.jm_interval)
                 # manually trigger job update if JM not running
                 if not self._jobs.actively_monitoring:
                     self._jobs.check_jobs()
@@ -477,9 +478,8 @@ class Controller:
                 statuses = self.get_entity_list_status(orchestrator)
                 if all([stat == STATUS_RUNNING for stat in statuses]):
                     ready = True
-                    time.sleep(
-                        WLM_JM_INTERVAL
-                    )  # TODO remove in favor of by node status check
+                    # TODO remove in favor of by node status check
+                    time.sleep(CONFIG.jm_interval)
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
                     self.stop_entity_list(orchestrator)
                     msg = "Orchestrator failed during startup"
