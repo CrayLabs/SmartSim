@@ -7,6 +7,8 @@
 
    overview
    installation
+   community
+   contribute
 
 .. toctree::
    :maxdepth: 2
@@ -42,6 +44,7 @@
    :caption: Reference
 
    developer
+   code_of_conduct
 
 
 Indices and tables
