@@ -4,7 +4,7 @@
 Introduction
 ************
 
-SmartSim is an HPE library that enables the convergence of numerical simulations
+SmartSim is an Open-Source library that enables the convergence of numerical simulations
 and AI workloads on heterogeneous architectures. SmartSim enables a data-science
 first approach to simulation research by overcoming systemic impediments; including
 lack of inter-operability between programming languages and dependence on file I/O.
@@ -47,7 +47,7 @@ Library Design
 There are two core components of the SmartSim library:
 
   1. Infrastructure Library
-  2. Client libraries (SILC)
+  2. Client libraries (SmartRedis)
 
 The two libraries can either be used in conjunction, or separately depending
 on the needs of the user.
