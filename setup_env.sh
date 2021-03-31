@@ -17,8 +17,8 @@ else
     echo "SmartSim found in PYTHONPATH"
 fi
 
-if [[ -d "./silc" ]]; then
-    cd ./silc
+if [[ -d "./smartredis" ]]; then
+    cd ./smartredis
     source setup_env.sh
     cd ..
 fi

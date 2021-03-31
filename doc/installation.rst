@@ -19,7 +19,6 @@ The prerequisites to begin building SmartSim are:
 Optional for building documentation:
 
 - Doxygen
-- breathe 4.27.0
 
 
 Installing From Source
@@ -64,9 +63,9 @@ Local Build (Quick Start)
   make deps          # default
 
   #after dependancies complete successfully, build clients
-  make silc
+  make smartredis
 
-Lastly, after SILC is installed, make sure to reset SmartSim
+Lastly, after smartredis is installed, make sure to reset SmartSim
 so that it is aware that the clients have been installed.
 Perform this step from the top level of the SmartSim
 directory.

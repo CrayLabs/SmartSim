@@ -25,7 +25,7 @@ Questions and discussion about SmartSim should be directed to the following area
 
  1. **Using SmartSim** - If you have questions on using SmartSim please `post them to Stack Overflow <https://stackoverflow.com/questions/tagged/smartsim>`_ and tag them with the #smartsim tag.
  2. **SmartSim Contributor Development Chat** - We monitor `Slack for SmartSim <https://join.slack.com/t/hpe-smartsim/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA>`_ for contribution development questions.
- 3. **Report a Bug or Request a Feature** - Features and Bugs are managed through GitHub. For issues related to `SmartSim post here <https://github.com/CrayLabs/SmartSim/issues>`_. For issues related to `SmartRedis post here <https://github.com/CrayLabs/SILC/issues>`_.
+ 3. **Report a Bug or Request a Feature** - Features and Bugs are managed through GitHub. For issues related to `SmartSim post here <https://github.com/CrayLabs/SmartSim/issues>`_. For issues related to `SmartRedis post here <https://github.com/CrayLabs/smartredis/issues>`_.
 
 
 How to Behave?
