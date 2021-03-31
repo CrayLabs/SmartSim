@@ -22,9 +22,3 @@ if [[ -d "./silc" ]]; then
     source setup_env.sh
     cd ..
 fi
-
-# Set environment variables for SmartSim
-export SMARTSIMHOME="$(pwd)"
-echo "SMARTSIMHOME set to $(pwd)"
-export SMARTSIM_LOG_LEVEL="info"
-echo "SMARTSIM_LOG_LEVEL set to $SMARTSIM_LOG_LEVEL"

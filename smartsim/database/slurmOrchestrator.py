@@ -3,6 +3,7 @@ from ..error import SmartSimError, SSUnsupportedError
 from ..settings import MpirunSettings, SbatchSettings, SrunSettings
 from ..utils import get_logger
 from .orchestrator import Orchestrator
+from ..config import CONFIG
 
 logger = get_logger(__name__)
 
@@ -191,10 +192,10 @@ class SlurmOrchestrator(Orchestrator):
         dpn = kwargs.get("dpn", 1)
         port = kwargs.get("port", 6379)
 
-        db_conf = self._get_db_config_path()
+        db_conf = CONFIG.redis_conf
+        exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
-        exe = self._find_db_exe()
 
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))

@@ -8,6 +8,8 @@ from os import getcwd
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
+from ..config import CONFIG
+
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError
 from ..launcher.util.shell import execute_cmd
@@ -87,10 +89,8 @@ class Orchestrator(EntityList):
                 address = ":".join((ip, str(port) + " "))
                 ip_list.append(address)
 
-        # TODO make a get redis_cli function
         # call cluster command
-        smartsimhome = get_env("SMARTSIMHOME")
-        redis_cli = os.path.join(smartsimhome, "third-party/redis/src/redis-cli")
+        redis_cli = CONFIG.redis_cli
         cmd = [redis_cli, "--cluster", "create"]
         cmd += ip_list
         cmd += ["--cluster-replicas", "0"]
@@ -145,27 +145,25 @@ class Orchestrator(EntityList):
         :return: path to module
         :rtype: str
         """
-        sshome = get_env("SMARTSIMHOME")
-        gpu_module = osp.join(sshome, "third-party/RedisAI/install-gpu/redisai.so")
-        cpu_module = osp.join(sshome, "third-party/RedisAI/install-cpu/redisai.so")
-
+        ai_module, device = CONFIG.redisai
         module = ["--loadmodule"]
         # if built for GPU
-        if osp.isfile(gpu_module):
+        if device == "gpu":
             logger.debug("Orchestrator using RedisAI GPU")
-            module.append(gpu_module)
+            module.append(ai_module)
             if self.queue_threads:
                 module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
             return " ".join(module)
-        if osp.isfile(cpu_module):
+        elif device == "cpu":
             logger.debug("Orchestrator using RedisAI CPU")
-            module.append(cpu_module)
+            module.append(ai_module)
             if self.inter_threads:
                 module.append(f"INTER_OP_THREADS {self.inter_threads}")
             if self.intra_threads:
                 module.append(f"INTRA_OP_THREADS {self.intra_threads}")
             return " ".join(module)
-        raise SSConfigError("Could not find RedisAI module")
+        else:
+            raise SSConfigError("Incorrect configuration for RedisAI device")
 
     @staticmethod
     def _get_IP_module_path():
@@ -175,30 +173,8 @@ class Orchestrator(EntityList):
         :return: path to module
         :rtype: str
         """
-        sshome = get_env("SMARTSIMHOME")
-        suffix = ".dylib" if sys.platform == "darwin" else ".so"
-        module_path = osp.join(sshome, "third-party/RedisIP/build/libredisip" + suffix)
-        if not osp.isfile(module_path):
-            msg = "Could not locate RedisIP module.\n"
-            msg += f"looked at path {module_path}"
-            raise SSConfigError(msg)
+        module_path = CONFIG.redisip
         return " ".join(("--loadmodule", module_path))
-
-    @staticmethod
-    def _get_db_config_path():
-        """Find the database configuration file on the filesystem
-
-        :raises SSConfigError: if env not setup for SmartSim
-        :return: path to configuration file for the database
-        :rtype: str
-        """
-        sshome = get_env("SMARTSIMHOME")
-        conf_path = osp.join(sshome, "smartsim/database/redis6.conf")
-        if not osp.isfile(conf_path):
-            msg = "Could not locate database configuration file.\n"
-            msg += f"looked at path {conf_path}"
-            raise SSConfigError(msg)
-        return conf_path
 
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
@@ -215,10 +191,10 @@ class Orchestrator(EntityList):
             )
 
         # collect database launch command information
-        db_conf = self._get_db_config_path()
+        db_conf = CONFIG.redis_conf
+        exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
-        exe = self._find_db_exe()
 
         # create single DBNode instance for Local Orchestrator
         exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
@@ -229,24 +205,6 @@ class Orchestrator(EntityList):
         # add DBNode to Orchestrator
         self.entities.append(node)
         self.ports = [port]
-
-    @staticmethod
-    def _find_db_exe():
-        """Find the database executable for the orchestrator
-
-        :raises SSConfigError: if env not setup for SmartSim
-        :return: path to database exe
-        :rtype: str
-        """
-        sshome = get_env("SMARTSIMHOME")
-        exe = osp.join(sshome, "third-party/redis/src/redis-server")
-        try:
-            full_exe = expand_exe_path(exe)
-            return full_exe
-        except SSConfigError:
-            msg = "Database not built/installed correctly. "
-            msg += "Could not locate database executable"
-            raise SSConfigError(msg) from None
 
     @staticmethod
     def _get_cluster_args(name, port):

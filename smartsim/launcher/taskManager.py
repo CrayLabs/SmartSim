@@ -18,7 +18,6 @@ try:
 except KeyError:
     verbose_tm = False
 
-
 class TaskManager:
     """The Task Manager watches the subprocesses launched through
     the asyncronous shell interface. Each task is a wrapper

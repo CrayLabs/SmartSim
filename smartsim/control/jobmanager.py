@@ -2,17 +2,17 @@ import itertools
 import time
 from threading import Thread
 
-from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
+from ..config import CONFIG
+from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..database.orchestrator import get_ip_from_host
 from ..entity import DBNode
 from ..error import SmartSimError
-from ..launcher import CobaltLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import LocalLauncher
 from ..utils import get_logger
 from .job import Job
 
 logger = get_logger(__name__)
-
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
@@ -295,10 +295,10 @@ class JobManager:
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
-        if isinstance(self._launcher, (SlurmLauncher, PBSLauncher, CobaltLauncher)):
-            time.sleep(WLM_JM_INTERVAL)
-        else:
+        if isinstance(self._launcher, (LocalLauncher)):
             time.sleep(LOCAL_JM_INTERVAL)
+        else:
+            time.sleep(CONFIG.jm_interval)
 
     def __len__(self):
         # number of active jobs
