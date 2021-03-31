@@ -3,7 +3,7 @@ __version__ = "0.1.0"
 import os
 import sys
 
-if sys.version_info < (3, 7):
+if sys.version_info < (3, 7): # pragma: no cover
     sys.exit("Python 3.7 or greater must be used with SmartSim.")
 
 ## setup smartsim environment

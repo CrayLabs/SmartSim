@@ -27,9 +27,9 @@ except ImportError:
     pass
 
 
-@pytest.mark.skipif(('silc' not in sys.modules) or
-                    ('torch' not in sys.modules),
-                    reason="requires SILC and PyTorch")
+pytestmark = pytest.mark.skipif(('silc' not in sys.modules) or
+                               ('torch' not in sys.modules),
+                               reason="requires SILC and PyTorch")
 
 
 def test_exchange(fileutils):

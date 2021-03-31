@@ -7,6 +7,10 @@ MAKEFLAGS += --no-print-directory
 # help: SmartSim Makefile help
 # help:
 
+ifndef COV_FILE
+export COV_FILE="${PWD}/tests/test_configs/cov/local_cov.cfg"
+endif
+
 SHELL:=/bin/bash
 
 # help: help                           - display this makefile's help information
@@ -132,5 +136,5 @@ test-verbose:
 # help: test-cov                       - run python tests with coverage
 .PHONY: test-cov
 test-cov:
-	@cd ./tests/; python -m pytest --cov=../smartsim -vv
+	@cd ./tests/; python -m pytest --cov=../smartsim -vv --cov-config=${COV_FILE}
 
