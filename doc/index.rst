@@ -3,10 +3,16 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: General
+   :caption: Overview of SmartSim
 
    overview
    installation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: tutorials
+
+   tutorials/smartredis
 
 .. toctree::
    :maxdepth: 2
@@ -15,32 +21,23 @@
    experiment
    orchestrator
    launchers
+   api/smartsim_api
 
 .. toctree::
    :maxdepth: 2
-   :caption: API
+   :caption: SmartRedis
 
-   api/experiment
-   api/settings
-   api/orchestrator
-   api/entity
-   api/slurm
-
-.. toctree::
-   :maxdepth: 2
-   :caption: SmartSim Clients (SILC)
-
-   silc-overview
-   api/python-client
-   api/cpp-client
-   api/c-client
-   api/fortran-client
-
+   smartredis
+   sr_data_structures
+   sr_runtime
+   api/smartredis_api
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference
 
+   community
+   code_of_conduct
    developer
 
 

@@ -3,11 +3,17 @@
 Developer
 *********
 
-This section details common practices and tip for contributors
-to SmartSim and SILC.
+This section details common practices and tips for contributors
+to SmartSim and SmartRedis
 
+================
 Testing SmartSim
 ================
+
+.. note::
+
+    This section describes how to run the SmartSim (infrastructure library)
+    test suite. For testing SmartRedis, see below
 
 SmartSim utilizes ``Pytest`` for running its test suite. In the
 top level of SmartSim, users can run multiple testing commands
@@ -28,7 +34,7 @@ with the developer Makefile
 
 
 Local
------
+=====
 
 There are two levels of testing in SmartSim. The first
 runs by default and doesn't launch any jobs out onto
@@ -39,7 +45,7 @@ run the the "light" test suite by default
 
 
 PBSPro, Slurm, Cobalt
----------------------
+=====================
 
 To run the full test suite, users will have to be on a system
 with one of the above workload managers. Additionally users will
@@ -67,24 +73,31 @@ of the following values
  - pbs
  - local
 
+-------------------------------------------------------
+
+==================
+Testing SmartRedis
+==================
+
+.. include:: ../silc/doc/testing.rst
+   :start-line: 3
 
 -------------------------------------------------------
 
-
-
-
+============
 Git Workflow
 ============
 
 Setup
------
+=====
 
-  - Fork the SmartSim repository
+  - Fork the SmartSim (SmartRedis) repository
   - Set upstream as the main repository and set upstream push remote to ``no_push``
   - Follow installation instructions
 
+
 Pull Requests
--------------
+=============
 
 Please check the following before submitting a pull request to the SmartSim repository
 
@@ -98,7 +111,7 @@ Please check the following before submitting a pull request to the SmartSim repo
   8) You have requested a review.
 
 Merging
--------
+=======
 
 When merging there are a few guidelines to follow
 
@@ -108,7 +121,7 @@ When merging there are a few guidelines to follow
 -------------------------------------------------------
 
 
-
+=================
 Python Guidelines
 =================
 
@@ -125,6 +138,7 @@ are a few things to specifically mention.
 
 ---------------------------------------------------------
 
+==================
 Editor Suggestions
 ==================
 

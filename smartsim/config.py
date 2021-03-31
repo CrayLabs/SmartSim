@@ -13,15 +13,46 @@ class Config:
         self.conf = self._load_conf()
 
     def _load_conf(self):
-        try:
-            home = os.environ["HOME"]
-            config_path = osp.join(home, ".smartsim/config.toml")
-            config = toml.load(config_path)
-            return config
-        except FileNotFoundError:
-            raise SSConfigError(
-                f"Could not find SmartSim config. Looked at {config_path}"
-            )
+
+        def _load_from_home():
+            try:
+                home = os.environ["HOME"]
+                config_path = osp.join(home, ".smartsim/config.toml")
+                if osp.isfile(config_path):
+                    return config_path
+                return None
+            except KeyError:
+                return None
+
+        def _load_from_sshome():
+            try:
+                home = os.environ["SMARTSIM_HOME"]
+                config_path = osp.join(home, "config.toml")
+                if osp.isfile(config_path):
+                    return config_path
+                config_path = osp.join(home, ".smartsim/config.toml")
+                if osp.isfile(config_path):
+                    return config_path
+                return None
+            except KeyError:
+                return None
+
+        conf_path = _load_from_home()
+        if not conf_path:
+            conf_path = _load_from_sshome()
+        if not conf_path:
+            msg = "Could not find SmartSim config\n"
+            msg += "This usually means you haven't written a config.toml for SmartSim\n"
+            msg += "Template Config\n"
+            msg += _template_config
+            msg += "\nCopy paste this in $HOME/.smartsim/config.toml"
+            msg += " and replace the /path/to/.. with paths to each of the libraries\n"
+            msg += "Optionally, you can also put the config in $SMARTSIM_HOME\n"
+            raise SSConfigError(msg)
+
+        config = toml.load(conf_path)
+        return config
+
 
     @property
     def redisai(self):
@@ -58,7 +89,7 @@ class Config:
                 raise SSConfigError("Redis 'config' provided in SmartSim config could be found")
             return conf_path
         except KeyError:
-            smartsim_path = os.path.dirname(os.path.abspath(__file__))
+            smartsim_path = os.path.dirname(osp.abspath(__file__))
             conf_path = osp.join(smartsim_path, "database/redis6.conf")
             return conf_path
 
@@ -119,6 +150,33 @@ class Config:
                 return int(num_seconds)
         except KeyError:
             return 15 # 15 seconds by default
+
+
+_template_config = """
+[smartsim]
+# number of seconds per job status update
+# for jobs on WLM system (e.g. slurm, pbs, etc)
+jm_interval = 15    # default
+log_level = "debug" # default
+
+[redis]
+# path to where "redis-server" and "redis-cli" binaries are located
+exe = "/path/to/redis/src/redis-server"
+config = "/path/to/redis.conf" # optional!
+cli = "/path/to/redis/src/redis-cli"
+
+  [redis.ai]
+  # path to the redisai "install_cpu" or "install_gpu" dir
+  device = "cpu" # cpu or gpu
+  install_path = "/path/to/RedisAI/install-cpu/"
+
+  [redis.ip]
+  # path to build dir for RedisIP
+  install_path = "/path/to/RedisIP/build/"
+
+[test]
+launcher = "local" # default
+"""
 
 
 # initialize config instance
