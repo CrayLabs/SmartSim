@@ -60,7 +60,7 @@ class UnmanagedStepInfo(StepInfo):
         return STATUS_FAILED
 
 
-class SlurmStepInfo(StepInfo):
+class SlurmStepInfo(StepInfo): # cov-slurm
 
     # see https://slurm.schedmd.com/squeue.html#lbAG
     mapping = {
@@ -104,7 +104,8 @@ class SlurmStepInfo(StepInfo):
         # we don't know what happened so return failed to be safe
         return STATUS_FAILED
 
-class PBSStepInfo(StepInfo):
+
+class PBSStepInfo(StepInfo): # cov-pbs
 
     # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
     mapping = {
@@ -144,8 +145,7 @@ class PBSStepInfo(StepInfo):
         return STATUS_FAILED
 
 
-
-class CobaltStepInfo(StepInfo):
+class CobaltStepInfo(StepInfo): # cov-cobalt
 
     mapping = {
         "running": STATUS_RUNNING,
