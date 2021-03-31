@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Retrieving smartredis library"
-git clone https://github.com/Spartee/smartredis.git smartredis
+echo "Retrieving SmartRedis library"
+git clone https://github.com/CrayLabs/SmartRedis.git smartredis
 cd smartredis
 git checkout develop
 
