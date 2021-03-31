@@ -1,2 +1,2 @@
 
-.. include:: ../../silc/doc/runtime.rst
+.. include:: ../silc/doc/runtime.rst
