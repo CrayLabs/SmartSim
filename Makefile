@@ -7,7 +7,10 @@ MAKEFLAGS += --no-print-directory
 # help: SmartSim Makefile help
 # help:
 
-# If COV_FILE is an empty string, no file will be used.
+# If COV_FILE is an empty string, no file will be used (the whole
+# source code will be considered reachable by coverage)
+# If COV_FILE is not defined, only local launcher code will be
+# checked for coverage
 ifndef COV_FILE
 export COV_FILE="${PWD}/tests/test_configs/cov/local_cov.cfg"
 endif
