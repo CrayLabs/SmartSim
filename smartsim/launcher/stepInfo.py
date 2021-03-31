@@ -26,6 +26,7 @@ class StepInfo:
         info_str += f" | Returncode {str(self.returncode)}"
         return info_str
 
+
 class UnmanagedStepInfo(StepInfo):
 
     # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
@@ -111,18 +112,16 @@ class PBSStepInfo(StepInfo): # cov-pbs
     mapping = {
         "R": STATUS_RUNNING,
         "B": STATUS_RUNNING,
-
         "H": STATUS_PAUSED,
-        "M": STATUS_PAUSED, # Actually means that it was moved to another server, TODO: understand what this implies
+        "M": STATUS_PAUSED,  # Actually means that it was moved to another server, TODO: understand what this implies
         "Q": STATUS_PAUSED,
         "S": STATUS_PAUSED,
-        "T": STATUS_PAUSED, # This means in transition, see above for comment
+        "T": STATUS_PAUSED,  # This means in transition, see above for comment
         "U": STATUS_PAUSED,
         "W": STATUS_PAUSED,
-
         "E": STATUS_COMPLETED,
         "F": STATUS_COMPLETED,
-        "X": STATUS_COMPLETED
+        "X": STATUS_COMPLETED,
     }
 
     def __init__(self, status="", returncode=None, output=None, error=None):
@@ -135,7 +134,9 @@ class PBSStepInfo(StepInfo): # cov-pbs
                 returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status)
-        super().__init__(smartsim_status, status, returncode, output=output, error=error)
+        super().__init__(
+            smartsim_status, status, returncode, output=output, error=error
+        )
 
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:
@@ -149,18 +150,15 @@ class CobaltStepInfo(StepInfo): # cov-cobalt
 
     mapping = {
         "running": STATUS_RUNNING,
-
         "queued": STATUS_PAUSED,
         "starting": STATUS_PAUSED,
         "dep_hold": STATUS_PAUSED,
         "user_hold": STATUS_PAUSED,
         "admin_hold": STATUS_PAUSED,
-
-        "dep_fail": STATUS_FAILED, # unsure of this one
-
+        "dep_fail": STATUS_FAILED,  # unsure of this one
         "terminating": STATUS_COMPLETED,
         "killing": STATUS_COMPLETED,
-        "exiting": STATUS_COMPLETED
+        "exiting": STATUS_COMPLETED,
     }
 
     def __init__(self, status="", returncode=None, output=None, error=None):
@@ -172,7 +170,9 @@ class CobaltStepInfo(StepInfo): # cov-cobalt
             returncode = 0
         else:
             smartsim_status = self._get_smartsim_status(status)
-        super().__init__(smartsim_status, status, returncode, output=output, error=error)
+        super().__init__(
+            smartsim_status, status, returncode, output=output, error=error
+        )
 
     def _get_smartsim_status(self, status):
         if status in SMARTSIM_STATUS:

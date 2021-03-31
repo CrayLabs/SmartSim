@@ -17,5 +17,15 @@ help:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	#(cd doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran)
+
+	# build the doxygen files for Clients
+	(cd ../silc/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran)
+
+	# Symlink SmartRedis examples
+	(cd ../; ln -s ./silc/examples ./examples)
+
+	# build docs
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+	# remove SmartRedis examples symlink
+	rm -rf ../examples

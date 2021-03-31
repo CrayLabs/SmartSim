@@ -21,7 +21,7 @@ copyright = '2020, Cray, a Hewlett Packard Enterprise company'
 author = 'HPE AI & Advanced Productivity'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0-alpha'
+release = '0.3.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -51,9 +51,9 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 breathe_projects = {
-        "c_client":"third-party/silc/doc/c_client/xml",
-        "fortran_client":"third-party/silc/doc/fortran_client/xml",
-        "cpp_client":"third-party/silc/doc/cpp_client/xml"
+        "c_client":"../silc/doc/c_client/xml",
+        "fortran_client":"../silc/doc/fortran_client/xml",
+        "cpp_client":"../silc/doc/cpp_client/xml"
         }
 
 # -- Options for HTML output -------------------------------------------------

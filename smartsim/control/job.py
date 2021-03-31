@@ -24,11 +24,11 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status = None # status before smartsim status mapping is applied
+        self.raw_status = None  # status before smartsim status mapping is applied
         self.returncode = None
-        self.output = None # only populated if it's system related (e.g. a command failed immediately)
-        self.error = None # same as output
-        self.hosts = []   # currently only used for DB jobs
+        self.output = None  # only populated if it's system related (e.g. a command failed immediately)
+        self.error = None  # same as output
+        self.hosts = []  # currently only used for DB jobs
         self.start_time = time.time()
         self.history = History()
 
@@ -82,7 +82,9 @@ class Job:
         """
         warning = f"{self.ename} failed. See below for details \n"
         if self.error:
-            warning += f"{self.entity.type} {self.ename} produced the following error \n"
+            warning += (
+                f"{self.entity.type} {self.ename} produced the following error \n"
+            )
             warning += f"Error: {self.error} \n"
         if self.output:
             warning += f"Output: {self.output} \n"
@@ -104,7 +106,6 @@ class Job:
         else:
             job = "{}: {}"
             return job.format(self.ename, self.status)
-
 
 
 class History:

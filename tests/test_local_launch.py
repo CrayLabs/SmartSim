@@ -1,8 +1,10 @@
 from smartsim import Experiment, constants
 from smartsim.settings import RunSettings
+
 """
 Test the launch of simple entity types with local launcher
 """
+
 
 def test_models(fileutils):
     exp_name = "test-models-local-launch"
@@ -34,5 +36,3 @@ def test_ensemble(fileutils):
     exp.start(ensemble, block=True, summary=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
-
-

@@ -1,5 +1,5 @@
-import shutil
 import pathlib
+import shutil
 from distutils import dir_util
 from os import mkdir, path, symlink
 
@@ -87,7 +87,9 @@ class Generator:
         """
 
         if path.isfile(self.gen_path):
-            raise FileExistsError(f"Experiment directory could not be created. {self.gen_path} exists")
+            raise FileExistsError(
+                f"Experiment directory could not be created. {self.gen_path} exists"
+            )
         if not path.isdir(self.gen_path):
             # keep exists ok for race conditions on NFS
             pathlib.Path(self.gen_path).mkdir(exist_ok=True)
@@ -188,7 +190,9 @@ class Generator:
 
             # write in changes to configurations
             if isinstance(entity, Model):
-                logger.debug(f"Configuring model {entity.name} with params {entity.params}")
+                logger.debug(
+                    f"Configuring model {entity.name} with params {entity.params}"
+                )
                 self._writer.configure_tagged_model_files(to_write, entity.params)
 
     def _copy_entity_files(self, entity):

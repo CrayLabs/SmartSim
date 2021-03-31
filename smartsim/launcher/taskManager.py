@@ -1,13 +1,14 @@
 import os
 import time
-import psutil
-from threading import RLock, Thread
 from subprocess import PIPE
+from threading import RLock, Thread
 
-from ..error import LauncherError
-from .util.shell import execute_async_cmd, execute_cmd
+import psutil
+
 from ..constants import TM_INTERVAL
+from ..error import LauncherError
 from ..utils import get_logger
+from .util.shell import execute_async_cmd, execute_cmd
 
 logger = get_logger(__name__)
 
@@ -16,7 +17,6 @@ try:
     verbose_tm = True if level == "developer" else False
 except KeyError:
     verbose_tm = False
-
 
 class TaskManager:
     """The Task Manager watches the subprocesses launched through
@@ -97,8 +97,7 @@ class TaskManager:
             self.tasks.append(task)
             self.task_history[task.pid] = (None, None, None)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
-            raise LauncherError(
-                f"Process provided {task_id} does not exist") from None
+            raise LauncherError(f"Process provided {task_id} does not exist") from None
         finally:
             self._lock.release()
 
@@ -169,7 +168,6 @@ class TaskManager:
 
 
 class Task:
-
     def __init__(self, process):
         """Initialize a task
 
@@ -214,25 +212,22 @@ class Task:
             logger.debug(f"Process terminated with kill {proc.pid}")
 
         children = self.process.children(recursive=True)
-        children.append(self.process) # add parent process to be killed
+        children.append(self.process)  # add parent process to be killed
 
         for child in children:
             child.kill()
 
-        _, alive = psutil.wait_procs(children,
-                                    timeout=timeout,
-                                    callback=kill_callback)
+        _, alive = psutil.wait_procs(children, timeout=timeout, callback=kill_callback)
         if alive:
             for proc in alive:
                 logger.warning(f"Unable to kill emitted process {proc.pid}")
 
     def terminate(self, timeout=10):
-
         def terminate_callback(proc):
             logger.debug(f"Cleanly terminated task {proc.pid}")
 
         children = self.process.children(recursive=True)
-        children.append(self.process) # add parent process to be killed
+        children.append(self.process)  # add parent process to be killed
 
         # try SIGTERM first for clean exit
         for child in children:
@@ -240,14 +235,13 @@ class Task:
             child.terminate()
 
         # wait for termination
-        _, alive = psutil.wait_procs(children,
-                                    timeout=timeout,
-                                    callback=terminate_callback)
+        _, alive = psutil.wait_procs(
+            children, timeout=timeout, callback=terminate_callback
+        )
 
         if alive:
             logger.debug(f"SIGTERM failed, using SIGKILL")
             self.process.kill()
-
 
     def wait(self):
         self.process.wait()

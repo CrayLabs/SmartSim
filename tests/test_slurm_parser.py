@@ -127,6 +127,7 @@ def test_parse_sstat_nodes_3():
     parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.2")
     assert nodes == parsed_nodes
 
+
 def test_parse_sstat_nodes_4():
     """Parse nodes from sstat called with args -i -a -p -n
 

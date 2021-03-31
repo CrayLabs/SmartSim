@@ -1,25 +1,27 @@
-from ..settings import SrunSettings, SbatchSettings, MpirunSettings
-from .orchestrator import Orchestrator
-from ..error import SmartSimError, SSUnsupportedError
 from ..entity import DBNode
-
+from ..error import SmartSimError, SSUnsupportedError
+from ..settings import MpirunSettings, SbatchSettings, SrunSettings
 from ..utils import get_logger
+from .orchestrator import Orchestrator
+from ..config import CONFIG
+
 logger = get_logger(__name__)
 
 
 class SlurmOrchestrator(Orchestrator):
-
-    def __init__(self,
-                 port=6379,
-                 db_nodes=1,
-                 batch=True,
-                 hosts=None,
-                 run_command="srun",
-                 account=None,
-                 time=None,
-                 alloc=None,
-                 dpn=1,
-                 **kwargs):
+    def __init__(
+        self,
+        port=6379,
+        db_nodes=1,
+        batch=True,
+        hosts=None,
+        run_command="srun",
+        account=None,
+        time=None,
+        alloc=None,
+        dpn=1,
+        **kwargs,
+    ):
 
         """Initialize an Orchestrator reference for Slurm based systems
 
@@ -47,21 +49,24 @@ class SlurmOrchestrator(Orchestrator):
         :type dpn: int, optional
         #TODO fill this out
         """
-        super().__init__(port,
-                         db_nodes=db_nodes,
-                         batch=batch,
-                         run_command=run_command,
-                         alloc=alloc,
-                         dpn=dpn,
-                         **kwargs)
-        self.batch_settings = self._build_batch_settings(db_nodes,
-                                                         alloc, batch,
-                                                         account, time, **kwargs)
+        super().__init__(
+            port,
+            db_nodes=db_nodes,
+            batch=batch,
+            run_command=run_command,
+            alloc=alloc,
+            dpn=dpn,
+            **kwargs,
+        )
+        self.batch_settings = self._build_batch_settings(
+            db_nodes, alloc, batch, account, time, **kwargs
+        )
         if hosts:
             self.set_hosts(hosts)
         elif not hosts and run_command == "mpirun":
             raise SmartSimError(
-                "hosts argument is required when launching SlurmOrchestrator with mpirun")
+                "hosts argument is required when launching SlurmOrchestrator with mpirun"
+            )
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -128,10 +133,9 @@ class SlurmOrchestrator(Orchestrator):
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
             batch_args = {"ntasks-per-node": dpn}
-            batch_settings = SbatchSettings(nodes=db_nodes,
-                                            time=time,
-                                            account=account,
-                                            batch_args=batch_args)
+            batch_settings = SbatchSettings(
+                nodes=db_nodes, time=time, account=account, batch_args=batch_args
+            )
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
@@ -141,7 +145,8 @@ class SlurmOrchestrator(Orchestrator):
         if run_command == "mpirun":
             return self._build_mpirun_settings(exe, exe_args, **kwargs)
         raise SSUnsupportedError(
-            f"SlurmOrchestrator does not support {run_command} as a launch binary")
+            f"SlurmOrchestrator does not support {run_command} as a launch binary"
+        )
 
     def _build_srun_settings(self, exe, exe_args, **kwargs):
         alloc = kwargs.get("alloc", None)
@@ -163,7 +168,9 @@ class SlurmOrchestrator(Orchestrator):
         alloc = kwargs.get("alloc", None)
         dpn = kwargs.get("dpn", 1)
         if alloc:
-            msg = "SlurmOrchestrator using OpenMPI cannot specify allocation to launch in"
+            msg = (
+                "SlurmOrchestrator using OpenMPI cannot specify allocation to launch in"
+            )
             msg += "\n User must launch in interactive allocation or as batch."
             logger.warning(msg)
         if dpn > 1:
@@ -175,10 +182,8 @@ class SlurmOrchestrator(Orchestrator):
         run_settings.set_tasks(1)
         return run_settings
 
-
     def _initialize_entities(self, **kwargs):
-        """Initialize DBNode instances for the orchestrator.
-        """
+        """Initialize DBNode instances for the orchestrator."""
         db_nodes = kwargs.get("db_nodes", 1)
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
@@ -187,10 +192,10 @@ class SlurmOrchestrator(Orchestrator):
         dpn = kwargs.get("dpn", 1)
         port = kwargs.get("port", 6379)
 
-        db_conf = self._get_db_config_path()
+        db_conf = CONFIG.redis_conf
+        exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
-        exe = self._find_db_exe()
 
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
@@ -200,7 +205,13 @@ class SlurmOrchestrator(Orchestrator):
             exe_args = []
             for port_offset in range(dpn):
                 next_port = int(port) + port_offset
-                node_exe_args = [db_conf, ai_module, ip_module, "--port", str(next_port)]
+                node_exe_args = [
+                    db_conf,
+                    ai_module,
+                    ip_module,
+                    "--port",
+                    str(next_port),
+                ]
                 if cluster:
                     node_exe_args += self._get_cluster_args(db_node_name, next_port)
                 exe_args.append(node_exe_args)

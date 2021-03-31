@@ -8,6 +8,7 @@ from smartsim.settings import RunSettings
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
+
 def test_write_easy_configs(fileutils):
 
     test_dir = fileutils.make_test_dir("easy_modelwriter_test")

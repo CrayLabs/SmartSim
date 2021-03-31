@@ -1,6 +1,8 @@
-import time
-import numpy as np
 import os.path as osp
+import time
+
+import numpy as np
+
 
 class Step:
     def __init__(self, name, cwd):

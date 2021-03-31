@@ -3,6 +3,7 @@ import shutil
 import pytest
 from smartsim.settings import SrunSettings, AprunSettings
 from smartsim.settings import RunSettings
+from smartsim.config import CONFIG
 
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
@@ -11,18 +12,8 @@ test_launcher = "local"
 
 def get_launcher():
     global test_launcher
-    if "SMARTSIM_TEST_LAUNCHER" in os.environ:
-        launcher = os.environ["SMARTSIM_TEST_LAUNCHER"]
-        if launcher == "slurm":
-            test_launcher = "slurm"
-        elif launcher == "pbs":
-            test_launcher = "pbs"
-        elif launcher == "cobalt":
-            test_launcher = "cobalt"
-        else:
-            test_launcher = "local"
+    test_launcher = CONFIG.test_launcher
     return test_launcher
-
 
 def print_test_configuration():
     global test_path

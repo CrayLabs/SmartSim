@@ -2,13 +2,6 @@
 Install SmartSim
 ****************
 
-From Source
-===========
-
-If your system does not include SmartSim
-as a module, the instructions in this section
-can be used to build and install SmartSim from source.
-
 Prerequisites
 -------------
 The prerequisites to begin building SmartSim are:
@@ -18,10 +11,29 @@ The prerequisites to begin building SmartSim are:
 - C++ compiler
 - CMake 3.10.x (or later)
 - GCC > 5
+- GNU Make > 4.0
+- autoconf
+- automake
+- libtool
 
-Windows is not supported and there are currently no plans to support windows.
+Optional for building documentation:
 
-Python libraries
+- Doxygen
+- breathe 4.27.0
+
+
+Installing From Source
+======================
+
+If your system does not include SmartSim
+as a module, the instructions in this section
+can be used to build and install SmartSim from source.
+
+Note: Windows is not supported and there are currently
+no plans to support windows.
+
+
+Requirements
 ----------------
 
 Most SmartSim library requirements can be installed via Python's
@@ -32,12 +44,60 @@ top level directory of SmartSim.
 
   conda activate env # optionally activate virtual env (recommended)
   pip install -r requirements.txt
-  pip install -r requirements-dex.txt (optionally download all dev requirements)
+  pip install -r requirements-dev.txt (optionally download all dev requirements)
 
 If users wish to install these requirements manually, the packages
 installed by the previous *pip* command are shown below.  Care
 should be taken to match package version numbers to avoid build
 and runtime errors.
+
+
+Local Build (Quick Start)
+-------------------------
+.. code-block:: bash
+
+  #clone repository
+  git clone https://github.com/CrayLabs/SmartSim.git
+  #navigate to top-level directory
+  cd SmartSim
+  #make dependencies for SmartSim
+  make deps          # default
+
+  #after dependancies complete successfully, build clients
+  make silc
+
+Lastly, after SILC is installed, make sure to reset SmartSim
+so that it is aware that the clients have been installed.
+Perform this step from the top level of the SmartSim
+directory.
+
+.. code-block:: bash
+
+  # in the terminal you are working in
+  source setup_env.sh
+
+In addition to installing packages, ``setup_env.sh`` sets
+system environment variables that are used by SmartSim
+to run experiments and can be used by the user to
+locate files needed to  build SmartSim clients into their
+applications.
+
+
+Documentation
+-------------
+
+Users can optionally build documentation of SmartSim
+
+.. code-block:: bash
+
+  # in the terminal you are working in
+  make docs
+
+Once the documentation has successfully built, users can open the
+main documents page from ``doc/_build/html/index.html``
+
+
+
 
 
 GPU Dependencies
@@ -117,106 +177,3 @@ variables are properly set.
   source setup_env.sh
 
 
-Building SILC from Source
-=========================
-
-Building the client libraries (SILC) is straightforward from
-an existing SmartSim installation. Follow these steps
-from the top level of the SmartSim directory
-
-.. code-block:: bash
-
-  # get the source code
-  git clone #link to SILC repo#	silc
-  git checkout develop # or a release branch
-
-  # build the dependencies
-  cd silc
-  make deps
-
-  # build the python client (still in top level of silc directory)
-  make pyclient
-
-Lastly, after SILC is installed, make sure to reset SmartSim
-so that it is aware that the clients have been installed.
-Perform this step from the top level of the SmartSim
-directory.
-
-.. code-block:: bash
-
-  # in the terminal you are working in
-  source setup_env.sh
-
-
-Suggested Environments for Cray Systems
-=======================================
-
-SmartSim has been built and tested on a number of
-Cray XC and CS systems.  To help users build from source
-on the systems that have been tested, in this section
-the terminal commands to load a working environment
-will be given.
-
-Osprey (Cray CS)
-----------------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/1.0.6
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load cmake/3.10.2
-		module load gcc/8.1.0
-		module load cudatoolkit/10.1
-
-Loon (Cray CS)
---------------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/1.0.6
-		module unload cray-libsci/17.12.1
-		module load cmake/3.10.2
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load gcc/8.1.0
-
-Raptor (Cray CS)
-----------------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/1.0.6
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load cmake/3.10.3
-		module load gcc/8.1.0
-
-Tiger (Cray XC)
----------------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/6.0.7
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load gcc/8.1.0
-
-Jupiter (Cray XC)
------------------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/6.0.7
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load gcc/8.1.0
-
-Heron
------
-
-.. code-block:: console
-
-		module load PrgEnv-cray/6.0.7
-		export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
-		module load gcc/8.1.0
-
-Cicero (Cray XC)
-----------------
-
-*Default system configurations and modules are sufficient on Cicero.*

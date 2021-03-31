@@ -1,5 +1,3 @@
-
-
 class ComputeNode:
     """The ComputeNode class holds resource information
     about a physical compute node

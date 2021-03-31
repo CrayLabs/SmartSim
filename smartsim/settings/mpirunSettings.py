@@ -1,5 +1,6 @@
 from .settings import RunSettings
 
+
 class MpirunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
         """Settings to run job with ``mpirun`` command (OpenMPI)
@@ -21,7 +22,9 @@ class MpirunSettings(RunSettings):
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
-        super().__init__(exe, exe_args, run_command="mpirun", run_args=run_args, env_vars=env_vars)
+        super().__init__(
+            exe, exe_args, run_command="mpirun", run_args=run_args, env_vars=env_vars
+        )
         self.mpmd = []
 
     def make_mpmd(self, mpirun_settings):
@@ -125,4 +128,3 @@ class MpirunSettings(RunSettings):
                 else:
                     formatted += ["-x", name]
         return formatted
-

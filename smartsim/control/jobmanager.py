@@ -1,18 +1,18 @@
-import time
 import itertools
+import time
 from threading import Thread
 
-from .job import Job
+from ..config import CONFIG
+from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES
+from ..database import Orchestrator
+from ..database.orchestrator import get_ip_from_host
 from ..entity import DBNode
 from ..error import SmartSimError
-from ..database import Orchestrator
-from ..launcher import SlurmLauncher, PBSLauncher, CobaltLauncher
-from ..database.orchestrator import get_ip_from_host
-from ..constants import LOCAL_JM_INTERVAL, TERMINAL_STATUSES, WLM_JM_INTERVAL
-
+from ..launcher import LocalLauncher
 from ..utils import get_logger
-logger = get_logger(__name__)
+from .job import Job
 
+logger = get_logger(__name__)
 
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
@@ -41,8 +41,8 @@ class JobManager:
         self.completed = {}
 
         self.actively_monitoring = False  # on/off flag
-        self._launcher = launcher         # reference to launcher
-        self._lock = lock                 # thread lock
+        self._launcher = launcher  # reference to launcher
+        self._lock = lock  # thread lock
 
     def start(self):
         """Start a thread for the job manager"""
@@ -68,7 +68,7 @@ class JobManager:
         while self.actively_monitoring:
 
             self._thread_sleep()
-            self.check_jobs() # update all job statuses at once
+            self.check_jobs()  # update all job statuses at once
             for _, job in self().items():
 
                 # if the job has errors then output the report
@@ -291,18 +291,15 @@ class JobManager:
         finally:
             self._lock.release()
 
-
     def _thread_sleep(self):
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
-        if isinstance(self._launcher, (SlurmLauncher, PBSLauncher, CobaltLauncher)):
-            time.sleep(WLM_JM_INTERVAL)
-        else:
+        if isinstance(self._launcher, (LocalLauncher)):
             time.sleep(LOCAL_JM_INTERVAL)
+        else:
+            time.sleep(CONFIG.jm_interval)
 
     def __len__(self):
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
-
-

@@ -1,7 +1,7 @@
+import os.path as osp
 import pickle
 import time
 from os import getcwd
-import os.path as osp
 from pprint import pformat
 
 import pandas as pd
@@ -12,10 +12,10 @@ from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
 from .generation import Generator
 from .launcher import LocalLauncher
+from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
 
-from .utils import get_logger
 logger = get_logger(__name__)
 
 
@@ -45,8 +45,7 @@ class Experiment:
             if not osp.isdir(osp.abspath(exp_path)):
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
-        self.exp_path = init_default(osp.join(getcwd(), name),
-                                     exp_path, str)
+        self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
         self._control = Controller(launcher=launcher)
 
     def start(self, *args, block=True, summary=False):
@@ -182,15 +181,16 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_ensemble(self,
-                        name,
-                        params=None,
-                        batch_settings=None,
-                        run_settings=None,
-                        replicas=None,
-                        perm_strategy="all_perm",
-                        **kwargs
-        ):
+    def create_ensemble(
+        self,
+        name,
+        params=None,
+        batch_settings=None,
+        run_settings=None,
+        replicas=None,
+        perm_strategy="all_perm",
+        **kwargs,
+    ):
         """Create an ensemble of models
 
         if given batch settings, an empty ensemble
@@ -266,8 +266,7 @@ class Experiment:
             raise
 
     def reconnect_orchestrator(self, checkpoint):
-        """Reconnect to running orchestator
-        """
+        """Reconnect to running orchestator"""
         try:
             orc = self._control.reload_saved_db(checkpoint)
             return orc

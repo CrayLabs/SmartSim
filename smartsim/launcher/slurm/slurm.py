@@ -1,11 +1,13 @@
 from shutil import which
+
 from ...error import LauncherError
 from ...utils import get_logger
 from ...utils.helpers import init_default
+from ..util.launcherUtil import ComputeNode, Partition
 from .slurmCommands import salloc, scancel, sinfo
 from .slurmLauncher import SlurmLauncher
 from .slurmParser import parse_salloc, parse_salloc_error
-from ..util.launcherUtil import ComputeNode, Partition
+
 logger = get_logger(__name__)
 
 
@@ -39,7 +41,8 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
     """
     if not which("salloc"):
         raise LauncherError(
-            "Attempted slurm function without access to slurm(salloc) at the call site")
+            "Attempted slurm function without access to slurm(salloc) at the call site"
+        )
 
     options = init_default({}, options, dict)
 
@@ -70,7 +73,8 @@ def release_allocation(alloc_id):
     """
     if not which("scancel"):
         raise LauncherError(
-            "Attempted slurm function without access to slurm(salloc) at the call site")
+            "Attempted slurm function without access to slurm(salloc) at the call site"
+        )
 
     logger.info(f"Releasing allocation: {alloc_id}")
     returncode, _, _ = scancel([str(alloc_id)])
@@ -80,7 +84,9 @@ def release_allocation(alloc_id):
         logger.error(
             "The job may have already timed out, or you may need to cancel the job manually"
         )
-        raise LauncherError(f"Unable to revoke your allocation for jobid  {str(alloc_id)}")
+        raise LauncherError(
+            f"Unable to revoke your allocation for jobid  {str(alloc_id)}"
+        )
 
     logger.info(f"Successfully freed allocation {alloc_id}")
 
@@ -110,7 +116,8 @@ def validate(nodes=1, ppn=1, partition=None):
             p_name = get_default_partition()
         except LauncherError as e:
             raise LauncherError(
-        "No partition provided and default partition could not be found") from e
+                "No partition provided and default partition could not be found"
+            ) from e
 
     if not p_name in sys_partitions:
         raise LauncherError(f"Partition {p_name} is not found on this system")

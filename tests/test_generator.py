@@ -1,11 +1,12 @@
-import pytest
-import numpy as np
 from os import path as osp
 
+import numpy as np
+import pytest
+
 from smartsim import Experiment
+from smartsim.database import Orchestrator
 from smartsim.generation import Generator
 from smartsim.settings import RunSettings
-from smartsim.database import Orchestrator
 
 rs = RunSettings("python", exe_args="sleep.py")
 
@@ -19,6 +20,7 @@ TODO
  - test re-generation
 
 """
+
 
 def test_ensemble(fileutils):
     exp = Experiment("gen-test", launcher="local")
@@ -36,6 +38,7 @@ def test_ensemble(fileutils):
     assert osp.isdir(osp.join(test_dir, "test"))
     for i in range(9):
         assert osp.isdir(osp.join(test_dir, "test/test_" + str(i)))
+
 
 def test_ensemble_overwrite(fileutils):
     exp = Experiment("gen-test-overwrite", launcher="local")
@@ -78,6 +81,7 @@ def test_ensemble_overwrite_error(fileutils):
     with pytest.raises(FileExistsError):
         gen.generate_experiment(ensemble)
 
+
 def test_full_exp(fileutils):
 
     test_dir = fileutils.make_test_dir("gen_full_test")
@@ -89,9 +93,7 @@ def test_full_exp(fileutils):
 
     orc = Orchestrator(6780)
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble(
-        "test_ens", params=params, run_settings=rs
-    )
+    ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
 
     config = fileutils.get_test_conf_path("in.atm")
     ensemble.attach_generator_files(to_configure=config)
@@ -109,6 +111,7 @@ def test_full_exp(fileutils):
     assert osp.isdir(osp.join(test_dir, "model"))
     assert osp.isfile(osp.join(test_dir, "model/sleep.py"))
 
+
 def test_dir_files(fileutils):
     """test the generate of models with files that
     are directories with subdirectories and files
@@ -118,9 +121,7 @@ def test_dir_files(fileutils):
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
-    ensemble = exp.create_ensemble(
-        "dir_test", params=params, run_settings=rs
-    )
+    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
     conf_dir = fileutils.get_test_dir_path("test_dir")
     ensemble.attach_generator_files(to_copy=conf_dir)
 
@@ -132,4 +133,3 @@ def test_dir_files(fileutils):
         assert osp.isdir(model_path)
         assert osp.isdir(osp.join(model_path, "test_dir_1"))
         assert osp.isfile(osp.join(model_path, "test.py"))
-

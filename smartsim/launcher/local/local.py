@@ -1,11 +1,10 @@
-
-from ...utils import get_logger
-from ..stepInfo import UnmanagedStepInfo
-from ..taskManager import TaskManager
-from ..step import LocalStep
-from ...settings import RunSettings
 from ...error import LauncherError
+from ...settings import RunSettings
+from ...utils import get_logger
+from ..step import LocalStep
+from ..stepInfo import UnmanagedStepInfo
 from ..stepMapping import StepMapping
+from ..taskManager import TaskManager
 
 logger = get_logger(__name__)
 
@@ -15,7 +14,7 @@ class LocalLauncher:
 
     def __init__(self):
         self.task_manager = TaskManager()
-        self.step_mapping = StepMapping() # only used for consistency
+        self.step_mapping = StepMapping()  # only used for consistency
 
     def create_step(self, name, cwd, step_settings):
         """Create a job step to launch an entity locally
@@ -24,7 +23,8 @@ class LocalLauncher:
         """
         if not isinstance(step_settings, RunSettings):
             raise TypeError(
-                f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}")
+                f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
+            )
         step = LocalStep(name, cwd, step_settings)
         return step
 
@@ -52,7 +52,7 @@ class LocalLauncher:
         TODO: Use socket to find the actual Lo address?
         :return: a list containing the local host address
         """
-        return [["127.0.0.1"]*len(step_names)]
+        return [["127.0.0.1"] * len(step_names)]
 
     def run(self, step):
         """Run a local step created by this launcher. Utilize the shell

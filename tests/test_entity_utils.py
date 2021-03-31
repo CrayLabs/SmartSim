@@ -3,10 +3,10 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
-from smartsim.error import SmartSimError
-from smartsim.utils.entityutils import separate_entities
 from smartsim.database import Orchestrator
+from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
+from smartsim.utils.entityutils import separate_entities
 
 # ---- create entities for testing --------
 

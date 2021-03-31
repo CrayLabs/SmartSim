@@ -1,5 +1,6 @@
 import os
-from .settings import RunSettings, BatchSettings
+
+from .settings import BatchSettings, RunSettings
 
 
 class SrunSettings(RunSettings):
@@ -17,7 +18,9 @@ class SrunSettings(RunSettings):
         :param alloc: allocation ID if running on existing alloc, defaults to None
         :type alloc: str, optional
         """
-        super().__init__(exe, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars)
+        super().__init__(
+            exe, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars
+        )
         self.alloc = alloc
         self.mpmd = False
 
@@ -100,8 +103,9 @@ class SrunSettings(RunSettings):
         :returns: the formatted string of environment variables
         :rtype: str
         """
-        #TODO make these overridable by user
+        # TODO make these overridable by user
         presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
+
         def add_env_var(var, format_str):
             try:
                 value = os.environ[var]
@@ -109,6 +113,7 @@ class SrunSettings(RunSettings):
                 return format_str
             except KeyError:
                 return format_str
+
         format_str = ""
 
         # add env var presets due to slurm weirdness
@@ -119,7 +124,6 @@ class SrunSettings(RunSettings):
         for k, v in self.env_vars.items():
             format_str += "=".join((k, str(v))) + ","
         return format_str.rstrip(",")
-
 
 
 class SbatchSettings(BatchSettings):
@@ -160,7 +164,7 @@ class SbatchSettings(BatchSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        #TODO check for errors here
+        # TODO check for errors here
         self.batch_args["time"] = walltime
 
     def set_nodes(self, num_nodes):

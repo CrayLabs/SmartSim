@@ -1,5 +1,4 @@
-
-class EntityList():
+class EntityList:
     """Abstract class for containers for SmartSimEntities"""
 
     def __init__(self, name, path, **kwargs):
@@ -11,7 +10,6 @@ class EntityList():
     def _initialize_entities(self, **kwargs):
         """Initialize the SmartSimEntity objects in the container"""
         raise NotImplementedError
-
 
     @property
     def batch(self):
@@ -26,8 +24,7 @@ class EntityList():
 
     @property
     def type(self):
-        """Return the name of the class
-        """
+        """Return the name of the class"""
         return type(self).__name__
 
     def set_path(self, new_path):

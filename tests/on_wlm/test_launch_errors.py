@@ -1,9 +1,9 @@
-
 import time
+
 import pytest
 
 from smartsim import Experiment, constants
-from smartsim.error import SmartSimError, LauncherError
+from smartsim.error import LauncherError, SmartSimError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -20,15 +20,14 @@ def test_failed_status(fileutils, wlmutils):
     script = fileutils.get_test_conf_path("bad.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=7")
 
-    model = exp.create_model(
-        "bad-model", path=test_dir, run_settings=settings
-    )
+    model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
 
     exp.start(model, block=False)
     while not exp.finished(model):
         time.sleep(2)
     status = exp.get_status(model)
     assert status[0] == constants.STATUS_FAILED
+
 
 def test_bad_run_command_args(fileutils, wlmutils):
     """Should fail because of incorrect arguments given to the
@@ -48,13 +47,11 @@ def test_bad_run_command_args(fileutils, wlmutils):
 
     # this argument will get turned into an argument for the run command
     # of the specific WLM of the system.
-    settings = wlmutils.get_run_settings("python",
-                                         f"{script} --time=5",
-                                         badarg="bad-arg")
-
-    model = exp.create_model(
-        "bad-model", path=test_dir, run_settings=settings
+    settings = wlmutils.get_run_settings(
+        "python", f"{script} --time=5", badarg="bad-arg"
     )
+
+    model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
 
     with pytest.raises(SmartSimError):
         exp.start(model)
