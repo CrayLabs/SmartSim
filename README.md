@@ -62,7 +62,7 @@ The following third-party (non-Python) libraries are used in the SmartSim IL.
 
 ## SmartRedis
 
-The SmartSim IL Clients ([SmartRedis](https://github.com/CrayLabs/SmartRedis)
+The SmartSim IL Clients ([SmartRedis](https://github.com/CrayLabs/SmartRedis))
 are implementations of Redis clients that implement the RedisAI
 API with additions specific to scientific workflows.
 
