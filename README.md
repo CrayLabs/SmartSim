@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large_Inv.png" width="90%"><img>
+  <img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large.png" width="90%"><img>
 </div>
 
 
@@ -40,34 +40,49 @@ At this time, PyTorch is the most tested within SmartSim and we recommend
 users use PyTorch at this time if possible.
 
 
-
 SmartSim is made up of two parts
-  1. SmartSim Infrastructure Library
-  2. SmartSim Infrastructure Library Clients (smartredis)
+  1. SmartSim Infrastructure Library (This repository)
+  2. [SmartRedis](https://github.com/CrayLabs/SmartRedis)
 
 ## SmartSim Infrastructure Library
 
 The Infrastructure Library (IL) helps users get the Orchestrator running
 on HPC systems. In addition, the IL provides mechanisms for creating, configuring,
-executing and monitoring simulations. Users can launch everything needed
-to run converged ML and simulation worklaods right from a jupyter
+executing and monitoring HPC workloads. Users can launch everything needed
+to run converged ML and simulation workloads right from a jupyter
 notebook using the IL Python interface.
 
-## smartredis
+### Dependencies
 
-The SmartSim Infrastructure Library Clients are implementations of Redis
-clients that implement the RedisAI API with a few additions specific to
-HPC simulations.
+The following third-party (non-Python) libraries are used in the SmartSim IL.
 
-smartredis clients are available in Fortran, C, C++, and Python. Users can seemlessly
+ - [Redis](https://github.com/redis/redis) 6.0.8
+ - [RedisAI](https://github.com/RedisAI/RedisAI) 1.2
+ - [RedisIP](https://github.com/Spartee/RedisIP) 0.1.0
+
+## SmartRedis
+
+The SmartSim IL Clients ([SmartRedis](https://github.com/CrayLabs/SmartRedis)
+are implementations of Redis clients that implement the RedisAI
+API with additions specific to scientific workflows.
+
+SmartRedis clients are available in Fortran, C, C++, and Python. Users can seemlessly
 pull and push data from the Orchestrator from different langauges.
 
 | Language 	| Version/Standard 	|
 |----------	|:----------------:	|
-| Python   	|    3.7 - 3.8.5   	|
+| Python   	|        3.7+      	|
 | Fortran  	|       2003       	|
 | C        	|        C99       	|
 | C++      	|       C++11      	|
 
-The smartredis clients are cluster compatible and work with the OSS Redis/RedisAI stack.
+SmartRedis clients are cluster compatible and work with the OSS Redis/RedisAI stack.
 
+### Dependencies
+
+SmartRedis utilizes the following libraries.
+
+ - [NumPy](https://github.com/numpy/numpy)
+ - [Hiredis](https://github.com/redis/hiredis) 1.0.0
+ - [Redis-plus-plus](https://github.com/sewenew/redis-plus-plus)  1.2.3
+ - [protobuf](https://github.com/protocolbuffers/protobuf)  v3.11.3
