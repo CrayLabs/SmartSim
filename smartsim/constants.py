@@ -1,10 +1,10 @@
 # Constants for SmartSim
 
 # Interval for Job Manager
-LOCAL_JM_INTERVAL = 3
+LOCAL_JM_INTERVAL = 2
 
 # Task Manager Interval
-TM_INTERVAL = 2
+TM_INTERVAL = 1
 
 # Statuses that are applied to jobs
 STATUS_RUNNING = "Running"

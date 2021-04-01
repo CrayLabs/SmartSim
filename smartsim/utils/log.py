@@ -3,9 +3,8 @@ import sys
 
 import coloredlogs
 
-from ..error import SSConfigError
 from ..config import CONFIG
-
+from ..error import SSConfigError
 
 # constants for logging
 coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"

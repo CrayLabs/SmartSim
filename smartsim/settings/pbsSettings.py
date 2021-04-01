@@ -17,19 +17,27 @@ class QsubBatchSettings(BatchSettings):
         batch_args=None,
         **kwargs,
     ):
-        """Create a Qsub batch setting for an entity
+        """Specify ``qsub`` batch parameters for a job
 
-        :param nodes: number of nodes for batch, defaults to None
+        ``nodes``, and ``ncpus`` are used to create the
+        select statement for PBS if a select statement is not
+        included in the ``resources``. If both are supplied
+        the value for select statement supplied in ``resources``
+        will override.
+
+        :param nodes: number of nodes for batch
         :type nodes: int, optional
-        :param ncpus: number of cpus per node, defaults to None
+        :param ncpus: number of cpus per node
         :type ncpus: int, optional
-        :param time: walltime, defaults to None
+        :param time: walltime for batch job
         :type time: str, optional
-        :param account: account for batch launch, defaults to None
+        :param queue: queue to run batch in
+        :type queue: str
+        :param account: account for batch launch
         :type account: str, optional
-        :param resources: overrides for resource arguments, defaults to None
+        :param resources: overrides for resource arguments
         :type resources: dict[str, str], optional
-        :param batch_args: overrides for PBS batch arguments, defaults to None
+        :param batch_args: overrides for PBS batch arguments
         :type batch_args: dict[str, str], optional
         """
         super().__init__("qsub", batch_args=batch_args)
@@ -46,7 +54,7 @@ class QsubBatchSettings(BatchSettings):
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
 
-        If a select argument is provided in QsubBatchSEttings.resources
+        If a select argument is provided in ``QsubBatchSettings.resources``
         this value will be overridden
 
         :param num_nodes: number of nodes
@@ -55,6 +63,12 @@ class QsubBatchSettings(BatchSettings):
         self._nodes = int(num_nodes)
 
     def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
@@ -68,7 +82,8 @@ class QsubBatchSettings(BatchSettings):
 
         format = "HH:MM:SS"
 
-        If a walltime argument is provided in QsubBatchSEttings.resources
+        If a walltime argument is provided in
+        ``QsubBatchSettings.resources``, then
         this value will be overridden
 
         :param walltime: wall time
@@ -87,7 +102,8 @@ class QsubBatchSettings(BatchSettings):
     def set_ncpus(self, num_cpus):
         """Set the number of cpus obtained in each node.
 
-        If a select argument is provided in QsubBatchSettings.resources
+        If a select argument is provided in
+        ``QsubBatchSettings.resources`` then,
         this value will be overridden
 
         :param num_cpus: number of cpus per node in select

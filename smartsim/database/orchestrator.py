@@ -9,7 +9,6 @@ from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError
 
 from ..config import CONFIG
-
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError
 from ..launcher.util.shell import execute_cmd
@@ -77,7 +76,8 @@ class Orchestrator(EntityList):
         """Connect launched cluster instances.
 
         Should only be used in the case where cluster initilization
-        needs to occur manually.
+        needs to occur manually which is not often.
+
         :raises SmartSimError: if cluster creation fails
         """
         # TODO check for cluster already being created.

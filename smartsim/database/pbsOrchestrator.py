@@ -1,8 +1,9 @@
+from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from .orchestrator import Orchestrator
-from ..config import CONFIG
+
 
 class PBSOrchestrator(Orchestrator):
     def __init__(
@@ -19,19 +20,31 @@ class PBSOrchestrator(Orchestrator):
     ):
         """Initialize an Orchestrator reference for PBSPro based systems
 
-        The orchestrator launches as a batch by default. If batch=False,
-        at launch, the orchestrator will look for an interactive
+        The ``PBSOrchestrator`` launches as a batch by default. If batch=False,
+        at launch, the ``PBSOrchestrator`` will look for an interactive
         allocation to launch on.
 
         The PBS orchestrator does not support multiple databases per node.
 
+        If ``mpirun`` is specifed as the ``run_command``, then the ``hosts``
+        argument is required.
+
         :param port: TCP/IP port
         :type port: int
-        :param db_nodes: number of database shards, defaults to 1
+        :param db_nodes: number of compute nodes to span accross, defaults to 1
         :type db_nodes: int, optional
-        :param batch: Run as a batch workload, defaults to True
+        :param batch: run as a batch workload
         :type batch: bool, optional
-        #TODO update this
+        :param hosts: specify hosts to launch on
+        :type hosts: list[str]
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
+        :type run_command: str
+        :param account: account to run batch on
+        :type account: str
+        :param time: walltime for batch 'HH:MM:SS' format
+        :type time: str
+        :param queue: queue to launch batch in
+        :type queue: str
         """
         super().__init__(
             port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
@@ -75,6 +88,12 @@ class PBSOrchestrator(Orchestrator):
         self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list):
+        """Specify the hosts for the ``PBSOrchestrator`` to launch on
+
+        :param host_list: list of hosts (compute node names)
+        :type host_list: list[str]
+        :raises TypeError: if wrong type
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
@@ -95,7 +114,7 @@ class PBSOrchestrator(Orchestrator):
                 db.run_settings.set_hostlist([host])
 
     def set_batch_arg(self, arg, value):
-        """Set a Qsub argument the orchestrator should launch with
+        """Set a ``qsub`` argument the ``PBSOrchestrator`` should launch with
 
         Some commonly used arguments such as -e are used
         by SmartSim and will not be allowed to be set.

@@ -7,6 +7,8 @@ SmartSim API
 Experiment
 ==========
 
+.. _experiment_api:
+
 .. currentmodule:: smartsim.experiment
 
 .. autosummary::
@@ -57,11 +59,14 @@ Types of Settings:
 Local
 -----
 
+.. _rs-api:
+
 When running SmartSim on laptops and single node workstations,
 the base ``RunSettings`` object is used to parameterize jobs.
 ``RunSettings`` include a ``run_command`` parameter for local
 launches that utilize a parallel launch binary like
 ``mpirun``, ``mpiexec``, and others.
+
 
 .. autosummary::
 
@@ -79,9 +84,12 @@ launches that utilize a parallel launch binary like
 SrunSettings
 ------------
 
+.. _srun_api:
+
 ``SrunSettings`` can be used for running on existing allocations,
 running jobs in interactive allocations, and for adding srun
 steps to a batch.
+
 
 .. autosummary::
 
@@ -104,8 +112,11 @@ steps to a batch.
 SbatchSettings
 --------------
 
+.. _sbatch_api:
+
 ``SbatchSettings`` are used for launching batches onto Slurm
 WLM systems.
+
 
 .. autosummary::
 
@@ -128,12 +139,15 @@ WLM systems.
 AprunSettings
 -------------
 
+.. _aprun_api:
+
 ``AprunSettings`` can be used on any system that suppports the
-Cray ALPS layer. Currently ALPS is only tested on PBSpro
-within SmartSim.
+Cray ALPS layer. SmartSim supports using ``AprunSettings``
+on PBSPro and Cobalt WLM systems.
 
 ``AprunSettings`` can be used in interactive session (on allocation)
-and within batch launches (``QsubBatchSettings``)
+and within batch launches (e.g. ``QsubBatchSettings``)
+
 
 .. autosummary::
 
@@ -156,8 +170,11 @@ and within batch launches (``QsubBatchSettings``)
 QsubBatchSettings
 -----------------
 
+.. _qsub_api:
+
 ``QsubBatchSettings`` are used to configure jobs that should
 be launched as a batch on PBSPro systems.
+
 
 .. autosummary::
 
@@ -183,6 +200,13 @@ be launched as a batch on PBSPro systems.
 CobaltBatchSettings
 -------------------
 
+.. _cqsub_api:
+
+``CobaltBatchSettings`` are used to configure jobs that should
+be launched as a batch on Cobalt Systems. They closely mimic
+that of the ``QsubBatchSettings`` for PBSPro.
+
+
 .. autosummary::
 
     CobaltBatchSettings.set_account
@@ -200,14 +224,17 @@ CobaltBatchSettings
 ------------------------------------------
 
 
-The following are run setting types that are supported on multiple
+The following are ``RunSettings`` types that are supported on multiple
 launchers
 
 MpirunSettings
 --------------
 
+.. _openmpi_api:
+
 ``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
 supported on Slurm, PBSpro, and Cobalt.
+
 
 .. autosummary::
 
@@ -232,20 +259,34 @@ Orchestrator
 
 .. currentmodule:: smartsim.database
 
+The ``Orchestrator`` API is implemented for each launcher that
+SmartSim supports.
+
+ - Slurm
+ - Cobalt
+ - PBSPro
+
+The base ``Orchestrator`` class can be used for launching Redis
+locally on single node workstations or laptops.
+
 Local Orchestrator
 ------------------
 
-The local Orchestrator can be launched through
-the local launcher and does not support cluster
-instances
+.. _local_orc_api:
+
+The ``Orchestrator`` base class can be launched through
+the local launcher and does not support cluster instances
 
 .. autoclass:: Orchestrator
    :members:
    :inherited-members:
    :undoc-members:
+   :exclude-members: create_cluster
 
 PBSPro Orchestrator
 -------------------
+
+.. _pbs_orc_api:
 
 The PBSPro Orchestrator can be launched as a batch, and
 in an interactive allocation.
@@ -255,11 +296,14 @@ in an interactive allocation.
    :members:
    :inherited-members:
    :undoc-members:
+   :exclude-members: create_cluster
 
 Slurm Orchestrator
 ------------------
 
-The Slurm Orchestrator is used to launch Redis on to Slurm WLM
+.. _slurm_orc_api:
+
+The ``SlurmOrchestrator`` is used to launch Redis on to Slurm WLM
 systems and can be launched as a batch, on existing allocations,
 or in an interactive allocation.
 
@@ -268,6 +312,22 @@ or in an interactive allocation.
    :members:
    :inherited-members:
    :undoc-members:
+   :exclude-members: create_cluster
+
+Cobalt Orchestrator
+-------------------
+
+.. _cobalt_orc_api:
+
+The ``CobaltOrchestrator`` can be launched as a batch, and
+in an interactive allocation.
+
+.. autoclass:: CobaltOrchestrator
+    :show-inheritance:
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :exclude-members: create_cluster
 
 Entity
 ======
@@ -315,8 +375,12 @@ Model
 Slurm
 =====
 
+.. _slurm_module_api:
+
 .. note::
     This module is importable through smartsim e.g. from smartsim import slurm
+
+
 
 .. currentmodule:: smartsim.launcher.slurm
 

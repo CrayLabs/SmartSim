@@ -7,21 +7,23 @@ from .settings import BatchSettings
 
 class CobaltBatchSettings(BatchSettings):
     def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
-        """Create a Cobalt qsub batch setting for an entity
+        """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None
         as the value. e.g. {'exclusive': None}
 
         Initialization values provided (nodes, time, account)
-        will overwrite the same arguments in batch_args if present
+        will overwrite the same arguments in ``batch_args`` if present
 
-        :param nodes: number of nodes, defaults to None
+        :param nodes: number of nodes
         :type nodes: int, optional
         :param time: walltime for job, e.g. "10:00:00" for 10 hours
         :type time: str, optional
-        :param account: account for job, defaults to None
+        :param queue: queue to launch job in
+        :type queue: str
+        :param account: account for job
         :type account: str, optional
-        :param batch_args: extra batch arguments, defaults to None
+        :param batch_args: extra batch arguments
         :type batch_args: dict[str, str], optional
         """
         super().__init__("qsub", batch_args=batch_args)
@@ -59,6 +61,12 @@ class CobaltBatchSettings(BatchSettings):
         self.batch_args["nodecount"] = int(num_nodes)
 
     def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):

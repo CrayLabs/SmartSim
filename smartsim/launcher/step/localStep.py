@@ -13,6 +13,8 @@ class LocalStep(Step):
         cmd = []
         if self.run_settings.run_command:
             cmd.append(self.run_settings.run_command)
+            run_args = self.run_settings.format_run_args()
+            cmd.extend(run_args)
 
         cmd.extend(self.run_settings.exe)
 
