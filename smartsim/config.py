@@ -109,8 +109,7 @@ class Config:
     def redis_cli(self):
         try:
             redis = self.conf["redis"]
-            lib_path = redis["cli"]
-            exe_path = osp.join(lib_path, "redis-cli")
+            exe_path = redis["cli"]
             exe = expand_exe_path(exe_path)
             return exe
         except KeyError:
