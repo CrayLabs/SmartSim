@@ -34,6 +34,7 @@ pytestmark = pytest.mark.skipif(
     reason="requires smartredis and PyTorch",
 )
 
+
 def test_exchange(fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
@@ -41,7 +42,9 @@ def test_exchange(fileutils):
     """
 
     test_dir = fileutils.make_test_dir("smartredis_ensemble_exchange_test")
-    exp = Experiment("smartredis_ensemble_exchange", exp_path=test_dir, launcher="local")
+    exp = Experiment(
+        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
+    )
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
@@ -88,7 +91,9 @@ def test_consumer(fileutils):
     and the consumer accesses the two results.
     """
     test_dir = fileutils.make_test_dir("smartredis_ensemble_consumer_test")
-    exp = Experiment("smartredis_ensemble_consumer", exp_path=test_dir, launcher="local")
+    exp = Experiment(
+        "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
+    )
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)

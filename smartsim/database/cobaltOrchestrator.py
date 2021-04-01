@@ -1,9 +1,9 @@
-
+from ..config import CONFIG
 from ..entity import DBNode
-from ..error import SSUnsupportedError, SmartSimError
+from ..error import SmartSimError, SSUnsupportedError
 from ..settings import AprunSettings, CobaltBatchSettings, MpirunSettings
 from .orchestrator import Orchestrator
-from ..config import CONFIG
+
 
 class CobaltOrchestrator(Orchestrator):
     def __init__(
@@ -32,6 +32,16 @@ class CobaltOrchestrator(Orchestrator):
         :type db_nodes: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
+        :param hosts: specify hosts to launch on
+        :type hosts: list[str]
+        :param run_command: specify launch binary. options are ``mpirun`` and ``aprun``
+        :type run_command: str
+        :param account: account to run batch on
+        :type account: str
+        :param queue: queue to launch batch in
+        :type queue: str
+        :param time: walltime for batch 'HH:MM:SS' format
+        :type time: str
         """
         super().__init__(
             port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
@@ -72,6 +82,12 @@ class CobaltOrchestrator(Orchestrator):
         self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list):
+        """Specify the hosts for the ``CobaltOrchestrator`` to launch on
+
+        :param host_list: list of host (compute node names)
+        :type host_list: list[str]
+        :raises TypeError: if wrong type
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
@@ -92,9 +108,9 @@ class CobaltOrchestrator(Orchestrator):
                 db.run_settings.set_hostlist([host])
 
     def set_batch_arg(self, arg, value):
-        """Set a Qsub argument the orchestrator should launch with
+        """Set a cobalt ``qsub`` argument
 
-        Some commonly used arguments such as -e are used
+        Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
 
         :param arg: batch argument to set e.g. "exclusive"

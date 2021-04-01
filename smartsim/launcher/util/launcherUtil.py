@@ -1,4 +1,4 @@
-class ComputeNode: # cov-wlm
+class ComputeNode:  # cov-wlm
     """The ComputeNode class holds resource information
     about a physical compute node
     """
@@ -31,7 +31,7 @@ class ComputeNode: # cov-wlm
         return True
 
 
-class Partition: # cov-wlm
+class Partition:  # cov-wlm
     """The partition class holds information about
     a system partition.
     """

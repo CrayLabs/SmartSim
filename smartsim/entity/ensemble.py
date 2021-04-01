@@ -15,13 +15,8 @@ logger = get_logger(__name__)
 
 
 class Ensemble(EntityList):
-    """Ensembles are groups of Models that can be used
-    for quickly generating a number of models with different
-    model parameter spaces.
-
-    Models within the default Ensemble will use their own
-    run_settings, whereas models not in the default ensemble
-    will inherit the run_settings of that ensemble.
+    """``Ensemble`` is a group of ``Model`` instances that can
+    be treated as a reference to a single instance.
     """
 
     def __init__(
@@ -38,16 +33,23 @@ class Ensemble(EntityList):
         The kwargs argument can be used to pass custom input
         parameters to the permutation strategy.
 
-        :param name: Name of the ensemble
+        :param name: name of the ensemble
         :type name: str
-        :param params: model parameters for Model generation
-        :type params: dict
-        :param run_settings: settings for the launcher, defaults to {}
-        :type run_settings: dict, optional
-        :param perm_strat: permutation strategy for model creation,
-                           options are "all_perm", "stepped", "random"
-                           or a callable function
-        :type perm_strat: str
+        :param params: parameters to expand into ``Model`` members
+        :type params: dict[str, Any]
+        :param batch_settings: describes settings for ``Ensemble`` as batch workload
+        :type batch_settings: BatchSettings
+        :param run_settings: describes how each ``Model`` should be executed
+        :type run_settings: RunSettings
+        :param replicas: number of replicas to create
+        :type replicas: int
+        :param perm_strategy: strategy for expanding ``params`` into
+                             ``Model`` instances from params argument
+                             options are "all_perm", "stepped", "random"
+                             or a callable function
+        :type perm_strategy: str
+        :return: ``Ensemble`` instance
+        :rtype: ``Ensemble``
         """
         self.params = init_default({}, params, dict)
         self._key_prefixing_enabled = True
@@ -113,7 +115,7 @@ class Ensemble(EntityList):
                         self.add_model(model)
                 else:
                     raise SmartSimError(
-                        "Ensembles without 'params' to expand into members cannot be given run settings"
+                        "Ensembles without 'params' or 'replicas` argument to expand into members cannot be given run settings"
                     )
             # if no params, no run settings and no batch settings, error because we
             # don't know how to run the ensemble

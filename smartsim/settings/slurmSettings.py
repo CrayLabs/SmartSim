@@ -5,17 +5,22 @@ from .settings import BatchSettings, RunSettings
 
 class SrunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None):
-        """Initialize entity settings to run with Srun
+        """Initialize run parameters for a slurm job with ``srun``
+
+        ``SrunSettings`` should only be used on Slurm based systems.
+
+        If an allocation is specified, the instance recieving these run
+        parameters will launch on that allocation.
 
         :param exe: executable
         :type exe: str
-        :param exe_args: executable arguments, defaults to None
+        :param exe_args: executable arguments
         :type exe_args: list[str] | str, optional
-        :param run_args: srun arguments without dashes, defaults to None
+        :param run_args: srun arguments without dashes
         :type run_args: dict[str, str | None], optional
-        :param env_vars: environment variables for job, defaults to None
+        :param env_vars: environment variables for job
         :type env_vars: dict[str, str], optional
-        :param alloc: allocation ID if running on existing alloc, defaults to None
+        :param alloc: allocation ID if running on existing alloc
         :type alloc: str, optional
         """
         super().__init__(
@@ -27,7 +32,7 @@ class SrunSettings(RunSettings):
     def set_nodes(self, num_nodes):
         """Set the number of nodes
 
-        effectively this is setting: srun --nodes <num_nodes>
+        Effectively this is setting: ``srun --nodes <num_nodes>``
 
         :param num_nodes: number of nodes to run with
         :type num_nodes: int
@@ -35,6 +40,12 @@ class SrunSettings(RunSettings):
         self.run_args["nodes"] = int(num_nodes)
 
     def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
@@ -128,24 +139,24 @@ class SrunSettings(RunSettings):
 
 class SbatchSettings(BatchSettings):
     def __init__(self, nodes=None, time="", account=None, batch_args=None):
-        """Settings for a Sbatch workload
+        """Specify run parameters for a Slurm batch job
 
-        Slurm Sbatch arguments can be written into batch_args
+        Slurm `sbatch` arguments can be written into ``batch_args``
         as a dictionary. e.g. {'ntasks': 1}
 
-        If the argument doesn't have a parameter, put None
+        If the argument doesn't have a parameter, put `None`
         as the value. e.g. {'exclusive': None}
 
         Initialization values provided (nodes, time, account)
-        will overwrite the same arguments in batch_args if present
+        will overwrite the same arguments in ``batch_args`` if present
 
-        :param nodes: number of nodes, defaults to None
+        :param nodes: number of nodes
         :type nodes: int, optional
         :param time: walltime for job, e.g. "10:00:00" for 10 hours
         :type time: str, optional
-        :param account: account for job, defaults to None
+        :param account: account for job
         :type account: str, optional
-        :param batch_args: extra batch arguments, defaults to None
+        :param batch_args: extra batch arguments
         :type batch_args: dict[str, str], optional
         """
         super().__init__("sbatch", batch_args=batch_args)
@@ -192,6 +203,12 @@ class SbatchSettings(BatchSettings):
         self.batch_args["partition"] = str(partition)
 
     def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):

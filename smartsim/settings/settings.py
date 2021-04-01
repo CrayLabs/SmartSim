@@ -11,17 +11,34 @@ class RunSettings:
     def __init__(
         self, exe, exe_args=None, run_command="", run_args=None, env_vars=None
     ):
-        """RunSettings represent how an entity or job should be run
+        """Run parameters for a ``Model``
 
-        :param exe: executable
+        The base ``RunSettings`` class should only be used with the `local`
+        launcher on single node, workstations, or laptops.
+
+        If no ``run_command`` is specified, the executable will be launched
+        locally.
+
+        ``run_args`` passed as a dict will be interpreted literally for
+        local ``RunSettings`` and added directly to the ``run_command``
+        e.g. run_args = {"-np": 2} will be "-np 2"
+
+        Example initialization
+
+        .. highlight:: python
+        .. code-block:: python
+
+            rs = RunSettings("echo", "hello", "mpirun", run_args={"-np": "2"})
+
+        :param exe: executable to run
         :type exe: str
-        :param exe_args: executable arguments, defaults to None
+        :param exe_args: executable arguments
         :type exe_args: str | list[str], optional
-        :param run_command: launch binary e.g. srun, defaults to ""
+        :param run_command: launch binary e.g. srun
         :type run_command: str, optional
-        :param run_args: arguments for run command, defaults to None
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`)
         :type run_args: dict[str, str], optional
-        :param env_vars: environment vars to launch job with, defaults to None
+        :param env_vars: environment vars to launch job with
         :type env_vars: dict[str, str], optional
         """
         self.exe = [expand_exe_path(exe)]
@@ -33,12 +50,9 @@ class RunSettings:
 
     @property
     def run_command(self):
-        """Return the batch command
+        """Return the launch binary used to launch the executable
 
-        Tests to see if we can expand the batch command
-        path, and if not, returns the batch command
-        as is
-        :returns: batch command
+        :returns: launch binary e.g. mpiexec
         :type: str
         """
         try:
@@ -50,11 +64,15 @@ class RunSettings:
             return self._run_command
 
     def update_env(self, env_vars):
-        """update the environment variables a job is launched with"""
+        """Update the job environment variables
+
+        :param env_vars: environment variables to update or add
+        :type env_vars: dict[str, str]
+        """
         self.env_vars.update(env_vars)
 
     def add_exe_args(self, args):
-        """Add executable arguments to final command produced by run settings
+        """Add executable arguments to executable
 
         :param args: executable arguments
         :type args: list[str]
@@ -80,6 +98,21 @@ class RunSettings:
         else:
             return []
 
+    def format_run_args(self):
+        """Return formatted run arguments
+
+        For ``RunSettings``, the run arguments are passed
+        literally with no formatting.
+
+        :return: list run arguments for these settings
+        :rtype: list[str]
+        """
+        formatted = []
+        for arg, value in self.run_args.items():
+            formatted.append(arg)
+            formatted.append(str(value))
+        return formatted
+
     def __str__(self):
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable arguments: {self.exe_args}\n"
@@ -100,8 +133,8 @@ class BatchSettings:
         """Return the batch command
 
         Tests to see if we can expand the batch command
-        path, and if not, returns the batch command
-        as is
+        path, and if not, returns the batch command as is
+
         :returns: batch command
         :type: str
         """
@@ -124,6 +157,11 @@ class BatchSettings:
         raise NotImplementedError
 
     def set_batch_command(self, command):
+        """Set the command used to launch the batch e.g. ``sbatch``
+
+        :param command: batch command
+        :type command: str
+        """
         self._batch_cmd = command
 
     def __str__(self):

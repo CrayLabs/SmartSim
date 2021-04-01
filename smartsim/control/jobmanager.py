@@ -14,6 +14,7 @@ from .job import Job
 
 logger = get_logger(__name__)
 
+
 class JobManager:
     """The JobManager maintains a mapping between user defined entities
     and the steps launched through the launcher. The JobManager
