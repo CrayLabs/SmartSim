@@ -4,7 +4,7 @@
 Introduction
 ************
 
-.. image:: images/SmartSim-Logo-white.png
+.. image:: images/SmartSim_Large.png
   :width: 700
   :alt: SmartSim
 
