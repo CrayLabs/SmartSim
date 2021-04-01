@@ -1,11 +1,29 @@
 import os
 import os.path as osp
 import sys
+from shutil import which
 
 import toml
 
 from .error import SSConfigError
-from .utils.helpers import expand_exe_path
+
+
+def expand_exe_path(exe):
+    """Takes an executable and returns the full path to that executable
+
+    :param exe: exectable or file
+    :type exe: str
+    """
+
+    # which returns none if not found
+    in_path = which(exe)
+    if not in_path:
+        if os.path.isfile(exe) and os.access(exe, os.X_OK):
+            return os.path.abspath(exe)
+        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
+            raise SSConfigError(f"File, {exe}, is not an executable")
+        raise SSConfigError(f"Could not locate executable {exe}")
+    return os.path.abspath(in_path)
 
 
 class Config:
