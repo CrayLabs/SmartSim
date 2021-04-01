@@ -43,7 +43,7 @@ users use PyTorch at this time if possible.
 
 SmartSim is made up of two parts
   1. SmartSim Infrastructure Library
-  2. SmartSim Infrastructure Library Clients (SILC)
+  2. SmartSim Infrastructure Library Clients (smartredis)
 
 ## SmartSim Infrastructure Library
 
@@ -53,13 +53,13 @@ executing and monitoring simulations. Users can launch everything needed
 to run converged ML and simulation worklaods right from a jupyter
 notebook using the IL Python interface.
 
-## SILC
+## smartredis
 
 The SmartSim Infrastructure Library Clients are implementations of Redis
 clients that implement the RedisAI API with a few additions specific to
 HPC simulations.
 
-SILC clients are available in Fortran, C, C++, and Python. Users can seemlessly
+smartredis clients are available in Fortran, C, C++, and Python. Users can seemlessly
 pull and push data from the Orchestrator from different langauges.
 
 | Language 	| Version/Standard 	|
@@ -69,5 +69,5 @@ pull and push data from the Orchestrator from different langauges.
 | C        	|        C99       	|
 | C++      	|       C++11      	|
 
-The SILC clients are cluster compatible and work with the OSS Redis/RedisAI stack.
+The smartredis clients are cluster compatible and work with the OSS Redis/RedisAI stack.
 

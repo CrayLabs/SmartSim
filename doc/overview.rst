@@ -83,5 +83,5 @@ the SmartRedis clients.
 SmartRedis (Client Library)
 ---------------------------
 
-.. include:: ../silc/doc/overview.rst
+.. include:: ../smartredis/doc/overview.rst
      :start-line: 4

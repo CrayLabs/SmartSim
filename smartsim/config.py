@@ -156,7 +156,7 @@ _template_config = """
 # number of seconds per job status update
 # for jobs on WLM system (e.g. slurm, pbs, etc)
 jm_interval = 15    # default
-log_level = "debug" # default
+log_level = "info" # default
 
 [redis]
 # path to where "redis-server" and "redis-cli" binaries are located

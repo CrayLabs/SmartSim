@@ -32,7 +32,7 @@ Model
 ``Model(s)`` are created through the Experiment API. Models represent
 any computational kernel capable of running on the system. Models
 are flexible enough to support nearly any type of script or application, however,
-to be used with our clients (SILC) the application will have to
+to be used with our clients (smartredis) the application will have to
 be written in Python, C, C++, or Fortran.
 
 Models are given ``run_settings`` which are dictionaries of settings

@@ -10,10 +10,10 @@ from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.settings import RunSettings
 
-"""Test SILC integration for ensembles. Two copies of the same
+"""Test smartredis integration for ensembles. Two copies of the same
    program will be executed concurrently, and name collusions
-   will be avoided through SILC prefixing:
-   SILC will prefix each instance's tensors with a prefix
+   will be avoided through smartredis prefixing:
+   smartredis will prefix each instance's tensors with a prefix
    set through environment variables by SmartSim.
 """
 
@@ -24,24 +24,24 @@ REDIS_PORT = 6780
 try:
     import torch
 
-    import silc
+    import smartredis
 except ImportError:
     pass
 
 
 pytestmark = pytest.mark.skipif(
-    ("silc" not in sys.modules) or ("torch" not in sys.modules),
-    reason="requires SILC and PyTorch",
-    )
-    
+    ("smartredis" not in sys.modules) or ("torch" not in sys.modules),
+    reason="requires smartredis and PyTorch",
+)
+
 def test_exchange(fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
     """
 
-    test_dir = fileutils.make_test_dir("silc_ensemble_exchange_test")
-    exp = Experiment("silc_ensemble_exchange", exp_path=test_dir, launcher="local")
+    test_dir = fileutils.make_test_dir("smartredis_ensemble_exchange_test")
+    exp = Experiment("smartredis_ensemble_exchange", exp_path=test_dir, launcher="local")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
@@ -62,7 +62,7 @@ def test_exchange(fileutils):
     ensemble.register_incoming_entity(ensemble[0])
     ensemble.register_incoming_entity(ensemble[1])
 
-    config = fileutils.get_test_conf_path("silc")
+    config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
     exp.generate(ensemble)
@@ -87,8 +87,8 @@ def test_consumer(fileutils):
     Finally, the tensor is used to run a model by each producer
     and the consumer accesses the two results.
     """
-    test_dir = fileutils.make_test_dir("silc_ensemble_consumer_test")
-    exp = Experiment("silc_ensemble_consumer", exp_path=test_dir, launcher="local")
+    test_dir = fileutils.make_test_dir("smartredis_ensemble_consumer_test")
+    exp = Experiment("smartredis_ensemble_consumer", exp_path=test_dir, launcher="local")
 
     # create and start a database
     orc = Orchestrator(port=REDIS_PORT)
@@ -110,7 +110,7 @@ def test_consumer(fileutils):
     ensemble.register_incoming_entity(ensemble[0])
     ensemble.register_incoming_entity(ensemble[1])
 
-    config = fileutils.get_test_conf_path("silc")
+    config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
     exp.generate(ensemble)
