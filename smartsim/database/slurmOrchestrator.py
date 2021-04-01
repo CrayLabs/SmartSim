@@ -1,9 +1,9 @@
+from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import MpirunSettings, SbatchSettings, SrunSettings
 from ..utils import get_logger
 from .orchestrator import Orchestrator
-from ..config import CONFIG
 
 logger = get_logger(__name__)
 
@@ -43,11 +43,18 @@ class SlurmOrchestrator(Orchestrator):
         :type db_nodes: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
+        :param hosts: specify hosts to launch on
+        :type hosts: list[str]
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
+        :type run_command: str
+        :param account: account to run batch on
+        :type account: str
+        :param time: walltime for batch 'HH:MM:SS' format
+        :type time: str
         :param alloc: allocation to launch on, defaults to None
         :type alloc: str, optional
         :param dpn: number of database per node (MPMD), defaults to 1
         :type dpn: int, optional
-        #TODO fill this out
         """
         super().__init__(
             port,
@@ -96,6 +103,12 @@ class SlurmOrchestrator(Orchestrator):
         self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list):
+        """Specify the hosts for the ``SlurmOrchestrator`` to launch on
+
+        :param host_list: list of host (compute node names)
+        :type host_list: list[str]
+        :raises TypeError: if wrong type
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):

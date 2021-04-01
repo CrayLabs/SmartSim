@@ -5,6 +5,9 @@ class AprunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
         """Settings to run job with ``aprun`` command
 
+        ``AprunSettings`` can be used for both the `pbs` and `cobalt`
+        launchers.
+
         :param exe: executable
         :type exe: str
         :param exe_args: executable arguments, defaults to None
@@ -20,6 +23,14 @@ class AprunSettings(RunSettings):
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):
+        """Make job a MPMD job
+
+        This method combines two ``AprunSettings``
+        into a single MPMD command joined with ':'
+
+        :param aprun_settings: ``AprunSettings`` instance
+        :type aprun_settings: AprunSettings
+        """
         self.mpmd.append(aprun_settings)
 
     def set_cpus_per_task(self, num_cpus):
@@ -53,6 +64,12 @@ class AprunSettings(RunSettings):
         self.run_args["pes-per-node"] = int(num_tpn)
 
     def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
@@ -62,9 +79,9 @@ class AprunSettings(RunSettings):
         self.run_args["nodelist"] = ",".join(host_list)
 
     def format_run_args(self):
-        """return a list of PBSPro formatted run arguments
+        """Return a list of ALPS formatted run arguments
 
-        :return: list PBSPro arguments for these settings
+        :return: list ALPS arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses

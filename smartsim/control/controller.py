@@ -3,12 +3,12 @@ import pickle
 import threading
 import time
 
+from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
 from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
-from ..config import CONFIG
 from ..utils import get_logger
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager

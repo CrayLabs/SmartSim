@@ -39,6 +39,7 @@
    community
    code_of_conduct
    developer
+   log
 
 
 Indices and tables

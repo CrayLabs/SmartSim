@@ -1,5 +1,4 @@
 import os.path as osp
-import pickle
 import time
 from os import getcwd
 from pprint import pformat
@@ -11,7 +10,6 @@ from .control import Controller
 from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
 from .generation import Generator
-from .launcher import LocalLauncher
 from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
@@ -20,23 +18,24 @@ logger = get_logger(__name__)
 
 
 class Experiment:
-    """Experiments are the main workflow tool in SmartSim.
+    """Experiments are the main user interface in SmartSim.
 
-    Experiments can create jobs to launch called ``Model``(s)
-    and ``Ensemble``(s). Through the Experiment interface, users
+    Experiments can create instances to launch called ``Model``
+    and ``Ensemble``. Through the ``Experiment`` interface, users
     can programmatically create, configure, start, stop, and
-    query the jobs they create.
+    query the instances they create.
     """
 
     def __init__(self, name, exp_path=None, launcher="local"):
-        """Initialize an Experiment
+        """Initialize an ``Experiment``
 
-        :param name: Name of the experiment
+        :param name: name for the ``Experiment``
         :type name: str
-        :param launcher: type of launcher, one of slurm, pbs, or local
-        :type launcher: str, optional
-        :param exp_path: path to location of Experiment directory if generated
+        :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str
+        :param launcher: type of launcher, options are "slurm", "pbs",
+                         "cobalt", or "local". Defaults to "local"
+        :type launcher: str
         """
         self.name = name
         if exp_path:
@@ -49,9 +48,9 @@ class Experiment:
         self._control = Controller(launcher=launcher)
 
     def start(self, *args, block=True, summary=False):
-        """Start the SmartSim Experiment
+        """Launch instances passed as arguments
 
-        Start the experiment by turning all entities into jobs
+        Start the ``Experiment`` by turning specified instances into jobs
         for the underlying launcher and launching them.
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -73,12 +72,12 @@ class Experiment:
             raise
 
     def stop(self, *args):
-        """Stop specific entities launched through SmartSim.
+        """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the start method.
 
-        :raises TypeError: if wrong entity type
+        :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
         try:
@@ -96,23 +95,22 @@ class Experiment:
             raise
 
     def generate(self, *args, tag=None, overwrite=False):
-        """Generate the file structure for an experiment
+        """Generate the file structure for an ``Experiment``
 
-        Generate creates directories for each entity passed
-        as well as copies and writes files for each entity.
+        ``Experiment.generate`` creates directories for each instance
+        passed to organize Experiments that launch many instances
 
-        If model objects are provided with generator files,
-        those files are written into according to the parameters
-        provided at model initialization.
+        If files or directories are attached to ``Model`` objects
+        using ``Model.attach_generator_files()``, those files or
+        directories will be symlinked, copied, or configured and
+        written into the created directory for that instance.
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the generate method.
 
-        :param tag: tag used in `to_configure` generator files,
-                    defaults to None
+        :param tag: tag used in `to_configure` generator files
         :type tag: str, optional
-        :param overwrite: overwrite existing folders and contents,
-                          defaults to False
+        :param overwrite: overwrite existing folders and contents
         :type overwrite: bool, optional
         """
         try:
@@ -127,11 +125,10 @@ class Experiment:
     def poll(self, interval=10, verbose=True):
         """Monitor jobs through logging to stdout.
 
-        Poll the running jobs and receive logging output
-        with the status of the jobs. If polling the database,
-        jobs will continue until database is manually shutdown.
+        This method should only be used if jobs were launched
+        with ``Experiment.start(block=False)``
 
-        :param interval: number of seconds to wait before polling again
+        :param interval: frequency of logging to stdout
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
@@ -146,7 +143,10 @@ class Experiment:
     def finished(self, entity):
         """Query if a job as completed
 
-        :param entity: object launched by SmartSim
+        A instance of ``Model``, ``Ensemble`` can be passed
+        as an argument.
+
+        :param entity: object launched by this ``Experiment``
         :type entity: SmartSimEntity | EntityList
         :returns: True if job has completed
         :rtype: bool
@@ -158,9 +158,12 @@ class Experiment:
             raise
 
     def get_status(self, *args):
-        """Query the status of an entity or entities
+        """Query the status of a job
 
-        :returns: status of the entity
+        Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
+        can all be passed as arguments to ``Experiment.get_status()``
+
+        :returns: status of the job
         :rtype: list[str]
         :raises SmartSimError: if status retrieval fails
         :raises TypeError:
@@ -191,31 +194,49 @@ class Experiment:
         perm_strategy="all_perm",
         **kwargs,
     ):
-        """Create an ensemble of models
+        """Create an ``Ensemble`` of ``Model`` instances
 
-        if given batch settings, an empty ensemble
-        will be created that models can be added to manually.
+        Ensembles can be launched sequentially or as a batch
+        if using a non-local launcher. e.g. slurm
+
+        Ensembles require one of the following combinations
+        of arguments
+          - ``run_settings`` and ``params``
+          - ``run_settings`` and ``replicas``
+          - ``batch_settings``
+          - ``batch_settings``, ``run_settings``, and ``params``
+          - ``batch_settings``, ``run_settings``, and ``replicas``
+
+        If given solely batch settings, an empty ensemble
+        will be created that models can be added to manually
+        through ``Ensemble.add_model()``.
         The entire ensemble will launch as one batch.
 
-        Provided batch and run settings, the ensemble
-        will require a number of replica models to be created
+        Provided batch and run settings, either ``params``
+        or ``replicas`` must be passed and the entire ensemble
+        will launch as a single batch.
 
-        Solely provided run settings, ensembles will require
-        either params or replicas to be passed
+        Provided solely run settings, either ``params``
+        or ``replicas`` must be passed and the ensemble members
+        will each launch sequentially.
 
         :param name: name of the ensemble
         :type name: str
-        :param params: parameters to write into attached configs
-        :type params: dict[str, Any], optional
-        :param batch_settings: describes settings for Ensemble as batch workload
-        :type batch_settings: BatchSettings, optional
-        :param run_settings: describes how each model should be executed
-        :type run_settings: RunSettings, optional
-        :param replicas: number of replicas to create in Ensemble
-        :type replicas: int, optional
-        :param perm_strategy: strategy for creating Model instances from params argument
-        :type perm_strategy: str, optional
-        :return: Ensemble instances
+        :param params: parameters to expand into ``Model`` members
+        :type params: dict[str, Any]
+        :param batch_settings: describes settings for ``Ensemble`` as batch workload
+        :type batch_settings: BatchSettings
+        :param run_settings: describes how each ``Model`` should be executed
+        :type run_settings: RunSettings
+        :param replicas: number of replicas to create
+        :type replicas: int
+        :param perm_strategy: strategy for expanding ``params`` into
+                             ``Model`` instances from params argument
+                             options are "all_perm", "stepped", "random"
+                             or a callable function
+        :type perm_strategy: str
+        :raises SmartSimError: if initialization fails
+        :return: ``Ensemble`` instance
         :rtype: Ensemble
         """
         try:
@@ -236,22 +257,28 @@ class Experiment:
     def create_model(
         self, name, run_settings, params=None, path=None, enable_key_prefixing=False
     ):
-        """Create a Model
+        """Create a ``Model``
+
+        By default, all ``Model`` instances start with the cwd
+        as their path unless specified. If specified or not, upon
+        user passing the instance to ``Experiment.generate()``,
+        the ``Model`` path will be overwritten and replaced
+        with the created directory for the ``Model``
 
         :param name: name of the model
         :type name: str
-        :param run_settings: defines how the model should be run,
+        :param run_settings: defines how ``Model`` should be run,
         :type run_settings: dict
         :param params: model parameters for writing into configuration files
         :type params: dict, optional
         :param path: path to where the model should be executed at runtime
         :type path: str, optional
-        :param enable_key_prefixing: If true, keys sent by this model will be
-                                     prefixed with the model's name.
-                                     Optional, defaults to False
+        :param enable_key_prefixing: If true, data sent to the Orchestrator
+                                     using SmartRedis from this ``Model`` will
+                                     be prefixed with the ``Model`` name.
         :type enable_key_prefixing: bool
-        :raises SmartSimError: if Model initialization fails
-        :return: the created model
+        :raises SmartSimError: if initialization fails
+        :return: the created ``Model``
         :rtype: Model
         """
         path = init_default(getcwd(), path, str)
@@ -266,7 +293,17 @@ class Experiment:
             raise
 
     def reconnect_orchestrator(self, checkpoint):
-        """Reconnect to running orchestator"""
+        """Reconnect to a running ``Orchestrator``
+
+        This method can be used to connect to a Redis deployment
+        that was launched by a previous ``Experiment``. This way
+        users can run many experiments utilizing the same Redis
+        deployment
+
+        :param checkpoint: the `smartsim_db.dat` file created
+                           when an ``Orchestrator`` is launched
+        :type checkpoint: str
+        """
         try:
             orc = self._control.reload_saved_db(checkpoint)
             return orc
@@ -275,9 +312,12 @@ class Experiment:
             raise
 
     def summary(self):
-        """Return a summary of the experiment
+        """Return a summary of the ``Experiment``
 
-        :return: Dataframe of experiment history
+        The summary will show each instance that has been
+        launched and completed in this ``Experiment``
+
+        :return: Dataframe of ``Experiment`` history
         :rtype: pd.DataFrame
         """
         index = 0

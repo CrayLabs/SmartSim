@@ -26,7 +26,7 @@ help:
 # help: Build
 # help: -------
 
-# help: smartredis                           - Make smartredis python client and setup smartredis library
+# help: smartredis                     - Make smartredis python client and setup smartredis library
 .PHONY: smartredis
 smartredis:
 	@bash ./build-scripts/build-smartredis.sh

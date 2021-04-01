@@ -18,20 +18,20 @@ try:
 except KeyError:
     verbose_tm = False
 
+
 class TaskManager:
     """The Task Manager watches the subprocesses launched through
     the asyncronous shell interface. Each task is a wrapper
-    around the popen that links it to the id of the Job instance
-    it is connected to.
+    around the Popen/Process instance.
 
-    The Task manager can be optionally added to any launcher interface
-    to have greater control over the entities that are launched.
+    The Task Managers polls processes on smartsim.constants.TM_INTERVAL
+    and detects job failure and completion. Upon termination, the
+    task returncode, output, and error are added to the task history.
 
-    The task manager connects to the job manager through the launcher
-    so as to not break encapsulation between the controller and launcher.
-
-    Each time a status is requested, a launcher can check the task
-    manager to ensure that the task is still alive and well.
+    When a launcher uses the task manager to start a task, the task
+    is either managed (by a WLM) or unmanaged (meaning not managed by
+    a WLM). In the latter case, the Task manager is responsible for the
+    lifecycle of the process.
     """
 
     def __init__(self):
@@ -42,12 +42,17 @@ class TaskManager:
         self._lock = RLock()
 
     def start(self):
-        """Start the task manager thread"""
+        """Start the task manager thread
+
+        The TaskManager is run as a daemon thread meaning
+        that it will die when the main thread dies.
+        """
         monitor = Thread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
     def run(self):
-        """Start the loop that continually checks tasks for status."""
+        """Start monitoring Tasks"""
+
         global verbose_tm
         if verbose_tm:
             logger.debug("Starting Task Manager")
@@ -70,6 +75,24 @@ class TaskManager:
                     logger.debug("Sleeping, no tasks to monitor")
 
     def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+        """Start a task managed by the TaskManager
+
+        This is an "unmanaged" task, meaning it is NOT managed
+        by a workload manager
+
+        :param cmd_list: command to run
+        :type cmd_list: list[str]
+        :param cwd: current working directory
+        :type cwd: str
+        :param env: environment to launch with
+        :type env: dict[str, str], optional
+        :param out: output file, defaults to PIPE
+        :type out: file, optional
+        :param err: error file, defaults to PIPE
+        :type err: file, optional
+        :return: task id
+        :rtype: int
+        """
         self._lock.acquire()
         try:
             proc = execute_async_cmd(cmd_list, cwd, env=env, out=out, err=err)
@@ -84,12 +107,36 @@ class TaskManager:
             self._lock.release()
 
     def start_and_wait(self, cmd_list, cwd, env=None, timeout=None):
+        """Start a task not managed by the TaskManager
+
+        This method is used by launchers to launch managed tasks
+        meaning that they ARE managed by a WLM.
+
+        This is primarily used for batch job launches
+
+        :param cmd_list: command to run
+        :type cmd_list: list[str]
+        :param cwd: current working directory
+        :type cwd: str
+        :param env: environment to launch with
+        :type env: dict[str, str], optional
+        :param timeout: time to wait, defaults to None
+        :type timeout: int, optional
+        :return: returncode, output, and err
+        :rtype: int, str, str
+        """
         returncode, out, err = execute_cmd(cmd_list, cwd=cwd, env=env, timeout=timeout)
         if verbose_tm:
             logger.debug("Ran and waited on task")
         return returncode, out, err
 
     def add_existing(self, task_id):
+        """Add existing task to be managed by the TaskManager
+
+        :param task_id: task id of existing task
+        :type task_id: int
+        :raises LauncherError: If task cannot be found
+        """
         self._lock.acquire()
         try:
             process = psutil.Process(pid=task_id)
@@ -126,6 +173,13 @@ class TaskManager:
             self._lock.release()
 
     def get_task_update(self, task_id):
+        """Get the update of a task
+
+        :param task_id: task id
+        :type task_id: str
+        :return: status, returncode, output, error
+        :rtype: str, int, str, str
+        """
         self._lock.acquire()
         try:
             rc, out, err = self.task_history[task_id]
@@ -135,8 +189,11 @@ class TaskManager:
                     task = self[task_id]
                     return task.status, rc, out, err
                 # removed forcefully either by OS or us, no returncode set
-                except KeyError:
+                # either way, job has completed and we won't have returncode
+                # Usually hits when jobs last less then the TM_INTERVAL
+                except (KeyError, psutil.NoSuchProcess):
                     return "Completed", rc, out, err
+
             # process has completed, status set manually as we don't
             # save task statuses during runtime.
             else:
@@ -147,6 +204,19 @@ class TaskManager:
             self._lock.release()
 
     def add_task_history(self, task_id, returncode, out=None, err=None):
+        """Add a task to the task history
+
+        Add a task to record its future returncode, output and error
+
+        :param task_id: id of the task
+        :type task_id: str
+        :param returncode: returncode
+        :type returncode: int
+        :param out: output, defaults to None
+        :type out: str, optional
+        :param err: output, defaults to None
+        :type err: str, optional
+        """
         self.task_history[task_id] = (returncode, out, err)
 
     def __getitem__(self, task_id):
@@ -206,7 +276,7 @@ class Task:
         return output, error
 
     def kill(self, timeout=10):
-        """Kill the subprocess"""
+        """Kill the subprocess and all childen"""
 
         def kill_callback(proc):
             logger.debug(f"Process terminated with kill {proc.pid}")
@@ -223,6 +293,11 @@ class Task:
                 logger.warning(f"Unable to kill emitted process {proc.pid}")
 
     def terminate(self, timeout=10):
+        """Terminate a this process and all children.
+
+        :param timeout: time to wait for task death, defaults to 10
+        :type timeout: int, optional
+        """
         def terminate_callback(proc):
             logger.debug(f"Cleanly terminated task {proc.pid}")
 

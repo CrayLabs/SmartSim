@@ -1,19 +1,36 @@
-
 import os
-import sys
-import toml
 import os.path as osp
+import sys
+from shutil import which
+
+import toml
 
 from .error import SSConfigError
-from .utils.helpers import expand_exe_path
+
+
+def expand_exe_path(exe):
+    """Takes an executable and returns the full path to that executable
+
+    :param exe: executable or file
+    :type exe: str
+    """
+
+    # which returns none if not found
+    in_path = which(exe)
+    if not in_path:
+        if os.path.isfile(exe) and os.access(exe, os.X_OK):
+            return os.path.abspath(exe)
+        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
+            raise SSConfigError(f"File, {exe}, is not an executable")
+        raise SSConfigError(f"Could not locate executable {exe}")
+    return os.path.abspath(in_path)
+
 
 class Config:
-
     def __init__(self):
         self.conf = self._load_conf()
 
     def _load_conf(self):
-
         def _load_from_home():
             try:
                 home = os.environ["HOME"]
@@ -53,7 +70,6 @@ class Config:
         config = toml.load(conf_path)
         return config
 
-
     @property
     def redisai(self):
         try:
@@ -62,7 +78,9 @@ class Config:
             lib = redisai["install_path"]
             lib_path = osp.join(lib, "redisai.so")
             if not osp.isfile(lib_path):
-                raise SSConfigError("RedisAI library path provided in SmartSim config could be found")
+                raise SSConfigError(
+                    "RedisAI library path provided in SmartSim config could not be found"
+                )
             return lib_path, device
         except KeyError:
             raise SSConfigError("Could not find redis.ai in SmartSim config")
@@ -75,7 +93,9 @@ class Config:
             suffix = ".dylib" if sys.platform == "darwin" else ".so"
             lib_path = osp.join(lib, "libredisip" + suffix)
             if not osp.isfile(lib_path):
-                raise SSConfigError("RedisIP library path provided in SmartSim config could be found")
+                raise SSConfigError(
+                    "RedisIP library path provided in SmartSim config could not be found"
+                )
             return lib_path
         except KeyError:
             raise SSConfigError("Could not find redis.ip in SmartSim config")
@@ -86,7 +106,9 @@ class Config:
             redis = self.conf["redis"]
             conf_path = redis["config"]
             if not osp.isfile(conf_path):
-                raise SSConfigError("Redis 'config' provided in SmartSim config could be found")
+                raise SSConfigError(
+                    "Redis 'config' provided in SmartSim config could not be found"
+                )
             return conf_path
         except KeyError:
             smartsim_path = os.path.dirname(osp.abspath(__file__))
@@ -113,9 +135,13 @@ class Config:
             exe = expand_exe_path(exe_path)
             return exe
         except KeyError:
-            raise SSConfigError("Could not find redis 'cli' executable in SmartSim config")
+            raise SSConfigError(
+                "Could not find redis 'cli' executable in SmartSim config"
+            )
         except SSConfigError as e:
-            raise SSConfigError("Redis-cli executable in SmartSim Config could not be used") from e
+            raise SSConfigError(
+                "Redis-cli executable in SmartSim Config could not be used"
+            ) from e
 
     @property
     def test_launcher(self):
@@ -126,7 +152,7 @@ class Config:
                 launcher = self.conf["test"]["launcher"]
                 return launcher
         except KeyError:
-            return "local" # local by default
+            return "local"  # local by default
 
     @property
     def log_level(self):
@@ -137,7 +163,7 @@ class Config:
                 level = self.conf["smartsim"]["log_level"]
                 return level
         except KeyError:
-            return "info" # local by default
+            return "info"  # info by default
 
     @property
     def jm_interval(self):
@@ -148,7 +174,7 @@ class Config:
                 num_seconds = self.conf["smartsim"]["jm_interval"]
                 return int(num_seconds)
         except KeyError:
-            return 15 # 15 seconds by default
+            return 15  # 15 seconds by default
 
 
 _template_config = """

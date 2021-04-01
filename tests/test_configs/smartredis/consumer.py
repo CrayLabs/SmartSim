@@ -5,25 +5,26 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-
-from silc import Client
+from smartredis import Client
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='SILC ensemble producer process.')
-    parser.add_argument('--exchange', action='store_true')
+    parser = argparse.ArgumentParser(description="SmartRedis ensemble producer process.")
+    parser.add_argument("--exchange", action="store_true")
     args = parser.parse_args()
 
     # get model and set into database
     c = Client(False)
 
     keyin = os.getenv("SSKEYIN")
-    data_sources = keyin.split(',')
+    data_sources = keyin.split(",")
     data_sources.sort()
 
-    assert data_sources == ['producer_0', 'producer_1']
+    assert data_sources == ["producer_0", "producer_1"]
 
-    inputs = {data_sources[0]: np.ones((1, 1, 3, 3)),
-              data_sources[1]: -np.ones((1, 1, 3, 3))}
+    inputs = {
+        data_sources[0]: np.ones((1, 1, 3, 3)),
+        data_sources[1]: -np.ones((1, 1, 3, 3)),
+    }
 
     for key in data_sources:
         c.set_data_source(key)
