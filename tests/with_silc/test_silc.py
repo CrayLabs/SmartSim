@@ -29,10 +29,11 @@ except ImportError:
     pass
 
 
-@pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     ("silc" not in sys.modules) or ("torch" not in sys.modules),
     reason="requires SILC and PyTorch",
-)
+    )
+    
 def test_exchange(fileutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
