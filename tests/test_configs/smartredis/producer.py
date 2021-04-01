@@ -5,7 +5,7 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from silc import Client
+from smartredis import Client
 
 
 # taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html
