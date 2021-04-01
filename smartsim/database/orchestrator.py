@@ -111,7 +111,7 @@ class Orchestrator(EntityList):
 
         :raises SmartSimError: If cluster status cannot be verified
         """
-        # TODO use silc for this, then we don't have to create host dictionary
+        # TODO use smartredis for this, then we don't have to create host dictionary
         host_list = []
         for host in self.hosts:
             for port in self.ports:

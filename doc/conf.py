@@ -51,9 +51,9 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 breathe_projects = {
-        "c_client":"../silc/doc/c_client/xml",
-        "fortran_client":"../silc/doc/fortran_client/xml",
-        "cpp_client":"../silc/doc/cpp_client/xml"
+        "c_client":"../smartredis/doc/c_client/xml",
+        "fortran_client":"../smartredis/doc/fortran_client/xml",
+        "cpp_client":"../smartredis/doc/cpp_client/xml"
         }
 
 # -- Options for HTML output -------------------------------------------------

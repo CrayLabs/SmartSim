@@ -6,7 +6,7 @@ Orchestrator
 The Orchestrator is an in-memory database that is launched prior to all other
 entities within an experiment. The Orchestrator can be used to store and retrieve
 data during the course of an experiment. In order to stream data into the orchestrator
-or receive data from the orchestrator, one of the SmartSim clients (SILC) has to be
+or receive data from the orchestrator, one of the SmartSim clients (smartredis) has to be
 used within a Model.
 
 .. |orchestrator| image:: images/SmartSim-orchestrator.png
@@ -22,7 +22,7 @@ instances per node, and allocation to launch on. At launch, the Orchestrator is 
 to the launch parameter specifications and optionally constructed into a distributed
 memory cluster.
 
-Combined with the SILC clients, the Orchestrator is capable of hosting and executing
+Combined with the smartredis clients, the Orchestrator is capable of hosting and executing
 AI models written in Python on CPU or GPU. The Orchestrator supports models written with
 TensorFlow, Pytorch, TensorFlow-Lite, or models saved in an ONNX format (sci-kit learn).
 
@@ -43,5 +43,5 @@ At its core, Redis is a key-value store. This means that put/get semantics are u
 messages to and from the database. SmartSim uses a specific hashing algorithm, CRC16, to ensure
 that data is evenly distributed amongst all database nodes. Notably, a user is not required to
 know where (which database node) data or Datasets (see Dataset API) are stored as the
-SILC clients will infer their location for the user.
+smartredis clients will infer their location for the user.
 

@@ -79,7 +79,7 @@ of the following values
 Testing SmartRedis
 ==================
 
-.. include:: ../silc/doc/testing.rst
+.. include:: ../smartredis/doc/testing.rst
    :start-line: 3
 
 -------------------------------------------------------

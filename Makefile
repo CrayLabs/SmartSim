@@ -26,10 +26,10 @@ help:
 # help: Build
 # help: -------
 
-# help: silc                           - Make SILC python client and setup SILC library
-.PHONY: silc
-silc:
-	@bash ./build-scripts/build-silc.sh
+# help: smartredis                           - Make smartredis python client and setup smartredis library
+.PHONY: smartredis
+smartredis:
+	@bash ./build-scripts/build-smartredis.sh
 
 # help: deps                           - Make SmartSim dependencies (CPU builds, TF and PT)
 .PHONY: deps

@@ -19,10 +19,10 @@ help:
 %: Makefile
 
 	# build the doxygen files for Clients
-	(cd ../silc/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran)
+	(cd ../smartredis/doc; doxygen Doxyfile_c; doxygen Doxyfile_cpp; doxygen Doxyfile_fortran)
 
 	# Symlink SmartRedis examples
-	(cd ../; ln -s ./silc/examples ./examples)
+	(cd ../; ln -s ./smartredis/examples ./examples)
 
 	# build docs
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

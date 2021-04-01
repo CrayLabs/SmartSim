@@ -109,8 +109,7 @@ class Config:
     def redis_cli(self):
         try:
             redis = self.conf["redis"]
-            lib_path = redis["cli"]
-            exe_path = osp.join(lib_path, "redis-cli")
+            exe_path = redis["cli"]
             exe = expand_exe_path(exe_path)
             return exe
         except KeyError:
@@ -157,7 +156,7 @@ _template_config = """
 # number of seconds per job status update
 # for jobs on WLM system (e.g. slurm, pbs, etc)
 jm_interval = 15    # default
-log_level = "debug" # default
+log_level = "info" # default
 
 [redis]
 # path to where "redis-server" and "redis-cli" binaries are located
