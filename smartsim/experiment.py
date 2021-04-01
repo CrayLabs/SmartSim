@@ -1,5 +1,4 @@
 import os.path as osp
-import pickle
 import time
 from os import getcwd
 from pprint import pformat
@@ -11,7 +10,6 @@ from .control import Controller
 from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
 from .generation import Generator
-from .launcher import LocalLauncher
 from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
