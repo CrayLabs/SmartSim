@@ -30,8 +30,6 @@ class Model(SmartSimEntity):
         has access to by storing the key_prefix associated
         with that entity
 
-        Only python clients can have multiple incoming connections
-
         :param incoming_entity: The entity that data will be received from
         :param incoming_entity: SmartSimEntity
         """
