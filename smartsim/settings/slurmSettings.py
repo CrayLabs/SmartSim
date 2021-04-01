@@ -9,7 +9,7 @@ class SrunSettings(RunSettings):
 
         ``SrunSettings`` should only be used on Slurm based systems.
 
-        If an allocation is specified, the instance recieving these run
+        If an allocation is specified, the instance receiving these run
         parameters will launch on that allocation.
 
         :param exe: executable

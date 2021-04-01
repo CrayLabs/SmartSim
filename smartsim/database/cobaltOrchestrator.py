@@ -34,7 +34,7 @@ class CobaltOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
         :type hosts: list[str]
-        :param run_command: specify launch binary. options are ``mpirun`` and ``aprun``
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
         :type run_command: str
         :param account: account to run batch on
         :type account: str
@@ -84,7 +84,7 @@ class CobaltOrchestrator(Orchestrator):
     def set_hosts(self, host_list):
         """Specify the hosts for the ``CobaltOrchestrator`` to launch on
 
-        :param host_list: list of host (compute node names)
+        :param host_list: list of hosts (compute node names)
         :type host_list: list[str]
         :raises TypeError: if wrong type
         """

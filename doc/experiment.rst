@@ -26,7 +26,7 @@ Model
 
 ``Model(s)`` are created through the Experiment API. Models represent
 any computational kernel. Models are flexible enough to support many
-different applications, however, to be used with our clients (smartredis)
+different applications, however, to be used with our clients (SmartRedis)
 the application will have to be written in Python, C, C++, or Fortran.
 
 Models are given ``RunSettings`` objects that specify how a kernel should
@@ -51,7 +51,7 @@ In addition to a single model, SmartSim has the ability to launch an
 ``Ensemble`` of ``Model`` applications simultaneously. An ``Ensemble`` can be
 constructed in three ways:
   1. Manually (by adding created ``Model`` objects)
-  2. by generating permutations of model parameters
+  2. By generating permutations of model parameters
   3. By specifying a number of replicas
 
 Ensembles can be given parameters and ``permutation strategies`` that
@@ -77,7 +77,7 @@ workload manager and available compute resources.
   - ``CobaltBatchSettings`` for Cobalt
 
 Users can specify how to execute ``Ensemble`` instances they
-are created through the ``Experiment`` interface.
+have created through the ``Experiment`` interface.
 
 # TODO provide examples
 To expand parameters into ``Model`` instances using permutation strategies
@@ -117,7 +117,7 @@ has to be used within a ``Model``.
 
 The use of an in-memory, distributed database to store data is one
 of the key components of SmartSim that allows for scalable simulation
-sand analysis workloads. The inclusion of an in-memory database
+and analysis workloads. The inclusion of an in-memory database
 provides data persistence so that the data can be accessed at any time
 during or after the SmartSim experiment.
 

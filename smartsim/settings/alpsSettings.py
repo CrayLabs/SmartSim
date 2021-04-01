@@ -79,9 +79,9 @@ class AprunSettings(RunSettings):
         self.run_args["nodelist"] = ",".join(host_list)
 
     def format_run_args(self):
-        """return a list of ALPs formatted run arguments
+        """Return a list of ALPS formatted run arguments
 
-        :return: list ALPs arguments for these settings
+        :return: list ALPS arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses

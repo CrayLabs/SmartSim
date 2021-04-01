@@ -11,7 +11,7 @@ from .error import SSConfigError
 def expand_exe_path(exe):
     """Takes an executable and returns the full path to that executable
 
-    :param exe: exectable or file
+    :param exe: executable or file
     :type exe: str
     """
 
@@ -79,7 +79,7 @@ class Config:
             lib_path = osp.join(lib, "redisai.so")
             if not osp.isfile(lib_path):
                 raise SSConfigError(
-                    "RedisAI library path provided in SmartSim config could be found"
+                    "RedisAI library path provided in SmartSim config could not be found"
                 )
             return lib_path, device
         except KeyError:
@@ -94,7 +94,7 @@ class Config:
             lib_path = osp.join(lib, "libredisip" + suffix)
             if not osp.isfile(lib_path):
                 raise SSConfigError(
-                    "RedisIP library path provided in SmartSim config could be found"
+                    "RedisIP library path provided in SmartSim config could not be found"
                 )
             return lib_path
         except KeyError:
@@ -107,7 +107,7 @@ class Config:
             conf_path = redis["config"]
             if not osp.isfile(conf_path):
                 raise SSConfigError(
-                    "Redis 'config' provided in SmartSim config could be found"
+                    "Redis 'config' provided in SmartSim config could not be found"
                 )
             return conf_path
         except KeyError:
@@ -163,7 +163,7 @@ class Config:
                 level = self.conf["smartsim"]["log_level"]
                 return level
         except KeyError:
-            return "info"  # local by default
+            return "info"  # info by default
 
     @property
     def jm_interval(self):

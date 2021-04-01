@@ -33,11 +33,11 @@ class PBSOrchestrator(Orchestrator):
         :type port: int
         :param db_nodes: number of compute nodes to span accross, defaults to 1
         :type db_nodes: int, optional
-        :param batch: Run as a batch workload
+        :param batch: run as a batch workload
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
         :type hosts: list[str]
-        :param run_command: specify launch binary. options are ``mpirun`` and ``aprun``
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
         :type run_command: str
         :param account: account to run batch on
         :type account: str
@@ -90,7 +90,7 @@ class PBSOrchestrator(Orchestrator):
     def set_hosts(self, host_list):
         """Specify the hosts for the ``PBSOrchestrator`` to launch on
 
-        :param host_list: list of host (compute node names)
+        :param host_list: list of hosts (compute node names)
         :type host_list: list[str]
         :raises TypeError: if wrong type
         """

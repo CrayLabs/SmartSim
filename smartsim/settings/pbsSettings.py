@@ -83,7 +83,7 @@ class QsubBatchSettings(BatchSettings):
         format = "HH:MM:SS"
 
         If a walltime argument is provided in
-        QsubBatchSettings.resources``, then
+        ``QsubBatchSettings.resources``, then
         this value will be overridden
 
         :param walltime: wall time

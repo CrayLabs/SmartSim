@@ -21,7 +21,7 @@ class Experiment:
     """Experiments are the main user interface in SmartSim.
 
     Experiments can create instances to launch called ``Model``
-    and ``Ensemble``. Through the Experiment interface, users
+    and ``Ensemble``. Through the ``Experiment`` interface, users
     can programmatically create, configure, start, stop, and
     query the instances they create.
     """
