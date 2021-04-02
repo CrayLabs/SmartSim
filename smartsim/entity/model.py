@@ -37,7 +37,7 @@ class Model(SmartSimEntity):
             in_entity.name for in_entity in self.incoming_entities
         ]:
             raise SSConfigError(
-                f"'{incoming_entity.name}' has already"
+                f"'{incoming_entity.name}' has already "
                 + "been registered as an incoming entity"
             )
 
