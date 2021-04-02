@@ -107,3 +107,10 @@ SmartRedis utilizes the following libraries.
  - [Hiredis](https://github.com/redis/hiredis) 1.0.0
  - [Redis-plus-plus](https://github.com/sewenew/redis-plus-plus)  1.2.3
  - [protobuf](https://github.com/protocolbuffers/protobuf)  v3.11.3
+
+
+## Publications
+
+The following are public presentations or publications using SmartSim (more to come!)
+
+ - [Collaboration with NCAR - CGD Seminar](https://www.youtube.com/watch?v=2e-5j427AS0)
