@@ -24,6 +24,7 @@ help:
 	# Symlink SmartRedis examples
 	(cd ../; ln -s ./smartredis/examples ./examples)
 
+
 	# build docs
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 

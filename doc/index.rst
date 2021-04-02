@@ -13,6 +13,7 @@
    :maxdepth: 2
    :caption: tutorials
 
+   tutorials/01_getting_started/01_getting_started
    tutorials/smartredis
 
 .. toctree::
