@@ -1,9 +1,30 @@
+
+
 <div align="center">
-  <img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large.png" width="90%"><img>
+    <a href="https://github.com/CrayLabs/SmartSim"><img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large.png" width="90%"><img></a>
+    <br />
+    <br />
+<div display="inline-block">
+    <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/build/html/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/build/html/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://github.com/CrayLabs/SmartSim/releases/download/v0.3.0/smartsim-0.3.0.tar.gz"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://craylabs.slack.com/ssb/redirect"><b>Slack</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
+  </div>
+    <br />
+    <br />
 </div>
 
 
+[![License](https://img.shields.io/github/license/CrayLabs/SmartSim)](https://github.com/CrayLabs/SmartSim/blob/master/LICENSE.md)
+![GitHub last commit](https://img.shields.io/github/last-commit/CrayLabs/SmartSim)
+![GitHub deployments](https://img.shields.io/github/deployments/CrayLabs/SmartSim/github-pages?label=doc%20build)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/CrayLabs/SmartSim)
+![Language](https://img.shields.io/github/languages/top/CrayLabs/SmartSim)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
 
 ------------
 
@@ -66,8 +87,8 @@ The SmartSim IL Clients ([SmartRedis](https://github.com/CrayLabs/SmartRedis))
 are implementations of Redis clients that implement the RedisAI
 API with additions specific to scientific workflows.
 
-SmartRedis clients are available in Fortran, C, C++, and Python. Users can seemlessly
-pull and push data from the Orchestrator from different langauges.
+SmartRedis clients are available in Fortran, C, C++, and Python.
+Users can seamlessly pull and push data from the Orchestrator from different languages.
 
 | Language 	| Version/Standard 	|
 |----------	|:----------------:	|
