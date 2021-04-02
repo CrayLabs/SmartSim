@@ -38,7 +38,8 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'breathe'
+    'breathe',
+    'nbsphinx'
 ]
 
 

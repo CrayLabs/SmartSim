@@ -98,7 +98,7 @@ class Orchestrator(EntityList):
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
 
-    def create_cluster(self):
+    def create_cluster(self):  # cov-wlm
         """Connect launched cluster instances.
 
         Should only be used in the case where cluster initilization
@@ -132,7 +132,7 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
 
-    def check_cluster_status(self):
+    def check_cluster_status(self): # cov-wlm
         """Check that a cluster is up and running
 
         :raises SmartSimError: If cluster status cannot be verified

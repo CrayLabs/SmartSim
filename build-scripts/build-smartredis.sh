@@ -3,7 +3,7 @@
 echo "Retrieving SmartRedis library"
 git clone https://github.com/CrayLabs/SmartRedis.git smartredis
 cd smartredis
-git checkout develop
+git checkout v0.1.0
 
 echo "Making smartredis dependencies"
 make deps

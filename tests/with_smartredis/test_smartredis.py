@@ -50,8 +50,6 @@ def test_exchange(fileutils):
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    # gen = Generator(test_dir)
-
     rs = RunSettings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
     ensemble = Ensemble(

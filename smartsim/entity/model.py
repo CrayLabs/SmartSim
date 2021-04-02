@@ -56,8 +56,6 @@ class Model(SmartSimEntity):
         has access to by storing the key_prefix associated
         with that entity
 
-        Only python clients can have multiple incoming connections
-
         :param incoming_entity: The entity that data will be received from
         :param incoming_entity: SmartSimEntity
         """
@@ -65,7 +63,7 @@ class Model(SmartSimEntity):
             in_entity.name for in_entity in self.incoming_entities
         ]:
             raise SSConfigError(
-                f"'{incoming_entity.name}' has already"
+                f"'{incoming_entity.name}' has already "
                 + "been registered as an incoming entity"
             )
 
