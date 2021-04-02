@@ -1,0 +1,26 @@
+{
+    "pbs_server":"sdb",
+    "Jobs":{
+        "16705.sdb":{
+            "Job_Name":"run.sh",
+            "Job_Owner":"username",
+            "resources_used":{
+                "cpupercent":10,
+                "cput":"00:00:01",
+                "mem":"35844kb",
+                "ncpus":17,
+                "vmem":"462556kb",
+                "walltime":"00:00:26"
+            },
+            "job_state":"R",
+            "queue":"that_queue",
+            "exec_host":"server/4+server/5",
+            "exec_vnode":"(server_1:ncpus=1)+(server_2:ncpus=1)",
+            "Hold_Types":"n",
+            "Join_Path":"n",
+            "Keep_Files":"n",
+            "Mail_Points":"a",
+            "mtime":"Wed Nov  4 12:23:28 2020"
+        }
+    }
+}

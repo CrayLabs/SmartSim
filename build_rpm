@@ -37,11 +37,6 @@ SCRIPT_DIR=$(dirname $(which $0))
 # Find newest build_common.shrc
 #
 
-# backup old one
-if [ -f build_common.shrc ] ; then
-  mv build_common.shrc build_common.shrc.bk
-fi
-
 # for Jenkins builds - find the directory
 COMMON_SUBDIR=multibranch-athena-build-common/branches/master/builds/lastSuccessfulBuild/archive/build
 for d in \
@@ -55,13 +50,6 @@ for d in \
   fi
 done
 
-# for personal builds (download it from Jenkins)
-if [ ! -f build_common.shrc ] ; then
-  wget http://iyumcf.us.cray.com:8080/job/multibranch-athena-build-common/job/master/lastSuccessfulBuild/artifact/build_common.shrc
-fi
-if [ ! -f build_common.shrc ] ; then
-  wget http://iyumsea.us.cray.com:5050/job/multibranch-athena-build-common/job/master/lastSuccessfulBuild/artifact/build_common.shrc
-fi
 if [ ! -f build_common.shrc ] ; then
   if [ -f build_common.shrc.bk ] ; then
     echo "Warning: cannot find build_common.shrc, using previous copy"

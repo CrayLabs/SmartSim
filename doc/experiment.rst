@@ -3,12 +3,13 @@
 Experiments
 ***********
 
-The primary user-facing object within the SmartSim library is the SmartSim Experiment,
-encompassing all external entities (e.g. numerical simulation, data analysis tools, or ML packages)
-as well as internal SmartSim objects that coordinate the setup and execution of the experiment.
-Users configure the experiment in Python, either in a script or Jupyter notebook.
-The simulation and analysis entities communicate with each other through an in-memory database
-using an API, referred to as a SmartSim client, with support for C, C++, Fortran, and Python.
+The Experiment acts as both a factory function as well as an interface to interact
+with the entities created by the experiment.
+
+Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a Jupyter notebook,
+interactive python session, or Python file and use the ``Experiment`` to
+iteratively create, configure and launch computational kernels on the
+system through the specified launcher.
 
 .. |SmartSim Architecture| image:: images/SmartSim_Architecture.png
   :width: 700
@@ -17,129 +18,109 @@ using an API, referred to as a SmartSim client, with support for C, C++, Fortran
 |SmartSim Architecture|
 
 
+The interface was designed to be simple with as little complexity
+as possible, and agnostic to the backend launching mechanism (local,
+Slurm, PBSPro, etc).
+
+
 Entities
 ========
 
-Experiments are like configuration files that specify exactly how a set
-of entities should be run within SmartSim. Entities are the specific tasks
-a user wants to run in their workflow. There are four entities within SmartSim:
+The instances created by an ``Experiment`` fall into two classes:
+  1. ``SmartSimEntity``
+  2. ``EntityList``
 
-1. Model
-2. Ensemble
-3. Node
-4. Orchestrator
-
+``Model`` instances are ``SmartSimEntity`` objects. ``Ensemble`` instances
+are ``EntityList`` objects. ``EntityList`` instances are containers of
+``SmartSimEntity`` objects.
 
 Model
------
-SmartSim model objects are created by the user to add simulation
-applications into the SmartSim experiment.  The SmartSim model
-object contains run settings for the simulation such as the number
-of computational nodes for the simulation, the number of processes per
-node, the executable, and executable arguments. For more information
-on how to configure the runtime settings of a Model or any entity,
-see the `launcher documentation <launchers.html>`_ Instances of SmartSim
-models can be created through a call to ``Experiment.create_model()``.
+=====
+
+``Model(s)`` are created through the Experiment API. Models represent
+any computational kernel. Models are flexible enough to support many
+different applications, however, to be used with our clients (SmartRedis)
+the application will have to be written in Python, C, C++, or Fortran.
+
+Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel should
+be excuted with regards to the workload manager (e.g. Slurm) and the available
+compute resources on the system.
+
+Each launcher supports specific types of ``RunSettings``.
+
+   - :ref:`SrunSettings <srun_api>` for Slurm
+   - :ref:`AprunSettings <aprun_api>` for PBSPro and Cobalt
+   - :ref:`MpirunSettings <openmpi_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, and Slurm
+
+When on systems that support these launch binaries, ``Model`` objects can
+be created to run applications in allocations obtained by the user, or in the
+case of Slurm based systems, SmartSim can obtain allocations before launching
+``Model`` instances.
 
 Ensemble
---------
+========
+
 In addition to a single model, SmartSim has the ability to launch an
-ensemble(s) of simulations simultaneously. An ensemble can be manually
-constructed through API calls or SmartSim can be used to generate an
-ensemble of model realizations by automatically copying and modifying
-input files For the latter approach, at run-time, user-defined character
-tags in the simulation's configuration files (e.g. Fortran namelists or XML)
-are replaced by SmartSim with specific parameter values. Users can
-specify ranges for each of these parameters with the ensemble of
-realizations run using a number of preset strategies or implementing
-a custom strategy. There are multiple ways of generating ensemble members;
-see the `generation documentation <generate.html>`_
+``Ensemble`` of ``Model`` applications simultaneously.
 
-Node
-----
-Nodes run processes adjacent to the simulation. Nodes can be used
-for anything from analysis, training, inference, etc. Nodes are the
-most flexible entity with no requirements on language or framework.
-Nodes are commonly used for acting on data being streamed out of a
-simulation model through the orchestrator
+An ``Ensemble`` can be constructed in three ways:
+  1. Parameter expansion (by specifying ``params`` and ``perm_strat`` argument)
+  2. Replica creation (by specifying ``replicas`` argument)
+  3. Manually (by adding created ``Model`` objects) if launching as a batch job
 
-Orchestrator
-------------
-The Orchestrator is an in-memory database, clustered or standalone, that
-is launched prior to the simulation. The Orchestrator can be used
-to store data from another entity in memory during the course of
-an experiment. In order to stream data into the orchestrator or
-receive data from the orchestrator, one of the SmartSim clients
-has to be used within a SmartSim Model or SmartSim Node.
+Ensembles can be given parameters and permutation strategies that
+define how the ``Ensemble`` will create the underlying model objects.
+Three strategies are built in
+  1. ``all_perm`` for generating all permutations of model parameters
+  2. ``step`` for creating one set of parameters for each element in `n` arrays
+  3. ``random`` for random selection from predefined parameter spaces.
 
-The use of an in-memory, distributed database to store data is one
-of the key components of SmartSim that allows for scalable simulation
-and analysis workloads. The inclusion of an in-memory database in the
-in-transit framework provides data persistence so that the data can
-be accessed at any time during or after the SmartSim experiment.
-A distributed framework enables the database to be scaled to the needs
-of a particular use case, which may exceed the resources of a single
-node for even modest simulations.
+A callable function can also be supplied for custom permutation strategies.
+The function should take in two lists: parameter names and parameter values.
+The function should return a list of dictionaries that will be supplied as
+model parameters. The length of the list returned will determine how many
+``Model`` instances are created.
 
-SmartSim can use KeyDB or Redis for data staging. We default to KeyDB
-due to its inherent clustering capability, performance, and
-compatibility with the widely-used Redis database APIs.
-KeyDB stores data in key-value pairs that can be set, retrieved,
-and manipulated using the aforementioned Redis database APIs.
-Every instance of KeyDB can handle concurrent database requests
-by taking advantage of multiple threads. KeyDB can be used in a cluster
-configuration to scale across multiple compute nodes, and with the
-assistance of SmartSim, also host multiple shards of the cluster per
-compute node.
+For example, the following the the built-in strategy ``all_perm``.
 
-Some of the additional features provided in the community
-version of KeyDB include multi-master, active replicas, rollover,
-and database backup to disk, and KeyDB Pro offers additional features
-such as persistent FLASH support, MVCC support, and non-blocking queries.
+.. code-block:: python
+
+    def create_all_permutations(param_names, param_values):
+        perms = list(product(*param_values))
+        all_permutations = []
+        for p in perms:
+            temp_model = dict(zip(param_names, p))
+            all_permutations.append(temp_model)
+        return all_permutations
 
 
+After ``Ensemble`` initialization, ``Ensemble`` instances can be
+passed as arguments to ``Experiment.generate()`` to write assigned
+parameter values into attached and tagged configuration files.
 
-Creating an Experiment
-======================
+Launching Ensembles
+-------------------
 
-Experiments can be run as a part of a larger python codebase, or as
-a standalone tool. When running a SmartSim script, users can call
-``experiment.generate()`` which will create a file structure for the
-experiment and all entities within the experiment. This helps
-label and organize the various outputs from each of the various
-entities. For more information on generation see the `generation
-documentation <generate.html>`_
+Ensembles can be launched in previously obtained interactive allocations
+and as a batch. Similar to ``RunSettings``, ``BatchSettings`` specify how
+a application(s) in a batch job should be executed with regards to the system
+workload manager and available compute resources.
 
+  - :ref:`SbatchSettings <sbatch_api>` for Slurm
+  - :ref:`QsubBatchSettings <qsub_api>` for PBSPro
+  - :ref:`CobaltBatchSettings <cqsub_api>` for Cobalt
 
-Launching an Experiment
-=======================
+If only passed  ``RunSettings``, ``Ensemble`` objects will require either
+a ``replicas`` argument or a ``params`` argument to expand parameters
+into ``Model`` instances. At launch, the ``Ensemble`` will look for
+interactive allocations to launch models in.
 
-SmartSim supports launching simulations, databases, and analysis packages on
-heterogeneous, computational resources with users specifying hardware groups
-on which SmartSim entities are launched. On execution, SmartSim will create
-the orchestrator (database) and then execute the models and nodes.  The launching of the
-SmartSim experiment is non-blocking, and as a result, the user is free to
-execute other commands or launch additional experiments in the same Python script.
-If the user would like to wait for the experiment to complete, the status of the
-SmartSim models and nodes can be monitored with a blocking poll command through the SmartSim API.
+If passed ``BatchSettings`` without other arguments, an empty ``Ensemble``
+will be created that ``Model`` objects can be added to manually. All ``Model``
+objects added to the ``Ensemble`` will be launched in a single batch.
 
+If passed ``BatchSettings`` and ``RunSettings``, the ``BatchSettings`` will
+determine the allocation settings for the entire batch, and the ``RunSettings``
+will determine how each individual ``Model`` instance is executed within
+that batch.
 
-Monitoring Experiments
-======================
-
-SmartSim allows users to monitor the status of SmartSim models, nodes, and
-orchestrators that have been launched in an experiment.  The ``Experiment``
-class provides a continuous status check with ``experiment.poll()`` that
-reports entity status and blocks execution until all entities are no longer
-running.  A non-blocking status check can be performed with
-``experiment.get_status()`` which will return the status of the launched
-entity.
-
-Stopping Experiments
-====================
-Because the SmartSim experiment uses an in-memory database, the simulation data is
-accessible for as long as the system allocation remains active.  However,
-if the user would like to stop the experiment, the API includes the ability to stop
-all or specified models, nodes, and database.  Similarly, the API allows the user
-to release the system allocations(s) requested by SmartSim if that allocation is not
-to be reused by follow-on experiments or for additional data analysis.

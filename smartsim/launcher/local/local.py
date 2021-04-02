@@ -1,87 +1,84 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..shell import execute_cmd
-from .localStep import LocalStep
-from ...error.errors import LauncherError, SSUnsupportedError
-
+from ...error import LauncherError
+from ...settings import RunSettings
 from ...utils import get_logger
+from ..step import LocalStep
+from ..stepInfo import UnmanagedStepInfo
+from ..stepMapping import StepMapping
+from ..taskManager import TaskManager
+
 logger = get_logger(__name__)
 
 
 class LocalLauncher:
-    """Launcher used for spawning proceses on a localhost machine.
+    """Launcher used for spawning proceses on a localhost machine."""
 
-       The Local Launcher is primarily used for testing and prototyping
-       purposes, this launcher does not have the same capability as the
-       launchers that inherit from the SmartSim launcher base class as those
-       launcher interact with the workload manager.
-
-       All jobs will be launched serially and will not be able to be queried
-       through the controller interface like jobs submitted to a workload
-       manager like Slurm.
-    """
     def __init__(self):
-        pass
+        self.task_manager = TaskManager()
+        self.step_mapping = StepMapping()  # only used for consistency
 
-    def validate(self, nodes=None, ppn=None, partition=None):
-        """Not supported in the local launcher
-
-        :raises SSUnsupportedError: if called
-        """
-
-        raise SSUnsupportedError("Local launcher does not support job validation")
-
-    def create_step(self, name, run_settings, multi_prog=False):
+    def create_step(self, name, cwd, step_settings):
         """Create a job step to launch an entity locally
 
-        :param name: name of the step to be launch, usually entity.name
-        :type name: str
-        :param run_settings: smartsim run_settings for an entity
-        :type run_settings: dict
-        :param multi_prog: create a multi-program step (not supported), but retained for consistency with other launchers
-        :type multi_prog: bool, optional
-        :raises SSUnsupportedError: if multi_prog is True
         :return: Step object
         """
-        if multi_prog:
-            raise SSUnsupportedError(
-                "Local Launcher does not support mutliple program jobs")
-        step = LocalStep(run_settings)
+        if not isinstance(step_settings, RunSettings):
+            raise TypeError(
+                f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
+            )
+        step = LocalStep(name, cwd, step_settings)
         return step
 
-    def get_step_status(self, step_id):
-        """Not supported in the local launcher
+    def get_step_update(self, step_names):
+        """Get status updates of all steps at once
 
-        :raises SSUnsupportedError: if called
+        :param step_names: list of step_names
+        :type step_names: list[str]
+        :return: list of LocalStepInfo for update
+        :rtype: list
         """
-        raise SSUnsupportedError("Local launcher does not support step statuses")
+        # step ids are process ids of the tasks
+        # as there is no WLM intermediary
+        updates = []
+        step_ids = self.step_mapping.get_ids(step_names, managed=False)
+        for step_id in step_ids:
+            status, rc, out, err = self.task_manager.get_task_update(step_id)
+            update = UnmanagedStepInfo(status, rc, out, err)
+            updates.append(update)
+        return updates
 
-    def get_step_nodes(self, step_id):
+    def get_step_nodes(self, step_names):
         """Return the address of nodes assigned to the step
 
+        TODO: Use socket to find the actual Lo address?
         :return: a list containing the local host address
         """
-        return ["127.0.0.1"]
-
-    def accept_alloc(self, alloc_id):
-        """Not supported in the local launcher
-
-        :raises SSUnsupportedError: if called
-        """
-        raise SSUnsupportedError("Local launcher does not support allocations")
-
-    def free_alloc(self, alloc_id):
-        """Not supported in the local launcher
-
-        :raises SSUnsupportedError: if called
-        """
-        raise SSUnsupportedError("Local launcher does not support allocations")
-
-    def get_alloc(self, nodes=1, ppn=1, duration="1:00:00", **kwargs):
-        """Not supported in the local launcher
-
-        :raises SSUnsupportedError: if called
-        """
-        raise SSUnsupportedError("Local launcher does not support allocations")
+        return [["127.0.0.1"] * len(step_names)]
 
     def run(self, step):
         """Run a local step created by this launcher. Utilize the shell
@@ -91,31 +88,33 @@ class LocalLauncher:
         :param step: LocalStep instance to run
         :type step: LocalStep
         """
-        out_file = step.run_settings["out_file"]
-        err_file = step.run_settings["err_file"]
-        cmd = step.build_cmd()
+        if not self.task_manager.actively_monitoring:
+            self.task_manager.start()
 
-        returncode, output, error = execute_cmd(cmd, shell=True,
-                                                cwd=step.cwd, env=step.env)
-        self._write_output(out_file, err_file, output, error)
+        out, err = step.get_output_files()
+        output = open(out, "w+")
+        error = open(err, "w+")
+        cmd = step.get_launch_cmd()
+        task_id = self.task_manager.start_task(
+            cmd, step.cwd, env=step.env, out=output, err=error
+        )
+        self.step_mapping.add(step.name, task_id=task_id, managed=False)
+        return task_id
 
-    def stop(self, step_id):
-        """Not supported in the local launcher
+    def stop(self, step_name):
+        """Stop a job step
 
-        :raises SSUnsupportedError: if called
+        :param step_name: name of the step to be stopped
+        :type step_name: str
+        :return: a LocalStepInfo instance
+        :rtype: LocalStepInfo
         """
-        raise SSUnsupportedError("Local launcher does not support job interaction")
+        # step_id is task_id for local. Naming for consistency
+        step_id = self.step_mapping[step_name].task_id
+        self.task_manager.remove_task(step_id)
+        status, rc, out, err = self.task_manager.get_task_update(step_id)
+        status = UnmanagedStepInfo("Cancelled", rc, out, err)
+        return status
 
-    def is_finished(self, status):
-        """Not supported in the local launcher
-
-        :raises SSUnsupportedError: if called
-        """
-        raise SSUnsupportedError("Local launcher does not support job interaction")
-
-    def _write_output(self, out_file, err_file, output, error):
-        """Write the output of a Popen subprocess"""
-        with open(out_file, "w+") as of:
-            of.write(output)
-        with open(err_file, "w+") as ef:
-            ef.write(error)
+    def __str__(self):
+        return "local"

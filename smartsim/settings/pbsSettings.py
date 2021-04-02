@@ -1,0 +1,213 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from smartsim.error.errors import SmartSimError
+
+from ..error import SSConfigError
+from ..utils.helpers import init_default
+from .settings import BatchSettings
+
+
+class QsubBatchSettings(BatchSettings):
+    def __init__(
+        self,
+        nodes=None,
+        ncpus=None,
+        time=None,
+        queue=None,
+        account=None,
+        resources=None,
+        batch_args=None,
+        **kwargs,
+    ):
+        """Specify ``qsub`` batch parameters for a job
+
+        ``nodes``, and ``ncpus`` are used to create the
+        select statement for PBS if a select statement is not
+        included in the ``resources``. If both are supplied
+        the value for select statement supplied in ``resources``
+        will override.
+
+        :param nodes: number of nodes for batch
+        :type nodes: int, optional
+        :param ncpus: number of cpus per node
+        :type ncpus: int, optional
+        :param time: walltime for batch job
+        :type time: str, optional
+        :param queue: queue to run batch in
+        :type queue: str
+        :param account: account for batch launch
+        :type account: str, optional
+        :param resources: overrides for resource arguments
+        :type resources: dict[str, str], optional
+        :param batch_args: overrides for PBS batch arguments
+        :type batch_args: dict[str, str], optional
+        """
+        super().__init__("qsub", batch_args=batch_args)
+        self.resources = init_default({}, resources, dict)
+        self._nodes = nodes
+        self._time = time
+        self._ncpus = ncpus
+        self._hosts = None
+        if account:
+            self.set_account(account)
+        if queue:
+            self.set_queue(queue)
+
+    def set_nodes(self, num_nodes):
+        """Set the number of nodes for this batch job
+
+        If a select argument is provided in ``QsubBatchSettings.resources``
+        this value will be overridden
+
+        :param num_nodes: number of nodes
+        :type num_nodes: int
+        """
+        self._nodes = int(num_nodes)
+
+    def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self._hosts = host_list
+
+    def set_walltime(self, walltime):
+        """Set the walltime of the job
+
+        format = "HH:MM:SS"
+
+        If a walltime argument is provided in
+        ``QsubBatchSettings.resources``, then
+        this value will be overridden
+
+        :param walltime: wall time
+        :type walltime: str
+        """
+        self._time = walltime
+
+    def set_queue(self, queue):
+        """Set the queue for the batch job
+
+        :param queue: queue name
+        :type queue: str
+        """
+        self.batch_args["q"] = str(queue)
+
+    def set_ncpus(self, num_cpus):
+        """Set the number of cpus obtained in each node.
+
+        If a select argument is provided in
+        ``QsubBatchSettings.resources`` then,
+        this value will be overridden
+
+        :param num_cpus: number of cpus per node in select
+        :type num_cpus: int
+        """
+        self._ncpus = int(num_cpus)
+
+    def set_account(self, acct):
+        """Set the account for this batch job
+
+        :param acct: account id
+        :type acct: str
+        """
+        self.batch_args["A"] = str(acct)
+
+    def set_resource(self, resource_name, value):
+        """Set a resource value for the Qsub batch
+
+        If a select statement is provided, the nodes and ncpus
+        arguments will be overridden. Likewise for Walltime
+
+        :param resource_name: name of resource, e.g. walltime
+        :type resource_name: str
+        :param value: value
+        :type value: str
+        """
+        # TODO add error checking here
+        # TODO include option to overwrite place (warning for orchestrator?)
+        self.resources[resource_name] = value
+
+    def format_batch_args(self):
+        """Get the formatted batch arguments for a preview
+
+        :return: batch arguments for Qsub
+        :rtype: list[str]
+        """
+        opts = self._create_resource_list()
+        for opt, value in self.batch_args.items():
+            prefix = "-"
+            if not value:
+                raise SSConfigError("PBS options without values are not allowed")
+            opts += [" ".join((prefix + opt, str(value)))]
+        return opts
+
+    def _create_resource_list(self):
+        res = []
+
+        # get select statement from resources or kwargs
+        if "select" in self.resources:
+            res += [f"-l select={str(self.resources['select'])}"]
+        else:
+            select = "-l select="
+            if self._nodes:
+                select += str(self._nodes)
+            else:
+                raise SmartSimError(
+                    "Insufficient resource specification: no nodes or select statement"
+                )
+            if self._ncpus:
+                select += f":ncpus={self._ncpus}"
+            if self._hosts:
+                hosts = ["=".join(("host", str(host))) for host in self._hosts]
+                select += f":{'+'.join(hosts)}"
+            res += [select]
+
+        if "place" in self.resources:
+            res += [f"-l place={str(self.resources['place'])}"]
+        else:
+            res += ["-l place=scatter"]
+
+        # get time from resources or kwargs
+        if "walltime" in self.resources:
+            res += [f"-l walltime={str(self.resources['walltime'])}"]
+        else:
+            if self._time:
+                res += [f"-l walltime={self._time}"]
+
+        for resource, value in self.resources.items():
+            if resource not in ["select", "walltime", "place"]:
+                res += [f"-l {resource}={str(value)}"]
+        return res

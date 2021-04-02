@@ -1,2 +1,1 @@
-
 from .controller import Controller

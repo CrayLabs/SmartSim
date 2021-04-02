@@ -1,6 +1,6 @@
 #!groovy
 
-node('cicero') {
+node('horizon') {
   def STAGE = ''
 
   try {
@@ -9,7 +9,7 @@ node('cicero') {
     //env.NAME = ""
     //env.IYUM_REPO_NAME = "${env.NAME}"
     env.IYUM_REPO_NAME = "analytics"
-    env.IYUM_REPO_PREFIX = "poseidon"
+    env.IYUM_REPO_PREFIX = "poseidon-"
 
     //
     // Stage Prep
@@ -27,6 +27,14 @@ node('cicero') {
 
     // Checkout code from repository and update any submodules
     checkout scm
+
+    //
+    // Fetch Artifact
+    //
+    STAGE = 'Fetch Artifact'
+    stage "${STAGE}"
+
+    copyArtifacts filter: 'build_common.shrc', fingerprintArtifacts: true, projectName: '/multibranch-athena-build-common/master', selector: lastSuccessful(), target: './build_rpm_dir'
 
     //
     // Build
@@ -60,7 +68,7 @@ node('cicero') {
     STAGE = 'Package'
     stage "${STAGE}"
     // TODO SET FOR WORKFLOWS
-    sh "mkdir build_rpm_dir && cd build_rpm_dir && ../build_rpm"
+    sh "mkdir -p build_rpm_dir && cd build_rpm_dir && ../build_rpm"
 
     //
     // Archive

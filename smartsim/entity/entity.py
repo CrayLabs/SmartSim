@@ -1,175 +1,56 @@
-from os import getcwd
-from os.path import join
-from .files import EntityFiles
-from ..error import SSConfigError
+# BSD 2-Clause License
+#
+# Copyright (c) 2021, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import os.path as osp
+
 
 class SmartSimEntity:
-    def __init__(self, name, path, entity_type, run_settings):
-        """SmartSimEntity is the base class for all entities within SmartSim.
-           Each entity starts of with default run settings for execution with
-           a launcher. Upon user initialization, those defaults are
-           updated with the arguments passed in by the user, and transformed
-           into the commands for a specific type of launcher - slurm, local etc.
-        """
-
-    def __init__(self, name, path, entity_type, run_settings):
+    def __init__(self, name, path, run_settings):
         """Initialize a SmartSim entity.
 
-           Each entity must have a name, path, type, and
-           run_settings. All entities within SmartSim
-           share these attributes.
+        Each entity must have a name, path, and
+        run_settings. All entities within SmartSim
+        share these attributes.
 
         :param name: Name of the entity
         :type name: str
-        :param path: path to the filesystem location where output, conf,
-                     and error files should be written.
+        :param path: path to output, error, and configuration files
         :type path: str
-        :param entity_type: type of the entity
-        :type entity_type: str
-        :param run_settings: Arguments for the launcher specific to this
+        :param run_settings: Launcher settings specified in the experiment
                              entity
         :type run_settings: dict
         """
         self.name = name
-        self.type = entity_type
         self.run_settings = run_settings
-        self.incoming_entities = []
-        self._key_prefixing_enabled = False
-        self._init_run_settings(path)
-        self.files = None
+        self.path = path
 
-    def _init_run_settings(self, init_path):
-        """Initialize the run_settings from the defaults
-
-        :param init_path: path to output, err and conf files,
-                          defaults to os.getcwd()
-        :type init_path: str
-        """
-        default_run_settings = {
-            "nodes": 1,
-            "ppn": 1,
-        }
-
-        new_path = getcwd()
-        if init_path:
-            new_path = init_path
-
-        self.set_path(new_path)
-        default_run_settings.update(self.run_settings)
-        self.run_settings = default_run_settings
-
-    def update_run_settings(self, updated_run_settings):
-        """Update the run settings of an entity.
-
-           This is commonly used with the Generator and
-           Controller classes for changing the entity run_settings.
-
-        :param updated_run_settings: new run settings
-        :type updated_run_settings: dict
-        """
-        old_path = self.path
-        self.run_settings.update(updated_run_settings)
-        self.set_path(old_path)
-
-    def set_path(self, new_path):
-        """Set the path to error, output, and execution location
-
-        :param new_path: path to set within run_settings
-        :type new_path: str
-        """
-        self.path = new_path
-        self.run_settings["cwd"] = self.path
-        self.run_settings["out_file"] = join(self.path, self.name + ".out")
-        self.run_settings["err_file"] = join(self.path, self.name + ".err")
-
-    def register_incoming_entity(self, incoming_entity, receiving_client_type):
-        """Register future communication between entities.
-
-           Registers the named data sources that this entity
-           has access to by storing the key_prefix associated
-           with that entity
-
-           Only python clients can have multiple incoming connections
-
-           :param incoming_entity: The named SmartSim entity that data will be
-                                   received from
-           :param incoming_entity: SmartSimEntity
-           :param receiving_client_type: The language of the SmartSim client used by
-                                         this object. Can be cpp, fortran, python
-           :param receiving_client_type: str
-        """
-        # Update list as clients are developed
-        multiple_conn_supported = receiving_client_type in ['python']
-        if not multiple_conn_supported and self.incoming_entities:
-            raise SSConfigError(f"Receiving client of type '{receiving_client_type}'"+
-                    " does not support multiple incoming connections")
-        if incoming_entity.name in [in_entity.name for in_entity in
-                                    self.incoming_entities]:
-            raise SSConfigError(f"'{incoming_entity.name}' has already" +
-                                "been registered as an incoming entity")
-
-        self.incoming_entities.append(incoming_entity)
-
-    def get_run_setting(self, setting):
-        """Retrieve a setting from entity.run_settings
-
-        :param setting: key for run_setting
-        :type setting: str
-        :return: run_setting value
-        """
-        return self.run_settings.get(setting)
-
-    def enable_key_prefixing(self):
-        """If called, the entity will prefix its keys with its own model name
-        """
-        self._key_prefixing_enabled = True
-
-    def disable_key_prefixing(self):
-        """If called, the entity will not prefix its keys with its own model name
-        """
-        self._key_prefixing_enabled = False
-
-    def query_key_prefixing(self):
-        """Inquire as to whether this entity will prefix its keys with its name"""
-        return self._key_prefixing_enabled
-
-    def attach_generator_files(self, to_copy=[], to_symlink=[], to_configure=[]):
-        """Attach files to an entity for generation
-
-           Attach files needed for the entity that, upon generation,
-           will be located in the path of the entity.
-
-           During generation files "to_copy" are just copied into
-           the path of the entity, and files "to_symlink" are
-           symlinked into the path of the entity.
-
-           Files "to_configure" are text based model input files where
-           parameters for the model are set. Note that only models
-           support the "to_configure" field. These files must have
-           fields tagged that correspond to the values the user
-           would like to change. The tag is settable but defaults
-           to a semicolon e.g. THERMO = ;10;
-
-        :param to_copy: files to copy, defaults to []
-        :type to_copy: list, optional
-        :param to_symlink: files to symlink, defaults to []
-        :type to_symlink: list, optional
-        :param to_configure: [description], defaults to []
-        :type to_configure: list, optional
-        """
-        self.files = EntityFiles(to_configure, to_copy, to_symlink)
+    @property
+    def type(self):
+        """Return the name of the class"""
+        return type(self).__name__
 
     def __repr__(self):
         return self.name
-
-    def __str__(self):
-        entity_str = "Name: " + self.name + "\n"
-        entity_str += "Type: " + self.type + "\n"
-        entity_str += "run_settings = {\n"
-        for param, value in self.run_settings.items():
-            param = '"' + param + '"'
-            if isinstance(value, str):
-                value = '"' + value + '"'
-            entity_str += " ".join((" ", str(param), ":", str(value), "\n"))
-        entity_str += "}"
-        return entity_str
