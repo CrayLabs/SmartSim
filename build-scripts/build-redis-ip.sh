@@ -10,10 +10,9 @@ else
 	echo "RedisIP downloaded"
     fi
     cd RedisIP
+    git checkout tags/0.1.0
+
     echo "Building RedisIP ..."
-    if [[ ! -d "./build" ]]; then
-      rm ./build
-    fi
     mkdir build
     cd build
     cmake ..
