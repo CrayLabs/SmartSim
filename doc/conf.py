@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'SmartSim'
-copyright = '2020, Cray, a Hewlett Packard Enterprise company'
+copyright = '2021, Hewlett Packard Enterprise'
 author = 'HPE AI & Advanced Productivity'
 
 # The full version, including alpha/beta/rc tags
@@ -38,6 +38,8 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
+    'sphinxfortran.fortran_domain',
+    'sphinxfortran.fortran_autodoc',
     'breathe',
     'nbsphinx'
 ]
@@ -56,6 +58,11 @@ breathe_projects = {
         "fortran_client":"../smartredis/doc/fortran_client/xml",
         "cpp_client":"../smartredis/doc/cpp_client/xml"
         }
+
+fortran_src = [
+    "../smartredis/src/fortran/client.F90",
+    "../smartredis/src/fortran/dataset.F90"
+]
 
 # -- Options for HTML output -------------------------------------------------
 
