@@ -68,6 +68,8 @@ class SbatchStep(Step):
         """
         launch_cmd = ["cd", step.cwd, ";"]
         launch_cmd += step.get_launch_cmd()
+        if not step.run_settings.block_in_batch:
+            launch_cmd += '&'
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
@@ -91,7 +93,7 @@ class SbatchStep(Step):
 
             for i, cmd in enumerate(self.step_cmds):
                 f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+                f.write(f"{' '.join((cmd))}\n")
                 if i == len(self.step_cmds) - 1:
                     f.write("\n")
                     f.write("wait\n")

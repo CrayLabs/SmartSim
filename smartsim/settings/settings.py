@@ -35,7 +35,7 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, block_in_batch=False, expand_exe=True
     ):
         """Run parameters for a ``Model``
 
@@ -66,13 +66,22 @@ class RunSettings:
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with
         :type env_vars: dict[str, str], optional
+        :param block_in_batch: whether execution of the next ``Model`` in a batch
+                               should wait until completion of this ``Model``
+        :type block_in_batch: bool
+        :param expand_exe: whether the executable path should be expanded. It is recommended
+                           to always leave this value to True, unless really needed (e.g. 
+                           when commands are not available on the launch node.
+        :type expand_exe: bool
         """
-        self.exe = [expand_exe_path(exe)]
+        self.exe = [expand_exe_path(exe) if expand_exe else exe]
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, (dict, list))
         self.env_vars = init_default({}, env_vars, (dict, list))
         self._run_command = run_command
         self.in_batch = False
+        self.block_in_batch = block_in_batch
+        self.expand_exe = expand_exe
 
     @property
     def run_command(self):
@@ -83,7 +92,10 @@ class RunSettings:
         """
         try:
             if self._run_command:
-                cmd = expand_exe_path(self._run_command)
+                if self.expand_exe:
+                    cmd = expand_exe_path(self._run_command)
+                else:
+                    cmd = self._run_command
                 return cmd
             return None
         except SSConfigError:

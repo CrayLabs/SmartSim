@@ -28,10 +28,10 @@ import time
 from shutil import which
 
 from ...error import LauncherError, SSConfigError, SSUnsupportedError
-from ...settings import MpirunSettings, SbatchSettings, SrunSettings
+from ...settings import MpirunSettings, SbatchSettings, SrunSettings, RunSettings
 from ...utils import get_logger
 from ..launcher import Launcher
-from ..step import MpirunStep, SbatchStep, SrunStep
+from ..step import MpirunStep, SbatchStep, SrunStep, LocalStep
 from ..stepInfo import SlurmStepInfo, UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
@@ -81,6 +81,9 @@ class SlurmLauncher(Launcher):
                 return step
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
+                return step
+            if isinstance(step_settings, RunSettings) and step_settings.in_batch:
+                step = LocalStep(name, cwd, step_settings)
                 return step
             raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
