@@ -114,3 +114,4 @@ SmartRedis utilizes the following libraries.
 The following are public presentations or publications using SmartSim (more to come!)
 
  - [Collaboration with NCAR - CGD Seminar](https://www.youtube.com/watch?v=2e-5j427AS0)
+ - [Using Machine Learning in HPC Simulations - paper (pre-print)](https://arxiv.org/abs/2104.09355)
