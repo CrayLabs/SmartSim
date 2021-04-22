@@ -115,3 +115,26 @@ The following are public presentations or publications using SmartSim (more to c
 
  - [Collaboration with NCAR - CGD Seminar](https://www.youtube.com/watch?v=2e-5j427AS0)
  - [Using Machine Learning in HPC Simulations - paper (pre-print)](https://arxiv.org/abs/2104.09355)
+
+
+## Cite
+
+Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
+
+
+Partee et al., “Using Machine Learning at Scale in HPC Simulations with SmartSim:
+An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
+[Online]. Available: http://arxiv.org/abs/2104.09355.
+
+### bibtex
+
+    ```latex
+    @misc{partee2021using,
+          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling}, 
+          author={Sam Partee and Matthew Ellis and Alessandro Rigazzi and Scott Bachman and Gustavo Marques and Andrew Shao and Benjamin Robbins},
+          year={2021},
+          eprint={2104.09355},
+          archivePrefix={arXiv},
+          primaryClass={cs.CE}
+    }
+    ```
