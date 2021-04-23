@@ -10,7 +10,7 @@ conda activate ;CONDA_ENV;
 
 echo "starting ray head node"
 # Launch the head node
-ray start --head --port=;RAY_PORT;\
-          --redis-password=;REDIS_PASSWORD;
+ray start --head --port=;RAY_PORT; \
+          --redis-password=;REDIS_PASSWORD; 
           
 sleep infinity

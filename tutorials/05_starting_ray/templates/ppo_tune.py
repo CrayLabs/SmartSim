@@ -11,7 +11,7 @@ parser.add_argument("--ray-address", type=str, help="The Redis address of the cl
 parser.add_argument("--redis-password", type=str, help="Password of Redis cluster.")
 args = parser.parse_args()
 
-ray.init(address=args.ray_address, _redis_password=args.redis_password)
+ray.init(address=args.ray_address, _node_ip_address=args.ray_address.split(":")[0], _redis_password=args.redis_password, log_to_driver=True)
 print("Nodes:")
 print(ray.nodes())
 
