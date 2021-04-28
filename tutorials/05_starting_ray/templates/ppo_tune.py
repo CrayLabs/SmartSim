@@ -15,8 +15,8 @@ ray.init(address=args.ray_address, _node_ip_address=args.ray_address.split(":")[
 print("Nodes:")
 print(ray.nodes())
 
-for i in trange(30, desc="Please wait, Ray resource configuration is running."):
-    time.sleep(1)
+for i in trange(5, desc="Please wait, Ray resource configuration is running."):
+    time.sleep(6)
 
 #print("Cluster resources:")
 #print(ray.cluster_resources())
@@ -32,8 +32,10 @@ tune.run(
         "framework": "torch",
         "env": "CartPole-v0",
         "num_gpus": 0,
-        "num_workers": 16,
-        "lr": tune.grid_search(np.arange (0.001, 0.02, 0.001).tolist() ),
+        "num_workers": 32,
+        "lr": tune.grid_search(np.arange (0.001, 0.02, 0.001).tolist()),
     },
+    local_dir="/lus/scratch/arigazzi/ray_local/",
+    sync_config=tune.SyncConfig(sync_to_driver=False),
     verbose=3,
 )
