@@ -43,7 +43,8 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-          CIBW_BEFORE_BUILD: make deps
+          CIBW_ENVIRONMENT: SHELL=/bin/bash
+          CIBW_BEFORE_BUILD: bash make deps
 
       - uses: actions/upload-artifact@v2
         with:
