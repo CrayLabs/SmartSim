@@ -44,7 +44,7 @@ jobs:
         env:
           CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
           CIBW_ENVIRONMENT: SHELL=/bin/bash
-          CIBW_BEFORE_BUILD: bash make deps
+          CIBW_BEFORE_BUILD: bash -c "make deps"
 
       - uses: actions/upload-artifact@v2
         with:
