@@ -55,7 +55,7 @@ jobs:
 
       - name: Make Dependencies
         run: |
-          /bin/bash build-scripts/make_deps.sh
+          make deps
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
