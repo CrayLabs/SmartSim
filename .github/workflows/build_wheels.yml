@@ -43,14 +43,16 @@ jobs:
         if: contains(matrix.os, 'macos')
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ENVIRONMENT: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+          CIBW_ENVIRONMENT: |
+            PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+            MACOSX_DEPLOYMENT_TARGET=10.15
           CIBW_BEFORE_BUILD: make deps
 
       - name: Build wheels ubuntu
         if: contains(matrix.os, 'ubuntu')
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ENVIRONMENT: PATH=/usr/bin/:$PATH
+          CIBW_ENVIRONMENT: alias wget="/usr/bin/wget"
           CIBW_BEFORE_BUILD: make deps
 
       - uses: actions/upload-artifact@v2
