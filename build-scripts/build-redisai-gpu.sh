@@ -7,14 +7,6 @@ if [[ -f ./RedisAI/install-gpu/redisai.so ]]; then
 else
 
     # check for cudnn includes
-    if [ -z "$CUDA_HOME" ]; then
-        echo "ERROR: CUDA_HOME is not set"
-        return 1
-    else
-        echo "Found CUDA_HOME: $CUDA_HOME"
-    fi
-
-    # check for cudnn includes
     if [ -z "$CUDNN_INCLUDE_DIR" ]; then
         echo "ERROR: CUDNN_INCLUDE_DIR is not set"
         return 1
@@ -44,20 +36,21 @@ else
 
 
     if [[ ! -d "./RedisAI" ]]; then
-        git clone --recursive https://github.com/RedisAI/RedisAI.git RedisAI
-        cd RedisAI
-	git checkout f1a05308e28ec307f064f1bb7e81886d8b711eb3
-        cd ..
+        git clone --recursive https://github.com/RedisAI/RedisAI.git --branch v1.2.2 --depth=1 RedisAI
     else
         echo "RedisAI downloaded"
     fi
     cd RedisAI
     echo "Downloading RedisAI GPU dependencies"
-    CC=gcc CXX=g++ bash get_deps.sh gpu
+    CC=gcc CXX=g++ VERBOSE=1 WITH_ORT=0 bash get_deps.sh gpu
     # TODO: enable TF and ONNX builds.
-    CC=gcc CXX=g++ ALL=1 make -C opt clean build GPU=1 WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4
+    CC=gcc CXX=g++ GPU=1 WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4 SHOW=1 make -C opt clean build
 
     if [ -f "./install-gpu/redisai.so" ]; then
+        if [[ -f ../../smartsim/lib/redisai.so ]]; then
+            rm ../../smartsim/lib/redisai.so
+        fi
+        cp  ./install-gpu/redisai.so ../../smartsim/lib/
         export REDISAI_GPU_INSTALL_PATH="$(pwd)/install-gpu"
         echo "Finished installing RedisAI"
         cd ../

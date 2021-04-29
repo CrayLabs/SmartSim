@@ -6,18 +6,22 @@ if [[ -f ./RedisIP/build/libredisip.so ]]; then
     export REDISIP_INSTALL_PATH="$(pwd)/RedisIP/build/"
 else
     if [[ ! -d "./RedisIP" ]]; then
-	git clone https://github.com/Spartee/RedisIP.git
+	git clone https://github.com/Spartee/RedisIP.git --branch master --depth 1
 	echo "RedisIP downloaded"
     fi
     cd RedisIP
-    git checkout tags/0.1.0
-
     echo "Building RedisIP ..."
     mkdir build
     cd build
     cmake ..
     CC=gcc CXX=g++ make
-    export REDISIP_INSTALL_PATH="$(pwd)"
-    echo "Finished installing RedisIP"
+    if [[ -f ./libredisip.so ]]; then
+        if [[ -f ../../../smartsim/lib/libredisip.so ]]; then
+            rm ../../../smartsim/lib/libredisip.so
+        fi
+        cp ./libredisip.so ../../../smartsim/lib
+        export REDISIP_INSTALL_PATH="$(pwd)"
+        echo "Finished installing RedisIP"
+    fi
     cd ../../
 fi
