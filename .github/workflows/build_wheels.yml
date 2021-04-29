@@ -10,6 +10,9 @@ env:
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
   CIBW_SKIP: "pp* *i686*" # skip building for PyPy
   CIBW_ARCHES: x86_64
+  CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+  MACOSX_DEPLOYMENT_TARGET: "10.09"
+
 
 jobs:
   build_wheels:
@@ -18,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-10.15]
+        os: [ubuntu-latest, macos-latest]
         gcc_v: [8]
     env:
       GCC_V: ${{ matrix.gcc_v }}
@@ -50,19 +53,15 @@ jobs:
         run: |
           python -m cibuildwheel . --print-build-identifiers
 
-      - name: Build wheels MacOS
-        if: contains(matrix.os, 'macos')
+      - name: Make Dependencies
+        run: |
+          /bin/bash build-scripts/make-deps.sh
+
+      - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
           MACOSX_DEPLOYMENT_TARGET: "10.09"
-          CIBW_BEFORE_BUILD: "bash build-scripts/build-deps.sh"
-
-      - name: Build wheels ubuntu
-        if: contains(matrix.os, 'ubuntu')
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BEFORE_BUILD: make deps
 
       - uses: actions/upload-artifact@v2
         with:
