@@ -32,17 +32,16 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
-          sudo apt-get install -y build-essentials
+          sudo apt-get install -y build-essential
 
       - name: Install GNU make for MacOS
         if: contains(matrix.os, 'macos')
-        run: |
-          brew install make || true
-          export PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+        run: brew install make || true
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
+          CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
           CIBW_BEFORE_BUILD: make deps
 
       - uses: actions/upload-artifact@v2
