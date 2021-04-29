@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-10.15]
+        os: [ubuntu-20.04] #, macos-10.15]
 
     steps:
       - uses: actions/checkout@v2
@@ -52,8 +52,7 @@ jobs:
         if: contains(matrix.os, 'ubuntu')
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ENVIRONMENT: alias wget="/usr/bin/wget"
-          CIBW_BEFORE_BUILD: make deps
+          CIBW_BEFORE_BUILD: alias wget="/usr/bin/wget" && make deps
 
       - uses: actions/upload-artifact@v2
         with:
