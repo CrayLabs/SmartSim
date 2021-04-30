@@ -1,18 +1,15 @@
 import os
-import re
-import sys
-import glob
-import sysconfig
-import platform
+import stat
 import subprocess
 import shutil
-import site
 from pathlib import Path
 import multiprocessing as mp
 
 import cmake
-from setuptools import setup, find_packages
-from distutils.version import LooseVersion
+#from distutils.version import LooseVersion
+from setuptools import setup
+import setuptools.command.build_py
+from setuptools.dist import Distribution
 
 # get number of processors
 NPROC = mp.cpu_count()
@@ -43,12 +40,17 @@ class Builder():
     def copy_to_bin(self, files):
         bin_path = self.setup_path.joinpath("smartsim/bin/")
         for file in files:
-            shutil.copyfile(file, bin_path)
+            binary_dest = bin_path.joinpath(file.name)
+            shutil.copyfile(file, binary_dest)
+            binary_dest.chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
+
 
     def copy_to_lib(self, files):
         lib_path = self.setup_path.joinpath("smartsim/lib/")
+        if not lib_path.is_dir():
+            lib_path.mkdir()
         for file in files:
-            shutil.copyfile(file, lib_path)
+            shutil.copyfile(file, lib_path.joinpath(file.name))
 
 
 class Redis(Builder):
@@ -74,7 +76,7 @@ class RedisIP(Builder):
 
     def build(self, build_dir):
         subprocess.check_call(["git", "clone", "https://github.com/Spartee/RedisIP.git",
-                               "--branch", "0.1.0" , "--depth", "1", "RedisIP"], cwd=build_dir)
+                               "--branch", "master" , "--depth", "1", "RedisIP"], cwd=build_dir)
 
         cfg = 'Release'
         build_args = ['--config', cfg]
@@ -98,7 +100,8 @@ class RedisIP(Builder):
         to_export = cmake_path.joinpath("libredisip.so")
         self.copy_to_lib([to_export])
 
-class SmartSimBuild():
+
+class SmartSimBuild(setuptools.command.build_py.build_py):
 
     @staticmethod
     def check_build_environment():
@@ -118,7 +121,7 @@ class SmartSimBuild():
         return build_dir
 
     def run(self):
-
+        self.check_build_environment()
         build_dir = self.get_build_dir()
 
         redis_builder = Redis()
@@ -127,6 +130,10 @@ class SmartSimBuild():
         redisip_builder = RedisIP()
         redisip_builder.build(build_dir)
 
+        # remove build directory
+        shutil.rmtree(build_dir)
+
+        setuptools.command.build_py.build_py.run(self)
 
 # check that certain dependencies are installed
 # TODO: Check versions for compatible versions
@@ -137,25 +144,28 @@ def check_prereq(command):
         raise RuntimeError(
             f"{command} must be installed to build SmartSim")
 
+# Tested with wheel v0.29.0
+class BinaryDistribution(Distribution):
+    """Distribution which always forces a binary package with platform name
 
-if __name__ == "__main__":
-
-    # builder
-    build = SmartSimBuild()
-
-    # check tools needed for installation
-    build.check_build_environment()
-
-    # build
-    build.run()
+       We use this because we want to pre-package Redis and RedisIP for certain
+       platforms to use.
+    """
+    def has_ext_modules(_placeholder):
+        return True
 
 
-    setup(
-    # ... in setup.cfg
-        packages=find_packages(),
-        package_data={"smartsim": [
-            "/bin/*"
-        ]},
-        libraries=["/lib/*",],
-        zip_safe=False,
-    )
+setup(
+# ... in setup.cfg
+    packages=["smartsim"],
+    package_data={"smartsim": [
+        "bin/*",
+        "lib/*"
+    ]},
+    cmdclass={
+        "build_py": SmartSimBuild
+    },
+    scripts=["./smartsim/bin/smartsim_setup"],
+    zip_safe=False,
+    distclass=BinaryDistribution
+)
