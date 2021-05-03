@@ -165,7 +165,7 @@ setup(
     cmdclass={
         "build_py": SmartSimBuild
     },
-    scripts=["./smartsim/bin/smartsim_setup"],
+    scripts=["./smart"],
     zip_safe=False,
     distclass=BinaryDistribution
 )
