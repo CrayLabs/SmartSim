@@ -52,7 +52,7 @@ else
     CC=gcc CXX=g++ WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4 bash $DIR/../../.third-party/RedisAI/get_deps.sh gpu
 
     echo "Building RedisAI GPU ML Runtimes"
-    CC=gcc CXX=g++ GPU=1 WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4 make -C $DIR/../../.third-party/RedisAI/opt clean build
+    CC=gcc CXX=g++ GPU=1 WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4 WITH_UNIT_TESTS=0 make -C $DIR/../../.third-party/RedisAI/opt clean build
 
     if [ -f "$DIR/../../.third-party/RedisAI/install-gpu/redisai.so" ]; then
         cp $DIR/../../.third-party/RedisAI/install-cpu/redisai.so $DIR/../../lib/
