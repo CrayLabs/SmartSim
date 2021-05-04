@@ -6,10 +6,10 @@ from pathlib import Path
 import multiprocessing as mp
 
 import cmake
-#from distutils.version import LooseVersion
 from setuptools import setup
-import setuptools.command.build_py
 from setuptools.dist import Distribution
+from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 
 # get number of processors
 NPROC = mp.cpu_count()
@@ -102,8 +102,15 @@ class RedisIP(Builder):
         to_export = cmake_path.joinpath("libredisip.so")
         self.copy_to_lib([to_export])
 
+# Hacky workaround for solving CI build "purelib" issue
+# see https://github.com/google/or-tools/issues/616
+class InstallPlatlib(install):
+    def finalize_options(self):
+        install.finalize_options(self)
+        if self.distribution.has_ext_modules():
+            self.install_lib = self.install_platlib
 
-class SmartSimBuild(setuptools.command.build_py.build_py):
+class SmartSimBuild(build_py):
 
     @staticmethod
     def check_build_environment():
@@ -165,7 +172,8 @@ setup(
         "lib/*"
     ]},
     cmdclass={
-        "build_py": SmartSimBuild
+        "build_py": SmartSimBuild,
+        "install": InstallPlatlib
     },
     scripts=["./smart"],
     zip_safe=False,
