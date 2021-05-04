@@ -1,0 +1,54 @@
+name: run-tests-local
+
+on: [push, pull_request]
+
+env:
+  HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
+  HOMEBREW_NO_AUTO_UPDATE: "ON"
+  HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
+  HOMEBREW_NO_GITHUB_API: "ON"
+  HOMEBREW_NO_INSTALL_CLEANUP: "ON"
+
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, macos-10.15]
+        python-version: [3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+        # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install build-essentials
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+          sudo apt-get install -y wget
+
+      - name: Install GNU make for MacOS
+        if: contains(matrix.os, 'macos')
+        run: brew install make || true
+
+      - name: Install SmartSim
+        run: python -m pip install .[dev]
+        env:
+          PATH: "$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+
+      - name: Install ML Runtimes with Smart
+        run: smart --device cpu
+
+      - name: Run Pytest
+        run: make test-cov

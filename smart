@@ -136,8 +136,8 @@ def make_description():
     other += "needed by SmartSim."
 
     prebuilts = colorize("Supported Systems\n", color="cyan")
-    systems = "  1) Linux CPU (x86)\n"
-    systems += "  2) MacOS CPU (x86)\n"
+    systems = "  1) Linux CPU (x86_64)\n"
+    systems += "  2) MacOS CPU (x86_64)\n"
     systems += "  3) Linux GPU (CUDA 10.2 or greater)\n\n"
     systems = colorize(systems, color="green")
 
