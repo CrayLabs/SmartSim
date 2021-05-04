@@ -142,7 +142,8 @@ class SmartSimBuild(build_py):
         # remove build directory
         shutil.rmtree(build_dir)
 
-        setuptools.command.build_py.build_py.run(self)
+        # run original build_py command
+        build_py.run(self)
 
 # check that certain dependencies are installed
 # TODO: Check versions for compatible versions
