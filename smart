@@ -24,7 +24,8 @@ def run_build(script_path, device, pt, tf, onnx, verbose):
             raise SetupError("ONNX runtime is currently not supported on MacOS")
 
     if sys.platform in ["msys", "win32", "cygwin"]:
-        raise SetupError("Windows is not supported, but kudos to you for making it this far!")
+        msg = "Windows is not supported, but kudos to you for making it this far!"
+        raise SetupError(msg)
 
     print("Running SmartSim build process...")
     cmd = [f"PT={pt} TF={tf} TFL=0 ONNX={onnx}", str(script), device]
@@ -51,6 +52,9 @@ def clean(install_path, _all=False):
     :param _all: Remove all non-python dependencies
     :type _all: bool, optional
     """
+    build_temp = install_path.joinpath(".third-party")
+    if build_temp.is_dir():
+        shutil.rmtree(build_temp, ignore_errors=True)
     lib_path = install_path.joinpath("lib")
     if lib_path.is_dir():
         # remove RedisAI
@@ -61,7 +65,7 @@ def clean(install_path, _all=False):
 
         backend_path = lib_path.joinpath("backends")
         if backend_path.is_dir():
-            shutil.rmtree(backend_path)
+            shutil.rmtree(backend_path, ignore_errors=True)
             print("Successfully removed ML runtimes")
 
         # remove redisip
