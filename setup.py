@@ -50,8 +50,10 @@ class Builder():
         if not lib_path.is_dir():
             lib_path.mkdir()
         for file in files:
-            shutil.copyfile(file, lib_path.joinpath(file.name))
-
+            lib_dest = lib_path.joinpath(file.name)
+            shutil.copyfile(file, lib_dest)
+            # shared library also needs to be executable
+            lib_dest.chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
 
 class Redis(Builder):
 
