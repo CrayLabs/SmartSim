@@ -44,7 +44,7 @@ jobs:
 
       - name: Print CWD details
         run: |
-          echo $(pwd)
+          echo $(ls smartsim/bin/)
 
       - name: Install SmartSim
         run: |
@@ -56,4 +56,5 @@ jobs:
 
       - name: Run Pytest
         run: |
+
           py.test -o log_cli=True tests
