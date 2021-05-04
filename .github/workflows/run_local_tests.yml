@@ -43,9 +43,9 @@ jobs:
         run: brew install make || true
 
       - name: Install SmartSim
-        run: python -m pip install .[dev]
-        env:
-          PATH: "$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+        run: |
+          python -m pip install .[dev]
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
 
       - name: Install ML Runtimes with Smart
         run: smart --device cpu
