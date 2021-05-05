@@ -3,6 +3,7 @@ import sys
 import shutil
 import pytest
 import os.path as osp
+import smartsim
 from smartsim.settings import SrunSettings, AprunSettings
 from smartsim.settings import RunSettings
 from smartsim.config import CONFIG
@@ -27,9 +28,10 @@ def print_test_configuration():
     global test_path
     global test_dir
     global test_launcher
+    print("TEST_SMARTSIM_LOCATION: ", smartsim.__path__)
     print("TEST_PATH:", test_path)
-    print("TEST_DIR:", test_dir)
     print("TEST_LAUNCHER", test_launcher)
+    print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
 

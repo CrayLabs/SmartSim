@@ -46,10 +46,6 @@ jobs:
         if: contains(matrix.os, 'macos')
         run: brew install make || true
 
-      - name: Print CWD details
-        run: |
-          echo $(ls smartsim/bin/)
-
       - name: Install SmartSim
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
@@ -60,5 +56,5 @@ jobs:
 
       - name: Run Pytest
         run: |
-
-          py.test -o log_cli=True tests
+          echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
+          py.test --import-mode=importlib -o log_cli=True
