@@ -52,7 +52,7 @@ jobs:
           python -m pip install -vvv .[dev]
 
       - name: Install ML Runtimes with Smart
-        run: smart --device cpu
+        run: smart -v --device cpu
 
       - name: Run Pytest
         run: |
