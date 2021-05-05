@@ -1,9 +1,17 @@
 import os
+import sys
 import shutil
 import pytest
+import os.path as osp
 from smartsim.settings import SrunSettings, AprunSettings
 from smartsim.settings import RunSettings
 from smartsim.config import CONFIG
+
+# Prevent pytest from adding current directory to
+# PYTHONPATH
+# see https://github.com/pytest-dev/pytest/issues/2269
+sys.path.remove(osp.dirname(osp.abspath(__file__)))
+
 
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
