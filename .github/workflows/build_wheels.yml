@@ -9,7 +9,8 @@ env:
   HOMEBREW_NO_GITHUB_API: "ON"
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
   CIBW_SKIP: "pp* *i686*" # skip building for PyPy
-  CIBW_ARCHES: x86_64
+  CIBW_ARCHS_MACOS: x86_64
+  CIBW_ARCHS_LINUX: x86_64 ppc64le
   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
@@ -22,9 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, macos-10.15]
-        gcc_v: [8]
-    env:
-      GCC_V: ${{ matrix.gcc_v }}
 
     steps:
       - uses: actions/checkout@v2
@@ -44,10 +42,6 @@ jobs:
       - name: Install GNU make for MacOS
         if: contains(matrix.os, 'macos')
         run: brew install make || true
-
-      - name: Install GCC macOS
-        if: contains(matrix.os, 'macos')
-        run: brew install gcc@${GCC_V} || brew upgrade gcc@${GCC_V} || true
 
       - name: list target wheels
         run: |
