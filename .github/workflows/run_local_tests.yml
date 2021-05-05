@@ -28,7 +28,11 @@ jobs:
 
         # You can test your matrix by printing the current Python version
       - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+        run: |
+          python -c "import sys; print(sys.version)"
+          python -c "import site; print(site.getsitepackages()[0])"
+          which python
+          which python3
 
       - name: Install build-essentials
         if: contains(matrix.os, 'ubuntu')
