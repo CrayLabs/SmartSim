@@ -27,6 +27,7 @@
 from ..database import Orchestrator
 from ..entity import EntityList, SmartSimEntity
 from ..error import SmartSimError
+from ..ray import RayCluster
 
 
 def separate_entities(args):
@@ -63,8 +64,8 @@ def _check_names(args):
     for arg in args:
         name = getattr(arg, "name", None)
         if not name:
-            raise TypeError(
-                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
+            raise AttributeError(
+                f"Name of argument {arg} is not set."
             )
         if name in used:
             raise SmartSimError("User provided two entities with the same name")
