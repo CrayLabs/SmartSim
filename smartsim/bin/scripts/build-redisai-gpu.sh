@@ -55,8 +55,8 @@ else
     CC=gcc CXX=g++ GPU=1 WITH_PT=$1 WITH_TF=$2 WITH_TFLITE=$3 WITH_ORT=$4 WITH_UNIT_TESTS=0 make -C $DIR/../../.third-party/RedisAI/opt clean build
 
     if [ -f "$DIR/../../.third-party/RedisAI/install-gpu/redisai.so" ]; then
-        cp $DIR/../../.third-party/RedisAI/install-cpu/redisai.so $DIR/../../lib/
-        cp -r $DIR/../../.third-party/RedisAI/install-cpu/backends $DIR/../../lib/
+        cp $DIR/../../.third-party/RedisAI/install-gpu/redisai.so $DIR/../../lib/
+        cp -r $DIR/../../.third-party/RedisAI/install-gpu/backends $DIR/../../lib/
         rm -rf $DIR/../../.third-party
         echo "Finished installing RedisAI"
     else
