@@ -10,7 +10,7 @@ env:
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
   CIBW_SKIP: "pp* *i686*" # skip building for PyPy
   CIBW_ARCHS_MACOS: x86_64
-  CIBW_ARCHS_LINUX: x86_64 ppc64le
+  CIBW_ARCHS_LINUX: x86_64  # ppc64le # uncomment to enable powerPC build
   CIBW_ENVIRONMENT_MACOS: PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
   MACOSX_DEPLOYMENT_TARGET: "10.09"
 
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
+    # Publish when a GitHub Release is created
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v2

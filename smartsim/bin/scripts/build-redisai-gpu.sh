@@ -18,30 +18,12 @@ if [[ -f "$DIR/../../lib/redisai.so" ]]; then
 else
     # check for cudnn includes
     if [ -z "$CUDNN_INCLUDE_DIR" ]; then
-        echo "ERROR: CUDNN_INCLUDE_DIR is not set"
-        return 1
-    else
-        echo "Found CUDNN_INCLUDE_DIR: $CUDNN_INCLUDE_DIR "
-        if [ -f "$CUDNN_INCLUDE_DIR/cudnn.h" ]; then
-            echo "Found cudnn.h at $CUDNN_INCLUDE_DIR"
-        else
-            echo "ERROR: could not find cudnn.h at $CUDNN_INCLUDE_DIR"
-            return 1
-        fi
+        echo "WARNING: CUDNN_INCLUDE_DIR is not set!!!"
     fi
 
     # check for cudnn library
     if [ -z "$CUDNN_LIBRARY" ]; then
-        echo "ERROR: CUDNN_LIBRARY is not set"
-        return 1
-    else
-        echo "Found CUDNN_LIBRARY: $CUDNN_LIBRARY"
-        if [ -f "$CUDNN_LIBRARY/libcudnn.so" ]; then
-            echo "Found libcudnn.so at $CUDNN_LIBRARY"
-        else
-            echo "ERROR: could not find libcudnn.so at $CUDNN_LIBRARY"
-            return 1
-        fi
+        echo "WARNING: CUDNN_LIBRARY is not set!!!"
     fi
 
     if [[ ! -d "$DIR/../../.third-party/RedisAI" ]]; then
