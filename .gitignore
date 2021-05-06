@@ -1,6 +1,7 @@
 .vscode
 __pycache__
 .ipynb_checkpoints
+.pytest_cache/
 
 # Dependencies
 third-party
@@ -9,3 +10,8 @@ third-party
 _build
 
 smartredis
+
+smartsim/bin/redis-server
+smartsim/bin/redis-cli
+
+smartsim/lib

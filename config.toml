@@ -7,18 +7,12 @@ log_level = "info" # default
 
 [redis]
 # path to where "redis-server" and "redis-cli" binaries are located
-exe = "/path/to/redis/src/redis-server"
+bin = "/path/to/redis/src/"
 config = "/path/to/redis.conf" # optional!
-cli = "/path/to/redis/src/redis-cli"
 
-  [redis.ai]
-  # path to the redisai "install_cpu" or "install_gpu" dir
-  device = "cpu" # cpu or gpu
-  install_path = "/path/to/RedisAI/install-cpu/"
-
-  [redis.ip]
-  # path to build dir for RedisIP
-  install_path = "/path/to/RedisIP/build/"
+  [redis.modules]
+  ai = "/path/to/RedisAI/install-cpu/"
+  ip = "/path/to/RedisIP/build/"
 
 [test]
 launcher = "local" # default

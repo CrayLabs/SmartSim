@@ -28,6 +28,7 @@ import os
 import os.path as osp
 import sys
 from shutil import which
+from pathlib import Path
 
 import toml
 
@@ -80,93 +81,98 @@ class Config:
             except KeyError:
                 return None
 
+        def _load_defaults():
+            package_path = os.path.dirname(os.path.abspath(__file__))
+            lib_path = str(Path(package_path, "lib").resolve())
+            bin_path = str(Path(package_path, "bin").resolve())
+            conf_path = str(Path(package_path, "database", "redis6.conf"))
+
+            if not osp.isdir(lib_path) and not osp.isdir(bin_path):
+                msg = "SmartSim not installed with pre-built Redis libraries\n"
+                msg += "Either install a pre-built wheel for SmartSim"
+                msg += " or build SmartSim from source.\n"
+                msg += " See documentation for instructions"
+                raise SSConfigError(msg)
+
+            default = {'redis': {'bin': bin_path,
+                                 'config': conf_path,
+                                 'modules': {'ai': lib_path,
+                                             'ip': lib_path}},
+                        'smartsim': {'jm_interval': 15, 'log_level': 'info'},
+                        'test': {'launcher': 'local'}}
+            return default
+
         conf_path = _load_from_home()
         if not conf_path:
             conf_path = _load_from_sshome()
         if not conf_path:
-            msg = "Could not find SmartSim config\n"
-            msg += "This usually means you haven't written a config.toml for SmartSim\n"
-            msg += "Template Config\n"
-            msg += _template_config
-            msg += "\nCopy paste this in $HOME/.smartsim/config.toml"
-            msg += " and replace the /path/to/.. with paths to each of the libraries\n"
-            msg += "Optionally, you can also put the config in $SMARTSIM_HOME\n"
-            raise SSConfigError(msg)
-
+            return _load_defaults()
         config = toml.load(conf_path)
         return config
 
     @property
     def redisai(self):
         try:
-            redisai = self.conf["redis"]["ai"]
-            device = redisai["device"]
-            lib = redisai["install_path"]
-            lib_path = osp.join(lib, "redisai.so")
-            if not osp.isfile(lib_path):
-                raise SSConfigError(
-                    "RedisAI library path provided in SmartSim config could not be found"
-                )
-            return lib_path, device
+            redisai = self.conf["redis"]["modules"]["ai"]
+            if not osp.isfile(redisai):
+                redisai = osp.join(redisai, "redisai.so")
+                if not osp.isfile(redisai):
+                    raise SSConfigError(
+                        "RedisAI library path provided in SmartSim config could not be found"
+                    )
+            return redisai
         except KeyError:
-            raise SSConfigError("Could not find redis.ai in SmartSim config")
+            raise SSConfigError("Could not find redis.modules.ai (path to redisai.so) in SmartSim config")
 
     @property
     def redisip(self):
         try:
-            redisip = self.conf["redis"]["ip"]
-            lib = redisip["install_path"]
-            suffix = ".dylib" if sys.platform == "darwin" else ".so"
-            lib_path = osp.join(lib, "libredisip" + suffix)
-            if not osp.isfile(lib_path):
-                raise SSConfigError(
+            redisip = self.conf["redis"]["modules"]["ip"]
+            if not osp.isfile(redisip):
+                redisip = osp.join(redisip, "libredisip.so")
+                if not osp.isfile(redisip):
+                    raise SSConfigError(
                     "RedisIP library path provided in SmartSim config could not be found"
                 )
-            return lib_path
+            return redisip
         except KeyError:
             raise SSConfigError("Could not find redis.ip in SmartSim config")
 
     @property
     def redis_conf(self):
-        try:
-            redis = self.conf["redis"]
-            conf_path = redis["config"]
-            if not osp.isfile(conf_path):
-                raise SSConfigError(
-                    "Redis 'config' provided in SmartSim config could not be found"
-                )
-            return conf_path
-        except KeyError:
+        redis_config = self.conf["redis"]["config"]
+        if not osp.isfile(redis_config):
             smartsim_path = os.path.dirname(osp.abspath(__file__))
             conf_path = osp.join(smartsim_path, "database/redis6.conf")
             return conf_path
+        return redis_config
 
     @property
     def redis_exe(self):
         try:
-            redis = self.conf["redis"]
-            exe_path = redis["exe"]
-            exe = expand_exe_path(exe_path)
+            redis_bin = self.conf["redis"]["bin"]
+            redis_cli = osp.join(redis_bin, "redis-server")
+            exe = expand_exe_path(redis_cli)
             return exe
         except KeyError:
-            raise SSConfigError("Could not find redis `exe` in SmartSim config")
+            raise SSConfigError("Could not find redis.bin in SmartSim config")
         except SSConfigError as e:
-            raise SSConfigError("Redis exe in SmartSim Config could not be used") from e
+            raise SSConfigError("redis-server exe in SmartSim Config could not be used") from e
 
     @property
     def redis_cli(self):
         try:
-            redis = self.conf["redis"]
-            exe_path = redis["cli"]
-            exe = expand_exe_path(exe_path)
+            redis_bin = self.conf["redis"]["bin"]
+            redis_cli = osp.join(redis_bin, "redis-cli")
+            exe = expand_exe_path(redis_cli)
             return exe
         except KeyError:
             raise SSConfigError(
-                "Could not find redis 'cli' executable in SmartSim config"
+                "Could not find redis.bin in SmartSim config"
             )
         except SSConfigError as e:
             raise SSConfigError(
-                "Redis-cli executable in SmartSim Config could not be used"
+                "redis-cli executable in SmartSim Config could not be used"
             ) from e
 
     @property
@@ -195,40 +201,12 @@ class Config:
     def jm_interval(self):
         try:
             if "SMARTSIM_JM_INTERVAL" in os.environ:
-                return os.environ["SMARTSIM_JM_INTERVAL"]
+                return int(os.environ["SMARTSIM_JM_INTERVAL"])
             else:
                 num_seconds = self.conf["smartsim"]["jm_interval"]
                 return int(num_seconds)
         except KeyError:
             return 15  # 15 seconds by default
-
-
-_template_config = """
-[smartsim]
-# number of seconds per job status update
-# for jobs on WLM system (e.g. slurm, pbs, etc)
-jm_interval = 15    # default
-log_level = "info" # default
-
-[redis]
-# path to where "redis-server" and "redis-cli" binaries are located
-exe = "/path/to/redis/src/redis-server"
-config = "/path/to/redis.conf" # optional!
-cli = "/path/to/redis/src/redis-cli"
-
-  [redis.ai]
-  # path to the redisai "install_cpu" or "install_gpu" dir
-  device = "cpu" # cpu or gpu
-  install_path = "/path/to/RedisAI/install-cpu/"
-
-  [redis.ip]
-  # path to build dir for RedisIP
-  install_path = "/path/to/RedisIP/build/"
-
-[test]
-launcher = "local" # default
-"""
-
 
 # initialize config instance
 CONFIG = Config()

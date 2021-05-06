@@ -171,25 +171,14 @@ class Orchestrator(EntityList):
         :return: path to module
         :rtype: str
         """
-        ai_module, device = CONFIG.redisai
-        module = ["--loadmodule"]
-        # if built for GPU
-        if device == "gpu":
-            logger.debug("Orchestrator using RedisAI GPU")
-            module.append(ai_module)
-            if self.queue_threads:
-                module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
-            return " ".join(module)
-        elif device == "cpu":
-            logger.debug("Orchestrator using RedisAI CPU")
-            module.append(ai_module)
-            if self.inter_threads:
-                module.append(f"INTER_OP_THREADS {self.inter_threads}")
-            if self.intra_threads:
-                module.append(f"INTRA_OP_THREADS {self.intra_threads}")
-            return " ".join(module)
-        else:
-            raise SSConfigError("Incorrect configuration for RedisAI device")
+        module = ["--loadmodule", CONFIG.redisai]
+        if self.queue_threads:
+            module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
+        if self.inter_threads:
+            module.append(f"INTER_OP_THREADS {self.inter_threads}")
+        if self.intra_threads:
+            module.append(f"INTRA_OP_THREADS {self.intra_threads}")
+        return " ".join(module)
 
     @staticmethod
     def _get_IP_module_path():
