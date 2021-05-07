@@ -6,8 +6,8 @@
     <br />
 <div display="inline-block">
     <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Slack Invite</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
   </div>
@@ -29,7 +29,8 @@
 # SmartSim
 
 SmartSim makes it easier to use common Machine Learning (ML) libraries
-like PyTorch and TensorFlow, on numerical simulations at scale.
+like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
+and workloads.
 
 SmartSim provides an API to connect HPC (MPI + X) simulations
 written in Fortran, C, C++, and Python to an in-memory database called
