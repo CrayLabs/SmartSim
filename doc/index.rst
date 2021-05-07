@@ -40,7 +40,7 @@
 
    code_of_conduct
    developer
-   log
+   changelog
 
 
 Indices and tables

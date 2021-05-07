@@ -70,7 +70,8 @@ An ``Ensemble`` can be constructed in three ways:
 
 Ensembles can be given parameters and permutation strategies that
 define how the ``Ensemble`` will create the underlying model objects.
-Three strategies are built in
+
+Three strategies are built in:
   1. ``all_perm`` for generating all permutations of model parameters
   2. ``step`` for creating one set of parameters for each element in `n` arrays
   3. ``random`` for random selection from predefined parameter spaces.

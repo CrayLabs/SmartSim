@@ -1,14 +1,13 @@
 
 
 <div align="center">
-    <a href="https://github.com/CrayLabs/SmartSim"><img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large.png" width="90%"><img></a>
+    <a href="https://github.com/CrayLabs/SmartSim"><img src="https://raw.githubusercontent.com/CrayLabs/SmartSim/master/doc/images/SmartSim_Large.png" width="90%"><img></a>
     <br />
     <br />
 <div display="inline-block">
     <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://github.com/CrayLabs/SmartSim/releases/download/v0.3.0/smartsim-0.3.0.tar.gz"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Slack Invite</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
   </div>
@@ -25,15 +24,15 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-
 ------------
 
 # SmartSim
 
 SmartSim makes it easier to use common Machine Learning (ML) libraries
-like PyTorch and TensorFlow, on numerical simulations at scale.
+like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
+and workloads.
 
-Essentially, SmartSim provides an API to connect HPC (MPI + X) simulations
+SmartSim provides an API to connect HPC (MPI + X) simulations
 written in Fortran, C, C++, and Python to an in-memory database called
 the Orchestrator. The Orchestrator is built on Redis, a popular caching
 database written in C. This connection between simulation and database
@@ -54,7 +53,6 @@ SmartSim 0.3.0 uses Redis 6.0.8 and RedisAI 1.2
 |------------|:-----------------:|
 | PyTorch    |       1.7.0       |
 | TensorFlow |       1.15.0      |
-| TFLite     |       2.0.0       |
 | ONNX       |       1.2.0       |
 
 At this time, PyTorch is the most tested within SmartSim and we recommend
@@ -130,7 +128,7 @@ An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
 
     ```latex
     @misc{partee2021using,
-          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling}, 
+          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling},
           author={Sam Partee and Matthew Ellis and Alessandro Rigazzi and Scott Bachman and Gustavo Marques and Andrew Shao and Benjamin Robbins},
           year={2021},
           eprint={2104.09355},

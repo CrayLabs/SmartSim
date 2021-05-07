@@ -1,4 +1,4 @@
-name: build_and_upload
+name: build-wheels
 
 on: [push, pull_request]
 
@@ -95,5 +95,5 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
-          password: ${{ secrets.TEST_PYPI }}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI }}
+          #repository_url: https://test.pypi.org/legacy/

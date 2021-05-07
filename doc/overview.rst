@@ -8,7 +8,7 @@ Introduction
   :width: 700
   :alt: SmartSim
 
-**SmartSim enables scientists to utilize machine learning inside traditional HPC simulations**
+**SmartSim enables scientists to utilize machine learning inside traditional HPC workloads**
 
 SmartSim provides this capability by
 
