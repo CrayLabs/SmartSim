@@ -1,6 +1,6 @@
 from smartsim.ray import RayServer
+import setproctitle
 import argparse
-
 
 parser = argparse.ArgumentParser(description="SmartSim Ray server launcher")
 parser.add_argument("--ray-port", type=int, help="Port used by Ray to start the Redis server at")
@@ -14,6 +14,6 @@ def current_ip():
     hostname = socket.getfqdn(socket.gethostname())
     return socket.gethostbyname(hostname)
 
-print("OK, YOU ARE ON THE RIGHT TRACK BUDDY. I LOVE YOU.")
 server = RayServer(current_ip(), args.zmq_port, args.ray_port, args.ray_password, args.ray_num_cpus)
+setproctitle.setproctitle("RayServer")
 server.start()

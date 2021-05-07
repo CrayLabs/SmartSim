@@ -39,6 +39,7 @@ from .generation import Generator
 from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
+from .ray import RayCluster
 
 logger = get_logger(__name__)
 
@@ -110,6 +111,10 @@ class Experiment:
             for entity in args:
                 if isinstance(entity, SmartSimEntity):
                     self._control.stop_entity(entity)
+                elif isinstance(entity, RayCluster):
+                    self._control.stop_entity(entity.worker_model)
+                    entity.execute_remote_request(entity._create_remote_request("shutdown"))
+                    self._control.stop_entity(entity.head_model)
                 elif isinstance(entity, EntityList):
                     self._control.stop_entity_list(entity)
                 else:
@@ -380,7 +385,7 @@ class Experiment:
             print(p, flush=True)
 
         sprint("\n")
-        models, ensembles, orchestrator = separate_entities(args)
+        models, ensembles, orchestrator, ray_clusters = separate_entities(args)
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)
@@ -444,6 +449,36 @@ class Experiment:
             batch = colorize(f"Launching as batch: {orchestrator.batch}", color="green")
             sprint(f"{batch}")
             sprint(f"{size}")
+        if ray_clusters:
+            sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
+            for rc in ray_clusters:
+                name = colorize(rc.name, color="green", bold=True)
+                num_models = colorize(
+                    "# of workers: " + str(rc._workers), color="green"
+                )
+                batch_settings = colorize(
+                    "Batch Settings: \n" + str(rc.batch_settings),
+                    color="green",
+                )
+                run_settings = colorize(
+                    "Head run Settings: \n" + str(rc.head_model.run_settings),
+                    color="green",
+                )
+                if rc.worker_model:
+                    run_settings += colorize (
+                        "\nWorkers run Settings: \n" + str(rc.worker_model.run_settings),
+                        color="green",
+                    )
+                batch = colorize(f"Launching as batch: {rc.batch}", color="green")
+
+                sprint(f"{name}")
+                sprint(f"{num_models}")
+                sprint(f"{batch}")
+                if rc.batch:
+                    print(f"{batch_settings}")
+                else:
+                    sprint(f"{run_settings}")
+            sprint("\n")    
 
         sprint("\n")
 

@@ -40,6 +40,7 @@ def separate_entities(args):
     _check_names(args)
     entities = []
     entity_lists = []
+    ray_clusters = []
     db = None
 
     for arg in args:
@@ -49,6 +50,8 @@ def separate_entities(args):
             db = arg
         elif isinstance(arg, SmartSimEntity):
             entities.append(arg)
+        elif isinstance(arg, RayCluster):
+            ray_clusters.append(arg)
         elif isinstance(arg, EntityList):
             entity_lists.append(arg)
         else:
@@ -56,7 +59,7 @@ def separate_entities(args):
                 f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
             )
 
-    return entities, entity_lists, db
+    return entities, entity_lists, db, ray_clusters
 
 
 def _check_names(args):

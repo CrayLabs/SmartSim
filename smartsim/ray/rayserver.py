@@ -1,5 +1,6 @@
 import zmq
 import pickle
+import shlex
 from smartsim.launcher.util.shell import execute_async_cmd, execute_cmd
 
 from smartsim.utils import get_logger
@@ -41,7 +42,14 @@ class RayServer:
             try:
                 request = self.socket.recv()
                 remote_request = pickle.loads(request)
-                returncode, out, err = self.process_command(remote_request)
+                if not remote_request.is_async:
+                    returncode, out, err = self.process_command(remote_request)
+                else:
+                    self.process_command(remote_request)
+                    returncode = 0
+                    out = "Process launched on head node"
+                    err = ""
+                    
                 response = RemoteResponse(returncode, out, err)
                 rep = response.serialize()
                 # send the response back to the compute node
@@ -87,7 +95,7 @@ class RayServer:
         elif cmd == "ping":
             return self.pong()
         else:
-            return self.run_command(remote_request)
+            return self.run_ray_job(remote_request)
 
     def run_ray_job(self, request):
         """Run a ray job
@@ -101,18 +109,20 @@ class RayServer:
         then send back the return code/error/output
 
         we may just want to write error and output to
-        file.. idk
+        file.
         """
-        logger.debug("CMD: " + " ".join(request.cmd))
+        logger.info("CMD: " + request.cmd)
 
-        # REPLACE WITH COMMAND NEEDED TO RUN RAY JOB
-        return execute_cmd(request.cmd,
-                            shell=request.shell,
-                            cwd=request.cwd,
-                            proc_input=request.input,
-                            timeout=request.timeout,
-                            env=request.env,
-                            remote=False)
+        return execute_async_cmd(shlex.split(request.cmd),
+                        cwd=request.cwd)
+        
+#         return execute_cmd(shlex.split(request.cmd),
+#                             shell=False,
+#                             cwd=request.cwd,
+#                             proc_input=request.input,
+#                             timeout=request.timeout,
+#                             env=request.env,
+#                             is_async=True)
 
     def shutdown(self):
         """Shutdown the ray Server.
@@ -123,7 +133,7 @@ class RayServer:
         logger.info(
                 "Received shutdown command from SmartSim experiment")
         self.running = False
-        return self.stop_ray_head()
+        return self.stop_ray_head_node()
 
     def pong(self):
         """Reply to ensure client that server is setup.
@@ -132,11 +142,13 @@ class RayServer:
         :rtype: tuple of (int, str, str)
         """
         logger.info(
-                "Recieved initialization comand from SmartSim experiment")
+                "Received initialization comand from SmartSim experiment")
         return 0, "OK", ""
 
 
-
+class RayServerError(Exception):
+    pass
+    
 # PULLED DIRECTLY FROM COMMAND SERVER
 # we can leave this as a general way of sending commands
 # or specialize it to ray.. idk what is better.

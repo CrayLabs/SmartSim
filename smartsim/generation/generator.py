@@ -81,11 +81,12 @@ class Generator:
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
         """
-        entities, entity_lists, orchestrator = separate_entities(args)
+        entities, entity_lists, orchestrator, ray_clusters = separate_entities(args)
         self._gen_exp_dir()
         self._gen_orc_dir(orchestrator)
         self._gen_entity_list_dir(entity_lists)
         self._gen_entity_dirs(entities)
+        self._gen_ray_cluster_dir(ray_clusters)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files
@@ -163,6 +164,46 @@ class Generator:
             elist.path = elist_dir
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
+            
+    def _gen_ray_cluster_dir(self, ray_clusters):
+        """Generate directories for RayCluster instances
+
+        :param ray_clusters: list of RayCluster instances
+        :type ray_clusters: list
+        """
+
+        if not ray_clusters:
+            return
+
+        for rc in ray_clusters:
+            rc_dir = path.join(self.gen_path, rc.path)
+            if path.isdir(rc_dir):
+                if self.overwrite:
+                    shutil.rmtree(rc_dir)
+                    mkdir(rc_dir)
+            else:
+                mkdir(rc_dir)
+            rc.path = rc_dir
+            
+            rc_head_dir = path.join(self.gen_path, rc.head_model.path)
+            if path.isdir(rc_head_dir):
+                if self.overwrite:
+                    shutil.rmtree(rc_head_dir)
+                    mkdir(rc_head_dir)
+            else:
+                mkdir(rc_head_dir)
+                
+            rc.head_model.path = rc_head_dir
+            
+            rc_worker_dir = path.join(self.gen_path, rc.worker_model.path)
+            if path.isdir(rc_worker_dir):
+                if self.overwrite:
+                    shutil.rmtree(rc_worker_dir)
+                    mkdir(rc_worker_dir)
+            else:
+                mkdir(rc_worker_dir)
+                
+            rc.worker_model.path = rc_worker_dir
 
     def _gen_entity_dirs(self, entities, entity_list=None):
         """Generate directories for Entity instances

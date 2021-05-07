@@ -35,7 +35,7 @@ tune.run(
         "framework": "torch",
         "env": "CartPole-v0",
         "num_gpus": 0,
-        "lr": tune.grid_search(np.arange (0.001, 0.02, 0.0001).tolist()),
+        "lr": tune.grid_search(np.arange (0.001, 0.01, 0.0001).tolist()),
     },
     local_dir="/lus/scratch/arigazzi/ray_local/",
     sync_config=tune.SyncConfig(sync_to_driver=False),
