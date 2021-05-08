@@ -95,7 +95,7 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 | C        	|        C99       	|
 | C++      	|       C++11      	|
 
-SmartRedis clients are cluster compatible and work with the OSS Redis/RedisAI stack.
+SmartRedis clients are cluster compatible and work with the open source Redis stack.
 
 ### Dependencies
 
