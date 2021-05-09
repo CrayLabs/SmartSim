@@ -19,6 +19,8 @@
 [![License](https://img.shields.io/github/license/CrayLabs/SmartSim)](https://github.com/CrayLabs/SmartSim/blob/master/LICENSE.md)
 ![GitHub last commit](https://img.shields.io/github/last-commit/CrayLabs/SmartSim)
 ![GitHub deployments](https://img.shields.io/github/deployments/CrayLabs/SmartSim/github-pages?label=doc%20build)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/smartsim)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/smartsim)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/CrayLabs/SmartSim)
 ![Language](https://img.shields.io/github/languages/top/CrayLabs/SmartSim)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
