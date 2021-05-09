@@ -399,13 +399,39 @@ class Controller:
                 except SSUnsupportedError:
                     logger.debug(
                         "WLM Ray worker node acquisition unsupported"
-                    )
-                    
-            logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
+                    )             
         else:
-            logger.info("You should not run Ray clusters as batches")
-
-
+            head_batch_step = self._create_batch_job_step(ray_cluster.head_model)
+            self._launch_step(head_batch_step, ray_cluster.head_model)
+            ray_cluster._get_ray_head_node_address()
+            try:
+                nodelist = self._launcher.get_step_nodes([head_batch_step.name])
+                ray_cluster._hosts = nodelist[0]
+                
+            # catch if it fails or launcher doesn't support it
+            except LauncherError:
+                logger.debug("WLM Ray head node aquisition failed")
+            except SSUnsupportedError:
+                logger.debug(
+                    "WLM Ray head node acquisition unsupported"
+                )
+                
+            if ray_cluster.worker_model:
+                ray_cluster._update_worker_model()
+                worker_batch_step = self._create_batch_job_step(ray_cluster.worker_model)
+                self._launch_step(worker_batch_step, ray_cluster.worker_model)
+                try:
+                    nodelist = self._launcher.get_step_nodes([worker_batch_step.name])
+                    ray_cluster._hosts.extend(nodelist[0])
+                    # catch if it fails or launcher doesn't support it
+                except LauncherError:
+                    logger.debug("WLM Ray worker node aquisition failed")
+                except SSUnsupportedError:
+                    logger.debug(
+                        "WLM Ray worker node acquisition unsupported"
+                    )
+        
+        logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
         
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop
@@ -433,22 +459,28 @@ class Controller:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity)
 
-    def _create_batch_job_step(self, entity_list):
+    def _create_batch_job_step(self, entity):
         """Use launcher to create batch job step
 
-        :param entity_list: EntityList to launch as batch
-        :type entity_list: EntityList
+        :param entity_list: Entity to launch as batch
+        :type entity_list: Entity
         :return: job step instance
         :rtype: Step
         """
         batch_step = self._launcher.create_step(
-            entity_list.name, entity_list.path, entity_list.batch_settings
+            entity.name, entity.path, entity.batch_settings
         )
-        for entity in entity_list.entities:
-            # tells step creation not to look for an allocation
+        if isinstance(entity, EntityList):
+            for e in entity.entities:
+                # tells step creation not to look for an allocation
+                e.run_settings.in_batch = True
+                step = self._create_job_step(e)
+                batch_step.add_to_batch(step)
+        else:
             entity.run_settings.in_batch = True
             step = self._create_job_step(entity)
             batch_step.add_to_batch(step)
+        
         return batch_step
 
     def _create_job_step(self, entity):

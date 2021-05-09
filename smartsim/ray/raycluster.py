@@ -51,7 +51,7 @@ class RayCluster(EntityList):
      -
     """
 
-    def __init__(self, name, path, ray_port=6780, ray_num_cpus=12, workers=0, zmq_port=7599, run_args={}, launcher='local', alloc=None):
+    def __init__(self, name, path, ray_port=6780, ray_num_cpus=12, workers=0, zmq_port=7599, run_args={}, launcher='local', alloc=None, batch=False):
         self._workers = workers
         self._ray_port = ray_port
         self._ray_password = uuid.uuid4()
@@ -65,8 +65,12 @@ class RayCluster(EntityList):
         self.batch_settings = None
         self.timeout = 100000
         self._alloc = alloc
+        self._batch = batch
         super().__init__(name=name, path=path)
 
+    def batch(self):
+        return self._batch
+        
     def start_ray_job(self, job_script, script_args=None):
         # use cmdserver client to send job to daemon thread
         """Start a Ray Job
@@ -91,8 +95,7 @@ class RayCluster(EntityList):
             cmd_list += [f"--ray-address={self.head_model.address}:{self._ray_port}"]
             request = self._create_remote_request(" ".join(cmd_list))
         
-        self.execute_remote_request(request)
-        
+        self.execute_remote_request(request)        
 
     def _update_worker_model(self):
         self.worker_model.update_run_settings()
@@ -106,7 +109,9 @@ class RayCluster(EntityList):
                                   zmq_port=self._zmq_port,
                                   run_args=self._run_args,
                                   ray_num_cpus=self._ray_num_cpus,
-                                  alloc=self._alloc)
+                                  alloc=self._alloc,
+                                  batch=self.batch())
+
         self.entities.append(self.head_model)
 
         if self._workers > 0:
@@ -119,7 +124,8 @@ class RayCluster(EntityList):
                                           ray_num_cpus=self._ray_num_cpus,
                                           head_model=self.head_model,
                                           launcher=self._launcher,
-                                          alloc=self._alloc)
+                                          alloc=self._alloc,
+                                          batch=self.batch())
             self.entities.append(self.worker_model)
 
 
@@ -215,7 +221,7 @@ class RayCluster(EntityList):
 
 class RayHead(Model):
     """Technically using facing but users will never see it similar to DBNode"""
-    def __init__(self, name, params, path, ray_password, ray_port=6780, zmq_port=7599, run_args={}, ray_num_cpus=12, launcher='local', alloc=None):
+    def __init__(self, name, params, path, ray_password, ray_port=6780, zmq_port=7599, run_args={}, ray_num_cpus=12, launcher='local', alloc=None, batch=False):
         self._ray_port = ray_port
         self._zmq_port = zmq_port
         self._run_args = run_args
@@ -224,10 +230,14 @@ class RayHead(Model):
         self._alloc = alloc
         self._launcher = launcher
         self.address = None
+        self._batch = batch
         
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
         
+    def batch(self):
+        return self._batch
+    
     def _build_run_settings(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         ray_args = [os.path.join(dir_path, "rayserverstarter.py")]
@@ -243,23 +253,27 @@ class RayHead(Model):
         
     def _build_srun_settings(self, ray_args):
     
-            self._head_run_args = {"nodes": 1,
-                                   "ntasks-per-node": 1, # Ray will take care of resources.
-                                   "ntasks": 1,
-                                   "cpus-per-task": self._ray_num_cpus,
-                                   "oversubscribe": None,
-                                   "overcommit": None,
-                                   "time": "12:00:00",
-                                   "unbuffered": None}
+            batch_args = {"nodes": 1,
+                          "ntasks-per-node": 1, # Ray will take care of resources.
+                          "ntasks": 1,
+                          "cpus-per-task": self._ray_num_cpus,
+                          "oversubscribe": None,
+                          "overcommit": None,
+                          "time": "12:00:00"}
             #have to include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
-            
+            if self.batch():
+                self.batch_settings = SbatchSettings(
+                    nodes=1, time=batch_args["time"], batch_args=batch_args
+                )
+            run_args = batch_args.copy()
+            run_args["unbuffered"] = None
             return SrunSettings("python", exe_args=" ".join(ray_args),
-                                run_args=self._head_run_args, expand_exe=False,
+                                run_args=run_args, expand_exe=False,
                                 alloc=self._alloc)
 
 class RayWorker(Model):
     """Technically using facing but users will never see it similar to DBNode"""
-    def __init__(self, name, params, path, run_args, workers, ray_port, ray_password, ray_num_cpus, head_model, launcher, alloc=None):
+    def __init__(self, name, params, path, run_args, workers, ray_port, ray_password, ray_num_cpus, head_model, launcher, alloc=None, batch=False):
         self._run_args = run_args
         self._ray_port = ray_port
         self._ray_password = ray_password
@@ -268,8 +282,13 @@ class RayWorker(Model):
         self._workers = workers
         self.head_model = head_model
         self._alloc = alloc
+        self._batch = batch
+        
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
+    
+    def batch(self):
+        return self._batch
     
     def update_run_settings(self):
         self.run_settings.add_exe_args([f"--address={self.head_model.address}:{self._ray_port}"])
@@ -281,19 +300,25 @@ class RayWorker(Model):
         ray_args += ["--block"]
         if self._launcher == 'slurm':
             self.run_settings = self._build_srun_settings(ray_args)
+            
         else:
             raise NotImplementedError("Only slurm launcher is supported.")
 
     def _build_srun_settings(self, ray_args):
-        run_args = {"nodes": self._workers,
-                     "ntasks-per-node": 1, # Ray will take care of resources.
-                     "ntasks": self._workers,
-                     "cpus-per-task": self._ray_num_cpus,
-                     "oversubscribe": None,
-                     "overcommit": None,
-                     "time": "12:00:00",
-                     "unbuffered": None}
+        batch_args = {"nodes": self._workers,
+                      "ntasks-per-node": 1, # Ray will take care of resources.
+                      "ntasks": self._workers,
+                      "cpus-per-task": self._ray_num_cpus,
+                      "oversubscribe": None,
+                      "overcommit": None,
+                      "time": "12:00:00"}
 
+        if self.batch():
+            self.batch_settings = SbatchSettings(
+                nodes=self._workers, time=batch_args["time"], batch_args=batch_args
+            )
+        run_args = batch_args.copy()
+        run_args["unbuffered"] = None
         return SrunSettings("ray", exe_args=" ".join(ray_args),
                             run_args=run_args, expand_exe=False,
                             alloc=self._alloc)
