@@ -41,6 +41,7 @@ class QsubBatchSettings(BatchSettings):
         account=None,
         resources=None,
         batch_args=None,
+        preamble=[],
         **kwargs,
     ):
         """Specify ``qsub`` batch parameters for a job
@@ -65,8 +66,13 @@ class QsubBatchSettings(BatchSettings):
         :type resources: dict[str, str], optional
         :param batch_args: overrides for PBS batch arguments
         :type batch_args: dict[str, str], optional
+        :param preamble: list of instructions to be written in the sbatch
+                         file before the `srun` (or equivalent) commands.
+                         Typical usage is to load modules, set variables,
+                         or activate virtual environments.
+        :type preamble: list[str], optional
         """
-        super().__init__("qsub", batch_args=batch_args)
+        super().__init__("qsub", batch_args=batch_args, preamble=preamble)
         self.resources = init_default({}, resources, dict)
         self._nodes = nodes
         self._time = time

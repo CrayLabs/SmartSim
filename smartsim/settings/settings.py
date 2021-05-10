@@ -71,7 +71,7 @@ class RunSettings:
         :type block_in_batch: bool
         :param expand_exe: whether the executable path should be expanded. It is recommended
                            to always leave this value to True, unless really needed (e.g. 
-                           when commands are not available on the launch node.
+                           when commands are not available on the launch node).
         :type expand_exe: bool
         """
         self.exe = [expand_exe_path(exe) if expand_exe else exe]
@@ -162,9 +162,10 @@ class RunSettings:
 
 
 class BatchSettings:
-    def __init__(self, batch_cmd, batch_args=None):
+    def __init__(self, batch_cmd, batch_args=None, preamble=[]):
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
+        self._preamble = preamble
 
     @property
     def batch_cmd(self):
