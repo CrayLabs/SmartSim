@@ -72,7 +72,8 @@ class RayServer:
                f"--port={self.ray_port}",
                f"--node-ip-address={self.address}",
                f"--redis-password={self.ray_password}",
-               f"--num-cpus={self.ray_num_cpus}"]
+               f"--num-cpus={self.ray_num_cpus}",
+              ]
 
         return execute_cmd(cmd, shell=False)
 
@@ -116,8 +117,14 @@ class RayServer:
         """
         logger.info("CMD: " + request.cmd)
 
+        for key in os.environ.keys():
+            print(key, os.environ[key])
+        
+        OUT_FILE = open("CMD_SERVER_OUT.txt", "a+")
+        ERR_FILE = open("CMD_SERVER_ERR.txt", "a+")
+        
         return execute_async_cmd(shlex.split(request.cmd),
-                        cwd=request.cwd)
+                        cwd=request.cwd, out=OUT_FILE, err=ERR_FILE)
         
 #         return execute_cmd(shlex.split(request.cmd),
 #                             shell=False,

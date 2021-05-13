@@ -2,9 +2,9 @@ import ray
 from ray import tune
 import time
 import numpy as np
-from tqdm import trange
 import argparse
 #from ray.rllib.agents import ppo
+import os
 
 parser = argparse.ArgumentParser(description="PPO Tune Example")
 parser.add_argument("--ray-address", type=str, help="The Redis address of the cluster.")
@@ -13,6 +13,8 @@ args = parser.parse_args()
 
 #ray.init(address=args.ray_address, _node_ip_address=args.ray_address.split(":")[0], _redis_password=args.redis_password, log_to_driver=True)
 ray.init(address=args.ray_address, _redis_password=args.redis_password)#, log_to_driver=True)#, local_mode=True)
+
+
 
 time.sleep(5)
 print("Nodes:")
@@ -79,9 +81,9 @@ tune.run(
         "env": "CartPole-v0",
         "num_gpus": 0,
         "lr": tune.grid_search(np.arange (0.001, 0.0030, 0.0001).tolist()),
-        "log_level": "INFO",
+        "log_level": "DEBUG",
+        "num_cpus_per_worker": 1,
         "num_cpus_for_driver": 1,
-        "num_workers": 1,
     },
     local_dir="/lus/scratch/arigazzi/ray_local/",
     #sync_config=tune.SyncConfig(sync_to_driver=False),

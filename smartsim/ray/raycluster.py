@@ -256,7 +256,7 @@ class RayHead(Model):
             batch_args = {"nodes": 1,
                           "ntasks-per-node": 1, # Ray will take care of resources.
                           "ntasks": 1,
-                          #"cpus-per-task": self._ray_num_cpus+10,
+                          "cpus-per-task": self._ray_num_cpus,
                           #"oversubscribe": None,
                           "overcommit": None,
                           "time": "12:00:00"}
@@ -273,6 +273,7 @@ class RayHead(Model):
             if self._launcher == 'slurm':
                 run_args = batch_args.copy()
                 run_args["unbuffered"] = None
+                run_args["overlap"] = None
                 return SrunSettings("python", exe_args=" ".join(ray_args),
                                     run_args=run_args, expand_exe=False,
                                     alloc=self._alloc)#, env_vars = {"TUNE_MAX_PENDING_TRIALS_PG": "4"})

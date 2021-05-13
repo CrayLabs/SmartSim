@@ -26,11 +26,7 @@ os.environ["TUNE_MAX_PENDING_TRIALS_PG"]="32"
 # os.environ["TUNE_PLACEMENT_GROUP_RECON_INTERVAL"]="1"
 # os.environ["RAY_BACKEND_LOG_LEVEL"]="0"
 
-# os.environ["OMP_NUM_THREADS"] = "1"
-# os.environ["OPENBLAS_NUM_THREADS"] = "1"
-# os.environ["MKL_NUM_THREADS"] = "1"
-# os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-# os.environ["NUMEXPR_NUM_THREADS"] = "1"
+#os.environ["OMP_NUM_THREADS"] = "72"
 
 server = RayServer(current_ip(), args.zmq_port, args.ray_port, args.ray_password, args.ray_num_cpus)
 setproctitle.setproctitle("RayServer")
