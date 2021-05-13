@@ -1,6 +1,7 @@
 import zmq
 import pickle
 import shlex
+import os
 from smartsim.launcher.util.shell import execute_async_cmd, execute_cmd
 
 from smartsim.utils import get_logger
@@ -46,6 +47,7 @@ class RayServer:
                     returncode, out, err = self.process_command(remote_request)
                 else:
                     self.process_command(remote_request)
+                    print("Command processed")
                     returncode = 0
                     out = "Process launched on head node"
                     err = ""
@@ -71,6 +73,7 @@ class RayServer:
                f"--node-ip-address={self.address}",
                f"--redis-password={self.ray_password}",
                f"--num-cpus={self.ray_num_cpus}"]
+
         return execute_cmd(cmd, shell=False)
 
     def stop_ray_head_node(self):

@@ -67,7 +67,8 @@ class RayCluster(EntityList):
         self._alloc = alloc
         self._batch = batch
         super().__init__(name=name, path=path)
-
+    
+    @property
     def batch(self):
         return self._batch
         
@@ -110,7 +111,7 @@ class RayCluster(EntityList):
                                   run_args=self._run_args,
                                   ray_num_cpus=self._ray_num_cpus,
                                   alloc=self._alloc,
-                                  batch=self.batch())
+                                  batch=self.batch)
 
         self.entities.append(self.head_model)
 
@@ -125,7 +126,7 @@ class RayCluster(EntityList):
                                           head_model=self.head_model,
                                           launcher=self._launcher,
                                           alloc=self._alloc,
-                                          batch=self.batch())
+                                          batch=self.batch)
             self.entities.append(self.worker_model)
 
 
@@ -246,30 +247,43 @@ class RayHead(Model):
         ray_args += [f"--ray-password={self._ray_password}"]
         ray_args += [f"--zmq-port={self._zmq_port}"]
         
-        if self._launcher == 'slurm':
+        if self._launcher == 'slurm' or self._launcher == 'slurm_ccm':
             self.run_settings = self._build_srun_settings(ray_args)
         else:
             raise NotImplementedError("Only Slurm launcher is supported.")
         
     def _build_srun_settings(self, ray_args):
-    
             batch_args = {"nodes": 1,
                           "ntasks-per-node": 1, # Ray will take care of resources.
                           "ntasks": 1,
-                          "cpus-per-task": self._ray_num_cpus,
-                          "oversubscribe": None,
+                          #"cpus-per-task": self._ray_num_cpus+10,
+                          #"oversubscribe": None,
                           "overcommit": None,
                           "time": "12:00:00"}
+            batch_args.update(self._run_args)
             #have to include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
             if self.batch():
                 self.batch_settings = SbatchSettings(
                     nodes=1, time=batch_args["time"], batch_args=batch_args
                 )
-            run_args = batch_args.copy()
-            run_args["unbuffered"] = None
-            return SrunSettings("python", exe_args=" ".join(ray_args),
-                                run_args=run_args, expand_exe=False,
-                                alloc=self._alloc)
+            else:
+                if "oversubscribe" in batch_args.keys():
+                    del batch_args["oversubscribe"]
+            
+            if self._launcher == 'slurm':
+                run_args = batch_args.copy()
+                run_args["unbuffered"] = None
+                return SrunSettings("python", exe_args=" ".join(ray_args),
+                                    run_args=run_args, expand_exe=False,
+                                    alloc=self._alloc)#, env_vars = {"TUNE_MAX_PENDING_TRIALS_PG": "4"})
+            elif self._launcher == 'slurm_ccm':
+                run_args = {}
+                rs = RunSettings("python", exe_args=" ".join(ray_args),
+                                 run_args=run_args, expand_exe=False)
+                rs._run_command = 'ccmrun'
+                return rs
+                
+            
 
 class RayWorker(Model):
     """Technically using facing but users will never see it similar to DBNode"""
@@ -298,7 +312,7 @@ class RayWorker(Model):
         ray_args += [f"--num-cpus={self._ray_num_cpus}"]
         ray_args += [f"--redis-password={self._ray_password}"]
         ray_args += ["--block"]
-        if self._launcher == 'slurm':
+        if self._launcher.startswith('slurm'):
             self.run_settings = self._build_srun_settings(ray_args)
             
         else:
@@ -312,6 +326,7 @@ class RayWorker(Model):
                       "oversubscribe": None,
                       "overcommit": None,
                       "time": "12:00:00"}
+        batch_args.update(self._run_args)
 
         if self.batch():
             self.batch_settings = SbatchSettings(

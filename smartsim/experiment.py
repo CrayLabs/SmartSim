@@ -112,7 +112,8 @@ class Experiment:
                 if isinstance(entity, SmartSimEntity):
                     self._control.stop_entity(entity)
                 elif isinstance(entity, RayCluster):
-                    self._control.stop_entity(entity.worker_model)
+                    if entity.worker_model:
+                        self._control.stop_entity(entity.worker_model)
                     entity.execute_remote_request(entity._create_remote_request("shutdown"))
                     self._control.stop_entity(entity.head_model)
                 elif isinstance(entity, EntityList):

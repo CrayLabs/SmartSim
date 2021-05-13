@@ -195,15 +195,16 @@ class Generator:
                 
             rc.head_model.path = rc_head_dir
             
-            rc_worker_dir = path.join(self.gen_path, rc.worker_model.path)
-            if path.isdir(rc_worker_dir):
-                if self.overwrite:
-                    shutil.rmtree(rc_worker_dir)
+            if rc._workers > 0:
+                rc_worker_dir = path.join(self.gen_path, rc.worker_model.path)
+                if path.isdir(rc_worker_dir):
+                    if self.overwrite:
+                        shutil.rmtree(rc_worker_dir)
+                        mkdir(rc_worker_dir)
+                else:
                     mkdir(rc_worker_dir)
-            else:
-                mkdir(rc_worker_dir)
-                
-            rc.worker_model.path = rc_worker_dir
+
+                rc.worker_model.path = rc_worker_dir
 
     def _gen_entity_dirs(self, entities, entity_list=None):
         """Generate directories for Entity instances
