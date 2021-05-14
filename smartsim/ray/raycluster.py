@@ -236,6 +236,7 @@ class RayHead(Model):
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
         
+    @property
     def batch(self):
         return self._batch
     
@@ -257,12 +258,14 @@ class RayHead(Model):
                           "ntasks-per-node": 1, # Ray will take care of resources.
                           "ntasks": 1,
                           "cpus-per-task": self._ray_num_cpus,
-                          #"oversubscribe": None,
-                          "overcommit": None,
                           "time": "12:00:00"}
+            # no alloc and no batch means that we are inside an allocation
+            # we need to overcommit one node
+            if self._alloc is None and not self.batch:
+                batch_args["overcommit"] = None
             batch_args.update(self._run_args)
             #have to include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
-            if self.batch():
+            if self.batch:
                 self.batch_settings = SbatchSettings(
                     nodes=1, time=batch_args["time"], batch_args=batch_args
                 )
@@ -276,14 +279,7 @@ class RayHead(Model):
                 run_args["overlap"] = None
                 return SrunSettings("python", exe_args=" ".join(ray_args),
                                     run_args=run_args, expand_exe=False,
-                                    alloc=self._alloc)#, env_vars = {"TUNE_MAX_PENDING_TRIALS_PG": "4"})
-            elif self._launcher == 'slurm_ccm':
-                run_args = {}
-                rs = RunSettings("python", exe_args=" ".join(ray_args),
-                                 run_args=run_args, expand_exe=False)
-                rs._run_command = 'ccmrun'
-                return rs
-                
+                                    alloc=self._alloc)
             
 
 class RayWorker(Model):
@@ -302,6 +298,7 @@ class RayWorker(Model):
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
     
+    @property
     def batch(self):
         return self._batch
     
@@ -323,18 +320,17 @@ class RayWorker(Model):
         batch_args = {"nodes": self._workers,
                       "ntasks-per-node": 1, # Ray will take care of resources.
                       "ntasks": self._workers,
-                      "cpus-per-task": self._ray_num_cpus,
-                      "oversubscribe": None,
-                      "overcommit": None,
                       "time": "12:00:00"}
         batch_args.update(self._run_args)
 
-        if self.batch():
+        if self.batch:
             self.batch_settings = SbatchSettings(
                 nodes=self._workers, time=batch_args["time"], batch_args=batch_args
             )
         run_args = batch_args.copy()
         run_args["unbuffered"] = None
+        if not self.batch and self._alloc is None:
+            run_args["overcommit"] = None
         return SrunSettings("ray", exe_args=" ".join(ray_args),
                             run_args=run_args, expand_exe=False,
                             alloc=self._alloc)

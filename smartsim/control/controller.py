@@ -383,9 +383,7 @@ class Controller:
             except LauncherError:
                 logger.debug("WLM Ray head node aquisition failed")
             except SSUnsupportedError:
-                logger.debug(
-                    "WLM Ray head node acquisition unsupported"
-                )
+                logger.debug("WLM Ray head node acquisition unsupported")
                 
             if ray_cluster.worker_model:
                 ray_cluster._update_worker_model()
@@ -398,9 +396,7 @@ class Controller:
                 except LauncherError:
                     logger.debug("WLM Ray worker node aquisition failed")
                 except SSUnsupportedError:
-                    logger.debug(
-                        "WLM Ray worker node acquisition unsupported"
-                    )
+                    logger.debug("WLM Ray worker node acquisition unsupported")
         else:
             head_step = self._create_job_step(ray_cluster.head_model)
             self._launch_step(head_step, ray_cluster.head_model)
@@ -408,21 +404,23 @@ class Controller:
             try:
                 nodelist = self._launcher.get_step_nodes([head_step.name])
                 ray_cluster._hosts = nodelist[0]
+                ray_cluster.head_model._hosts = nodelist[0]
                 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
                 logger.debug("WLM Ray head node aquisition failed")
             except SSUnsupportedError:
-                logger.debug(
-                    "WLM Ray head node acquisition unsupported"
-                )
+                logger.debug("WLM Ray head node acquisition unsupported")
             if ray_cluster.worker_model:
                 ray_cluster._update_worker_model()
+                # Don't launch on head host
+                ray_cluster.worker_model.run_settings.set_excludelist(ray_cluster.head_model._hosts)
                 worker_step = self._create_job_step(ray_cluster.worker_model)
                 self._launch_step(worker_step, ray_cluster.worker_model)
                 try:
                     nodelist = self._launcher.get_step_nodes([worker_step.name])
                     ray_cluster._hosts.extend(nodelist[0])
+                    
                     # catch if it fails or launcher doesn't support it
                 except LauncherError:
                     logger.debug("WLM Ray worker node aquisition failed")

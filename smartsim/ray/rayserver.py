@@ -28,6 +28,7 @@ class RayServer:
         self.ray_port = ray_port
         self.ray_password = ray_password
         self.ray_num_cpus = ray_num_cpus
+        self.file_opened = False
 
     def start(self):
         """Continually serve requests until a shutdown command is
@@ -116,24 +117,14 @@ class RayServer:
         file.
         """
         logger.info("CMD: " + request.cmd)
-
-        for key in os.environ.keys():
-            print(key, os.environ[key])
         
-        OUT_FILE = open("CMD_SERVER_OUT.txt", "a+")
-        ERR_FILE = open("CMD_SERVER_ERR.txt", "a+")
+        if not self.file_opened:
+            OUT_FILE = open("head.out", "a+", buffering=1)
+            ERR_FILE = open("head.err", "a+", buffering=1)
         
         return execute_async_cmd(shlex.split(request.cmd),
                         cwd=request.cwd, out=OUT_FILE, err=ERR_FILE)
         
-#         return execute_cmd(shlex.split(request.cmd),
-#                             shell=False,
-#                             cwd=request.cwd,
-#                             proc_input=request.input,
-#                             timeout=request.timeout,
-#                             env=request.env,
-#                             is_async=True)
-
     def shutdown(self):
         """Shutdown the ray Server.
 
@@ -142,6 +133,9 @@ class RayServer:
         """
         logger.info(
                 "Received shutdown command from SmartSim experiment")
+        if self.file_opened:
+            close("head.out")
+            close("head.err")
         self.running = False
         return self.stop_ray_head_node()
 
