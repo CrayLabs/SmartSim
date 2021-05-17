@@ -1,5 +1,6 @@
 import ray
 from ray import tune
+import ray.util
 import time
 import numpy as np
 import argparse
@@ -10,8 +11,10 @@ parser.add_argument("--ray-address", type=str, help="The Redis address of the cl
 parser.add_argument("--redis-password", type=str, help="Password of Redis cluster.")
 args = parser.parse_args()
 
-ray.init(address=args.ray_address, _redis_password=args.redis_password)
-
+ray.util.connect(args.ray_address.split(':')[0]+":10001")
+# print("connected")
+#ray.init(address=args.ray_address, _redis_password=args.redis_password)
+print("initialized")
 tune.run(
     "PPO",
     stop={"episode_reward_max": 200},
@@ -27,5 +30,4 @@ tune.run(
     local_dir="/lus/scratch/arigazzi/ray_local/",
     verbose=3,
     fail_fast=True,
-    log_to_file=True,
 )

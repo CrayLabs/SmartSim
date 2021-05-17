@@ -264,7 +264,7 @@ class RayHead(Model):
             if self._alloc is None and not self.batch:
                 batch_args["overcommit"] = None
             batch_args.update(self._run_args)
-            #have to include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
+            #TODO include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
             if self.batch:
                 self.batch_settings = SbatchSettings(
                     nodes=1, time=batch_args["time"], batch_args=batch_args
@@ -276,7 +276,6 @@ class RayHead(Model):
             if self._launcher == 'slurm':
                 run_args = batch_args.copy()
                 run_args["unbuffered"] = None
-                run_args["overlap"] = None
                 return SrunSettings("python", exe_args=" ".join(ray_args),
                                     run_args=run_args, expand_exe=False,
                                     alloc=self._alloc)
