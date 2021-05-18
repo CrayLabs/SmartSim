@@ -22,7 +22,7 @@ tune.run(
         "framework": "torch",
         "env": "CartPole-v0",
         "num_gpus": 0,
-        "lr": tune.grid_search(np.linspace (0.001, 0.01, 1000).tolist()),
+        "lr": tune.grid_search(np.linspace (0.001, 0.01, 100).tolist()),
         "log_level": "ERROR",
         "num_cpus_per_worker": 1,
         "num_cpus_for_driver": 1,
