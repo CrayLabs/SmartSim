@@ -78,6 +78,7 @@ class QsubBatchSettings(BatchSettings):
         self._time = time
         self._ncpus = ncpus
         self._hosts = None
+        self._preamble = preamble
         if account:
             self.set_account(account)
         if queue:

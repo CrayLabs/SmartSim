@@ -28,7 +28,7 @@ from .settings import RunSettings
 
 
 class AprunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, block_in_batch=False, expand_exe=True):
         """Settings to run job with ``aprun`` command
 
         ``AprunSettings`` can be used for both the `pbs` and `cobalt`
@@ -42,10 +42,19 @@ class AprunSettings(RunSettings):
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
+        :param block_in_batch: whether the execution of this call should block when executed
+                               in a batch.
+        :type block_in_batch: bool
+        :param expand_exe: whether the executable path should be expanded. It is recommended
+                           to always leave this value to True, unless really needed (e.g. 
+                           when commands are not available on the launch node).
+        :type expand_exe: bool
         """
         super().__init__(
-            exe, exe_args, run_command="aprun", run_args=run_args, env_vars=env_vars
+            exe, exe_args, run_command="aprun", run_args=run_args, env_vars=env_vars,
+            expand_exe=expand_exe
         )
+        self.block_in_batch = block_in_batch
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):

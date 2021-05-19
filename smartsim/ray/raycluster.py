@@ -2,7 +2,7 @@ from ..config import CONFIG
 from ..entity import EntityList, Model
 from ..error import SmartSimError, SSConfigError
 from ..launcher.util.shell import execute_cmd
-from ..settings import RunSettings, SrunSettings, SbatchSettings
+from ..settings import RunSettings, SrunSettings, SbatchSettings, AprunSettings, QsubBatchSettings
 from ..utils import get_logger
 from ..utils.helpers import expand_exe_path, get_env
 
@@ -50,6 +50,7 @@ class RayCluster(EntityList):
         self.batch_settings = None
         self._alloc = alloc
         self._batch = batch
+        self._hosts = None
         super().__init__(name=name, path=path)
     
     @property
@@ -142,30 +143,38 @@ class RayHead(Model):
         return self._batch
     
     def _build_run_settings(self):
-        ray_args = ["start"]
-        ray_args += ["--head"]
+#         ray_args = ["start"]
+#         ray_args += ["--head"]
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        ray_args = [f"{dir_path}/rayserverstarter.py"]
         ray_args += [f"--num-cpus={self._ray_num_cpus}"]
         ray_args += [f"--port={self._ray_port}"]
         ray_args += [f"--redis-password={self._ray_password}"]
-        ray_args += ["--block"]
+#         ray_args += ["--block"]
         
         if self._launcher == 'slurm':
             self.run_settings = self._build_srun_settings(ray_args)
+        elif self._launcher == 'pbs':
+            self.run_settings = self._build_pbs_settings(ray_args)
         else:
-            raise NotImplementedError("Only Slurm launcher is supported.")
-        
+            raise NotImplementedError("Only Slurm and PBS launchers are supported.")
+    
+    def _build_pbs_settings(self, ray_args):
+        if self.batch:
+            self.batch_settings = QsubBatchSettings(nodes=1, ncpus=1)
+        return AprunSettings("python", exe_args=" ".join(ray_args),
+                            run_args=self._run_args, expand_exe=True)
+    
     def _build_srun_settings(self, ray_args):
             batch_args = {"nodes": 1,
                           "ntasks-per-node": 1, # Ray will take care of resources.
-                          "ntasks": 1,
-                          "cpus-per-task": self._ray_num_cpus,
-                          "time": "06:00:00"}
+                          "ntasks": 1}
             # no alloc and no batch means that we are inside an allocation
             # we need to overcommit one node
             if self._alloc is None and not self.batch:
                 batch_args["overcommit"] = None
+            #TODO reject nodes, ntasks, ntasks-per-node, and so on.
             batch_args.update(self._run_args)
-            #TODO include user-provided run args, but rejecting nodes, ntasks, ntasks-per-node, and so on.
             if self.batch:
                 self.batch_settings = SbatchSettings(
                     nodes=1, time=batch_args["time"], batch_args=batch_args
@@ -177,7 +186,7 @@ class RayHead(Model):
             if self._launcher == 'slurm':
                 run_args = batch_args.copy()
                 run_args["unbuffered"] = None
-                return SrunSettings("ray", exe_args=" ".join(ray_args),
+                return SrunSettings("python", exe_args=" ".join(ray_args),
                                     run_args=run_args, expand_exe=False,
                                     alloc=self._alloc)
             
@@ -210,16 +219,17 @@ class RayWorker(Model):
         ray_args += [f"--redis-password={self._ray_password}"]
         ray_args += [f"--num-cpus={self._ray_num_cpus}"]
         ray_args += ["--block"]
-        if self._launcher.startswith('slurm'):
+        if self._launcher == 'slurm':
             self.run_settings = self._build_srun_settings(ray_args)
+        elif self._launcher == 'pbs':
+            self.run_settings = self._build_pbs_settings(ray_args)
         else:
-            raise NotImplementedError("Only slurm launcher is supported.")
+            raise NotImplementedError("Only Slurm and PBS launchers are supported.")
 
     def _build_srun_settings(self, ray_args):
         batch_args = {"nodes": self._workers,
                       "ntasks-per-node": 1, # Ray will take care of resources.
                       "ntasks": self._workers,
-                      "cpus-per-task": self._ray_num_cpus,
                       "time": "12:00:00"}
         batch_args.update(self._run_args)
 
@@ -234,3 +244,9 @@ class RayWorker(Model):
         return SrunSettings("ray", exe_args=" ".join(ray_args),
                             run_args=run_args, expand_exe=False,
                             alloc=self._alloc)
+
+    def _build_pbs_settings(self, ray_args):
+        if self.batch:
+            self.batch_settings = QsubBatchSettings(nodes=self._workers, ncpus=1)
+        return AprunSettings("ray", exe_args=" ".join(ray_args),
+                             run_args=self._run_args, expand_exe=False)

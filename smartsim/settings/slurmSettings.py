@@ -48,6 +48,13 @@ class SrunSettings(RunSettings):
         :type env_vars: dict[str, str], optional
         :param alloc: allocation ID if running on existing alloc
         :type alloc: str, optional
+        :param block_in_batch: whether the execution of this call should block when executed
+                               in a batch.
+        :type block_in_batch: bool
+        :param expand_exe: whether the executable path should be expanded. It is recommended
+                           to always leave this value to True, unless really needed (e.g. 
+                           when commands are not available on the launch node).
+        :type expand_exe: bool
         """
         super().__init__(
             exe, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars, block_in_batch=block_in_batch, expand_exe=expand_exe
