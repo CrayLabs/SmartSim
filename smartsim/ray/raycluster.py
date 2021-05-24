@@ -12,6 +12,17 @@ import uuid
 import re
 logger = get_logger(__name__)
 
+def delete_elements(dictionary, key_list):
+    """Delete elements from a dictionary.
+    :param dictionary: the dictionary from which the elements must be deleted.
+    :type dictionary: dict
+    :param key_list: the list of keys to delete from the dictionary.
+    :type key: any
+    """
+    for key in key_list:
+        if key in dictionary:
+            del dictionary[key]
+    
 class RayCluster(EntityList):
     """Entity used to run a Ray cluster on a given number of hosts. Ray is launched on each host,
     and the first host is used to launch the head node.
@@ -31,13 +42,25 @@ class RayCluster(EntityList):
     :param launcher: Name of launcher to use for starting the cluster.
     :type launcher: str
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
-                  obtained with ``ray.slurm.get_allocation``.
+                  obtained with ``ray.slurm.get_allocation``
     :type alloc: int
-    :param batch: Whether cluster should be launched as batch file.
+    :param batch: Whether cluster should be launched as batch file
     :type batch: bool
+    :param time: The walltime the cluster will be running for
+    :type time: str
     """
 
-    def __init__(self, name, path, ray_port=6780, ray_num_cpus=12, workers=0, run_args={}, launcher='local', alloc=None, batch=False):
+    def __init__(self,
+                 name,
+                 path,
+                 ray_port=6780,
+                 ray_num_cpus=12,
+                 workers=0,
+                 run_args={},
+                 launcher='local',
+                 batch=False,
+                 time="01:00:00",
+                 alloc=None):
         self._workers = workers
         self._ray_port = ray_port
         self._ray_password = uuid.uuid4()
@@ -51,6 +74,7 @@ class RayCluster(EntityList):
         self._alloc = alloc
         self._batch = batch
         self._hosts = None
+        self._time = time
         super().__init__(name=name, path=path)
     
     @property
@@ -69,7 +93,8 @@ class RayCluster(EntityList):
                                   run_args=self._run_args,
                                   ray_num_cpus=self._ray_num_cpus,
                                   alloc=self._alloc,
-                                  batch=self.batch)
+                                  batch=self.batch,
+                                  time=self._time)
 
         self.entities.append(self.head_model)
 
@@ -84,7 +109,8 @@ class RayCluster(EntityList):
                                           head_model=self.head_model,
                                           launcher=self._launcher,
                                           alloc=self._alloc,
-                                          batch=self.batch)
+                                          batch=self.batch,
+                                          time=self._time)
             self.entities.append(self.worker_model)
 
 
@@ -125,15 +151,27 @@ class RayCluster(EntityList):
         
 class RayHead(Model):
     """Technically using facing but users will never see it similar to DBNode"""
-    def __init__(self, name, params, path, ray_password, ray_port=6780, run_args={}, ray_num_cpus=12, launcher='local', alloc=None, batch=False):
+    def __init__(self, 
+                 name, 
+                 params, 
+                 path, 
+                 ray_password, 
+                 ray_port=6780, 
+                 run_args={}, 
+                 ray_num_cpus=12, 
+                 launcher='local',
+                 alloc=None,
+                 batch=False,
+                 time="01:00:00"):
         self._ray_port = ray_port
-        self._run_args = run_args
+        self._run_args = run_args.copy()
         self._ray_password = ray_password
         self._ray_num_cpus = ray_num_cpus
         self._alloc = alloc
         self._launcher = launcher
         self.address = None
         self._batch = batch
+        self._time = time
         
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
@@ -143,14 +181,11 @@ class RayHead(Model):
         return self._batch
     
     def _build_run_settings(self):
-#         ray_args = ["start"]
-#         ray_args += ["--head"]
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ray_args = [f"{dir_path}/rayserverstarter.py"]
+        ray_args = [f"{dir_path}/raystarter.py"]
         ray_args += [f"--num-cpus={self._ray_num_cpus}"]
         ray_args += [f"--port={self._ray_port}"]
         ray_args += [f"--redis-password={self._ray_password}"]
-#         ray_args += ["--block"]
         
         if self._launcher == 'slurm':
             self.run_settings = self._build_srun_settings(ray_args)
@@ -158,43 +193,57 @@ class RayHead(Model):
             self.run_settings = self._build_pbs_settings(ray_args)
         else:
             raise NotImplementedError("Only Slurm and PBS launchers are supported.")
+            
+        self.run_settings.set_walltime(self._time)
+        self.run_settings.set_tasks(1)
+        self.run_settings.set_tasks_per_node(1)
     
     def _build_pbs_settings(self, ray_args):
         if self.batch:
-            self.batch_settings = QsubBatchSettings(nodes=1, ncpus=1)
-        return AprunSettings("python", exe_args=" ".join(ray_args),
-                            run_args=self._run_args, expand_exe=True)
+            self.batch_settings = QsubBatchSettings(nodes=1, ncpus=1, time=self._time)
+        self._run_args["sync-output"] = None
+        aprun_settings = AprunSettings("python", exe_args=" ".join(ray_args),
+                                       run_args=self._run_args, expand_exe=True)
+
+        return aprun_settings
     
     def _build_srun_settings(self, ray_args):
-            batch_args = {"nodes": 1,
-                          "ntasks-per-node": 1, # Ray will take care of resources.
-                          "ntasks": 1}
-            # no alloc and no batch means that we are inside an allocation
-            # we need to overcommit one node
-            if self._alloc is None and not self.batch:
-                batch_args["overcommit"] = None
-            #TODO reject nodes, ntasks, ntasks-per-node, and so on.
-            batch_args.update(self._run_args)
-            if self.batch:
-                self.batch_settings = SbatchSettings(
-                    nodes=1, time=batch_args["time"], batch_args=batch_args
-                )
-            else:
-                if "oversubscribe" in batch_args.keys():
-                    del batch_args["oversubscribe"]
+        batch_args["overcommit"] = None
+        batch_args.update(self._run_args)
+        delete_elements(batch_args, ["nodes", "ntasks-per-node"])
             
-            if self._launcher == 'slurm':
-                run_args = batch_args.copy()
-                run_args["unbuffered"] = None
-                return SrunSettings("python", exe_args=" ".join(ray_args),
-                                    run_args=run_args, expand_exe=False,
-                                    alloc=self._alloc)
+        if self.batch:
+            self.batch_settings = SbatchSettings(
+                nodes=1, time=self.time, batch_args=batch_args
+            )
+        else:
+            delete_elements(batch_args, ["oversubscribe"])
+
+        run_args = batch_args.copy()
+        run_args["unbuffered"] = None
+        srun_settings = SrunSettings("python", exe_args=" ".join(ray_args),
+                                     run_args=run_args, expand_exe=False,
+                                     alloc=self._alloc)
+        return srun_settings
             
 
 class RayWorker(Model):
     """Technically using facing but users will never see it similar to DBNode"""
-    def __init__(self, name, params, path, run_args, workers, ray_port, ray_password, ray_num_cpus, head_model, launcher, alloc=None, batch=False):
-        self._run_args = run_args
+    def __init__(self, 
+                 name, 
+                 params, 
+                 path, 
+                 run_args, 
+                 workers, 
+                 ray_port, 
+                 ray_password, 
+                 ray_num_cpus, 
+                 head_model, 
+                 launcher, 
+                 alloc=None, 
+                 batch=False, 
+                 time="01:00:00"):
+        self._run_args = run_args.copy()
         self._ray_port = ray_port
         self._ray_password = ray_password
         self._ray_num_cpus = ray_num_cpus
@@ -203,6 +252,7 @@ class RayWorker(Model):
         self.head_model = head_model
         self._alloc = alloc
         self._batch = batch
+        self._time = time
         
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
@@ -225,28 +275,33 @@ class RayWorker(Model):
             self.run_settings = self._build_pbs_settings(ray_args)
         else:
             raise NotImplementedError("Only Slurm and PBS launchers are supported.")
+        self.run_settings.set_walltime(self._time)
+        self.run_settings.set_tasks(self._workers)
+        self.run_settings.set_tasks_per_node(1)
 
     def _build_srun_settings(self, ray_args):
-        batch_args = {"nodes": self._workers,
-                      "ntasks-per-node": 1, # Ray will take care of resources.
-                      "ntasks": self._workers,
-                      "time": "12:00:00"}
         batch_args.update(self._run_args)
+        delete_elements(batch_args, ["nodes", "ntasks-per-node"])
 
         if self.batch:
             self.batch_settings = SbatchSettings(
-                nodes=self._workers, time=batch_args["time"], batch_args=batch_args
+                nodes=self._workers, time=self._time, batch_args=batch_args
             )
         run_args = batch_args.copy()
         run_args["unbuffered"] = None
         if not self.batch and self._alloc is None:
             run_args["overcommit"] = None
-        return SrunSettings("ray", exe_args=" ".join(ray_args),
-                            run_args=run_args, expand_exe=False,
-                            alloc=self._alloc)
+        srun_settings =  SrunSettings("ray", exe_args=" ".join(ray_args),
+                                      run_args=run_args, expand_exe=False,
+                                      alloc=self._alloc)
+        srun_settings.set_walltime(self._time)
+        return srun_settings
 
     def _build_pbs_settings(self, ray_args):
+        batch_args.update(self._run_args)
         if self.batch:
-            self.batch_settings = QsubBatchSettings(nodes=self._workers, ncpus=1)
-        return AprunSettings("ray", exe_args=" ".join(ray_args),
-                             run_args=self._run_args, expand_exe=False)
+            self.batch_settings = QsubBatchSettings(nodes=self._workers, ncpus=1, time=self._time)
+        self._run_args["sync-output"] = None
+        aprun_settings = AprunSettings("ray", exe_args=" ".join(ray_args),
+                                       run_args=self._run_args, expand_exe=False)
+        return aprun_settings

@@ -79,7 +79,7 @@ class AprunStep(Step):
             logger.debug(
                 f"Running on PBS allocation {self.alloc} gleaned from user environment"
             )
-        if "COBALT_JOBID" in os.environ:
+        elif "COBALT_JOBID" in os.environ:
             self.alloc = os.environ["COBALT_JOBID"]
             logger.debug(
                 f"Running on Cobalt allocation {self.alloc} gleaned from user environment"

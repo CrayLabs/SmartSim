@@ -112,6 +112,21 @@ class AprunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
+        
+    def set_excludelist(self, host_list):
+        """Specify a list of hosts to exclude for launching this job
+
+        :param host_list: hosts to exclude
+        :type host_list: list[str]
+        :raises TypeError:
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["exclude‐node‐list"] = ",".join(host_list)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
@@ -147,3 +162,14 @@ class AprunSettings(RunSettings):
             for name, value in self.env_vars.items():
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
+
+    def set_walltime(self, walltime):
+        """Set the walltime of the job
+
+        format = "HH:MM:SS"
+
+        :param walltime: wall time
+        :type walltime: str
+        """
+        h_m_s = walltime.split(":")
+        self.run_args["t"] = str(int(h_m_s[0])*3600+int(h_m_s[1])*60+int(h_m_s[2]))
