@@ -132,6 +132,17 @@ class SrunSettings(RunSettings):
         """
         self.run_args["ntasks-per-node"] = int(num_tpn)
 
+    def set_walltime(self, walltime):
+        """Set the walltime of the job
+
+        format = "HH:MM:SS"
+
+        :param walltime: wall time
+        :type walltime: str
+        """
+        # TODO check for errors here
+        self.run_args["time"] = walltime
+
     def format_run_args(self):
         """return a list of slurm formatted run arguments
 
