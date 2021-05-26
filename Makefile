@@ -23,40 +23,8 @@ help:
 	@grep "^# help\:" Makefile | grep -v grep | sed 's/\# help\: //' | sed 's/\# help\://'
 
 # help:
-# help: Build
-# help: -------
-
-# help: smartredis                     - Make smartredis python client and setup smartredis library
-.PHONY: smartredis
-smartredis:
-	@bash ./build-scripts/build-smartredis.sh
-
-# help: deps                           - Make SmartSim dependencies (CPU builds, TF and PT)
-.PHONY: deps
-deps:
-	@bash ./build-scripts/build-deps.sh
-
-# help: deps-cpu-all                   - Make SmartSim dependencies (CPU builds, TF, PT, TFL, ONNX)
-.PHONY: deps-cpu-all
-deps-cpu-all:
-	@bash ./build-scripts/build-deps.sh cpu 1 1 1 1
-
-# help: deps-gpu                       - Make SmartSim dependencies (GPU builds, TF, PT)
-.PHONY: deps-gpu
-deps-gpu:
-	@bash ./build-scripts/build-deps.sh gpu
-
-# help: deps-gpu-all                   - Make SmartSim dependencies (GPU builds, TF, PT, TFL, ONNX)
-.PHONY: deps-gpu-all
-deps-gpu-all:
-	@bash ./build-scripts/build-deps.sh gpu 1 1 1 1
-
-
-# help: clean-deps                     - remove third-party deps
-.PHONY: clean-deps
-clean-deps:
-	@rm -rf ./third-party
-
+# help: Clean
+# help: -----
 
 # help: clean                          - remove builds, pyc files, .gitignore rules
 .PHONY: clean

@@ -1,15 +1,14 @@
 
 
 <div align="center">
-    <a href="https://github.com/CrayLabs/SmartSim"><img src="https://github.com/CrayLabs/SmartSim/blob/develop/doc/images/SmartSim_Large.png" width="90%"><img></a>
+    <a href="https://github.com/CrayLabs/SmartSim"><img src="https://raw.githubusercontent.com/CrayLabs/SmartSim/master/doc/images/SmartSim_Large.png" width="90%"><img></a>
     <br />
     <br />
 <div display="inline-block">
     <a href="https://github.com/CrayLabs/SmartSim"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://www.craylabs.org/build/html/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://github.com/CrayLabs/SmartSim/releases/download/v0.3.0/smartsim-0.3.0.tar.gz"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
-    <a href="https://craylabs.slack.com/ssb/redirect"><b>Slack</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/installation.html"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://www.craylabs.org/docs/overview.html"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+    <a href="https://join.slack.com/t/craylabs/shared_invite/zt-nw3ag5z5-5PS4tIXBfufu1bIvvr71UA"><b>Slack Invite</b></a>&nbsp;&nbsp;&nbsp;
     <a href="https://github.com/CrayLabs"><b>Cray Labs</b></a>&nbsp;&nbsp;&nbsp;
   </div>
     <br />
@@ -20,10 +19,11 @@
 [![License](https://img.shields.io/github/license/CrayLabs/SmartSim)](https://github.com/CrayLabs/SmartSim/blob/master/LICENSE.md)
 ![GitHub last commit](https://img.shields.io/github/last-commit/CrayLabs/SmartSim)
 ![GitHub deployments](https://img.shields.io/github/deployments/CrayLabs/SmartSim/github-pages?label=doc%20build)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/smartsim)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/smartsim)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/CrayLabs/SmartSim)
 ![Language](https://img.shields.io/github/languages/top/CrayLabs/SmartSim)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
 
 
 ------------
@@ -31,9 +31,10 @@
 # SmartSim
 
 SmartSim makes it easier to use common Machine Learning (ML) libraries
-like PyTorch and TensorFlow, on numerical simulations at scale.
+like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
+and workloads.
 
-Essentially, SmartSim provides an API to connect HPC (MPI + X) simulations
+SmartSim provides an API to connect HPC (MPI + X) simulations
 written in Fortran, C, C++, and Python to an in-memory database called
 the Orchestrator. The Orchestrator is built on Redis, a popular caching
 database written in C. This connection between simulation and database
@@ -54,7 +55,6 @@ SmartSim 0.3.0 uses Redis 6.0.8 and RedisAI 1.2
 |------------|:-----------------:|
 | PyTorch    |       1.7.0       |
 | TensorFlow |       1.15.0      |
-| TFLite     |       2.0.0       |
 | ONNX       |       1.2.0       |
 
 At this time, PyTorch is the most tested within SmartSim and we recommend
@@ -97,7 +97,7 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 | C        	|        C99       	|
 | C++      	|       C++11      	|
 
-SmartRedis clients are cluster compatible and work with the OSS Redis/RedisAI stack.
+SmartRedis clients are cluster compatible and work with the open source Redis stack.
 
 ### Dependencies
 
@@ -114,3 +114,27 @@ SmartRedis utilizes the following libraries.
 The following are public presentations or publications using SmartSim (more to come!)
 
  - [Collaboration with NCAR - CGD Seminar](https://www.youtube.com/watch?v=2e-5j427AS0)
+ - [Using Machine Learning in HPC Simulations - paper (pre-print)](https://arxiv.org/abs/2104.09355)
+
+
+## Cite
+
+Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
+
+
+Partee et al., “Using Machine Learning at Scale in HPC Simulations with SmartSim:
+An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
+[Online]. Available: http://arxiv.org/abs/2104.09355.
+
+### bibtex
+
+    ```latex
+    @misc{partee2021using,
+          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling},
+          author={Sam Partee and Matthew Ellis and Alessandro Rigazzi and Scott Bachman and Gustavo Marques and Andrew Shao and Benjamin Robbins},
+          year={2021},
+          eprint={2104.09355},
+          archivePrefix={arXiv},
+          primaryClass={cs.CE}
+    }
+    ```

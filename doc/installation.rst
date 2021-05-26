@@ -1,316 +1,335 @@
-****************
-Install SmartSim
-****************
+************
+Installation
+************
 
-There are 3 ways to install SmartSim:
- 1. Quick Start - local build for laptops and workstations
- 2. Full Install - Full build of SmartSim and SmartRedis
- 3. From Source - For SmartSim developers and contributors
+The following will show how to install both SmartSim and SmartRedis
 
-For users looking for a full installation of all machine learning
-backends and GPU compatibility, see the Full Installation section below.
+SmartSim and SmartRedis can both be installed through ``pip``
+and have pre-built wheels for the following platforms.
 
-For users of SmartSim on large cluster or supercomputer systems,
-we recommend the full installation. Before install, reference the
-launcher documentation (link) to ensure SmartSim has compatibility
-with the workload manager of your sites system.
+.. list-table:: Supported System for Pre-built Wheels
+   :widths: 50 50 50 50
+   :header-rows: 1
+   :align: center
 
-For contributors and developers, we recommend the From Source
-installation below. The source build will be able to create docs,
-run tests, and includes helpful developer tooling.
+   * - Platform
+     - CPU
+     - GPU
+     - Python Versions
+   * - MacOS
+     - x86_64
+     - not supported
+     - 3.7 - 3.9
+   * - Linux
+     - x64_64
+     - Nvidia
+     - 3.7 - 3.9
+
+.. note::
+
+  Windows is not supported and there are currently no plans
+  to support windows.
+
+SmartSim supports multiple machine learning libraries through
+the use of RedisAI_. The following libraries are supported.
+
+.. list-table:: Supported ML Libraries
+   :widths: 50 50 50
+   :header-rows: 1
+   :align: center
+
+   * - Library
+     - Versions
+     - Built By Default
+   * - PyTorch_
+     - 1.7
+     - Yes
+   * - Tensorflow_
+     - 1.15
+     - Yes
+   * - ONNX_
+     - 1.2
+     - No
+
+TensorFlow_ 2.0 and Keras_ are supported through graph freezing_.
+
+ScikitLearn_ and Spark_ models are supported by SmartSim as well
+through the use of the ONNX_ runtime.
+
+.. _Spark: https://spark.apache.org/mllib/
+.. _Keras: https://keras.io
+.. _ScikitLearn: https://github.com/scikit-learn/scikit-learn
+.. _TensorFlow: https://github.com/tensorflow/tensorflow
+.. _PyTorch: https://github.com/pytorch/pytorch
+.. _ONNX: https://github.com/microsoft/onnxruntime
+.. _RedisAI: https://github.com/RedisAI/RedisAI
+.. _freezing: https://github.com/leimao/Frozen-Graph-TensorFlow
+
+------------------------------------------------------------
 
 =============
 Prerequisites
 =============
 
-The prerequisites to begin building SmartSim are:
+The prerequisites to install SmartSim and SmartRedis are:
 
-- Python 3.7.x (or later) and pip
-- C compiler
-- C++ compiler
-- CMake 3.10.x (or later)
-- GCC > 5
-- GNU Make > 4.0
-- autoconf
-- automake
-- libtool
+  - Python 3.7.x (or later) and pip
+  - CMake 3.10.x (or later)
+  - GCC > 5
+  - GNU Make > 4.0
+  - git-lfs
 
 For most developer systems, many of these packages will already
 be installed.
 
-.. note::
+Git LFS can be installed through ``conda install git-lfs && git lfs install``
 
-   For Mac OS users, the version of ``make`` that comes with
-   the Mac commandline tools is 3.81 which needs to be updated to install
-   SmartSim. Users can ``brew install make`` to get ``make`` > 4.0 but
-   brew will install it as ``gmake``. An easy way around this
-   is to do ``alias make=gmake``.
-
-.. note::
-
-   Windows is not supported and there are currently no plans
-   to support windows.
-
-------------------------------------------------------------
-
-===========
-Quick Start
-===========
-
-The following is a quick start installation for users looking
-to quickly get up and running on their local machine. This
-build will install SmartSim for use with Pytorch and TensorFlow
-on CPU.
+Be sure to reference the :ref:`installation notes <install-notes>` for helpful
+information regarding various system types before installation.
 
 
-Install SmartSim
-================
-
-Follow the steps below for local builds on Mac OS. These instructions
-also work for most linux flavors provided the above prerequisites
-have been installed.
-
-First, get and unpack the release tarball for SmartSim
-
-.. code-block:: bash
-
-    wget <tarball location>
-    tar -xf smartsim-0.3.0.tar.gz
-
-Create a virtual environment and install ``git-lfs``
-
-.. code-block:: bash
-
-    conda create --name=smartsim python=3.7.7
-    conda activate smartsim
-    conda install git-lfs (if you dont have git-lfs already)
-    git-lfs install
-
-Make SmartSim dependencies (see make third-party libraries below).
-
-
-.. code-block:: bash
-
-    cd smartsim-0.3.0
-    make deps # have to have internet access on system
-
-
-Install SmartSim into your virtual environment through pip, in this
-case pip is provided by Conda.
-
-.. code-block:: bash
-
-    pip install -e .
-
-Install the SmartSim user configuration file in your ``$HOME``
-directory under ``~/.smartsim/config.toml``. This can also
-be installed in other locations. For details, see the full
-installation.
-
-.. code-block:: bash
-
-    mkdir ~/.smartsim && cd ~/.smartsim
-    touch config.toml
-
-The configuration file specifies user and developer settings
-for SmartSim as well as the location of third-party libraries.
-If you followed the instructions above, the third-party libraries
-will be installed in ``smartsim/third-party/``.
-
-You can copy paste, the below configuration file into the
-``config.toml`` file you just created. The only part that
-should be changed is the path to where you installed
+========
 SmartSim
+========
 
-.. code-block:: toml
+Activate a new virtual environment and install SmartSim from PyPi with
+the following command
 
-    [smartsim]
-    # options are "error", "info", and "debug"
-    log_level = "info"
+.. code-block:: bash
 
-    [redis]
-    # path to where "redis-server" and "redis-cli" binaries are located
-    exe = "/REPLACE/ME/smartsim-0.3.0/third-party/redis/src/redis-server"
-    cli = "/REPLACE/ME/smartsim-0.3.0/third-party/redis/src/redis-cli"
+    pip install smartsim
 
-    # optional!
-    config = "/REPLACE/ME/smartsim-0.3.0/smartsim/database/redis6.conf"
+At this point, SmartSim is installed and can be used for more basic features.
+If you want to use the machine learning features of SmartSim, you will need
+to install the ML backends in the section below.
 
-      [redis.ai]
-      # path to the redisai "install_cpu" or "install_gpu" dir
-      device = "cpu" # cpu or gpu
-      install_path = "/REPLACE/ME/smartsim-0.3.0/third-party/RedisAI/install-cpu/"
 
-      [redis.ip]
-      # path to build dir for RedisIP
-      install_path = "/REPLACE/ME/smartsim-0.3.0/third-party/RedisIP/build/"
+Install ML Backends
+===================
 
-    [test]
-    # optional!
-    launcher = "local"
+Use the ``smart`` cli tool to install the machine learning backends.
+``smart`` is installed during the pip installation of SmartSim and may
+only be available while your virtual environment is active.
 
-Done! Now you can follow the tutorial section for working through
-Smartsim. If you want to use the SmartRedis Clients in addition to
-SmartSim, see below.
+.. note::
 
-Install SmartRedis
-==================
+    If the ``smart`` tool is not found. Look for it in places like
+    ``~/.local/bin`` and other ``bin`` locations and add it to your
+    ``$PATH``
 
-The following will show how to install SmartRedis Python client
-for use in SmartSim. Note that only the Python client will be built
-and the C, C++, and Fortran client will solely be downloaded. For
-building a static library of the compiled SmartRedis clients, see
-the instructions for the full installation of SmartRedis.
+To see all the installation options:
+
+.. code-block:: bash
+
+    smart
+
+To install the backends, run
+
+.. code-block:: bash
+
+    smart --device cpu
+
+By default, ``smart`` will install PyTorch and TensorFlow backends
+for use in SmartSim.
+
+Install ML Backends for GPU
+============================
+
+First, make sure to have installed or loaded CUDA and CUDNN. This step may
+differ between system types. See installation notes for various
+architectures for more information.
+
+In addition, set the following environment variables.
+ - ``CUDNN_INCLUDE_DIR``  - path to directory containing cudnn.h
+ - ``CUDNN_LIBRARY``      - path to directory containing libcudnn.so
+
+
+ .. note::
+
+  Currently, SmartSim is solely compatible with NVIDIA GPUs on Linux systems
+  and ``CUDA >= 10.2`` is required to build.
+
+To install the backends for GPU instead of CPU, run the following:
+
+.. code-block::
+
+  smart --device gpu
+
+----------------------------------------------------------------------
+
+==========
+SmartRedis
+==========
+
+There are implementations of the SmartRedis client in
+4 languages: Python, C++, C and Fortran. The Python
+client is installed through ``pip`` and the compiled
+clients can be built as a static or shared library
+through cmake.
+
+SmartRedis Python supports the same architectures for
+pre-built wheels that SmartSim does.
+
+.. list-table:: Supported Systems for Pre-built Wheels
+   :widths: 50 50
+   :header-rows: 1
+   :align: center
+
+   * - Platform
+     - Python Versions
+   * - MacOS
+     - 3.7 - 3.9
+   * - Linux
+     - 3.7 - 3.9
+
+
+The Python client for SmartRedis is installed through
+``pip`` as follows:
 
 .. include:: ../smartredis/doc/install/python_client.rst
 
--------------------------------------------------------------------
 
-=================
-Full Installation
-=================
+Build SmartRedis Library (C++, C, Fortran)
+==========================================
 
-The full installation of SmartSim includes
+Building the SmartRedis library, in addition to the specified prerequisites,
+also requires the installation of the following tools
 
-  - SmartSim with GPU support and full ML library support
-  - SmartRedis Python client
-  - SmartRedis static lib for C, C++, and Fortran
-
-Installation Variants
-=====================
-
-The following two sections detail how to install variants of SmartSim
-for GPU and CPU along with varying levels of support for Machine Learning
-libaries. The full install steps (link) will use the GPU build
-with all possible backends.
+  - autoconf
+  - automake
+  - libtool
 
 
-Third Party Libraries
----------------------
+.. include:: ../smartredis/doc/install/lib.rst
 
-`Redis`_,  RedisAI_, and RedisIP_ are required
-in order to use all features of SmartSim. Note that if
-you are soley using SmartSim for it's launching capabilties
-and not utilizing the ``Orchestrator``, these dependencies
-do not need to be installed.
 
-There are 4 built-in builds for different types of systems.
+-----------------------------------------------------------------
 
-	1. default (builds SmartSim backends for Pytorch and TF on CPU)
-	2. GPU     (builds SmartSim backends for Pytorch and TF on GPU)
-	3. CPU all (builds SmartSim backends for Pytorch, TF, TF-Lite, and Onnx for CPU)
-	4. GPU all (builds SmartSim backends for Pytorch, TF, TF-Lite, and Onnx for GPU)
 
-.. _RedisIP: https://github.com/Spartee/RedisIP
-.. _Redis: https://github.com/redis/redis
-.. _RedisAI: https://github.com/RedisAI/RedisAI
+===========
+From Source
+===========
 
-These packages can be downloaded, compiled, and installed
-by substituting ONE of the following commands for the ``make deps``
-step in the full installation instructions below this section.
+This section will be geared towards contributors who want
+to install SmartSim and SmartRedis from source. If you are
+installing from source for other reasons, follow the steps
+below but use the distribution provided hosted on GitHub
+or PyPi.
+
+
+Install SmartSim from Source
+============================
+
+First, clone SmartSim.
 
 .. code-block:: bash
 
-  # in the top level of the SmartSim directory
-  # perform only one of the following
-  make deps          # default
-  make deps-gpu      # gpu default
-  make deps-cpu-all  # all cpu backends
-  make deps-gpu-all  # all gpu backends
+  git clone https://github.com/CrayLabs/SmartSim smartsim
 
-The ``make deps`` command will install the three packages into
-the ``third-party`` directory in the top level directory of
-SmartSim.
+And then install SmartSim with pip in *editable* mode. This way,
+SmartSim is installed in your virtual environment and available
+in PYTHONPATH, but the source remains at the site of the clone
+instead of in site-packages.
+
+.. code-block:: bash
+
+  cd smartsim
+  pip install -e .[dev]   # for bash users
+  pip install -e .\[dev\] # for zsh users
+
+Use the now installed ``smart`` cli to install the machine learning
+runtimes.
+
+.. code-block:: bash
+
+  # run one of the following
+  smart -v --device cpu          # verbose install cpu
+  smart -v --device gpu          # verbose install gpu
+  smart -v --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
-Install SmartSim for GPU
-========================
+Install SmartRedis from Source
+==============================
 
-These instructions will detail the SmartSim for NVIDIA GPU
-installation. This can easily be changed for CPU only machine
-by changing the ``make-deps`` line below as detailed in the
-installation variants section above.
+.. include:: ../smartredis/doc/install/from_source.rst
 
-The following steps are to install SmartSim and SmartRedis
-with the full feature set and support for TensorFlow, Pytorch,
-TensorFlow-Lite, and ONNX runtimes.
+
+Building the Documentation
+==========================
 
 .. note::
+    To build the full documentation, user need to install
+    ``doxygen 1.9.1``. For Mac OS users, doxygen can be
+    installed through ``brew install doxygen``
 
-   This intall requires internet access. Installing on compute
-   or MOM nodes of a cluster or supercomputer without public
-   internet access will not work.
-
-
-.. note::
-
-   Currently, SmartSim is solely compatible with NVIDIA GPUs
-   and ``CUDA >= 10.2`` is required to build.
-
-
-Get the SmartSim Release
-------------------------
-
-First, get and unpack the release tarball for SmartSim
+Users can optionally build documentation of SmartSim
 
 .. code-block:: bash
 
-    wget <tarball location>
-    tar -xf smartsim-0.3.0.tar.gz
+  git clone https://github.com/CrayLabs/SmartRedis.git
+  cd /smartsim      # top level smartsim dir
+  make docs
 
-Create a virtual environment and install ``git-lfs``
+Once the documentation has successfully built, users can open the
+main documents page from ``doc/_build/html/index.html``
 
-.. code-block:: bash
 
-    conda create --name=smartsim python=3.7.7
-    conda activate smartsim
-    conda install git-lfs (if you dont have git-lfs already)
-    git-lfs install
+.. _install-notes:
 
-Setup CUDA for Install
-----------------------
+============================================
+Installation Notes for Specific System Types
+============================================
 
-Next, install (or module load) and set the paths to the NVIDIA CUDA
-libraries. For large systems, this is often already installed.
 
-If you plan to run SmartSim on GPU you will need
-to follow the steps below. Otherwise if you plan to run solely
-on CPU, skip this subsection.
+The following describes installation details for
+various system types that SmartSim may be used on.
 
-For users of systems with modules that include CUDA, like most
-Cray systems with GPUs. Do the following
 
-.. code-block:: bash
+SmartSim on MacOS
+=================
 
-  # Skip in favor of module load if cudnn is a module
-  conda install cudnn=7.6.5
+We recommend users and contributors install brew_ for managing installed packages.
+For contributors, the following brew packages can be helpful
 
-  module load cudatoolkit
+ - openmpi_ for building and running parallel SmartRedis examples
+ - doxygen_ for building the documention
+ - cmake_ for building SmartSim and SmartRedis from source
 
-  # and make sure the following variables are set in your env
-  # after module load. check with ``env | grep CUD``
-  export CUDA_HOME=/path/to/cuda
-  export CUDNN_LIBRARY=/path/to/cudnn-7.6.5-cuda10.2_0/lib
-  export CUDNN_INCLUDE_DIR=/path/to/cudnn-7.6.5-cuda10.2_0/include
+.. _brew: https://brew.sh/
+.. _openmpi: https://formulae.brew.sh/formula/open-mpi#default
+.. _doxygen: https://formulae.brew.sh/formula/doxygen#default
+.. _cmake: https://formulae.brew.sh/formula/cmake#default
 
-For systems without CUDA installed, install CUDA > 10.2 prior
-to this setup.
+For Mac OS users, the version of ``make`` that comes with
+the Mac commandline tools is often 3.81 which needs to be updated to install
+SmartSim. Users can ``brew install make`` to get ``make`` > 4.0 but
+brew will install it as ``gmake``. An easy way around this
+is to do ``alias make=gmake``.
 
-If you did the above step, you don't have to do this step.
-If not, make sure to change the paths to the CUDNN and CUDA libraries.
 
-.. code-block:: bash
+SmartSim on Ubuntu or Linux Workstations
+========================================
 
-  # Install CUDA requirements
-  conda install cudatoolkit=10.2 cudnn=7.6.5
-  export CUDA_HOME=/path/to/cuda
-  export CUDNN_LIBRARY=/path/to/miniconda/pkgs/cudnn-7.6.5-cuda10.2_0/lib
-  export CUDNN_INCLUDE_DIR=/path/to/miniconda/pkgs/cudnn-7.6.5-cuda10.2_0/include
+When building SmartSim for Linux systems where the user
+has root access, many of the needed packages can be installed
+through ``apt``.
 
-Install all SmartSim Dependencies
-----------------------------------
+If you have a cuda enabled GPU and want to run SmartSim on GPU
+on a linux system you have root access to, you can install cuda
+through ``apt`` with the ``cuda`` package.
 
-Make SmartSim dependencies (see make third-party libraries below).
+In addition, cudnn can be installed through the ``libcudnn``
+and ``libcudnn-dev`` pacakges.
+
+If you run into trouble compiling the machine learning runtimes
+on ubuntu because of cudnn, it might be due to this issue_
+
+.. _issue: https://github.com/pytorch/pytorch/issues/40965
+
+
+SmartSim on Cray XC, CS, and EX
+===============================
+
 If on a Cray system, be sure to set the correct toolchain. SmartSim
 is tested on ``PrgEnv-GNU`` and ``PrgEnv-Cray`` modules.
 
@@ -319,36 +338,79 @@ is tested on ``PrgEnv-GNU`` and ``PrgEnv-Cray`` modules.
     If on a Cray, please note that the intel and PGI compiler
     toolchains are currently not supported by SmartSim.
 
+Before installing the machine learning runtimes with the ``smart``
+cli tool, be sure to set the ``CRAYPE_LINK_TYPE`` to ``dynamic``
+
 .. code-block:: bash
 
-    cd smartsim
-    export CRAYPE_LINK_TYPE=dynamic # (optional only for cray systems)
-    module load PrgEnv-Gnu          # or PrgEnv-Cray (optional only for cray systems)
-
-    make deps-gpu-all
-
-    # or for CPU-only (see installation variants section above)
-    make deps-cpu-all
+    export CRAYPE_LINK_TYPE=dynamic
 
 Keep in mind, the libraries installed above need to be accessable
 by SmartSim at runtime. If using a networked file system (NFS),
 make sure to install these somewhere reachable from head, MOM, and
-compute nodes.
+compute nodes (network mounted).
 
-Install SmartSim into Python Environment
-----------------------------------------
+CUDA and CUDNN on Cray
+----------------------
 
-Install SmartSim into your virtual environment through pip, in this
-case pip is provided by Conda.
+Usually ``cudatoolkit`` is available as a module and CUDA
+is installed in ``/usr/local/cuda``. In this case, prior
+to installation run
 
 .. code-block:: bash
 
-    pip install -e .
-    # or if you want all the dev dependencies which includes Pytorch 1.7
-    pip install -e .[dev] #
+    module load cudatoolkit
 
-Setup SmartSim Configuration File
-----------------------------------
+If cudnn libraries and includes are not installed as a module
+or otherwise, you can install them with ``conda``.
+
+.. code-block:: bash
+
+  # Install CUDA requirements
+  conda install cudatoolkit cudnn
+  export CUDNN_LIBRARY=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/lib
+  export CUDNN_INCLUDE_DIR=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/include
+
+Be sure to get the cudnn version that matches your cuda installation
+The package_ names usually specify the versions.
+
+.. _package: https://anaconda.org/anaconda/cudnn/files
+
+
+
+
+
+==============================================
+Changing Redis installation and Configurations
+==============================================
+
+If you want to use a pre-existing Redis installation, override
+the configuration, or install the depedencies for SmartSim
+manually, you can do so by specifying a SmartSim configuration
+file in a ``config.toml``
+
+This can be useful for
+ - contributors who want to try bleeding edge features
+ - users who want to edit Redis behavior (adding checkpoints)
+ - sites who want to package SmartSim in a different manner.
+ - sites who want to set intervals for scheduler communication
+
+Override Pre-packaged Settings
+==============================
+
+The following fields can be overridden in the SmartSim configuration
+file
+
+ - Redis installation
+ - Redis configuration
+ - RedisAI installation
+ - RedisIP installation
+ - Test launcher default
+ - Log level default
+ - Job manager interval default
+
+If you want to override the configuration, you need
+to supply values for each of these.
 
 Install the SmartSim user configuration file.
 Usually this is in your ``$HOME`` directory under
@@ -378,95 +440,19 @@ SmartSim
 .. code-block:: toml
 
     [smartsim]
-    # options are "error", "info", and "debug"
-    log_level = "info"
+    # number of seconds per job status update
+    # for jobs on WLM system (e.g. slurm, pbs, etc)
+    jm_interval = 15    # default
+    log_level = "info" # default
 
     [redis]
     # path to where "redis-server" and "redis-cli" binaries are located
-    exe = "/REPLACE/ME/smartsim-0.3.0/third-party/redis/src/redis-server"
-    cli = "/REPLACE/ME/smartsim-0.3.0/third-party/redis/src/redis-cli"
+    bin = "/path/to/redis/src/"
+    config = "/path/to/redis.conf" # optional!
 
-    # optional!
-    config = "/REPLACE/ME/smartsim-0.3.0/smartsim/database/redis6.conf"
-
-      [redis.ai]
-      # path to the redisai "install_cpu" or "install_gpu" dir
-      device = "cpu" # cpu or gpu
-      install_path = "/REPLACE/ME/smartsim-0.3.0/third-party/RedisAI/install-cpu/"
-
-      [redis.ip]
-      # path to build dir for RedisIP
-      install_path = "/REPLACE/ME/smartsim-0.3.0/third-party/RedisIP/build/"
+      [redis.modules]
+      ai = "/path/to/RedisAI/install-cpu/"
+      ip = "/path/to/RedisIP/build/"
 
     [test]
-    # optional!
-    launcher = "local"
-
-Install SmartRedis
-==================
-
-Now that the infrastructure library is installed, we complete the full
-SmartSim installation by installing the SmartRedis clients.
-
-We will build two components:
-
-  1. The SmartRedis Python Client
-  2. The SmartRedis C, C++, and Fortran Clients as a static library
-
-
-.. include:: ../smartredis/doc/install/python_client.rst
-
-
-Build SmartRedis as a Static Library
--------------------------------------
-
-
-.. include:: ../smartredis/doc/install/lib.rst
-
-
---------------------------------------------------------------------
-
-
-===========
-From Source
-===========
-
-Install SmartSim from Source
-============================
-
-To install SmartSim from source, simply clone the github repo
-at ``https://github.com/CrayLabs/SmartSim`` and follow the
-instructions for the full installation.
-
-From source, users have the option of downloading SmartRedis
-using the Makefile command ``make smartredis``.
-
-
-Building the Documentation
-==========================
-
-.. note::
-    To build the full documentation, user need to install
-    ``doxygen 1.9.1``. For Mac OS users, doxygen can be
-    installed through ``brew install doxygen``
-
-Users can optionally build documentation of SmartSim
-
-.. code-block:: bash
-
-  make smartredis   # (need the docs from SmartRedis as well)
-  cd /smartsim      # top level smartsim dir
-  make docs
-
-Once the documentation has successfully built, users can open the
-main documents page from ``doc/_build/html/index.html``
-
-
-
-
-
-Install SmartRedis from Source
-==============================
-
-.. include:: ../smartredis/doc/install/from_source.rst
-
+    launcher = "local" # default
