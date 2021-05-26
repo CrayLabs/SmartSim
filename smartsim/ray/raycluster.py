@@ -52,7 +52,7 @@ class RayCluster(EntityList):
 
     def __init__(self,
                  name,
-                 path,
+                 path=".",
                  ray_port=6780,
                  ray_num_cpus=12,
                  workers=0,
