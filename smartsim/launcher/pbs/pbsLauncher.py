@@ -101,14 +101,18 @@ class PBSLauncher(Launcher):
         updates = []
 
         # get updates of jobs managed by PBS (just qsub batch for now)
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
+        s_names, step_ids = self.step_mapping.get_ids(step_names, managed=True)
         if len(step_ids) > 0:
-            updates.extend(self._get_managed_step_update(step_ids))
+            s_statuses = self._get_managed_step_update(step_ids)
+            _updates = [(name, stat) for name, stat in zip(s_names, s_statuses)]
+            updates.extend(_updates)
 
         # get updates of unmanaged jobs (Aprun, mpirun, etc)
-        task_ids = self.step_mapping.get_ids(step_names, managed=False)
+        t_names, task_ids = self.step_mapping.get_ids(step_names, managed=False)
         if len(task_ids) > 0:
-            updates.extend(self._get_unmanaged_step_update(task_ids))
+            t_statuses = self._get_unmanaged_step_update(task_ids)
+            _updates = [(name, stat) for name, stat in zip(t_names, t_statuses)]
+            updates.extend(_updates)
 
         return updates
 
@@ -139,7 +143,7 @@ class PBSLauncher(Launcher):
         cmd_list = step.get_launch_cmd()
         step_id = None
         task_id = None
-        if isinstance(step, QsubBatchStep):  # make this QsubBatchStep
+        if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if rc != 0:
@@ -180,7 +184,7 @@ class PBSLauncher(Launcher):
         else:
             self.task_manager.remove_task(stepmap.task_id)
 
-        step_info = self.get_step_update([step_name])[0]
+        _, step_info = self.get_step_update([step_name])[0]
         step_info.status = "Cancelled"  # set status to cancelled instead of failed
         return step_info
 
@@ -212,12 +216,13 @@ class PBSLauncher(Launcher):
         :return: list of updates for managed jobs
         :rtype: list[StepInfo]
         """
+        updates = []
+        
         qstat_out, _ = qstat(step_ids)
-
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
         # create PBSStepInfo objects to return
-        updates = []
-        for stat, _ in zip(stats, step_ids):
+
+        for stat, step_id in zip(stats, step_ids):
             info = PBSStepInfo(stat, None)
             # account for case where job history is not logged by PBS
             if info.status == STATUS_COMPLETED:
