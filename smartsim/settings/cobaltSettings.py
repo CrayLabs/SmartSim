@@ -32,7 +32,7 @@ from .settings import BatchSettings
 
 
 class CobaltBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None, preamble=[]):
+    def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
         """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None
@@ -57,7 +57,7 @@ class CobaltBatchSettings(BatchSettings):
                          or activate virtual environments.
         :type preamble: list[str], optional
         """
-        super().__init__("qsub", batch_args=batch_args, preamble=preamble)
+        super().__init__("qsub", batch_args=batch_args)
         if nodes:
             self.set_nodes(nodes)
         if time:

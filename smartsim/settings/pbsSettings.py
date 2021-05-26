@@ -41,7 +41,6 @@ class QsubBatchSettings(BatchSettings):
         account=None,
         resources=None,
         batch_args=None,
-        preamble=[],
         **kwargs,
     ):
         """Specify ``qsub`` batch parameters for a job
@@ -72,13 +71,12 @@ class QsubBatchSettings(BatchSettings):
                          or activate virtual environments.
         :type preamble: list[str], optional
         """
-        super().__init__("qsub", batch_args=batch_args, preamble=preamble)
+        super().__init__("qsub", batch_args=batch_args)
         self.resources = init_default({}, resources, dict)
         self._nodes = nodes
         self._time = time
         self._ncpus = ncpus
         self._hosts = None
-        self._preamble = preamble
         if account:
             self.set_account(account)
         if queue:

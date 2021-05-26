@@ -29,7 +29,7 @@ class RayCluster(EntityList):
     
     :param name: The name of the entity.
     :type name: str
-    :param path: Path where the entity is launched.
+    :param path: path to output, error, and configuration files
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
@@ -115,11 +115,14 @@ class RayCluster(EntityList):
 
 
     def _get_ray_head_node_address(self):
-        """Get the ray head node address.
+        """Get the ray head node host address from the log file produced
+        by the head process.
 
         :return: address of the head host
         :rtype: str
         """
+        # We can rely on the file name, because we set it when we create
+        # the head model
         head_log = os.path.join(self.head_model.path, "head.out")
         
         max_attempts = 60
@@ -150,7 +153,32 @@ class RayCluster(EntityList):
         
         
 class RayHead(Model):
-    """Technically using facing but users will never see it similar to DBNode"""
+    """Ray head node model.
+    
+    :param name: The name of the entity.
+    :type name: str
+    :param params: model parameters for writing into configuration files.
+    :type params: dict
+    :param path: path to output, error, and configuration files
+    :type path: str
+    :param ray_password: Password used to connect to Redis by Ray
+    :type ray_password: str
+    :param ray_port: Port at which the head node will be running
+    :type ray_port: int
+    :param ray_num_cpus: Number of CPUs used by Ray
+    :type ray_num_cpus: int
+    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on
+    :type run_args: dict[str,str]
+    :param launcher: Name of launcher to use for starting the cluster
+    :type launcher: str
+    :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
+                  obtained with ``ray.slurm.get_allocation``
+    :type alloc: int
+    :param batch: Whether the head node should be launched through a batch file
+    :type batch: bool
+    :param time: The walltime the head node will be running for
+    :type time: str
+    """
     def __init__(self, 
                  name, 
                  params, 
@@ -229,16 +257,43 @@ class RayHead(Model):
             
 
 class RayWorker(Model):
-    """Technically using facing but users will never see it similar to DBNode"""
+    """Ray head node model.
+    
+    :param name: The name of the entity.
+    :type name: str
+    :param params: model parameters for writing into configuration files.
+    :type params: dict
+    :param path: path to output, error, and configuration files
+    :type path: str
+    :param ray_password: Password used to connect to Redis by Ray
+    :type ray_password: str
+    :param ray_port: Port at which the head node will be running
+    :type ray_port: int
+    :param ray_num_cpus: Number of CPUs used by Ray
+    :type ray_num_cpus: int
+    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on
+    :type run_args: dict[str,str]
+    :param head_model: This cluster's head model's entity
+    :type head_model: RayHead
+    :param launcher: Name of launcher to use for starting the cluster
+    :type launcher: str
+    :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
+                  obtained with ``ray.slurm.get_allocation``
+    :type alloc: int
+    :param batch: Whether the head node should be launched through a batch file
+    :type batch: bool
+    :param time: The walltime the head node will be running for
+    :type time: str
+    """
     def __init__(self, 
                  name, 
                  params, 
                  path, 
-                 run_args, 
                  workers, 
-                 ray_port, 
                  ray_password, 
+                 ray_port, 
                  ray_num_cpus, 
+                 run_args,
                  head_model, 
                  launcher, 
                  alloc=None, 
@@ -276,7 +331,9 @@ class RayWorker(Model):
             self.run_settings = self._build_pbs_settings(ray_args)
         else:
             raise NotImplementedError("Only Slurm and PBS launchers are supported.")
-        self.run_settings.set_walltime(self._time)
+        
+        if self._time:
+            self.run_settings.set_walltime(self._time)
         self.run_settings.set_tasks(self._workers)
         self.run_settings.set_tasks_per_node(1)
 
@@ -295,7 +352,6 @@ class RayWorker(Model):
         srun_settings =  SrunSettings("ray", exe_args=" ".join(ray_args),
                                       run_args=run_args, expand_exe=False,
                                       alloc=self._alloc)
-        srun_settings.set_walltime(self._time)
         return srun_settings
 
     def _build_pbs_settings(self, ray_args):
@@ -305,4 +361,5 @@ class RayWorker(Model):
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("ray", exe_args=" ".join(ray_args),
                                        run_args=self._run_args, expand_exe=False)
+        
         return aprun_settings

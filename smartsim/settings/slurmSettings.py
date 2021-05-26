@@ -197,7 +197,7 @@ class SrunSettings(RunSettings):
 
 
 class SbatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", account=None, batch_args=None, preamble=[]):
+    def __init__(self, nodes=None, time="", account=None, batch_args=None):
         """Specify run parameters for a Slurm batch job
 
         Slurm `sbatch` arguments can be written into ``batch_args``
@@ -223,7 +223,7 @@ class SbatchSettings(BatchSettings):
                          or activate virtual environments.
         :type preamble: list[str], optional
         """
-        super().__init__("sbatch", batch_args=batch_args, preamble=preamble)
+        super().__init__("sbatch", batch_args=batch_args)
         if nodes:
             self.set_nodes(nodes)
         if time:
