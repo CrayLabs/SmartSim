@@ -208,13 +208,14 @@ class RayHead(Model):
         return aprun_settings
     
     def _build_srun_settings(self, ray_args):
+        batch_args = self._run_args
         batch_args["overcommit"] = None
         batch_args.update(self._run_args)
         delete_elements(batch_args, ["nodes", "ntasks-per-node"])
             
         if self.batch:
             self.batch_settings = SbatchSettings(
-                nodes=1, time=self.time, batch_args=batch_args
+                nodes=1, time=self._time, batch_args=batch_args
             )
         else:
             delete_elements(batch_args, ["oversubscribe"])
@@ -280,7 +281,7 @@ class RayWorker(Model):
         self.run_settings.set_tasks_per_node(1)
 
     def _build_srun_settings(self, ray_args):
-        batch_args.update(self._run_args)
+        batch_args = self._run_args
         delete_elements(batch_args, ["nodes", "ntasks-per-node"])
 
         if self.batch:
@@ -298,7 +299,7 @@ class RayWorker(Model):
         return srun_settings
 
     def _build_pbs_settings(self, ray_args):
-        batch_args.update(self._run_args)
+        batch_args = self._run_args
         if self.batch:
             self.batch_settings = QsubBatchSettings(nodes=self._workers, ncpus=1, time=self._time)
         self._run_args["sync-output"] = None
