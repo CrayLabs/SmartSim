@@ -37,7 +37,7 @@ def test_two_orc():
 
 
 def test_separate_type():
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         _, _, _, _ = separate_entities([1, 2, 3, 4])
 
 
