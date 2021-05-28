@@ -294,7 +294,7 @@ class Experiment:
         :param name: name of the model
         :type name: str
         :param run_settings: defines how ``Model`` should be run,
-        :type run_settings: dict
+        :type run_settings: RunSettings
         :param params: model parameters for writing into configuration files
         :type params: dict, optional
         :param path: path to where the model should be executed at runtime

@@ -41,7 +41,7 @@ class Model(SmartSimEntity):
         :param path: path to output, error, and configuration files
         :type path: str
         :param run_settings: launcher settings specified in the experiment
-        :type run_settings: dict
+        :type run_settings: RunSettings
         """
         super().__init__(name, path, run_settings)
         self.params = params
