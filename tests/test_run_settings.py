@@ -23,6 +23,17 @@ def test_add_exe_args():
     settings.add_exe_args(["--add", "--list"])
     result = ["--time", "5", "--add", "--list"]
     assert settings.exe_args == result
+    with pytest.raises(TypeError):
+        settings.add_exe_args([1, 2, 3])
+
+
+def test_format_run_args():
+    settings = RunSettings(
+        "echo", exe_args="test", run_command="mpirun", run_args={"-np": 2}
+    )
+    run_args = settings.format_run_args()
+    assert type(run_args) == type(list())
+    assert run_args == ["-np", "2"]
 
 
 def test_addto_existing_exe_args():
