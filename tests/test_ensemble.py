@@ -1,7 +1,7 @@
 import pytest
 
 from smartsim.entity import Ensemble, Model
-from smartsim.error import SSUnsupportedError, UserStrategyError
+from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
 
 """
@@ -125,3 +125,16 @@ def test_add_model_type():
     with pytest.raises(TypeError):
         # should be a Model not string
         e.add_model("model")
+
+
+def test_add_model_preexists():
+    params_1 = {"h": 5}
+    params_2 = {"z": 6}
+    model_1 = Model("identical_name", params_1, "", rs)
+    model_2 = Model("identical_name", params_2, "", rs)
+    e = Ensemble("ensemble", params_1, run_settings=rs)
+    e.add_model(model_1)
+    with pytest.raises(EntityExistsError):
+        # model_2 has the same 'name' as model_1 which
+        # already exists in the ensemble
+        e.add_model(model_2)
