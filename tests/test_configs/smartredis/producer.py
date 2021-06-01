@@ -38,7 +38,9 @@ def create_torch_cnn():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SmartRedis ensemble producer process.")
+    parser = argparse.ArgumentParser(
+        description="SmartRedis ensemble producer process."
+    )
     parser.add_argument("--exchange", action="store_true")
     args = parser.parse_args()
 

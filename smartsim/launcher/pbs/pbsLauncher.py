@@ -95,8 +95,8 @@ class PBSLauncher(Launcher):
 
         :param step_names: list of job steps to get updates for
         :type step_names: list[str]
-        :return: list of job updates
-        :rtype: list[StepInfo]
+        :return: list of name, job update tuples
+        :rtype: list[(str, StepInfo)]
         """
         updates = []
 
@@ -167,7 +167,7 @@ class PBSLauncher(Launcher):
         return step_id
 
     def stop(self, step_name):
-        """Step a job step
+        """Stop/cancel a job step
 
         :param step_name: name of the job to stop
         :type step_name: str
@@ -217,7 +217,7 @@ class PBSLauncher(Launcher):
         :rtype: list[StepInfo]
         """
         updates = []
-        
+
         qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
         # create PBSStepInfo objects to return

@@ -22,8 +22,8 @@ REDIS_PORT = 6780
 
 
 try:
-    import torch
     import smartredis
+    import torch
 except ImportError:
     pass
 

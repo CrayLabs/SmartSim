@@ -27,8 +27,8 @@
 import os
 import os.path as osp
 import sys
-from shutil import which
 from pathlib import Path
+from shutil import which
 
 import toml
 
@@ -94,12 +94,15 @@ class Config:
                 msg += " See documentation for instructions"
                 raise SSConfigError(msg)
 
-            default = {'redis': {'bin': bin_path,
-                                 'config': conf_path,
-                                 'modules': {'ai': lib_path,
-                                             'ip': lib_path}},
-                        'smartsim': {'jm_interval': 15, 'log_level': 'info'},
-                        'test': {'launcher': 'local'}}
+            default = {
+                "redis": {
+                    "bin": bin_path,
+                    "config": conf_path,
+                    "modules": {"ai": lib_path, "ip": lib_path},
+                },
+                "smartsim": {"jm_interval": 15, "log_level": "info"},
+                "test": {"launcher": "local"},
+            }
             return default
 
         conf_path = _load_from_home()
@@ -122,7 +125,9 @@ class Config:
                     )
             return redisai
         except KeyError:
-            raise SSConfigError("Could not find redis.modules.ai (path to redisai.so) in SmartSim config")
+            raise SSConfigError(
+                "Could not find redis.modules.ai (path to redisai.so) in SmartSim config"
+            )
 
     @property
     def redisip(self):
@@ -132,8 +137,8 @@ class Config:
                 redisip = osp.join(redisip, "libredisip.so")
                 if not osp.isfile(redisip):
                     raise SSConfigError(
-                    "RedisIP library path provided in SmartSim config could not be found"
-                )
+                        "RedisIP library path provided in SmartSim config could not be found"
+                    )
             return redisip
         except KeyError:
             raise SSConfigError("Could not find redis.ip in SmartSim config")
@@ -157,7 +162,9 @@ class Config:
         except KeyError:
             raise SSConfigError("Could not find redis.bin in SmartSim config")
         except SSConfigError as e:
-            raise SSConfigError("redis-server exe in SmartSim Config could not be used") from e
+            raise SSConfigError(
+                "redis-server exe in SmartSim Config could not be used"
+            ) from e
 
     @property
     def redis_cli(self):
@@ -167,9 +174,7 @@ class Config:
             exe = expand_exe_path(redis_cli)
             return exe
         except KeyError:
-            raise SSConfigError(
-                "Could not find redis.bin in SmartSim config"
-            )
+            raise SSConfigError("Could not find redis.bin in SmartSim config")
         except SSConfigError as e:
             raise SSConfigError(
                 "redis-cli executable in SmartSim Config could not be used"
@@ -207,6 +212,7 @@ class Config:
                 return int(num_seconds)
         except KeyError:
             return 15  # 15 seconds by default
+
 
 # initialize config instance
 CONFIG = Config()

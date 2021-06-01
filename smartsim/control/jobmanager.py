@@ -211,7 +211,7 @@ class JobManager:
         try:
             jobs = self().values()
             job_name_map = dict([(job.name, job.ename) for job in jobs])
-            
+
             # returns (job step name, StepInfo) tuples
             statuses = self._launcher.get_step_update(job_name_map.keys())
             for job_name, status in statuses:
