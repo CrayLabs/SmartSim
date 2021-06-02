@@ -72,7 +72,9 @@ def test_exchange(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+        exp.stop(orc)
+        assert(False) # client ensemble failed
 
     # stop the orchestrator
     exp.stop(orc)
@@ -122,7 +124,9 @@ def test_consumer(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+        exp.stop(orc)
+        assert(False) # client ensemble failed
 
     # stop the orchestrator
     exp.stop(orc)

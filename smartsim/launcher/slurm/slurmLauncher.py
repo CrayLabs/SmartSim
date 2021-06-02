@@ -26,7 +26,7 @@
 
 import time
 from shutil import which
-
+from ...constants import STATUS_CANCELLED
 from ...error import LauncherError, SSConfigError, SSUnsupportedError
 from ...settings import MpirunSettings, SbatchSettings, SrunSettings
 from ...utils import get_logger
@@ -49,10 +49,7 @@ class SlurmLauncher(WLMLauncher):
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
-
-    def __init__(self):
-        """Initialize a SlurmLauncher"""
-        super().__init__()
+    # init in launcher.py (WLMLauncher)
 
     def create_step(self, name, cwd, step_settings):
         """Create a Slurm job step
@@ -103,7 +100,7 @@ class SlurmLauncher(WLMLauncher):
         :return: list of hostnames
         :rtype: list[str]
         """
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
+        _, step_ids = self.step_mapping.get_ids(step_names, managed=True)
         step_str = _create_step_id_str(step_ids)
         output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
 
@@ -187,8 +184,8 @@ class SlurmLauncher(WLMLauncher):
         else:
             self.task_manager.remove_task(stepmap.task_id)
 
-        step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled"  # set status to cancelled instead of failed
+        _, step_info = self.get_step_update([step_name])[0]
+        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
     def _get_slurm_step_id(self, step, interval=2, trials=5):
