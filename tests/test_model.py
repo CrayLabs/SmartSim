@@ -22,3 +22,17 @@ def test_disable_key_prefixing():
     m = exp.create_model("model", run_settings=rs)
     m.disable_key_prefixing()
     assert m.query_key_prefixing() == False
+
+
+def test_repr():
+    expr = Experiment("experiment")
+    m = expr.create_model("test_model", run_settings=RunSettings("python"))
+    assert m.__repr__() == "test_model"
+
+
+def test_str():
+    expr = Experiment("experiment")
+    rs = RunSettings("python", exe_args="sleep.py")
+    m = expr.create_model("test_model", run_settings=rs)
+    entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
+    assert m.__str__() == entity_str
