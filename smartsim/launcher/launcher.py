@@ -25,10 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import abc
+
+from ..error import SSUnsupportedError
+from .stepInfo import UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
-from .stepInfo import UnmanagedStepInfo
-from ..error import SSUnsupportedError
+
 
 class Launcher(abc.ABC):
     """Abstract base class of all launchers
@@ -38,6 +40,7 @@ class Launcher(abc.ABC):
     in SmartSim should implement the methods in this class to
     be fully compatible.
     """
+
     def __init__(self):
         pass
 
@@ -86,7 +89,6 @@ class WLMLauncher(Launcher):
     def stop(self, step_name):
         raise NotImplementedError
 
-
     def get_step_update(self, step_names):
         """Get update for a list of job steps
 
@@ -132,4 +134,3 @@ class WLMLauncher(Launcher):
 
     def _get_managed_step_update(self, step_ids):
         pass
-

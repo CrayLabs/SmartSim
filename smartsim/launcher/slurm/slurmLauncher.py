@@ -26,6 +26,7 @@
 
 import time
 from shutil import which
+
 from ...constants import STATUS_CANCELLED
 from ...error import LauncherError, SSConfigError, SSUnsupportedError
 from ...settings import MpirunSettings, SbatchSettings, SrunSettings
@@ -49,6 +50,7 @@ class SlurmLauncher(WLMLauncher):
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
+
     # init in launcher.py (WLMLauncher)
 
     def create_step(self, name, cwd, step_settings):
@@ -78,7 +80,6 @@ class SlurmLauncher(WLMLauncher):
             raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
-
 
     def get_step_nodes(self, step_names):
         """Return the compute nodes of a specific job or allocation
@@ -243,7 +244,6 @@ class SlurmLauncher(WLMLauncher):
 
             updates.append(info)
         return updates
-
 
     @staticmethod
     def check_for_slurm():

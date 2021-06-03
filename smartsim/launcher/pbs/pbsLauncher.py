@@ -27,7 +27,7 @@
 import time
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
-from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...error import LauncherError, SSConfigError
 from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
@@ -49,6 +49,7 @@ class PBSLauncher(WLMLauncher):
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
+
     # init in WLMLauncher, launcher.py
 
     def create_step(self, name, cwd, step_settings):
@@ -69,10 +70,10 @@ class PBSLauncher(WLMLauncher):
             if isinstance(step_settings, AprunSettings):
                 step = AprunStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, QsubBatchSettings):
+            if isinstance(step_settings, QsubBatchSettings):
                 step = QsubBatchStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, MpirunSettings):
+            if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
