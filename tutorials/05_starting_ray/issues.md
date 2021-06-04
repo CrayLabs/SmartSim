@@ -1,5 +1,0 @@
-# Issues when running Ray clusters with SmartSim
-
-1. Redis version is incompatible. Ray needs Redis 3.5 something. It would not be a problem, if we could use a different conda environment when we run. This poses two problems:
-    1. SmartSim needs to expand the executable name (`ray` in this case), but if we don't have Ray in the env, this is not possible. Maybe we could just output a warning, saying that the executable could not be expanded, this can lead to bad things, and so on, but still allow the experiment to run. Still this would need us to switch conda env in the 
-    2. It seems that in a Sbatch ensemble, we can only use `SrunSettings`. The problem is that sometimes users want to add non-`srun` lines to their Sbatch scripts. For example, `conda activate myenv` or `module load whatever`. I can't find a way of doing this, but maybe there is a way not to use `srun`?
