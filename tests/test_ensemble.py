@@ -1,3 +1,4 @@
+from typing import runtime_checkable
 import pytest
 
 from smartsim.entity import Ensemble, Model
@@ -135,6 +136,25 @@ def test_add_model_preexists():
     e = Ensemble("ensemble", params_1, run_settings=rs)
     e.add_model(model_1)
     with pytest.raises(EntityExistsError):
-        # model_2 has the same 'name' as model_1 which
-        # already exists in the ensemble
         e.add_model(model_2)
+
+
+# ----- Other --------------------------------------
+
+
+def test_models_property():
+    params = {"h": [5, 6, 7, 8]}
+    e = Ensemble("test", params, run_settings=rs)
+    models = e.models
+    assert models == [model for model in e]
+
+
+def test_key_prefixing():
+    params_1 = {"h": [5, 6, 7, 8]}
+    params_2 = {"z": 6}
+    e = Ensemble("test", params_1, run_settings=rs)
+    model = Model("model", params_2, "", rs)
+    e.add_model(model)
+    assert e.query_key_prefixing() == False
+    e.enable_key_prefixing()
+    assert e.query_key_prefixing() == True
