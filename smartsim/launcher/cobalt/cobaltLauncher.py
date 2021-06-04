@@ -53,7 +53,6 @@ class CobaltLauncher(WLMLauncher):
     """
 
     def __init__(self):
-        """Initialize a PBSLauncher"""
         super().__init__()
         self.user = psutil.Process().username()
 

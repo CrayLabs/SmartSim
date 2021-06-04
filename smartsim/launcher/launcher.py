@@ -72,7 +72,6 @@ class WLMLauncher(Launcher):
     """
 
     def __init__(self):
-        """Initialize a PBSLauncher"""
         super().__init__()
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
