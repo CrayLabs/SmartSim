@@ -1,3 +1,4 @@
+from pprint import pformat
 from shutil import which
 
 import pytest
@@ -66,3 +67,14 @@ def test_bad_exe_args_2():
     exe_args = ["list-includes-int", 5]
     with pytest.raises(TypeError):
         _ = RunSettings("python", exe_args=exe_args)
+
+
+def test_str():
+    settings = RunSettings(
+        "echo", exe_args="test", run_command="mpirun", run_args={"-np": 2}
+    )
+    exe = f"Executable: {settings.exe[0]}\n"
+    exe_args = f"Executable arguments: {settings.exe_args}\n"
+    run_command = "Run Command: mpirun\n"
+    run_args = f"Run arguments: {pformat(settings.run_args)}"
+    assert settings.__str__() == (exe + exe_args + run_command + run_args)
