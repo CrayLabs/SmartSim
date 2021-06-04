@@ -1,6 +1,6 @@
 from ..config import CONFIG
 from ..entity import EntityList, Model
-from ..error import SmartSimError, SSConfigError
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..launcher.util.shell import execute_cmd
 from ..settings import RunSettings, SrunSettings, SbatchSettings, AprunSettings, QsubBatchSettings
 from ..utils import get_logger
@@ -44,7 +44,7 @@ class RayCluster(EntityList):
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
                   obtained with ``ray.slurm.get_allocation``
     :type alloc: int
-    :param batch: Whether cluster should be launched as batch file
+    :param batch: Whether cluster should be launched as batch file, ignored when ``launcher`` is `local`
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
@@ -61,6 +61,9 @@ class RayCluster(EntityList):
                  batch=False,
                  time="01:00:00",
                  alloc=None):
+        if launcher=='local' and workers>0:
+            raise SSUnsupportedError('Cannot launch a local Ray cluster with more than one node.'
+                                     'Set workers to 0 and restart.')
         self._workers = workers
         self._ray_port = ray_port
         self._ray_password = uuid.uuid4()
@@ -72,7 +75,7 @@ class RayCluster(EntityList):
         self.alloc = None
         self.batch_settings = None
         self._alloc = alloc
-        self._batch = batch
+        self._batch = launcher!='local' and batch
         self._hosts = None
         self._time = time
         super().__init__(name=name, path=path)
@@ -121,6 +124,11 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
+        
+#         if self._launcher == 'local':
+#             self.head_model.address = '127.0.0.1'
+#             return
+        
         # We can rely on the file name, because we set it when we create
         # the head model
         head_log = os.path.join(self.head_model.path, "head.out")
@@ -198,7 +206,7 @@ class RayHead(Model):
         self._alloc = alloc
         self._launcher = launcher
         self.address = None
-        self._batch = batch
+        self._batch = launcher!='local' and batch
         self._time = time
         
         self._build_run_settings()
@@ -206,7 +214,7 @@ class RayHead(Model):
         
     @property
     def batch(self):
-        return self._batch
+        return self._launcher
     
     def _build_run_settings(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -219,19 +227,22 @@ class RayHead(Model):
             self.run_settings = self._build_srun_settings(ray_args)
         elif self._launcher == 'pbs':
             self.run_settings = self._build_pbs_settings(ray_args)
+        elif self._launcher == 'local':
+            self.run_settings = RunSettings("python", exe_args=" ".join(ray_args), run_args=self._run_args)
         else:
-            raise NotImplementedError("Only Slurm and PBS launchers are supported.")
+            raise NotImplementedError("Only Slurm, local, and PBS launchers are supported.")
             
-        self.run_settings.set_walltime(self._time)
-        self.run_settings.set_tasks(1)
-        self.run_settings.set_tasks_per_node(1)
+        if self._launcher != 'local':
+            self.run_settings.set_walltime(self._time)
+            self.run_settings.set_tasks(1)
+            self.run_settings.set_tasks_per_node(1)
     
     def _build_pbs_settings(self, ray_args):
         if self.batch:
             self.batch_settings = QsubBatchSettings(nodes=1, ncpus=1, time=self._time)
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("python", exe_args=" ".join(ray_args),
-                                       run_args=self._run_args, expand_exe=True)
+                                       run_args=self._run_args)
 
         return aprun_settings
     
@@ -329,6 +340,8 @@ class RayWorker(Model):
             self.run_settings = self._build_srun_settings(ray_args)
         elif self._launcher == 'pbs':
             self.run_settings = self._build_pbs_settings(ray_args)
+        elif self._launcher == 'local':
+            raise SSUnsupportedError("Ray workers cannot be launched locally.")
         else:
             raise NotImplementedError("Only Slurm and PBS launchers are supported.")
         

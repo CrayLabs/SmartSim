@@ -31,4 +31,4 @@ p = Popen(args,
           stderr=STDOUT)
 
 for line in iter(p.stdout.readline, b''):
-    print(line.decode('utf-8').rstrip())
+    print(line.decode('utf-8').rstrip(), flush=True)

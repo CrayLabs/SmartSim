@@ -39,6 +39,7 @@ from .generation import Generator
 from .utils import get_logger
 from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
+from .launcher.util.shell import execute_cmd
 from .ray import RayCluster
 
 logger = get_logger(__name__)
@@ -112,6 +113,8 @@ class Experiment:
                 if isinstance(entity, SmartSimEntity):
                     self._control.stop_entity(entity)
                 elif isinstance(entity, RayCluster):
+                    if entity._launcher == 'local':
+                        execute_cmd(["ray", "stop"])
                     if entity.worker_model:
                         self._control.stop_entity(entity.worker_model)
                     self._control.stop_entity(entity.head_model)
