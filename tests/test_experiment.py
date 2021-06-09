@@ -82,7 +82,7 @@ def test_stop_entity():
 def test_poll():
     # Ensure that a SmartSimError is not raised
     exp = Experiment("test")
-    model = exp.create_model("test_model", run_settings=RunSettings("echo", "hello"))
+    model = exp.create_model("model", run_settings=RunSettings("echo", "hello"))
     exp.start(model, block=False)
     exp.poll(interval=1)
     exp.stop(model)
