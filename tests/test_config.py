@@ -33,7 +33,7 @@ def test_redisip():
 def test_redis_conf():
     config = Config()
     config.conf["redis"]["config"] = "not/a/path"
-    config.redis_conf
+    assert os.path.isfile(config.redis_conf)
 
 
 def test_redis_exe():
