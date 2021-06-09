@@ -68,3 +68,21 @@ def test_bad_ensemble_init_no_rs_bs():
     exp = Experiment("test")
     with pytest.raises(SmartSimError):
         exp.create_ensemble("name")
+
+
+def test_stop_entity():
+    exp = Experiment("test")
+    m = exp.create_model("model", run_settings=RunSettings("echo", "hello"))
+    exp.start(m, block=False)
+    assert exp.finished(m) == False
+    exp.stop(m)
+    assert exp.finished(m) == True
+
+
+def test_poll():
+    # Ensure that a SmartSimError is not raised
+    exp = Experiment("test")
+    model = exp.create_model("test_model", run_settings=RunSettings("echo", "hello"))
+    exp.start(model, block=False)
+    exp.poll(interval=1)
+    exp.stop(model)
