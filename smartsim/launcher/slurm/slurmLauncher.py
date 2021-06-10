@@ -27,21 +27,20 @@
 import time
 from shutil import which
 
+from ...constants import STATUS_CANCELLED
 from ...error import LauncherError, SSConfigError, SSUnsupportedError
 from ...settings import MpirunSettings, SbatchSettings, SrunSettings
 from ...utils import get_logger
-from ..launcher import Launcher
+from ..launcher import WLMLauncher
 from ..step import MpirunStep, SbatchStep, SrunStep
-from ..stepInfo import SlurmStepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMapping
-from ..taskManager import TaskManager
+from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
 logger = get_logger(__name__)
 
 
-class SlurmLauncher(Launcher):
+class SlurmLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
     to launch jobs on systems that use Slurm as a workload manager.
 
@@ -52,11 +51,7 @@ class SlurmLauncher(Launcher):
     i.e. a psutil.Popen object
     """
 
-    def __init__(self):
-        """Initialize a SlurmLauncher"""
-        super().__init__()
-        self.task_manager = TaskManager()
-        self.step_mapping = StepMapping()
+    # init in launcher.py (WLMLauncher)
 
     def create_step(self, name, cwd, step_settings):
         """Create a Slurm job step
@@ -86,29 +81,6 @@ class SlurmLauncher(Launcher):
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
 
-    def get_step_update(self, step_names):
-        """Get update for a list of job steps
-
-        :param step_names: list of job steps to get updates for
-        :type step_names: list[str]
-        :return: list of job updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-
-        # get updates of jobs managed by slurm (SrunStep, SbatchStep, MpiexecStep)
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
-        if len(step_ids) > 0:
-            updates.extend(self._get_managed_step_update(step_ids))
-
-        # get process managed updates (MpirunStep, non-slurm mpieexec, or when
-        # facilities like sacct, and sstat are unavailable or slow)
-        task_ids = self.step_mapping.get_ids(step_names, managed=False)
-        if len(task_ids) > 0:
-            updates.extend(self._get_unmanaged_step_update(task_ids))
-
-        return updates
-
     def get_step_nodes(self, step_names):
         """Return the compute nodes of a specific job or allocation
 
@@ -129,7 +101,7 @@ class SlurmLauncher(Launcher):
         :return: list of hostnames
         :rtype: list[str]
         """
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
+        _, step_ids = self.step_mapping.get_ids(step_names, managed=True)
         step_str = _create_step_id_str(step_ids)
         output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
 
@@ -213,8 +185,8 @@ class SlurmLauncher(Launcher):
         else:
             self.task_manager.remove_task(stepmap.task_id)
 
-        step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled"  # set status to cancelled instead of failed
+        _, step_info = self.get_step_update([step_name])[0]
+        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
     def _get_slurm_step_id(self, step, interval=2, trials=5):
@@ -271,21 +243,6 @@ class SlurmLauncher(Launcher):
                     info.error = err
 
             updates.append(info)
-        return updates
-
-    def _get_unmanaged_step_update(self, task_ids):
-        """Get step updates for Popen managed jobs
-
-        :param task_ids: task id to check
-        :type task_ids: list[str]
-        :return: list of step updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-        for task_id in task_ids:
-            stat, rc, out, err = self.task_manager.get_task_update(task_id)
-            update = UnmanagedStepInfo(stat, rc, out, err)
-            updates.append(update)
         return updates
 
     @staticmethod

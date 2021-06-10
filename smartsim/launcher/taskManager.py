@@ -324,6 +324,7 @@ class Task:
         :param timeout: time to wait for task death, defaults to 10
         :type timeout: int, optional
         """
+
         def terminate_callback(proc):
             logger.debug(f"Cleanly terminated task {proc.pid}")
 
