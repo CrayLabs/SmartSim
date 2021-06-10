@@ -1,5 +1,3 @@
-from typing import runtime_checkable
-
 import pytest
 
 from smartsim.entity import Ensemble, Model
