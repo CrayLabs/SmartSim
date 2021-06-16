@@ -138,12 +138,12 @@ class Orchestrator(EntityList):
 
         :raises SmartSimError: If cluster status cannot be verified
         """
-        # pick a single host and port
         try:
+            # SmartRedis needs only one cluster host/port to connect
             host = self.hosts[0]
             port = self.ports[0]
-        except:
-            raise SmartSimError("Hosts and ports are not populated")
+        except SmartSimError as e:
+            raise SmartSimError("Database is not active") from e
 
         address = ":".join((host, str(port)))
         client = Client(address=address, cluster=True)
