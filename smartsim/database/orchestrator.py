@@ -139,8 +139,12 @@ class Orchestrator(EntityList):
         :raises SmartSimError: If cluster status cannot be verified
         """
         # pick a single host and port
-        host = self.hosts[0]
-        port = self.ports[0]
+        try:
+            host = self.hosts[0]
+            port = self.ports[0]
+        except:
+            raise SmartSimError("Hosts and ports are not populated")
+
         address = ":".join((host, str(port)))
         client = Client(address=address, cluster=True)
 
@@ -151,6 +155,7 @@ class Orchestrator(EntityList):
             time.sleep(2)
             try:
                 client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
+                receive_tensor = client.get_tensor("cluster_test")
                 logger.debug("Cluster status verified")
                 return
             except RedisReplyError:
