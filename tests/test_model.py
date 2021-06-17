@@ -1,7 +1,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.error import SSConfigError
+from smartsim.error import EntityExistsError
 from smartsim.settings import RunSettings
 
 
@@ -12,7 +12,7 @@ def test_register_incoming_entity_preexists():
     m = exp.create_model("model", run_settings=rs)
     m.register_incoming_entity(ensemble[0])
     assert len(m.incoming_entities) == 1
-    with pytest.raises(SSConfigError):
+    with pytest.raises(EntityExistsError):
         m.register_incoming_entity(ensemble[0])
 
 
@@ -36,3 +36,14 @@ def test_str():
     m = expr.create_model("test_model", run_settings=rs)
     entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
     assert m.__str__() == entity_str
+
+
+# def test_str(fileutils):
+#     exp_name = "test_model_str"
+#     expr = Experiment(exp_name)
+#     test_dir = fileutils.make_test_dir(exp_name)
+#     script = fileutils.get_test_conf_path("sleep.py")
+#     rs = RunSettings("python", script)
+#     m = expr.create_model("test_model", path=test_dir, run_settings=rs)
+#     entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
+#     assert m.__str__() == entity_str

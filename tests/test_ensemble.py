@@ -1,5 +1,6 @@
 import pytest
 
+from smartsim import Experiment
 from smartsim.entity import Ensemble, Model
 from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
@@ -127,7 +128,7 @@ def test_add_model_type():
         e.add_model("model")
 
 
-def test_add_model_preexists():
+def test_add_existing_model():
     params_1 = {"h": 5}
     params_2 = {"z": 6}
     model_1 = Model("identical_name", params_1, "", rs)
@@ -157,3 +158,10 @@ def test_key_prefixing():
     assert e.query_key_prefixing() == False
     e.enable_key_prefixing()
     assert e.query_key_prefixing() == True
+
+
+def test_ensemble_type():
+    exp = Experiment("name")
+    ens_settings = RunSettings("python")
+    ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
+    assert ensemble.type == "Ensemble"

@@ -7,20 +7,34 @@ from smartsim.error.errors import SmartSimError
 
 def test_parse_db_host_error():
     orc = Orchestrator()
+    orc.entities[0].path = "not/a/path"
     # Fail to obtain database hostname
     with pytest.raises(SmartSimError):
         orc.entities[0].host
 
 
-def test_parse_db_host():
-    # check that an Error is NOT raised
-    exp = Experiment("test_dbnode")
+def test_hosts(fileutils):
+    exp_name = "test_hosts"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+
     orc = Orchestrator()
+    orc.set_path(test_dir)
     exp.generate(orc)
     exp.start(orc)
-    orc.entities[0]._parse_db_host()
-    exp.stop(orc)
-    orc.remove_stale_files()
+
+    thrown = False
+    hosts = []
+    try:
+        hosts = orc.hosts
+    except SmartSimError:
+        thrown = True
+    finally:
+        # stop the database even if there is an error raised
+        exp.stop(orc)
+        orc.remove_stale_files()
+        assert not thrown
+        assert hosts == orc.hosts
 
 
 def test_set_host():
