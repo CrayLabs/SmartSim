@@ -34,12 +34,12 @@ def collect_db_hosts(num_hosts):
 
     # account for mpiprocs causing repeats in PBS_NODEFILE
     hosts = list(set(hosts))
-    
+
     if len(hosts) >= num_hosts:
         return hosts[:num_hosts]
     else:
         raise Exception(f"PBS_NODEFILE had {len(hosts)} hosts, not {num_hosts}")
-    
+
 
 def launch_cluster_orc(exp, db_hosts, port):
     """Just spin up a database cluster, check the status

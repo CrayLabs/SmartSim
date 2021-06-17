@@ -33,7 +33,7 @@ mpirun.set_tasks(10)
 
 
 # create three replicas of the same model to run in a batch
-hello_world = exp.create_ensemble("hello_world_ensemble", 
+hello_world = exp.create_ensemble("hello_world_ensemble",
                                   batch_settings=batch,
                                   run_settings=mpirun,
                                   replicas=3)
