@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SSConfigError
+from ..error import EntityExistsError
 from ..utils.helpers import init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
@@ -62,7 +62,7 @@ class Model(SmartSimEntity):
         if incoming_entity.name in [
             in_entity.name for in_entity in self.incoming_entities
         ]:
-            raise SSConfigError(
+            raise EntityExistsError(
                 f"'{incoming_entity.name}' has already "
                 + "been registered as an incoming entity"
             )

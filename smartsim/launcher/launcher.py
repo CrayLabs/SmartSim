@@ -65,7 +65,7 @@ class Launcher(abc.ABC):
         raise NotImplementedError
 
 
-class WLMLauncher(Launcher):
+class WLMLauncher(Launcher):  # cov-wlm
     """The base class for any Launcher that utilizes workload
     manager specific commands. This base class is used to provide
     implemented methods that are alike across all WLM launchers.
