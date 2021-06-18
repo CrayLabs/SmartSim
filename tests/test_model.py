@@ -10,10 +10,10 @@ def test_register_incoming_entity_preexists():
     rs = RunSettings("python", exe_args="sleep.py")
     ensemble = exp.create_ensemble(name="ensemble", replicas=1, run_settings=rs)
     m = exp.create_model("model", run_settings=rs)
-    m.register_incoming_entity(ensemble[0])
+    m.register_incoming_entity(ensemble["ensemble_0"])
     assert len(m.incoming_entities) == 1
     with pytest.raises(EntityExistsError):
-        m.register_incoming_entity(ensemble[0])
+        m.register_incoming_entity(ensemble["ensemble_0"])
 
 
 def test_disable_key_prefixing():
@@ -36,14 +36,3 @@ def test_str():
     m = expr.create_model("test_model", run_settings=rs)
     entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
     assert m.__str__() == entity_str
-
-
-# def test_str(fileutils):
-#     exp_name = "test_model_str"
-#     expr = Experiment(exp_name)
-#     test_dir = fileutils.make_test_dir(exp_name)
-#     script = fileutils.get_test_conf_path("sleep.py")
-#     rs = RunSettings("python", script)
-#     m = expr.create_model("test_model", path=test_dir, run_settings=rs)
-#     entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
-#     assert m.__str__() == entity_str

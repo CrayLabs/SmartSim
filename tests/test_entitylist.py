@@ -1,9 +1,9 @@
-from os import getcwd
+from os import getcwd, name
 
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Ensemble, EntityList, Model
+from smartsim.entity import EntityList
 from smartsim.settings import RunSettings
 
 
@@ -19,7 +19,7 @@ def test_entity_list_getitem():
     exp = Experiment("name")
     ens_settings = RunSettings("python")
     ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
-    assert EntityList.__getitem__(ensemble, "name_3") == ensemble[3]
+    assert ensemble.__getitem__("name_3") == ensemble["name_3"]
 
 
 def test_entity_list_repr():

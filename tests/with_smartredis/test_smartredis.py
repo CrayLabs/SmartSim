@@ -59,8 +59,8 @@ def test_exchange(fileutils):
         perm_strat="step",
     )
 
-    ensemble.register_incoming_entity(ensemble[0])
-    ensemble.register_incoming_entity(ensemble[1])
+    ensemble.register_incoming_entity(ensemble["producer_0"])
+    ensemble.register_incoming_entity(ensemble["producer_1"])
 
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
@@ -111,8 +111,8 @@ def test_consumer(fileutils):
     )
     ensemble.add_model(consumer)
 
-    ensemble.register_incoming_entity(ensemble[0])
-    ensemble.register_incoming_entity(ensemble[1])
+    ensemble.register_incoming_entity(ensemble["producer_0"])
+    ensemble.register_incoming_entity(ensemble["producer_1"])
 
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
