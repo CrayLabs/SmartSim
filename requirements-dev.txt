@@ -1,6 +1,5 @@
 coloredlogs==10.0
-redis>=3.0.1
-redis-py-cluster==2.0.0
+smartredis==0.1.1
 sphinx==3.1.1
 numpy>=1.18.2
 toml>=0.10.1
