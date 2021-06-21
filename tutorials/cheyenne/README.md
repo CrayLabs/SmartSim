@@ -11,23 +11,19 @@ different types of workflows that are possible with SmartSim.
 Since SmartSim does not currently support the Message Passing Toolkit (MPT), Cheyenne
 users of SmartSim will need to utilize OpenMPI.
 
-The following modules were utilized to run the examples
+The following module commands were utilized to run the examples
 
-```
-
-Currently Loaded Modules:
-  1) ncarenv/1.3   2) gnu/8.3.0   3) ncarcompilers/0.5.0   4) netcdf/4.7.4   5) openmpi/4.0.5
-
+```bash
+module purge
+module load ncarenv/1.3 gnu/8.3.0 ncarcompilers/0.5.0 netcdf/4.7.4 openmpi/4.0.5
 ```
 
 With this environment loaded, users will need to build and install both SmartSim and
-SmartRedis through conda
+SmartRedis through pip. Usually we recommend users installing or loading miniconda and
+using the pip that comes with that installation.
 
- 1. Install conda through script (or load if available)
-
- and then (with conda environment active)
  2. ``pip install smartsim``
- 3. ``smart --device cpu``
+ 3. ``smart --device cpu``  (May take a couple minutes)
  4. ``pip install smartredis``
 
 If you run into trouble with the installation, please consult the installation
@@ -84,7 +80,8 @@ nodes and 20 processors per node. be sure to include mpiprocs in your
 allocation.
 
 ```bash
-qsub -l select=3:ncpus=20:mpiprocs=20 -l walltime=00:20:00 -A <account> -q premium -I
+# fill in account and queue parameters
+qsub -l select=3:ncpus=20:mpiprocs=20 -l walltime=00:20:00 -A <account> -q <queue> -I
 ```
 
 After obtaining the allocation, make sure to module load your conda or python environment
@@ -116,7 +113,8 @@ nodes and 2 processors per node. be sure to include mpiprocs in your
 allocation.
 
 ```bash
-qsub -l select=3:ncpus=1 -l walltime=00:20:00 -A <account> -q premium -I
+# fill in account and queue parameters
+qsub -l select=3:ncpus=1 -l walltime=00:20:00 -A <account> -q <queue> -I
 ```
 After obtaining the allocation, make sure to module load your conda or python environment
 with SmartSim and SmartRedis installed, as well as module load OpenMPI and gcc 8.3 as
@@ -137,13 +135,14 @@ This example shows how a user can take the previous example a step further by
 launching the application which communicates with the Orchestrator through SmartSim
 as well.
 
-It's important to note in this example that the database and producer are running
+It is important to note in this example that the database and producer are running
 a converged workflow - that is, the database and application are placed on the same
 nodes. Add a node(s) to the interactive allocation line if you wish for the data
 producer to run on a seperate node.
 
 ```bash
-qsub -l select=3:ncpus=2:mpiprocs:2 -l walltime=00:20:00 -A <account> -q premium -I
+# fill in account and queue parameters
+qsub -l select=3:ncpus=2:mpiprocs:2 -l walltime=00:20:00 -A <account> -q <queue> -I
 ```
 After obtaining the allocation, make sure to module load your conda or python environment
 with SmartSim and SmartRedis installed, as well as module load OpenMPI and gcc 8.3 as
@@ -155,7 +154,7 @@ run the workflow with
 python launch_multiple.py
 ```
 
-### 4. launch_ensemble.py
+### 4. launch_ensemble_batch.py
 
 Launch a ensemble of hello world models in a batch created by SmartSim. This
 file can be launched on a head node and will create a batch file for the all
@@ -178,7 +177,7 @@ mpicc hello.c -o hello
 and run the workflow with
 
 ```bash
-python launch_ensemble.py
+python launch_ensemble_batch.py
 ```
 
 
