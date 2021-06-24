@@ -72,24 +72,24 @@ db_hosts = collect_db_hosts(3)
 db = launch_cluster_orc(exp, db_hosts, db_port)
 
 
-# test sending some arrays to the database cluster
-# the following functions are largely the same across all the
-# client languages: C++, C, Fortran, Python
-
-# only need one address of one shard of DB to connect client
-db_address = ":".join((db_hosts[0], str(db_port)))
-client = Client(address=db_address, cluster=True)
-
-# put into database
-test_array = np.array([1,2,3,4])
-print(f"Array put in database: {test_array}")
-client.put_tensor("test", test_array)
-
-# get from database
-returned_array = client.get_tensor("test")
-print(f"Array retrieved from database: {returned_array}")
-
-# shutdown the database because we don't need it anymore
-exp.stop(db)
+## test sending some arrays to the database cluster
+## the following functions are largely the same across all the
+## client languages: C++, C, Fortran, Python
+#
+## only need one address of one shard of DB to connect client
+#db_address = ":".join((db_hosts[0], str(db_port)))
+#client = Client(address=db_address, cluster=True)
+#
+## put into database
+#test_array = np.array([1,2,3,4])
+#print(f"Array put in database: {test_array}")
+#client.put_tensor("test", test_array)
+#
+## get from database
+#returned_array = client.get_tensor("test")
+#print(f"Array retrieved from database: {returned_array}")
+#
+## shutdown the database because we don't need it anymore
+#exp.stop(db)
 
 
