@@ -133,7 +133,7 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
 
-    def check_cluster_status(self):
+    def check_cluster_status(self): # cov-wlm
         """Check that a cluster is up and running
 
         :raises SmartSimError: If cluster status cannot be verified
