@@ -1,0 +1,29 @@
+36055:C 09 Jun 2021 18:44:12.681 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+36055:C 09 Jun 2021 18:44:12.681 # Redis version=6.0.8, bits=64, commit=03b59cd5, modified=0, pid=36055, just started
+36055:C 09 Jun 2021 18:44:12.681 # Configuration loaded
+36055:M 09 Jun 2021 18:44:12.682 * Increased maximum number of open files to 25032 (it was originally set to 4096).
+                _._                                                  
+           _.-``__ ''-._                                             
+      _.-``    `.  `_.  ''-._           Redis 6.0.8 (03b59cd5/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ ''-._                                   
+ (    '      ,       .-`  | `,    )     Running in standalone mode
+ |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6899
+ |    `-._   `._    /     _.-'    |     PID: 36055
+  `-._    `-._  `-./  _.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |           http://redis.io        
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+ |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+ |    `-._`-._        _.-'_.-'    |                                  
+  `-._    `-._`-.__.-'_.-'    _.-'                                   
+      `-._    `-.__.-'    _.-'                                       
+          `-._        _.-'                                           
+              `-.__.-'                                               
+
+36055:M 09 Jun 2021 18:44:12.684 # Server initialized
+36055:M 09 Jun 2021 18:44:12.780 * <ai> Redis version found by RedisAI: 6.0.8 - oss
+36055:M 09 Jun 2021 18:44:12.780 * <ai> RedisAI version 10202, git_sha=6892f973ded0a6eaaff156bc51ef193dc5fb0449
+36055:M 09 Jun 2021 18:44:12.780 * Module 'ai' loaded from /Users/celiatandon/smartsim/smartsim/lib/redisai.so
+36055:M 09 Jun 2021 18:44:12.930 # <RedisIP> Hostname: NOTFOUND
+36055:M 09 Jun 2021 18:44:12.930 * Module 'RedisIP' loaded from /Users/celiatandon/smartsim/smartsim/lib/libredisip.so
+36055:M 09 Jun 2021 18:44:12.930 * Ready to accept connections
