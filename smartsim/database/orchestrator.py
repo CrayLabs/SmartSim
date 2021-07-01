@@ -165,6 +165,19 @@ class Orchestrator(EntityList):
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
 
+    def get_address(self):
+        """Return database addresses
+
+        :return: addresses
+        :rtype: list[str]
+        """
+        if not self._hosts:
+            raise SmartSimError()
+        addresses = []
+        for host, port in itertools.product(self._hosts, self.ports):
+            addresses.append(":".join((host, port)))
+        return addresses
+
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
 
