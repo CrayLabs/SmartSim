@@ -18,9 +18,8 @@ def test_hosts(fileutils):
     exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir(exp_name)
 
-    orc = Orchestrator()
+    orc = Orchestrator(port=6888)
     orc.set_path(test_dir)
-    exp.generate(orc)
     exp.start(orc)
 
     thrown = False
