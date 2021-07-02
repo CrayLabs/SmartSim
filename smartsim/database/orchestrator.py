@@ -31,8 +31,9 @@ import sys
 import time
 from os import getcwd
 
-from rediscluster import RedisCluster
-from rediscluster.exceptions import ClusterDownError
+import numpy as np
+from smartredis import Client
+from smartredis.error import RedisReplyError
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
@@ -132,19 +133,20 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
 
-    def check_cluster_status(self): # cov-wlm
+    def check_cluster_status(self):  # cov-wlm
         """Check that a cluster is up and running
 
         :raises SmartSimError: If cluster status cannot be verified
         """
-        # TODO use smartredis for this, then we don't have to create host dictionary
-        host_list = []
-        for host in self.hosts:
-            for port in self.ports:
-                host_dict = dict()
-                host_dict["host"] = host
-                host_dict["port"] = port
-                host_list.append(host_dict)
+        try:
+            # SmartRedis needs only one cluster host/port to connect
+            host = self.hosts[0]
+            port = self.ports[0]
+        except SmartSimError as e:
+            raise SmartSimError("Database is not active") from e
+
+        address = ":".join((host, str(port)))
+        client = Client(address=address, cluster=True)
 
         trials = 10
         logger.debug("Beginning database cluster status check...")
@@ -152,12 +154,11 @@ class Orchestrator(EntityList):
             # wait for cluster to spin up
             time.sleep(2)
             try:
-                redis_tester = RedisCluster(startup_nodes=host_list)
-                redis_tester.set("__test__", "__test__")
-                redis_tester.delete("__test__")
+                client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
+                receive_tensor = client.get_tensor("cluster_test")
                 logger.debug("Cluster status verified")
                 return
-            except ClusterDownError:
+            except RedisReplyError:
                 logger.debug("Cluster still spinning up...")
                 time.sleep(5)
                 trials -= 1

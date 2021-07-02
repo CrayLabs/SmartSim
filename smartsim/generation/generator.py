@@ -139,7 +139,7 @@ class Generator:
 
         # Always remove orchestrator files if present.
         if path.isdir(orc_path):
-            shutil.rmtree(orc_path)
+            shutil.rmtree(orc_path, ignore_errors=True)
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists):
