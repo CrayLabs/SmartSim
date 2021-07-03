@@ -196,12 +196,12 @@ class BatchSettings:
         written (unmodified) at the beginning of the batch file
         (after the WLM directives) and can be used to e.g.
         start virtual environments before running the executables.
-        
+
         :param line: lines to add to preamble.
         :type line: str or list[str]
         """
         if isinstance(lines, str):
-            self._preamble += [lines] 
+            self._preamble += [lines]
         elif isinstance(lines, list):
             self._preamble += lines
         else:
