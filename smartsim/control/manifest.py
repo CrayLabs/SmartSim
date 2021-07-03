@@ -57,7 +57,6 @@ class Manifest:
                 if _db:
                     raise SmartSimError("Manifest was given two orchestrators")
                 _db = deployable
-        print(_db)
         return _db
 
     @property
@@ -66,7 +65,6 @@ class Manifest:
         for deployable in self._deployables:
             if isinstance(deployable, SmartSimEntity):
                 _models.append(deployable)
-        print(_models)
         return _models
 
     @property
