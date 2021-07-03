@@ -287,7 +287,7 @@ class Controller:
                     batch_step = self._create_batch_job_step(elist)
                     steps.append((batch_step, elist))
                 else:
-                    # if ensemble is to be run as seperate job steps, aka not in a batch
+                    # if ensemble is to be run as separate job steps, aka not in a batch
                     job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                     steps.extend(job_steps)
         if entities:
@@ -416,7 +416,7 @@ class Controller:
                 ray_cluster._update_worker_model()
                 # Don't launch on head host
                 if isinstance(self._launcher, SlurmLauncher):
-                    ray_cluster.worker_model.run_settings.set_excludelist(ray_cluster.head_model._hosts)
+                    ray_cluster.worker_model.run_settings.set_excluded_hosts(ray_cluster.head_model._hosts)
                 worker_step = self._create_job_step(ray_cluster.worker_model)
                 self._launch_step(worker_step, ray_cluster.worker_model)
                 
@@ -475,10 +475,10 @@ class Controller:
             entity.name, entity.path, entity.batch_settings
         )
         if isinstance(entity, EntityList):
-            for e in entity.entities:
+            for _entity in entity:
                 # tells step creation not to look for an allocation
-                e.run_settings.in_batch = True
-                step = self._create_job_step(e)
+                _entity.run_settings.in_batch = True
+                step = self._create_job_step(_entity)
                 batch_step.add_to_batch(step)
         else:
             entity.run_settings.in_batch = True

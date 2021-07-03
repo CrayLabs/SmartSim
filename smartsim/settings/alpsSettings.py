@@ -113,7 +113,7 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
         
-    def set_excludelist(self, host_list):
+    def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude

@@ -112,12 +112,6 @@ class Experiment:
             for entity in args:
                 if isinstance(entity, SmartSimEntity):
                     self._control.stop_entity(entity)
-                elif isinstance(entity, RayCluster):
-                    if entity._launcher == 'local':
-                        execute_cmd(["ray", "stop"])
-                    if entity.worker_model:
-                        self._control.stop_entity(entity.worker_model)
-                    self._control.stop_entity(entity.head_model)
                 elif isinstance(entity, EntityList):
                     self._control.stop_entity_list(entity)
                 else:
