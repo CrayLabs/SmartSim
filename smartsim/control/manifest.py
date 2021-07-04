@@ -55,7 +55,7 @@ class Manifest:
         for deployable in self._deployables:
             if isinstance(deployable, Orchestrator):
                 if _db:
-                    raise SmartSimError("Manifest was given two orchestrators")
+                    raise SmartSimError("User attempted to create more than one Orchestrator")
                 _db = deployable
         return _db
 
