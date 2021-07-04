@@ -84,9 +84,9 @@ class Generator:
         """
         generator_manifest = Manifest(*args)
         self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest)
-        self._gen_entity_list_dir(generator_manifest)
-        self._gen_entity_dirs(generator_manifest)
+        self._gen_orc_dir(generator_manifest.db)
+        self._gen_entity_list_dir(generator_manifest.ensembles)
+        self._gen_entity_dirs(generator_manifest.models)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files
@@ -123,15 +123,14 @@ class Generator:
         else:
             logger.info("Working in previously created experiment")
 
-    def _gen_orc_dir(self, manifest):
+    def _gen_orc_dir(self, orchestrator):
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
-        :param manifest: Manifest of deployables
-        :type manifest: Manifest
+        :param orchestrator: Orchestrator instance
+        :type orchestrator: Orchestrator
         """
 
-        orchestrator = manifest.db
         if not orchestrator:
             return
 
@@ -143,14 +142,17 @@ class Generator:
             shutil.rmtree(orc_path, ignore_errors=True)
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
-    def _gen_entity_list_dir(self, manifest):
+    def _gen_entity_list_dir(self, entity_lists):
         """Generate directories for EntityList instances
 
-        :param manifest: Manifest of deployables
-        :type manifest: Manifest
+        :param entity_lists: list of EntityList instances
+        :type entity_lists: list
         """
 
-        for elist in manifest.ensembles:
+        if not entity_lists:
+            return
+
+        for elist in entity_lists:
 
             elist_dir = path.join(self.gen_path, elist.name)
             if path.isdir(elist_dir):
@@ -163,20 +165,20 @@ class Generator:
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
 
-    def _gen_entity_dirs(self, manifest, entity_list=None):
-        """Generate directories for Entity instances.
+    def _gen_entity_dirs(self, entities, entity_list=None):
+        """Generate directories for Entity instances
 
-        :param manifest: Manifest of deployables. Only `SmartSimEntity`
-                         objects wil be used. `EntityLists` can be passed
-                         optionally with the ``entity_list`` argument.
-        :type manifest: Manifest
+        :param entities: list of Entity instances
+        :type entities: list
         :param entity_list: EntityList instance, defaults to None
         :type entity_list: EntityList, optional
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
         """
+        if not entities:
+            return
 
-        for entity in manifest.models:
+        for entity in entities:
             if entity_list:
                 dst = path.join(self.gen_path, entity_list.name, entity.name)
             else:
