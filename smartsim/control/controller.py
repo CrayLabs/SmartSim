@@ -34,7 +34,7 @@ from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher, LSFLauncher
 from ..utils import get_logger
 from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
@@ -217,7 +217,8 @@ class Controller:
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
-        SmartSim currently supports slurm, pbs(pro), and local launching
+        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        and local launching
 
         Since the JobManager and the controller share a launcher
         instance, set the JobManager launcher if we create a new
@@ -245,6 +246,9 @@ class Controller:
                 self._jobs.set_launcher(self._launcher)
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
+                self._jobs.set_launcher(self._launcher)
+            elif launcher == "lsf":
+                self._launcher = LSFLauncher()
                 self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)

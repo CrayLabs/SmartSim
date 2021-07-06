@@ -2,7 +2,7 @@ import os
 import shutil
 import pytest
 import smartsim
-from smartsim.settings import SrunSettings, AprunSettings
+from smartsim.settings import SrunSettings, AprunSettings, JsrunSettings
 from smartsim.settings import RunSettings
 from smartsim.config import CONFIG
 
@@ -31,7 +31,7 @@ def print_test_configuration():
 def pytest_configure():
     launcher = get_launcher()
     pytest.test_launcher = launcher
-    pytest.wlm_options = ["slurm", "pbs", "cobalt"]
+    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
 
 def pytest_sessionstart(session):
     """
@@ -83,6 +83,13 @@ class WLMUtils:
             run_args = {"pes": ntasks}
             run_args.update(kwargs)
             settings = AprunSettings(exe, args, run_args=run_args)
+            return settings
+        if test_launcher == "lsf":
+            run_args = {"nrs": nodes,
+                       "tasks_per_rs": max(ntasks//nodes,1),
+                       }
+            run_args.update(kwargs)
+            settings = JsrunSettings(exe, args, run_args=run_args)
             return settings
         else:
             return RunSettings(exe, args)

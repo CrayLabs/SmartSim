@@ -24,9 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SmartSimError
-
-from ..error import SSConfigError
+from ..error import SmartSimError, SSConfigError
 from ..utils.helpers import init_default
 from .settings import BatchSettings
 
@@ -100,7 +98,7 @@ class QsubBatchSettings(BatchSettings):
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
-            raise TypeError("host_list argument must be list of strings")
+            raise TypeError("host_list argument must be a list of strings")
         self._hosts = host_list
 
     def set_walltime(self, walltime):
