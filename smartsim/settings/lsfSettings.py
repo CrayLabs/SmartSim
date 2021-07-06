@@ -82,6 +82,16 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["gpu_per_rs"] = int(num_gpus)
 
+    def set_rs_per_host(self, num_rs):
+        """Set the number of resource sets to use per host
+
+        This sets ``--rs_per_host``
+
+        :param num_rs: number of resource sets to use per host
+        :type num_rs: int
+        """
+        self.run_args["rs_per_host"] = int(num_rs)
+
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
 
@@ -128,9 +138,7 @@ class JsrunSettings(RunSettings):
 class BsubBatchSettings(BatchSettings):
     def __init__(
         self,
-        nrs=None,
-        cpus_per_rs=None,
-        gpus_per_rs=None,
+        nodes=None,
         time=None,
         project=None,
         batch_args=None,
@@ -140,31 +148,18 @@ class BsubBatchSettings(BatchSettings):
 
         :param nodes: number of nodes for batch
         :type nodes: int, optional
-        :param ncpus: number of cpus per node
-        :type ncpus: int, optional
         :param time: walltime for batch job in format hh:mm
         :type time: str, optional
-        :param queue: queue to run batch in
-        :type queue: str
         :param project: project for batch launch
         :type project: str, optional
-        :param resources: overrides for resource arguments
-        :type resources: dict[str, str], optional
         :param batch_args: overrides for LSF batch arguments
         :type batch_args: dict[str, str], optional
         """
         super().__init__("bsub", batch_args=batch_args)
-
-        if project:
-            self.set_project(project)
-        if nrs:
-            self.set_num_rs(nrs)
-        if cpus_per_rs:
-            self.set_cpus_per_rs(cpus_per_rs)
-        if gpus_per_rs:
-            self.set_gpus_per_rs(gpus_per_rs)
-        if time:
-            self.set_walltime(time)
+        if nodes:
+            self.set_nodes(nodes)
+        self.set_walltime(time)
+        self.set_project(project)
 
     def set_walltime(self, time):
         """Set the walltime
@@ -174,42 +169,52 @@ class BsubBatchSettings(BatchSettings):
         :param time: Time in hh:mm format
         :type time: str
         """
-
-        self.run_args["W"] = time
-
-    def set_num_rs(self, num_rs):
-        """Set the number of resource sets to use
-
-        This sets ``--nrs``. 
-
-        :param num_rs: Number of resource sets or `ALL_HOSTS`
-        :type num_rs: int or str
-        """
-
-        if isinstance(num_rs, str):
-            self.run_args["nrs"] = num_rs
+        if time:
+            self.walltime = time
         else:
-            self.run_args["nrs"] = int(num_rs)
+            # If not supplied, batch submission fails,
+            # but the user will know from the error
+            self.walltime = None
 
-    def set_cpus_per_rs(self, num_cpus):
-        """Set the number of cpus to use per resource set
+    def set_project(self, project):
+        """Set the project
 
-        This sets ``--cpu_per_rs``
+        This sets ``-P``.
 
-        :param num_cpus: number of cpus to use per resource set
-        :type num_cpus: int
+        :param time: project name
+        :type time: str
         """
-        self.run_args["cpu_per_rs"] = int(num_cpus)
+        if project:
+            self.project = project
+        else:
+            # If not supplied, batch submission fails,
+            # but the user will know from the error
+            self.project = None
 
-    def set_gpus_per_rs(self, num_gpus):
-        """Set the number of gpus to use per resource set
+    def set_nodes(self, num_nodes):
+        """Set the number of nodes for this batch job
 
-        This sets ``--gpu_per_rs``
+        This sets ``--nnodes``.
 
-        :param num_cpus: number of gpus to use per resource set
-        :type num_gpus: int
+        :param num_nodes: number of nodes
+        :type num_nodes: int
         """
-        self.run_args["gpu_per_rs"] = int(num_gpus)
+        self.batch_args["nnodes"] = int(num_nodes)
+
+    def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: list[str]
+        :raises TypeError:
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self.batch_args["m"] = "\"" + ",".join(host_list) + "\""
 
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
@@ -237,16 +242,18 @@ class BsubBatchSettings(BatchSettings):
         :return: batch arguments for Qsub
         :rtype: list[str]
         """
+        opts = []
         for opt, value in self.batch_args.items():
             # attach "-" prefix if argument is 1 character otherwise "--"
-            short_arg = bool(len(str(opt)) == 1)
-            prefix = "-" if short_arg else "--"
+            #short_arg = bool(len(str(opt)) == 1)
+            prefix = "-" # LSF only uses dashses if short_arg else "--"
 
             if not value:
                 opts += [prefix + opt]
             else:
-                if short_arg:
-                    opts += [prefix + opt, str(value)]
-                else:
-                    opts += ["=".join((prefix + opt, str(value)))]
+                # if short_arg:
+                opts += [" ".join((prefix + opt, str(value)))]
+                # else:
+                #     opts += ["=".join((prefix + opt, str(value)))]
+
         return opts

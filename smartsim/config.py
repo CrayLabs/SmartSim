@@ -213,6 +213,18 @@ class Config:
         except KeyError:
             return 15  # 15 seconds by default
 
+    @property
+    def test_project(self):
+        try:
+            if "SMARTSIM_TEST_PROJECT" in os.environ:
+                print("OS", os.environ["SMARTSIM_TEST_PROJECT"])
+                return os.environ["SMARTSIM_TEST_PROJECT"]
+            else:
+                project = self.conf["test"]["project"]
+                return project
+        except KeyError:
+            return ""  # no project by default
 
+    
 # initialize config instance
 CONFIG = Config()

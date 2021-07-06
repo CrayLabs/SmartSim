@@ -221,6 +221,7 @@ class LSFStepInfo(StepInfo):  # cov-lsf
 
     def __init__(self, status="", returncode=None, output=None, error=None):
         if status == "NOTFOUND":
+            print(status)
             if returncode is not None:
                 smartsim_status = "Completed" if returncode == 0 else "Failed"
             else:

@@ -115,6 +115,9 @@ class Orchestrator(EntityList):
             for port in self.ports:
                 address = ":".join((ip, str(port) + " "))
                 ip_list.append(address)
+                # Remove duplicates (which can happen with LSF)
+                # TODO find a better way of handling this
+                ip_list = list(set(ip_list))
 
         # call cluster command
         redis_cli = CONFIG.redis_cli

@@ -35,7 +35,7 @@ from ..launcher import WLMLauncher
 from ..step import BsubBatchStep, JsrunStep
 from ..stepInfo import LSFStepInfo
 from .lsfCommands import bkill, bjobs
-from .lsfParser import parse_bjobs_jobid, parse_step_id_from_bjobs
+from .lsfParser import parse_bjobs_jobid, parse_step_id_from_bjobs, parse_bsub
 
 logger = get_logger(__name__)
 
@@ -101,10 +101,10 @@ class LSFLauncher(WLMLauncher):
             if rc != 0:
                 raise LauncherError(f"Bsub batch submission failed\n {out}\n {err}")
             if out:
-                step_id = out.strip()
+                step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
-            # aprun doesn't direct output for us.
+            # jsrun doesn't direct output for us.
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
@@ -171,7 +171,7 @@ class LSFLauncher(WLMLauncher):
         """
         updates = []
         # Include recently finished jobs
-        bjobs_args = ["a"] + step_ids
+        bjobs_args = ["-a"] + step_ids
         bjobs_out, _ = bjobs(bjobs_args)
         stats = [parse_bjobs_jobid(bjobs_out, str(step_id)) for step_id in step_ids]
         # create LSFStepInfo objects to return

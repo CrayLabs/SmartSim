@@ -11,19 +11,28 @@ from smartsim.config import CONFIG
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = "local"
+test_project = ""
 
 def get_launcher():
     global test_launcher
     test_launcher = CONFIG.test_launcher
     return test_launcher
 
+def get_project():
+    global test_project
+    test_project = CONFIG.test_project
+    return test_project
+
 def print_test_configuration():
     global test_path
     global test_dir
     global test_launcher
+    global test_project
     print("TEST_SMARTSIM_LOCATION: ", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER", test_launcher)
+    if test_project != "":
+        print("TEST_PROJECT", test_project)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
@@ -32,6 +41,8 @@ def pytest_configure():
     launcher = get_launcher()
     pytest.test_launcher = launcher
     pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
+    project = get_project()
+    pytest.test_project = project
 
 def pytest_sessionstart(session):
     """
@@ -63,6 +74,11 @@ class WLMUtils:
     def get_test_launcher():
         global test_launcher
         return test_launcher
+
+    @staticmethod
+    def get_test_project():
+        global test_project
+        return test_project
 
     @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
