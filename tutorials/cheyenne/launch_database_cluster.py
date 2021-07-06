@@ -1,4 +1,17 @@
+#!/usr/bin/env python3
+#PBS -N smartsimtest
+#PBS  -r n
+#PBS  -j oe
+#PBS  -V
+#PBS  -l walltime=00:10:00
+#PBS  -A P93300606
+#PBS  -q regular
+#PBS  -V
+#PBS  -S /bin/bash
+#PBS  -l select=4:ncpus=36:mpiprocs=36:ompthreads=1:nodetype=largemem
+
 import os
+import socket
 import numpy as np
 
 from smartsim import Experiment, constants
@@ -37,8 +50,13 @@ def collect_db_hosts(num_hosts):
 
     if len(hosts) >= num_hosts:
         return hosts[:num_hosts]
+        with open(os.path.basename(node_file), "w") as f:
+            for line in hosts[num_hosts:]:
+                f.write(line)
+                print("host is {}".format(line))
+        os.environ["PBS_NODEFILE"] = os.path.basename(node_file)
     else:
-        raise Exception(f"PBS_NODEFILE had {len(hosts)} hosts, not {num_hosts}")
+        raise Exception("PBS_NODEFILE {} had {} hosts, not {}".format(node_file, len(hosts),num_hosts))
 
 
 def launch_cluster_orc(exp, db_hosts, port):
@@ -63,6 +81,8 @@ def launch_cluster_orc(exp, db_hosts, port):
 
     return db
 
+print("before PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
+
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_cluster_db", launcher="pbs")
 
@@ -77,7 +97,9 @@ db = launch_cluster_orc(exp, db_hosts, db_port)
 ## client languages: C++, C, Fortran, Python
 #
 ## only need one address of one shard of DB to connect client
-#db_address = ":".join((db_hosts[0], str(db_port)))
+db_address = ":".join((socket.gethostbyname(db_hosts[0]), str(db_port)))
+print("db_address is {}".format(db_address))
+print("after PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
 #client = Client(address=db_address, cluster=True)
 #
 ## put into database
@@ -90,6 +112,4 @@ db = launch_cluster_orc(exp, db_hosts, db_port)
 #print(f"Array retrieved from database: {returned_array}")
 #
 ## shutdown the database because we don't need it anymore
-#exp.stop(db)
-
-
+exp.stop(db)
