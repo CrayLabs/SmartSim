@@ -165,18 +165,41 @@ class Orchestrator(EntityList):
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
 
-    def _get_address(self):
+    def get_address(self):
         """Return database addresses
 
         :return: addresses
         :rtype: list[str]
         """
         if not self._hosts:
-            raise SmartSimError()
+            raise SmartSimError("Could not find database address")
+        if len(self._hosts) > 1:
+            self.check_cluster_status()
+        else:
+            self.is_active()
         addresses = []
         for host, port in itertools.product(self._hosts, self.ports):
             addresses.append(":".join((host, port)))
         return addresses
+
+    def is_active(self):
+        """Check if database is running
+
+        :raise SmartSimError: if database cannot be verified
+        """
+        try:
+            host = self._hosts[0]
+            port = self.ports[0]
+        except SmartSimError as e:
+            raise SmartSimError("Database is not active") from e
+        address = ":".join((host, str(port)))
+        client = Client(address=address, cluster=False)
+        try:
+            client.put_tensor("db_test", np.array([1, 2, 3, 4]))
+            receive_tensor = client.get_tensor("db_test")
+            return
+        except SmartSimError as e:
+            raise SmartSimError("Database could not be verified")
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
