@@ -175,8 +175,8 @@ class Orchestrator(EntityList):
             raise SmartSimError("Could not find database address")
         if len(self._hosts) > 1:
             self.check_cluster_status()
-        else:
-            self.is_active()
+        elif not self.is_active():
+            raise SmartSimError("Database is not active")
         addresses = []
         for host, port in itertools.product(self._hosts, self.ports):
             addresses.append(":".join((host, port)))
@@ -185,7 +185,8 @@ class Orchestrator(EntityList):
     def is_active(self):
         """Check if database is running
 
-        :raise SmartSimError: if database cannot be verified
+        :returns: True if database is active, False otherwise
+        :rtype: bool
         """
         try:
             host = self._hosts[0]
@@ -197,9 +198,9 @@ class Orchestrator(EntityList):
         try:
             client.put_tensor("db_test", np.array([1, 2, 3, 4]))
             receive_tensor = client.get_tensor("db_test")
-            return
-        except SmartSimError as e:
-            raise SmartSimError("Database could not be verified")
+            return True
+        except:
+            return False
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
