@@ -67,9 +67,11 @@ class JsrunSettings(RunSettings):
 
         This sets ``--cpu_per_rs``
 
-        :param num_cpus: number of cpus to use per resource set
+        :param num_cpus: number of cpus to use per resource set or ALL_CPUS
         :type num_cpus: int
         """
+        if isinstance(num_cpus, str):
+            self.run_args["cpu_per_rs"] = num_cpus
         self.run_args["cpu_per_rs"] = int(num_cpus)
 
     def set_gpus_per_rs(self, num_gpus):
@@ -77,9 +79,11 @@ class JsrunSettings(RunSettings):
 
         This sets ``--gpu_per_rs``
 
-        :param num_cpus: number of gpus to use per resource set
+        :param num_cpus: number of gpus to use per resource set or ALL_GPUS
         :type num_gpus: int
         """
+        if isinstance(num_gpus, str):
+            self.run_args["gpu_per_rs"] = num_gpus
         self.run_args["gpu_per_rs"] = int(num_gpus)
 
     def set_rs_per_host(self, num_rs):
@@ -244,16 +248,11 @@ class BsubBatchSettings(BatchSettings):
         """
         opts = []
         for opt, value in self.batch_args.items():
-            # attach "-" prefix if argument is 1 character otherwise "--"
-            #short_arg = bool(len(str(opt)) == 1)
-            prefix = "-" # LSF only uses dashses if short_arg else "--"
+            prefix = "-" # LSF only uses single dashses
 
             if not value:
                 opts += [prefix + opt]
             else:
-                # if short_arg:
                 opts += [" ".join((prefix + opt, str(value)))]
-                # else:
-                #     opts += ["=".join((prefix + opt, str(value)))]
 
         return opts

@@ -62,9 +62,10 @@ class LSFOrchestrator(Orchestrator):
         
         Each database shard is assigned a resource set: 
         it is the user's responsibility to check if
-        enough resources are available on each host.
+        enough resources are available on each host. Resource sets can be
+        defined by providing ``run_args`` as argument.
 
-        LSFOrchestrator supports launching with ``jsrun``
+        LSFOrchestrator is launched with ``jsrun``
         as launch binary.
 
         :param port: TCP/IP port
@@ -181,8 +182,10 @@ class LSFOrchestrator(Orchestrator):
         run_args = kwargs.get("run_args", {})
 
         # if user specified batch=False
-        run_args["nrs"] = dph
-        run_args["rs_per_host"] = dph
+        if not "nrs" in run_args.keys():
+            run_args["nrs"] = dph
+        if not "rs_per_host" in run_args.keys():
+            run_args["rs_per_host"] = dph
         run_settings = JsrunSettings(exe, exe_args, run_args=run_args)
         if dph > 1:
             # tell step to create a mpmd executable
@@ -192,7 +195,6 @@ class LSFOrchestrator(Orchestrator):
     def _initialize_entities(self, **kwargs):
         """Initialize DBNode instances for the orchestrator."""
         db_nodes = kwargs.get("db_nodes", 1)
-        print(self.force_port_increment)
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
@@ -235,5 +237,4 @@ class LSFOrchestrator(Orchestrator):
             run_settings = self._build_run_settings(exe, exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             self.entities.append(node)
-        print(ports)
         self.ports = ports
