@@ -268,7 +268,7 @@ class Controller:
 
         # create all steps prior to launch
         steps = []
-       
+
         for elist in manifest.ensembles:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
@@ -277,7 +277,7 @@ class Controller:
                 # if ensemble is to be run as seperate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
-        
+
         # models themselves cannot be batch steps
         job_steps = [(self._create_job_step(e), e) for e in manifest.models]
         steps.extend(job_steps)

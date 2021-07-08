@@ -55,7 +55,9 @@ class Manifest:
         for deployable in self._deployables:
             if isinstance(deployable, Orchestrator):
                 if _db:
-                    raise SmartSimError("User attempted to create more than one Orchestrator")
+                    raise SmartSimError(
+                        "User attempted to create more than one Orchestrator"
+                    )
                 _db = deployable
         return _db
 
@@ -88,6 +90,7 @@ class Manifest:
             if not name:
                 raise AttributeError(f"Entity has no name. Please set name attribute.")
             if name in used:
+                print("2")
                 raise SmartSimError("User provided two entities with the same name")
             used.append(name)
 

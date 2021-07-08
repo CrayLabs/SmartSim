@@ -18,6 +18,7 @@ model_2 = exp.create_model("model_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
+orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
 
 
@@ -38,6 +39,7 @@ def test_no_name():
 def test_two_orc():
     with pytest.raises(SmartSimError):
         manifest = Manifest(orc, orc_1)
+        manifest.db
 
 
 def test_separate_type():

@@ -32,7 +32,7 @@ from .stepMapping import StepMapping
 from .taskManager import TaskManager
 
 
-class Launcher(abc.ABC):
+class Launcher(abc.ABC):  # pragma: no cover
     """Abstract base class of all launchers
 
     This class provides the interface between the experiment
