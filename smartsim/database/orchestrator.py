@@ -170,6 +170,8 @@ class Orchestrator(EntityList):
 
         :return: addresses
         :rtype: list[str]
+
+        :raises SmartSimError: If database address cannot be found
         """
         if not self._hosts:
             raise SmartSimError("Could not find database address")
@@ -188,11 +190,10 @@ class Orchestrator(EntityList):
         :returns: True if database is active, False otherwise
         :rtype: bool
         """
-        try:
-            host = self._hosts[0]
-            port = self.ports[0]
-        except SmartSimError as e:
-            raise SmartSimError("Database is not active") from e
+        if not self._hosts:
+            return False
+        host = self._hosts[0]
+        port = self.ports[0]
         address = ":".join((host, str(port)))
         client = Client(address=address, cluster=False)
         try:
