@@ -32,12 +32,13 @@ from pprint import pformat
 import pandas as pd
 from tqdm import trange
 
-from .control import Controller
+from smartsim.control.manifest import Manifest
+
+from .control import Controller, Manifest
 from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
 from .generation import Generator
 from .utils import get_logger
-from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
 
 logger = get_logger(__name__)
@@ -89,10 +90,11 @@ class Experiment:
                         defaults to False
         :type summary: bool, optional
         """
+        start_manifest = Manifest(*args)
         try:
             if summary:
-                self._launch_summary(*args)
-            self._control.start(*args, block=block)
+                self._launch_summary(start_manifest)
+            self._control.start(manifest=start_manifest, block=block)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -107,15 +109,14 @@ class Experiment:
         :raises SmartSimError: if stop request fails
         """
         try:
-            for entity in args:
-                if isinstance(entity, SmartSimEntity):
-                    self._control.stop_entity(entity)
-                elif isinstance(entity, EntityList):
-                    self._control.stop_entity_list(entity)
-                else:
-                    raise TypeError(
-                        f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
-                    )
+            stop_manifest = Manifest(*args)
+            for entity in stop_manifest.models:
+                self._control.stop_entity(entity)
+            for entity_list in stop_manifest.ensembles:
+                self._control.stop_entity_list(entity_list)
+            orchestrator = stop_manifest.db
+            if orchestrator:
+                self._control.stop_entity_list(orchestrator)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -195,16 +196,15 @@ class Experiment:
         :raises TypeError:
         """
         try:
+            manifest = Manifest(*args)
             statuses = []
-            for entity in args:
-                if isinstance(entity, SmartSimEntity):
-                    statuses.append(self._control.get_entity_status(entity))
-                elif isinstance(entity, EntityList):
-                    statuses.extend(self._control.get_entity_list_status(entity))
-                else:
-                    raise TypeError(
-                        f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
-                    )
+            for entity in manifest.models:
+                statuses.append(self._control.get_entity_status(entity))
+            for entity_list in manifest.ensembles:
+                statuses.extend(self._control.get_entity_list_status(entity_list))
+            orchestrator = manifest.db
+            if orchestrator:
+                statuses.extend(self._control.get_entity_list_status(orchestrator))
             return statuses
         except SmartSimError as e:
             logger.error(e)
@@ -373,14 +373,19 @@ class Experiment:
                 index += 1
         return df
 
-    def _launch_summary(self, *args):
-        """Experiment pre-launch summary of entities that will be launched"""
+    def _launch_summary(self, manifest):
+        """Experiment pre-launch summary of entities that will be launched
+        :param manifest: Manifest of deployables.
+        :type manifest: Manifest
+        """
 
         def sprint(p):
             print(p, flush=True)
 
         sprint("\n")
-        models, ensembles, orchestrator = separate_entities(args)
+        models = manifest.models
+        ensembles = manifest.ensembles
+        orchestrator = manifest.db
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)
