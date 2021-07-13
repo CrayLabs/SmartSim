@@ -200,7 +200,7 @@ class Orchestrator(EntityList):
             client.put_tensor("db_test", np.array([1, 2, 3, 4]))
             receive_tensor = client.get_tensor("db_test")
             return True
-        except:
+        except (RedisReplyError, RedisConnectionError):
             return False
 
     def _get_AI_module(self):
