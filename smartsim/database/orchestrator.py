@@ -33,7 +33,7 @@ from os import getcwd
 
 import numpy as np
 from smartredis import Client
-from smartredis.error import RedisReplyError
+from smartredis.error import RedisConnectionError, RedisReplyError
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
