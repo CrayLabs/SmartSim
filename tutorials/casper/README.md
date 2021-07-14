@@ -26,14 +26,14 @@ usage: launch.py [-h] [--db-nodes DB_NODES] [--ngpus-per-node NGPUS_PER_NODE]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --db-nodes DB_NODES   Number of nodes for the SmartSim database
+  --db-nodes DB_NODES   Number of nodes for the SmartSim database, default=1
   --ngpus-per-node NGPUS_PER_NODE
-                        Number of gpus per SmartSim database node
-  --walltime WALLTIME   Total walltime for submitted job
+                        Number of gpus per SmartSim database node, default=0
+  --walltime WALLTIME   Total walltime for submitted job, default=00:30:00
   --ensemble-size ENSEMBLE_SIZE
-                        Number of ensemble members to run
+                        Number of ensemble members to run, default=1
   --member-nodes MEMBER_NODES
-                        Number of nodes per ensemble member
+                        Number of nodes per ensemble member, default=1
   --account ACCOUNT     Account ID
-  --db-port DB_PORT     db port
+  --db-port DB_PORT     db port, default=6780
 ```
