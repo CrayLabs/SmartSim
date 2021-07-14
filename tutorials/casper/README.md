@@ -40,8 +40,8 @@ optional arguments:
 It creates pbs jobs from each of the 4 templates
 1. resv_job.template
 2. launch_database_cluster.template
-3. launch_client.sh
-4. cleanup.sh
+3. launch_client.template
+4. cleanup.template
 
 and submits the resv_job.sh which in turn will create a reservation large enough for the db and all the ensemble members
 then it submits those jobs in the newly created reservation.  It starts the database and sets the SSDB environment variable
