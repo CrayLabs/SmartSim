@@ -14,8 +14,16 @@ ncar_pylib -c 20201220 /glade/work/$USER/casper_npl_clone
 ```
 
 ``pip install smartsim``
+
 ``smart --device gpu``
+
 ``pip install smartredis``
+
+First you need to build the smartredis_put_get_3D.F90 fortran example:
+```
+make
+```
+
 
 launch.py is the primary launch script 
 ```
