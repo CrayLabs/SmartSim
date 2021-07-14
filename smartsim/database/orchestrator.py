@@ -115,9 +115,6 @@ class Orchestrator(EntityList):
             for port in self.ports:
                 address = ":".join((ip, str(port) + " "))
                 ip_list.append(address)
-                # Remove duplicates (which can happen with LSF)
-                # TODO find a better way of handling this
-                ip_list = list(set(ip_list))
 
         # call cluster command
         redis_cli = CONFIG.redis_cli
@@ -134,7 +131,7 @@ class Orchestrator(EntityList):
 
         # Ensure cluster has been setup correctly
         self.check_cluster_status()
-        logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
+        logger.info(f"Database cluster created with {str(len(self))} shards")
 
     def check_cluster_status(self):  # cov-wlm
         """Check that a cluster is up and running

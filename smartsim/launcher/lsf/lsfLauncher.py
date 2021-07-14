@@ -144,7 +144,6 @@ class LSFLauncher(WLMLauncher):
         """Get the step_id of a step from bjobs (rarely used)
 
         Parses bjobs output by looking for the step name
-        TODO: change this to use ``bjobs -u user``
         """
         time.sleep(interval)
         step_id = "unassigned"

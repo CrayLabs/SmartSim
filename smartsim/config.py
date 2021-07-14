@@ -217,7 +217,6 @@ class Config:
     def test_project(self):
         try:
             if "SMARTSIM_TEST_PROJECT" in os.environ:
-                print("OS", os.environ["SMARTSIM_TEST_PROJECT"])
                 return os.environ["SMARTSIM_TEST_PROJECT"]
             else:
                 project = self.conf["test"]["project"]

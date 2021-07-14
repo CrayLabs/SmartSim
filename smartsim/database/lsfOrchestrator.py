@@ -95,8 +95,9 @@ class LSFOrchestrator(Orchestrator):
             dpn=db_per_host,
             **kwargs,
         )
+        self.db_nodes = db_nodes
         self.batch_settings = self._build_batch_settings(
-            db_nodes, batch, project, time, **kwargs
+            db_nodes, batch, project, time, dpn=db_per_host, **kwargs
         )
         if hosts:
             self.set_hosts(hosts)
@@ -165,31 +166,35 @@ class LSFOrchestrator(Orchestrator):
 
     def _build_batch_settings(self, db_nodes, batch, project, time, **kwargs):
         batch_settings = None
-        # enter this conditional if user has not specified an allocation to run
-        # on or if user specified batch=False (alloc will be found through env)
+        dph = kwargs.get("dpn", 1)
         if batch:
             batch_settings = BsubBatchSettings(
-                nodes=db_nodes, time=time, project=project
+                nodes=db_nodes//dph, time=time, project=project
             )
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        return self._build_jsrun_settings(exe, exe_args, **kwargs)
-
-    def _build_jsrun_settings(self, exe, exe_args, **kwargs):
         project = kwargs.get("project", None)
-        dph = kwargs.get("db_per_host", 1)
+        dph = kwargs.get("dpn", 1)
         run_args = kwargs.get("run_args", {})
+        host = kwargs.get("host", "*")
 
-        # if user specified batch=False
         if not "nrs" in run_args.keys():
-            run_args["nrs"] = dph
+            run_args["nrs"] = 1
         if not "rs_per_host" in run_args.keys():
-            run_args["rs_per_host"] = dph
+            run_args["rs_per_host"] = 1
+        
+        run_args["tasks_per_rs"] = 1
+        bind = run_args.get("cpu_per_rs", 1)
+        if bind=="ALL_CPUS":
+            bind = "42"
+        run_args["bind"] = f"packed:{bind}"
+
+        run_args["launch_distribution"] = "packed"
         run_settings = JsrunSettings(exe, exe_args, run_args=run_args)
         if dph > 1:
             # tell step to create a mpmd executable
-            run_settings.mpmd = True
+            run_settings.set_mpmd_args(smts_per_task=42//dph, host=host)
         return run_settings
 
     def _initialize_entities(self, **kwargs):
@@ -199,24 +204,24 @@ class LSFOrchestrator(Orchestrator):
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        dph = kwargs.get("db_per_host", 1)
+        dph = kwargs.get("dpn", 1)
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
         exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
-        ports = []
 
-        for db_id in range(db_nodes):
+        for db_id in range(db_nodes//dph):
             db_node_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            exe_args = []
             if self.force_port_increment:
                 base_port = int(port) + db_id*dph
             else:
                 base_port = int(port)
+            ports = []
+            exe_args = []
             for port_offset in range(dph):
                 next_port = base_port + port_offset
                 node_exe_args = [
@@ -231,10 +236,14 @@ class LSFOrchestrator(Orchestrator):
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
 
-            # if only launching 1 dpn, we don't need a list of exe args lists
             if dph == 1:
                 exe_args = exe_args[0]
-            run_settings = self._build_run_settings(exe, exe_args, **kwargs)
+
+            # host=db_id+1 because 0 is login node
+            run_settings = self._build_run_settings(exe, exe_args, host=db_id+1, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             self.entities.append(node)
         self.ports = ports
+
+    def __len__(self):
+        return self.db_nodes

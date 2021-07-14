@@ -48,6 +48,25 @@ class JsrunSettings(RunSettings):
             exe, exe_args, run_command="jsrun", run_args=run_args, env_vars=env_vars
         )
 
+        # Parameters needed for MPMD run
+        self.host = None
+        self.smts_per_task = 4
+        self.mpmd = False
+
+    def set_mpmd_args(self, host, smts_per_task):
+        """Set arguments used in ERF file, such as execution host and SMTs
+        per task. This function also sets MPMD flag to ``True``.
+
+        :param host: execution host(s) id(s)
+        :type host: str
+        :param smts_per_task: SMTs per task
+        :type smts_per_task: int
+        """
+
+        self.mpmd = True
+        self.smts_per_task = smts_per_task
+        self.host = str(host)
+
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
 
@@ -116,6 +135,16 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["tasks_per_rs"] = int(num_tprs)
 
+    def set_binding(self, binding):
+        """Set binding
+
+        This sets ``--bind``
+
+        :params binding: Binding, e.g. `packed:21`
+        :type binding: str
+        """
+        self.run_args["binding"] = binding
+
     def format_run_args(self):
         """Return a list of LSF formatted run arguments
 
@@ -146,6 +175,7 @@ class BsubBatchSettings(BatchSettings):
         time=None,
         project=None,
         batch_args=None,
+        smts=None,
         **kwargs,
     ):
         """Specify ``bsub`` batch parameters for a job
@@ -156,6 +186,8 @@ class BsubBatchSettings(BatchSettings):
         :type time: str, optional
         :param project: project for batch launch
         :type project: str, optional
+        :param smts: SMTs
+        :type smts: int
         :param batch_args: overrides for LSF batch arguments
         :type batch_args: dict[str, str], optional
         """
@@ -164,6 +196,8 @@ class BsubBatchSettings(BatchSettings):
             self.set_nodes(nodes)
         self.set_walltime(time)
         self.set_project(project)
+        self.set_smts(smts)
+        self.expert_mode=False
 
     def set_walltime(self, time):
         """Set the walltime
@@ -179,6 +213,18 @@ class BsubBatchSettings(BatchSettings):
             # If not supplied, batch submission fails,
             # but the user will know from the error
             self.walltime = None
+
+    def set_smts(self, smts):
+        """Set SMTs
+
+        This sets ``-alloc_flags``. If the user sets
+        SMT explicitly through ``-alloc_flags``, then that
+        takes precedence.
+
+        :param smts: SMT (e.g on Summit: 1, 2, or 4)
+        :type smts: int
+        """
+        self.smts = int(smts)
 
     def set_project(self, project):
         """Set the project
@@ -198,12 +244,24 @@ class BsubBatchSettings(BatchSettings):
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
 
-        This sets ``--nnodes``.
+        This sets ``-nnodes``.
 
         :param num_nodes: number of nodes
         :type num_nodes: int
         """
         self.batch_args["nnodes"] = int(num_nodes)
+
+    def set_expert_mode_req(self, res_req, slots):
+        """Set allocation for expert mode. This 
+        will activate expert mode (``-csm``) and 
+        disregard all other allocation options. 
+
+        This sets ``-csm -n slots -R res_req``
+        """
+        self.expert_mode = True
+        self.batch_args["csm"] = "y"
+        self.batch_args["R"] = res_req
+        self.batch_args["n"] = slots
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -223,22 +281,29 @@ class BsubBatchSettings(BatchSettings):
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
 
-        This sets ``--np``
+        This sets ``-n``
 
         :param num_tasks: number of tasks
         :type num_tasks: int
         """
-        self.run_args["np"] = int(num_tasks)
+        self.run_args["n"] = int(num_tasks)
 
-    def set_tasks_per_rs(self, num_tprs):
-        """Set the number of tasks per resource set
-
-        This sets ``--tasks_per_rs``
-
-        :param num_tpn: number of tasks per resource set
-        :type num_tpn: int
+    def _format_alloc_flags(self):
+        """Format ``alloc_flags`` checking if user already
+        set it. Currently only adds SMT flag if missing
+        and ``self.smts`` is set.
         """
-        self.run_args["tasks_per_rs"] = int(num_tprs)
+        if not self.smts:
+            return
+
+        if not "alloc_flags" in self.run_args.keys():
+            self.run_args["alloc_flags"] = f"smt{self.smt}"
+        else:
+            # see if smt is in the flag, otherwise add it
+            flags = self.run_args["alloc_flags"].split()
+            if not any([flag.startswith("smt") for flag in flags]):
+                flags.append(f"smt{self.smt}")
+                self.run_args["alloc_flags"] = " ".join(flags)
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
@@ -247,6 +312,9 @@ class BsubBatchSettings(BatchSettings):
         :rtype: list[str]
         """
         opts = []
+
+        self._format_alloc_flags()
+
         for opt, value in self.batch_args.items():
             prefix = "-" # LSF only uses single dashses
 

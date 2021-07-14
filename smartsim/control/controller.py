@@ -318,10 +318,10 @@ class Controller:
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
                 logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                    "WLM node acquisition unsupported, moving to RedisIP fallback"
                 )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -340,10 +340,10 @@ class Controller:
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
                 logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                    "WLM node acquisition unsupported, moving to RedisIP fallback"
                 )
 
         # set the jobs in the job manager to provide SSDB variable to entities
@@ -512,7 +512,6 @@ class Controller:
                     time.sleep(CONFIG.jm_interval)
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
                     self.stop_entity_list(orchestrator)
-                    print(statuses)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
                     raise SmartSimError(msg)

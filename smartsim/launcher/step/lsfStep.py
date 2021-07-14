@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+from itertools import product
 
 from ...error import SSConfigError
 from ...utils import get_logger
@@ -76,6 +77,9 @@ class BsubBatchStep(Step):
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
+
+        self._format_alloc_flags()
+
         with open(batch_script, "w") as f:
             f.write("#!/bin/bash\n\n")
             if self.batch_settings.walltime:
@@ -86,7 +90,7 @@ class BsubBatchStep(Step):
             f.write(f"#BSUB -e {error}\n")
             f.write(f"#BSUB -J {self.name}\n")
 
-            # add additional sbatch options
+            # add additional bsub options
             for opt in self.batch_settings.format_batch_args():
                 f.write(f"#BSUB {opt}\n")
 
@@ -124,6 +128,9 @@ class JsrunStep(Step):
         """
         jsrun = self.run_settings.run_command
         jsrun_cmd = [jsrun, "--chdir", self.cwd]
+
+        if not self.run_settings.mpmd:
+            jsrun_cmd += self.run_settings.format_run_args()
         jsrun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to
@@ -148,14 +155,82 @@ class JsrunStep(Step):
                 "No allocation specified or found and not running in batch"
             )
 
-
     def _build_exe(self):
         """Build the executable for this step
 
         :return: executable list
         :rtype: list[str]
         """
-        cmd = self.run_settings.format_run_args()
-        cmd += self.run_settings.exe
-        cmd += self.run_settings.exe_args
-        return cmd
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+        if self.run_settings.mpmd:
+            mpmd_file = self.get_step_file(ending=".mpmd")
+            cmd = self._make_mpmd(exe, args)
+            mp_cmd = ["--erf_input", mpmd_file]
+            return mp_cmd
+        else:
+            cmd = exe + args
+            return cmd
+
+
+    def _make_mpmd(self, executable, exe_args):
+        """Build LSF multi-prog (MPMD) executable
+
+        Launch multiple programs on seperate SMTs on the same node using the
+        LSF --erf_input feature.
+        """
+        
+        mpmd_file = self.get_step_file(ending=".mpmd")
+        launch_args = list(product(executable, exe_args))
+
+        if self.run_settings.host:
+            host = self.run_settings.host
+        else:
+            host = "*"
+
+        with open(mpmd_file, "w+") as f:
+            #if host == "*" or int(host) == 0:
+            f.write("launch_distribution : packed\n")
+
+            # First we list apps
+            app_id = 0
+            for exe, args in launch_args:
+                e_args = " ".join(args)
+                f.write(f"app {app_id} : " +
+                         " ".join((exe, e_args, "\n")))
+                app_id += 1
+
+            f.write("\n")
+
+            # Then we list resources
+            ntasks = self.run_settings.run_args.get("tasks_per_rs", 1)
+            
+            smts_per_task = self.run_settings.smts_per_task
+
+            assigned_smts = 0
+            assigned_gpus = 0
+            app_id = 0
+
+            for exe, args in launch_args:
+                f.write(f"{ntasks} : ")
+                f.write("{")
+                f.write( f"host: {host}; cpu: ")
+                smt_sets = []
+                for task in range(ntasks):
+                    smt_set = "{" + f"{assigned_smts}:{smts_per_task}" + "}"
+                    smt_sets.append(smt_set)
+                    assigned_smts += smts_per_task
+                f.write(",".join(smt_sets) + ";")
+                if "gpu_per_rs" in self.run_settings.run_args.keys():
+                    ngpus = self.run_settings.run_args["gpu_per_rs"]
+                    f.write(" gpu: ")
+                    if ngpus>1:
+                        gpu_set = "{" + f"{assigned_gpus}-{assigned_gpus+ngpus-1}" + "}"
+                    else:
+                        gpu_set = "{" + f"{assigned_gpus}" + "}"
+                    assigned_gpus += ngpus
+                    f.write(gpu_set)
+
+                f.write("}" + f" : app {app_id} \n")
+                app_id += 1
+        return mpmd_file
