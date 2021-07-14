@@ -3,13 +3,13 @@
 #PBS  -r n
 #PBS  -j oe
 #PBS  -V
-#PBS  -l walltime=00:10:00
+#PBS  -l walltime=00:20:00
 #PBS  -A P93300606
-#PBS  -q regular
+##PBS  -q regular
 #PBS  -V
-#PBS  -S /bin/bash
-#PBS  -l select=4:ncpus=36:mpiprocs=36:ompthreads=1
-import os, sys
+#PBS  -l select=1:ncpus=1:ompthreads=1:mpiprocs=1
+
+import os, sys, time
 cesmroot = os.environ.get('CESM_ROOT')
 if cesmroot is None:
     raise SystemExit("ERROR: CESM_ROOT must be defined in environment")
@@ -56,11 +56,7 @@ def collect_db_hosts(num_hosts):
     # account for mpiprocs causing repeats in PBS_NODEFILE
     hosts = list(set(hosts))
     if len(hosts) >= num_hosts:
-        new_host_file = os.path.basename(node_file)
-        with open(new_host_file, "w") as f:
-            for line in hosts[num_hosts:]:
-                f.write(line+".ib0.cheyenne.ucar.edu\n")
-        return hosts[:num_hosts], new_host_file
+        return hosts[:num_hosts]
     else:
         raise Exception("PBS_NODEFILE {} had {} hosts, not {}".format(node_file, len(hosts),num_hosts))
 
@@ -71,7 +67,7 @@ def launch_cluster_orc(exp, db_hosts, port):
 
     print(f"Starting Orchestrator on hosts: {db_hosts}")
     # batch = False to launch on existing allocation
-    db = PBSOrchestrator(port=port, db_nodes=3, batch=False,
+    db = PBSOrchestrator(port=port, db_nodes=len(db_hosts), batch=False,
                           run_command="mpirun", hosts=db_hosts)
 
     # generate directories for output files
@@ -87,13 +83,11 @@ def launch_cluster_orc(exp, db_hosts, port):
 
     return db
 
-print("before PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
-
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_cluster_db", launcher="pbs")
 
 db_port = 6780
-db_hosts, new_host_file = collect_db_hosts(3)
+db_hosts = collect_db_hosts(1)
 # start the database
 db = launch_cluster_orc(exp, db_hosts, db_port)
 
@@ -102,14 +96,10 @@ db = launch_cluster_orc(exp, db_hosts, db_port)
 ## client languages: C++, C, Fortran, Python
 #
 ## only need one address of one shard of DB to connect client
-db_address = ":".join((socket.gethostbyname(db_hosts[0]), str(db_port)))
-print("db_address is {}".format(db_address))
-os.environ["SSDB"] = db_address
-#os.environ["PBS_NODEFILE"] = new_host_file
-print("after PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
+#db_address = ":".join((socket.gethostbyname(db_hosts[0]), str(db_port)))
 
-s, o, e = run_cmd("mpirun -n 36 --hostfile {} ./hello".format(new_host_file), verbose=True)
-print("After hello {} {} {} ".format(s,o,e))
+#s, o, e = run_cmd("mpirun -n 36 --hostfile {} ./hello".format(new_host_file), verbose=True)
+#print("After hello {} {} {} ".format(s,o,e))
 #client = Client(address=db_address, cluster=True)
 #
 ## put into database
@@ -122,4 +112,5 @@ print("After hello {} {} {} ".format(s,o,e))
 #print(f"Array retrieved from database: {returned_array}")
 #
 ## shutdown the database because we don't need it anymore
+time.sleep(1200)
 exp.stop(db)
