@@ -3,20 +3,15 @@
 #PBS  -r n
 #PBS  -j oe
 #PBS  -V
-#PBS  -l walltime=00:20:00
-#PBS  -A P93300606
+#PBS  -l walltime=$walltime
+#PBS  -A $account
 ##PBS  -q regular
 #PBS  -V
-#PBS  -l select=1:ncpus=1:ompthreads=1:mpiprocs=1
+#PBS  -l select=$db_nodes:ncpus=1:ompthreads=1:mpiprocs=1$ngpus
 
 import os, sys, time
-cesmroot = os.environ.get('CESM_ROOT')
-if cesmroot is None:
-    raise SystemExit("ERROR: CESM_ROOT must be defined in environment")
 
-_LIBDIR = os.path.join(cesmroot,"cime","scripts","Tools")
-sys.path.append(_LIBDIR)
-_LIBDIR = os.path.join(cesmroot,"cime","scripts","lib")
+_LIBDIR = "/glade/work/jedwards/casper_npl_clone/lib/python3.7/site-packages/"
 sys.path.append(_LIBDIR)
 
 import socket
@@ -26,7 +21,6 @@ from smartsim import Experiment, constants
 from smartsim.database import PBSOrchestrator
 
 from smartredis import Client
-from CIME.utils import run_cmd
 
 """
 Launch a distributed, in memory database cluster and use the
@@ -86,8 +80,8 @@ def launch_cluster_orc(exp, db_hosts, port):
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_cluster_db", launcher="pbs")
 
-db_port = 6780
-db_hosts = collect_db_hosts(1)
+db_port = $db_port
+db_hosts = collect_db_hosts($db_nodes)
 # start the database
 db = launch_cluster_orc(exp, db_hosts, db_port)
 
@@ -112,5 +106,5 @@ db = launch_cluster_orc(exp, db_hosts, db_port)
 #print(f"Array retrieved from database: {returned_array}")
 #
 ## shutdown the database because we don't need it anymore
-time.sleep(1200)
-exp.stop(db)
+#time.sleep(1200)
+#exp.stop(db)
