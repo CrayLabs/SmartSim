@@ -34,7 +34,7 @@ from os import getcwd
 import numpy as np
 
 from smartredis import Client
-from smartredis.error import RedisReplyError
+from smartredis.error import RedisConnectionError, RedisReplyError
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
@@ -165,6 +165,44 @@ class Orchestrator(EntityList):
                 trials -= 1
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
+
+    def get_address(self):
+        """Return database addresses
+
+        :return: addresses
+        :rtype: list[str]
+
+        :raises SmartSimError: If database address cannot be found
+        """
+        if not self._hosts:
+            raise SmartSimError("Could not find database address")
+        if len(self._hosts) > 1:
+            self.check_cluster_status()
+        elif not self.is_active():
+            raise SmartSimError("Database is not active")
+        addresses = []
+        for host, port in itertools.product(self._hosts, self.ports):
+            addresses.append(":".join((host, port)))
+        return addresses
+
+    def is_active(self):
+        """Check if database is running
+
+        :returns: True if database is active, False otherwise
+        :rtype: bool
+        """
+        if not self._hosts:
+            return False
+        host = self._hosts[0]
+        port = self.ports[0]
+        address = ":".join((host, str(port)))
+        client = Client(address=address, cluster=False)
+        try:
+            client.put_tensor("db_test", np.array([1, 2, 3, 4]))
+            receive_tensor = client.get_tensor("db_test")
+            return True
+        except (RedisReplyError, RedisConnectionError):
+            return False
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
