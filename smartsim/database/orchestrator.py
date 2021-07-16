@@ -28,8 +28,8 @@ import itertools
 import socket
 import time
 from os import getcwd
-
 import numpy as np
+import multiprocessing as mp
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
 
@@ -41,6 +41,18 @@ from ..settings.settings import RunSettings
 from ..utils import get_logger
 
 logger = get_logger(__name__)
+
+class ClientThread(mp.Process):
+
+    def __init__(self, address, cluster=False):
+        mp.Process.__init__(self, name='ClientThread')
+        self.address = address
+        self.cluster = cluster
+
+    def run(self):
+        client = Client(self.address, cluster=self.cluster)
+        client.put_tensor("db_test", np.array([1]))
+        receive_tensor = client.get_tensor("db_test")
 
 
 class Orchestrator(EntityList):
@@ -194,13 +206,21 @@ class Orchestrator(EntityList):
         host = self._hosts[0]
         port = self.ports[0]
         address = ":".join((host, str(port)))
+        active = True
         try:
-            client = Client(address=address, cluster=False)
-            client.put_tensor("db_test", np.array([1, 2, 3, 4]))
-            receive_tensor = client.get_tensor("db_test")
-            return True
-        except (RedisReplyError, RedisConnectionError):
-            return False
+            client_thread = ClientThread(address, cluster=False)
+            client_thread.start()
+            client_thread.join()
+            if client_thread.exitcode != 0:
+                active = False
+            #client = Client(address=address, cluster=False)
+            #client.put_tensor("db_test", np.array([1, 2, 3, 4]))
+            #receive_tensor = client.get_tensor("db_test")
+            #return True
+        except (mp.ProcessError):
+            active = False
+
+        return active
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
