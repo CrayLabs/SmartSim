@@ -24,7 +24,6 @@ First you need to build the smartredis_put_get_3D.F90 fortran example:
 make
 ```
 
-
 launch.py is the primary launch script 
 ```
 usage: launch.py [-h] [--db-nodes DB_NODES] [--ngpus-per-node NGPUS_PER_NODE]
@@ -45,13 +44,11 @@ optional arguments:
   --account ACCOUNT     Account ID
   --db-port DB_PORT     db port, default=6780
 ```
-It creates pbs jobs from each of the 4 templates
+It creates pbs jobs from each of the 3 templates
 1. resv_job.template
 2. launch_database_cluster.template
 3. launch_client.template
-4. cleanup.template
 
-and submits the resv_job.sh which in turn will create a reservation large enough for the db and all the ensemble members
-then it submits those jobs in the newly created reservation.  It starts the database and sets the SSDB environment variable
-then launchs each of the clients, all of this is done within the newly created reservation.   It also launchs a cleanup script 
-that will remove the reservation when all jobs are complete. 
+and submits the resv_job.sh which in turn will create a reservation large enough for the db and all the ensemble members.
+It submits those jobs in the newly created reservation.  It starts the database and sets the SSDB environment variable
+then launchs each of the clients, all of this is done within the newly created reservation.   The database job monitors progress of the clients and exits and removes the reservation when it is complete. 
