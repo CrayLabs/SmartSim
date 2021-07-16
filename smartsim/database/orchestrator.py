@@ -24,25 +24,21 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import os.path as osp
-import socket
-import sys
 import time
-from os import getcwd
-
+import socket
+import itertools
 import numpy as np
+from os import getcwd
 
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSConfigError
+from ..error import SmartSimError
 from ..launcher.util.shell import execute_cmd
 from ..settings.settings import RunSettings
 from ..utils import get_logger
-from ..utils.helpers import expand_exe_path, get_env
 
 logger = get_logger(__name__)
 
@@ -89,7 +85,6 @@ class Orchestrator(EntityList):
         :return: hostnames
         :rtype: list[str]
         """
-        # TODO test if active?
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
@@ -158,7 +153,7 @@ class Orchestrator(EntityList):
                 client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
                 receive_tensor = client.get_tensor("cluster_test")
                 logger.debug("Cluster status verified")
-                return
+                break
             except RedisReplyError:
                 logger.debug("Cluster still spinning up...")
                 time.sleep(5)
@@ -182,7 +177,7 @@ class Orchestrator(EntityList):
             raise SmartSimError("Database is not active")
         addresses = []
         for host, port in itertools.product(self._hosts, self.ports):
-            addresses.append(":".join((host, port)))
+            addresses.append(":".join((host, str(port))))
         return addresses
 
     def is_active(self):
