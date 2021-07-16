@@ -1,32 +1,11 @@
-#!/usr/bin/env python3
-#PBS -N smartsimtest
-#PBS  -r n
-#PBS  -j oe
-#PBS  -V
-#PBS  -l walltime=00:10:00
-#PBS  -A P93300606
-#PBS  -q regular
-#PBS  -V
-#PBS  -S /bin/bash
-#PBS  -l select=4:ncpus=36:mpiprocs=36:ompthreads=1
-import os, sys
-cesmroot = os.environ.get('CESM_ROOT')
-if cesmroot is None:
-    raise SystemExit("ERROR: CESM_ROOT must be defined in environment")
-
-_LIBDIR = os.path.join(cesmroot,"cime","scripts","Tools")
-sys.path.append(_LIBDIR)
-_LIBDIR = os.path.join(cesmroot,"cime","scripts","lib")
-sys.path.append(_LIBDIR)
-
-import socket
+import os
 import numpy as np
 
 from smartsim import Experiment, constants
 from smartsim.database import PBSOrchestrator
 
 from smartredis import Client
-from CIME.utils import run_cmd
+
 
 """
 Launch a distributed, in memory database cluster and use the
@@ -55,14 +34,11 @@ def collect_db_hosts(num_hosts):
 
     # account for mpiprocs causing repeats in PBS_NODEFILE
     hosts = list(set(hosts))
+
     if len(hosts) >= num_hosts:
-        new_host_file = os.path.basename(node_file)
-        with open(new_host_file, "w") as f:
-            for line in hosts[num_hosts:]:
-                f.write(line+".ib0.cheyenne.ucar.edu\n")
-        return hosts[:num_hosts], new_host_file
+        return hosts[:num_hosts]
     else:
-        raise Exception("PBS_NODEFILE {} had {} hosts, not {}".format(node_file, len(hosts),num_hosts))
+        raise Exception(f"PBS_NODEFILE had {len(hosts)} hosts, not {num_hosts}")
 
 
 def launch_cluster_orc(exp, db_hosts, port):
@@ -87,39 +63,33 @@ def launch_cluster_orc(exp, db_hosts, port):
 
     return db
 
-print("before PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
-
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_cluster_db", launcher="pbs")
 
 db_port = 6780
-db_hosts, new_host_file = collect_db_hosts(3)
+db_hosts = collect_db_hosts(3)
 # start the database
 db = launch_cluster_orc(exp, db_hosts, db_port)
 
-## test sending some arrays to the database cluster
-## the following functions are largely the same across all the
-## client languages: C++, C, Fortran, Python
-#
-## only need one address of one shard of DB to connect client
-db_address = ":".join((socket.gethostbyname(db_hosts[0]), str(db_port)))
-print("db_address is {}".format(db_address))
-os.environ["SSDB"] = db_address
-#os.environ["PBS_NODEFILE"] = new_host_file
-print("after PBS_NODEFILE is {}".format(os.getenv("PBS_NODEFILE")))
 
-s, o, e = run_cmd("mpirun -n 36 --hostfile {} ./hello".format(new_host_file), verbose=True)
-print("After hello {} {} {} ".format(s,o,e))
-#client = Client(address=db_address, cluster=True)
-#
-## put into database
-#test_array = np.array([1,2,3,4])
-#print(f"Array put in database: {test_array}")
-#client.put_tensor("test", test_array)
-#
-## get from database
-#returned_array = client.get_tensor("test")
-#print(f"Array retrieved from database: {returned_array}")
-#
-## shutdown the database because we don't need it anymore
+# test sending some arrays to the database cluster
+# the following functions are largely the same across all the
+# client languages: C++, C, Fortran, Python
+
+# only need one address of one shard of DB to connect client
+db_address = ":".join((db_hosts[0], str(db_port)))
+client = Client(address=db_address, cluster=True)
+
+# put into database
+test_array = np.array([1,2,3,4])
+print(f"Array put in database: {test_array}")
+client.put_tensor("test", test_array)
+
+# get from database
+returned_array = client.get_tensor("test")
+print(f"Array retrieved from database: {returned_array}")
+
+# shutdown the database because we don't need it anymore
 exp.stop(db)
+
+
