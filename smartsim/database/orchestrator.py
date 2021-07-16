@@ -191,8 +191,8 @@ class Orchestrator(EntityList):
         host = self._hosts[0]
         port = self.ports[0]
         address = ":".join((host, str(port)))
-        client = Client(address=address, cluster=False)
         try:
+            client = Client(address=address, cluster=False)
             client.put_tensor("db_test", np.array([1, 2, 3, 4]))
             receive_tensor = client.get_tensor("db_test")
             return True
