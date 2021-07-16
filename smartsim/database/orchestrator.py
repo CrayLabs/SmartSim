@@ -142,7 +142,6 @@ class Orchestrator(EntityList):
             raise SmartSimError("Database is not active") from e
 
         address = ":".join((host, str(port)))
-        client = Client(address=address, cluster=True)
 
         trials = 10
         logger.debug("Beginning database cluster status check...")
@@ -150,11 +149,15 @@ class Orchestrator(EntityList):
             # wait for cluster to spin up
             time.sleep(2)
             try:
+                # init new client each time so if it fails we dont
+                # throw a connection error
+                client = Client(address=address, cluster=True)
+
                 client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
                 receive_tensor = client.get_tensor("cluster_test")
                 logger.debug("Cluster status verified")
                 break
-            except RedisReplyError:
+            except (RedisReplyError, RedisConnectionError):
                 logger.debug("Cluster still spinning up...")
                 time.sleep(5)
                 trials -= 1
