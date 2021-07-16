@@ -1,16 +1,20 @@
 import pytest
+
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
+
 
 def test_orc_parameters():
     threads_per_queue = 2
     inter_op_threads = 2
     intra_op_threads = 2
-    db = Orchestrator(db_nodes=1,
-                      threads_per_queue=threads_per_queue,
-                      inter_op_threads=inter_op_threads,
-                      intra_op_threads=intra_op_threads)
+    db = Orchestrator(
+        db_nodes=1,
+        threads_per_queue=threads_per_queue,
+        inter_op_threads=inter_op_threads,
+        intra_op_threads=intra_op_threads,
+    )
     assert db.queue_threads == threads_per_queue
     assert db.inter_threads == inter_op_threads
     assert db.intra_threads == intra_op_threads
@@ -30,6 +34,7 @@ def test_inactive_orc_get_address():
     db = Orchestrator()
     with pytest.raises(SmartSimError):
         db.get_address()
+
 
 def test_orc_active_functions(fileutils):
     exp_name = "test_orc_active_functions"
@@ -65,8 +70,3 @@ def test_catch_local_db_errors():
     # MPMD local orchestrator not allowed
     with pytest.raises(SmartSimError):
         db = Orchestrator(dpn=2)
-
-
-
-
-

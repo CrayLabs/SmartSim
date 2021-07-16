@@ -24,12 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-import socket
 import itertools
-import numpy as np
+import socket
+import time
 from os import getcwd
 
+import numpy as np
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
 
