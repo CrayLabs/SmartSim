@@ -21,7 +21,8 @@ if [ -z $rsvname ]; then echo "rsv is unset"; exit -1; else echo "rsv name is se
 
 me=$(whoami)
 pbs_ralter -U $me $rsvname
-db_jobid=$(qsub -q $rsvname launch_database_cluster.sh)
+
+db_jobid=$(qsub -q $rsvname -vRSVNAME=$rsvname launch_database_cluster.sh)
 
 head_host=$(qstat -f $PBS_JOBID|awk '$1 ~ /^exec_host$/{print $3}'|cut -d\/ -f1-1)
 # This gets the ib network
@@ -37,9 +38,5 @@ do
   client_id=$(qsub  -q $rsvname -v SSDB ./launch_client.sh)
 done
 
-# clean up
 
-#
-#pbs_rdel $rsvname
-export RSVNAME=$rsvname
-qsub -q casper -W depend=afterany:$client_id:$db_jobid -v RSVNAME ./cleanup.sh 
+

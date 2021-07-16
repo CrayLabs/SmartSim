@@ -1,9 +1,0 @@
-#!/bin/bash
-#PBS -N cleanup
-#PBS -l select=1:ncpus=1:mpiprocs=1
-#PBS -l walltime=00:30:00
-#PBS -j oe
-#PBS -k oed
-#PBS -A $account
-
-pbs_rdel $RSVNAME

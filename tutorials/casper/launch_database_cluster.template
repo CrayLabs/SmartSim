@@ -11,16 +11,15 @@
 
 import os, sys, time
 
-_LIBDIR = "/glade/work/jedwards/casper_npl_clone/lib/python3.7/site-packages/"
-sys.path.append(_LIBDIR)
+# The python environment is not passed properly to submitted jobs on casper
+_LIBDIR = $python_sys_path
+sys.path.extend(_LIBDIR)
 
-import socket
+import socket, subprocess
 import numpy as np
-
+from utils import run_cmd
 from smartsim import Experiment, constants
 from smartsim.database import PBSOrchestrator
-
-from smartredis import Client
 
 """
 Launch a distributed, in memory database cluster and use the
@@ -77,6 +76,21 @@ def launch_cluster_orc(exp, db_hosts, port):
 
     return db
 
+def monitor_client_jobs(rsvname):
+    jobs_done=False
+    while not jobs_done:
+        s, o, e = run_cmd("qstat -q {}".format(rsvname), verbose=True) 
+        jobs_left = o.split()[-2:]
+        print("Jobs left: Running {} Queued {}".format(int(jobs_left[0]),int(jobs_left[1])))
+        if int(jobs_left[0]) + int(jobs_left[1]) == 1:
+            jobs_done = True
+        else:
+            time.sleep(60)
+
+
+
+
+
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_cluster_db", launcher="pbs")
 
@@ -85,26 +99,11 @@ db_hosts = collect_db_hosts($db_nodes)
 # start the database
 db = launch_cluster_orc(exp, db_hosts, db_port)
 
-## test sending some arrays to the database cluster
-## the following functions are largely the same across all the
-## client languages: C++, C, Fortran, Python
-#
-## only need one address of one shard of DB to connect client
-#db_address = ":".join((socket.gethostbyname(db_hosts[0]), str(db_port)))
+rsvname = os.environ["RSVNAME"]
+# stay alive until client jobs have completed
+monitor_client_jobs(rsvname)
 
-#s, o, e = run_cmd("mpirun -n 36 --hostfile {} ./hello".format(new_host_file), verbose=True)
-#print("After hello {} {} {} ".format(s,o,e))
-#client = Client(address=db_address, cluster=True)
-#
-## put into database
-#test_array = np.array([1,2,3,4])
-#print(f"Array put in database: {test_array}")
-#client.put_tensor("test", test_array)
-#
-## get from database
-#returned_array = client.get_tensor("test")
-#print(f"Array retrieved from database: {returned_array}")
-#
-## shutdown the database because we don't need it anymore
-#time.sleep(1200)
-#exp.stop(db)
+# shutdown the database because we don't need it anymore
+exp.stop(db)
+# delete the job reservation
+run_cmd("pbs_rdel {}".format(rsvname))

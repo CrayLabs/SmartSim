@@ -3,24 +3,25 @@ import os, sys
 
 import argparse, subprocess
 from string import Template
+from utils import run_cmd
 
 def parse_command_line(args, description):
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--db-nodes", default=1,
-                        help="Number of nodes for the SmartSim database")
+                        help="Number of nodes for the SmartSim database, default=1")
     parser.add_argument("--ngpus-per-node", default=0,
-                        help="Number of gpus per SmartSim database node")
+                        help="Number of gpus per SmartSim database node, default=0")
     parser.add_argument("--walltime", default="00:30:00",
-                        help="Total walltime for submitted job")
+                        help="Total walltime for submitted job, default=00:30:00")
     parser.add_argument("--ensemble-size", default=1,
-                        help="Number of ensemble members to run")
+                        help="Number of ensemble members to run, default=1")
     parser.add_argument("--member-nodes", default=1,
-                        help="Number of nodes per ensemble member")
+                        help="Number of nodes per ensemble member, default=1")
     parser.add_argument("--account", default="P93300606",
                         help="Account ID")
     parser.add_argument("--db-port", default=6780,
-                        help="db port")
+                        help="db port, default=6780")
 
     args = parser.parse_args(args[1:])
     ngpus = ""
@@ -30,30 +31,12 @@ def parse_command_line(args, description):
 
     return {"db_nodes":args.db_nodes, "ngpus": ngpus, "client_nodes": args.ensemble_size*args.member_nodes, 
             "walltime": args.walltime, "account" : args.account, "member_nodes": args.member_nodes, 
-            "ensemble_size": args.ensemble_size, "db_port": args.db_port}
-
-def execute(command):
-    """
-    Function for running a command on shell.
-    Args:
-        command (str):
-            command that we want to run.
-    Raises:
-        Error with the return code from shell.
-    """
-    print ('\n',' >>  ',*command,'\n')
-
-    try:
-        subprocess.check_call(command, stdout=sys.stdout, stderr=subprocess.STDOUT)
-
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
+            "ensemble_size": args.ensemble_size, "db_port": args.db_port, "python_sys_path": sys.path}
 
 def _main_func(desc):
     templatevars = parse_command_line(sys.argv, desc)
     
-    template_files = ["resv_job.template", "launch_database_cluster.template", "launch_client.template", "cleanup.template"]
+    template_files = ["resv_job.template", "launch_database_cluster.template", "launch_client.template"]
     
     for template in template_files:
         with open(template) as f:
@@ -63,7 +46,7 @@ def _main_func(desc):
         with open(result_file, "w") as f:
             f.write(result)
 
-    execute(['qsub', 'resv_job.sh'])
+    run_cmd("qsub resv_job.sh", verbose=True)
 
 if __name__ == "__main__":
     _main_func(__doc__)
