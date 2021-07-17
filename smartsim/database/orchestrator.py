@@ -25,11 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
+import multiprocessing as mp
 import socket
 import time
 from os import getcwd
+
 import numpy as np
-import multiprocessing as mp
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
 
@@ -41,18 +42,6 @@ from ..settings.settings import RunSettings
 from ..utils import get_logger
 
 logger = get_logger(__name__)
-
-class ClientThread(mp.Process):
-
-    def __init__(self, address, cluster=False):
-        mp.Process.__init__(self, name='ClientThread')
-        self.address = address
-        self.cluster = cluster
-
-    def run(self):
-        client = Client(self.address, cluster=self.cluster)
-        client.put_tensor("db_test", np.array([1]))
-        receive_tensor = client.get_tensor("db_test")
 
 
 class Orchestrator(EntityList):
@@ -115,8 +104,6 @@ class Orchestrator(EntityList):
 
         :raises SmartSimError: if cluster creation fails
         """
-        # TODO check for cluster already being created.
-        # TODO do non-cluster status check on each instance
         ip_list = []
         for host in self.hosts:
             ip = get_ip_from_host(host)
@@ -213,10 +200,6 @@ class Orchestrator(EntityList):
             client_thread.join()
             if client_thread.exitcode != 0:
                 active = False
-            #client = Client(address=address, cluster=False)
-            #client.put_tensor("db_test", np.array([1, 2, 3, 4]))
-            #receive_tensor = client.get_tensor("db_test")
-            #return True
         except (mp.ProcessError):
             active = False
 
@@ -291,6 +274,20 @@ class Orchestrator(EntityList):
         for dbnode in self.entities:
             hosts.append(dbnode.host)
         return hosts
+
+
+# Hack to avoid a bug in SmartRedis 1.1 where
+# client will segfault because of a uncaught error
+class ClientThread(mp.Process):
+    def __init__(self, address, cluster=False):
+        mp.Process.__init__(self, name="ClientThread")
+        self.address = address
+        self.cluster = cluster
+
+    def run(self):
+        client = Client(self.address, cluster=self.cluster)
+        client.put_tensor("db_test", np.array([1]))
+        receive_tensor = client.get_tensor("db_test")
 
 
 def get_ip_from_host(host):
