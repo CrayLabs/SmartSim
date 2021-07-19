@@ -82,11 +82,11 @@ def test_random():
         params,
         run_settings=rs,
         perm_strat="random",
-        n_models=len(random_ints)-1,
+        n_models=len(random_ints) - 1,
     )
-    assert len(ensemble) == len(random_ints)-1
+    assert len(ensemble) == len(random_ints) - 1
     assigned_params = [m.params["h"] for m in ensemble.entities]
-    assert all([x in random_ints for x in assigned_params])    
+    assert all([x in random_ints for x in assigned_params])
 
 
 def test_user_strategy():
