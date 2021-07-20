@@ -126,7 +126,7 @@ def pip_install_torch(device="cpu", verbose=False):
         cmd = ["pip", "install", f"torch=={TORCH_VERSION}"]
 
     # also install torchvision
-    cmd.append("torchvision=={TORCHVISION_VERSION}")
+    cmd.append(f"torchvision=={TORCHVISION_VERSION}")
     cmd = " ".join(cmd)
 
     print("Installing Torch...")

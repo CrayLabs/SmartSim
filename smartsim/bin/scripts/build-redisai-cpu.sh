@@ -36,6 +36,7 @@ else
         # remove the need for the user to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH (mac)
         # by copying shared libs to lib
         if [[ $1 == "1" ]]; then
+            mkdir -p $DIR/../../lib/backends/redisai_torch/lib/
             cp $SITE_PACKAGES/torch/lib/* $DIR/../../lib/backends/redisai_torch/lib/
             # for apple, move openmp library to lib/
             if [[ $OS == "mac" ]]; then
