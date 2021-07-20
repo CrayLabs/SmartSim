@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SSConfigError
+from ..error import EntityExistsError
 from ..utils.helpers import init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
@@ -41,7 +41,7 @@ class Model(SmartSimEntity):
         :param path: path to output, error, and configuration files
         :type path: str
         :param run_settings: launcher settings specified in the experiment
-        :type run_settings: dict
+        :type run_settings: RunSettings
         """
         super().__init__(name, path, run_settings)
         self.params = params
@@ -62,7 +62,7 @@ class Model(SmartSimEntity):
         if incoming_entity.name in [
             in_entity.name for in_entity in self.incoming_entities
         ]:
-            raise SSConfigError(
+            raise EntityExistsError(
                 f"'{incoming_entity.name}' has already "
                 + "been registered as an incoming entity"
             )

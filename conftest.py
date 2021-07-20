@@ -1,6 +1,7 @@
 import os
 import shutil
 import pytest
+import psutil
 import smartsim
 from smartsim.settings import SrunSettings, AprunSettings
 from smartsim.settings import RunSettings
@@ -51,7 +52,21 @@ def pytest_sessionfinish(session, exitstatus):
     """
     if exitstatus == 0:
         shutil.rmtree(test_dir)
+    else:
+        # kill all spawned processes in case of error
+        kill_all_test_spawned_processes()
 
+
+def kill_all_test_spawned_processes():
+    # in case of test failure, clean up all spawned processes
+    pid = os.getpid()
+    try:
+        parent = psutil.Process(pid)
+    except psutil.Error:
+        # could not find parent process id
+        return
+    for child in parent.children(recursive=True):
+        child.kill()
 
 @pytest.fixture
 def wlmutils():

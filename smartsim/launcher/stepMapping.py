@@ -54,12 +54,15 @@ class StepMapping:
 
     def get_ids(self, step_names, managed=True):
         ids = []
+        names = []
         for name in step_names:
             if name in self.mapping:
                 stepmap = self.mapping[name]
                 # do we want task(unmanaged) or step(managed) id?
                 if managed and stepmap.managed:
+                    names.append(name)
                     ids.append(stepmap.step_id)
                 elif not managed and not stepmap.managed:
+                    names.append(name)
                     ids.append(stepmap.task_id)
-        return ids
+        return names, ids

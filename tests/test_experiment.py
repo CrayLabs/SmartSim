@@ -6,9 +6,16 @@ from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
 
 
-def test_model_prefix():
-    exp = Experiment("test")
-    model = exp.create_model("model", RunSettings("python"), enable_key_prefixing=True)
+def test_model_prefix(fileutils):
+    exp_name = "test_prefix"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+    model = exp.create_model(
+        "model",
+        path=test_dir,
+        run_settings=RunSettings("python"),
+        enable_key_prefixing=True,
+    )
     assert model._key_prefixing_enabled == True
 
 
@@ -68,3 +75,27 @@ def test_bad_ensemble_init_no_rs_bs():
     exp = Experiment("test")
     with pytest.raises(SmartSimError):
         exp.create_ensemble("name")
+
+
+def test_stop_entity(fileutils):
+    exp_name = "test_stop_entity"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+    m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
+    exp.start(m, block=False)
+    assert exp.finished(m) == False
+    exp.stop(m)
+    assert exp.finished(m) == True
+
+
+def test_poll(fileutils):
+    # Ensure that a SmartSimError is not raised
+    exp_name = "test_exp_poll"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+    model = exp.create_model(
+        "model", path=test_dir, run_settings=RunSettings("sleep", "5")
+    )
+    exp.start(model, block=False)
+    exp.poll(interval=1)
+    exp.stop(model)

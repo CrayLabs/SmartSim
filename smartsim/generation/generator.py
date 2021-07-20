@@ -29,10 +29,10 @@ import shutil
 from distutils import dir_util
 from os import mkdir, path, symlink
 
+from ..control import Manifest
 from ..entity import Model
 from ..error import EntityExistsError
 from ..utils import get_logger
-from ..utils.entityutils import separate_entities
 from .modelwriter import ModelWriter
 
 logger = get_logger(__name__)
@@ -80,13 +80,13 @@ class Generator:
         specified with a tag within the input file itself.
         The default tag is surronding an input value with semicolons.
         e.g. ``THERMO=;90;``
+
         """
-        entities, entity_lists, orchestrator, ray_clusters = separate_entities(args)
+        generator_manifest = Manifest(*args)
         self._gen_exp_dir()
-        self._gen_orc_dir(orchestrator)
-        self._gen_entity_list_dir(entity_lists)
-        self._gen_entity_dirs(entities)
-        self._gen_ray_cluster_dir(ray_clusters)
+        self._gen_orc_dir(generator_manifest.db)
+        self._gen_entity_list_dir(generator_manifest.ensembles)
+        self._gen_entity_dirs(generator_manifest.models)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files
@@ -139,7 +139,7 @@ class Generator:
 
         # Always remove orchestrator files if present.
         if path.isdir(orc_path):
-            shutil.rmtree(orc_path)
+            shutil.rmtree(orc_path, ignore_errors=True)
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists):

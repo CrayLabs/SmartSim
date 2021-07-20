@@ -38,8 +38,8 @@ from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedEr
 from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
 from ..launcher import slurm
 from ..utils import get_logger
-from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
+from .manifest import Manifest
 
 logger = get_logger(__name__)
 
@@ -62,7 +62,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, *args, block=True):
+    def start(self, manifest, block=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -71,10 +71,8 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        entities, entity_lists, orchestrator, ray_clusters = separate_entities(args)
-        self._sanity_check_launch(orchestrator, entity_lists)
-
-        self._launch(entities, entity_lists, orchestrator, ray_clusters)
+        self._sanity_check_launch(manifest)
+        self._launch(manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
@@ -253,21 +251,16 @@ class Controller:
         else:
             raise SSConfigError("Must provide a 'launcher' argument")
 
-    def _launch(self, entities, entity_lists, orchestrator, ray_clusters):
+    def _launch(self, manifest):
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
         address of the database can be given to following entities
 
-        :param entities: entities to launch
-        :type entities: SmartSimEntity
-        :param entity_lists: entity lists to launch
-        :type entity_lists: EntityList
-        :param orchestrator: orchestrator to launch
-        :type orchestrator: Orchestrator
-        :param ray_clusters: Ray clusters to launch
-        :type ray_clusters: RayCluster
+        :param manifest: Manifest of deploayables to launch
+        :type manifest: Manifest
         """
+        orchestrator = manifest.db
         if orchestrator:
             if self.orchestrator_active:
                 msg = "Attempted to launch a second Orchestrator instance. "
@@ -275,25 +268,25 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
             
-        if ray_clusters:
-            for rc in ray_clusters:
-                self._launch_ray_cluster(rc)
+
+        for rc in manifest.ray_clusters:
+            self._launch_ray_cluster(rc)
             
         # create all steps prior to launch
         steps = []
-        if entity_lists:
-            for elist in entity_lists:
-                if elist.batch:
-                    batch_step = self._create_batch_job_step(elist)
-                    steps.append((batch_step, elist))
-                else:
-                    # if ensemble is to be run as seperate job steps, aka not in a batch
-                    job_steps = [(self._create_job_step(e), e) for e in elist.entities]
-                    steps.extend(job_steps)
-        if entities:
-            # models themselves cannot be batch steps
-            job_steps = [(self._create_job_step(e), e) for e in entities]
-            steps.extend(job_steps)
+
+        for elist in manifest.ensembles:
+            if elist.batch:
+                batch_step = self._create_batch_job_step(elist)
+                steps.append((batch_step, elist))
+            else:
+                # if ensemble is to be run as seperate job steps, aka not in a batch
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                steps.extend(job_steps)
+
+        # models themselves cannot be batch steps
+        job_steps = [(self._create_job_step(e), e) for e in manifest.models]
+        steps.extend(job_steps)
 
         # launch steps
         for job_step in steps:
@@ -524,25 +517,26 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
         entity.run_settings.update_env(client_env)
 
-    def _sanity_check_launch(self, orchestrator, entity_lists):
+    def _sanity_check_launch(self, manifest):
         """Check the orchestrator settings
 
         Sanity check the orchestrator settings in case the
         user tries to do something silly. This function will
         serve as the location of many such sanity checks to come.
 
-        :param orchestrator: Orchestrator instance
-        :type orchestrator: Orchestrator
+        :param manifest: Manifest with deployables to be launched
+        :type manifest: Manifest
         :raises SSConfigError: If local launcher is being used to
                                launch a database cluster
         """
-
+        orchestrator = manifest.db
         if isinstance(self._launcher, LocalLauncher) and orchestrator:
             if len(orchestrator) > 1:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases"
                 )
         # check for empty ensembles
+        entity_lists = manifest.ensembles
         for elist in entity_lists:
             if len(elist) < 1:
                 raise SSConfigError("User attempted to run an empty ensemble")

@@ -1,8 +1,11 @@
 import filecmp
 from distutils import dir_util
 from glob import glob
-from os import path
+from os import chmod, path
 
+import pytest
+
+from smartsim.error.errors import ParameterWriterError
 from smartsim.generation.modelwriter import ModelWriter
 from smartsim.settings import RunSettings
 
@@ -61,6 +64,8 @@ def test_write_med_configs(fileutils):
 
     # init modelwriter
     writer = ModelWriter()
+    writer.set_tag(writer.tag, "(;.+;)")
+    assert writer.regex == "(;.+;)"
     writer.configure_tagged_model_files(glob(test_dir + "/*"), param_dict)
 
     written_files = sorted(glob(test_dir + "/*"))
@@ -101,3 +106,15 @@ def test_write_new_tag_configs(fileutils):
 
     for written, correct in zip(written_files, correct_files):
         assert filecmp.cmp(written, correct)
+
+
+def test_mw_error_1():
+    writer = ModelWriter()
+    with pytest.raises(ParameterWriterError):
+        writer.configure_tagged_model_files("[not/a/path]", {"5": 10})
+
+
+def test_mw_error_2():
+    writer = ModelWriter()
+    with pytest.raises(ParameterWriterError):
+        writer._write_changes("[not/a/path]")

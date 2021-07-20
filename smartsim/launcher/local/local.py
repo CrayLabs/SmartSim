@@ -40,7 +40,7 @@ class LocalLauncher:
 
     def __init__(self):
         self.task_manager = TaskManager()
-        self.step_mapping = StepMapping()  # only used for consistency
+        self.step_mapping = StepMapping()
 
     def create_step(self, name, cwd, step_settings):
         """Create a job step to launch an entity locally
@@ -55,20 +55,21 @@ class LocalLauncher:
         return step
 
     def get_step_update(self, step_names):
-        """Get status updates of all steps at once
+        """Get status updates of each job step name provided
 
         :param step_names: list of step_names
         :type step_names: list[str]
-        :return: list of LocalStepInfo for update
-        :rtype: list
+        :return: list of tuples for update
+        :rtype: list[(str, UnmanagedStepInfo)]
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
         updates = []
-        step_ids = self.step_mapping.get_ids(step_names, managed=False)
-        for step_id in step_ids:
+        s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
+        for step_name, step_id in zip(s_names, s_ids):
             status, rc, out, err = self.task_manager.get_task_update(step_id)
-            update = UnmanagedStepInfo(status, rc, out, err)
+            step_info = UnmanagedStepInfo(status, rc, out, err)
+            update = (step_name, step_info)
             updates.append(update)
         return updates
 
@@ -106,8 +107,8 @@ class LocalLauncher:
 
         :param step_name: name of the step to be stopped
         :type step_name: str
-        :return: a LocalStepInfo instance
-        :rtype: LocalStepInfo
+        :return: a UnmanagedStepInfo instance
+        :rtype: UnmanagedStepInfo
         """
         # step_id is task_id for local. Naming for consistency
         step_id = self.step_mapping[step_name].task_id
