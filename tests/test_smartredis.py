@@ -29,8 +29,8 @@ except ImportError:
 
 
 pytestmark = pytest.mark.skipif(
-    ("smartredis" not in sys.modules) or ("torch" not in sys.modules),
-    reason="requires smartredis and PyTorch",
+    ("torch" not in sys.modules),
+    reason="requires PyTorch",
 )
 
 

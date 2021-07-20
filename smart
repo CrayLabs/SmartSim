@@ -1,24 +1,29 @@
 #!/usr/bin/env python
 
-import os
 import sys
+import site
 import shutil
 import argparse
 import subprocess
 from pathlib import Path
 
+TORCH_VERSION = "1.7.1"
+TORCHVISION_VERSION = "0.8.2"
+
 class SetupError(Exception):
     pass
 
-def run_build(script_path, device, pt, tf, onnx, verbose):
+def run_build(script_path, device, pt, tf, onnx, verbose, user_torch_dir=None):
     script = script_path.joinpath("smartsim_setup")
+    device = device.lower()
+
     if not script.is_file():
         msg = "Could not find smartsim_setup script. "
         msg += "You may have to trigger manually from the installation site"
         raise SetupError(msg)
 
     if sys.platform == "darwin":
-        if device.lower() == "gpu":
+        if device == "gpu":
             raise SetupError("SmartSim does not support GPU builds on MacOS")
         if onnx == 1:
             raise SetupError("ONNX runtime is currently not supported on MacOS")
@@ -27,8 +32,22 @@ def run_build(script_path, device, pt, tf, onnx, verbose):
         msg = "Windows is not supported, but kudos to you for making it this far!"
         raise SetupError(msg)
 
+    cmd = []
+    # add SmartSim installed Torch to command
+    if pt != 0:
+        # detect user install of torch and add to command
+        if user_torch_dir:
+            if not user_torch_dir.is_dir():
+                raise SetupError("Could not find requested user Torch installation")
+            else:
+                torch_dir = str(user_torch_dir)
+        else:
+            pip_install_torch(device=device, verbose=verbose)
+            torch_dir = str(find_torch())
+        cmd.append(f"Torch_DIR={torch_dir}")
+
     print("Running SmartSim build process...")
-    cmd = [f"PT={pt} TF={tf} TFL=0 ONNX={onnx}", str(script), device]
+    cmd.extend([f"PT={pt} TF={tf} TFL=0 ONNX={onnx}", str(script), device])
     cmd = " ".join(cmd)
     if verbose:
         subprocess.check_call(cmd, shell=True)
@@ -88,6 +107,43 @@ def clean(install_path, _all=False):
             print("Successfully removed SmartSim Redis installation")
 
 
+def find_site_packages_path():
+    site_path = Path(site.getsitepackages()[0]).resolve()
+    return site_path
+
+def find_torch():
+    site_path = find_site_packages_path()
+    torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
+    return torch_path
+
+def pip_install_torch(device="cpu", verbose=False):
+    # if we are on linux cpu, use the torch without CUDA
+    if sys.platform == "linux" and device == "cpu":
+        cmd = ["pip", "install", f"torch=={TORCH_VERSION}+cpu",
+               "-f", "https://download.pytorch.org/whl/torch_stable.html"]
+    # otherwise just use the version downloaded by pip
+    else:
+        cmd = ["pip", "install", f"torch=={TORCH_VERSION}"]
+
+    # also install torchvision
+    cmd.append("torchvision=={TORCHVISION_VERSION}")
+    cmd = " ".join(cmd)
+
+    print("Installing Torch...")
+    if verbose:
+        subprocess.check_call(cmd, shell=True)
+    else:
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        returncode = int(proc.returncode)
+        if returncode != 0:
+            error = f"Torch backend installation failed with exitcode {returncode}\n"
+            error += err.decode("utf-8")
+            raise SetupError(error)
+        else:
+            print(f"Torch {TORCH_VERSION} installed successfully")
+
+
 def colorize(string, color, bold=False, highlight=False):
     """
     Colorize a string.
@@ -135,6 +191,11 @@ def make_description():
     other += "build and install other non-python dependencies\n"
     other += "needed by SmartSim."
 
+    other += "If not backends are built, users will still be\n"
+    other += "to pass tensors/dataset through the database\n"
+    other += "but model and script commands will fail."
+    other = colorize(other, color="green")
+
     prebuilts = colorize("Supported Systems\n", color="cyan")
     systems = "  1) Linux CPU (x86_64)\n"
     systems += "  2) MacOS CPU (x86_64)\n"
@@ -145,7 +206,7 @@ def make_description():
     default += "be installed.\n"
     default = colorize(default, color="green")
 
-    return "".join((header, info, prebuilts, systems, default))
+    return "".join((header, info, other, prebuilts, systems, default))
 
 
 
@@ -179,6 +240,13 @@ def cli():
                         help='Do not build TensorFlow backend')
     parser.add_argument('--onnx', action="store_true", default=False,
                         help='Build ONNX backend (off by default)')
+    parser.add_argument('--torch_dir', default=None, type=str,
+                        help='Path to custom <path>/torch/share/cmake/Torch/ directory (ONLY USE IF NEEDED)')
+    parser.add_argument('--site', action="store_true", default=False,
+                        help="Print the install location of SmartSim and exit")
+    parser.add_argument('--dbcli', action="store_true", default=False,
+                        help="Print the install location of SmartSim and exit")
+
 
     # display help
     if len(sys.argv) < 2:
@@ -196,6 +264,15 @@ def cli():
         elif args.clean:
             clean(package_path, _all=False)
             exit(0)
+        elif args.site:
+            print(f"SmartSim install location: {package_path}")
+            exit(0)
+        elif args.dbcli:
+            cli = script_path.joinpath("redis-cli")
+            print(f"Invoke: .{cli}")
+            print("Use -h <hostname or ip> to specify host")
+            print("Use -p <port> to specify port number")
+            exit(0)
 
         def color(is_in_build=True):
             _color = "green" if is_in_build else "red"
@@ -211,7 +288,12 @@ def cli():
         pt = 0 if args.no_pt else 1
         tf = 0 if args.no_tf else 1
         onnx = 1 if args.onnx else 0
-        run_build(script_path, args.device, pt, tf, onnx, args.v)
+
+        # check for user install of pytorch
+        user_torch_dir = None
+        if pt == 1 and args.torch_dir:
+            user_torch_dir = Path(args.torch_dir)
+        run_build(script_path, args.device, pt, tf, onnx, args.v, user_torch_dir)
 
 if __name__ == '__main__':
     cli()

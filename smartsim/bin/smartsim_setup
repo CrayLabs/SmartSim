@@ -50,6 +50,12 @@ else
         OS="unknown"
 fi
 
+# catch silly users
+if [[ $OS == "mac" && DEVICE == "gpu" ]]; then
+        echo "WARNING: You are using a GPU on a Mac. This is not supported. Switching to CPU."
+        DEVICE="cpu"
+fi
+
 # avoid wget warnings on macOS
 [[ $OS == macos ]] && export LC_ALL=en_US.UTF-8
 
