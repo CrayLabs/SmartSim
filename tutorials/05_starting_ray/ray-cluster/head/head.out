@@ -1,0 +1,18 @@
+ray start --head --block --port=6780 --redis-password=791229d2-c6a7-405b-ba28-ee989d37bcd8 --num-cpus=38 --node-ip-address=10.128.0.1
+2021-07-20 11:32:17,617	INFO scripts.py:542 -- Local node IP: 10.128.0.1
+2021-07-20 11:32:19,282	INFO services.py:1267 -- View the Ray dashboard at [1m[32mhttp://127.0.0.1:8265[39m[22m
+2021-07-20 11:32:20,306	SUCC scripts.py:570 -- --------------------
+2021-07-20 11:32:20,307	SUCC scripts.py:571 -- Ray runtime started.
+2021-07-20 11:32:20,307	SUCC scripts.py:572 -- --------------------
+2021-07-20 11:32:20,307	INFO scripts.py:574 -- Next steps
+2021-07-20 11:32:20,307	INFO scripts.py:575 -- To connect to this Ray runtime from another node, run
+2021-07-20 11:32:20,307	INFO scripts.py:579 --   ray start --address='10.128.0.1:6780' --redis-password='791229d2-c6a7-405b-ba28-ee989d37bcd8'
+2021-07-20 11:32:20,307	INFO scripts.py:584 -- Alternatively, use the following Python code:
+2021-07-20 11:32:20,307	INFO scripts.py:587 -- import ray
+2021-07-20 11:32:20,307	INFO scripts.py:588 -- ray.init(address='auto', _redis_password='791229d2-c6a7-405b-ba28-ee989d37bcd8')
+2021-07-20 11:32:20,307	INFO scripts.py:596 -- If connection fails, check your firewall settings and network configuration.
+2021-07-20 11:32:20,307	INFO scripts.py:601 -- To terminate the Ray runtime, run
+2021-07-20 11:32:20,307	INFO scripts.py:602 --   ray stop
+2021-07-20 11:32:20,307	INFO scripts.py:670 -- --block
+2021-07-20 11:32:20,307	INFO scripts.py:671 -- This command will now block until terminated by a signal.
+2021-07-20 11:32:20,308	INFO scripts.py:673 -- Running subprocesses are monitored and a message will be printed if any of them terminate unexpectedly.
