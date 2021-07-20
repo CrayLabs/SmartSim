@@ -32,12 +32,11 @@ import time
 from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
-from ..ray import RayCluster
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
 from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
-from ..launcher import slurm
 from ..utils import get_logger
+from ..ray import RayCluster
 from .jobmanager import JobManager
 from .manifest import Manifest
 
@@ -267,11 +266,7 @@ class Controller:
                 msg += "Only 1 Orchestrator can be active at a time"
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
-            
 
-        for rc in manifest.ray_clusters:
-            self._launch_ray_cluster(rc)
-            
         # create all steps prior to launch
         steps = []
 
@@ -287,6 +282,10 @@ class Controller:
         # models themselves cannot be batch steps
         job_steps = [(self._create_job_step(e), e) for e in manifest.models]
         steps.extend(job_steps)
+
+        for rc in manifest.ray_clusters:
+            job_steps = [(self._create_job_step(e), e) for e in rc.entities]
+            steps.extend(job_steps)    
 
         # launch steps
         for job_step in steps:
@@ -337,10 +336,10 @@ class Controller:
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
-                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
+                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
                 logger.debug(
-                    "WLM node acquisition unsupported, moving to RedisIP fallback"
+                    "WLM node aquisition unsupported, moving to RedisIP fallback"
                 )
 
         # set the jobs in the job manager to provide SSDB variable to entities
@@ -353,83 +352,6 @@ class Controller:
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-    def _launch_ray_cluster(self, ray_cluster):
-        """Launch a Ray Cluster instance
-
-        This function will launch the Ray Cluster instance and
-        if on WLM, find the nodes where it was launched and
-        set them in the JobManager
-
-        :param orchestrator: ray cluster to launch
-        :type orchestrator: RayCluster
-        """
-        # if the Ray cluster was launched as a batch workload
-        if ray_cluster.batch:   
-            head_batch_step = self._create_batch_job_step(ray_cluster.head_model)
-            self._launch_step(head_batch_step, ray_cluster.head_model)
-            ray_cluster._get_ray_head_node_address()
-            try:
-                nodelist = self._launcher.get_step_nodes([head_batch_step.name])
-                ray_cluster._hosts = nodelist[0]
-                
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node aquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
-                
-            if ray_cluster.worker_model:
-                ray_cluster._update_worker_model()
-                worker_batch_step = self._create_batch_job_step(ray_cluster.worker_model)
-                self._launch_step(worker_batch_step, ray_cluster.worker_model)
-                try:
-                    nodelist = self._launcher.get_step_nodes([worker_batch_step.name])
-                    ray_cluster._hosts.extend(nodelist[0])
-                    # catch if it fails or launcher doesn't support it
-                except LauncherError:
-                    logger.debug("WLM Ray worker node aquisition failed")
-                except SSUnsupportedError:
-                    logger.debug("WLM Ray worker node acquisition unsupported")
-        else:
-            head_step = self._create_job_step(ray_cluster.head_model)
-            self._launch_step(head_step, ray_cluster.head_model)
-            ray_cluster._get_ray_head_node_address()
-            try:
-                nodelist = self._launcher.get_step_nodes([head_step.name])
-                ray_cluster._hosts = nodelist[0]
-                ray_cluster.head_model._hosts = nodelist[0]
-            
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node aquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
-            
-            if ray_cluster.worker_model:
-                ray_cluster._update_worker_model()
-                # Don't launch on head host
-                if isinstance(self._launcher, SlurmLauncher):
-                    ray_cluster.worker_model.run_settings.set_excluded_hosts(ray_cluster.head_model._hosts)
-                worker_step = self._create_job_step(ray_cluster.worker_model)
-                self._launch_step(worker_step, ray_cluster.worker_model)
-                
-                try:
-                    nodelist = self._launcher.get_step_nodes([worker_step.name])
-                    ray_cluster._hosts.extend(nodelist[0])
-
-                # catch if it fails or launcher doesn't support it
-                except LauncherError:
-                    logger.debug("WLM Ray worker node aquisition failed")
-                except SSUnsupportedError:
-                    logger.debug(
-                        "WLM Ray worker node acquisition unsupported"
-                    ) 
-        
-        if ray_cluster._hosts:
-            logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
-        else:
-            logger.info("Ray cluster launched.")
-        
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop
 
@@ -456,28 +378,22 @@ class Controller:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity)
 
-    def _create_batch_job_step(self, entity):
+    def _create_batch_job_step(self, entity_list):
         """Use launcher to create batch job step
 
-        :param entity_list: Entity to launch as batch
-        :type entity_list: Entity
+        :param entity_list: EntityList to launch as batch
+        :type entity_list: EntityList
         :return: job step instance
         :rtype: Step
         """
         batch_step = self._launcher.create_step(
-            entity.name, entity.path, entity.batch_settings
+            entity_list.name, entity_list.path, entity_list.batch_settings
         )
-        if isinstance(entity, EntityList):
-            for _entity in entity:
-                # tells step creation not to look for an allocation
-                _entity.run_settings.in_batch = True
-                step = self._create_job_step(_entity)
-                batch_step.add_to_batch(step)
-        else:
+        for entity in entity_list.entities:
+            # tells step creation not to look for an allocation
             entity.run_settings.in_batch = True
             step = self._create_job_step(entity)
             batch_step.add_to_batch(step)
-        
         return batch_step
 
     def _create_job_step(self, entity):
@@ -513,6 +429,7 @@ class Controller:
                 )
             if entity.query_key_prefixing():
                 client_env["SSKEYOUT"] = entity.name
+
         entity.run_settings.update_env(client_env)
 
     def _sanity_check_launch(self, manifest):

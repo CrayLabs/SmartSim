@@ -15,18 +15,19 @@ def current_ip():
     hostname = socket.getfqdn(socket.gethostname())
     return socket.gethostbyname(hostname)
 
-args = ["ray",
-        "start",
-        "--head",
-        "--block",
-        f"--port={args.port}",
-        f"--redis-password={args.redis_password}",
-        f"--num-cpus={args.num_cpus}",
-        f"--node-ip-address={current_ip()}"]
+cliargs = ["ray",
+            "start",
+            "--head",
+            "--block",
+            f"--port={args.port}",
+            f"--redis-password={args.redis_password}",
+            f"--node-ip-address={current_ip()}"]
+if args.num_cpus:
+    cliargs.append(f"--num-cpus={args.num_cpus}")
 
-print(" ".join(args))
+print(" ".join(cliargs))
 
-p = Popen(args,
+p = Popen(cliargs,
           stdout=PIPE,
           stderr=STDOUT)
 

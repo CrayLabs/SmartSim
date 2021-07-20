@@ -82,7 +82,7 @@ class RayCluster(EntityList):
         self._batch = launcher!='local' and batch
         self._hosts = None
         self._time = time
-        self._ray_args = ray_args 
+        self._ray_args = ray_args
         super().__init__(name=name, path=path)
     
     @property
@@ -122,7 +122,7 @@ class RayCluster(EntityList):
                                           batch=self.batch,
                                           time=self._time)
             # Insert at first position, because we want this top be stopped first
-            self.entities.insert(0, self.worker_model)
+            self.entities.append(self.worker_model)
 
 
     def _get_ray_head_node_address(self):
@@ -177,8 +177,6 @@ class RayHead(Model):
     :type ray_password: str
     :param ray_port: Port at which the head node will be running
     :type ray_port: int
-    :param ray_num_cpus: Number of CPUs used by Ray
-    :type ray_num_cpus: int
     :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
                      to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
     :type ray_args: dict[str,str]
@@ -257,6 +255,7 @@ class RayHead(Model):
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("python", exe_args=" ".join(ray_args),
                                        run_args=self._run_args)
+        aprun_settings.set_nodes(1)
 
         return aprun_settings
     
@@ -275,6 +274,7 @@ class RayHead(Model):
         srun_settings = SrunSettings("python", exe_args=" ".join(ray_args),
                                      run_args=self._run_args, expand_exe=False,
                                      alloc=self._alloc)
+        srun_settings.set_nodes(1)
         return srun_settings
             
 
@@ -291,8 +291,6 @@ class RayWorker(Model):
     :type ray_password: str
     :param ray_port: Port at which the head node will be running
     :type ray_port: int
-    :param ray_num_cpus: Number of CPUs used by Ray
-    :type ray_num_cpus: int
     :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
                      to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
     :type ray_args: dict[str,str]
