@@ -87,6 +87,7 @@ class Generator:
         self._gen_orc_dir(generator_manifest.db)
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
+        self._gen_ray_cluster_dir(generator_manifest.ray_clusters)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files

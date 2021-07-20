@@ -33,12 +33,15 @@ class RayCluster(EntityList):
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
-    :param ray_num_cpus: Number of CPUs used by Ray
-    :type ray_num_cpus: int
+    :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
+                     to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
+    :type ray_args: dict[str,str]
     :param workers: Number of workers (the total size of the cluster is ``workers``+1).
     :type workers: int
     :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
     :type run_args: dict[str,str]
+    :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
+    :type batch_args: dict[str,str]
     :param launcher: Name of launcher to use for starting the cluster.
     :type launcher: str
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
@@ -54,9 +57,10 @@ class RayCluster(EntityList):
                  name,
                  path=".",
                  ray_port=6780,
-                 ray_num_cpus=12,
+                 ray_args={},
                  workers=0,
                  run_args={},
+                 batch_args={},
                  launcher='local',
                  batch=False,
                  time="01:00:00",
@@ -69,7 +73,7 @@ class RayCluster(EntityList):
         self._ray_password = uuid.uuid4()
         self._launcher = launcher.lower()
         self._run_args = run_args
-        self._ray_num_cpus = ray_num_cpus
+        self._batch_args = batch_args
         self.head_model = None
         self.worker_model = None
         self.alloc = None
@@ -78,6 +82,7 @@ class RayCluster(EntityList):
         self._batch = launcher!='local' and batch
         self._hosts = None
         self._time = time
+        self._ray_args = ray_args 
         super().__init__(name=name, path=path)
     
     @property
@@ -94,7 +99,8 @@ class RayCluster(EntityList):
                                   ray_port=self._ray_port,
                                   launcher=self._launcher,
                                   run_args=self._run_args,
-                                  ray_num_cpus=self._ray_num_cpus,
+                                  batch_args=self._batch_args,
+                                  ray_args=self._ray_args,
                                   alloc=self._alloc,
                                   batch=self.batch,
                                   time=self._time)
@@ -105,16 +111,18 @@ class RayCluster(EntityList):
             self.worker_model = RayWorker(name="workers", params=None,
                                           path=os.path.join(self.path, 'workers'),
                                           run_args=self._run_args,
+                                          batch_args=self._batch_args,
                                           workers=self._workers,
                                           ray_port=self._ray_port,
                                           ray_password=self._ray_password,
-                                          ray_num_cpus=self._ray_num_cpus,
+                                          ray_args=self._ray_args,
                                           head_model=self.head_model,
                                           launcher=self._launcher,
                                           alloc=self._alloc,
                                           batch=self.batch,
                                           time=self._time)
-            self.entities.append(self.worker_model)
+            # Insert at first position, because we want this top be stopped first
+            self.entities.insert(0, self.worker_model)
 
 
     def _get_ray_head_node_address(self):
@@ -124,11 +132,7 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
-        
-#         if self._launcher == 'local':
-#             self.head_model.address = '127.0.0.1'
-#             return
-        
+
         # We can rely on the file name, because we set it when we create
         # the head model
         head_log = os.path.join(self.head_model.path, "head.out")
@@ -175,12 +179,15 @@ class RayHead(Model):
     :type ray_port: int
     :param ray_num_cpus: Number of CPUs used by Ray
     :type ray_num_cpus: int
-    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on
-    :type run_args: dict[str,str]
+    :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
+                     to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
+    :type ray_args: dict[str,str]
+    :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
+    :type batch_args: dict[str,str]
     :param launcher: Name of launcher to use for starting the cluster
     :type launcher: str
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
-                  obtained with ``ray.slurm.get_allocation``
+                  obtained with ``smartsim.slurm.get_allocation``
     :type alloc: int
     :param batch: Whether the head node should be launched through a batch file
     :type batch: bool
@@ -193,16 +200,18 @@ class RayHead(Model):
                  path, 
                  ray_password, 
                  ray_port=6780, 
-                 run_args={}, 
-                 ray_num_cpus=12, 
+                 run_args={},
+                 batch_args={},
+                 ray_args={}, 
                  launcher='local',
                  alloc=None,
                  batch=False,
                  time="01:00:00"):
         self._ray_port = ray_port
         self._run_args = run_args.copy()
+        self._batch_args = batch_args.copy()
         self._ray_password = ray_password
-        self._ray_num_cpus = ray_num_cpus
+        self._ray_args = ray_args
         self._alloc = alloc
         self._launcher = launcher
         self.address = None
@@ -218,17 +227,20 @@ class RayHead(Model):
     
     def _build_run_settings(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ray_args = [f"{dir_path}/raystarter.py"]
-        ray_args += [f"--num-cpus={self._ray_num_cpus}"]
-        ray_args += [f"--port={self._ray_port}"]
-        ray_args += [f"--redis-password={self._ray_password}"]
+        ray_args_str = [f"{dir_path}/raystarter.py"]
+        ray_args_str += [f"--port={self._ray_port}"]
+        ray_args_str += [f"--redis-password={self._ray_password}"]
+        delete_elements(self._ray_args, ["block", "redis-password", "start", "head"])
+
+        for key in self._ray_args:
+            ray_args_str += [f"--{key}={self._ray_args[key]}"]
         
         if self._launcher == 'slurm':
-            self.run_settings = self._build_srun_settings(ray_args)
+            self.run_settings = self._build_srun_settings(ray_args_str)
         elif self._launcher == 'pbs':
-            self.run_settings = self._build_pbs_settings(ray_args)
+            self.run_settings = self._build_pbs_settings(ray_args_str)
         elif self._launcher == 'local':
-            self.run_settings = RunSettings("python", exe_args=" ".join(ray_args), run_args=self._run_args)
+            self.run_settings = RunSettings("python", exe_args=" ".join(ray_args_str), run_args=self._run_args)
         else:
             raise NotImplementedError("Only Slurm, local, and PBS launchers are supported.")
             
@@ -239,7 +251,9 @@ class RayHead(Model):
     
     def _build_pbs_settings(self, ray_args):
         if self.batch:
-            self.batch_settings = QsubBatchSettings(nodes=1, ncpus=1, time=self._time)
+            self.batch_settings = QsubBatchSettings(
+                nodes=1, ncpus=1, time=self._time, batch_args=self._batch_args
+            )
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("python", exe_args=" ".join(ray_args),
                                        run_args=self._run_args)
@@ -247,22 +261,19 @@ class RayHead(Model):
         return aprun_settings
     
     def _build_srun_settings(self, ray_args):
-        batch_args = self._run_args
-        batch_args["overcommit"] = None
-        batch_args.update(self._run_args)
-        delete_elements(batch_args, ["nodes", "ntasks-per-node"])
+        self._batch_args["overcommit"] = None
+        delete_elements(self._batch_args, ["nodes", "ntasks-per-node"])
             
         if self.batch:
             self.batch_settings = SbatchSettings(
-                nodes=1, time=self._time, batch_args=batch_args
+                nodes=1, time=self._time, batch_args=self._batch_args
             )
-        else:
-            delete_elements(batch_args, ["oversubscribe"])
+        
+        delete_elements(self._run_args, ["oversubscribe"])
 
-        run_args = batch_args.copy()
-        run_args["unbuffered"] = None
+        self._run_args["unbuffered"] = None
         srun_settings = SrunSettings("python", exe_args=" ".join(ray_args),
-                                     run_args=run_args, expand_exe=False,
+                                     run_args=self._run_args, expand_exe=False,
                                      alloc=self._alloc)
         return srun_settings
             
@@ -282,8 +293,11 @@ class RayWorker(Model):
     :type ray_port: int
     :param ray_num_cpus: Number of CPUs used by Ray
     :type ray_num_cpus: int
-    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on
-    :type run_args: dict[str,str]
+    :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
+                     to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
+    :type ray_args: dict[str,str]
+    :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
+    :type batch_args: dict[str,str]
     :param head_model: This cluster's head model's entity
     :type head_model: RayHead
     :param launcher: Name of launcher to use for starting the cluster
@@ -297,23 +311,25 @@ class RayWorker(Model):
     :type time: str
     """
     def __init__(self, 
-                 name, 
-                 params, 
-                 path, 
-                 workers, 
+                 name,
+                 params,
+                 path,
+                 workers,
+                 head_model,
                  ray_password, 
-                 ray_port, 
-                 ray_num_cpus, 
-                 run_args,
-                 head_model, 
-                 launcher, 
+                 ray_port=6780, 
+                 ray_args={}, 
+                 run_args={},
+                 batch_args={}, 
+                 launcher='local', 
                  alloc=None, 
                  batch=False, 
                  time="01:00:00"):
         self._run_args = run_args.copy()
+        self._batch_args = batch_args.copy()
         self._ray_port = ray_port
         self._ray_password = ray_password
-        self._ray_num_cpus = ray_num_cpus
+        self._ray_args = ray_args
         self._launcher = launcher
         self._workers = workers
         self.head_model = head_model
@@ -332,14 +348,16 @@ class RayWorker(Model):
         self.run_settings.add_exe_args([f"--address={self.head_model.address}:{self._ray_port}"])
 
     def _build_run_settings(self):
-        ray_args = ["start"]
-        ray_args += [f"--redis-password={self._ray_password}"]
-        ray_args += [f"--num-cpus={self._ray_num_cpus}"]
-        ray_args += ["--block"]
+        ray_args_str = ["start"]
+        ray_args_str += [f"--redis-password={self._ray_password}"]
+        ray_args_str += ["--block"]
+        delete_elements(self._ray_args, ["block", "redis-password", "start", "head"])
+        for key in self._ray_args:
+            ray_args_str += [f"--{key}={self._ray_args[key]}"]
         if self._launcher == 'slurm':
-            self.run_settings = self._build_srun_settings(ray_args)
+            self.run_settings = self._build_srun_settings(ray_args_str)
         elif self._launcher == 'pbs':
-            self.run_settings = self._build_pbs_settings(ray_args)
+            self.run_settings = self._build_pbs_settings(ray_args_str)
         elif self._launcher == 'local':
             raise SSUnsupportedError("Ray workers cannot be launched locally.")
         else:
@@ -351,26 +369,26 @@ class RayWorker(Model):
         self.run_settings.set_tasks_per_node(1)
 
     def _build_srun_settings(self, ray_args):
-        batch_args = self._run_args
-        delete_elements(batch_args, ["nodes", "ntasks-per-node"])
+        delete_elements(self._batch_args, ["nodes", "ntasks-per-node"])
 
         if self.batch:
             self.batch_settings = SbatchSettings(
-                nodes=self._workers, time=self._time, batch_args=batch_args
+                nodes=self._workers, time=self._time, batch_args=self._batch_args
             )
-        run_args = batch_args.copy()
-        run_args["unbuffered"] = None
+        
+        self._run_args["unbuffered"] = None
         if not self.batch and self._alloc is None:
-            run_args["overcommit"] = None
+            self._run_args["overcommit"] = None
         srun_settings =  SrunSettings("ray", exe_args=" ".join(ray_args),
-                                      run_args=run_args, expand_exe=False,
+                                      run_args=self._run_args, expand_exe=False,
                                       alloc=self._alloc)
         return srun_settings
 
     def _build_pbs_settings(self, ray_args):
-        batch_args = self._run_args
         if self.batch:
-            self.batch_settings = QsubBatchSettings(nodes=self._workers, ncpus=1, time=self._time)
+            self.batch_settings = QsubBatchSettings(
+                nodes=self._workers, batch_args=self._batch_args, ncpus=1, time=self._time
+            )
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("ray", exe_args=" ".join(ray_args),
                                        run_args=self._run_args, expand_exe=False)
