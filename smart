@@ -130,18 +130,15 @@ def pip_install_torch(device="cpu", verbose=False):
     cmd = " ".join(cmd)
 
     print("Installing Torch...")
-    if verbose:
-        subprocess.check_call(cmd, shell=True)
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    returncode = int(proc.returncode)
+    if returncode != 0:
+        error = f"Torch backend installation failed with exitcode {returncode}\n"
+        error += err.decode("utf-8")
+        raise SetupError(error)
     else:
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = proc.communicate()
-        returncode = int(proc.returncode)
-        if returncode != 0:
-            error = f"Torch backend installation failed with exitcode {returncode}\n"
-            error += err.decode("utf-8")
-            raise SetupError(error)
-        else:
-            print(f"Torch {TORCH_VERSION} installed successfully")
+        print(f"Torch {TORCH_VERSION} installed successfully")
 
 
 def colorize(string, color, bold=False, highlight=False):
