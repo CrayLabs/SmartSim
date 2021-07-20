@@ -85,7 +85,7 @@ def get_logger(name=None, log_level=None):
             user_log_level = CONFIG.log_level
             if user_log_level not in ("developer"):
                 name = "SmartSim"
-        except SSConfigError:
+        except SSConfigError:  # pragma: no cover
             name = "SmartSim"
     logger = logging.getLogger(name)
     if log_level:

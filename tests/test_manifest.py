@@ -3,11 +3,11 @@ from copy import deepcopy
 import pytest
 
 from smartsim import Experiment
+from smartsim.control import Manifest
 from smartsim.database import Orchestrator
 from smartsim.ray import RayCluster
 from smartsim.error import SmartSimError
 from smartsim.settings import RunSettings
-from smartsim.utils.entityutils import separate_entities
 
 # ---- create entities for testing --------
 
@@ -21,29 +21,38 @@ ray_cluster =  RayCluster(name="ray-cluster", workers=1, launcher='pbs')
 
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
+orc_1.name = "orc2"
+model_no_name = exp.create_model(name=None, run_settings=rs)
 
 
 def test_separate():
-    ent, ent_list, _orc, rc = separate_entities([model, ensemble, orc, ray_cluster])
-    assert ent[0] == model
-    assert ent_list[0] == ensemble
-    assert _orc == orc
-    assert rc[0] == ray_cluster
+    manifest = Manifest(model, ensemble, orc)
+    assert manifest.models[0] == model
+    assert len(manifest.models) == 1
+    assert manifest.ensembles[0] == ensemble
+    assert len(manifest.ensembles) == 1
+    assert manifest.db == orc
+
+
+def test_no_name():
+    with pytest.raises(AttributeError):
+        manifest = Manifest(model_no_name)
 
 
 def test_two_orc():
     with pytest.raises(SmartSimError):
-        _, _, _orc, _ = separate_entities([orc, orc_1])
+        manifest = Manifest(orc, orc_1)
+        manifest.db
 
 
 def test_separate_type():
-    with pytest.raises(AttributeError):
-        _, _, _, _ = separate_entities([1, 2, 3, 4])
+    with pytest.raises(TypeError):
+        manifest = Manifest([1, 2, 3])
 
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        _, _, _, _ = separate_entities([model, model_2])
+        manifest = Manifest(model, model_2)
 
 
 def test_corner_case():
@@ -56,4 +65,4 @@ def test_corner_case():
 
     p = Person()
     with pytest.raises(TypeError):
-        _, _, _, _ = separate_entities([p])
+        manifest = Manifest(p)
