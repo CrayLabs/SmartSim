@@ -121,12 +121,14 @@ def pip_install_torch(device="cpu", verbose=False):
     if sys.platform == "linux" and device == "cpu":
         cmd = ["pip", "install", f"torch=={TORCH_VERSION}+cpu",
                "-f", "https://download.pytorch.org/whl/torch_stable.html"]
+        cmd.append(f"torchvision=={TORCHVISION_VERSION}+cpu")
+
     # otherwise just use the version downloaded by pip
     else:
         cmd = ["pip", "install", f"torch=={TORCH_VERSION}"]
+        cmd.append(f"torchvision=={TORCHVISION_VERSION}")
 
     # also install torchvision
-    cmd.append(f"torchvision=={TORCHVISION_VERSION}")
     cmd = " ".join(cmd)
 
     print("Installing Torch...")

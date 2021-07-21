@@ -84,6 +84,7 @@ def test_torch_model_and_script(fileutils):
     except RedisReplyError as e:
         print("Caught Database error")
         print(e)
+        test_status = False
 
     finally:
         exp.stop(db)
