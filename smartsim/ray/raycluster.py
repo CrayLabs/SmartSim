@@ -256,7 +256,7 @@ class RayHead(Model):
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("python", exe_args=" ".join(ray_args),
                                        run_args=self._run_args)
-        aprun_settings.set_nodes(1)
+        aprun_settings.set_tasks(1)
 
         return aprun_settings
     
@@ -395,5 +395,5 @@ class RayWorker(Model):
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings("ray", exe_args=" ".join(ray_args),
                                        run_args=self._run_args, expand_exe=False)
-        
+        aprun_settings.set_tasks(1)
         return aprun_settings
