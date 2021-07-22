@@ -140,10 +140,45 @@ class JsrunSettings(RunSettings):
 
         This sets ``--bind``
 
-        :params binding: Binding, e.g. `packed:21`
+        :param binding: Binding, e.g. `packed:21`
         :type binding: str
         """
-        self.run_args["binding"] = binding
+        self.run_args["bind"] = binding
+
+    def set_stdout_file(self, filename):
+        """Set stdout file 
+        
+        This sets ``--stdio_stdout``
+        
+        :param filename: The name of the file used to write stdout
+        :type filename: str
+        """
+        self.run_args["stdio_stdout"] = filename
+
+    def set_stderr_file(self, filename):
+        """Set stderr file 
+        
+        This sets ``--stdio_stderr``
+        
+        :param filename: The name of the file used to write stderr
+        :type filename: str
+        """
+        self.run_args["stdio_stderr"] = filename
+
+    def format_env_vars(self):
+        """Format environment variables. Each variable needs
+        to be passed with ``--env``. If a variable is set to ``None``,
+        its value is propagated from the current environment.
+
+        :returns: formatted string to export variables
+        :rtype: str
+        """
+        for k, v in self.env_vars.items():
+            if v:
+                format_str += f"--env {k}={v} "
+            else:
+                format_str += f"--env {k} "
+        return format_str.rstrip(" ")
 
     def format_run_args(self):
         """Return a list of LSF formatted run arguments
@@ -154,6 +189,22 @@ class JsrunSettings(RunSettings):
         # args launcher uses
         args = []
         restricted = ["chdir"]
+        if self.mpmd:
+            restricted.extend(["tasks_per_rs",
+                              "np", "cpu_per_rs",
+                              "gpu_per_rs", 
+                              "latency_priority",
+                              "memory_per_rs", 
+                              "nrs",
+                              "rs_per_host",
+                              "rs_per_socket",
+                              "appfile",
+                              "allocate_only", 
+                              "launch_node_task", 
+                              "use_reservation", 
+                              "use_resources", 
+                              "bind",
+                              "launch_distribution"])
 
         for opt, value in self.run_args.items():
             if opt not in restricted:
@@ -197,7 +248,8 @@ class BsubBatchSettings(BatchSettings):
         self.set_walltime(time)
         self.set_project(project)
         self.set_smts(smts)
-        self.expert_mode=False
+        self.expert_mode = False
+        self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
     def set_walltime(self, time):
         """Set the walltime

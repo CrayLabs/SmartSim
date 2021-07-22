@@ -104,13 +104,13 @@ class LSFLauncher(WLMLauncher):
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
-            # jsrun doesn't direct output for us.
+            # It seems that jsrun has difficulties channelling too many ouputs
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
-            )
+                )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:

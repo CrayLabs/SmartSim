@@ -78,7 +78,14 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        self._format_alloc_flags()
+        self.batch_settings._format_alloc_flags()
+
+        opts = self.batch_settings.format_batch_args()
+
+        # if self.batch_settings.expert_mode:
+        #     for opt in opts:
+        #         if opt in batch_settings.easy_options:
+        #             del batch_settings[arg]
 
         with open(batch_script, "w") as f:
             f.write("#!/bin/bash\n\n")
@@ -91,7 +98,7 @@ class BsubBatchStep(Step):
             f.write(f"#BSUB -J {self.name}\n")
 
             # add additional bsub options
-            for opt in self.batch_settings.format_batch_args():
+            for opt in opts:
                 f.write(f"#BSUB {opt}\n")
 
             for i, cmd in enumerate(self.step_cmds):
@@ -127,17 +134,18 @@ class JsrunStep(Step):
         :rtype: list[str]
         """
         jsrun = self.run_settings.run_command
-        jsrun_cmd = [jsrun, "--chdir", self.cwd]
 
-        if not self.run_settings.mpmd:
-            jsrun_cmd += self.run_settings.format_run_args()
+        output, error = self.get_output_files()
+
+        jsrun_cmd = [jsrun, "--chdir", self.cwd] # , "--stdio_stdout", output, "--stdio_stderr", error]
+
+        if self.run_settings.env_vars:
+            env_var_str = self.run_settings.format_env_vars()
+            jsrun_cmd += [env_var_str]
+
+        jsrun_cmd += self.run_settings.format_run_args()
         jsrun_cmd += self._build_exe()
 
-        # if its in a batch, redirect stdout to
-        # file in the cwd.
-        if self.run_settings.in_batch:
-            output = self.get_step_file(ending=".out")
-            jsrun_cmd += [">", output]
         return jsrun_cmd
 
     def _set_alloc(self):
@@ -176,7 +184,7 @@ class JsrunStep(Step):
     def _make_mpmd(self, executable, exe_args):
         """Build LSF multi-prog (MPMD) executable
 
-        Launch multiple programs on seperate SMTs on the same node using the
+        Launch multiple programs on separate cpus on the same node using the
         LSF --erf_input feature.
         """
         
@@ -198,6 +206,7 @@ class JsrunStep(Step):
                 e_args = " ".join(args)
                 f.write(f"app {app_id} : " +
                          " ".join((exe, e_args, "\n")))
+
                 app_id += 1
 
             f.write("\n")
@@ -233,4 +242,5 @@ class JsrunStep(Step):
 
                 f.write("}" + f" : app {app_id} \n")
                 app_id += 1
+
         return mpmd_file

@@ -26,6 +26,7 @@
 
 import os.path as osp
 import pickle
+from smartsim.database.lsfOrchestrator import LSFOrchestrator
 import threading
 import time
 
@@ -512,6 +513,7 @@ class Controller:
                     time.sleep(CONFIG.jm_interval)
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
                     self.stop_entity_list(orchestrator)
+                    print(statuses)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
                     raise SmartSimError(msg)

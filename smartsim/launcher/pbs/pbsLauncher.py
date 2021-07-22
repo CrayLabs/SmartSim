@@ -118,6 +118,9 @@ class PBSLauncher(WLMLauncher):
         if not step_id and step.managed:
             step_id = self._get_pbs_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
+
+        time.sleep(5)
+
         return step_id
 
     def stop(self, step_name):

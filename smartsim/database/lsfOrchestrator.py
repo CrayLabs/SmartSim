@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import time
+
 from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -145,8 +147,7 @@ class LSFOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         for host, db in zip(host_list, self.entities):
             db.set_host(host)
-            db.run_settings.set_hostlist([host])
-
+            
     def set_batch_arg(self, arg, value):
         """Set a Bsub batch argument the orchestrator should launch with
 
@@ -174,9 +175,8 @@ class LSFOrchestrator(Orchestrator):
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        project = kwargs.get("project", None)
         dph = kwargs.get("dpn", 1)
-        run_args = kwargs.get("run_args", {})
+        run_args = kwargs.get("run_args", {}).copy()
         host = kwargs.get("host", "*")
 
         if not "nrs" in run_args.keys():
@@ -185,16 +185,16 @@ class LSFOrchestrator(Orchestrator):
             run_args["rs_per_host"] = 1
         
         run_args["tasks_per_rs"] = 1
-        bind = run_args.get("cpu_per_rs", 1)
-        if bind=="ALL_CPUS":
-            bind = "42"
-        run_args["bind"] = f"packed:{bind}"
+        # bind = run_args.get("cpu_per_rs", 1)
+        # if bind == "ALL_CPUS":
+        #     bind = 42
 
         run_args["launch_distribution"] = "packed"
         run_settings = JsrunSettings(exe, exe_args, run_args=run_args)
-        if dph > 1:
-            # tell step to create a mpmd executable
-            run_settings.set_mpmd_args(smts_per_task=42//dph, host=host)
+        run_settings.set_binding("none")
+        # tell step to create a mpmd executable even if we only have one task
+        # because we need to specify the host
+        run_settings.set_mpmd_args(smts_per_task=42//dph, host=host)
         return run_settings
 
     def _initialize_entities(self, **kwargs):
@@ -235,9 +235,6 @@ class LSFOrchestrator(Orchestrator):
                     node_exe_args += self._get_cluster_args(db_node_name, next_port)
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
-
-            if dph == 1:
-                exe_args = exe_args[0]
 
             # host=db_id+1 because 0 is login node
             run_settings = self._build_run_settings(exe, exe_args, host=db_id+1, **kwargs)
