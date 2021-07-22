@@ -122,7 +122,7 @@ class RayCluster(EntityList):
                                           batch=self.batch,
                                           time=self._time)
             # Insert at first position, because we want this top be stopped first
-            self.entities.append(self.worker_model)
+            self.entities.insert(0, self.worker_model)
 
 
     def _get_ray_head_node_address(self):
@@ -215,13 +215,14 @@ class RayHead(Model):
         self.address = None
         self._batch = launcher!='local' and batch
         self._time = time
+        self._hosts = []
         
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
         
     @property
     def batch(self):
-        return self._launcher
+        return self._batch
     
     def _build_run_settings(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -230,7 +231,7 @@ class RayHead(Model):
         ray_args_str += [f"--redis-password={self._ray_password}"]
         delete_elements(self._ray_args, ["block", "redis-password", "start", "head"])
 
-        for key in self._ray_args:
+        for key in self._ray_args.keys():
             ray_args_str += [f"--{key}={self._ray_args[key]}"]
         
         if self._launcher == 'slurm':
@@ -260,7 +261,7 @@ class RayHead(Model):
         return aprun_settings
     
     def _build_srun_settings(self, ray_args):
-        self._batch_args["overcommit"] = None
+        # self._batch_args["overcommit"] = None
         delete_elements(self._batch_args, ["nodes", "ntasks-per-node"])
             
         if self.batch:
@@ -271,6 +272,8 @@ class RayHead(Model):
         delete_elements(self._run_args, ["oversubscribe"])
 
         self._run_args["unbuffered"] = None
+        if not self.batch and not self._alloc:
+            self._run_args["overcommit"] = None
         srun_settings = SrunSettings("python", exe_args=" ".join(ray_args),
                                      run_args=self._run_args, expand_exe=False,
                                      alloc=self._alloc)
@@ -380,6 +383,8 @@ class RayWorker(Model):
         srun_settings =  SrunSettings("ray", exe_args=" ".join(ray_args),
                                       run_args=self._run_args, expand_exe=False,
                                       alloc=self._alloc)
+        srun_settings.set_nodes(self._workers)
+        srun_settings.set_tasks_per_node(1)
         return srun_settings
 
     def _build_pbs_settings(self, ray_args):

@@ -116,6 +116,8 @@ class Experiment:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
+            for rc in stop_manifest.ray_clusters:
+                self._control.stop_entity_list(rc)
             orchestrator = stop_manifest.db
             if orchestrator:
                 self._control.stop_entity_list(orchestrator)
