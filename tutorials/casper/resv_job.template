@@ -30,9 +30,6 @@ SSDB="$(getent hosts ${head_host}-ib|awk '{print $1}'):$db_port"
 # This gets the external network
 #SSDB="$(getent hosts ${head_host}.ucar.edu |awk '{print $1}'):$db_port"
 export SSDB
-#./xmlchange JOB_QUEUE=$rsvname --subgroup case.test --force
-#./xmlchange JOB_WALLCLOCK_TIME=00:20:00 --subgroup case.test
-#./case.submit
 for i in `seq 1 $ensemble_size`;
 do
   client_id=$(qsub  -q $rsvname -v SSDB ./launch_client.sh)

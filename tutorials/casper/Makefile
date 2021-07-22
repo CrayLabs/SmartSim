@@ -1,17 +1,19 @@
-REDIS_HOME = $(HOME)/sandboxes/SmartRedis
-REDIS_SRC = $(REDIS_HOME)/src/fortran/client.F90 \
-	    $(REDIS_HOME)/src/fortran/dataset.F90 \
-	    $(REDIS_HOME)/src/fortran/fortran_c_interop.F90
+SMARTREDIS_FTN = $(SMARTREDIS_FSRC)/client.F90 \
+		 $(SMARTREDIS_FSRC)/dataset.F90 \
+		 $(SMARTREDIS_FSRC)/fortran_c_interop.F90
 
-REDIS_OBJ = client.o dataset.o fortran_c_interop.o
+SMARTREDIS_OBJ = client.o dataset.o fortran_c_interop.o
 MPIFC = mpif90
 
-smartredis_put_get_3D: smartredis_put_get_3D.F90 $(REDIS_OBJ)
-	$(MPIFC) $< -o $@ $(REDIS_OBJ) -L$(REDIS_HOME)/install/lib -lsmartredis -Wl,-rpath $(REDIS_HOME)/install/lib
+smartredis_put_get_3D: smartredis_put_get_3D.F90 $(SMARTREDIS_OBJ)
+	$(MPIFC) $< -o $@ $(SMARTREDIS_OBJ) -L$(SMARTREDIS_LIB) -lsmartredis -Wl,-rpath $(SMARTREDIS_LIB)
 
-%.o : $(REDIS_HOME)/src/fortran/%.F90
-	$(MPIFC) $< -c -o $@ -I $(REDIS_HOME)/install/include
+%.o : $(SMARTREDIS_FSRC)/%.F90
+	$(MPIFC) $< -c -o $@ -I $(SMARTREDIS_INCLUDE)
 
 
 client.o: dataset.o
 dataset.o: fortran_c_interop.o
+
+clean:
+	$(RM) *.o *.mod

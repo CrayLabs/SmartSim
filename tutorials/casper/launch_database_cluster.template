@@ -25,9 +25,6 @@ from smartsim.database import PBSOrchestrator
 Launch a distributed, in memory database cluster and use the
 SmartRedis python client to send and recieve some numpy arrays.
 
-This example runs in an interactive allocation with at least three
-nodes and 1 processor per node.
-
 i.e. qsub -l select=3:ncpus=1 -l walltime=00:10:00 -A <account> -q premium -I
 """
 
@@ -44,7 +41,7 @@ def collect_db_hosts(num_hosts):
                 host = line.split(".")[0]
                 hosts.append(host)
     else:
-        raise Exception("could not parse interactive allocation nodes from PBS_NODEFILE")
+        raise Exception("could not parse allocation nodes from PBS_NODEFILE")
 
     # account for mpiprocs causing repeats in PBS_NODEFILE
     hosts = list(set(hosts))
@@ -67,7 +64,7 @@ def launch_cluster_orc(exp, db_hosts, port):
     # pass in objects to make dirs for
     exp.generate(db, overwrite=True)
 
-    # start the database on interactive allocation
+    # start the database within the reservation allocation
     exp.start(db, block=True)
 
     # get the status of the database

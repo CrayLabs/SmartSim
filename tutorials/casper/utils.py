@@ -5,10 +5,9 @@ def _convert_to_fd(filearg, from_dir, mode="a"):
 
     return open(filearg, mode)
 
-_hack=object()
 
 def run_cmd(cmd, input_str=None, from_dir=None, verbose=None,
-            arg_stdout=_hack, arg_stderr=_hack, env=None,
+            arg_stdout=subprocess.PIPE, arg_stderr=subprocess.PIPE, env=None,
             combine_output=False, timeout=None, executable=None):
     """
     Wrapper around subprocess to make it much more convenient to run shell commands
@@ -18,13 +17,11 @@ def run_cmd(cmd, input_str=None, from_dir=None, verbose=None,
     """
 
     # Real defaults for these value should be subprocess.PIPE
-    if arg_stdout is _hack:
-        arg_stdout = subprocess.PIPE
-    elif isinstance(arg_stdout, str):
+    if isinstance(arg_stdout, str):
         arg_stdout = _convert_to_fd(arg_stdout, from_dir)
 
-    if arg_stderr is _hack:
-        arg_stderr = subprocess.STDOUT if combine_output else subprocess.PIPE
+    if combine_output:
+        arg_stderr = subprocess.STDOUT 
     elif isinstance(arg_stderr, str):
         arg_stderr = _convert_to_fd(arg_stdout, from_dir)
 
