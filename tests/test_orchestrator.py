@@ -69,4 +69,4 @@ def test_catch_local_db_errors():
 
     # MPMD local orchestrator not allowed
     with pytest.raises(SmartSimError):
-        db = Orchestrator(dpn=2)
+        db = Orchestrator(db_per_host=2)
