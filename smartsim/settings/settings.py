@@ -164,6 +164,7 @@ class BatchSettings:
     def __init__(self, batch_cmd, batch_args=None):
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
+        self._preamble = []
 
     @property
     def batch_cmd(self):
@@ -200,6 +201,22 @@ class BatchSettings:
         :type command: str
         """
         self._batch_cmd = command
+
+    def add_preamble(self, lines):
+        """Add lines to the batch file preamble. The lines are just
+        written (unmodified) at the beginning of the batch file
+        (after the WLM directives) and can be used to e.g.
+        start virtual environments before running the executables.
+
+        :param line: lines to add to preamble.
+        :type line: str or list[str]
+        """
+        if isinstance(lines, str):
+            self._preamble += [lines]
+        elif isinstance(lines, list):
+            self._preamble += lines
+        else:
+            raise TypeError
 
     def __str__(self):
         string = f"Batch Command: {self._batch_cmd}\n"

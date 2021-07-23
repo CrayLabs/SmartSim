@@ -84,6 +84,9 @@ class QsubBatchStep(Step):
             for opt in self.batch_settings.format_batch_args():
                 f.write(f"#PBS {opt}\n")
 
+            for cmd in self.batch_settings._preamble:
+                f.write(f"{cmd}\n")
+
             for i, cmd in enumerate(self.step_cmds):
                 f.write("\n")
                 f.write(f"{' '.join((cmd))} &\n")

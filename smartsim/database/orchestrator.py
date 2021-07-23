@@ -24,24 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import os.path as osp
+import itertools
+import multiprocessing as mp
 import socket
-import sys
 import time
 from os import getcwd
 
 import numpy as np
 from smartredis import Client
-from smartredis.error import RedisReplyError
+from smartredis.error import RedisConnectionError, RedisReplyError
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSConfigError
+from ..error import SmartSimError
 from ..launcher.util.shell import execute_cmd
 from ..settings.settings import RunSettings
 from ..utils import get_logger
-from ..utils.helpers import expand_exe_path, get_env
 
 logger = get_logger(__name__)
 
@@ -99,7 +97,6 @@ class Orchestrator(EntityList):
         :return: hostnames
         :rtype: list[str]
         """
-        # TODO test if active?
         if not self._hosts:
             self._hosts = self._get_db_hosts()
         return self._hosts
@@ -118,8 +115,6 @@ class Orchestrator(EntityList):
 
         :raises SmartSimError: if cluster creation fails
         """
-        # TODO check for cluster already being created.
-        # TODO do non-cluster status check on each instance
         ip_list = []
         for host in self.hosts:
             ip = get_ip_from_host(host)
@@ -157,7 +152,6 @@ class Orchestrator(EntityList):
             raise SmartSimError("Database is not active") from e
 
         address = ":".join((host, str(port)))
-        client = Client(address=address, cluster=True)
 
         trials = 10
         logger.debug("Beginning database cluster status check...")
@@ -165,16 +159,62 @@ class Orchestrator(EntityList):
             # wait for cluster to spin up
             time.sleep(2)
             try:
+                # init new client each time so if it fails we dont
+                # throw a connection error
+                client = Client(address=address, cluster=True)
+
                 client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
                 receive_tensor = client.get_tensor("cluster_test")
                 logger.debug("Cluster status verified")
-                return
-            except RedisReplyError:
+                break
+            except (RedisReplyError, RedisConnectionError):
                 logger.debug("Cluster still spinning up...")
                 time.sleep(5)
                 trials -= 1
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
+
+    def get_address(self):
+        """Return database addresses
+
+        :return: addresses
+        :rtype: list[str]
+
+        :raises SmartSimError: If database address cannot be found
+        """
+        if not self._hosts:
+            raise SmartSimError("Could not find database address")
+        if len(self._hosts) > 1:
+            self.check_cluster_status()
+        elif not self.is_active():
+            raise SmartSimError("Database is not active")
+        addresses = []
+        for host, port in itertools.product(self._hosts, self.ports):
+            addresses.append(":".join((host, str(port))))
+        return addresses
+
+    def is_active(self):
+        """Check if database is running
+
+        :returns: True if database is active, False otherwise
+        :rtype: bool
+        """
+        if not self._hosts:
+            return False
+        host = self._hosts[0]
+        port = self.ports[0]
+        address = ":".join((host, str(port)))
+        active = True
+        try:
+            client_thread = ClientThread(address, cluster=False)
+            client_thread.start()
+            client_thread.join()
+            if client_thread.exitcode != 0:
+                active = False
+        except (mp.ProcessError):
+            active = False
+
+        return active
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
@@ -248,6 +288,20 @@ class Orchestrator(EntityList):
             else:
                 hosts.extend(dbnode.hosts)
         return hosts
+
+
+# Hack to avoid a bug in SmartRedis 1.1 where
+# client will segfault because of a uncaught error
+class ClientThread(mp.Process):
+    def __init__(self, address, cluster=False):
+        mp.Process.__init__(self, name="ClientThread")
+        self.address = address
+        self.cluster = cluster
+
+    def run(self):
+        client = Client(self.address, cluster=self.cluster)
+        client.put_tensor("db_test", np.array([1]))
+        receive_tensor = client.get_tensor("db_test")
 
 
 def get_ip_from_host(host):
