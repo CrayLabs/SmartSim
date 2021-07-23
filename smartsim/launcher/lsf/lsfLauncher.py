@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import os
+import psutil
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
@@ -147,7 +147,7 @@ class LSFLauncher(WLMLauncher):
         """
         time.sleep(interval)
         step_id = "unassigned"
-        username = os.environ["USER"]
+        username = psutil.Process.username()
         while trials > 0:
             output, _ = bjobs(["-w", "-u", username])
             step_id = parse_step_id_from_bjobs(output, step.name)

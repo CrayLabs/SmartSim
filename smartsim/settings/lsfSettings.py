@@ -53,19 +53,19 @@ class JsrunSettings(RunSettings):
         self.smts_per_task = 4
         self.mpmd = False
 
-    def set_mpmd_args(self, host, smts_per_task):
-        """Set arguments used in ERF file, such as execution host and SMTs
+    def set_mpmd_args(self, hosts, smts_per_task):
+        """Set arguments used in ERF file, such as execution hosts and SMTs
         per task. This function also sets MPMD flag to ``True``.
 
-        :param host: execution host(s) id(s)
-        :type host: str
+        :param host: execution host ids
+        :type host: list[str]
         :param smts_per_task: SMTs per task
         :type smts_per_task: int
         """
 
         self.mpmd = True
         self.smts_per_task = smts_per_task
-        self.host = str(host)
+        self.hosts = hosts
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
@@ -173,11 +173,12 @@ class JsrunSettings(RunSettings):
         :returns: formatted string to export variables
         :rtype: str
         """
+        format_str = ""
         for k, v in self.env_vars.items():
             if v:
-                format_str += f"--env {k}={v} "
+                format_str += f"-E {k}={v} "
             else:
-                format_str += f"--env {k} "
+                format_str += f"-E {k} "
         return format_str.rstrip(" ")
 
     def format_run_args(self):

@@ -79,6 +79,17 @@ class Orchestrator(EntityList):
         super().__init__("orchestrator", self.path, port=port, **kwargs)
 
     @property
+    def num_shards(self):
+        """Return the number of DB shards contained in the orchestrator.
+        This might differ from the number of ``DBNode`` objects, as each
+        ``DBNode`` may start more than one shard (e.g. with MPMD).
+
+        :returns: num_shards
+        :rtype: int
+        """
+        return len(self)
+
+    @property
     def hosts(self):
         """Return the hostnames of orchestrator instance hosts
 
@@ -232,7 +243,10 @@ class Orchestrator(EntityList):
     def _get_db_hosts(self):
         hosts = []
         for dbnode in self.entities:
-            hosts.append(dbnode.host)
+            if not dbnode._multihost:
+                hosts.append(dbnode.host)
+            else:
+                hosts.extend(dbnode.hosts)
         return hosts
 
 

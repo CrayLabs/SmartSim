@@ -24,8 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-
 from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -50,7 +48,7 @@ class LSFOrchestrator(Orchestrator):
         **kwargs,
     ):
 
-        """Initialize an Orchestrator reference for Slurm based systems
+        """Initialize an Orchestrator reference for LSF based systems
 
         The orchestrator launches as a batch by default. If 
         batch=False, at launch, the orchestrator will look for an interactive
@@ -177,7 +175,7 @@ class LSFOrchestrator(Orchestrator):
     def _build_run_settings(self, exe, exe_args, **kwargs):
         dph = kwargs.get("dpn", 1)
         run_args = kwargs.get("run_args", {}).copy()
-        host = kwargs.get("host", "*")
+        hosts = kwargs.get("hosts", "*")
 
         if not "nrs" in run_args.keys():
             run_args["nrs"] = 1
@@ -185,16 +183,13 @@ class LSFOrchestrator(Orchestrator):
             run_args["rs_per_host"] = 1
         
         run_args["tasks_per_rs"] = 1
-        # bind = run_args.get("cpu_per_rs", 1)
-        # if bind == "ALL_CPUS":
-        #     bind = 42
 
         run_args["launch_distribution"] = "packed"
         run_settings = JsrunSettings(exe, exe_args, run_args=run_args)
         run_settings.set_binding("none")
         # tell step to create a mpmd executable even if we only have one task
         # because we need to specify the host
-        run_settings.set_mpmd_args(smts_per_task=42//dph, host=host)
+        run_settings.set_mpmd_args(smts_per_task=42//dph, hosts=hosts)
         return run_settings
 
     def _initialize_entities(self, **kwargs):
@@ -212,8 +207,9 @@ class LSFOrchestrator(Orchestrator):
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
 
+        exe_args = []
+        hosts = []
         for db_id in range(db_nodes//dph):
-            db_node_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
             if self.force_port_increment:
@@ -221,26 +217,33 @@ class LSFOrchestrator(Orchestrator):
             else:
                 base_port = int(port)
             ports = []
-            exe_args = []
             for port_offset in range(dph):
                 next_port = base_port + port_offset
+                db_shard_name = "_".join((self.name, str(db_id*dph+port_offset)))
                 node_exe_args = [
                     db_conf,
                     ai_module,
                     ip_module,
                     "--port",
                     str(next_port),
+                    "--logfile",
+                    db_shard_name+".out"
                 ]
                 if cluster:
-                    node_exe_args += self._get_cluster_args(db_node_name, next_port)
+                    node_exe_args += self._get_cluster_args(db_shard_name, next_port)
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
 
-            # host=db_id+1 because 0 is login node
-            run_settings = self._build_run_settings(exe, exe_args, host=db_id+1, **kwargs)
-            node = DBNode(db_node_name, self.path, run_settings, ports)
-            self.entities.append(node)
+                # host=db_id+1 because 0 is login node
+                hosts.append(db_id+1)
+
+        run_settings = self._build_run_settings(exe, exe_args, hosts=hosts, **kwargs)
+        node = DBNode(self.name, self.path, run_settings, ports)
+        node._multihost = True
+        node._shard_ids = range(db_nodes)
+        self.entities.append(node)
         self.ports = ports
 
-    def __len__(self):
+    @property
+    def num_shards(self):
         return self.db_nodes

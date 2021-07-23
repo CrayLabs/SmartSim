@@ -352,7 +352,7 @@ class Controller:
         self._jobs.set_db_hosts(orchestrator)
 
         # create the database cluster
-        if len(orchestrator) > 2:
+        if orchestrator.num_shards > 2:
             orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
@@ -450,7 +450,7 @@ class Controller:
         """
 
         if isinstance(self._launcher, LocalLauncher) and orchestrator:
-            if len(orchestrator) > 1:
+            if orchestrator.num_shards > 1:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases"
                 )

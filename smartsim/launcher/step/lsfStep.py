@@ -137,7 +137,7 @@ class JsrunStep(Step):
 
         output, error = self.get_output_files()
 
-        jsrun_cmd = [jsrun, "--chdir", self.cwd] # , "--stdio_stdout", output, "--stdio_stderr", error]
+        jsrun_cmd = [jsrun, "--chdir", self.cwd, "--stdio_stdout", output, "--stdio_stderr", error]
 
         if self.run_settings.env_vars:
             env_var_str = self.run_settings.format_env_vars()
@@ -184,17 +184,20 @@ class JsrunStep(Step):
     def _make_mpmd(self, executable, exe_args):
         """Build LSF multi-prog (MPMD) executable
 
-        Launch multiple programs on separate cpus on the same node using the
-        LSF --erf_input feature.
+        Launch multiple programs on separate cpus on multiple hosts using the
+        LSF --erf_input feature. The number of apps must be divisible
+        by the number of hosts in run_settings 
         """
         
         mpmd_file = self.get_step_file(ending=".mpmd")
         launch_args = list(product(executable, exe_args))
 
-        if self.run_settings.host:
-            host = self.run_settings.host
+        if self.run_settings.hosts:
+            hosts = self.run_settings.hosts
         else:
-            host = "*"
+            hosts = ["*"]
+
+        tasks_per_host = len(launch_args)//len(hosts)
 
         with open(mpmd_file, "w+") as f:
             #if host == "*" or int(host) == 0:
@@ -206,7 +209,6 @@ class JsrunStep(Step):
                 e_args = " ".join(args)
                 f.write(f"app {app_id} : " +
                          " ".join((exe, e_args, "\n")))
-
                 app_id += 1
 
             f.write("\n")
@@ -216,16 +218,21 @@ class JsrunStep(Step):
             
             smts_per_task = self.run_settings.smts_per_task
 
-            assigned_smts = 0
-            assigned_gpus = 0
             app_id = 0
-
-            for exe, args in launch_args:
+            
+            old_host = None
+            for taskid , launch_arg in enumerate(launch_args):
+                exe, args = launch_arg
+                host = hosts[taskid//tasks_per_host]
+                if host != old_host:
+                    assigned_smts = 0
+                    assigned_gpus = 0
+                old_host = host
                 f.write(f"{ntasks} : ")
                 f.write("{")
                 f.write( f"host: {host}; cpu: ")
                 smt_sets = []
-                for task in range(ntasks):
+                for _ in range(ntasks):
                     smt_set = "{" + f"{assigned_smts}:{smts_per_task}" + "}"
                     smt_sets.append(smt_set)
                     assigned_smts += smts_per_task
@@ -243,4 +250,5 @@ class JsrunStep(Step):
                 f.write("}" + f" : app {app_id} \n")
                 app_id += 1
 
+        import sys
         return mpmd_file
