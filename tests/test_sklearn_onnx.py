@@ -13,9 +13,14 @@ from smartredis import Client
 from smartredis.error import RedisReplyError
 
 try:
-    import sklearn
-    import onnxmltools
-    import skl2onnx
+    from sklearn.model_selection import train_test_split
+    from sklearn.datasets import load_iris
+    from sklearn.cluster import KMeans
+    from sklearn.linear_model import LinearRegression
+
+    from skl2onnx import  to_onnx
+    from sklearn.ensemble import RandomForestRegressor
+
 except ImportError:
     pass
 
@@ -27,13 +32,6 @@ pytestmark = pytest.mark.skipif(
     reason="requires scikit-learn, onnxmltools, skl2onnx",
 )
 
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
-from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression
-
-from skl2onnx import  to_onnx
-from sklearn.ensemble import RandomForestRegressor
 
 def build_lin_reg():
     x = np.array([[1.0], [2.0], [6.0], [4.0], [3.0], [5.0]]).astype(np.float32)
