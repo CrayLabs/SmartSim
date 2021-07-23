@@ -95,12 +95,12 @@ class JsrunSettings(RunSettings):
         `{"host": "1", "cpu": "{0:21}, {21:21}", "gpu": "*"}`
         can be used to specify rank (or rank_count), hosts, cpus, gpus,
         and memory.
-        The key `rank` is used to give specific ranks, as in 
+        The key `rank` is used to give specific ranks, as in
         `{"rank": "1, 2, 5"}`, while the key `rank_count` is used to specify
         the count only, as in `{"rank_count": "3"}`. If both are specified,
         only `rank` is used.
 
-        :param hosts: dictionary of resources               
+        :param hosts: dictionary of resources
         :type hosts: dict[str,str]
         """
         self.erf_sets = erf_sets
@@ -230,22 +230,35 @@ class JsrunSettings(RunSettings):
         if self.use_erf or "erf_input" in self.run_args.keys():
             restricted.extend(
                 [
-                    "tasks_per_rs", "a",
-                    "np", "p",
-                    "cpu_per_rs", "c"
-                    "gpu_per_rs", "g"
-                    "latency_priority", "l",
-                    "memory_per_rs", "m",
-                    "nrs", "n",
-                    "rs_per_host", "r",
-                    "rs_per_socket", "K",
-                    "appfile", "f",
-                    "allocate_only", "A",
-                    "launch_node_task", "H",
-                    "use_reservation", "J",
+                    "tasks_per_rs",
+                    "a",
+                    "np",
+                    "p",
+                    "cpu_per_rs",
+                    "c" "gpu_per_rs",
+                    "g" "latency_priority",
+                    "l",
+                    "memory_per_rs",
+                    "m",
+                    "nrs",
+                    "n",
+                    "rs_per_host",
+                    "r",
+                    "rs_per_socket",
+                    "K",
+                    "appfile",
+                    "f",
+                    "allocate_only",
+                    "A",
+                    "launch_node_task",
+                    "H",
+                    "use_reservation",
+                    "J",
                     "use_resources",
-                    "bind", "b",
-                    "launch_distribution", "d"
+                    "bind",
+                    "b",
+                    "launch_distribution",
+                    "d",
                 ]
             )
 
@@ -262,12 +275,12 @@ class JsrunSettings(RunSettings):
                         args += ["=".join((prefix + opt, str(value)))]
         return args
 
-
     def __str__(self):
         string = super().__str__()
         if self.use_erf:
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
+
 
 class BsubBatchSettings(BatchSettings):
     def __init__(

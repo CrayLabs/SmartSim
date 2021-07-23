@@ -1,5 +1,6 @@
-import pytest
 import time
+
+import pytest
 
 from smartsim import Experiment, constants
 from smartsim.database import LSFOrchestrator

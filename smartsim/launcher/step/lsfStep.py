@@ -189,8 +189,7 @@ class JsrunStep(Step):
             return cmd
 
     def _make_erf(self):
-        """Build LSF's Explicit Resource File
-        """
+        """Build LSF's Explicit Resource File"""
         erf_file = self.get_step_file(ending=".mpmd")
 
         # Find launch_distribution command
@@ -203,7 +202,9 @@ class JsrunStep(Step):
         if not distr_line:
             for jrs in self.run_settings.erf:
                 if "launch_distribution" in jrs.run_args.keys():
-                    distr_line = "launch_distribution : " + jrs.run_args["launch_distribution"]
+                    distr_line = (
+                        "launch_distribution : " + jrs.run_args["launch_distribution"]
+                    )
                 elif "d" in jrs.run_args.keys():
                     distr_line = "launch_distribution : " + jrs.run_args["d"]
                 if distr_line:
@@ -216,10 +217,10 @@ class JsrunStep(Step):
             for line in preamble_lines:
                 f.write(line)
             f.write("\n")
-            
+
             # First we list the apps
             for app_id, jrs in enumerate(self.run_settings.erf):
-                f.write(f"app {app_id} : " + " ".join(jrs.exe + jrs.exe_args ) + "\n")
+                f.write(f"app {app_id} : " + " ".join(jrs.exe + jrs.exe_args) + "\n")
             f.write("\n")
 
             # Then we list the resources
@@ -244,11 +245,11 @@ class JsrunStep(Step):
                     rs_line += "cpu: * "
 
                 if "gpu" in jrs.erf_sets.keys():
-                    rs_line += "; gpu: " + jrs.erf_sets["gpu"] 
+                    rs_line += "; gpu: " + jrs.erf_sets["gpu"]
 
                 if "memory" in jrs.erf_sets.keys():
-                    rs_line += "; memory: " + jrs.erf_sets["memory"] 
-                
+                    rs_line += "; memory: " + jrs.erf_sets["memory"]
+
                 rs_line += "}: app " + str(app_id) + "\n"
 
                 f.write(rs_line)

@@ -129,7 +129,7 @@ class LSFOrchestrator(Orchestrator):
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
-        for db in self.entities:    
+        for db in self.entities:
             db.set_hosts(host_list)
 
     def set_batch_arg(self, arg, value):
@@ -176,15 +176,19 @@ class LSFOrchestrator(Orchestrator):
                 assigned_gpus = 0
             old_host = host
 
-            erf_sets = {"rank_count": "1",
-                       "host": str(1+host),
-                       "cpu": "{"+f"{assigned_smts}:{self.cpus_per_shard}"+"}"}
+            erf_sets = {
+                "rank_count": "1",
+                "host": str(1 + host),
+                "cpu": "{" + f"{assigned_smts}:{self.cpus_per_shard}" + "}",
+            }
 
             assigned_smts += self.cpus_per_shard
             if self.gpus_per_shard > 1:
-                erf_sets["gpu"] = "{"+f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}"+"}"
+                erf_sets["gpu"] = (
+                    "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
+                )
             elif self.gpus_per_shard > 0:
-                erf_sets["gpu"] = "{"+f"{assigned_gpus}"+"}"
+                erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
             assigned_gpus += self.gpus_per_shard
 
             run_settings.set_erf_sets(erf_sets)
