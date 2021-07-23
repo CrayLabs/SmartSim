@@ -214,15 +214,15 @@ class Config:
             return 15  # 15 seconds by default
 
     @property
-    def test_project(self):
+    def test_account(self):
         try:
-            if "SMARTSIM_TEST_PROJECT" in os.environ:
-                return os.environ["SMARTSIM_TEST_PROJECT"]
+            if "SMARTSIM_TEST_ACCOUNT" in os.environ:
+                return os.environ["SMARTSIM_TEST_ACCOUNT"]
             else:
-                project = self.conf["test"]["project"]
-                return project
+                account = self.conf["test"]["account"]
+                return account
         except KeyError:
-            return ""  # no project by default
+            return ""  # no account by default
 
 
 # initialize config instance

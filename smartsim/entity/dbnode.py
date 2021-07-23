@@ -71,6 +71,9 @@ class DBNode(SmartSimEntity):
     def set_host(self, host):
         self._host = str(host)
 
+    def set_hosts(self, hosts):
+        self._hosts = [str(host) for host in hosts]
+
     def remove_stale_dbnode_files(self):
         """This function removes the .conf, .err, and .out files that
         have the same names used by this dbnode that may have been

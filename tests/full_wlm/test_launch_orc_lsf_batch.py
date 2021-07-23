@@ -19,7 +19,7 @@ def test_launch_lsf_orc(fileutils, wlmutils):
 
     # batch = False to launch on existing allocation
     orc = LSFOrchestrator(
-        6780, batch=True, project=wlmutils.get_test_project(), time="00:05"
+        6780, batch=True, project=wlmutils.get_test_account(), time="00:05", smts=1
     )
     orc.set_path(test_dir)
 
@@ -47,9 +47,9 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
         6780,
         db_nodes=3,
         batch=True,
-        force_port_increment=True,
-        project=wlmutils.get_test_project(),
+        project=wlmutils.get_test_account(),
         time="00:05",
+        smts=1
     )
     orc.set_path(test_dir)
 
@@ -78,9 +78,9 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
         6780,
         db_nodes=3,
         batch=True,
-        force_port_increment=True,
-        project=wlmutils.get_test_project(),
+        project=wlmutils.get_test_account(),
         time="00:05",
+        smts=1
     )
     orc.set_path(test_dir)
 

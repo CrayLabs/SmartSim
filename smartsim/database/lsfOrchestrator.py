@@ -39,6 +39,8 @@ class LSFOrchestrator(Orchestrator):
         self,
         port=6379,
         db_nodes=1,
+        cpus_per_shard=4,
+        gpus_per_shard=1,
         batch=True,
         hosts=None,
         project=None,
@@ -61,8 +63,9 @@ class LSFOrchestrator(Orchestrator):
         enough resources are available on each host. Resource sets can be
         defined by providing ``run_args`` as argument.
 
-        LSFOrchestrator is launched with ``jsrun``
-        as launch binary.
+        LSFOrchestrator is launched with only one ``jsrun`` command
+        as launch binary, and a Explicit Resource File (ERF) which is
+        automatically generated.
 
         :param port: TCP/IP port
         :type port: int
@@ -76,35 +79,26 @@ class LSFOrchestrator(Orchestrator):
         :type project: str
         :param time: walltime for batch 'HH:MM' format
         :type time: str
-        :param db_per_host: number of database per host, defaults to 1
+        :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
         """
+        self.cpus_per_shard = cpus_per_shard
+        self.gpus_per_shard = gpus_per_shard
+
         super().__init__(
             port,
             db_nodes=db_nodes,
             batch=batch,
             run_command="jsrun",
-            dpn=db_per_host,
+            db_per_host=db_per_host,
             **kwargs,
         )
         self.db_nodes = db_nodes
         self.batch_settings = self._build_batch_settings(
-            db_nodes, batch, project, time, dpn=db_per_host, **kwargs
+            db_nodes, batch, project, time, db_per_host=db_per_host, **kwargs
         )
         if hosts:
             self.set_hosts(hosts)
-
-    def set_cpus(self, num_cpus):
-        """Set the number of CPUs available to each database shard
-
-        This effectively will determine how many cpus can be used for
-        compute threads, background threads, and network I/O.
-
-        :param num_cpus: number of cpus to set
-        :type num_cpus: int
-        """
-        for db in self:
-            db.run_settings.set_cpus_per_rs(num_cpus)
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -135,8 +129,8 @@ class LSFOrchestrator(Orchestrator):
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
-        for host, db in zip(host_list, self.entities):
-            db.set_host(host)
+        for db in self.entities:    
+            db.set_hosts(host_list)
 
     def set_batch_arg(self, arg, value):
         """Set a Bsub batch argument the orchestrator should launch with
@@ -157,32 +151,51 @@ class LSFOrchestrator(Orchestrator):
 
     def _build_batch_settings(self, db_nodes, batch, project, time, **kwargs):
         batch_settings = None
-        dph = kwargs.get("dpn", 1)
+        dph = kwargs.get("db_per_host", 1)
+        smts = kwargs.get("smts", 1)
         if batch:
             batch_settings = BsubBatchSettings(
-                nodes=db_nodes // dph, time=time, project=project
+                nodes=db_nodes // dph, time=time, project=project, smts=smts
             )
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        dph = kwargs.get("dpn", 1)
+        dph = kwargs.get("db_per_host", 1)
         run_args = kwargs.get("run_args", {}).copy()
-        hosts = kwargs.get("hosts", "*")
+        old_host = None
+        erf_rs = None
+        for shard_id, args in enumerate(exe_args):
+            host = shard_id // dph
+            run_args["launch_distribution"] = "packed"
+            run_settings = JsrunSettings(exe, args, run_args=run_args)
+            run_settings.set_binding("none")
+            # tell step to create a mpmd executable even if we only have one task
+            # because we need to specify the host
+            if host != old_host:
+                assigned_smts = 0
+                assigned_gpus = 0
+            old_host = host
 
-        if not "nrs" in run_args.keys():
-            run_args["nrs"] = 1
-        if not "rs_per_host" in run_args.keys():
-            run_args["rs_per_host"] = 1
+            erf_sets = {"rank_count": "1",
+                       "host": str(1+host),
+                       "cpu": "{"+f"{assigned_smts}:{self.cpus_per_shard}"+"}"}
 
-        run_args["tasks_per_rs"] = 1
+            assigned_smts += self.cpus_per_shard
+            if self.gpus_per_shard > 1:
+                erf_sets["gpu"] = "{"+f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}"+"}"
+            elif self.gpus_per_shard > 0:
+                erf_sets["gpu"] = "{"+f"{assigned_gpus}"+"}"
+            assigned_gpus += self.gpus_per_shard
 
-        run_args["launch_distribution"] = "packed"
-        run_settings = JsrunSettings(exe, exe_args, run_args=run_args)
-        run_settings.set_binding("none")
-        # tell step to create a mpmd executable even if we only have one task
-        # because we need to specify the host
-        run_settings.set_mpmd_args(smts_per_task=42 // dph, hosts=hosts)
-        return run_settings
+            run_settings.set_erf_sets(erf_sets)
+
+            if erf_rs:
+                erf_rs.make_erf(run_settings)
+            else:
+                run_settings.make_erf()
+                erf_rs = run_settings
+
+        return erf_rs
 
     def _initialize_entities(self, **kwargs):
         """Initialize DBNode instances for the orchestrator."""
@@ -191,7 +204,7 @@ class LSFOrchestrator(Orchestrator):
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        dph = kwargs.get("dpn", 1)
+        dph = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
@@ -200,15 +213,13 @@ class LSFOrchestrator(Orchestrator):
         ai_module = self._get_AI_module()
 
         exe_args = []
-        hosts = []
         for db_id in range(db_nodes // dph):
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
 
-            base_port = int(port)
             ports = []
             for port_offset in range(dph):
-                next_port = base_port + port_offset
+                next_port = int(port) + port_offset
                 db_shard_name = "_".join((self.name, str(db_id * dph + port_offset)))
                 node_exe_args = [
                     db_conf,
@@ -224,10 +235,7 @@ class LSFOrchestrator(Orchestrator):
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
 
-                # host=db_id+1 because 0 is login node
-                hosts.append(db_id + 1)
-
-        run_settings = self._build_run_settings(exe, exe_args, hosts=hosts, **kwargs)
+        run_settings = self._build_run_settings(exe, exe_args, **kwargs)
         node = DBNode(self.name, self.path, run_settings, ports)
         node._multihost = True
         node._shard_ids = range(db_nodes)

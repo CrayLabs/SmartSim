@@ -45,7 +45,7 @@ class SlurmOrchestrator(Orchestrator):
         account=None,
         time=None,
         alloc=None,
-        dpn=1,
+        db_per_host=1,
         **kwargs,
     ):
 
@@ -79,8 +79,8 @@ class SlurmOrchestrator(Orchestrator):
         :type time: str
         :param alloc: allocation to launch on, defaults to None
         :type alloc: str, optional
-        :param dpn: number of database per node (MPMD), defaults to 1
-        :type dpn: int, optional
+        :param db_per_host: number of database shards per system host (MPMD), defaults to 1
+        :type db_per_host: int, optional
         """
         super().__init__(
             port,
@@ -88,7 +88,7 @@ class SlurmOrchestrator(Orchestrator):
             batch=batch,
             run_command=run_command,
             alloc=alloc,
-            dpn=dpn,
+            db_per_host=db_per_host,
             **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
@@ -167,11 +167,11 @@ class SlurmOrchestrator(Orchestrator):
 
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
-            batch_args = {"ntasks-per-node": dpn}
+            batch_args = {"ntasks-per-node": db_per_host}
             batch_settings = SbatchSettings(
                 nodes=db_nodes, time=time, account=account, batch_args=batch_args
             )
@@ -189,30 +189,30 @@ class SlurmOrchestrator(Orchestrator):
 
     def _build_srun_settings(self, exe, exe_args, **kwargs):
         alloc = kwargs.get("alloc", None)
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         run_args = kwargs.get("run_args", {})
 
         # if user specified batch=False
         # also handles batch=False and alloc=False (alloc will be found by launcher)
         run_args["nodes"] = 1
-        run_args["ntasks"] = dpn
-        run_args["ntasks-per-node"] = dpn
+        run_args["ntasks"] = db_per_host
+        run_args["ntasks-per-node"] = db_per_host
         run_settings = SrunSettings(exe, exe_args, run_args=run_args, alloc=alloc)
-        if dpn > 1:
+        if db_per_host > 1:
             # tell step to create a mpmd executable
             run_settings.mpmd = True
         return run_settings
 
     def _build_mpirun_settings(self, exe, exe_args, **kwargs):
         alloc = kwargs.get("alloc", None)
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         if alloc:
             msg = (
                 "SlurmOrchestrator using OpenMPI cannot specify allocation to launch in"
             )
             msg += "\n User must launch in interactive allocation or as batch."
             logger.warning(msg)
-        if dpn > 1:
+        if db_per_host > 1:
             msg = "SlurmOrchestrator does not support multiple databases per node when launching with mpirun"
             raise SmartSimError(msg)
 
@@ -228,7 +228,7 @@ class SlurmOrchestrator(Orchestrator):
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
@@ -242,7 +242,7 @@ class SlurmOrchestrator(Orchestrator):
             # per node. also collect port range for dbnode
             ports = []
             exe_args = []
-            for port_offset in range(dpn):
+            for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
                 node_exe_args = [
                     db_conf,
@@ -256,8 +256,8 @@ class SlurmOrchestrator(Orchestrator):
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
 
-            # if only launching 1 dpn, we don't need a list of exe args lists
-            if dpn == 1:
+            # if only launching 1 db_per_host, we don't need a list of exe args lists
+            if db_per_host == 1:
                 exe_args = exe_args[0]
             run_settings = self._build_run_settings(exe, exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)

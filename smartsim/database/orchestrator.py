@@ -142,7 +142,7 @@ class Orchestrator(EntityList):
 
         # Ensure cluster has been setup correctly
         self.check_cluster_status()
-        logger.info(f"Database cluster created with {str(len(self))} shards")
+        logger.info(f"Database cluster created with {self.num_shards} shards")
 
     def check_cluster_status(self):  # cov-wlm
         """Check that a cluster is up and running
@@ -206,8 +206,8 @@ class Orchestrator(EntityList):
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
-        dpn = kwargs.get("dpn", 1)
-        if dpn > 1:
+        db_per_host = kwargs.get("db_per_host", 1)
+        if db_per_host > 1:
             raise SmartSimError(
                 "Local Orchestrator does not support multiple databases per node (MPMD)"
             )

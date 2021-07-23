@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from pprint import pformat
+
 from ..error import SSConfigError
 from ..utils.helpers import init_default
 from .settings import BatchSettings, RunSettings
@@ -48,24 +50,60 @@ class JsrunSettings(RunSettings):
             exe, exe_args, run_command="jsrun", run_args=run_args, env_vars=env_vars
         )
 
-        # Parameters needed for MPMD run
-        self.host = None
-        self.smts_per_task = 4
-        self.mpmd = False
+        # Parameters needed for ERF run
+        self.use_erf = False
+        self.erf_sets = {"host": "*", "cpu": "*", "ranks": "1"}
+        self.erf_preamble_lines = []
+        self.erf = []
 
-    def set_mpmd_args(self, hosts, smts_per_task):
-        """Set arguments used in ERF file, such as execution hosts and SMTs
-        per task. This function also sets MPMD flag to ``True``.
+    def make_erf(self, jsrun_settings=None):
+        """Make job a ERF job
 
-        :param host: execution host ids
-        :type host: list[str]
-        :param smts_per_task: SMTs per task
-        :type smts_per_task: int
+        This method will activate job execution through an ERF file.
+
+        Optionally, this method adds an instance of ``JsrunSettings`` to
+        the list of settings to be launched in the same ERF file.
+
+        :param aprun_settings: ``JsrunSettings`` instance, optional
+        :type aprun_settings: JsrunSettings
         """
+        self.use_erf = True
+        print(self.use_erf)
+        if len(self.erf) == 0:
+            self.erf.append(self)
+        if jsrun_settings:
+            self.erf.append(jsrun_settings)
 
-        self.mpmd = True
-        self.smts_per_task = smts_per_task
-        self.hosts = hosts
+    def set_erf_preamble(self, preamble_lines):
+        """Set preamble used in ERF file. Typical lines include
+        `oversubscribe-cpu : allow` or `overlapping-rs : allow`.
+        Can be used to set `launch_distribution`. If it is not present,
+        it will be inferred from the settings, or set to `packed` by
+        default.
+
+        :param preamble_lines: lines to put at the beginning of the ERF
+                               file.
+        :type preamble_lines: list[str]
+        """
+        self.erf_preamble_lines = preamble_lines
+
+    def set_erf_sets(self, erf_sets):
+        """Set resource sets used for ERF (SPMD or MPMD) steps.
+
+        ``erf_sets`` is a dictionary used to fill the ERF
+        line representing these settings, e.g.
+        `{"host": "1", "cpu": "{0:21}, {21:21}", "gpu": "*"}`
+        can be used to specify rank (or rank_count), hosts, cpus, gpus,
+        and memory.
+        The key `rank` is used to give specific ranks, as in 
+        `{"rank": "1, 2, 5"}`, while the key `rank_count` is used to specify
+        the count only, as in `{"rank_count": "3"}`. If both are specified,
+        only `rank` is used.
+
+        :param hosts: dictionary of resources               
+        :type hosts: dict[str,str]
+        """
+        self.erf_sets = erf_sets
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
@@ -75,7 +113,6 @@ class JsrunSettings(RunSettings):
         :param num_rs: Number of resource sets or `ALL_HOSTS`
         :type num_rs: int or str
         """
-
         if isinstance(num_rs, str):
             self.run_args["nrs"] = num_rs
         else:
@@ -189,26 +226,26 @@ class JsrunSettings(RunSettings):
         """
         # args launcher uses
         args = []
-        restricted = ["chdir"]
-        if self.mpmd:
+        restricted = ["chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"]
+        if self.use_erf or "erf_input" in self.run_args.keys():
             restricted.extend(
                 [
-                    "tasks_per_rs",
-                    "np",
-                    "cpu_per_rs",
-                    "gpu_per_rs",
-                    "latency_priority",
-                    "memory_per_rs",
-                    "nrs",
-                    "rs_per_host",
-                    "rs_per_socket",
-                    "appfile",
-                    "allocate_only",
-                    "launch_node_task",
-                    "use_reservation",
+                    "tasks_per_rs", "a",
+                    "np", "p",
+                    "cpu_per_rs", "c"
+                    "gpu_per_rs", "g"
+                    "latency_priority", "l",
+                    "memory_per_rs", "m",
+                    "nrs", "n",
+                    "rs_per_host", "r",
+                    "rs_per_socket", "K",
+                    "appfile", "f",
+                    "allocate_only", "A",
+                    "launch_node_task", "H",
+                    "use_reservation", "J",
                     "use_resources",
-                    "bind",
-                    "launch_distribution",
+                    "bind", "b",
+                    "launch_distribution", "d"
                 ]
             )
 
@@ -225,6 +262,12 @@ class JsrunSettings(RunSettings):
                         args += ["=".join((prefix + opt, str(value)))]
         return args
 
+
+    def __str__(self):
+        string = super().__str__()
+        if self.use_erf:
+            string += "\nERF settings: " + pformat(self.erf_sets)
+        return string
 
 class BsubBatchSettings(BatchSettings):
     def __init__(
@@ -345,7 +388,7 @@ class BsubBatchSettings(BatchSettings):
         :param num_tasks: number of tasks
         :type num_tasks: int
         """
-        self.run_args["n"] = int(num_tasks)
+        self.batch_args["n"] = int(num_tasks)
 
     def _format_alloc_flags(self):
         """Format ``alloc_flags`` checking if user already
@@ -355,14 +398,14 @@ class BsubBatchSettings(BatchSettings):
         if not self.smts:
             return
 
-        if not "alloc_flags" in self.run_args.keys():
-            self.run_args["alloc_flags"] = f"smt{self.smt}"
+        if not "alloc_flags" in self.batch_args.keys():
+            self.batch_args["alloc_flags"] = f"smt{self.smts}"
         else:
             # see if smt is in the flag, otherwise add it
-            flags = self.run_args["alloc_flags"].split()
+            flags = self.batch_args["alloc_flags"].split()
             if not any([flag.startswith("smt") for flag in flags]):
-                flags.append(f"smt{self.smt}")
-                self.run_args["alloc_flags"] = " ".join(flags)
+                flags.append(f"smt{self.smts}")
+                self.batch_args["alloc_flags"] = " ".join(flags)
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
