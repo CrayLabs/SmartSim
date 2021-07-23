@@ -431,6 +431,9 @@ class BsubBatchSettings(BatchSettings):
         self._format_alloc_flags()
 
         for opt, value in self.batch_args.items():
+            if self.expert_mode and opt in self.easy_settings:
+                continue
+
             prefix = "-"  # LSF only uses single dashses
 
             if not value:

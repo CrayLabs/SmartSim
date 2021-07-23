@@ -82,20 +82,15 @@ class BsubBatchStep(Step):
 
         opts = self.batch_settings.format_batch_args()
 
-        # if self.batch_settings.expert_mode:
-        #     for opt in opts:
-        #         if opt in batch_settings.easy_options:
-        #             del batch_settings[arg]
-
         with open(batch_script, "w") as f:
             f.write("#!/bin/bash\n\n")
             if self.batch_settings.walltime:
                 f.write(f"#BSUB -W {self.batch_settings.walltime}\n")
             if self.batch_settings.project:
                 f.write(f"#BSUB -P {self.batch_settings.project}\n")
+            f.write(f"#BSUB -J {self.name}\n")
             f.write(f"#BSUB -o {output}\n")
             f.write(f"#BSUB -e {error}\n")
-            f.write(f"#BSUB -J {self.name}\n")
 
             # add additional bsub options
             for opt in opts:

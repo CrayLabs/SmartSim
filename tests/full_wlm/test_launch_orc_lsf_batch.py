@@ -79,7 +79,7 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
         db_nodes=3,
         batch=True,
         project=wlmutils.get_test_account(),
-        time="00:05",
+        time="00:03",
         smts=1,
     )
     orc.set_path(test_dir)
