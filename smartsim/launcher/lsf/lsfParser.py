@@ -54,7 +54,7 @@ def parse_bsub_error(output):
         if line.strip():
             error = "\n".join(output_lines[line_num:])
             return error.strip()
-    
+
     # if no non-empty line was received,
     # present a base error message
     base_err = "LSF run error"
@@ -95,11 +95,11 @@ def parse_bjobs_nodes(output):
     :rtype: list of str
     """
     nodes = []
-    
+
     lines = output.split("\n")
 
     nodes_str = lines[1][5]
-    nodes = nodes_str.split(':')[1:]
+    nodes = nodes_str.split(":")[1:]
 
     return list(sorted(set(nodes)))
 

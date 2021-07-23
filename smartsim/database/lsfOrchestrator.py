@@ -27,7 +27,7 @@
 from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
-from ..settings import JsrunSettings, BsubBatchSettings
+from ..settings import BsubBatchSettings, JsrunSettings
 from ..utils import get_logger
 from .orchestrator import Orchestrator
 
@@ -44,23 +44,19 @@ class LSFOrchestrator(Orchestrator):
         project=None,
         time=None,
         db_per_host=1,
-        force_port_increment=False,
         **kwargs,
     ):
 
         """Initialize an Orchestrator reference for LSF based systems
 
-        The orchestrator launches as a batch by default. If 
+        The orchestrator launches as a batch by default. If
         batch=False, at launch, the orchestrator will look for an interactive
         allocation to launch on.
 
         The LSFOrchestrator port provided will be incremented if multiple
-        databases per host are launched (``db_per_host>1``) or if
-        ``force_port_increment`` is set to ``True`` (this is useful if
-        the user does not know how many resource sets will be scheduled
-        on each node). 
-        
-        Each database shard is assigned a resource set: 
+        databases per host are launched (``db_per_host>1``).
+
+        Each database shard is assigned a resource set:
         it is the user's responsibility to check if
         enough resources are available on each host. Resource sets can be
         defined by providing ``run_args`` as argument.
@@ -82,16 +78,12 @@ class LSFOrchestrator(Orchestrator):
         :type time: str
         :param db_per_host: number of database per host, defaults to 1
         :type db_per_host: int, optional
-        :param force_port_increment: whether to increment port number for
-                                     each DB shard. This requires ``db_nodes``
-                                     available consecutive ports on each node
-        """        
-        self.force_port_increment = force_port_increment
+        """
         super().__init__(
             port,
             db_nodes=db_nodes,
             batch=batch,
-            run_command='jsrun',
+            run_command="jsrun",
             dpn=db_per_host,
             **kwargs,
         )
@@ -101,7 +93,7 @@ class LSFOrchestrator(Orchestrator):
         )
         if hosts:
             self.set_hosts(hosts)
-        
+
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
 
@@ -145,7 +137,7 @@ class LSFOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         for host, db in zip(host_list, self.entities):
             db.set_host(host)
-            
+
     def set_batch_arg(self, arg, value):
         """Set a Bsub batch argument the orchestrator should launch with
 
@@ -168,7 +160,7 @@ class LSFOrchestrator(Orchestrator):
         dph = kwargs.get("dpn", 1)
         if batch:
             batch_settings = BsubBatchSettings(
-                nodes=db_nodes//dph, time=time, project=project
+                nodes=db_nodes // dph, time=time, project=project
             )
         return batch_settings
 
@@ -181,7 +173,7 @@ class LSFOrchestrator(Orchestrator):
             run_args["nrs"] = 1
         if not "rs_per_host" in run_args.keys():
             run_args["rs_per_host"] = 1
-        
+
         run_args["tasks_per_rs"] = 1
 
         run_args["launch_distribution"] = "packed"
@@ -189,7 +181,7 @@ class LSFOrchestrator(Orchestrator):
         run_settings.set_binding("none")
         # tell step to create a mpmd executable even if we only have one task
         # because we need to specify the host
-        run_settings.set_mpmd_args(smts_per_task=42//dph, hosts=hosts)
+        run_settings.set_mpmd_args(smts_per_task=42 // dph, hosts=hosts)
         return run_settings
 
     def _initialize_entities(self, **kwargs):
@@ -209,17 +201,15 @@ class LSFOrchestrator(Orchestrator):
 
         exe_args = []
         hosts = []
-        for db_id in range(db_nodes//dph):
+        for db_id in range(db_nodes // dph):
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            if self.force_port_increment:
-                base_port = int(port) + db_id*dph
-            else:
-                base_port = int(port)
+
+            base_port = int(port)
             ports = []
             for port_offset in range(dph):
                 next_port = base_port + port_offset
-                db_shard_name = "_".join((self.name, str(db_id*dph+port_offset)))
+                db_shard_name = "_".join((self.name, str(db_id * dph + port_offset)))
                 node_exe_args = [
                     db_conf,
                     ai_module,
@@ -227,7 +217,7 @@ class LSFOrchestrator(Orchestrator):
                     "--port",
                     str(next_port),
                     "--logfile",
-                    db_shard_name+".out"
+                    db_shard_name + ".out",
                 ]
                 if cluster:
                     node_exe_args += self._get_cluster_args(db_shard_name, next_port)
@@ -235,7 +225,7 @@ class LSFOrchestrator(Orchestrator):
                 ports.append(next_port)
 
                 # host=db_id+1 because 0 is login node
-                hosts.append(db_id+1)
+                hosts.append(db_id + 1)
 
         run_settings = self._build_run_settings(exe, exe_args, hosts=hosts, **kwargs)
         node = DBNode(self.name, self.path, run_settings, ports)

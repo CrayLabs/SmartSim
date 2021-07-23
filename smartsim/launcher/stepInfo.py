@@ -207,13 +207,14 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
             return self.mapping[status]
         return STATUS_FAILED
 
+
 class LSFStepInfo(StepInfo):  # cov-lsf
 
     # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
     mapping = {
         "RUN": STATUS_RUNNING,
         "PSUSP": STATUS_PAUSED,
-        "USUSP": STATUS_PAUSED, 
+        "USUSP": STATUS_PAUSED,
         "SSUSP": STATUS_PAUSED,
         "PEND": STATUS_PAUSED,
         "DONE": STATUS_COMPLETED,

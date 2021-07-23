@@ -70,7 +70,7 @@ class JsrunSettings(RunSettings):
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
 
-        This sets ``--nrs``. 
+        This sets ``--nrs``.
 
         :param num_rs: Number of resource sets or `ALL_HOSTS`
         :type num_rs: int or str
@@ -146,20 +146,20 @@ class JsrunSettings(RunSettings):
         self.run_args["bind"] = binding
 
     def set_stdout_file(self, filename):
-        """Set stdout file 
-        
+        """Set stdout file
+
         This sets ``--stdio_stdout``
-        
+
         :param filename: The name of the file used to write stdout
         :type filename: str
         """
         self.run_args["stdio_stdout"] = filename
 
     def set_stderr_file(self, filename):
-        """Set stderr file 
-        
+        """Set stderr file
+
         This sets ``--stdio_stderr``
-        
+
         :param filename: The name of the file used to write stderr
         :type filename: str
         """
@@ -191,21 +191,26 @@ class JsrunSettings(RunSettings):
         args = []
         restricted = ["chdir"]
         if self.mpmd:
-            restricted.extend(["tasks_per_rs",
-                              "np", "cpu_per_rs",
-                              "gpu_per_rs", 
-                              "latency_priority",
-                              "memory_per_rs", 
-                              "nrs",
-                              "rs_per_host",
-                              "rs_per_socket",
-                              "appfile",
-                              "allocate_only", 
-                              "launch_node_task", 
-                              "use_reservation", 
-                              "use_resources", 
-                              "bind",
-                              "launch_distribution"])
+            restricted.extend(
+                [
+                    "tasks_per_rs",
+                    "np",
+                    "cpu_per_rs",
+                    "gpu_per_rs",
+                    "latency_priority",
+                    "memory_per_rs",
+                    "nrs",
+                    "rs_per_host",
+                    "rs_per_socket",
+                    "appfile",
+                    "allocate_only",
+                    "launch_node_task",
+                    "use_reservation",
+                    "use_resources",
+                    "bind",
+                    "launch_distribution",
+                ]
+            )
 
         for opt, value in self.run_args.items():
             if opt not in restricted:
@@ -219,6 +224,7 @@ class JsrunSettings(RunSettings):
                     else:
                         args += ["=".join((prefix + opt, str(value)))]
         return args
+
 
 class BsubBatchSettings(BatchSettings):
     def __init__(
@@ -305,9 +311,9 @@ class BsubBatchSettings(BatchSettings):
         self.batch_args["nnodes"] = int(num_nodes)
 
     def set_expert_mode_req(self, res_req, slots):
-        """Set allocation for expert mode. This 
-        will activate expert mode (``-csm``) and 
-        disregard all other allocation options. 
+        """Set allocation for expert mode. This
+        will activate expert mode (``-csm``) and
+        disregard all other allocation options.
 
         This sets ``-csm -n slots -R res_req``
         """
@@ -329,7 +335,7 @@ class BsubBatchSettings(BatchSettings):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
-        self.batch_args["m"] = "\"" + ",".join(host_list) + "\""
+        self.batch_args["m"] = '"' + ",".join(host_list) + '"'
 
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
@@ -369,7 +375,7 @@ class BsubBatchSettings(BatchSettings):
         self._format_alloc_flags()
 
         for opt, value in self.batch_args.items():
-            prefix = "-" # LSF only uses single dashses
+            prefix = "-"  # LSF only uses single dashses
 
             if not value:
                 opts += [prefix + opt]

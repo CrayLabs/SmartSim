@@ -137,7 +137,15 @@ class JsrunStep(Step):
 
         output, error = self.get_output_files()
 
-        jsrun_cmd = [jsrun, "--chdir", self.cwd, "--stdio_stdout", output, "--stdio_stderr", error]
+        jsrun_cmd = [
+            jsrun,
+            "--chdir",
+            self.cwd,
+            "--stdio_stdout",
+            output,
+            "--stdio_stderr",
+            error,
+        ]
 
         if self.run_settings.env_vars:
             env_var_str = self.run_settings.format_env_vars()
@@ -180,15 +188,14 @@ class JsrunStep(Step):
             cmd = exe + args
             return cmd
 
-
     def _make_mpmd(self, executable, exe_args):
         """Build LSF multi-prog (MPMD) executable
 
         Launch multiple programs on separate cpus on multiple hosts using the
         LSF --erf_input feature. The number of apps must be divisible
-        by the number of hosts in run_settings 
+        by the number of hosts in run_settings
         """
-        
+
         mpmd_file = self.get_step_file(ending=".mpmd")
         launch_args = list(product(executable, exe_args))
 
@@ -197,58 +204,59 @@ class JsrunStep(Step):
         else:
             hosts = ["*"]
 
-        tasks_per_host = len(launch_args)//len(hosts)
+        tasks_per_host = len(launch_args) // len(hosts)
 
         with open(mpmd_file, "w+") as f:
-            #if host == "*" or int(host) == 0:
+            # if host == "*" or int(host) == 0:
             f.write("launch_distribution : packed\n")
 
             # First we list apps
             app_id = 0
             for exe, args in launch_args:
                 e_args = " ".join(args)
-                f.write(f"app {app_id} : " +
-                         " ".join((exe, e_args, "\n")))
+                f.write(f"app {app_id} : " + " ".join((exe, e_args, "\n")))
                 app_id += 1
 
             f.write("\n")
 
             # Then we list resources
             ntasks = self.run_settings.run_args.get("tasks_per_rs", 1)
-            
+
             smts_per_task = self.run_settings.smts_per_task
 
             app_id = 0
-            
+
             old_host = None
-            for taskid , launch_arg in enumerate(launch_args):
+            for taskid, launch_arg in enumerate(launch_args):
                 exe, args = launch_arg
-                host = hosts[taskid//tasks_per_host]
+                host = hosts[taskid // tasks_per_host]
                 if host != old_host:
                     assigned_smts = 0
                     assigned_gpus = 0
                 old_host = host
                 f.write(f"{ntasks} : ")
                 f.write("{")
-                f.write( f"host: {host}; cpu: ")
+                f.write(f"host: {host}; cpu: ")
                 smt_sets = []
                 for _ in range(ntasks):
                     smt_set = "{" + f"{assigned_smts}:{smts_per_task}" + "}"
                     smt_sets.append(smt_set)
                     assigned_smts += smts_per_task
-                f.write(",".join(smt_sets) + ";")
+                f.write(",".join(smt_sets))
                 if "gpu_per_rs" in self.run_settings.run_args.keys():
                     ngpus = self.run_settings.run_args["gpu_per_rs"]
-                    f.write(" gpu: ")
-                    if ngpus>1:
+                    f.write("; gpu: ")
+                    if ngpus > 1:
                         gpu_set = "{" + f"{assigned_gpus}-{assigned_gpus+ngpus-1}" + "}"
                     else:
                         gpu_set = "{" + f"{assigned_gpus}" + "}"
                     assigned_gpus += ngpus
                     f.write(gpu_set)
+                
 
                 f.write("}" + f" : app {app_id} \n")
                 app_id += 1
 
         import sys
+
         return mpmd_file

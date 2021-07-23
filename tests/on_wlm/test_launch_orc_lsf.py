@@ -1,4 +1,5 @@
 import pytest
+import time
 
 from smartsim import Experiment, constants
 from smartsim.database import LSFOrchestrator
@@ -34,6 +35,8 @@ def test_launch_lsf_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
 
+    time.sleep(5)
+
 
 def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     """test clustered 3-node orchestrator"""
@@ -48,7 +51,7 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = LSFOrchestrator(6780, db_nodes=3, batch=False, force_port_increment=True)
+    orc = LSFOrchestrator(6780, db_nodes=3, batch=False)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -62,3 +65,5 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
+
+    time.sleep(5)

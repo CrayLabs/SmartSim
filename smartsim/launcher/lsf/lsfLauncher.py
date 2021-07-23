@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+
 import psutil
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
@@ -34,8 +35,8 @@ from ...utils import get_logger
 from ..launcher import WLMLauncher
 from ..step import BsubBatchStep, JsrunStep
 from ..stepInfo import LSFStepInfo
-from .lsfCommands import bkill, bjobs
-from .lsfParser import parse_bjobs_jobid, parse_step_id_from_bjobs, parse_bsub
+from .lsfCommands import bjobs, bkill
+from .lsfParser import parse_bjobs_jobid, parse_bsub, parse_step_id_from_bjobs
 
 logger = get_logger(__name__)
 
@@ -110,7 +111,7 @@ class LSFLauncher(WLMLauncher):
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
-                )
+            )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:

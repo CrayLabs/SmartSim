@@ -224,6 +224,6 @@ class Config:
         except KeyError:
             return ""  # no project by default
 
-    
+
 # initialize config instance
 CONFIG = Config()
