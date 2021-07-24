@@ -48,7 +48,12 @@ jobs:
           python -m pip install -vvv .[dev]
 
       - name: Install ML Runtimes with Smart
+        if: contains(matrix.os, 'macos')
         run: smart -v --device cpu
+
+      - name: Install ML Runtimes with Smart
+        if: contains(matrix.os, 'ubuntu')
+        run: smart -v --device cpu --onnx
 
       - name: Run Pytest
         run: |

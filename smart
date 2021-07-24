@@ -9,42 +9,153 @@ from pathlib import Path
 
 TORCH_VERSION = "1.7.1"
 TORCHVISION_VERSION = "0.8.2"
+TF_VERSION = "2.4.0"
+ONNX_VERSION = "1.7.0"
 
 class SetupError(Exception):
     pass
 
-def run_build(script_path, device, pt, tf, onnx, verbose, user_torch_dir=None):
-    script = script_path.joinpath("smartsim_setup")
-    device = device.lower()
 
-    if not script.is_file():
-        msg = "Could not find smartsim_setup script. "
-        msg += "You may have to trigger manually from the installation site"
-        raise SetupError(msg)
+def check_installed(package, majors, minors, supported):
+    try:
+        installed_version = getattr(sys.modules[package], "__version__")
+        installed_major, installed_minor, _ = installed_version.split(".")
+        if int(installed_major) not in majors or int(installed_minor) not in minors:
+            msg = f"Only {package} {supported} is supported. You have {installed_version}"
+            raise SetupError(msg)
+        else:
+            return True
+    except (ImportError, KeyError):
+        return False
+
+
+def find_site_packages_path():
+    site_path = Path(site.getsitepackages()[0]).resolve()
+    return site_path
+
+def find_torch():
+    site_path = find_site_packages_path()
+    torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
+    return torch_path
+
+def install_torch(device="cpu"):
+    packages = []
+    end_point = None
+    if not check_installed("torch", [1], [7], TORCH_VERSION):
+        # if we are on linux cpu, use the torch without CUDA
+        if sys.platform == "linux" and device == "cpu":
+            packages.append(f"torch=={TORCH_VERSION}+cpu")
+            packages.append(f"torchvision=={TORCHVISION_VERSION}+cpu")
+            end_point = "https://download.pytorch.org/whl/torch_stable.html"
+        # otherwise just use the version downloaded by pip
+        else:
+            packages.append(f"torch=={TORCH_VERSION}")
+            packages.append(f"torchvision=={TORCHVISION_VERSION}")
+
+        pip_install(packages, end_point=end_point)
+    else:
+        print(f"Torch already installed, skipping")
+
+
+def install_onnx(device="cpu"):
+    # conversions tools for ONNX
+    packages = [
+        "skl2onnx==1.9.0",
+        "onnxmltools==1.7.0",
+        "onnx==1.7.0"
+    ]
+    if not check_installed("onnx", [1], [6, 7], ONNX_VERSION):
+        pip_install(packages)
+    else:
+        print("ONNX already installed, skipping")
+
+
+def install_tf(device="cpu"):
+    packages = []
+    if not check_installed("tensorflow", [2], [4], TF_VERSION):
+        if sys.platform == "linux":
+            if device == "gpu":
+                packages.append(f"tensorflow-gpu=={TF_VERSION}")
+            else:
+                packages.append(f"tensorflow=={TF_VERSION}")
+
+        elif sys.platform == "darwin":
+            if device == "gpu":
+                raise SetupError("TF is not supported on MacOS GPU")
+            packages.append(f"tensorflow=={TF_VERSION}")
+
+        else:
+            raise SetupError(
+                f"TensorFlow for SmartSim is not supported on your platform: {sys.platform}")
+        pip_install(packages)
+    else:
+        print(f"TensorFlow already installed, skipping")
+
+def pip_install(packages, end_point=None):
+    # add various package endpoints to bundle
+    if end_point:
+        packages.append(f"-f {end_point}")
+    packages = " ".join(packages)
+
+    # form pip install command
+    cmd = ["python", "-m", "pip", "install", packages]
+    cmd = " ".join(cmd)
+
+    print(f"Installing packages {packages}...")
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, err = proc.communicate()
+    returncode = int(proc.returncode)
+    if returncode != 0:
+        error = f"{packages} installation failed with exitcode {returncode}\n"
+        error += err.decode("utf-8")
+        raise SetupError(error)
+    else:
+        print(f"{packages} installed successfully")
+
+def check_platform(device, onnx=False):
 
     if sys.platform == "darwin":
         if device == "gpu":
             raise SetupError("SmartSim does not support GPU builds on MacOS")
-        if onnx == 1:
+        if onnx:
             raise SetupError("ONNX runtime is currently not supported on MacOS")
 
     if sys.platform in ["msys", "win32", "cygwin"]:
         msg = "Windows is not supported, but kudos to you for making it this far!"
         raise SetupError(msg)
 
+
+def run_build(script_path, device, pt, tf, onnx, verbose, user_torch_dir=None):
+    device = device.lower()
+
+    script = script_path.joinpath("smartsim_setup")
+    if not script.is_file():
+        msg = "Could not find smartsim_setup script. "
+        msg += "You may have to trigger manually from the installation site"
+        raise SetupError(msg)
+
     cmd = []
-    # add SmartSim installed Torch to command
-    if pt != 0:
+
+    # TORCH
+    if pt == 1:
         # detect user install of torch and add to command
         if user_torch_dir:
             if not user_torch_dir.is_dir():
                 raise SetupError("Could not find requested user Torch installation")
-            else:
-                torch_dir = str(user_torch_dir)
+            torch_dir = str(user_torch_dir)
         else:
-            pip_install_torch(device=device, verbose=verbose)
+            install_torch(device=device)
             torch_dir = str(find_torch())
         cmd.append(f"Torch_DIR={torch_dir}")
+
+    # ONNX
+    if onnx == 1:
+        install_onnx(device=device)
+
+    # TF
+    if tf == 1:
+        install_tf(device=device)
+
 
     print("Running SmartSim build process...")
     cmd.extend([f"PT={pt} TF={tf} TFL=0 ONNX={onnx}", str(script), device])
@@ -105,42 +216,6 @@ def clean(install_path, _all=False):
                 file_path.unlink()
         if removed:
             print("Successfully removed SmartSim Redis installation")
-
-
-def find_site_packages_path():
-    site_path = Path(site.getsitepackages()[0]).resolve()
-    return site_path
-
-def find_torch():
-    site_path = find_site_packages_path()
-    torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
-    return torch_path
-
-def pip_install_torch(device="cpu", verbose=False):
-    # if we are on linux cpu, use the torch without CUDA
-    if sys.platform == "linux" and device == "cpu":
-        cmd = ["pip", "install", f"torch=={TORCH_VERSION}+cpu",
-               "-f", "https://download.pytorch.org/whl/torch_stable.html"]
-        cmd.append(f"torchvision=={TORCHVISION_VERSION}+cpu")
-
-    # otherwise just use the version downloaded by pip
-    else:
-        cmd = ["pip", "install", f"torch=={TORCH_VERSION}"]
-        cmd.append(f"torchvision=={TORCHVISION_VERSION}")
-
-    # also install torchvision
-    cmd = " ".join(cmd)
-
-    print("Installing Torch...")
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    returncode = int(proc.returncode)
-    if returncode != 0:
-        error = f"Torch backend installation failed with exitcode {returncode}\n"
-        error += err.decode("utf-8")
-        raise SetupError(error)
-    else:
-        print(f"Torch {TORCH_VERSION} installed successfully")
 
 
 def colorize(string, color, bold=False, highlight=False):
@@ -267,8 +342,8 @@ def cli():
             print(f"SmartSim install location: {package_path}")
             exit(0)
         elif args.dbcli:
-            cli = script_path.joinpath("redis-cli")
-            print(f"Invoke: .{cli}")
+            dbcli = script_path.joinpath("redis-cli")
+            print(f"Invoke: .{dbcli}")
             print("Use -h <hostname or ip> to specify host")
             print("Use -p <port> to specify port number")
             exit(0)
