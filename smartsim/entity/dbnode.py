@@ -199,5 +199,4 @@ class DBNode(SmartSimEntity):
                 host = ip
             hosts.append(host)
 
-        print(list(dict.fromkeys(hosts)))
         return list(dict.fromkeys(hosts))

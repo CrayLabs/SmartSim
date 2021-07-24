@@ -50,14 +50,13 @@ class JsrunSettings(RunSettings):
             exe, exe_args, run_command="jsrun", run_args=run_args, env_vars=env_vars
         )
 
-        # Parameters needed for ERF run
-        self.use_erf = False
+        # Parameters needed for MPMD run
         self.erf_sets = {"host": "*", "cpu": "*", "ranks": "1"}
-        self.erf_preamble_lines = []
-        self.erf = []
+        self.mpmd_preamble_lines = []
+        self.mpmd = []
 
-    def make_erf(self, jsrun_settings=None):
-        """Make job a ERF job
+    def make_mpmd(self, jsrun_settings=None):
+        """Make step a MPMD (or SPMD) job.
 
         This method will activate job execution through an ERF file.
 
@@ -67,14 +66,12 @@ class JsrunSettings(RunSettings):
         :param aprun_settings: ``JsrunSettings`` instance, optional
         :type aprun_settings: JsrunSettings
         """
-        self.use_erf = True
-        print(self.use_erf)
-        if len(self.erf) == 0:
-            self.erf.append(self)
+        if len(self.mpmd) == 0:
+            self.mpmd.append(self)
         if jsrun_settings:
-            self.erf.append(jsrun_settings)
+            self.mpmd.append(jsrun_settings)
 
-    def set_erf_preamble(self, preamble_lines):
+    def set_mpmd_preamble(self, preamble_lines):
         """Set preamble used in ERF file. Typical lines include
         `oversubscribe-cpu : allow` or `overlapping-rs : allow`.
         Can be used to set `launch_distribution`. If it is not present,
@@ -85,7 +82,7 @@ class JsrunSettings(RunSettings):
                                file.
         :type preamble_lines: list[str]
         """
-        self.erf_preamble_lines = preamble_lines
+        self.mpmd_preamble_lines = preamble_lines
 
     def set_erf_sets(self, erf_sets):
         """Set resource sets used for ERF (SPMD or MPMD) steps.
@@ -227,7 +224,7 @@ class JsrunSettings(RunSettings):
         # args launcher uses
         args = []
         restricted = ["chdir", "h", "stdio_stdout", "o", "stdio_stderr", "k"]
-        if self.use_erf or "erf_input" in self.run_args.keys():
+        if self.mpmd or "erf_input" in self.run_args.keys():
             restricted.extend(
                 [
                     "tasks_per_rs",
@@ -235,8 +232,10 @@ class JsrunSettings(RunSettings):
                     "np",
                     "p",
                     "cpu_per_rs",
-                    "c" "gpu_per_rs",
-                    "g" "latency_priority",
+                    "c",
+                    "gpu_per_rs",
+                    "g",
+                    "latency_priority",
                     "l",
                     "memory_per_rs",
                     "m",
@@ -277,7 +276,7 @@ class JsrunSettings(RunSettings):
 
     def __str__(self):
         string = super().__str__()
-        if self.use_erf:
+        if self.mpmd:
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
 

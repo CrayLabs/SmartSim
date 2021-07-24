@@ -174,28 +174,28 @@ class JsrunStep(Step):
         """
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
-        if self.run_settings.use_erf:
+        if self.run_settings.mpmd:
             erf_file = self.get_step_file(ending=".mpmd")
-            cmd = self._make_erf()
+            cmd = self._make_mpmd()
             mp_cmd = ["--erf_input", erf_file]
             return mp_cmd
         else:
             cmd = exe + args
             return cmd
 
-    def _make_erf(self):
+    def _make_mpmd(self):
         """Build LSF's Explicit Resource File"""
         erf_file = self.get_step_file(ending=".mpmd")
 
         # Find launch_distribution command
-        preamble_lines = self.run_settings.erf_preamble_lines.copy()
+        preamble_lines = self.run_settings.mpmd_preamble_lines.copy()
         distr_line = None
-        for line in self.run_settings.erf_preamble_lines:
+        for line in self.run_settings.mpmd_preamble_lines:
             if line.lstrip(" ").startswith("launch_distribution"):
                 distr_line = line
                 preamble_lines.remove(line)
         if not distr_line:
-            for jrs in self.run_settings.erf:
+            for jrs in self.run_settings.mpmd:
                 if "launch_distribution" in jrs.run_args.keys():
                     distr_line = (
                         "launch_distribution : " + jrs.run_args["launch_distribution"]
@@ -214,12 +214,12 @@ class JsrunStep(Step):
             f.write("\n")
 
             # First we list the apps
-            for app_id, jrs in enumerate(self.run_settings.erf):
+            for app_id, jrs in enumerate(self.run_settings.mpmd):
                 f.write(f"app {app_id} : " + " ".join(jrs.exe + jrs.exe_args) + "\n")
             f.write("\n")
 
             # Then we list the resources
-            for app_id, jrs in enumerate(self.run_settings.erf):
+            for app_id, jrs in enumerate(self.run_settings.mpmd):
                 rs_line = ""
                 if "rank" in jrs.erf_sets.keys():
                     rs_line += "rank: " + jrs.erf_sets["rank"] + ": "

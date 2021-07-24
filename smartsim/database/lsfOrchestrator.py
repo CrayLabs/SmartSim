@@ -194,9 +194,9 @@ class LSFOrchestrator(Orchestrator):
             run_settings.set_erf_sets(erf_sets)
 
             if erf_rs:
-                erf_rs.make_erf(run_settings)
+                erf_rs.make_mpmd(run_settings)
             else:
-                run_settings.make_erf()
+                run_settings.make_mpmd()
                 erf_rs = run_settings
 
         return erf_rs
