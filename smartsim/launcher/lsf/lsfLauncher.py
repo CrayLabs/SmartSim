@@ -30,10 +30,10 @@ import psutil
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
-from ...settings import BsubBatchSettings, JsrunSettings
+from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep
+from ..step import BsubBatchStep, JsrunStep, MpirunStep
 from ..stepInfo import LSFStepInfo
 from .lsfCommands import bjobs, bkill
 from .lsfParser import parse_bjobs_jobid, parse_bsub, parse_step_id_from_bjobs
@@ -75,6 +75,9 @@ class LSFLauncher(WLMLauncher):
             if isinstance(step_settings, BsubBatchSettings):
                 step = BsubBatchStep(name, cwd, step_settings)
                 return step
+            if isinstance(step_settings, MpirunSettings):
+                step = MpirunStep(name, cwd, step_settings)
+                return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by LSF"
             )
@@ -105,16 +108,12 @@ class LSFLauncher(WLMLauncher):
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
-            # It seems that jsrun has difficulties channelling too many ouputs
-            out, err = step.get_output_files()
-            output = open(out, "w+")
-            error = open(err, "w+")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output, err=error
+                cmd_list, step.cwd
             )
 
         # if batch submission did not successfully retrieve job ID
-        if not step_id and step.managed:
+        if not step_id and step.managed:  # pragma: no cover
             step_id = self._get_lsf_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
@@ -141,7 +140,11 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2, trials=5):
+    # TODO: use jslist here if it is a JsrunStep
+    # otherwise, this is only reached in a very rare case where a batch
+    # job is submitted but no message is receieved
+    # We exclude this from coverage
+    def _get_lsf_step_id(self, step, interval=2, trials=5):  # pragma: no cover
         """Get the step_id of a step from bjobs (rarely used)
 
         Parses bjobs output by looking for the step name
@@ -161,6 +164,7 @@ class LSFLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
+    # TODO: use jslist here if it is a JsrunStep
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
 

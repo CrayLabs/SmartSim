@@ -88,6 +88,11 @@ class MpirunStep(Step):
             logger.debug(
                 f"Running on Slurm allocation {self.alloc} gleaned from user environment"
             )
+        elif "LSB_JOBID" in os.environ:
+            self.alloc = os.environ["LSB_JOBID"]
+            logger.debug(
+                f"Running on Slurm allocation {self.alloc} gleaned from user environment"
+            )
         else:
             raise SSConfigError(
                 "No allocation specified or found and not running in batch"

@@ -38,19 +38,6 @@ def bjobs(args):
     _, out, error = execute_cmd(cmd)
     return out, error
 
-
-def bsub(args):
-    """Calls LSF bsub with args
-
-    :param args: List of command arguments
-    :type args: List of str
-    :returns: Output and error of salloc
-    """
-    cmd = ["bsub"] + args
-    _, out, error = execute_cmd(cmd)
-    return out, error
-
-
 def bkill(args):
     """Calls LSF bkill with args.
 

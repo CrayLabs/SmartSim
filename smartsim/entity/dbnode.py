@@ -81,9 +81,18 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
-            if osp.exists(conf_file):
-                os.remove(conf_file)
+            if not self._multihost:
+                conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
+                if osp.exists(conf_file):
+                    os.remove(conf_file)
+            else:
+                conf_files = [
+                    osp.join(self.path, filename)
+                    for filename in self._get_cluster_conf_filenames(port)
+                ]
+                for conf_file in conf_files:
+                    if osp.exists(conf_file):
+                        os.remove(conf_file)
 
         for file_ending in [".err", ".out", ".mpmd"]:
             file_name = osp.join(self.path, self.name + file_ending)
@@ -99,6 +108,21 @@ class DBNode(SmartSimEntity):
         :rtype: str
         """
         return "".join(("nodes-", self.name, "-", str(port), ".conf"))
+
+    def _get_cluster_conf_filenames(self, port):
+        """Returns the .conf file name for the given port number
+
+        This function should bu used if and only if ``_multihost==True``
+
+        :param port: port number
+        :type port: int
+        :return: the dbnode configuration file name
+        :rtype: str
+        """
+        return [
+            "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
+            for shard_id in self._shard_ids
+        ]
 
     def _parse_db_host(self):
         """Parse the database host/IP from the output file
@@ -150,11 +174,12 @@ class DBNode(SmartSimEntity):
         return host
 
     def _parse_db_hosts(self):
-        """Parse the database host/IP from the output file
+        """Parse the database hosts/IPs from the output files
 
         this uses the RedisIP module that is built as a dependency
         The IP address is preferred, but if hostname is only present
-        then a lookup to /etc/hosts is done through the socket library
+        then a lookup to /etc/hosts is done through the socket library.
+        This function must be called only if ``_multihost==True``.
 
         :raises SmartSimError: if host/ip could not be found
         :return: ip addresses | hostnames

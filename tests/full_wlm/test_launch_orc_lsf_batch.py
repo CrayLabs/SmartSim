@@ -48,7 +48,7 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
         db_nodes=3,
         batch=True,
         project=wlmutils.get_test_account(),
-        time="00:05",
+        time="00:03",
         smts=1,
     )
     orc.set_path(test_dir)
@@ -79,7 +79,7 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
         db_nodes=3,
         batch=True,
         project=wlmutils.get_test_account(),
-        time="00:03",
+        time="00:05",
         smts=1,
     )
     orc.set_path(test_dir)
@@ -91,6 +91,8 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
     if constants.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
+
+    exp.stop(orc)
 
     exp_name = "test-orc-lsf-cluster-orc-batch-reconnect-2nd"
     exp_2 = Experiment(exp_name, launcher="lsf")

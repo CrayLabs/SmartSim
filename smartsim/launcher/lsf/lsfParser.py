@@ -49,14 +49,24 @@ def parse_bsub_error(output):
     :rtype: str
     """
     # Search for first non-empty line
-    output_lines = output.split("\n")
-    for line_num, line in enumerate(output.split("\n")):
-        if line.strip():
-            error = "\n".join(output_lines[line_num:])
-            return error.strip()
+    error_lines = []
+    copy_lines = False
+    for line in output.split("\n"):
+        if line.strip().startswith("**"):
+            copy_lines = True
+        if line.strip().startswith("-----------"):
+            copy_lines = False
+        if copy_lines and line.lstrip("*").strip():
+            error_lines += [line.lstrip("*").strip()]
 
-    # if no non-empty line was received,
-    # present a base error message
+    if error_lines:
+        return "\n".join(error_lines).strip()
+
+    # If the error message was not parsable, return it as is
+    if output.strip():
+        return output
+
+    # If output is empty, present standard error
     base_err = "LSF run error"
     return base_err
 
@@ -84,7 +94,7 @@ def parse_bjobs_jobid(output, job_id):
 
 def parse_bjobs_nodes(output):
     """Parse and return the bjobs command run with
-    options to obtain node list.
+    options to obtain node list, i.e. with `-w`.
 
     This function parses and returns the nodes of
     a job in a list with the duplicates removed.
@@ -97,15 +107,14 @@ def parse_bjobs_nodes(output):
     nodes = []
 
     lines = output.split("\n")
+    nodes_str = lines[1].split()[5]
+    nodes = nodes_str.split(":")
 
-    nodes_str = lines[1][5]
-    nodes = nodes_str.split(":")[1:]
-
-    return list(sorted(set(nodes)))
+    return list(dict.fromkeys(nodes))
 
 
 def parse_step_id_from_bjobs(output, step_name):
-    """Parse and return the step id from a bjobs command
+    """Parse and return the step id from a bjobs command without args
 
     :param output: output bjobs
     :type output: str
@@ -116,11 +125,12 @@ def parse_step_id_from_bjobs(output, step_name):
     """
     step_id = None
 
-    lines = output.split("\n")
-
     for line in output.split("\n"):
-        fields = line.split(" ")
-        if fields[6] == step_name:
-            step_id = fields[0]
+        fields = line.split()
+        print(fields)
+        if len(fields)>=7:
+            if fields[7] == step_name:
+                step_id = fields[0]
+                return step_id
 
-    return step_id
+    return ""

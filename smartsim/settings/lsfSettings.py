@@ -55,53 +55,6 @@ class JsrunSettings(RunSettings):
         self.mpmd_preamble_lines = []
         self.mpmd = []
 
-    def make_mpmd(self, jsrun_settings=None):
-        """Make step a MPMD (or SPMD) job.
-
-        This method will activate job execution through an ERF file.
-
-        Optionally, this method adds an instance of ``JsrunSettings`` to
-        the list of settings to be launched in the same ERF file.
-
-        :param aprun_settings: ``JsrunSettings`` instance, optional
-        :type aprun_settings: JsrunSettings
-        """
-        if len(self.mpmd) == 0:
-            self.mpmd.append(self)
-        if jsrun_settings:
-            self.mpmd.append(jsrun_settings)
-
-    def set_mpmd_preamble(self, preamble_lines):
-        """Set preamble used in ERF file. Typical lines include
-        `oversubscribe-cpu : allow` or `overlapping-rs : allow`.
-        Can be used to set `launch_distribution`. If it is not present,
-        it will be inferred from the settings, or set to `packed` by
-        default.
-
-        :param preamble_lines: lines to put at the beginning of the ERF
-                               file.
-        :type preamble_lines: list[str]
-        """
-        self.mpmd_preamble_lines = preamble_lines
-
-    def set_erf_sets(self, erf_sets):
-        """Set resource sets used for ERF (SPMD or MPMD) steps.
-
-        ``erf_sets`` is a dictionary used to fill the ERF
-        line representing these settings, e.g.
-        `{"host": "1", "cpu": "{0:21}, {21:21}", "gpu": "*"}`
-        can be used to specify rank (or rank_count), hosts, cpus, gpus,
-        and memory.
-        The key `rank` is used to give specific ranks, as in
-        `{"rank": "1, 2, 5"}`, while the key `rank_count` is used to specify
-        the count only, as in `{"rank_count": "3"}`. If both are specified,
-        only `rank` is used.
-
-        :param hosts: dictionary of resources
-        :type hosts: dict[str,str]
-        """
-        self.erf_sets = erf_sets
-
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
 
@@ -179,25 +132,52 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["bind"] = binding
 
-    def set_stdout_file(self, filename):
-        """Set stdout file
+    def make_mpmd(self, jsrun_settings=None):
+        """Make step a MPMD (or SPMD) job.
 
-        This sets ``--stdio_stdout``
+        This method will activate job execution through an ERF file.
 
-        :param filename: The name of the file used to write stdout
-        :type filename: str
+        Optionally, this method adds an instance of ``JsrunSettings`` to
+        the list of settings to be launched in the same ERF file.
+
+        :param aprun_settings: ``JsrunSettings`` instance, optional
+        :type aprun_settings: JsrunSettings
         """
-        self.run_args["stdio_stdout"] = filename
+        if len(self.mpmd) == 0:
+            self.mpmd.append(self)
+        if jsrun_settings:
+            self.mpmd.append(jsrun_settings)
 
-    def set_stderr_file(self, filename):
-        """Set stderr file
+    def set_mpmd_preamble(self, preamble_lines):
+        """Set preamble used in ERF file. Typical lines include
+        `oversubscribe-cpu : allow` or `overlapping-rs : allow`.
+        Can be used to set `launch_distribution`. If it is not present,
+        it will be inferred from the settings, or set to `packed` by
+        default.
 
-        This sets ``--stdio_stderr``
-
-        :param filename: The name of the file used to write stderr
-        :type filename: str
+        :param preamble_lines: lines to put at the beginning of the ERF
+                               file.
+        :type preamble_lines: list[str]
         """
-        self.run_args["stdio_stderr"] = filename
+        self.mpmd_preamble_lines = preamble_lines
+
+    def set_erf_sets(self, erf_sets):
+        """Set resource sets used for ERF (SPMD or MPMD) steps.
+
+        ``erf_sets`` is a dictionary used to fill the ERF
+        line representing these settings, e.g.
+        `{"host": "1", "cpu": "{0:21}, {21:21}", "gpu": "*"}`
+        can be used to specify rank (or rank_count), hosts, cpus, gpus,
+        and memory.
+        The key `rank` is used to give specific ranks, as in
+        `{"rank": "1, 2, 5"}`, while the key `rank_count` is used to specify
+        the count only, as in `{"rank_count": "3"}`. If both are specified,
+        only `rank` is used.
+
+        :param hosts: dictionary of resources
+        :type hosts: dict[str,str]
+        """
+        self.erf_sets = erf_sets
 
     def format_env_vars(self):
         """Format environment variables. Each variable needs
@@ -300,7 +280,7 @@ class BsubBatchSettings(BatchSettings):
         :param project: project for batch launch
         :type project: str, optional
         :param smts: SMTs
-        :type smts: int
+        :type smts: int, optional
         :param batch_args: overrides for LSF batch arguments
         :type batch_args: dict[str, str], optional
         """
@@ -309,7 +289,8 @@ class BsubBatchSettings(BatchSettings):
             self.set_nodes(nodes)
         self.set_walltime(time)
         self.set_project(project)
-        self.set_smts(smts)
+        if smts:
+            self.set_smts(smts)
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
@@ -321,12 +302,7 @@ class BsubBatchSettings(BatchSettings):
         :param time: Time in hh:mm format
         :type time: str
         """
-        if time:
-            self.walltime = time
-        else:
-            # If not supplied, batch submission fails,
-            # but the user will know from the error
-            self.walltime = None
+        self.walltime = time
 
     def set_smts(self, smts):
         """Set SMTs
@@ -348,12 +324,7 @@ class BsubBatchSettings(BatchSettings):
         :param time: project name
         :type time: str
         """
-        if project:
-            self.project = project
-        else:
-            # If not supplied, batch submission fails,
-            # but the user will know from the error
-            self.project = None
+        self.project = project
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -415,9 +386,12 @@ class BsubBatchSettings(BatchSettings):
         else:
             # see if smt is in the flag, otherwise add it
             flags = self.batch_args["alloc_flags"].split()
+            print(flags)
             if not any([flag.startswith("smt") for flag in flags]):
                 flags.append(f"smt{self.smts}")
                 self.batch_args["alloc_flags"] = " ".join(flags)
+            if len(flags)>1:
+                self.batch_args["alloc_flags"] = '"' + self.batch_args["alloc_flags"] + '"'
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview

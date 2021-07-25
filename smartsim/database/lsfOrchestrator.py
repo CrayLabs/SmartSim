@@ -40,7 +40,7 @@ class LSFOrchestrator(Orchestrator):
         port=6379,
         db_nodes=1,
         cpus_per_shard=4,
-        gpus_per_shard=1,
+        gpus_per_shard=0,
         batch=True,
         hosts=None,
         project=None,
@@ -58,19 +58,30 @@ class LSFOrchestrator(Orchestrator):
         The LSFOrchestrator port provided will be incremented if multiple
         databases per host are launched (``db_per_host>1``).
 
-        Each database shard is assigned a resource set:
+        Each database shard is assigned a resource set with cpus and gpus
+        allocated contiguously on the host:
         it is the user's responsibility to check if
-        enough resources are available on each host. Resource sets can be
-        defined by providing ``run_args`` as argument.
+        enough resources are available on each host.
+
+        A list of hosts to launch the database on can be specified
+        these addresses must correspond to
+        those of the first ``db_nodes//db_per_host`` compute nodes
+        in the allocation: for example, for 8 ``db_nodes`` and 2 ``db_per_host``
+        the ``host_list`` must contain the addresses of hosts 1, 2, 3, and 4.
 
         LSFOrchestrator is launched with only one ``jsrun`` command
         as launch binary, and a Explicit Resource File (ERF) which is
-        automatically generated.
+        automatically generated. The orchestrator is always launched on the
+        first ``db_nodes//db_per_host`` compute nodes in the allocation.
 
         :param port: TCP/IP port
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
+        :param cpus_per_shard: cpus to allocate per shard
+        :type cpus_per_shard: int
+        :param gpus_per_shard: gpus to allocate per shard
+        :type gpus_per_shard: int
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
@@ -183,7 +194,7 @@ class LSFOrchestrator(Orchestrator):
             }
 
             assigned_smts += self.cpus_per_shard
-            if self.gpus_per_shard > 1:
+            if self.gpus_per_shard > 1:  # pragma: no-cover
                 erf_sets["gpu"] = (
                     "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
                 )
