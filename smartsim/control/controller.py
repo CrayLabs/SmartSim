@@ -355,6 +355,7 @@ class Controller:
 
         # create the database cluster
         if orchestrator.num_shards > 2:
+            time.sleep(1)  # wait to make sure shards are ready
             orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")

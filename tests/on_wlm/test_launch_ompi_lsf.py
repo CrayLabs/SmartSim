@@ -1,11 +1,12 @@
 import pytest
 
-from smartsim.settings import MpirunSettings
 from smartsim import Experiment, constants
+from smartsim.settings import MpirunSettings
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
+
 
 def test_launch_openmpi_lsf(wlmutils, fileutils):
     launcher = wlmutils.get_test_launcher()
@@ -25,4 +26,3 @@ def test_launch_openmpi_lsf(wlmutils, fileutils):
     exp.start(model, block=True)
     statuses = exp.get_status(model)
     assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
-    

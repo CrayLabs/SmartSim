@@ -47,7 +47,7 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports):
+    def __init__(self, name, path, run_settings, ports, hostname_converter=None):
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
@@ -55,6 +55,7 @@ class DBNode(SmartSimEntity):
         self._multihost = False
         self._shard_ids = None
         self._hosts = None
+        self.hostname_converter = hostname_converter
 
     @property
     def host(self):
@@ -165,12 +166,20 @@ class DBNode(SmartSimEntity):
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        # prefer the ip address if present
-        # TODO do socket lookup and ensure IP address matches
-        # in the case where compute node returns 127.0.0.1 for its
-        # own IP address
-        if host and ip:
-            host = ip
+        if self.hostname_converter:
+            # Very unlikely case. In this case, the hostname_converter
+            # should take IPs as input
+            if ip and not host:
+                host = ip
+            host = self.hostname_converter[host]
+        else:
+            # prefer the ip address if present
+            # TODO do socket lookup and ensure IP address matches
+            # in the case where compute node returns 127.0.0.1 for its
+            # own IP address
+            if host and ip:
+                host = ip
+
         return host
 
     def _parse_db_hosts(self):
@@ -212,16 +221,27 @@ class DBNode(SmartSimEntity):
                 logger.debug("Waiting for RedisIP files to populate...")
                 trials -= 1
                 time.sleep(5)
+
             if not host and not ip:
                 logger.error("RedisIP address lookup strategy failed.")
                 raise SmartSimError("Failed to obtain database hostname")
 
-            # prefer the ip address if present
-            # TODO do socket lookup and ensure IP address matches
-            # in the case where compute node returns 127.0.0.1 for its
-            # own IP address
-            if host and ip:
-                host = ip
+            if self.hostname_converter:
+                # Very unlikely case. In this case, the hostname_converter
+                # should take IPs as input
+                if ip and not host:
+                    host = ip
+                host = self.hostname_converter(host)
+            else:
+                # prefer the ip address if present
+                # TODO do socket lookup and ensure IP address matches
+                # in the case where compute node returns 127.0.0.1 for its
+                # own IP address
+                if host and ip:
+                    host = ip
             hosts.append(host)
 
-        return list(dict.fromkeys(hosts))
+        hosts = list(dict.fromkeys(hosts))
+
+        return hosts
+

@@ -46,6 +46,7 @@ class LSFOrchestrator(Orchestrator):
         project=None,
         time=None,
         db_per_host=1,
+        hostname_converter=None,
         **kwargs,
     ):
 
@@ -74,6 +75,12 @@ class LSFOrchestrator(Orchestrator):
         automatically generated. The orchestrator is always launched on the
         first ``db_nodes//db_per_host`` compute nodes in the allocation.
 
+        Database nodes should always be accessed using high-speed networks. If
+        the hostnames provided are not attached to high-speed networks, 
+        ``hostname_converter`` should provide a way to obtain the high-speed
+        network addresses (or hostnames). See the function ``convert_hostnames``
+        for details.
+
         :param port: TCP/IP port
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
@@ -92,9 +99,12 @@ class LSFOrchestrator(Orchestrator):
         :type time: str
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
+        :param hostname_converter: function to convert hostnames
+        :type hostname_converter: function
         """
         self.cpus_per_shard = cpus_per_shard
         self.gpus_per_shard = gpus_per_shard
+        self.hostname_converter = hostname_converter
 
         super().__init__(
             port,
@@ -137,11 +147,19 @@ class LSFOrchestrator(Orchestrator):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
+
+        if self.hostname_converter:
+            high_speed_hosts = self.convert_hostnames(self.hostname_converter, host_list)
+            while "" in high_speed_hosts:
+                high_speed_hosts.remove("")
+        else:
+            high_speed_hosts = host_list
+
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
         for db in self.entities:
-            db.set_hosts(host_list)
+            db.set_hosts(high_speed_hosts)
 
     def set_batch_arg(self, arg, value):
         """Set a Bsub batch argument the orchestrator should launch with
@@ -251,7 +269,7 @@ class LSFOrchestrator(Orchestrator):
                 ports.append(next_port)
 
         run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-        node = DBNode(self.name, self.path, run_settings, ports)
+        node = DBNode(self.name, self.path, run_settings, ports, self.hostname_converter)
         node._multihost = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
@@ -260,3 +278,29 @@ class LSFOrchestrator(Orchestrator):
     @property
     def num_shards(self):
         return self.db_nodes
+
+    def convert_hostnames(self, converter, hosts):
+        """Convert hostnames (or IPs) to corresponding high-speed network
+        addresses.
+
+        This is used on systems where the hosts have different
+        names and addresses for the different networks they are
+        attached to. For example, on some systems, the host `host1`
+        can be reached over InfiniBand with the hostname `host1-IB`,
+        in that case, translator should be a function returning the
+        IP address of `host1-1B`. The function can also just return
+        the high-speed network hostname, but the IP is preferrable.
+
+        If and only if hostnames cannot be obtained, the ``converter`` should 
+        take IP addresses as arguments.
+
+        If some hostnames should not be used (e.g. because they are
+        batch nodes), the converter should convert them to an empty
+        string.
+
+        :param converter: function to convert hostname
+        :type converter: function
+        :hosts: list of hostnames or IPs to convert
+        :type hosts: list[str]
+        """
+        return [converter(host) for host in hosts]

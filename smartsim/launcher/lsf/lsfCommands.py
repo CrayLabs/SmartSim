@@ -38,6 +38,7 @@ def bjobs(args):
     _, out, error = execute_cmd(cmd)
     return out, error
 
+
 def bkill(args):
     """Calls LSF bkill with args.
 

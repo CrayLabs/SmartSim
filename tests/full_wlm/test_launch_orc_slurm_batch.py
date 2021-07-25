@@ -75,7 +75,7 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils):
     if constants.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
-        
+
     exp.stop(orc)
 
     exp_name = "test-orc-slurm-cluster-orc-batch-reconnect-2nd"
@@ -92,5 +92,5 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils):
         if stat == constants.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
-    
+
     exp_2.stop(reloaded_orc)

@@ -56,7 +56,7 @@ def test_orc_active_functions(fileutils):
 
     assert not db.is_active()
 
-    # check if orchestrator.get_addree() raises an exception
+    # check if orchestrator.get_address() raises an exception
     with pytest.raises(SmartSimError):
         db.get_address()
 

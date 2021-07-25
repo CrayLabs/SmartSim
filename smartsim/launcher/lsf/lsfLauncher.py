@@ -108,9 +108,7 @@ class LSFLauncher(WLMLauncher):
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
-            task_id = self.task_manager.start_task(
-                cmd_list, step.cwd
-            )
+            task_id = self.task_manager.start_task(cmd_list, step.cwd)
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:  # pragma: no cover

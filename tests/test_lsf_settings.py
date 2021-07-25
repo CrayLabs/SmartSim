@@ -15,13 +15,15 @@ def test_jsrun_settings():
     settings.set_tasks(96)
     settings.set_binding("packed:2")
     formatted = settings.format_run_args()
-    result = ["--nrs=8",
-              "--cpu_per_rs=2", 
-              "--gpu_per_rs=1",
-              "--rs_per_host=4",
-              "--tasks_per_rs=12",
-              "--np=96",
-              "--bind=packed:2"]
+    result = [
+        "--nrs=8",
+        "--cpu_per_rs=2",
+        "--gpu_per_rs=1",
+        "--rs_per_host=4",
+        "--tasks_per_rs=12",
+        "--np=96",
+        "--bind=packed:2",
+    ]
     assert formatted == result
 
 
@@ -66,9 +68,15 @@ def test_jsrun_format_env():
 
 
 def test_bsub_batch_settings():
-    sbatch = BsubBatchSettings(nodes=1, time="10:00:00", project="A3123", smts=4, batch_args={"alloc_flags": "nvme"})
+    sbatch = BsubBatchSettings(
+        nodes=1,
+        time="10:00:00",
+        project="A3123",
+        smts=4,
+        batch_args={"alloc_flags": "nvme"},
+    )
     formatted = sbatch.format_batch_args()
-    result = ["-alloc_flags \"nvme smt4\"", "-nnodes 1"]
+    result = ['-alloc_flags "nvme smt4"', "-nnodes 1"]
     assert formatted == result
 
 
@@ -77,16 +85,10 @@ def test_bsub_batch_manual():
     sbatch.set_nodes(5)
     sbatch.set_project("A3531")
     sbatch.set_walltime("10:00:00")
-    sbatch.set_smts("2") # This should have no effect as per our docs
+    sbatch.set_smts("2")  # This should have no effect as per our docs
     sbatch.set_hostlist(["node1", "node2", "node5"])
     formatted = sbatch.format_batch_args()
-    result = ["-alloc_flags \"gpumps smt4\"",
-              "-nnodes 5",
-              '-m "node1,node2,node5"']
+    result = ['-alloc_flags "gpumps smt4"', "-nnodes 5", '-m "node1 node2 node5"']
     assert formatted == result
 
 
-def test_change_bsub_batch_cmd():
-    sbatch = BsubBatchSettings()
-    sbatch.set_batch_command("qsub")
-    assert sbatch._batch_cmd == "qsub"

@@ -361,7 +361,7 @@ class BsubBatchSettings(BatchSettings):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
-        self.batch_args["m"] = '"' + ",".join(host_list) + '"'
+        self.batch_args["m"] = '"' + " ".join(host_list) + '"'
 
     def set_tasks(self, num_tasks):
         """Set the number of tasks for this job
@@ -390,8 +390,10 @@ class BsubBatchSettings(BatchSettings):
             if not any([flag.startswith("smt") for flag in flags]):
                 flags.append(f"smt{self.smts}")
                 self.batch_args["alloc_flags"] = " ".join(flags)
-            if len(flags)>1:
-                self.batch_args["alloc_flags"] = '"' + self.batch_args["alloc_flags"] + '"'
+            if len(flags) > 1:
+                self.batch_args["alloc_flags"] = (
+                    '"' + self.batch_args["alloc_flags"] + '"'
+                )
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
