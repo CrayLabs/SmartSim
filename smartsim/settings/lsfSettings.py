@@ -74,11 +74,12 @@ class JsrunSettings(RunSettings):
         This sets ``--cpu_per_rs``
 
         :param num_cpus: number of cpus to use per resource set or ALL_CPUS
-        :type num_cpus: int
+        :type num_cpus: int or str
         """
         if isinstance(num_cpus, str):
             self.run_args["cpu_per_rs"] = num_cpus
-        self.run_args["cpu_per_rs"] = int(num_cpus)
+        else:
+            self.run_args["cpu_per_rs"] = int(num_cpus)
 
     def set_gpus_per_rs(self, num_gpus):
         """Set the number of gpus to use per resource set
@@ -86,11 +87,12 @@ class JsrunSettings(RunSettings):
         This sets ``--gpu_per_rs``
 
         :param num_cpus: number of gpus to use per resource set or ALL_GPUS
-        :type num_gpus: int
+        :type num_gpus: int or str
         """
         if isinstance(num_gpus, str):
             self.run_args["gpu_per_rs"] = num_gpus
-        self.run_args["gpu_per_rs"] = int(num_gpus)
+        else:
+            self.run_args["gpu_per_rs"] = int(num_gpus)
 
     def set_rs_per_host(self, num_rs):
         """Set the number of resource sets to use per host
@@ -291,6 +293,8 @@ class BsubBatchSettings(BatchSettings):
         self.set_project(project)
         if smts:
             self.set_smts(smts)
+        else:
+            self.smts = None
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
@@ -386,7 +390,6 @@ class BsubBatchSettings(BatchSettings):
         else:
             # see if smt is in the flag, otherwise add it
             flags = self.batch_args["alloc_flags"].split()
-            print(flags)
             if not any([flag.startswith("smt") for flag in flags]):
                 flags.append(f"smt{self.smts}")
                 self.batch_args["alloc_flags"] = " ".join(flags)

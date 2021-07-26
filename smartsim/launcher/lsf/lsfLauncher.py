@@ -116,8 +116,7 @@ class LSFLauncher(WLMLauncher):
                 cmd_list, step.cwd, out=output, err=error
             )
         else:
-            task_id = self.task_manager.start_task(
-                cmd_list, step.cwd)
+            task_id = self.task_manager.start_task(cmd_list, step.cwd)
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:  # pragma: no cover

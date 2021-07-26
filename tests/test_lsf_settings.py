@@ -1,4 +1,6 @@
-import os
+from pprint import pformat
+
+import pytest
 
 from smartsim.settings import BsubBatchSettings, JsrunSettings
 
@@ -19,6 +21,22 @@ def test_jsrun_settings():
         "--nrs=8",
         "--cpu_per_rs=2",
         "--gpu_per_rs=1",
+        "--rs_per_host=4",
+        "--tasks_per_rs=12",
+        "--np=96",
+        "--bind=packed:2",
+    ]
+    assert formatted == result
+
+    settings.set_cpus_per_rs("ALL_CPUS")
+    settings.set_gpus_per_rs("ALL_GPUS")
+    settings.set_num_rs("ALL_HOSTS")
+
+    formatted = settings.format_run_args()
+    result = [
+        "--nrs=ALL_HOSTS",
+        "--cpu_per_rs=ALL_CPUS",
+        "--gpu_per_rs=ALL_GPUS",
         "--rs_per_host=4",
         "--tasks_per_rs=12",
         "--np=96",
@@ -64,6 +82,12 @@ def test_jsrun_format_env():
     assert formatted == "-E OMP_NUM_THREADS -E LOGGING=verbose"
 
 
+def test_jsrun_mpmd():
+    settings = JsrunSettings("python")
+    settings.set_mpmd_preamble(["launch_distribution : packed"])
+    assert settings.mpmd_preamble_lines == ["launch_distribution : packed"]
+
+
 # ---- Bsub Batch ---------------------------------------------------
 
 
@@ -79,16 +103,37 @@ def test_bsub_batch_settings():
     result = ['-alloc_flags "nvme smt4"', "-nnodes 1"]
     assert formatted == result
 
+    assert str(sbatch) == (
+        f"Batch Command: bsub\n"
+        + "Batch arguments: {'alloc_flags': '\"nvme smt4\"', 'nnodes': 1}"
+    )
+
 
 def test_bsub_batch_manual():
     sbatch = BsubBatchSettings(batch_args={"alloc_flags": "gpumps smt4"})
     sbatch.set_nodes(5)
     sbatch.set_project("A3531")
     sbatch.set_walltime("10:00:00")
+    sbatch._format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "gpumps smt4"
     sbatch.set_smts("2")  # This should have no effect as per our docs
     sbatch.set_hostlist(["node1", "node2", "node5"])
+    sbatch.set_tasks(5)
     formatted = sbatch.format_batch_args()
-    result = ['-alloc_flags "gpumps smt4"', "-nnodes 5", '-m "node1 node2 node5"']
+    result = [
+        '-alloc_flags "gpumps smt4"',
+        "-nnodes 5",
+        '-m "node1 node2 node5"',
+        "-n 5",
+    ]
     assert formatted == result
+    sbatch.add_preamble("module load gcc")
+    sbatch.add_preamble(["module load openmpi", "conda activate smartsim"])
+    assert sbatch._preamble == [
+        "module load gcc",
+        "module load openmpi",
+        "conda activate smartsim",
+    ]
 
-
+    with pytest.raises(TypeError):
+        sbatch.add_preamble(1)

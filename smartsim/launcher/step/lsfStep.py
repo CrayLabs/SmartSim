@@ -133,8 +133,15 @@ class JsrunStep(Step):
 
         output, error = self.get_output_files()
 
-        jsrun_cmd = [jsrun, "--chdir", self.cwd, "--stdio_stdout", output, "--stdio_stderr", error]
- 
+        jsrun_cmd = [
+            jsrun,
+            "--chdir",
+            self.cwd,
+            "--stdio_stdout",
+            output,
+            "--stdio_stderr",
+            error,
+        ]
 
         if self.run_settings.env_vars:
             env_var_str = self.run_settings.format_env_vars()
@@ -242,13 +249,12 @@ class JsrunStep(Step):
                 rs_line += "}: app " + str(app_id) + "\n"
 
                 f.write(rs_line)
-                
 
         with open(erf_file) as f:
             f.flush()
             os.fsync(f)
             logger.debug("ERF synced")
-        
+
         size = os.stat(erf_file).st_size
         while not size:
             size = os.stat(erf_file).st_size

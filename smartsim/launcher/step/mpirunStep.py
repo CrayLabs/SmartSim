@@ -73,22 +73,22 @@ class MpirunStep(Step):
 
         :raises SSConfigError: allocation not listed or found
         """
-        if "PBS_JOBID" in os.environ:
+        if "PBS_JOBID" in os.environ:  # cov-pbs
             self.alloc = os.environ["PBS_JOBID"]
             logger.debug(
                 f"Running on PBS allocation {self.alloc} gleaned from user environment"
             )
-        elif "COBALT_JOBID" in os.environ:
+        elif "COBALT_JOBID" in os.environ:  # cov-cobalt
             self.alloc = os.environ["COBALT_JOBID"]
             logger.debug(
                 f"Running on Cobalt allocation {self.alloc} gleaned from user environment"
             )
-        elif "SLURM_JOBID" in os.environ:
+        elif "SLURM_JOBID" in os.environ:  # cov-slurm
             self.alloc = os.environ["SLURM_JOBID"]
             logger.debug(
                 f"Running on Slurm allocation {self.alloc} gleaned from user environment"
             )
-        elif "LSB_JOBID" in os.environ:
+        elif "LSB_JOBID" in os.environ:  # cov-lsf
             self.alloc = os.environ["LSB_JOBID"]
             logger.debug(
                 f"Running on Slurm allocation {self.alloc} gleaned from user environment"

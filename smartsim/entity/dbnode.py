@@ -110,7 +110,7 @@ class DBNode(SmartSimEntity):
         """
         return "".join(("nodes-", self.name, "-", str(port), ".conf"))
 
-    def _get_cluster_conf_filenames(self, port):
+    def _get_cluster_conf_filenames(self, port):  # cov-lsf
         """Returns the .conf file name for the given port number
 
         This function should bu used if and only if ``_multihost==True``
@@ -182,7 +182,7 @@ class DBNode(SmartSimEntity):
 
         return host
 
-    def _parse_db_hosts(self):
+    def _parse_db_hosts(self):  # cov-lsf
         """Parse the database hosts/IPs from the output files
 
         this uses the RedisIP module that is built as a dependency
@@ -244,4 +244,3 @@ class DBNode(SmartSimEntity):
         hosts = list(dict.fromkeys(hosts))
 
         return hosts
-
