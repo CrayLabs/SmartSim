@@ -108,9 +108,9 @@ class LSFLauncher(WLMLauncher):
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
         else:
-            time.sleep(5)  # avoid overloading LSF with too many bg jsrun calls
+            time.sleep(10)  # avoid overloading LSF with too many bg jsrun calls
             out, err = step.get_output_files()
-            # jsrun has problems redirecting too much output too quickly
+            # jsrun gets slow redirecting too much output too quickly
             # mpirun doesn't direct output for us
             output = open(out, "w+")
             error = open(err, "w+")
