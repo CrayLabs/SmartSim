@@ -119,6 +119,7 @@ class JsrunStep(Step):
         super().__init__(name, cwd)
         self.run_settings = run_settings
         self.alloc = None
+        self.managed = False
         if not self.run_settings.in_batch:
             self._set_alloc()
 
@@ -130,9 +131,9 @@ class JsrunStep(Step):
         """
         jsrun = self.run_settings.run_command
 
-        # output, error = self.get_output_files()
+        output, error = self.get_output_files()
 
-        jsrun_cmd = [jsrun, "--chdir", self.cwd]
+        jsrun_cmd = [jsrun, "--chdir", self.cwd, "--stdio_stdout", output, "--stdio_stderr", error]
  
 
         if self.run_settings.env_vars:

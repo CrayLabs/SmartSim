@@ -107,21 +107,27 @@ class LSFLauncher(WLMLauncher):
             if out:
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-        else:
-            time.sleep(10)  # avoid overloading LSF with too many bg jsrun calls
+        elif isinstance(step, MpirunSettings):
+            time.sleep(10)
             out, err = step.get_output_files()
-            # jsrun gets slow redirecting too much output too quickly
             # mpirun doesn't direct output for us
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
             )
+        else:
+            time.sleep(10)
+            task_id = self.task_manager.start_task(
+                cmd_list, step.cwd)
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:  # pragma: no cover
             step_id = self._get_lsf_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
+
+        time.sleep(5)
+
         return step_id
 
     def stop(self, step_name):
