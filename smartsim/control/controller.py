@@ -355,7 +355,8 @@ class Controller:
 
         # create the database cluster
         if orchestrator.num_shards > 2:
-            time.sleep(1)  # wait to make sure shards are ready
+            if isinstance(self._launcher, LSFOrchestrator):
+                time.sleep(1)
             orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
@@ -430,7 +431,11 @@ class Controller:
         client_env = {}
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
-            client_env["SSDB"] = ",".join(addresses)
+            if len(addresses) <= 128:
+                client_env["SSDB"] = ",".join(addresses)
+            else:
+                # Cap max length of SSDB 
+                client_env["SSDB"] = addresses[:128]
             if entity.incoming_entities:
                 client_env["SSKEYIN"] = ",".join(
                     [in_entity.name for in_entity in entity.incoming_entities]
@@ -517,7 +522,6 @@ class Controller:
                     time.sleep(CONFIG.jm_interval)
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
                     self.stop_entity_list(orchestrator)
-                    print(statuses)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
                     raise SmartSimError(msg)

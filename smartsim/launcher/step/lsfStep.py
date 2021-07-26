@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-from itertools import product
+import time
 
 from ...error import SSConfigError
 from ...utils import get_logger
@@ -130,17 +130,10 @@ class JsrunStep(Step):
         """
         jsrun = self.run_settings.run_command
 
-        output, error = self.get_output_files()
+        # output, error = self.get_output_files()
 
-        jsrun_cmd = [
-            jsrun,
-            "--chdir",
-            self.cwd,
-            "--stdio_stdout",
-            output,
-            "--stdio_stderr",
-            error,
-        ]
+        jsrun_cmd = [jsrun, "--chdir", self.cwd]
+ 
 
         if self.run_settings.env_vars:
             env_var_str = self.run_settings.format_env_vars()
@@ -248,3 +241,17 @@ class JsrunStep(Step):
                 rs_line += "}: app " + str(app_id) + "\n"
 
                 f.write(rs_line)
+                
+
+        with open(erf_file) as f:
+            f.flush()
+            os.fsync(f)
+            logger.debug("ERF synced")
+        
+        size = os.stat(erf_file).st_size
+        while not size:
+            size = os.stat(erf_file).st_size
+            logger.debug("ERF: waiting for file to have non-zero size")
+            time.sleep(10)
+        logger.debug(f"ERF: {erf_file} successfully written to disk, size: {size}")
+        time.sleep(5)

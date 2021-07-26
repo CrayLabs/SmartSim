@@ -111,11 +111,8 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
     exp_2.stop(reloaded_orc)
 
 
-def test_orc_converter_lsf_batch(wlmutils):
-    launcher = wlmutils.get_test_launcher()
-    if launcher != "lsf":
-        pytest.skip("Test only runs on systems with LSF as WLM")
-
+def test_orc_converter_lsf_batch():
+    
     def converter(host):
         int_dict = {"host1": "HOST1-IB", "host2": "HOST2-IB"}
         if host in int_dict.keys():
@@ -126,4 +123,3 @@ def test_orc_converter_lsf_batch(wlmutils):
     orc = LSFOrchestrator(6780, db_nodes=3, batch=True, hosts=["batch", "host1", "host2"], hostname_converter=converter)
     assert orc.entities[0].hosts == ["HOST1-IB", "HOST2-IB"]
     assert orc.batch_settings.batch_args["m"]=="\"batch host1 host2\""
-    
