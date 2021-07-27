@@ -44,13 +44,13 @@ jobs:
 
 
       - name: Install SmartSim (with ML backends if not python 3.9)
-        if: startsWith(matrix.python-version, "3.9") != true
+        if: matrix.python-version != '3.9'
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
           python -m pip install -vvv .[dev,ml]
 
       - name: Install SmartSim
-        if: startsWith(matrix.python-version, "3.9")
+        if: matrix.python-version == '3.9'
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
           python -m pip install -vvv .[dev]
