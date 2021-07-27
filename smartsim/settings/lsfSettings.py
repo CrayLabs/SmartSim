@@ -382,21 +382,26 @@ class BsubBatchSettings(BatchSettings):
         set it. Currently only adds SMT flag if missing
         and ``self.smts`` is set.
         """
-        if not self.smts:
-            return
-
-        if not "alloc_flags" in self.batch_args.keys():
-            self.batch_args["alloc_flags"] = f"smt{self.smts}"
-        else:
-            # see if smt is in the flag, otherwise add it
-            flags = self.batch_args["alloc_flags"].split()
-            if not any([flag.startswith("smt") for flag in flags]):
-                flags.append(f"smt{self.smts}")
-                self.batch_args["alloc_flags"] = " ".join(flags)
+ 
+        if self.smts:
+            if not "alloc_flags" in self.batch_args.keys():
+                self.batch_args["alloc_flags"] = f"smt{self.smts}"
+            else:
+                # Check if smt is in the flag, otherwise add it
+                flags = self.batch_args["alloc_flags"].strip('"').split()
+                if not any([flag.startswith("smt") for flag in flags]):
+                    flags.append(f"smt{self.smts}")
+                    self.batch_args["alloc_flags"] = " ".join(flags)
+                
+        # Check if alloc_flags has to be enclosed in quotes
+        if "alloc_flags" in self.batch_args.keys():
+            flags = self.batch_args["alloc_flags"].strip('"').split()
             if len(flags) > 1:
                 self.batch_args["alloc_flags"] = (
-                    '"' + self.batch_args["alloc_flags"] + '"'
+                    '"' + " ".join(flags) + '"'
                 )
+            
+        
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
