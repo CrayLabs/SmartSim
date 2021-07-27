@@ -69,7 +69,7 @@ class SbatchStep(Step):
         launch_cmd = ["cd", step.cwd, ";"]
         launch_cmd += step.get_launch_cmd()
         if not step.run_settings.block_in_batch:
-            launch_cmd += '&'
+            launch_cmd += "&"
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 

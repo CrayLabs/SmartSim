@@ -165,7 +165,7 @@ class Generator:
             elist.path = elist_dir
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
-            
+
     def _gen_ray_cluster_dir(self, ray_clusters):
         """Generate directories for RayCluster instances
 
@@ -185,7 +185,7 @@ class Generator:
             else:
                 mkdir(rc_dir)
             rc.path = rc_dir
-            
+
             rc_head_dir = path.join(self.gen_path, rc.head_model.path)
             if path.isdir(rc_head_dir):
                 if self.overwrite:
@@ -193,9 +193,9 @@ class Generator:
                     mkdir(rc_head_dir)
             else:
                 mkdir(rc_head_dir)
-                
+
             rc.head_model.path = rc_head_dir
-            
+
             if rc._workers > 0:
                 rc_worker_dir = path.join(self.gen_path, rc.worker_model.path)
                 if path.isdir(rc_worker_dir):

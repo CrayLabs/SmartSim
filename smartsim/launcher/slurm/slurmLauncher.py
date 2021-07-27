@@ -29,10 +29,10 @@ from shutil import which
 
 from ...constants import STATUS_CANCELLED
 from ...error import LauncherError, SSConfigError, SSUnsupportedError
-from ...settings import MpirunSettings, SbatchSettings, SrunSettings, RunSettings
+from ...settings import MpirunSettings, RunSettings, SbatchSettings, SrunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import MpirunStep, SbatchStep, SrunStep, LocalStep
+from ..step import LocalStep, MpirunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct

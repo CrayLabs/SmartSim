@@ -38,10 +38,10 @@ from .control import Controller, Manifest
 from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
 from .generation import Generator
+from .launcher.util.shell import execute_cmd
+from .ext.ray import RayCluster
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
-from .launcher.util.shell import execute_cmd
-from .ray import RayCluster
 
 logger = get_logger(__name__)
 
@@ -117,7 +117,7 @@ class Experiment:
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
             for rc in stop_manifest.ray_clusters:
-                self._control.stop_entity_list(rc)
+                self._control.stop_ray_cluster(rc)
             orchestrator = stop_manifest.db
             if orchestrator:
                 self._control.stop_entity_list(orchestrator)
@@ -470,8 +470,9 @@ class Experiment:
                     color="green",
                 )
                 if rc.worker_model:
-                    run_settings += colorize (
-                        "\nWorkers run Settings: \n" + str(rc.worker_model.run_settings),
+                    run_settings += colorize(
+                        "\nWorkers run Settings: \n"
+                        + str(rc.worker_model.run_settings),
                         color="green",
                     )
                 batch = colorize(f"Launching as batch: {rc.batch}", color="green")
@@ -483,7 +484,7 @@ class Experiment:
                     print(f"{batch_settings}")
                 else:
                     sprint(f"{run_settings}")
-            sprint("\n")    
+            sprint("\n")
 
         sprint("\n")
 

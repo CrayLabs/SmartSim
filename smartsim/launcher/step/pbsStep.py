@@ -63,7 +63,7 @@ class QsubBatchStep(Step):
         """
         launch_cmd = step.get_launch_cmd()
         if not step.block_in_batch:
-            launch_cmd.append('&')
+            launch_cmd.append("&")
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 

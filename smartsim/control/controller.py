@@ -37,7 +37,6 @@ from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedEr
 from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
 from ..utils import get_logger
 from .jobmanager import JobManager
-from .manifest import Manifest
 
 logger = get_logger(__name__)
 
@@ -178,6 +177,17 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
+    # TODO Gracefully stop head with `ray stop`
+    def stop_ray_cluster(self, ray_cluster):
+        """Stop a ``RayCluster``, first stopping
+        the workers, then the head.
+
+        :param ray_cluster: the cluster to stop
+        :type ray_cluster: RayCluster
+        """
+        for entity in ray_cluster.entities:
+            self.stop_entity(entity)
+
     def get_entity_status(self, entity):
         """Get the status of an entity
 
@@ -241,6 +251,7 @@ class Controller:
             elif launcher == "pbs":
                 self._launcher = PBSLauncher()
                 self._jobs.set_launcher(self._launcher)
+            # Init Cobalt launcher
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
                 self._jobs.set_launcher(self._launcher)
@@ -359,7 +370,7 @@ class Controller:
         :type orchestrator: RayCluster
         """
         # if the Ray cluster was launched as a batch workload
-        if ray_cluster.batch:   
+        if ray_cluster.batch:
             head_batch_step = self._create_batch_job_step(ray_cluster.head_model)
             self._launch_step(head_batch_step, ray_cluster.head_model)
             ray_cluster._get_ray_head_node_address()
@@ -375,7 +386,9 @@ class Controller:
 
             if ray_cluster.worker_model:
                 ray_cluster._update_worker_model()
-                worker_batch_step = self._create_batch_job_step(ray_cluster.worker_model)
+                worker_batch_step = self._create_batch_job_step(
+                    ray_cluster.worker_model
+                )
                 self._launch_step(worker_batch_step, ray_cluster.worker_model)
                 try:
                     nodelist = self._launcher.get_step_nodes([worker_batch_step.name])
@@ -404,7 +417,9 @@ class Controller:
                 ray_cluster._update_worker_model()
                 # Don't launch on head host
                 if isinstance(self._launcher, SlurmLauncher):
-                    ray_cluster.worker_model.run_settings.set_excluded_hosts(ray_cluster.head_model._hosts)
+                    ray_cluster.worker_model.run_settings.set_excluded_hosts(
+                        ray_cluster.head_model._hosts
+                    )
                 worker_step = self._create_job_step(ray_cluster.worker_model)
                 self._launch_step(worker_step, ray_cluster.worker_model)
 
@@ -416,9 +431,7 @@ class Controller:
                 except LauncherError:
                     logger.debug("WLM Ray worker node aquisition failed")
                 except SSUnsupportedError:
-                    logger.debug(
-                        "WLM Ray worker node acquisition unsupported"
-                    ) 
+                    logger.debug("WLM Ray worker node acquisition unsupported")
 
         if ray_cluster._hosts:
             logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
@@ -462,10 +475,15 @@ class Controller:
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
-        for entity in entity_list.entities:
-            # tells step creation not to look for an allocation
-            entity.run_settings.in_batch = True
-            step = self._create_job_step(entity)
+        if isinstance(entity_list, EntityList):
+            for entity in entity_list.entities:
+                # tells step creation not to look for an allocation
+                entity.run_settings.in_batch = True
+                step = self._create_job_step(entity)
+                batch_step.add_to_batch(step)
+        elif isinstance(entity_list, SmartSimEntity):
+            entity_list.run_settings.in_batch = True
+            step = self._create_job_step(entity_list)
             batch_step.add_to_batch(step)
         return batch_step
 
@@ -574,7 +592,7 @@ class Controller:
                 if not self._jobs.actively_monitoring:
                     self._jobs.check_jobs()
 
-                # _jobs.get_status aquires JM lock for main thread, no need for locking
+                # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
                 if all([stat == STATUS_RUNNING for stat in statuses]):
                     ready = True

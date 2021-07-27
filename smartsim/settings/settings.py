@@ -35,7 +35,14 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, block_in_batch=False, expand_exe=True
+        self,
+        exe,
+        exe_args=None,
+        run_command="",
+        run_args=None,
+        env_vars=None,
+        block_in_batch=False,
+        expand_exe=True,
     ):
         """Run parameters for a ``Model``
 
@@ -70,7 +77,7 @@ class RunSettings:
                                should wait until completion of this ``Model``
         :type block_in_batch: bool
         :param expand_exe: whether the executable path should be expanded. It is recommended
-                           to always leave this value to True, unless really needed (e.g. 
+                           to always leave this value to True, unless really needed (e.g.
                            when commands are not available on the launch node).
         :type expand_exe: bool
         """
@@ -202,18 +209,18 @@ class BatchSettings:
         :type command: str
         """
         self._batch_cmd = command
-        
+
     def add_preamble(self, lines):
         """Add lines to the batch file preamble. The lines are just
         written (unmodified) at the beginning of the batch file
         (after the WLM directives) and can be used to e.g.
         start virtual environments before running the executables.
-        
+
         :param line: lines to add to preamble.
         :type line: str or list[str]
         """
         if isinstance(lines, str):
-            self._preamble += [lines] 
+            self._preamble += [lines]
         elif isinstance(lines, list):
             self._preamble += lines
         else:

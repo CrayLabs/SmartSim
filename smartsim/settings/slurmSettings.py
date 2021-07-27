@@ -30,7 +30,16 @@ from .settings import BatchSettings, RunSettings
 
 
 class SrunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None, block_in_batch=False, expand_exe=True):
+    def __init__(
+        self,
+        exe,
+        exe_args=None,
+        run_args=None,
+        env_vars=None,
+        alloc=None,
+        block_in_batch=False,
+        expand_exe=True,
+    ):
         """Initialize run parameters for a slurm job with ``srun``
 
         ``SrunSettings`` should only be used on Slurm based systems.
@@ -52,12 +61,18 @@ class SrunSettings(RunSettings):
                                in a batch.
         :type block_in_batch: bool
         :param expand_exe: whether the executable path should be expanded. It is recommended
-                           to always leave this value to True, unless really needed (e.g. 
+                           to always leave this value to True, unless really needed (e.g.
                            when commands are not available on the launch node).
         :type expand_exe: bool
         """
         super().__init__(
-            exe, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars, block_in_batch=block_in_batch, expand_exe=expand_exe
+            exe,
+            exe_args,
+            run_command="srun",
+            run_args=run_args,
+            env_vars=env_vars,
+            block_in_batch=block_in_batch,
+            expand_exe=expand_exe,
         )
         self.alloc = alloc
         self.mpmd = False
@@ -86,7 +101,7 @@ class SrunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
-        
+
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
 

@@ -5,8 +5,8 @@ import pytest
 from smartsim import Experiment
 from smartsim.control import Manifest
 from smartsim.database import Orchestrator
-from smartsim.ray import RayCluster
 from smartsim.error import SmartSimError
+from smartsim.ext.ray import RayCluster
 from smartsim.settings import RunSettings
 
 # ---- create entities for testing --------
@@ -17,21 +17,25 @@ exp = Experiment("util-test", launcher="local")
 model = exp.create_model("model_1", run_settings=rs)
 model_2 = exp.create_model("model_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
-ray_cluster =  RayCluster(name="ray-cluster", workers=1, launcher='pbs')
+
 
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
 
+rc = RayCluster(name="ray-cluster", workers=0, launcher="local")
+
 
 def test_separate():
-    manifest = Manifest(model, ensemble, orc)
+    manifest = Manifest(model, ensemble, orc, rc)
     assert manifest.models[0] == model
     assert len(manifest.models) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.db == orc
+    assert len(manifest.ray_clusters) == 1
+    assert manifest.ray_clusters[0] == rc
 
 
 def test_no_name():

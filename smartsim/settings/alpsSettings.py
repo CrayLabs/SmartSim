@@ -28,7 +28,15 @@ from .settings import RunSettings
 
 
 class AprunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, block_in_batch=False, expand_exe=True):
+    def __init__(
+        self,
+        exe,
+        exe_args=None,
+        run_args=None,
+        env_vars=None,
+        block_in_batch=False,
+        expand_exe=True,
+    ):
         """Settings to run job with ``aprun`` command
 
         ``AprunSettings`` can be used for both the `pbs` and `cobalt`
@@ -46,13 +54,17 @@ class AprunSettings(RunSettings):
                                in a batch.
         :type block_in_batch: bool
         :param expand_exe: whether the executable path should be expanded. It is recommended
-                           to always leave this value to True, unless really needed (e.g. 
+                           to always leave this value to True, unless really needed (e.g.
                            when commands are not available on the launch node).
         :type expand_exe: bool
         """
         super().__init__(
-            exe, exe_args, run_command="aprun", run_args=run_args, env_vars=env_vars,
-            expand_exe=expand_exe
+            exe,
+            exe_args,
+            run_command="aprun",
+            run_args=run_args,
+            env_vars=env_vars,
+            expand_exe=expand_exe,
         )
         self.block_in_batch = block_in_batch
         self.mpmd = []
@@ -112,7 +124,7 @@ class AprunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
-        
+
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
 
@@ -172,4 +184,6 @@ class AprunSettings(RunSettings):
         :type walltime: str
         """
         h_m_s = walltime.split(":")
-        self.run_args["t"] = str(int(h_m_s[0])*3600+int(h_m_s[1])*60+int(h_m_s[2]))
+        self.run_args["t"] = str(
+            int(h_m_s[0]) * 3600 + int(h_m_s[1]) * 60 + int(h_m_s[2])
+        )
