@@ -103,3 +103,41 @@ def test_catch_orc_errors_lsf():
         orc = LSFOrchestrator(
             6780, db_nodes=2, db_per_host=2, batch=False, hosts=["host1", "host2"]
         )
+
+    def bad_converter(host):
+        return "TWO WORDS"
+
+    with pytest.raises(ValueError):
+        orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        hosts=["batch", "host1", "host2"],
+        hostname_converter=bad_converter,
+    )
+
+    def bad_converter_2(host):
+        return "*"*300
+
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        hosts=["batch"],
+        hostname_converter=bad_converter_2,
+    )
+
+    assert ["*"*256] == orc.entities[0]._hosts
+
+    def bad_converter_3(host):
+        # Something very stupid
+        return bad_converter_2
+    
+    with pytest.raises(TypeError):
+        orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        hosts=["batch", "host1", "host2"],
+        hostname_converter=bad_converter_3,
+    )

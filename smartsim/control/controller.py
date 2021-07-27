@@ -356,7 +356,7 @@ class Controller:
         # create the database cluster
         if orchestrator.num_shards > 2:
             if isinstance(self._launcher, LSFOrchestrator):
-                time.sleep(1)
+                time.sleep(10)
             orchestrator.create_cluster()
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")

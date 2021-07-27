@@ -256,9 +256,5 @@ class JsrunStep(Step):
             logger.debug("ERF synced")
 
         size = os.stat(erf_file).st_size
-        while not size:
-            size = os.stat(erf_file).st_size
-            logger.debug("ERF: waiting for file to have non-zero size")
-            time.sleep(10)
         logger.debug(f"ERF: {erf_file} successfully written to disk, size: {size}")
         time.sleep(5)

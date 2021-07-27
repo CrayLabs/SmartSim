@@ -149,7 +149,7 @@ class LSFOrchestrator(Orchestrator):
             raise TypeError("host_list argument must be list of strings")
 
         if self.hostname_converter:
-            high_speed_hosts = self.convert_hostnames(self.hostname_converter, host_list)
+            high_speed_hosts = self.convert_hostnames(host_list)
             while "" in high_speed_hosts:
                 high_speed_hosts.remove("")
         else:
@@ -269,7 +269,7 @@ class LSFOrchestrator(Orchestrator):
                 ports.append(next_port)
 
         run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-        node = DBNode(self.name, self.path, run_settings, ports, self.hostname_converter)
+        node = DBNode(self.name, self.path, run_settings, ports, self.convert_hostnames)
         node._multihost = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
@@ -279,7 +279,7 @@ class LSFOrchestrator(Orchestrator):
     def num_shards(self):
         return self.db_nodes
 
-    def convert_hostnames(self, converter, hosts):
+    def convert_hostnames(self, hosts):
         """Convert hostnames (or IPs) to corresponding high-speed network
         addresses.
 
@@ -291,16 +291,33 @@ class LSFOrchestrator(Orchestrator):
         IP address of `host1-1B`. The function can also just return
         the high-speed network hostname, but the IP is preferrable.
 
-        If and only if hostnames cannot be obtained, the ``converter`` should 
+        If and only if hostnames cannot be obtained, ``self.hostname_converter`` should 
         take IP addresses as arguments.
 
         If some hostnames should not be used (e.g. because they are
         batch nodes), the converter should convert them to an empty
         string.
 
-        :param converter: function to convert hostname
-        :type converter: function
+        This function does a minimum of sanitization, avoiding 
+        addresses of more than 256 characters or containing spaces.
+
         :hosts: list of hostnames or IPs to convert
         :type hosts: list[str]
         """
-        return [converter(host) for host in hosts]
+        converted_hosts = []
+        for host in hosts:
+            converted_host = self.hostname_converter(host)
+            if not isinstance(converted_host, str):
+                raise TypeError("Converter function must return string")
+
+            if len(converted_host) > 256:
+                logger.warning("Converter returned hostname or address " +
+                               f"longer than 256 characters for original hostname {host}, " +
+                               "the name will be truncated")
+                converted_host = converted_host[:256]
+            if len(converted_host.split())>1:
+                raise ValueError(f"Converter must return single value for hostname {host}, "
+                                 f"but returned \"{converted_host}\".")
+            converted_hosts.append(converted_host)
+
+        return converted_hosts
