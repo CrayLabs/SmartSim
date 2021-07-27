@@ -277,8 +277,8 @@ class RayHead(Model):
         ray_starter_args = [f"{dir_path}/raystarter.py"]
         ray_starter_args += [f"--port={self._ray_port}"]
         ray_starter_args += [f"--redis-password={self._ray_password}"]
-        if "dashboard-port" in self.ray_args:
-            self.dashboard_port = int(self.ray_args["dashboard-port"])
+        if "dashboard-port" in self._ray_args:
+            self.dashboard_port = int(self._ray_args["dashboard-port"])
         ray_starter_args += [f"--dashboard-port={self.dashboard_port}"]
 
         delete_elements(self._ray_args, ["block", "redis-password", "start", "head", "port", "dashboard-port"])
