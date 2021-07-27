@@ -1,10 +1,10 @@
 import io
-import numpy as np
-from smartredis import Client
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from smartredis import Client
 
 
 # simple MNIST in PyTorch
@@ -34,7 +34,6 @@ class Net(nn.Module):
         return output
 
 
-
 def create_torch_model():
     n = Net()
     example_forward_input = torch.rand(1, 1, 28, 28)
@@ -42,6 +41,7 @@ def create_torch_model():
     model_buffer = io.BytesIO()
     torch.jit.save(module, model_buffer)
     return model_buffer.getvalue()
+
 
 # random function from TorchScript API
 def calc_svd(input_tensor):
@@ -54,17 +54,14 @@ def run(device):
     client = Client(cluster=False)
 
     # test the SVD function
-    tensor = np.random.randint(0, 100,
-                            size=(5, 3, 2)).astype(np.float32)
+    tensor = np.random.randint(0, 100, size=(5, 3, 2)).astype(np.float32)
     client.put_tensor("input", tensor)
     client.set_function("svd", calc_svd)
-    client.run_script("svd", "calc_svd",
-                    "input", ["U", "S", "V"])
+    client.run_script("svd", "calc_svd", "input", ["U", "S", "V"])
     U = client.get_tensor("U")
     S = client.get_tensor("S")
     V = client.get_tensor("V")
     print(f"U: {U}, S: {S}, V: {V}")
-
 
     # test simple convNet
     net = create_torch_model()
@@ -79,8 +76,10 @@ def run(device):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Torch test Script")
-    parser.add_argument('--device', type=str, default="CPU",
-                            help='device type for model execution')
+    parser.add_argument(
+        "--device", type=str, default="CPU", help="device type for model execution"
+    )
     args = parser.parse_args()
     run(args.device)

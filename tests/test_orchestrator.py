@@ -55,7 +55,7 @@ def test_orc_active_functions(fileutils):
     exp.stop(db)
 
     # TODO: Update is_active code after smartredis 0.2.0 is released
-    #assert not db.is_active()
+    # assert not db.is_active()
 
     # check if orchestrator.get_addree() raises an exception
     with pytest.raises(SmartSimError):

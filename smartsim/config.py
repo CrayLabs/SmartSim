@@ -200,7 +200,7 @@ class Config:
                 device = self.conf["test"]["device"]
                 return device
         except KeyError:
-            return "CPU" # cpu by default
+            return "CPU"  # cpu by default
 
     @property
     def log_level(self):
