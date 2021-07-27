@@ -141,7 +141,16 @@ class RayCluster(EntityList):
             # Insert at first position, because we want this top be stopped first
             self.entities.insert(0, self.worker_model)
 
-    def _get_ray_head_node_address(self):
+    def add_batch_args(self, batch_args):
+        """Add batch argumentss to all Ray nodes
+
+        :param batch_args: batch arguments to add to Ray nodes
+        :type batch_args: dict[str,str]
+        """
+        for node in self.entities:
+            node._batch_args.update(batch_args)
+
+    def _parse_ray_head_node_address(self):
         """Get the ray head node host address from the log file produced
         by the head process.
 
@@ -179,6 +188,25 @@ class RayCluster(EntityList):
 
         self.head_model.address = head_ip
 
+    def get_head_address(self):
+        """Return address of head node
+
+        If address has not been initialized, returns None
+
+        :returns: Address of head node
+        :rtype: str
+        """
+        return self.head_model.address
+
+    def get_dashboard_address(self):
+        """Returns address of dashboard address
+
+        The format is <head_ip>:<dashboard_port>
+
+        :returns: Dashboard address
+        :rtype: str
+        """
+        return self.head_model.address+":"+self.head_model.dashboard_port
 
 class RayHead(Model):
     """Ray head node model.
@@ -235,6 +263,7 @@ class RayHead(Model):
         self._batch = launcher != "local" and batch
         self._time = time
         self._hosts = []
+        self.dashboard_port=8265
 
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
@@ -248,7 +277,11 @@ class RayHead(Model):
         ray_starter_args = [f"{dir_path}/raystarter.py"]
         ray_starter_args += [f"--port={self._ray_port}"]
         ray_starter_args += [f"--redis-password={self._ray_password}"]
-        delete_elements(self._ray_args, ["block", "redis-password", "start", "head", "port"])
+        if "dashboard-port" in self.ray_args:
+            self.dashboard_port = int(self.ray_args["dashboard-port"])
+        ray_starter_args += [f"--dashboard-port={self.dashboard_port}"]
+
+        delete_elements(self._ray_args, ["block", "redis-password", "start", "head", "port", "dashboard-port"])
 
         ray_args = []
         for key in self._ray_args.keys():
