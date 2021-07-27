@@ -20,7 +20,7 @@ except ImportError:
         f"TensorFlow {TF_VERSION} is not installed. Please install it to use smartsim.tf") from None
 except AssertionError:
     raise SmartSimError(
-        f"TensorFlow {TF_VERSION} is required for smartsim.tf, you have {tf_version}")
+        f"TensorFlow {TF_VERSION} is required for smartsim.tf, you have {tf_version}") from None
 
 
 from .utils import freeze_model

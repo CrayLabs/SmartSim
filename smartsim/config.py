@@ -101,7 +101,7 @@ class Config:
                     "modules": {"ai": lib_path, "ip": lib_path},
                 },
                 "smartsim": {"jm_interval": 15, "log_level": "info"},
-                "test": {"launcher": "local"},
+                "test": {"launcher": "local", "device": "CPU"},
             }
             return default
 
@@ -190,6 +190,17 @@ class Config:
                 return launcher
         except KeyError:
             return "local"  # local by default
+
+    @property
+    def test_device(self):
+        try:
+            if "SMARTSIM_TEST_DEVICE" in os.environ:
+                return os.environ["SMARTSIM_TEST_DEVICE"]
+            else:
+                device = self.conf["test"]["device"]
+                return device
+        except KeyError:
+            return "CPU" # cpu by default
 
     @property
     def log_level(self):
