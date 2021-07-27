@@ -401,7 +401,7 @@ class Controller:
         else:
             head_step = self._create_job_step(ray_cluster.head_model)
             self._launch_step(head_step, ray_cluster.head_model)
-            ray_cluster._get_ray_head_node_address()
+            ray_cluster._parse_ray_head_node_address()
             try:
                 nodelist = self._launcher.get_step_nodes([head_step.name])
                 ray_cluster._hosts = nodelist[0]
