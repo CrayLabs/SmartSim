@@ -209,10 +209,11 @@ class Builder:
     @staticmethod
     def check_prereq(command):
         try:
-            _ = subprocess.check_call([command, '--version'],
+            cmd = " ".join([command, '--version'])
+            _ = subprocess.check_call(cmd, shell=True,
                                       stdout=subprocess.DEVNULL,
                                       stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+        except (subprocess.SubprocessError, OSError):
             raise SetupError(
                 f"{command} must be installed to build SmartSim") from None
 
