@@ -123,7 +123,7 @@ class LSFLauncher(WLMLauncher):
             step_id = self._get_lsf_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
-        time.sleep(10)
+        time.sleep(5)
 
         return step_id
 

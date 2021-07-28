@@ -127,7 +127,6 @@ def parse_step_id_from_bjobs(output, step_name):
 
     for line in output.split("\n"):
         fields = line.split()
-        print(fields)
         if len(fields) >= 7:
             if fields[7] == step_name:
                 step_id = fields[0]

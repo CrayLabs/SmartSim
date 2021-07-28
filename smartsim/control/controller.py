@@ -355,9 +355,21 @@ class Controller:
 
         # create the database cluster
         if orchestrator.num_shards > 2:
-            if isinstance(self._launcher, LSFOrchestrator):
-                time.sleep(10)
-            orchestrator.create_cluster()
+            num_trials = 5
+            cluster_created = False
+            while not cluster_created:
+                try:
+                    orchestrator.create_cluster()
+                    cluster_created = True
+                except SmartSimError:
+                    if num_trials > 0:
+                        logger.debug(
+                            "Cluster creation failed, attempting again in five seconds..."
+                        )
+                        num_trials -= 1
+                        time.sleep(5)
+                    else:
+                        raise
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 

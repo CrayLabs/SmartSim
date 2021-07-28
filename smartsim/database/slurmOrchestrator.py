@@ -100,6 +100,9 @@ class SlurmOrchestrator(Orchestrator):
             raise SmartSimError(
                 "hosts argument is required when launching SlurmOrchestrator with mpirun"
             )
+        self._reserved_run_args = {}
+        self._reserved_batch_args = {}
+        self._fill_reserved()
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -162,23 +165,32 @@ class SlurmOrchestrator(Orchestrator):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
-        # TODO catch commonly used arguments we use for SmartSim here
-        self.batch_settings.batch_args[arg] = value
+        if arg in self._reserved_batch_args:
+            logger.warning(
+                f"Can not set batch argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+            )
+        else:
+            self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg, value):
         """Set a run argument the orchestrator should launch
         each node with (it will be passed to `jrun`)
-        
-        Some commonly used arguments are used 
+
+        Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
-        
+
         :param arg: run argument to set
         :type arg: str
         :param value: run parameter - set to None if no parameter value
         :type value: str | None
         """
-        for db in self.entities:
-            db.run_settings.run_args[arg] = value
+        if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+            )
+        else:
+            for db in self.entities:
+                db.run_settings.run_args[arg] = value
 
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
@@ -278,3 +290,58 @@ class SlurmOrchestrator(Orchestrator):
             node = DBNode(db_node_name, self.path, run_settings, ports)
             self.entities.append(node)
         self.ports = ports
+
+    def _fill_reserved(self):
+        """Fill the reserved batch and run arguments dictionaries"""
+        self._reserved_run_args[MpirunSettings] = [
+            "np",
+            "N",
+            "c",
+            "output-filename",
+            "n",
+            "wdir",
+            "wd",
+            "host",
+        ]
+        self._reserved_run_args[SrunSettings] = [
+            "nodes",
+            "N",
+            "ntasks",
+            "n",
+            "ntasks-per-node",
+            "output",
+            "o",
+            "error",
+            "e",
+            "job-name",
+            "J",
+            "jobid",
+            "multi-prog",
+            "nodelist",
+            "w",
+            "nodefile",
+            "F",
+            "chdir",
+            "D",
+        ]
+        self._reserved_batch_args = [
+            "nodes",
+            "N",
+            "ntasks",
+            "n",
+            "ntasks-per-node",
+            "output",
+            "o",
+            "error",
+            "e",
+            "job-name",
+            "J",
+            "jobid",
+            "multi-prog",
+            "nodelist",
+            "w",
+            "nodefile",
+            "F",
+            "chdir",
+            "D",
+        ]

@@ -6,6 +6,7 @@ from smartsim.error import SSUnsupportedError
 
 # Tests which don't require launching the orchestrator
 
+
 def test_orc_converter_lsf():
     def converter(host):
         int_dict = {"host1": "HOST1-IB", "host2": "HOST2-IB"}
@@ -32,9 +33,14 @@ def test_orc_converter_lsf():
     )
     assert orc.entities[0].hosts == ["batch", "host1", "host2"]
 
-    orc.set_run_arg("erf_output_name",  "ERF_OUTPUT")
+    orc.set_run_arg("erf_output_name", "ERF_OUTPUT")
 
-    assert all([db.run_settings.run_args["erf_output_name"] == "ERF_OUTPUT" for db in orc.entities])
+    assert all(
+        [
+            db.run_settings.run_args["erf_output_name"] == "ERF_OUTPUT"
+            for db in orc.entities
+        ]
+    )
 
 
 def test_catch_orc_errors_lsf():
@@ -48,15 +54,15 @@ def test_catch_orc_errors_lsf():
 
     with pytest.raises(ValueError):
         orc = LSFOrchestrator(
-        6780,
-        db_nodes=3,
-        batch=False,
-        hosts=["batch", "host1", "host2"],
-        host_map=bad_converter,
-    )
+            6780,
+            db_nodes=3,
+            batch=False,
+            hosts=["batch", "host1", "host2"],
+            host_map=bad_converter,
+        )
 
     def bad_converter_2(host):
-        return "*"*300
+        return "*" * 300
 
     orc = LSFOrchestrator(
         6780,
@@ -66,17 +72,17 @@ def test_catch_orc_errors_lsf():
         host_map=bad_converter_2,
     )
 
-    assert ["*"*256] == orc.entities[0]._hosts
+    assert ["*" * 256] == orc.entities[0]._hosts
 
     def bad_converter_3(host):
         # Something very stupid
         return bad_converter_2
-    
+
     with pytest.raises(TypeError):
         orc = LSFOrchestrator(
-        6780,
-        db_nodes=3,
-        batch=False,
-        hosts=["batch", "host1", "host2"],
-        host_map=bad_converter_3,
-    )
+            6780,
+            db_nodes=3,
+            batch=False,
+            hosts=["batch", "host1", "host2"],
+            host_map=bad_converter_3,
+        )

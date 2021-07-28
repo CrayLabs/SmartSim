@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from smartsim.settings import lsfSettings
+
 from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -76,7 +78,7 @@ class LSFOrchestrator(Orchestrator):
         first ``db_nodes//db_per_host`` compute nodes in the allocation.
 
         Database nodes should always be accessed using high-speed networks. If
-        the hostnames provided are not attached to high-speed networks, 
+        the hostnames provided are not attached to high-speed networks,
         ``host_map`` should provide a way to obtain the high-speed
         network addresses (or hostnames). See the function ``convert_hostnames``
         for details.
@@ -120,6 +122,9 @@ class LSFOrchestrator(Orchestrator):
         )
         if hosts:
             self.set_hosts(hosts)
+        self._reserved_run_args = {}
+        self._reserved_batch_args = {}
+        self._fill_reserved()
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -134,20 +139,46 @@ class LSFOrchestrator(Orchestrator):
             raise SmartSimError("Not running as batch, cannot set walltime")
         self.batch_settings.set_walltime(walltime)
 
+    def set_batch_arg(self, arg, value):
+        """Set a cobalt ``qsub`` argument
+
+        Some commonly used arguments are used
+        by SmartSim and will not be allowed to be set.
+
+        :param arg: batch argument to set e.g. "exclusive"
+        :type arg: str
+        :param value: batch param - set to None if no param value
+        :type value: str | None
+        :raises SmartSimError: if orchestrator not launching as batch
+        """
+        if not self.batch:
+            raise SmartSimError("Not running as batch, cannot set batch_arg")
+        if arg in self._reserved_batch_args:
+            logger.warning(
+                f"Can not set batch argument {arg}: it is a reserved keyword in LSFOrchestrator"
+            )
+        else:
+            self.batch_settings.batch_args[arg] = value
+
     def set_run_arg(self, arg, value):
         """Set a run argument the orchestrator should launch
-        each node with (it will be passed to `jsrun`)
-        
-        Some commonly used arguments are used 
+        each node with (it will be passed to `aprun`)
+
+        Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
-        
+
         :param arg: run argument to set
         :type arg: str
         :param value: run parameter - set to None if no parameter value
         :type value: str | None
         """
-        for db in self.entities:
-            db.run_settings.run_args[arg] = value
+        if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in LSFOrchestrator"
+            )
+        else:
+            for db in self.entities:
+                db.run_settings.run_args[arg] = value
 
     def set_hosts(self, host_list):
         """Specify the hosts for the ``LSFOrchestrator`` to launch on
@@ -175,23 +206,6 @@ class LSFOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         for db in self.entities:
             db.set_hosts(high_speed_hosts)
-
-    def set_batch_arg(self, arg, value):
-        """Set a Bsub batch argument the orchestrator should launch with
-
-        Some commonly used arguments are used
-        by SmartSim and will not be allowed to be set.
-
-        :param arg: batch argument to set
-        :type arg: str
-        :param value: batch param - set to None if no param value
-        :type value: str | None
-        :raises SmartSimError: if orchestrator not launching as batch
-        """
-        if not self.batch:
-            raise SmartSimError("Not running as batch, cannot set batch_arg")
-        # TODO catch commonly used arguments we use for SmartSim here
-        self.batch_settings.batch_args[arg] = value
 
     def _build_batch_settings(self, db_nodes, batch, project, time, **kwargs):
         batch_settings = None
@@ -284,7 +298,13 @@ class LSFOrchestrator(Orchestrator):
                 ports.append(next_port)
 
         run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-        node = DBNode(self.name, self.path, run_settings, ports, self.convert_hostnames if self.host_map else None)
+        node = DBNode(
+            self.name,
+            self.path,
+            run_settings,
+            ports,
+            self.convert_hostnames if self.host_map else None,
+        )
         node._multihost = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
@@ -313,7 +333,7 @@ class LSFOrchestrator(Orchestrator):
         batch nodes), the converter should convert them to an empty
         string.
 
-        This function does a minimum of sanitization, avoiding 
+        This function does a minimum of sanitization, avoiding
         addresses of more than 256 characters or containing spaces.
 
         :hosts: list of hostnames or IPs to convert
@@ -328,13 +348,62 @@ class LSFOrchestrator(Orchestrator):
                 raise TypeError("Converter function must return string")
 
             if len(converted_host) > 256:
-                logger.warning("Converter returned hostname or address " +
-                               f"longer than 256 characters for original hostname {host}, " +
-                               "the name will be truncated")
+                logger.warning(
+                    "Converter returned hostname or address "
+                    + f"longer than 256 characters for original hostname {host}, "
+                    + "the name will be truncated"
+                )
                 converted_host = converted_host[:256]
-            if len(converted_host.split())>1:
-                raise ValueError(f"Converter must return single value for hostname {host}, "
-                                 f"but returned \"{converted_host}\".")
+            if len(converted_host.split()) > 1:
+                raise ValueError(
+                    f"Converter must return single value for hostname {host}, "
+                    f'but returned "{converted_host}".'
+                )
             converted_hosts.append(converted_host)
 
         return converted_hosts
+
+    def _fill_reserved(self):
+        """Fill the reserved batch and run arguments dictionaries"""
+        # ERF basically makes all other args useless
+        self._reserved_run_args[JsrunSettings] = [
+            "chdir",
+            "h",
+            "stdio_stdout",
+            "o",
+            "stdio_stderr",
+            "k",
+            "tasks_per_rs",
+            "a",
+            "np",
+            "p",
+            "cpu_per_rs",
+            "c",
+            "gpu_per_rs",
+            "g",
+            "latency_priority",
+            "l",
+            "memory_per_rs",
+            "m",
+            "nrs",
+            "n",
+            "rs_per_host",
+            "r",
+            "rs_per_socket",
+            "K",
+            "appfile",
+            "f",
+            "allocate_only",
+            "A",
+            "launch_node_task",
+            "H",
+            "use_reservation",
+            "J",
+            "use_resources",
+            "bind",
+            "b",
+            "launch_distribution",
+            "d",
+        ]
+
+        self._reserved_batch_args = ["J", "o", "e", "m", "n", "nnodes"]
