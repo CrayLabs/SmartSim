@@ -16,7 +16,7 @@ try:
         )
 
     tf_version = tf.__version__.split(".")
-    assert tf_version[0] == "2" and tf_version[1] >= "4"
+    assert int(tf_version[0]) == 2 and int(tf_version[1]) >= 4
 
 except ImportError:
     raise SmartSimError(

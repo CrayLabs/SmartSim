@@ -319,17 +319,17 @@ def make_description():
 
     other = "If installing from source, this script will also\n"
     other += "build and install other non-python dependencies\n"
-    other += "needed by SmartSim."
+    other += "needed by SmartSim.\n\n"
 
-    other += "If not backends are built, users will still be\n"
+    other += "If no ML backends are requested, users will still be able to\n"
     other += "to pass tensors/dataset through the database\n"
-    other += "but model and script commands will fail."
+    other += "but model and script commands will fail.\n\n"
     other = colorize(other, color="green")
 
-    prebuilts = colorize("Supported Systems\n", color="cyan")
+    prebuilts = colorize("Supported Systems for ML backends\n", color="cyan")
     systems = "  1) Linux CPU (x86_64)\n"
     systems += "  2) MacOS CPU (x86_64)\n"
-    systems += "  3) Linux GPU (CUDA 10.2 or greater)\n\n"
+    systems += "  3) Linux GPU (CUDA >= 11)\n\n"
     systems = colorize(systems, color="green")
 
     default = "By default, the PyTorch and TensorFlow backends will\n"
