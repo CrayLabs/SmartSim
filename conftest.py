@@ -3,7 +3,11 @@ import shutil
 import pytest
 import psutil
 import smartsim
-from smartsim.settings import SrunSettings, AprunSettings, JsrunSettings
+from smartsim.database import CobaltOrchestrator, SlurmOrchestrator
+from smartsim.database import PBSOrchestrator, Orchestrator
+from smartsim.database import LSFOrchestrator
+from smartsim.settings import SrunSettings, AprunSettings
+from smartsim.settings import JsrunSettings
 from smartsim.settings import RunSettings
 from smartsim.config import CONFIG
 
@@ -11,13 +15,8 @@ from smartsim.config import CONFIG
 # Globals, yes, but its a testing file
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_dir = os.path.join(test_path, "tests", "test_output")
-test_launcher = "local"
-test_account = ""
-
-def get_launcher():
-    global test_launcher
-    test_launcher = CONFIG.test_launcher
-    return test_launcher
+test_launcher = CONFIG.test_launcher
+test_device = CONFIG.test_device
 
 def get_account():
     global test_account
@@ -34,13 +33,14 @@ def print_test_configuration():
     print("TEST_LAUNCHER", test_launcher)
     if test_account != "":
         print("TEST_ACCOUNT", test_account)
+    print("TEST_DEVICE", test_device)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
 
 def pytest_configure():
-    launcher = get_launcher()
-    pytest.test_launcher = launcher
+    global test_launcher
+    pytest.test_launcher = test_launcher
     pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
     account = get_account()
     pytest.test_account = account
@@ -50,7 +50,6 @@ def pytest_sessionstart(session):
     Called after the Session object has been created and
     before performing collection and entering the run test loop.
     """
-    get_launcher()
     if os.path.isdir(test_dir):
         shutil.rmtree(test_dir)
     os.mkdir(test_dir)
@@ -125,6 +124,19 @@ class WLMUtils:
         else:
             return RunSettings(exe, args)
 
+    @staticmethod
+    def get_orchestrator(nodes=1, port=6780, batch=False):
+        global test_launcher
+        if test_launcher == "slurm":
+            db = SlurmOrchestrator(db_nodes=nodes, port=port, batch=batch)
+        elif test_launcher == "pbs":
+            db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch)
+        elif test_launcher == "cobalt":
+            db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch)
+        else:
+            db = Orchestrator(port=port)
+        return db
+
 
 @pytest.fixture
 def fileutils():
@@ -155,3 +167,15 @@ class FileUtils:
     def get_test_dir_path(dirname):
         dir_path = os.path.join(test_path, "tests", "test_configs", dirname)
         return dir_path
+
+
+@pytest.fixture
+def mlutils():
+    return MLUtils
+
+class MLUtils:
+
+    @staticmethod
+    def get_test_device():
+        global test_device
+        return test_device
