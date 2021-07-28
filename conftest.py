@@ -33,7 +33,7 @@ def print_test_configuration():
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER", test_launcher)
     if test_account != "":
-        print("TEST_PROJECT", test_account)
+        print("TEST_ACCOUNT", test_account)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
