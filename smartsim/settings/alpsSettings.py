@@ -51,7 +51,7 @@ class AprunSettings(RunSettings):
     def make_mpmd(self, aprun_settings):
         """Make job a MPMD job
 
-        This method combines two or more ``AprunSettings``
+        This method combines two ``AprunSettings``
         into a single MPMD command joined with ':'
 
         :param aprun_settings: ``AprunSettings`` instance

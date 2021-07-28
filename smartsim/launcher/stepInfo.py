@@ -225,7 +225,6 @@ class LSFStepInfo(StepInfo):  # cov-lsf
             if returncode is not None:
                 smartsim_status = "Completed" if returncode == 0 else "Failed"
             else:
-                # if PBS job history isnt available, and job isnt in queue
                 smartsim_status = "Completed"
                 returncode = 0
         else:

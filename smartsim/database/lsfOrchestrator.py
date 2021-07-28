@@ -46,7 +46,7 @@ class LSFOrchestrator(Orchestrator):
         project=None,
         time=None,
         db_per_host=1,
-        hostname_converter=None,
+        host_map=None,
         **kwargs,
     ):
 
@@ -77,7 +77,7 @@ class LSFOrchestrator(Orchestrator):
 
         Database nodes should always be accessed using high-speed networks. If
         the hostnames provided are not attached to high-speed networks, 
-        ``hostname_converter`` should provide a way to obtain the high-speed
+        ``host_map`` should provide a way to obtain the high-speed
         network addresses (or hostnames). See the function ``convert_hostnames``
         for details.
 
@@ -99,12 +99,12 @@ class LSFOrchestrator(Orchestrator):
         :type time: str
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
-        :param hostname_converter: function to convert hostnames
-        :type hostname_converter: function
+        :param host_map: function to convert hostnames
+        :type host_map: callable function
         """
         self.cpus_per_shard = cpus_per_shard
         self.gpus_per_shard = gpus_per_shard
-        self.hostname_converter = hostname_converter
+        self.host_map = host_map
 
         super().__init__(
             port,
@@ -148,7 +148,7 @@ class LSFOrchestrator(Orchestrator):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
 
-        if self.hostname_converter:
+        if self.host_map:
             high_speed_hosts = self.convert_hostnames(host_list)
             while "" in high_speed_hosts:
                 high_speed_hosts.remove("")
@@ -291,8 +291,8 @@ class LSFOrchestrator(Orchestrator):
         IP address of `host1-1B`. The function can also just return
         the high-speed network hostname, but the IP is preferrable.
 
-        If and only if hostnames cannot be obtained, ``self.hostname_converter`` should 
-        take IP addresses as arguments.
+        If and only if hostnames cannot be obtained,
+        ``self.host_map`` should take IP addresses as arguments.
 
         If some hostnames should not be used (e.g. because they are
         batch nodes), the converter should convert them to an empty
@@ -306,7 +306,7 @@ class LSFOrchestrator(Orchestrator):
         """
         converted_hosts = []
         for host in hosts:
-            converted_host = self.hostname_converter(host)
+            converted_host = self.host_map(host)
             if not isinstance(converted_host, str):
                 raise TypeError("Converter function must return string")
 

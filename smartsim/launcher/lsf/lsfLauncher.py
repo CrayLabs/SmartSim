@@ -85,7 +85,7 @@ class LSFLauncher(WLMLauncher):
             raise LauncherError("Job step creation failed: " + str(e)) from None
 
     def run(self, step):
-        """Run a job step through PBSPro
+        """Run a job step through LSF
 
         :param step: a job step instance
         :type step: Step

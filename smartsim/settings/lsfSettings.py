@@ -142,8 +142,8 @@ class JsrunSettings(RunSettings):
         Optionally, this method adds an instance of ``JsrunSettings`` to
         the list of settings to be launched in the same ERF file.
 
-        :param aprun_settings: ``JsrunSettings`` instance, optional
-        :type aprun_settings: JsrunSettings
+        :param aprun_settings: ``JsrunSettings`` instance
+        :type aprun_settings: JsrunSettings, optional
         """
         if len(self.mpmd) == 0:
             self.mpmd.append(self)

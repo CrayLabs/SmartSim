@@ -47,7 +47,7 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports, hostname_converter=None):
+    def __init__(self, name, path, run_settings, ports, host_map=None):
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
@@ -55,7 +55,7 @@ class DBNode(SmartSimEntity):
         self._multihost = False
         self._shard_ids = None
         self._hosts = None
-        self.hostname_converter = hostname_converter
+        self.host_map = host_map
 
     @property
     def host(self):
@@ -64,7 +64,7 @@ class DBNode(SmartSimEntity):
         return self._host
 
     @property
-    def hosts(self):
+    def hosts(self):  # cov-lsf
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
         return self._hosts
@@ -72,7 +72,7 @@ class DBNode(SmartSimEntity):
     def set_host(self, host):
         self._host = str(host)
 
-    def set_hosts(self, hosts):
+    def set_hosts(self, hosts):  # cov-lsf
         self._hosts = [str(host) for host in hosts]
 
     def remove_stale_dbnode_files(self):
@@ -86,7 +86,7 @@ class DBNode(SmartSimEntity):
                 conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
                 if osp.exists(conf_file):
                     os.remove(conf_file)
-            else:
+            else:  # cov-lsf
                 conf_files = [
                     osp.join(self.path, filename)
                     for filename in self._get_cluster_conf_filenames(port)
@@ -166,12 +166,12 @@ class DBNode(SmartSimEntity):
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        if self.hostname_converter:
-            # Very unlikely case. In this case, the hostname_converter
+        if self.host_map:
+            # Very unlikely case. In this case, the host_map
             # should take IPs as input
             if ip and not host:
                 host = ip
-            host = self.hostname_converter[host]
+            host = self.host_map[host]
         else:
             # prefer the ip address if present
             # TODO do socket lookup and ensure IP address matches
@@ -226,12 +226,12 @@ class DBNode(SmartSimEntity):
                 logger.error("RedisIP address lookup strategy failed.")
                 raise SmartSimError("Failed to obtain database hostname")
 
-            if self.hostname_converter:
-                # Very unlikely case. In this case, the hostname_converter
+            if self.host_map:
+                # Very unlikely case. In this case, the host_map
                 # should take IPs as input
                 if ip and not host:
                     host = ip
-                host = self.hostname_converter(host)
+                host = self.host_map(host)
             else:
                 # prefer the ip address if present
                 # TODO do socket lookup and ensure IP address matches
