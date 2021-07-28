@@ -178,7 +178,7 @@ class Builder:
             else:
                 print(Warning("ONNX installed in Python environment"))
         except SetupError as e:
-            print(Warning(e))
+            print(Warning(str(e)))
 
     def check_tf_install(self):
         """Check Python environment for TensorFlow installation"""
@@ -191,7 +191,7 @@ class Builder:
             else:
                 print(Warning("TensorFlow installed in Python environment"))
         except SetupError as e:
-            print(Warning(e))
+            print(Warning(str(e)))
 
     @staticmethod
     def check_platform(device, onnx=0):
