@@ -133,6 +133,8 @@ class WLMUtils:
             db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch)
         elif test_launcher == "cobalt":
             db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch)
+        elif test_launcher == "lsf":
+            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, project=get_account())
         else:
             db = Orchestrator(port=port)
         return db
