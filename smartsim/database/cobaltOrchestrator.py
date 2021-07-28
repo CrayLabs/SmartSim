@@ -91,8 +91,9 @@ class CobaltOrchestrator(Orchestrator):
         :param num_cpus: number of cpus to set
         :type num_cpus: int
         """
-        # unsure of how to add cpus per task to Cobalt batch settings
-        raise NotImplementedError("Cobalt batch doesn't support setting cpus per task")
+        for db in self.entities:
+            # Supported by MpirunSettings and AprunSettings
+            db.run_settings.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -148,6 +149,21 @@ class CobaltOrchestrator(Orchestrator):
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
         self.batch_settings.batch_args[arg] = value
+
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `aprun`)
+        
+        Some commonly used arguments are used 
+        by SmartSim and will not be allowed to be set.
+        
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        for db in self.entities:
+            db.run_settings.run_args[arg] = value
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
         run_command = kwargs.get("run_command", "aprun")

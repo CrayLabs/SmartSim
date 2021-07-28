@@ -56,6 +56,9 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
     orc = PBSOrchestrator(6780, db_nodes=3, batch=False, inter_op_threads=4)
     orc.set_path(test_dir)
 
+    orc.set_cpus(4)
+    assert all([db.run_settings.run_args["cpus-per-pe"] == 4 for db in orc.entities])
+
     exp.start(orc, block=True)
     status = exp.get_status(orc)
 

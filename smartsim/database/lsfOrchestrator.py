@@ -134,6 +134,21 @@ class LSFOrchestrator(Orchestrator):
             raise SmartSimError("Not running as batch, cannot set walltime")
         self.batch_settings.set_walltime(walltime)
 
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `jsrun`)
+        
+        Some commonly used arguments are used 
+        by SmartSim and will not be allowed to be set.
+        
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        for db in self.entities:
+            db.run_settings.run_args[arg] = value
+
     def set_hosts(self, host_list):
         """Specify the hosts for the ``LSFOrchestrator`` to launch on
 
@@ -269,7 +284,7 @@ class LSFOrchestrator(Orchestrator):
                 ports.append(next_port)
 
         run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-        node = DBNode(self.name, self.path, run_settings, ports, self.convert_hostnames)
+        node = DBNode(self.name, self.path, run_settings, ports, self.convert_hostnames if self.host_map else None)
         node._multihost = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
@@ -304,6 +319,8 @@ class LSFOrchestrator(Orchestrator):
         :hosts: list of hostnames or IPs to convert
         :type hosts: list[str]
         """
+        if self.host_map is None:
+            return hosts
         converted_hosts = []
         for host in hosts:
             converted_host = self.host_map(host)

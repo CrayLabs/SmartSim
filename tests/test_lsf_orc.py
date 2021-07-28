@@ -4,6 +4,8 @@ from smartsim import Experiment, constants
 from smartsim.database import LSFOrchestrator
 from smartsim.error import SSUnsupportedError
 
+# Tests which don't require launching the orchestrator
+
 def test_orc_converter_lsf():
     def converter(host):
         int_dict = {"host1": "HOST1-IB", "host2": "HOST2-IB"}
@@ -29,6 +31,10 @@ def test_orc_converter_lsf():
         host_map=None,
     )
     assert orc.entities[0].hosts == ["batch", "host1", "host2"]
+
+    orc.set_run_arg("erf_output_name",  "ERF_OUTPUT")
+
+    assert all([db.run_settings.run_args["erf_output_name"] == "ERF_OUTPUT" for db in orc.entities])
 
 
 def test_catch_orc_errors_lsf():

@@ -156,6 +156,21 @@ class PBSOrchestrator(Orchestrator):
         # TODO catch commonly used arguments we use for SmartSim here
         self.batch_settings.batch_args[arg] = value
 
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `aprun`)
+        
+        Some commonly used arguments are used 
+        by SmartSim and will not be allowed to be set.
+        
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        for db in self.entities:
+            db.run_settings.run_args[arg] = value
+
     def _build_run_settings(self, exe, exe_args, **kwargs):
         run_command = kwargs.get("run_command", "aprun")
         if run_command == "aprun":

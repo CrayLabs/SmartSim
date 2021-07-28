@@ -253,8 +253,7 @@ class JsrunStep(Step):
         with open(erf_file) as f:
             f.flush()
             os.fsync(f)
-            logger.debug("ERF synced")
 
         size = os.stat(erf_file).st_size
-        logger.debug(f"ERF: {erf_file} successfully written to disk, size: {size}")
+        logger.debug(f"ERF: {erf_file} written to disk, size: {size}")
         time.sleep(5)
