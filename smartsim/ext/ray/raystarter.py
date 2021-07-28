@@ -21,6 +21,7 @@ def current_ip():
     hostname = socket.getfqdn(socket.gethostname())
     return socket.gethostbyname(hostname)
 
+
 print(args)
 
 cliargs = [

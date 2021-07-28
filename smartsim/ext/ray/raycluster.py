@@ -157,7 +157,6 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
-
         # We can rely on the file name, because we set it when we create
         # the head model
         head_log = os.path.join(self.head_model.path, "head.out")
@@ -206,7 +205,8 @@ class RayCluster(EntityList):
         :returns: Dashboard address
         :rtype: str
         """
-        return self.head_model.address+":"+self.head_model.dashboard_port
+        return self.head_model.address + ":" + self.head_model.dashboard_port
+
 
 class RayHead(Model):
     """Ray head node model.
@@ -263,7 +263,7 @@ class RayHead(Model):
         self._batch = launcher != "local" and batch
         self._time = time
         self._hosts = []
-        self.dashboard_port=8265
+        self.dashboard_port = 8265
 
         self._build_run_settings()
         super().__init__(name, params, path, self.run_settings)
@@ -281,7 +281,10 @@ class RayHead(Model):
             self.dashboard_port = int(self._ray_args["dashboard-port"])
         ray_starter_args += [f"--dashboard-port={self.dashboard_port}"]
 
-        delete_elements(self._ray_args, ["block", "redis-password", "start", "head", "port", "dashboard-port"])
+        delete_elements(
+            self._ray_args,
+            ["block", "redis-password", "start", "head", "port", "dashboard-port"],
+        )
 
         ray_args = []
         for key in self._ray_args.keys():

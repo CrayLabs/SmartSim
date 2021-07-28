@@ -37,9 +37,9 @@ from smartsim.control.manifest import Manifest
 from .control import Controller, Manifest
 from .entity import Ensemble, EntityList, Model, SmartSimEntity
 from .error import SmartSimError
+from .ext.ray import RayCluster
 from .generation import Generator
 from .launcher.util.shell import execute_cmd
-from .ext.ray import RayCluster
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
 
