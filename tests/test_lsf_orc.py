@@ -1,8 +1,7 @@
 import pytest
 
-from smartsim import Experiment, constants
 from smartsim.database import LSFOrchestrator
-from smartsim.error import SSUnsupportedError
+from smartsim.error import SmartSimError, SSUnsupportedError
 
 # Tests which don't require launching the orchestrator
 
@@ -86,3 +85,60 @@ def test_catch_orc_errors_lsf():
             hosts=["batch", "host1", "host2"],
             host_map=bad_converter_3,
         )
+
+
+def test_orc_converter_lsf_batch():
+    def converter(host):
+        int_dict = {"host1": "HOST1-IB", "host2": "HOST2-IB"}
+        if host in int_dict.keys():
+            return int_dict[host]
+        else:
+            return ""
+
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        hosts=["batch", "host1", "host2"],
+        host_map=converter,
+    )
+    assert orc.entities[0].hosts == ["HOST1-IB", "HOST2-IB"]
+    assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
+
+
+def test_set_run_args():
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        hosts=["batch", "host1", "host2"],
+        host_map=None,
+    )
+
+    orc.set_run_arg("l", "gpu-gpu")
+    assert all(["l" not in db.run_settings.run_args for db in orc.entities])
+
+
+def test_set_batch_args():
+
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        hosts=["batch", "host1", "host2"],
+        host_map=None,
+    )
+
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("P", "MYPROJECT")
+
+    orc2 = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        hosts=["batch", "host1", "host2"],
+        host_map=None,
+    )
+
+    orc2.set_batch_arg("D", "102400000")
+    assert orc2.batch_settings.batch_args["D"] == "102400000"
