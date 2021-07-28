@@ -154,10 +154,11 @@ class Builder:
             if "cpu" in patch and device == "gpu":
                 msg = "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages"
                 msg += " and run the `smart` command again to obtain Torch GPU libraries"
-                raise SetupError(msg)
+                print(Warning(msg))
             if device == "cpu" and "cpu" not in patch:
-                msg = "WARNING: Torch GPU installed in python environment but requested Torch CPU."
-                msg += " Consider pip uninstalling Torch and re-running the `smart` install if build fails"
+                msg = "Torch GPU installed in python environment but requested Torch CPU."
+                msg += " Run `pip uninstall torch torchvision` and run `smart` again"
+                print(Warning(msg))
             print("Torch installed in Python environment")
 
 
@@ -171,24 +172,26 @@ class Builder:
         ]
         try:
             if not self.check_installed("onnx", self.onnx_version):
-                print(f"ONNX {self.onnx_version} not installed in python environment")
-                print(f"Consider installing {' '.join(packages)} with pip")
+                msg = f"ONNX {self.onnx_version} not installed in python environment\n"
+                msg += f"Consider installing {' '.join(packages)} with pip"
+                print(Warning(msg))
             else:
-                print("ONNX installed in Python environment")
+                print(Warning("ONNX installed in Python environment"))
         except SetupError as e:
-            print(f"WARNING: {e}")
+            print(Warning(e))
 
     def check_tf_install(self):
         """Check Python environment for TensorFlow installation"""
 
         try:
             if not self.check_installed("tensorflow", self.tf_version):
-                print(f"TensorFlow {self.tf_version} not installed in Python environment")
-                print(f"Consider installing tensorflow=={self.tf_version} with pip")
+                msg = f"TensorFlow {self.tf_version} not installed in Python environment\n"
+                msg += f"Consider installing tensorflow=={self.tf_version} with pip"
+                print(Warning(msg))
             else:
-                print("TensorFlow installed in Python environment")
+                print(Warning("TensorFlow installed in Python environment"))
         except SetupError as e:
-            print(f"WARNING: {e}")
+            print(Warning(e))
 
     @staticmethod
     def check_platform(device, onnx=0):
@@ -298,6 +301,7 @@ def colorize(string, color, bold=False, highlight=False):
         attr.append("1")
     return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
 
+
 def make_description():
     header = "\nSmartSim Setup\n"
     header += "--------------\n\n"
@@ -333,7 +337,14 @@ def make_description():
 
     return "".join((header, info, other, prebuilts, systems, default))
 
+class Warning:
 
+    def __init__(self, message):
+        prefix = colorize("WARNING: ", "red", bold=True)
+        self.message = prefix + message
+
+    def __str__(self):
+        return self.message
 
 def cli():
 
