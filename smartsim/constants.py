@@ -26,6 +26,12 @@
 
 # Constants for SmartSim
 
+# ML backend versions
+TF_VERSION = "2.4.0"
+TORCH_VERSION = "1.7.1"
+ONNX_VERSION = "1.6.0"
+
+
 # Interval for Job Manager
 LOCAL_JM_INTERVAL = 2
 
