@@ -2,6 +2,7 @@ import pytest
 
 from smartsim import Experiment, constants
 from smartsim.database import CobaltOrchestrator
+from smartsim.error import SmartSimError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -67,3 +68,23 @@ def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
+
+
+def test_set_run_arg():
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    orc.set_run_arg("account", "ACCOUNT")
+    assert all([db.run_settings.run_args["account"]=="ACCOUNT" for db in orc.entities])
+    orc.set_run_arg("pes‐per‐numa‐node", "2")
+    assert all(["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities])
+
+
+def test_set_batch_arg():
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("account", "ACCOUNT")
+
+    orc2 = CobaltOrchestrator(6780, db_nodes=3, batch=True)
+    orc2.set_batch_arg("account", "ACCOUNT")
+    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
+    orc2.set_batch_arg("outputprefix", "new_output/")
+    assert "outputprefix" not in orc2.batch_settings.batch_args
