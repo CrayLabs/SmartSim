@@ -1,6 +1,5 @@
 import os
 import re
-import shlex
 import time
 import uuid
 
@@ -63,7 +62,7 @@ class RayCluster(EntityList):
     def __init__(
         self,
         name,
-        path=".",
+        path="",
         ray_port=6780,
         ray_args={},
         workers=0,
@@ -205,7 +204,7 @@ class RayCluster(EntityList):
         :returns: Dashboard address
         :rtype: str
         """
-        return self.head_model.address + ":" + self.head_model.dashboard_port
+        return self.head_model.address + ":" + str(self.head_model.dashboard_port)
 
 
 class RayHead(Model):
@@ -303,8 +302,8 @@ class RayHead(Model):
                 "python", ray_starter_args_str, run_args=self._run_args
             )
         else:
-            raise NotImplementedError(
-                "Only Slurm, local, and PBS launchers are supported."
+            raise SSUnsupportedError(
+                "Only Slurm, PBS, and local launchers are supported."
             )
 
         if self._launcher != "local":

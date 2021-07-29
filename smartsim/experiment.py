@@ -457,24 +457,37 @@ class Experiment:
         if ray_clusters:
             sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
             for rc in ray_clusters:
+                batch = rc.batch
                 name = colorize(rc.name, color="green", bold=True)
                 num_models = colorize(
                     "# of workers: " + str(rc._workers), color="green"
                 )
                 batch_settings = colorize(
-                    "Batch Settings: \n" + str(rc.batch_settings),
+                    "Head batch Settings: \n" + str(rc.head_model.batch_settings),
                     color="green",
                 )
-                run_settings = colorize(
+                head_run_settings = colorize(
                     "Head run Settings: \n" + str(rc.head_model.run_settings),
                     color="green",
                 )
-                if rc.worker_model:
-                    run_settings += colorize(
+                if batch:
+                    batch_settings += head_run_settings
+                else:
+                    run_settings = head_run_settings
+                if rc._workers > 0:
+                    batch_settings += colorize(
+                        "\nWorkers batch Settings: \n" + str(rc.worker_model.batch_settings),
+                        color="green",
+                    )
+                    worker_run_settings = colorize(
                         "\nWorkers run Settings: \n"
                         + str(rc.worker_model.run_settings),
                         color="green",
                     )
+                    if batch:
+                        batch_settings += worker_run_settings
+                    else:
+                        run_settings += worker_run_settings
                 batch = colorize(f"Launching as batch: {rc.batch}", color="green")
 
                 sprint(f"{name}")
