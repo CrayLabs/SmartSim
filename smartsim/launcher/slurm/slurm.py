@@ -47,10 +47,12 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
 
     The options can be used to pass extra settings to the
     workload manager such as the following for Slurm:
+
         - nodelist="nid00004"
 
     For arguments without a value, pass None or and empty
     string as the value. For Slurm:
+    
         - exclusive=None
 
     :param nodes: number of nodes for the allocation, defaults to 1

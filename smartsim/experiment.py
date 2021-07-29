@@ -227,11 +227,12 @@ class Experiment:
 
         Ensembles require one of the following combinations
         of arguments
-          - ``run_settings`` and ``params``
-          - ``run_settings`` and ``replicas``
-          - ``batch_settings``
-          - ``batch_settings``, ``run_settings``, and ``params``
-          - ``batch_settings``, ``run_settings``, and ``replicas``
+        
+            - ``run_settings`` and ``params``
+            - ``run_settings`` and ``replicas``
+            - ``batch_settings``
+            - ``batch_settings``, ``run_settings``, and ``params``
+            - ``batch_settings``, ``run_settings``, and ``replicas``
 
         If given solely batch settings, an empty ensemble
         will be created that models can be added to manually

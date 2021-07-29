@@ -61,7 +61,7 @@ The key features of the IL are:
   - An API to start, monitor, and stop HPC jobs from Python or Jupyter notebook.
   - Automated deployment of in-memory data staging (Redis) and computational
     storage (RedisAI)
-  - Programmatic launches of batch and in-allocation jobs on PBS, Slurm,
+  - Programmatic launches of batch and in-allocation jobs on PBS, Slurm, lSF,
     and Cobalt systems.
   - Creating and configuring ensembles of workloads with isolated communication channels.
 

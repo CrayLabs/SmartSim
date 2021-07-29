@@ -54,6 +54,8 @@ Types of Settings:
     QsubBatchSettings
     CobaltBatchSettings
     MpirunSettings
+    JsrunSettings
+    BsubBatchSettings
 
 
 Local
@@ -222,6 +224,70 @@ that of the ``QsubBatchSettings`` for PBSPro.
     :members:
 
 ------------------------------------------
+    
+    
+JsrunSettings
+-------------
+
+.. _jsrun_api:
+
+``JsrunSettings`` can be used on any system that suppports the
+IBM LSF launcher.
+
+``JsrunSettings`` can be used in interactive session (on allocation)
+and within batch launches (i.e. ``BsubBatchSettings``)
+
+
+.. autosummary::
+
+    JsrunSettings.set_num_rs
+    JsrunSettings.set_cpus_per_rs
+    JsrunSettings.set_gpus_per_rs
+    JsrunSettings.set_rs_per_host
+    JsrunSettings.set_tasks
+    JsrunSettings.set_tasks_per_rs
+    JsrunSettings.set_binding
+    JsrunSettings.make_mpmd
+    JsrunSettings.set_mpmd_preamble
+    JsrunSettings.update_env
+    JsrunSettings.set_erf_sets
+    JsrunSettings.format_env_vars
+    JsrunSettings.format_run_args
+
+
+.. autoclass:: JsrunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+BsubBatchSettings
+-----------------
+
+.. _bsub_api:
+
+``BsubBatchSettings`` are used to configure jobs that should
+be launched as a batch on LSF systems.
+
+
+.. autosummary::
+
+    BsubBatchSettings.set_walltime
+    BsubBatchSettings.set_smts
+    BsubBatchSettings.set_project
+    BsubBatchSettings.set_nodes
+    BsubBatchSettings.set_expert_mode_req
+    BsubBatchSettings.set_hostlist
+    BsubBatchSettings.set_tasks
+    BsubBatchSettings.format_batch_args
+
+
+.. autoclass:: BsubBatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+------------------------------------------
 
 
 The following are ``RunSettings`` types that are supported on multiple
@@ -265,6 +331,7 @@ SmartSim supports.
  - Slurm
  - Cobalt
  - PBSPro
+ - LSF
 
 The base ``Orchestrator`` class can be used for launching Redis
 locally on single node workstations or laptops.
@@ -323,6 +390,21 @@ The ``CobaltOrchestrator`` can be launched as a batch, and
 in an interactive allocation.
 
 .. autoclass:: CobaltOrchestrator
+    :show-inheritance:
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :exclude-members: create_cluster
+
+LSF Orchestrator
+----------------
+
+.. _lsf_orc_api:
+
+The ``LSFOrchestrator`` can be launched as a batch, and
+in an interactive allocation.
+
+.. autoclass:: LSFOrchestrator
     :show-inheritance:
     :members:
     :inherited-members:
