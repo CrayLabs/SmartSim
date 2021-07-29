@@ -28,7 +28,10 @@ from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
+from ..utils import get_logger
 from .orchestrator import Orchestrator
+
+logger = get_logger(__name__)
 
 
 class PBSOrchestrator(Orchestrator):
@@ -84,6 +87,9 @@ class PBSOrchestrator(Orchestrator):
             raise SmartSimError(
                 "hosts argument is required when launching PBSOrchestrator with OpenMPI"
             )
+        self._reserved_run_args = {}
+        self._reserved_batch_args = {}
+        self._fill_reserved()
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -153,8 +159,33 @@ class PBSOrchestrator(Orchestrator):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
-        # TODO catch commonly used arguments we use for SmartSim here
-        self.batch_settings.batch_args[arg] = value
+
+        if arg in self._reserved_batch_args:
+            logger.warning(
+                f"Can not set batch argument {arg}: it is a reserved keyword in the PBSOrchestrator"
+            )
+        else:
+            self.batch_settings.batch_args[arg] = value
+
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `aprun`)
+
+        Some commonly used arguments are used
+        by SmartSim and will not be allowed to be set.
+
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in PBSOrchestrator"
+            )
+        else:
+            for db in self.entities:
+                db.run_settings.run_args[arg] = value
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
         run_command = kwargs.get("run_command", "aprun")
@@ -213,3 +244,28 @@ class PBSOrchestrator(Orchestrator):
             node = DBNode(db_node_name, self.path, run_settings, [port])
             self.entities.append(node)
         self.ports = [port]
+
+    def _fill_reserved(self):
+        """Fill the reserved batch and run arguments dictionaries"""
+        self._reserved_run_args[MpirunSettings] = [
+            "np",
+            "N",
+            "c",
+            "output-filename",
+            "n",
+            "wdir",
+            "wd",
+            "host",
+        ]
+        self._reserved_run_args[AprunSettings] = [
+            "pes",
+            "n",
+            "pes-per-node",
+            "N",
+            "l",
+            "node-list-file",
+            "pes‐per‐numa‐node",
+            "S",
+            "wdir",
+        ]
+        self._reserved_batch_args = ["e", "o", "N", "l"]

@@ -77,6 +77,17 @@ class Orchestrator(EntityList):
         super().__init__("orchestrator", self.path, port=port, **kwargs)
 
     @property
+    def num_shards(self):
+        """Return the number of DB shards contained in the orchestrator.
+        This might differ from the number of ``DBNode`` objects, as each
+        ``DBNode`` may start more than one shard (e.g. with MPMD).
+
+        :returns: num_shards
+        :rtype: int
+        """
+        return len(self)
+
+    @property
     def hosts(self):
         """Return the hostnames of orchestrator instance hosts
 
@@ -126,7 +137,7 @@ class Orchestrator(EntityList):
 
         # Ensure cluster has been setup correctly
         self.check_cluster_status()
-        logger.info(f"Database cluster created with {str(len(self.hosts))} shards")
+        logger.info(f"Database cluster created with {self.num_shards} shards")
 
     def check_cluster_status(self):  # cov-wlm
         """Check that a cluster is up and running
@@ -235,8 +246,8 @@ class Orchestrator(EntityList):
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
-        dpn = kwargs.get("dpn", 1)
-        if dpn > 1:
+        db_per_host = kwargs.get("db_per_host", 1)
+        if db_per_host > 1:
             raise SmartSimError(
                 "Local Orchestrator does not support multiple databases per node (MPMD)"
             )
@@ -272,7 +283,10 @@ class Orchestrator(EntityList):
     def _get_db_hosts(self):
         hosts = []
         for dbnode in self.entities:
-            hosts.append(dbnode.host)
+            if not dbnode._multihost:
+                hosts.append(dbnode.host)
+            else:
+                hosts.extend(dbnode.hosts)
         return hosts
 
 

@@ -224,6 +224,17 @@ class Config:
         except KeyError:
             return 15  # 15 seconds by default
 
+    @property
+    def test_account(self):
+        try:
+            if "SMARTSIM_TEST_ACCOUNT" in os.environ:
+                return os.environ["SMARTSIM_TEST_ACCOUNT"]
+            else:
+                account = self.conf["test"]["account"]
+                return account
+        except KeyError:
+            return ""  # no account by default
+
 
 # initialize config instance
 CONFIG = Config()

@@ -57,7 +57,7 @@ def test_orc_active_functions(fileutils):
     # TODO: Update is_active code after smartredis 0.2.0 is released
     # assert not db.is_active()
 
-    # check if orchestrator.get_addree() raises an exception
+    # check if orchestrator.get_address() raises an exception
     with pytest.raises(SmartSimError):
         db.get_address()
 
@@ -70,4 +70,4 @@ def test_catch_local_db_errors():
 
     # MPMD local orchestrator not allowed
     with pytest.raises(SmartSimError):
-        db = Orchestrator(dpn=2)
+        db = Orchestrator(db_per_host=2)

@@ -26,26 +26,28 @@
 
 import time
 
+import psutil
+
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
-from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings
+from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import AprunStep, MpirunStep, QsubBatchStep
-from ..stepInfo import PBSStepInfo
-from .pbsCommands import qdel, qstat
-from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
+from ..step import BsubBatchStep, JsrunStep, MpirunStep
+from ..stepInfo import LSFStepInfo
+from .lsfCommands import bjobs, bkill
+from .lsfParser import parse_bjobs_jobid, parse_bsub, parse_step_id_from_bjobs
 
 logger = get_logger(__name__)
 
 
-class PBSLauncher(WLMLauncher):
+class LSFLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
-    to launch jobs on systems that use PBS as a workload manager.
+    to launch jobs on systems that use LSF as a workload manager.
 
     All WLM launchers are capable of launching managed and unmanaged
     jobs. Managed jobs are queried through interaction with with WLM,
-    in this case PBS. Unmanaged jobs are held in the TaskManager
+    in this case LSF. Unmanaged jobs are held in the TaskManager
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
@@ -53,7 +55,7 @@ class PBSLauncher(WLMLauncher):
     # init in WLMLauncher, launcher.py
 
     def create_step(self, name, cwd, step_settings):
-        """Create a PBSpro job step
+        """Create a LSF job step
 
         :param name: name of the entity to be launched
         :type name: str
@@ -67,23 +69,23 @@ class PBSLauncher(WLMLauncher):
         :rtype: Step
         """
         try:
-            if isinstance(step_settings, AprunSettings):
-                step = AprunStep(name, cwd, step_settings)
+            if isinstance(step_settings, JsrunSettings):
+                step = JsrunStep(name, cwd, step_settings)
                 return step
-            if isinstance(step_settings, QsubBatchSettings):
-                step = QsubBatchStep(name, cwd, step_settings)
+            if isinstance(step_settings, BsubBatchSettings):
+                step = BsubBatchStep(name, cwd, step_settings)
                 return step
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
-                f"RunSettings type {type(step_settings)} not supported by PBSPro"
+                f"RunSettings type {type(step_settings)} not supported by LSF"
             )
         except SSConfigError as e:
             raise LauncherError("Job step creation failed: " + str(e)) from None
 
     def run(self, step):
-        """Run a job step through PBSPro
+        """Run a job step through LSF
 
         :param step: a job step instance
         :type step: Step
@@ -97,27 +99,31 @@ class PBSLauncher(WLMLauncher):
         cmd_list = step.get_launch_cmd()
         step_id = None
         task_id = None
-        if isinstance(step, QsubBatchStep):
+        if isinstance(step, BsubBatchStep):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if rc != 0:
-                raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
+                raise LauncherError(f"Bsub batch submission failed\n {out}\n {err}")
             if out:
-                step_id = out.strip()
+                step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-        else:
-            # aprun doesn't direct output for us.
+        elif isinstance(step, MpirunSettings):
             out, err = step.get_output_files()
+            # mpirun doesn't direct output for us
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
             )
+        else:
+            task_id = self.task_manager.start_task(cmd_list, step.cwd)
 
         # if batch submission did not successfully retrieve job ID
-        if not step_id and step.managed:
-            step_id = self._get_pbs_step_id(step)
+        if not step_id and step.managed:  # pragma: no cover
+            step_id = self._get_lsf_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
+
+        time.sleep(5)
 
         return step_id
 
@@ -131,7 +137,7 @@ class PBSLauncher(WLMLauncher):
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
-            qdel_rc, _, err = qdel([str(stepmap.step_id)])
+            qdel_rc, _, err = bkill([str(stepmap.step_id)])
             if qdel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
@@ -143,17 +149,21 @@ class PBSLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_pbs_step_id(self, step, interval=2, trials=5):
-        """Get the step_id of a step from qstat (rarely used)
+    # TODO: use jslist here if it is a JsrunStep
+    # otherwise, this is only reached in a very rare case where a batch
+    # job is submitted but no message is receieved
+    # We exclude this from coverage
+    def _get_lsf_step_id(self, step, interval=2, trials=5):  # pragma: no cover
+        """Get the step_id of a step from bjobs (rarely used)
 
-        Parses qstat JSON output by looking for the step name
-        TODO: change this to use ``qstat -a -u user``
+        Parses bjobs output by looking for the step name
         """
         time.sleep(interval)
         step_id = "unassigned"
+        username = psutil.Process.username()
         while trials > 0:
-            output, _ = qstat(["-f", "-F", "json"])
-            step_id = parse_step_id_from_qstat(output, step.name)
+            output, _ = bjobs(["-w", "-u", username])
+            step_id = parse_step_id_from_bjobs(output, step.name)
             if step_id:
                 break
             else:
@@ -163,6 +173,7 @@ class PBSLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
+    # TODO: use jslist here if it is a JsrunStep
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
 
@@ -172,14 +183,15 @@ class PBSLauncher(WLMLauncher):
         :rtype: list[StepInfo]
         """
         updates = []
-
-        qstat_out, _ = qstat(step_ids)
-        stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
-        # create PBSStepInfo objects to return
+        # Include recently finished jobs
+        bjobs_args = ["-a"] + step_ids
+        bjobs_out, _ = bjobs(bjobs_args)
+        stats = [parse_bjobs_jobid(bjobs_out, str(step_id)) for step_id in step_ids]
+        # create LSFStepInfo objects to return
 
         for stat, _ in zip(stats, step_ids):
-            info = PBSStepInfo(stat, None)
-            # account for case where job history is not logged by PBS
+            info = LSFStepInfo(stat, None)
+            # account for case where job history is not logged by LSF
             if info.status == STATUS_COMPLETED:
                 info.returncode = 0
 
@@ -188,4 +200,4 @@ class PBSLauncher(WLMLauncher):
 
     def __str__(self):
         # TODO get the version here
-        return "PBSPro"
+        return "LSF"

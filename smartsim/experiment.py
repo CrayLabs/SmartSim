@@ -61,7 +61,7 @@ class Experiment:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str
         :param launcher: type of launcher, options are "slurm", "pbs",
-                         "cobalt", or "local". Defaults to "local"
+                         "cobalt", "lsf", or "local". Defaults to "local"
         :type launcher: str
         """
         self.name = name
@@ -444,7 +444,7 @@ class Experiment:
         if orchestrator:
             sprint(colorize("=== DATABASE ===", color="cyan", bold=True))
             size = colorize(
-                "# of database nodes: " + str(len(orchestrator)), color="green"
+                "# of database shards: " + str(orchestrator.num_shards), color="green"
             )
             batch = colorize(f"Launching as batch: {orchestrator.batch}", color="green")
             sprint(f"{batch}")

@@ -28,6 +28,8 @@ import os
 import os.path as osp
 import time
 
+from pandas.core.base import NoNewAttributesMixin
+
 from smartsim.error.errors import SmartSimError
 
 from ..utils import get_logger
@@ -45,11 +47,15 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports):
+    def __init__(self, name, path, run_settings, ports, host_map=None):
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
         super().__init__(name, path, run_settings)
+        self._multihost = False
+        self._shard_ids = None
+        self._hosts = None
+        self.host_map = host_map
 
     @property
     def host(self):
@@ -57,8 +63,17 @@ class DBNode(SmartSimEntity):
             self._host = self._parse_db_host()
         return self._host
 
+    @property
+    def hosts(self):  # cov-lsf
+        if not self._hosts:
+            self._hosts = self._parse_db_hosts()
+        return self._hosts
+
     def set_host(self, host):
         self._host = str(host)
+
+    def set_hosts(self, hosts):  # cov-lsf
+        self._hosts = [str(host) for host in hosts]
 
     def remove_stale_dbnode_files(self):
         """This function removes the .conf, .err, and .out files that
@@ -67,9 +82,18 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
-            if osp.exists(conf_file):
-                os.remove(conf_file)
+            if not self._multihost:
+                conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
+                if osp.exists(conf_file):
+                    os.remove(conf_file)
+            else:  # cov-lsf
+                conf_files = [
+                    osp.join(self.path, filename)
+                    for filename in self._get_cluster_conf_filenames(port)
+                ]
+                for conf_file in conf_files:
+                    if osp.exists(conf_file):
+                        os.remove(conf_file)
 
         for file_ending in [".err", ".out", ".mpmd"]:
             file_name = osp.join(self.path, self.name + file_ending)
@@ -85,6 +109,21 @@ class DBNode(SmartSimEntity):
         :rtype: str
         """
         return "".join(("nodes-", self.name, "-", str(port), ".conf"))
+
+    def _get_cluster_conf_filenames(self, port):  # cov-lsf
+        """Returns the .conf file name for the given port number
+
+        This function should bu used if and only if ``_multihost==True``
+
+        :param port: port number
+        :type port: int
+        :return: the dbnode configuration file name
+        :rtype: str
+        """
+        return [
+            "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
+            for shard_id in self._shard_ids
+        ]
 
     def _parse_db_host(self):
         """Parse the database host/IP from the output file
@@ -127,10 +166,81 @@ class DBNode(SmartSimEntity):
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        # prefer the ip address if present
-        # TODO do socket lookup and ensure IP address matches
-        # in the case where compute node returns 127.0.0.1 for its
-        # own IP address
-        if host and ip:
-            host = ip
+        if self.host_map:
+            # Very unlikely case. In this case, the host_map
+            # should take IPs as input
+            if ip and not host:
+                host = ip
+            host = self.host_map[host]
+        else:
+            # prefer the ip address if present
+            # TODO do socket lookup and ensure IP address matches
+            # in the case where compute node returns 127.0.0.1 for its
+            # own IP address
+            if host and ip:
+                host = ip
+
         return host
+
+    def _parse_db_hosts(self):  # cov-lsf
+        """Parse the database hosts/IPs from the output files
+
+        this uses the RedisIP module that is built as a dependency
+        The IP address is preferred, but if hostname is only present
+        then a lookup to /etc/hosts is done through the socket library.
+        This function must be called only if ``_multihost==True``.
+
+        :raises SmartSimError: if host/ip could not be found
+        :return: ip addresses | hostnames
+        :rtype: list[str]
+        """
+        hosts = []
+
+        for shard_id in self._shard_ids:
+            trials = 5
+            host = None
+            ip = None
+            filepath = osp.join(self.path, self.name + f"_{shard_id}.out")
+            # try a few times to give the database files time to
+            # populate on busy systems.
+            while not host and trials > 0:
+                try:
+                    with open(filepath, "r") as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            content = line.split()
+                            if "Hostname:" in content:
+                                host = content[-1]
+                            if "IP:" in content:
+                                ip = content[-1]
+                                break
+                except FileNotFoundError:
+                    logger.debug("Waiting for RedisIP files to populate...")
+                    trials -= 1
+                    time.sleep(5)
+                logger.debug("Waiting for RedisIP files to populate...")
+                trials -= 1
+                time.sleep(5)
+
+            if not host and not ip:
+                logger.error("RedisIP address lookup strategy failed.")
+                raise SmartSimError("Failed to obtain database hostname")
+
+            if self.host_map:
+                # Very unlikely case. In this case, the host_map
+                # should take IPs as input
+                if ip and not host:
+                    host = ip
+                host = self.host_map(host)
+            else:
+                # prefer the ip address if present
+                # TODO do socket lookup and ensure IP address matches
+                # in the case where compute node returns 127.0.0.1 for its
+                # own IP address
+                if host and ip:
+                    host = ip
+            hosts.append(host)
+
+        hosts = list(dict.fromkeys(hosts))
+
+        return hosts

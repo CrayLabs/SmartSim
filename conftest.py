@@ -5,7 +5,9 @@ import psutil
 import smartsim
 from smartsim.database import CobaltOrchestrator, SlurmOrchestrator
 from smartsim.database import PBSOrchestrator, Orchestrator
+from smartsim.database import LSFOrchestrator
 from smartsim.settings import SrunSettings, AprunSettings
+from smartsim.settings import JsrunSettings
 from smartsim.settings import RunSettings
 from smartsim.config import CONFIG
 
@@ -16,13 +18,21 @@ test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 
+def get_account():
+    global test_account
+    test_account = CONFIG.test_account
+    return test_account
+
 def print_test_configuration():
     global test_path
     global test_dir
     global test_launcher
+    global test_account
     print("TEST_SMARTSIM_LOCATION: ", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER", test_launcher)
+    if test_account != "":
+        print("TEST_ACCOUNT", test_account)
     print("TEST_DEVICE", test_device)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
@@ -31,7 +41,9 @@ def print_test_configuration():
 def pytest_configure():
     global test_launcher
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "cobalt"]
+    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
+    account = get_account()
+    pytest.test_account = account
 
 def pytest_sessionstart(session):
     """
@@ -78,6 +90,11 @@ class WLMUtils:
         return test_launcher
 
     @staticmethod
+    def get_test_account():
+        global test_account
+        return test_account
+
+    @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
             run_args = {"nodes": nodes,
@@ -97,6 +114,13 @@ class WLMUtils:
             run_args.update(kwargs)
             settings = AprunSettings(exe, args, run_args=run_args)
             return settings
+        if test_launcher == "lsf":
+            run_args = {"nrs": nodes,
+                       "tasks_per_rs": max(ntasks//nodes,1),
+                       }
+            run_args.update(kwargs)
+            settings = JsrunSettings(exe, args, run_args=run_args)
+            return settings
         else:
             return RunSettings(exe, args)
 
@@ -109,6 +133,8 @@ class WLMUtils:
             db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch)
         elif test_launcher == "cobalt":
             db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch)
+        elif test_launcher == "lsf":
+            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, project=get_account())
         else:
             db = Orchestrator(port=port)
         return db
