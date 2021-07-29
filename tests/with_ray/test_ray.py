@@ -42,7 +42,6 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         launcher="local",
         workers=0,
         batch=True,
-        ray_port=6830,
         ray_args={"num-cpus": "4",
                   "dashboard-port": "8266"},
     )
@@ -54,19 +53,19 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
     right_size = len(ray.nodes()) == 1
     if not right_size:
         ray.util.disconnect()
-        exp.stop()
+        exp.stop(cluster)
         assert False
     
     right_resources = ray.cluster_resources()["CPU"] == 4
     if not right_resources:
         ray.util.disconnect()
-        exp.stop()
+        exp.stop(cluster)
         assert False
 
     # Even setting batch to True must result in cluster.batch==False on local
     if cluster.batch:
         ray.util.disconnect()
-        exp.stop()
+        exp.stop(cluster)
         assert False
 
     exp.stop(cluster)
