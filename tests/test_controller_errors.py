@@ -48,7 +48,7 @@ def test_unsupported_launcher():
     """Test when user provideds unsupported launcher"""
     cont = Controller(launcher="local")
     with pytest.raises(SSUnsupportedError):
-        cont.init_launcher("lsf")
+        cont.init_launcher("thelauncherwhichdoesnotexist")
 
 
 def test_no_launcher():

@@ -317,7 +317,10 @@ class JobManager:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
                 for dbnode in orchestrator:
-                    self.db_jobs[dbnode.name].hosts = [dbnode.host]
+                    if not dbnode._multihost:
+                        self.db_jobs[dbnode.name].hosts = [dbnode.host]
+                    else:
+                        self.db_jobs[dbnode.name].hosts = dbnode.hosts
         finally:
             self._lock.release()
 

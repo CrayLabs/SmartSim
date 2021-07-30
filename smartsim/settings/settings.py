@@ -126,9 +126,20 @@ class RunSettings:
             if isinstance(exe_args, str):
                 return exe_args.split()
             if isinstance(exe_args, list):
-                correct_type = all([isinstance(arg, (str)) for arg in exe_args])
-                if not correct_type:
-                    raise TypeError("Executable arguments were not list of str or str")
+                plain_type = all([isinstance(arg, (str)) for arg in exe_args])
+                if not plain_type:
+                    nested_type = all(
+                        [
+                            all([isinstance(arg, (str)) for arg in exe_args_list])
+                            for exe_args_list in exe_args
+                        ]
+                    )
+                    if not nested_type:
+                        raise TypeError(
+                            "Executable arguments were not list of str or str"
+                        )
+                    else:
+                        return exe_args
                 return exe_args
             raise TypeError("Executable arguments were not list of str or str")
         else:

@@ -4,27 +4,29 @@ import time
 import pytest
 
 from smartsim import Experiment, constants
-from smartsim.database import SlurmOrchestrator
+from smartsim.database import LSFOrchestrator
 
 # retrieved from pytest fixtures
-if pytest.test_launcher != "slurm":
+if pytest.test_launcher != "lsf":
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_launch_slurm_orc(fileutils):
+def test_launch_lsf_orc(fileutils, wlmutils):
     """test single node orchestrator"""
-    exp_name = "test-launch-slurm-orc-batch"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp_name = "test-launch-lsf-orc-batch"
+    exp = Experiment(exp_name, launcher="lsf")
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, batch=True)
+    orc = LSFOrchestrator(
+        6780, batch=True, project=wlmutils.get_test_account(), time="00:05", smts=1
+    )
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
     status = exp.get_status(orc)
 
-    # don't use assert so that orc we don't leave an orphan process
+    # don't use assert so that we don't leave an orphan process
     if constants.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
@@ -34,14 +36,21 @@ def test_launch_slurm_orc(fileutils):
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
 
 
-def test_launch_slurm_cluster_orc(fileutils):
+def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     """test clustered 3-node orchestrator"""
-    exp_name = "test-launch-slurm-cluster-orc-batch"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp_name = "test-launch-lsf-cluster-orc-batch"
+    exp = Experiment(exp_name, launcher="lsf")
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        project=wlmutils.get_test_account(),
+        time="00:03",
+        smts=1,
+    )
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -57,15 +66,22 @@ def test_launch_slurm_cluster_orc(fileutils):
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
 
 
-def test_launch_slurm_cluster_orc_reconnect(fileutils):
+def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
 
-    exp_name = "test-launch-slurm-cluster-orc-batch-reconect"
-    exp = Experiment(exp_name, launcher="slurm")
+    exp_name = "test-launch-lsf-cluster-orc-batch-reconect"
+    exp = Experiment(exp_name, launcher="lsf")
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        project=wlmutils.get_test_account(),
+        time="00:05",
+        smts=1,
+    )
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -78,8 +94,8 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils):
 
     exp.stop(orc)
 
-    exp_name = "test-orc-slurm-cluster-orc-batch-reconnect-2nd"
-    exp_2 = Experiment(exp_name, launcher="slurm")
+    exp_name = "test-orc-lsf-cluster-orc-batch-reconnect-2nd"
+    exp_2 = Experiment(exp_name, launcher="lsf")
 
     checkpoint = osp.join(test_dir, "smartsim_db.dat")
     reloaded_orc = exp_2.reconnect_orchestrator(checkpoint)
@@ -92,5 +108,4 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils):
         if stat == constants.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
-
     exp_2.stop(reloaded_orc)

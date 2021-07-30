@@ -29,12 +29,20 @@ import pickle
 import threading
 import time
 
+from smartsim.database.lsfOrchestrator import LSFOrchestrator
+
 from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    CobaltLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..utils import get_logger
 from .jobmanager import JobManager
 
@@ -225,7 +233,8 @@ class Controller:
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
-        SmartSim currently supports slurm, pbs(pro), and local launching
+        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        and local launching
 
         Since the JobManager and the controller share a launcher
         instance, set the JobManager launcher if we create a new
@@ -254,6 +263,9 @@ class Controller:
             # Init Cobalt launcher
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
+                self._jobs.set_launcher(self._launcher)
+            elif launcher == "lsf":
+                self._launcher = LSFLauncher()
                 self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
@@ -323,10 +335,10 @@ class Controller:
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
                 logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                    "WLM node acquisition unsupported, moving to RedisIP fallback"
                 )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
@@ -345,10 +357,10 @@ class Controller:
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
+                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
             except SSUnsupportedError:
                 logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
+                    "WLM node acquisition unsupported, moving to RedisIP fallback"
                 )
 
         # set the jobs in the job manager to provide SSDB variable to entities
@@ -356,8 +368,22 @@ class Controller:
         self._jobs.set_db_hosts(orchestrator)
 
         # create the database cluster
-        if len(orchestrator) > 2:
-            orchestrator.create_cluster()
+        if orchestrator.num_shards > 2:
+            num_trials = 5
+            cluster_created = False
+            while not cluster_created:
+                try:
+                    orchestrator.create_cluster()
+                    cluster_created = True
+                except SmartSimError:
+                    if num_trials > 0:
+                        logger.debug(
+                            "Cluster creation failed, attempting again in five seconds..."
+                        )
+                        num_trials -= 1
+                        time.sleep(5)
+                    else:
+                        raise
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
@@ -516,7 +542,11 @@ class Controller:
         client_env = {}
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
-            client_env["SSDB"] = ",".join(addresses)
+            if len(addresses) <= 128:
+                client_env["SSDB"] = ",".join(addresses)
+            else:
+                # Cap max length of SSDB
+                client_env["SSDB"] = ",".join(addresses[:128])
             if entity.incoming_entities:
                 client_env["SSKEYIN"] = ",".join(
                     [in_entity.name for in_entity in entity.incoming_entities]
@@ -539,7 +569,7 @@ class Controller:
         """
         orchestrator = manifest.db
         if isinstance(self._launcher, LocalLauncher) and orchestrator:
-            if len(orchestrator) > 1:
+            if orchestrator.num_shards > 1:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases"
                 )
