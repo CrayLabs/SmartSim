@@ -35,7 +35,6 @@ class AprunSettings(RunSettings):
         run_args=None,
         env_vars=None,
         block_in_batch=False,
-        expand_exe=True,
     ):
         """Settings to run job with ``aprun`` command
 
@@ -53,10 +52,6 @@ class AprunSettings(RunSettings):
         :param block_in_batch: whether the execution of this call should block when executed
                                in a batch.
         :type block_in_batch: bool
-        :param expand_exe: whether the executable path should be expanded. It is recommended
-                           to always leave this value to True, unless really needed (e.g.
-                           when commands are not available on the launch node).
-        :type expand_exe: bool
         """
         super().__init__(
             exe,
@@ -64,7 +59,6 @@ class AprunSettings(RunSettings):
             run_command="aprun",
             run_args=run_args,
             env_vars=env_vars,
-            expand_exe=expand_exe,
         )
         self.block_in_batch = block_in_batch
         self.mpmd = []
