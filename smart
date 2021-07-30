@@ -406,9 +406,7 @@ def cli():
             sys.exit(0)
         elif args.dbcli:
             dbcli = script_path.joinpath("redis-cli")
-            print(f"Invoke: .{dbcli}")
-            print("Use -h <hostname or ip> to specify host")
-            print("Use -p <port> to specify port number")
+            print(f"{dbcli}")
             sys.exit(0)
 
         def color(is_in_build=True):
