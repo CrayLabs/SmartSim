@@ -11,10 +11,11 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: tutorials
+   :caption: Tutorials
 
    tutorials/01_getting_started/01_getting_started
-   tutorials/smartredis
+   tutorials/using_clients
+   tutorials/lattice_boltz_analysis
 
 .. toctree::
    :maxdepth: 2
