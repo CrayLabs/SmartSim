@@ -651,6 +651,10 @@ The following is an example of how a user could monitor and analyze a simulation
 The example here uses the Python client, but SmartRedis clients are available in
 C++, C, and Fortran as well and implement the same API.
 
+The example will produce the visualization below while the simulation is running.
+
+https://user-images.githubusercontent.com/13009163/127622717-2c9e4cfd-50f4-4d94-88c4-8c05fa2fa616.mp4
+
 #### Lattice Boltzmann Simulation
 
 Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Boltzmann_methods),
