@@ -76,7 +76,7 @@ class RunSettings:
                                should wait until completion of this ``Model``
         :type block_in_batch: bool
         """
-        self.exe = expand_exe_path(exe)
+        self.exe = [expand_exe_path(exe)]
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, (dict, list))
         self.env_vars = init_default({}, env_vars, (dict, list))
