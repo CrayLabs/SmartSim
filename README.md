@@ -439,12 +439,62 @@ launching Ray through SmartSim is a relatively simple task.
 
 ### Ray on Slurm
 
-Below is an example of how to launch Ray on a Slurm system.
+Below is an example of how to launch a Ray cluster on a Slurm system and connect to it.
+In this example, we set `batch=True`, which means that the cluster will be started
+requesting an allocation through Slurm. If this code is run within a sufficiently large
+interactive allocation, setting `batch=False` will spin the Ray cluster on the
+allocated nodes.
+
+```Python
+import ray
+
+from smartsim import Experiment
+from smartsim.ext.ray import RayCluster
+
+exp = Experiment("ray-cluster", launcher='slurm')
+# 3 workers + 1 head node = 4 node-cluster
+cluster = RayCluster(name="ray-cluster", run_args={},
+                     ray_args={"num-cpus": 24},
+                     launcher=launcher, workers=3, batch=True)
+
+exp.generate(cluster, overwrite=True)
+exp.start(cluster, block=False, summary=True)
+
+# Connect to the Ray cluster
+ray.util.connect(cluster.head_model.address+":10001")
+
+# <run Ray tune, RLlib, HPO...>
+```
 
 
 ### Ray on PBS
 
-Below is an example of how to launch Ray on a PBS system.
+Below is an example of how to launch a Ray cluster on a PBS system and connect to it.
+In this example, we set `batch=True`, which means that the cluster will be started
+requesting an allocation through Slurm. If this code is run within a sufficiently large
+interactive allocation, setting `batch=False` will spin the Ray cluster on the
+allocated nodes.
+
+```Python
+import ray
+
+from smartsim import Experiment
+from smartsim.ext.ray import RayCluster
+
+exp = Experiment("ray-cluster", launcher='pbs')
+# 3 workers + 1 head node = 4 node-cluster
+cluster = RayCluster(name="ray-cluster", run_args={},
+                     ray_args={"num-cpus": 24},
+                     launcher=launcher, workers=3, batch=True)
+
+exp.generate(cluster, overwrite=True)
+exp.start(cluster, block=False, summary=True)
+
+# Connect to the ray cluster
+ray.util.connect(cluster.head_model.address+":10001")
+
+# <run Ray tune, RLlib, HPO...>
+```
 
 
 ------

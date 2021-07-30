@@ -40,9 +40,9 @@ class RayCluster(EntityList):
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
     :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
-                     to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
+                     to the Ray command line as `--key=value` , or `--key` if `value` is set to `None`.
     :type ray_args: dict[str,str]
-    :param workers: Number of workers (the total size of the cluster is ``workers``+1).
+    :param workers: Number of workers, the total size of the cluster is the number of workers + 1.
     :type workers: int
     :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
     :type run_args: dict[str,str]
@@ -55,7 +55,7 @@ class RayCluster(EntityList):
     :type alloc: int
     :param batch: Whether cluster should be launched as batch file, ignored when ``launcher`` is `local`
     :type batch: bool
-    :param time: The walltime the cluster will be running for
+    :param time: The walltime the cluster will be running for, in format `hh:mm:ss`
     :type time: str
     """
 
