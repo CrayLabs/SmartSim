@@ -32,7 +32,7 @@
 
 SmartSim makes it easier to use common Machine Learning (ML) libraries
 like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
-and workloads.
+and applications.
 
 SmartSim provides an API to connect HPC workloads, particularly (MPI + X) simulations,
 to an in-memory database called the Orchestrator, built on an in-memory database
@@ -76,30 +76,32 @@ independently.
   - [Experiments on HPC Systems](#experiments-on-hpc-systems)
     - [Interactive Launch Example](#interactive-launch-example)
     - [Batch Launch Examples](#batch-launch-examples)
-  - [Built-In Applications](#built-in-applications)
-  - [Orchestrator](#orchestrator)
+- [Infrastructure Library Applications](#infrastructure-library-applications)
+  - [Redis + RedisAI](#redis--redisai)
     - [Local Launch](#local-launch)
     - [Interactive Launch](#interactive-launch)
     - [Batch Launch](#batch-launch)
   - [Ray](#ray)
-    - [Ray on HPC](#ray-on-hpc)
-      - [Ray on Slurm](#ray-on-slurm)
-      - [Ray on PBS](#ray-on-pbs)
+    - [Ray on Slurm](#ray-on-slurm)
+    - [Ray on PBS](#ray-on-pbs)
 - [SmartRedis](#smartredis)
   - [Tensors](#tensors)
-  - [DataSets](#datasets)
+  - [Datasets](#datasets)
+  - [Examples](#examples)
+    - [Python](#python)
+    - [C++](#c)
+    - [Fortran](#fortran)
 - [SmartSim + SmartRedis](#smartsim--smartredis)
   - [Online Analysis](#online-analysis)
       - [Lattice Boltzmann Simulation](#lattice-boltzmann-simulation)
+  - [Online Processing](#online-processing)
+    - [Singular Value Decomposition](#singular-value-decomposition)
   - [Online Inference](#online-inference)
     - [PyTorch](#pytorch)
-      - [Python](#python)
-      - [C++](#c)
-      - [Fortran](#fortran)
-  - [TensorFlow and Keras](#tensorflow-and-keras)
-  - [ONNX](#onnx)
-    - [KMeans](#kmeans)
-    - [Random Forest](#random-forest)
+    - [TensorFlow and Keras](#tensorflow-and-keras)
+    - [ONNX](#onnx)
+      - [KMeans](#kmeans)
+      - [Random Forest](#random-forest)
 - [Publications](#publications)
 - [Cite](#cite)
   - [bibtex](#bibtex)
@@ -291,13 +293,13 @@ python hello_ensemble_pbs.py
 
 --------
 
-## Built-In Applications
+# Infrastructure Library Applications
  - Orchestrator - In-memory data store and Machine Learning Inference (Redis + RedisAI)
  - Ray - Distributed Reinforcement Learning (RL), Hyperparameter Optimization (HPO)
 
-## Orchestrator
+## Redis + RedisAI
 
-The Orchestrator is an in-memory database that utilizes Redis and RedisAI to provide
+The ``Orchestrator`` is an in-memory database that utilizes Redis and RedisAI to provide
 a distributed database and access to ML runtimes from Fortran, C, C++ and Python.
 
 SmartSim provides classes that make it simple to launch the database in many
@@ -431,19 +433,16 @@ Ray is a distributed computation framework that supports a number of application
  - Ray Serve - ML/DL inference
 As well as other integrations with frameworks like Modin, Mars, Dask, and Spark.
 
-### Ray on HPC
-
 Historically, Ray has not been well supported on HPC systems. A few examples exist,
 but none are well maintained. Because SmartSim already has launchers for HPC systems,
 launching Ray through SmartSim is a relatively simple task.
 
-
-#### Ray on Slurm
+### Ray on Slurm
 
 Below is an example of how to launch Ray on a Slurm system.
 
 
-#### Ray on PBS
+### Ray on PBS
 
 Below is an example of how to launch Ray on a PBS system.
 
@@ -460,10 +459,176 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 
 ## Tensors
 
-TODO: description of the Tensor API
-## DataSets
+Tensors are the fundamental data structure for the SmartRedis clients. The Clients
+use the native array format of the language. For example, in Python, a tensor is
+a NumPy array. The C++/C client accepts nested and contingous arrays.
 
-TODO description of the DataSet API
+When stored in the database, all tensors are stored in the same format. Hence,
+any language can recieve a tensor from the database no matter what supported language
+the array was sent from. This enables applications in different languages to communicate
+numerical data with each other at runtime (coupling).
+
+For more information on the tensor data structure, see
+[the documentation](https://www.craylabs.org/docs/sr_data_structures.html#tensor)
+
+## Datasets
+
+Datasets are collections of Tensors and associated metadata. The ``Dataset`` class
+is a user space object that can be created, added to, sent to, and retrieved from
+the Orchestrator database.
+
+For an example of how to use the ``Dataset`` class, see the [Online Analysis example](#online-analysis)
+
+For more information on the API, see the
+[API documentation](https://www.craylabs.org/docs/sr_data_structures.html#dataset)
+
+## Examples
+
+Even though the clients rely on the Orchestrator database to be running, it can be helpful
+to see examples of how the API is used accross different languages even without the
+infrastructure code. The following examples provide simple examples of client usage.
+
+For more imformation on the SmartRedis clients, see the
+[API documentation](https://www.craylabs.org/docs/api/smartredis_api.html) and
+[tutorials](https://www.craylabs.org/docs/tutorials/smartredis.html).
+
+**Please note** these are client examples, they will not run if there is no database to
+connect to.
+
+### Python
+
+Training code and Model construction are not shown here, but the example below
+shows how to take a PyTorch model, sent it to the database, and execute it
+on data stored within the database.
+
+Notably the **GPU** argument is used to ensure that exection of the model
+takes place on a GPU if one is available to the database.
+
+```Python
+import torch
+from smartredis import Client
+
+net = create_mnist_cnn() # returns trained PyTorch nn.Module
+
+client = Client(address="127.0.0.1:6780", cluster=False)
+
+client.put_tensor("input", torch.rand(20, 1, 28, 28).numpy())
+
+# put the PyTorch CNN in the database in GPU memory
+client.set_model("cnn", net, "TORCH", device="GPU")
+
+# execute the model, supports a variable number of inputs and outputs
+client.run_model("cnn", inputs=["input"], outputs=["output"])
+
+# get the output
+output = client.get_tensor("output")
+print(f"Prediction: {output}")
+```
+
+### C++
+
+One common pattern is to use SmartSim to spin up the Orchestrator database
+and then use the Python client to set the model in
+the database. Once set, an application that uses
+the C, C++, or Fortran clients will call the model that was set.
+
+This example shows the necessary code an application would need to include
+to execute a model (with any ML backend) that had been stored prior to application
+launch by the Python client.
+
+```C++
+#include "client.h"
+
+// dummy tensor for brevity
+// Initialize a vector that will hold input image tensor
+size_t n_values = 1*1*28*28;
+std::vector<float> img(n_values, 0)
+
+// Declare keys that we will use in forthcoming client commands
+std::string model_name = "cnn"; // from previous example
+std::string in_key = "mnist_input";
+std::string out_key = "mnist_output";
+
+// Initialize a Client object
+SmartRedis::Client client(false);
+
+// Put the image tensor on the database
+client.put_tensor(in_key, img.data(), {1,1,28,28},
+                    SmartRedis::TensorType::flt,
+                    SmartRedis::MemoryLayout::contiguous);
+
+// Run model already in the database
+client.run_model(model_name, {in_key}, {out_key});
+
+// Get the result of the model
+std::vector<float> result(1*10);
+client.unpack_tensor(out_key, result.data(), {10},
+                        SmartRedis::TensorType::flt,
+                        SmartRedis::MemoryLayout::contiguous);
+
+```
+
+### Fortran
+
+You can also load a model from file and put it in the database before you execute it.
+This example shows how this is done in Fortran.
+
+
+```fortran
+program run_mnist_example
+
+  use smartredis_client, only : client_type
+  implicit none
+
+  character(len=*), parameter :: model_key = "mnist_model"
+  character(len=*), parameter :: model_file = "../../cpp/mnist_data/mnist_cnn.pt"
+
+  type(client_type) :: client
+  call client%initialize(.false.)
+
+  ! Load pre-trained model into the Orchestrator database
+  call client%set_model_from_file(model_key, model_file, "TORCH", "GPU")
+  call run_mnist(client, model_key)
+
+contains
+
+subroutine run_mnist( client, model_name )
+  type(client_type), intent(in) :: client
+  character(len=*),  intent(in) :: model_name
+
+  integer, parameter :: mnist_dim1 = 28
+  integer, parameter :: mnist_dim2 = 28
+  integer, parameter :: result_dim1 = 10
+
+  real, dimension(1,1,mnist_dim1,mnist_dim2) :: array
+  real, dimension(1,result_dim1) :: result
+
+  character(len=255) :: in_key
+  character(len=255) :: out_key
+
+  character(len=255), dimension(1) :: inputs
+  character(len=255), dimension(1) :: outputs
+
+  ! Construct the keys used for the specifiying inputs and outputs
+  in_key = "mnist_input"
+  out_key = "mnist_output"
+
+  ! Generate some fake data for inference
+  call random_number(array)
+  call client%put_tensor(in_key, array, shape(array))
+
+  inputs(1) = in_key
+  outputs(1) = out_key
+  call client%run_model(model_name, inputs, outputs)
+  result(:,:) = 0.
+  call client%unpack_tensor(out_key, result, shape(result))
+
+end subroutine run_mnist
+
+end program run_mnist_example
+
+```
+
 
 ---------
 # SmartSim + SmartRedis
@@ -488,7 +653,7 @@ C++, C, and Fortran as well and implement the same API.
 
 #### Lattice Boltzmann Simulation
 
-Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Boltzmann_method),
+Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Boltzmann_methods),
 this example demonstrates how to use the SmartRedis ``Dataset`` API to stream
 data to the Orchestrator deployed by SmartSim.
 
@@ -572,154 +737,86 @@ More details about online anaylsis with SmartSim and the full code examples can 
 [SmartSim documentation](https://www.craylabs.org). #fix this
 
 
+## Online Processing
+
+Each of the SmartRedis clients can be used to remotely execute
+[TorchScript](https://pytorch.org/docs/stable/jit.html) code on data
+stored within the database. The scripts/functions are executed in the Torch
+runtime linked into the database.
+
+Any of the functions available in the
+[TorchScript builtins](https://pytorch.org/docs/stable/jit_builtin_functions.html#builtin-functions)
+can be saved as "script" or "functions" in the database and used directly by
+any of the SmartRedis Clients.
+
+### Singular Value Decomposition
+
+For example, the following code sends the built-in
+[Singular Value Decomposition](https://pytorch.org/docs/stable/generated/torch.svd.html)
+to the database and execute it on a dummy tensor.
+
+```python
+import numpy as np
+from smartredis import Client
+
+# don't even need to import torch
+def calc_svd(input_tensor):
+    return input_tensor.svd()
+
+
+# connect a client to the database
+client = Client(address="127.0.0.1:6780", cluster=False)
+
+# get dummy data
+tensor = np.random.randint(0, 100, size=(5, 3, 2)).astype(np.float32)
+
+client.put_tensor("input", tensor)
+client.set_function("svd", calc_svd)
+
+client.run_script("svd", "calc_svd", "input", ["U", "S", "V"])
+# results are not retrieved immediately in case they need
+# to be fed to another function/model
+
+U = client.get_tensor("U")
+S = client.get_tensor("S")
+V = client.get_tensor("V")
+print(f"U: {U}, S: {S}, V: {V}")
+```
+
+The processing capabilties make it simple to form computational piplines of
+functions, scripts, and models.
+
+See the full [TorchScript Language Reference](https://pytorch.org/docs/stable/jit.html#torchscript-language)
+documentation for more information on available methods, functions, and how
+to create your own.
+
 ## Online Inference
 
 Compiling TensorFlow or PyTorch runtimes into each existing simulation is
 difficult. Maintaining that type of integration with the rapidly growing and changing
-APIs of TensorFlow and PyTorch is even moreso.
+APIs of libaries like TensorFlow and PyTorch is even more difficult.
 
-SmartSim takes a different approach to the inclusion of ML/DL models. Instead of forcing
-dependencies on the simulation code, SmartSim itself maintains those dependencies
-and provides them in the ``Orchestrator`` through RedisAI.
+Instead of forcing dependencies on the simulation code, SmartSim itself maintains those dependencies
+and provides them in the ``Orchestrator`` database through RedisAI.
 
 Because of this, Simulations in Fortran, C, C++ and Python can call into PyTorch, TensorFlow,
 and any library that supports the ONNX format without having to compile in those libraries.
 
 Below are a few examples of different Machine Learning Libraries you can use with SmartSim.
 
+
 ### PyTorch
 
-Convolutional Neural Networks (CNNs) are a popular type of Deep Learning model.
-The following example shows how to call a PyTorch CNN from Fortran, C++ and Python
-using the SmartRedis Clients.
+The Orchestrator supports both PyTorch models and TorchScript functions and scripts
+in PyTorch 1.7.1. Prior examples are shown for how to use PyTorch models in
+the SmartRedis examples in [Python](#Python), [C++](#c), and [Fortran](#fortran).
 
-For the entire examples that include the necessary SmartSim code for setting
-up the Orchestrator, see # PUT IN LINK.
 
-#### Python
-```Python
-net = create_mnist_cnn() # returns trained PyTorch nn.Module
+### TensorFlow and Keras
 
-from smartredis import Client
-client = Client(address="127.0.0.1:6780", cluster=False)
-
-client.put_tensor("input", torch.rand(20, 1, 28, 28).numpy())
-
-# put the CNN in the database in GPU memory
-client.set_model("cnn", net, "TORCH", device="GPU")
-
-# execute the model, supports a variable number of inputs and outputs
-client.run_model("cnn", inputs=["input"], outputs=["output"])
-
-# get the output
-output = client.get_tensor("output")
-print(f"Prediction: {output}")
-```
-
-#### C++
-
-Once placed in the database, any of the clients can call the model set from
-Python. However, each client has methods to set and get models.
-
-```C++
-#include "client.h"
-
-// dummy tensor for brevity
-// Initialize a vector that will hold input image tensor
-size_t n_values = 1*1*28*28;
-std::vector<float> img(n_values, 0)
-
-// Declare keys that we will use in forthcoming client commands
-std::string model_name = "cnn"; // from previous example
-std::string in_key = "mnist_input";
-std::string out_key = "mnist_output";
-
-// Initialize a Client object
-SmartRedis::Client client(false);
-
-// Put the image tensor on the database
-client.put_tensor(in_key, img.data(), {1,1,28,28},
-                    SmartRedis::TensorType::flt,
-                    SmartRedis::MemoryLayout::contiguous);
-
-// Run model already in the database
-client.run_model(model_name, {in_key}, {out_key});
-
-// Get the result of the model
-std::vector<float> result(1*10);
-client.unpack_tensor(out_key, result.data(), {10},
-                        SmartRedis::TensorType::flt,
-                        SmartRedis::MemoryLayout::contiguous);
-
-```
-
-#### Fortran
-
-You can also load a model from file and put it in the database before you execute it.
-This example shows how this is done in Fortran.
-
-All the SmartRedis clients implement the same interface.
-
-```fortran
-program run_mnist_example
-
-  use smartredis_client, only : client_type
-  implicit none
-
-  character(len=*), parameter :: model_key = "mnist_model"
-  character(len=*), parameter :: model_file = "../../cpp/mnist_data/mnist_cnn.pt"
-
-  type(client_type) :: client
-  call client%initialize(.false.)
-
-  ! Load pre-trained model into the Orchestrator database
-  call client%set_model_from_file(model_key, model_file, "TORCH", "GPU")
-  call run_mnist(client, model_key)
-
-contains
-
-subroutine run_mnist( client, model_name )
-  type(client_type), intent(in) :: client
-  character(len=*),  intent(in) :: model_name
-
-  integer, parameter :: mnist_dim1 = 28
-  integer, parameter :: mnist_dim2 = 28
-  integer, parameter :: result_dim1 = 10
-
-  real, dimension(1,1,mnist_dim1,mnist_dim2) :: array
-  real, dimension(1,result_dim1) :: result
-
-  character(len=255) :: in_key
-  character(len=255) :: out_key
-
-  character(len=255), dimension(1) :: inputs
-  character(len=255), dimension(1) :: outputs
-
-  ! Construct the keys used for the specifiying inputs and outputs
-  in_key = "mnist_input"
-  out_key = "mnist_output"
-
-  ! Generate some fake data for inference
-  call random_number(array)
-  call client%put_tensor(in_key, array, shape(array))
-
-  inputs(1) = in_key
-  outputs(1) = out_key
-  call client%run_model(model_name, inputs, outputs)
-  result(:,:) = 0.
-  call client%unpack_tensor(out_key, result, shape(result))
-
-end subroutine run_mnist
-
-end program run_mnist_example
-
-```
-
-## TensorFlow and Keras
-
-The Orchestrator is also build with TensorFlow support by default. Currently TensorFlow
-2.4.0 is supported, but the graph of the model must be frozen before it is placed in the
-database.
+The Orchestrator, in addition to PyTorch, is built with TensorFlow support by default.
+Currently TensorFlow 2.4.0 is supported, but the graph of the model must be frozen
+before it is placed in the database.
 
 SmartSim include a utility to freeze the graph of a TensorFlow or Keras model in
 ``smartsim.tf``
@@ -765,8 +862,8 @@ client.run_model("keras_fcn", "input", "output")
 pred = client.get_tensor("output")
 print(pred)
 ```
-
-## ONNX
+------
+### ONNX
 
 ONNX is a standard format for representing models. A number of different Machine Learning
 Libraries are supported by ONNX and can be readily used with SmartSim.
@@ -792,7 +889,7 @@ And PyTorch has it's own converter.
 
 Below are some examples of a few models in Sci-kit Learn that are converted
 into onnx format for use with SmartSim.
-### KMeans
+#### KMeans
 
 K-means clustering is an unsupervised ML algorithm. It is used to categorize data points
 into f groups ("clusters"). Sci-kit Learn has a built in implementation of K-means clustering
@@ -816,7 +913,7 @@ client.run_model("kmeans", inputs="input", outputs=["labels", "transform"])
 print(client.get_tensor("labels"))
 ```
 
-### Random Forest
+#### Random Forest
 
 The Random Forest example uses the Iris datset from Sci-kit Learn to train a
 RandomForestRegressor. As with the other examples, the skl2onnx function
@@ -841,7 +938,7 @@ print(client.get_tensor("output"))
 
 ```
 
-
+--------
 
 # Publications
 
@@ -853,6 +950,7 @@ The following are public presentations or publications using SmartSim
  - [PyTorch Ecosystem Day Poster](https://assets.pytorch.org/pted2021/posters/J8.png)
 
 
+--------
 # Cite
 
 Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
