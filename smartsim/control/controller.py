@@ -391,7 +391,7 @@ class Controller:
                 )
                 self._launch_step(worker_batch_step, ray_cluster.worker_model)
                 try:
-                    time.sleep(1)
+                    time.sleep(5)
                     nodelist = self._launcher.get_step_nodes([worker_batch_step.name])
                     ray_cluster._hosts.extend(nodelist[0])
                     # catch if it fails or launcher doesn't support it
@@ -426,7 +426,7 @@ class Controller:
                 self._launch_step(worker_step, ray_cluster.worker_model)
 
                 try:
-                    time.sleep(1)
+                    time.sleep(5)
                     nodelist = self._launcher.get_step_nodes([worker_step.name])
                     ray_cluster._hosts.extend(nodelist[0])
 

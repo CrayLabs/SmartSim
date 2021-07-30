@@ -2,6 +2,7 @@ import os
 import re
 import time
 import uuid
+from shutil import which
 
 from ...entity import EntityList, Model
 from ...error import SSUnsupportedError
@@ -278,6 +279,9 @@ class RayHead(Model):
         ray_starter_args += [f"--redis-password={self._ray_password}"]
         if "dashboard-port" in self._ray_args:
             self.dashboard_port = int(self._ray_args["dashboard-port"])
+        ray_exe = which('ray')
+        if ray_exe:
+            ray_starter_args += [f"--ray-exe={ray_exe}"]
         ray_starter_args += [f"--dashboard-port={self.dashboard_port}"]
 
         delete_elements(
@@ -342,7 +346,7 @@ class RayHead(Model):
             "python",
             exe_args=ray_args,
             run_args=self._run_args,
-            expand_exe=False,
+            expand_exe=True,
             alloc=self._alloc,
         )
         srun_settings.set_nodes(1)
@@ -479,6 +483,6 @@ class RayWorker(Model):
             )
         self._run_args["sync-output"] = None
         aprun_settings = AprunSettings(
-            "ray", exe_args=ray_args, run_args=self._run_args, expand_exe=False
+            "ray", exe_args=ray_args, run_args=self._run_args, expand_exe=True
         )
         return aprun_settings

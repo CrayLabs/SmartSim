@@ -1,6 +1,6 @@
 import argparse
 import os
-import shlex
+from shutil import which
 from subprocess import PIPE, STDOUT, Popen
 
 os.environ["PYTHONUNBUFFERED"] = "1"
@@ -12,20 +12,19 @@ parser.add_argument(
 parser.add_argument("--redis-password", type=str, help="Password of Redis cluster")
 parser.add_argument("--ray-args", type=str, help="Additional arguments to start Ray")
 parser.add_argument("--dashboard-port", type=str, help="Ray dashboard port")
+parser.add_argument("--ray-exe", type=str, help="Ray executable", default='ray')
 args = parser.parse_args()
 
 
 def current_ip():
     import socket
-
     hostname = socket.getfqdn(socket.gethostname())
     return socket.gethostbyname(hostname)
 
 
-print(args)
 
 cliargs = [
-    "ray",
+    args.ray_exe,
     "start",
     "--head",
     "--block",

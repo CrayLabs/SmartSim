@@ -40,6 +40,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         name="ray-cluster",
         run_args={},
         launcher="local",
+        ray_port=6830,
         workers=0,
         batch=True,
         ray_args={"num-cpus": "4",
@@ -68,6 +69,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         exp.stop(cluster)
         assert False
 
+    ray.util.disconnect()
     exp.stop(cluster)
 
     raylet_active = False
