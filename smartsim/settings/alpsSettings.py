@@ -132,7 +132,7 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
-        self.run_args["exclude‐node‐list"] = ",".join(host_list)
+        self.run_args["exclude-node-list"] = ",".join(host_list)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
