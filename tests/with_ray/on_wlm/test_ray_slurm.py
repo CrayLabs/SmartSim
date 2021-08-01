@@ -1,6 +1,7 @@
 import logging
 import sys
 from os import environ
+import time
 
 import pytest
 
@@ -47,7 +48,12 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     exp.start(cluster, block=False, summary=False)
     ray.util.connect(cluster.get_head_address()+":10001")
 
-    right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (2, 8)
+    right_resources = False
+    trials = 10
+    while not right_resources and trials>0:
+        right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (2, 8)
+        trials -= 1
+        time.sleep(1)
 
     if not right_resources:
         ray.util.disconnect()
@@ -74,7 +80,12 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     exp.start(cluster, block=False, summary=False)
     ray.util.connect(cluster.get_head_address()+":10001")
 
-    right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (2, 8)
+    right_resources = False
+    trials = 10
+    while not right_resources and trials>0:
+        right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (2, 8)
+        trials -= 1
+        time.sleep(1)
 
     if not right_resources:
         ray.util.disconnect()
@@ -105,7 +116,12 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
     exp.start(cluster, block=False, summary=False)
     ray.util.connect(cluster.get_head_address()+":10001")
 
-    right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (3, 12)
+    right_resources = False
+    trials = 10
+    while not right_resources and trials>0:
+        right_resources = (len(ray.nodes()), ray.cluster_resources()['CPU']) == (3, 12)
+        trials -= 1
+        time.sleep(1)
 
     if not right_resources:
         ray.util.disconnect()
