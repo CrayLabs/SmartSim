@@ -252,7 +252,7 @@ LSF
 The LSF Launcher works like the PBSPro and Cobalt launchers and
 is compatible with LSF and OpenMPI workloads.
 
-To use the LSF launcher, specify at ``Experiment`` intialization:
+To use the LSF launcher, specify at ``Experiment`` initialization:
 
 .. code-block:: python
 
