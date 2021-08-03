@@ -222,9 +222,9 @@ class Orchestrator(EntityList):
         if self.queue_threads:
             module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
         if self.inter_threads:
-            module.append(f"INTER_OP_THREADS {self.inter_threads}")
+            module.append(f"INTER_OP_PARALLELISM {self.inter_threads}")
         if self.intra_threads:
-            module.append(f"INTRA_OP_THREADS {self.intra_threads}")
+            module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
     @staticmethod

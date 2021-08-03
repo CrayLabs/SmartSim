@@ -24,7 +24,6 @@ using the pip that comes with that installation.
 
  2. ``pip install smartsim``
  3. ``smart --device cpu``  (May take a couple minutes)
- 4. ``pip install smartredis``
 
 If you run into trouble with the installation, please consult the installation
 documentation [here](https://www.craylabs.org/docs/installation.html)
