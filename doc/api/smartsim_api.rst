@@ -231,7 +231,7 @@ JsrunSettings
 
 .. _jsrun_api:
 
-``JsrunSettings`` can be used on any system that suppports the
+``JsrunSettings`` can be used on any system that supports the
 IBM LSF launcher.
 
 ``JsrunSettings`` can be used in interactive session (on allocation)
@@ -473,4 +473,3 @@ Slurm
 
 .. automodule:: smartsim.launcher.slurm.slurm
     :members:
-
