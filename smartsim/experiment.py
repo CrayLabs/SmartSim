@@ -462,10 +462,11 @@ class Experiment:
                 num_models = colorize(
                     "# of workers: " + str(rc._workers), color="green"
                 )
-                batch_settings = colorize(
-                    "Head batch Settings: \n" + str(rc.head_model.batch_settings),
-                    color="green",
-                )
+                if batch:
+                    batch_settings = colorize(
+                        "Head batch Settings: \n" + str(rc.head_model.batch_settings),
+                        color="green",
+                    )
                 head_run_settings = colorize(
                     "Head run Settings: \n" + str(rc.head_model.run_settings),
                     color="green",
@@ -475,10 +476,11 @@ class Experiment:
                 else:
                     run_settings = head_run_settings
                 if rc._workers > 0:
-                    batch_settings += colorize(
-                        "\nWorkers batch Settings: \n" + str(rc.worker_model.batch_settings),
-                        color="green",
-                    )
+                    if batch:
+                        batch_settings += colorize(
+                            "\nWorkers batch Settings: \n" + str(rc.worker_model.batch_settings),
+                            color="green",
+                        )
                     worker_run_settings = colorize(
                         "\nWorkers run Settings: \n"
                         + str(rc.worker_model.run_settings),
