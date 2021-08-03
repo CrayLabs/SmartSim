@@ -20,6 +20,12 @@ of the lattice Boltzmann method in Python. Since that example is licensed under 
 
 Philip also wrote a great medium `article`_ explaining the simulation in detail.
 
+.. |simulation| image:: ../images/latticeboltzmann.png
+  :width: 700
+
+
+|simulation|
+
 
 3.2 Integrating SmartRedis
 --------------------------

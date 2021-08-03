@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
-import multiprocessing as mp
 import socket
 import time
 from os import getcwd
@@ -179,7 +178,6 @@ class Orchestrator(EntityList):
             addresses.append(":".join((host, str(port))))
         return addresses
 
-
     def is_active(self):
         """Check if database is running
 
@@ -204,7 +202,7 @@ class Orchestrator(EntityList):
                         return False
                 active = True
             else:
-                tensor = np.array([1,2])
+                tensor = np.array([1, 2])
                 client.put_tensor("cluster_test", tensor)
                 _ = client.get_tensor("cluster_test")
                 active = True
@@ -212,7 +210,6 @@ class Orchestrator(EntityList):
             return False
 
         return active
-
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
@@ -286,20 +283,6 @@ class Orchestrator(EntityList):
             else:
                 hosts.extend(dbnode.hosts)
         return hosts
-
-
-# Hack to avoid a bug in SmartRedis 1.1 where
-# client will segfault because of a uncaught error
-class ClientThread(mp.Process):
-    def __init__(self, address, cluster=False):
-        mp.Process.__init__(self, name="ClientThread")
-        self.address = address
-        self.cluster = cluster
-
-    def run(self):
-        client = Client(self.address, cluster=self.cluster)
-        client.put_tensor("db_test", np.array([1]))
-        receive_tensor = client.get_tensor("db_test")
 
 
 def get_ip_from_host(host):

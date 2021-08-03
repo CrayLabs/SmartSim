@@ -36,6 +36,7 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
+@pytest.mark.skip(reason="Skip until SmartRedis 2.0 is released")
 def test_orc_active_functions(fileutils):
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local")
@@ -55,7 +56,7 @@ def test_orc_active_functions(fileutils):
     exp.stop(db)
 
     # TODO: Update is_active code after smartredis 0.2.0 is released
-    # assert not db.is_active()
+    assert not db.is_active()
 
     # check if orchestrator.get_address() raises an exception
     with pytest.raises(SmartSimError):

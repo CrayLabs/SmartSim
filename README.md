@@ -97,11 +97,7 @@ independently.
   - [Online Processing](#online-processing)
     - [Singular Value Decomposition](#singular-value-decomposition)
   - [Online Inference](#online-inference)
-    - [PyTorch](#pytorch)
-    - [TensorFlow and Keras](#tensorflow-and-keras)
-    - [ONNX](#onnx)
-      - [KMeans](#kmeans)
-      - [Random Forest](#random-forest)
+    - [PyTorch CNN Example](#pytorch)
 - [Publications](#publications)
 - [Cite](#cite)
   - [bibtex](#bibtex)
@@ -796,7 +792,73 @@ to create your own.
 
 ## Online Inference
 
+SmartSim supports the following frameworks for quering Machine Learning models
+from C, C++, Fortran and Python with the SmartRedis Clients:
 
+|       Library     | Supported Version |
+|-------------------|:-----------------:|
+| PyTorch           |       1.7.1       |
+| TensorFlow\Keras  |       2.4.0       |
+| ONNX              |       1.7.0       |
+
+Note, it's important to remember that SmartSim utilizes a client-server model. To run
+experiments that utilize the above frameworks, you must first start the Orchestrator
+database with SmartSim.
+
+### PyTorch CNN Example
+
+The example below shows how to spin up a database with SmartSim and
+invoke a PyTorch CNN model using the SmartRedis clients.
+
+```python
+# simple_torch_inference.py
+import io
+import torch
+import torch.nn as nn
+from smartredis import Client
+from smartsim import Experiment
+from smartsim.database import Orchestrator
+
+exp = Experiment("simple-online-inference", launcher="local")
+db = Orchestrator(port=6780)
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv = nn.Conv2d(1, 1, 3)
+
+    def forward(self, x):
+        return self.conv(x)
+
+torch_model = Net()
+example_forward_input = torch.rand(1, 1, 3, 3)
+module = torch.jit.trace(torch_model, example_forward_input)
+model_buffer = io.BytesIO()
+torch.jit.save(module, model_buffer)
+
+exp.start(db, summary=True)
+
+address = db.get_address()[0]
+client = Client(address=address, cluster=False)
+
+client.put_tensor("input", example_forward_input.numpy())
+client.set_model("cnn", model_buffer.getvalue(), "TORCH", device="CPU")
+client.run_model("cnn", inputs=["input"], outputs=["output"])
+output = client.get_tensor("output")
+print(f"Prediction: {output}")
+
+exp.stop(db)
+```
+
+To run:
+```bash
+python simple_torch_inference.py
+```
+
+For more examples of how to use SmartSim and SmartRedis together to perform
+online inference, please see the tutorials section of the
+[SmartSim documentation](https://www.craylabs.org).
 
 --------
 

@@ -71,7 +71,9 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
 def test_set_run_arg():
     orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
     orc.set_run_arg("account", "ACCOUNT")
-    assert all([db.run_settings.run_args["account"]=="ACCOUNT" for db in orc.entities])
+    assert all(
+        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+    )
     orc.set_run_arg("nodefile", "nonexisting.txt")
     assert all(["nodefile" not in db.run_settings.run_args for db in orc.entities])
 
