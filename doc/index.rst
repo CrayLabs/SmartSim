@@ -16,6 +16,8 @@
    tutorials/01_getting_started/01_getting_started
    tutorials/using_clients
    tutorials/lattice_boltz_analysis
+   tutorials/inference
+
 
 .. toctree::
    :maxdepth: 2
