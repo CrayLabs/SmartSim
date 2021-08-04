@@ -90,8 +90,8 @@ class QsubBatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -127,7 +127,7 @@ class QsubBatchSettings(BatchSettings):
         """Set the number of cpus obtained in each node.
 
         If a select argument is provided in
-        ``QsubBatchSettings.resources`` then,
+        ``QsubBatchSettings.resources``, then
         this value will be overridden
 
         :param num_cpus: number of cpus per node in select

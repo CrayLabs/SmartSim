@@ -123,8 +123,8 @@ class PBSOrchestrator(Orchestrator):
         """Specify the hosts for the ``PBSOrchestrator`` to launch on
 
         :param host_list: list of hosts (compute node names)
-        :type host_list: list[str]
-        :raises TypeError: if wrong type
+        :type host_list: str | list[str]
+        :raises TypeError: if host_list is wrong type
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]

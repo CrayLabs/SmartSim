@@ -69,8 +69,8 @@ class SrunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -133,7 +133,7 @@ class SrunSettings(RunSettings):
     def format_env_vars(self):
         """Build environment variable string for Slurm
 
-        Slurm takes exports in comma seperated lists
+        Slurm takes exports in comma separated lists
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
 
@@ -232,8 +232,8 @@ class SbatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]

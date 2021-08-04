@@ -155,7 +155,7 @@ class Experiment:
         This method should only be used if jobs were launched
         with ``Experiment.start(block=False)``
 
-        :param interval: frequency of logging to stdout
+        :param interval: frequency (in seconds) of logging to stdout
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
@@ -168,9 +168,9 @@ class Experiment:
             raise
 
     def finished(self, entity):
-        """Query if a job as completed
+        """Query if a job has completed
 
-        A instance of ``Model``, ``Ensemble`` can be passed
+        An instance of ``Model``, ``Ensemble`` can be passed
         as an argument.
 
         :param entity: object launched by this ``Experiment``
