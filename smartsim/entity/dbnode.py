@@ -160,7 +160,8 @@ class DBNode(SmartSimEntity):
                 time.sleep(5)
             logger.debug("Waiting for RedisIP files to populate...")
             trials -= 1
-            time.sleep(5)
+            if not host:
+                time.sleep(5)
 
         if not host and not ip:
             logger.error("RedisIP address lookup strategy failed.")
@@ -220,7 +221,8 @@ class DBNode(SmartSimEntity):
                     time.sleep(5)
                 logger.debug("Waiting for RedisIP files to populate...")
                 trials -= 1
-                time.sleep(5)
+                if not host:
+                    time.sleep(5)
 
             if not host and not ip:
                 logger.error("RedisIP address lookup strategy failed.")
