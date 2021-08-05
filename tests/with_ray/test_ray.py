@@ -43,8 +43,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         ray_port=6830,
         workers=0,
         batch=True,
-        ray_args={"num-cpus": "4",
-                  "dashboard-port": "8266"},
+        ray_args={"num-cpus": "4", "dashboard-port": "8266"},
     )
     exp.generate(cluster, overwrite=False)
     exp.start(cluster, block=False, summary=False)
@@ -56,7 +55,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         ray.util.disconnect()
         exp.stop(cluster)
         assert False
-    
+
     right_resources = ray.cluster_resources()["CPU"] == 4
     if not right_resources:
         ray.util.disconnect()
@@ -81,7 +80,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
             pass
     assert not raylet_active
 
-    assert cluster.get_dashboard_address() == cluster.get_head_address()+":8266"
+    assert cluster.get_dashboard_address() == cluster.get_head_address() + ":8266"
 
 
 def test_ray_errors(fileutils):
@@ -91,5 +90,9 @@ def test_ray_errors(fileutils):
 
     with pytest.raises(SSUnsupportedError):
         _ = RayCluster(
-            name="ray-cluster", path=test_dir, run_args={}, launcher="notsupportedlauncher", workers=1
+            name="ray-cluster",
+            path=test_dir,
+            run_args={},
+            launcher="notsupportedlauncher",
+            workers=1,
         )

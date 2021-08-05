@@ -478,7 +478,8 @@ class Experiment:
                 if rc._workers > 0:
                     if batch:
                         batch_settings += colorize(
-                            "\nWorkers batch Settings: \n" + str(rc.worker_model.batch_settings),
+                            "\nWorkers batch Settings: \n"
+                            + str(rc.worker_model.batch_settings),
                             color="green",
                         )
                     worker_run_settings = colorize(

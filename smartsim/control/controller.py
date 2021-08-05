@@ -29,7 +29,6 @@ import pickle
 import threading
 import time
 
-from smartsim.database.lsfOrchestrator import LSFOrchestrator
 
 from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
@@ -184,17 +183,6 @@ class Controller:
         else:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
-
-    # TODO Gracefully stop head with `ray stop`
-    def stop_ray_cluster(self, ray_cluster):
-        """Stop a ``RayCluster``, first stopping
-        the workers, then the head.
-
-        :param ray_cluster: the cluster to stop
-        :type ray_cluster: RayCluster
-        """
-        for entity in ray_cluster.entities:
-            self.stop_entity(entity)
 
     def get_entity_status(self, entity):
         """Get the status of an entity
@@ -392,6 +380,7 @@ class Controller:
         This function will launch the Ray Cluster instance and
         if on WLM, find the nodes where it was launched and
         set them in the JobManager
+
         :param orchestrator: ray cluster to launch
         :type orchestrator: RayCluster
         """

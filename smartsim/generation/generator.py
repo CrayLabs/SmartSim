@@ -186,7 +186,7 @@ class Generator:
                 mkdir(rc_dir)
             rc.path = rc_dir
 
-            rc_head_dir = path.join(self.gen_path, rc.head_model.path)
+            rc_head_dir = path.join(self.gen_path, "head", rc.head_model.path)
             if path.isdir(rc_head_dir):
                 if self.overwrite:
                     shutil.rmtree(rc_head_dir)
@@ -197,7 +197,9 @@ class Generator:
             rc.head_model.path = rc_head_dir
 
             if rc._workers > 0:
-                rc_worker_dir = path.join(self.gen_path, rc.worker_model.path)
+                rc_worker_dir = path.join(
+                    self.gen_path, "workers", rc.worker_model.path
+                )
                 if path.isdir(rc_worker_dir):
                     if self.overwrite:
                         shutil.rmtree(rc_worker_dir)

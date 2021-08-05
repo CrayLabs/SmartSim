@@ -57,7 +57,6 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
     orc = PBSOrchestrator(6780, db_nodes=3, batch=False, inter_op_threads=4)
     orc.set_path(test_dir)
 
-
     exp.start(orc, block=True)
     status = exp.get_status(orc)
 
@@ -74,9 +73,13 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
 def test_set_run_arg():
     orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
     orc.set_run_arg("account", "ACCOUNT")
-    assert all([db.run_settings.run_args["account"]=="ACCOUNT" for db in orc.entities])
+    assert all(
+        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+    )
     orc.set_run_arg("pes-per-numa-node", "5")
-    assert all(["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities])
+    assert all(
+        ["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities]
+    )
     orc.set_cpus(4)
     assert all([db.run_settings.run_args["cpus-per-pe"] == 4 for db in orc.entities])
 
