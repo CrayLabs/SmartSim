@@ -90,7 +90,7 @@ class Orchestrator(EntityList):
     def hosts(self):
         """Return the hostnames of orchestrator instance hosts
 
-        Note that this will only be popluated after the orchestrator
+        Note that this will only be populated after the orchestrator
         has been launched by SmartSim.
 
         :return: hostnames
@@ -109,7 +109,7 @@ class Orchestrator(EntityList):
     def create_cluster(self):  # cov-wlm
         """Connect launched cluster instances.
 
-        Should only be used in the case where cluster initilization
+        Should only be used in the case where cluster initialization
         needs to occur manually which is not often.
 
         :raises SmartSimError: if cluster creation fails
@@ -270,7 +270,7 @@ class Orchestrator(EntityList):
 
     @staticmethod
     def _get_cluster_args(name, port):
-        """Create the arguments neccessary for cluster creation"""
+        """Create the arguments necessary for cluster creation"""
         cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args

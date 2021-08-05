@@ -47,7 +47,7 @@ Supported Versions
 .. note::
 
   Windows is not supported and there are currently no plans
-  to support windows.
+  to support Windows.
 
 SmartSim supports multiple machine learning libraries through
 the use of RedisAI_. The following libraries are supported.
@@ -288,7 +288,7 @@ Building the Documentation
 ==========================
 
 .. note::
-    To build the full documentation, user need to install
+    To build the full documentation, users need to install
     ``doxygen 1.9.1``. For Mac OS users, doxygen can be
     installed through ``brew install doxygen``
 
@@ -331,7 +331,7 @@ For contributors, the following brew packages can be helpful
 .. _cmake: https://formulae.brew.sh/formula/cmake#default
 
 For Mac OS users, the version of ``make`` that comes with
-the Mac commandline tools is often 3.81 which needs to be updated to install
+the Mac command line tools is often 3.81 which needs to be updated to install
 SmartSim. Users can ``brew install make`` to get ``make`` > 4.0 but
 brew will install it as ``gmake``. An easy way around this
 is to do ``alias make=gmake``.
@@ -344,15 +344,15 @@ When building SmartSim for Linux systems where the user
 has root access, many of the needed packages can be installed
 through ``apt``.
 
-If you have a cuda enabled GPU and want to run SmartSim on GPU
-on a linux system you have root access to, you can install cuda
+If you have a CUDA enabled GPU and want to run SmartSim on GPU
+on a Linux system you have root access to, you can install CUDA
 through ``apt`` with the ``cuda`` package.
 
-In addition, cudnn can be installed through the ``libcudnn``
+In addition, cuDNN can be installed through the ``libcudnn``
 and ``libcudnn-dev`` pacakges.
 
 If you run into trouble compiling the machine learning runtimes
-on ubuntu because of cudnn, it might be due to this issue_
+on Ubuntu because of cuDNN, it might be due to this issue_
 
 .. _issue: https://github.com/pytorch/pytorch/issues/40965
 
@@ -375,7 +375,7 @@ cli tool, be sure to set the ``CRAYPE_LINK_TYPE`` to ``dynamic``
 
     export CRAYPE_LINK_TYPE=dynamic
 
-Keep in mind, the libraries installed above need to be accessable
+Keep in mind, the libraries installed above need to be accessible
 by SmartSim at runtime. If using a networked file system (NFS),
 make sure to install these somewhere reachable from head, MOM, and
 compute nodes (network mounted).
@@ -391,7 +391,7 @@ to installation run
 
     module load cudatoolkit
 
-If cudnn libraries and includes are not installed as a module
+If cuDNN libraries and includes are not installed as a module
 or otherwise, you can install them with ``conda``.
 
 .. code-block:: bash
@@ -401,7 +401,7 @@ or otherwise, you can install them with ``conda``.
   export CUDNN_LIBRARY=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/lib
   export CUDNN_INCLUDE_DIR=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/include
 
-Be sure to get the cudnn version that matches your cuda installation
+Be sure to get the cuDNN version that matches your CUDA installation
 The package_ names usually specify the versions.
 
 .. _package: https://anaconda.org/anaconda/cudnn/files
@@ -486,7 +486,7 @@ Changing Redis installation and Configurations
 ==============================================
 
 If you want to use a pre-existing Redis installation, override
-the configuration, or install the depedencies for SmartSim
+the configuration, or install the dependencies for SmartSim
 manually, you can do so by specifying a SmartSim configuration
 file in a ``config.toml``
 
@@ -520,7 +520,7 @@ where the ``$HOME`` directory is not mounted, do the following
 
 .. code-block:: bash
 
-    # set the configuration directory to somewhere accessable
+    # set the configuration directory to somewhere accessible
     # (e.g. /lustre) for HPC systems
 
     echo "export SMARTSIM_HOME=/REPLACE/ME/.smartsim" >> ~/.bashrc

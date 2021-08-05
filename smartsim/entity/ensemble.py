@@ -89,7 +89,7 @@ class Ensemble(EntityList):
 
     def _initialize_entities(self, **kwargs):
         """Initialize all the models within the ensemble based
-        on the parameters passed to the ensemble and the permuation
+        on the parameters passed to the ensemble and the permutation
         strategy given at init.
 
         :raises UserStrategyError: if user generation strategy fails
@@ -157,6 +157,7 @@ class Ensemble(EntityList):
 
         :param model: model instance
         :type model: Model
+        :raises TypeError: if model is not an instance of ``Model``
         :raises EntityExistsError: if model already exists in this ensemble
         """
         if not isinstance(model, Model):
@@ -196,7 +197,7 @@ class Ensemble(EntityList):
         """Inquire as to whether each model within the ensemble will prefix its keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
-        :rtype: dict
+        :rtype: bool
         """
         return all([model.query_key_prefixing() for model in self.entities])
 
@@ -234,7 +235,7 @@ class Ensemble(EntityList):
 
         :raises TypeError: if params are of the wrong type
         :return: param names and values for permutation strategy
-        :rtype: tuple
+        :rtype: tuple[list, list]
         """
         if not isinstance(self.params, dict):
             raise TypeError(
