@@ -5,16 +5,16 @@ Online Inference
 
 Compiling TensorFlow or PyTorch runtimes into each existing simulation is
 difficult. Maintaining that type of integration with the rapidly growing and changing
-APIs of libaries like TensorFlow and PyTorch is even more difficult.
+APIs of libraries like TensorFlow and PyTorch is even more difficult.
 
 Instead of forcing dependencies on the simulation code, SmartSim itself maintains those dependencies
 and provides them in the ``Orchestrator`` database through RedisAI.
 
-Because of this, Simulations in Fortran, C, C++ and Python can call into PyTorch, TensorFlow,
+Because of this, simulations in Fortran, C, C++ and Python can call into PyTorch, TensorFlow,
 and any library that supports the ONNX format without having to compile in those libraries.
 
 Therefore we define *Online Inference* as the execution of machine learning models via
-requests to an application (Orchestrator) running seperately from the client program (Simulation)
+requests to an application (Orchestrator) running separately from the client program (Simulation)
 without exchanging data over the filesystem.
 
 
@@ -51,10 +51,10 @@ script that uses the SmartRedis Python client to perform innovations of the ML r
 The above script will first launch the database, and then the script
 containing the SmartRedis client code Python script. The code here could
 easily be adapted to launch a C, C++, or Fortran application containing
-the SmartRedis clients in those langugages as well.
+the SmartRedis clients in those languages as well.
 
 Below are a few examples of scripts that could be used with the above
-code to perform online inference in with various ML backends supported
+code to perform online inference with various ML backends supported
 by SmartSim.
 
 
@@ -71,7 +71,7 @@ by SmartSim.
 .. _trace: https://pytorch.org/docs/stable/generated/torch.jit.trace.html#torch.jit.trace
 
 The Orchestrator supports both `PyTorch`_ models and `TorchScript`_ functions and scripts
-in `PyTorch`_ 1.7.1. To use onnx in SmartSim, specify
+in `PyTorch`_ 1.7.1. To use ONNX in SmartSim, specify
 ``TORCH`` as the argument for *backend* in the call to ``client.set_model`` or
 ``client.set_model_from_file``.
 
@@ -135,7 +135,7 @@ Torch documentation for `trace`_.
         torch.jit.save(module, model_buffer)
         return model_buffer.getvalue()
 
-Lastly, we use the SmartRedis Python client to connect to
+Lastly, we use the SmartRedis Python client to
   1. Connect to the database
   2. Put a batch of 20 tensors into the database  (``put_tensor``)
   3. Set the Torch model in the database (``set_model``)
@@ -185,7 +185,7 @@ SmartSim include a utility to freeze the graph of a TensorFlow or Keras model in
 ``TF`` as the argument for *backend* in the call to ``client.set_model`` or
 ``client.set_model_from_file``.
 
-The example below shows how to use the utility to freeze an mnist model created in
+The example below shows how to use the utility to freeze an MNIST model created in
 Keras. This script can be used with the :ref:`SmartSim code <infrastructure_code>`
 above to launch an inference session with a TensorFlow or Keras model.
 
@@ -221,9 +221,9 @@ method ``client.set_model_from_file`` can load it into the database.
 
 Note that TensorFlow and Keras, unlike the other ML libraries supported by
 SmartSim, requires an ``input`` and ``output`` argument in the call to
-``set_model``. These arguments correspond the the layer names of the
+``set_model``. These arguments correspond to the layer names of the
 created model. The ``smartsim.tf.freeze_model`` utility returns these
-values for convienence as shown below.
+values for convenience as shown below.
 
 .. code-block:: python
 
@@ -287,7 +287,7 @@ models to ONNX.
 And PyTorch has it's own converter.
 
 Below are some examples of a few models in `Scikit-learn`_ that are converted
-into onnx format for use with SmartSim. To use onnx in SmartSim, specify
+into ONNX format for use with SmartSim. To use ONNX in SmartSim, specify
 ``ONNX`` as the argument for *backend* in the call to ``client.set_model`` or
 ``client.set_model_from_file``.
 
@@ -327,7 +327,7 @@ with two ``outputs``.
 Random Forest
 -------------
 
-The Random Forest example uses the Iris datset from Scikit Learn to train a
+The Random Forest example uses the Iris dataset from Scikit Learn to train a
 RandomForestRegressor. As with the other examples, the skl2onnx function
 `skl2onnx.to_onnx`_ is used to convert the model to ONNX format.
 
@@ -348,4 +348,3 @@ RandomForestRegressor. As with the other examples, the skl2onnx function
     client.set_model("rf_regressor", model, "ONNX", device="CPU")
     client.run_model("rf_regressor", inputs="input", outputs="output")
     print(client.get_tensor("output"))
-

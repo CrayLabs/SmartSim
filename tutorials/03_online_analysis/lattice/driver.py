@@ -30,7 +30,7 @@ exp.generate(db, model, overwrite=True)
 exp.start(db)
 client = Client(address="127.0.0.1:6780", cluster=False)
 
-# start simulation without blocking so data can be analyized in real time
+# start simulation without blocking so data can be analyzed in real time
 exp.start(model, block=False, summary=True)
 
 # poll until data is available

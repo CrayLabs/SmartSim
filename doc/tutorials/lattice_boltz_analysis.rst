@@ -5,8 +5,8 @@ Online Analysis
 Being able to visualize and interpret simulation data in real time is
 invaluable for understanding the behavior of a physical system.
 
-SmartSim can be used to stream data from and Fortran, C, C++ simulations
-to Python where visualization is signifigantly easier and more interactive.
+SmartSim can be used to stream data from Fortran, C, and C++ simulations
+to Python where visualization is significantly easier and more interactive.
 
 3.1 Lattice Boltzmann Simulation
 --------------------------------
@@ -33,14 +33,14 @@ Philip also wrote a great medium `article`_ explaining the simulation in detail.
 .. _Dataset: https://www.craylabs.org/docs/sr_data_structures.html#dataset
 
 Typically HPC simulations are written in C, C++, Fortran or other high performance
-languages. Embedding the SmartRedis client usually invovles compiling in the
+languages. Embedding the SmartRedis client usually involves compiling in the
 SmartRedis library into the simulation.
 
 Because this simulation is written in Python, we can use the SmartRedis
 Python client to stream data to the database.
 
 To make the visualization easier, we use the SmartRedis `Dataset`_ object
-to hold two 2D NumPy arrays. A convience function is provided to convert
+to hold two 2D NumPy arrays. A convenience function is provided to convert
 the fields into a dataset object.
 
 
@@ -67,7 +67,7 @@ the fields into a dataset object.
         return dataset
 
 This is all the SmartRedis code needed to stream the simulation data. Note that
-the client does not need to have an address explictly stated because we
+the client does not need to have an address explicitly stated because we
 are going to be launching the simulation through SmartSim.
 
 The full simulation code can be found here # PUT IN LINK
@@ -77,12 +77,12 @@ The full simulation code can be found here # PUT IN LINK
 
 
 SmartSim, the infrastructure library, is used here to launch both the
-database and the simulation locally, but in seperate processes. The example
+database and the simulation locally, but in separate processes. The example
 is designed to run on laptops, so the local launcher is used.
 
 
-First the necessary libraries are imported and and `Experiment` instance is created.
-Also defined is an `Orchestrator` which is the refrence to the in-memory database
+First the necessary libraries are imported and an `Experiment` instance is created.
+Also defined is an `Orchestrator` which is the reference to the in-memory database
 to be launched and used to stage data between the simulation and analysis code.
 
 .. code-block:: python
@@ -102,7 +102,7 @@ The reference to the simulation is created through a call to `Experiment.create_
 The python script is "attached" to the model, such that when run directories are
 created for it, the python script will be placed in that run directory.
 
-Executable arguments are used to pass the simulation parameters to the to simulation.
+Executable arguments are used to pass the simulation parameters to the simulation.
 
 .. code-block:: python
 
@@ -136,20 +136,20 @@ being streamed from the simulation can be analyzed in real time.
     exp.start(db)
     client = Client(address="127.0.0.1:6780", cluster=False)
 
-    # start simulation without blocking so data can be analyized in real time
+    # start simulation without blocking so data can be analyzed in real time
     exp.start(model, block=False, summary=True)
 
 
-SmartRedis is used  to pull the Datasets created by
+SmartRedis is used to pull the Datasets created by
 the simulation and use matplotlib to plot the results.
 
 Another `Model` could have been created to plot the results and launched
 in a similar manner to the simulation.
 
 Doing so would enable the analysis application to be executed on different
-resources such as GPU enabled nodes, or distributed accross nodes.
+resources such as GPU enabled nodes, or distributed across nodes.
 
-This version, where the driver and anaylsis code coexist in the same
+This version, where the driver and analysis code coexist in the same
 script, is shown for simplicity.
 
 .. code-block:: python
@@ -231,4 +231,3 @@ online analysis example
         └── fv_simulation.out
 
     2 directories, 6 files
-
