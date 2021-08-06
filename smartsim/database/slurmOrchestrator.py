@@ -276,9 +276,8 @@ class SlurmOrchestrator(Orchestrator):
                 next_port = int(port) + port_offset
                 start_script_args = [
                     start_script,                  # redis_starter.py
-                    f"--ifname={self._interface}"  # pass interface to start script
-                ]
-                redis_args = [
+                    f"+ifname={self._interface}",  # pass interface to start script
+                    "+command",                    # command flag for argparser
                     redis_exe,                     # redis-server
                     db_conf,                       # redis6.conf file
                     ai_module,                     # redisai.so
@@ -287,13 +286,9 @@ class SlurmOrchestrator(Orchestrator):
                     str(next_port),                # port number
                 ]
                 if cluster:
-                    redis_args += self._get_cluster_args(db_node_name, next_port)
+                    start_script_args += self._get_cluster_args(db_node_name, next_port)
 
-                # redis args need to be a string to be passed to redis_starter.py
-                redis_args = " ".join(redis_args)
-                node_exe_args = start_script_args + ["'" + redis_args + "'"]
-
-                exe_args.append(" ".join(node_exe_args))
+                exe_args.append(" ".join(start_script_args))
                 ports.append(next_port)
 
             # if only launching 1 db_per_host, we don't need a list of exe args lists
