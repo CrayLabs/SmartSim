@@ -42,6 +42,7 @@ class CobaltOrchestrator(Orchestrator):
         batch=True,
         hosts=None,
         run_command="aprun",
+        interface="ipogif0",
         account=None,
         queue=None,
         time=None,
@@ -65,6 +66,8 @@ class CobaltOrchestrator(Orchestrator):
         :type hosts: list[str]
         :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
         :type run_command: str
+        :param interface: network interface to use
+        :type interface: str
         :param account: account to run batch on
         :type account: str
         :param queue: queue to launch batch in
@@ -73,7 +76,12 @@ class CobaltOrchestrator(Orchestrator):
         :type time: str
         """
         super().__init__(
-            port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
+            port,
+            interface,
+            db_nodes=db_nodes,
+            batch=batch,
+            run_command=run_command,
+            **kwargs
         )
         self.batch_settings = self._build_batch_settings(
             db_nodes, batch, account, queue, time
@@ -223,18 +231,33 @@ class CobaltOrchestrator(Orchestrator):
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
+        redis_exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
         # Build DBNode instance for each node listed
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
-            node_exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
-            if cluster:
-                node_exe_args += self._get_cluster_args(db_node_name, port)
+            start_script_args = [
+                start_script,                  # redis_starter.py
+                f"+ifname={self._interface}",  # pass interface to start script
+                "+command",                    # command flag for argparser
+                redis_exe,                     # redis-server
+                db_conf,                       # redis6.conf file
+                ai_module,                     # redisai.so
+                ip_module,                     # libredisip.so
+                "--port",                      # redis port
+                str(port),                    # port number
+            ]
 
-            run_settings = self._build_run_settings(exe, node_exe_args, **kwargs)
+            if cluster:
+                start_script_args += self._get_cluster_args(db_node_name, port)
+
+            # Python because we use redis_starter.py to run redis
+            run_settings = self._build_run_settings("python",
+                                                    start_script_args,
+                                                    **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, [port])
             self.entities.append(node)
         self.ports = [port]

@@ -35,7 +35,7 @@ from pathlib import Path
 from os import getcwd
 
 from rediscluster import RedisCluster
-from rediscluster.exceptions import ClusterDownError
+from rediscluster.exceptions import ClusterDownError, RedisClusterException
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ..config import CONFIG
@@ -170,7 +170,7 @@ class Orchestrator(EntityList):
                 redis_tester.delete("__test__")
                 logger.debug("Cluster status verified")
                 return
-            except (ClusterDownError, redis.RedisError):
+            except (ClusterDownError, RedisClusterException, redis.RedisError):
                 logger.debug("Cluster still spinning up...")
                 trials -= 1
         if trials == 0:
@@ -207,7 +207,7 @@ class Orchestrator(EntityList):
             return False
 
         # if single shard
-        if self.num_shards > 1:
+        if self.num_shards < 2:
             host = self._hosts[0]
             port = self.ports[0]
             try:
@@ -268,13 +268,27 @@ class Orchestrator(EntityList):
 
         # collect database launch command information
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
+        redis_exe = CONFIG.redis_exe
         ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
-        # create single DBNode instance for Local Orchestrator
-        exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
-        run_settings = RunSettings(exe, exe_args)
+        start_script_args = [
+            start_script,                  # redis_starter.py
+            f"+ifname={self._interface}",  # pass interface to start script
+            "+command",                    # command flag for argparser
+            redis_exe,                     # redis-server
+            db_conf,                       # redis6.conf file
+            ai_module,                     # redisai.so
+            ip_module,                     # libredisip.so
+            "--port",                      # redis port
+            str(port),                     # port number
+        ]
+
+        exe_args = " ".join(start_script_args)
+
+        # python is exe because we are using redis_starter.py to start redis
+        run_settings = RunSettings("python", exe_args)
         db_node_name = self.name + "_0"
         node = DBNode(db_node_name, self.path, run_settings, [port])
 

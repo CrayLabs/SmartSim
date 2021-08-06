@@ -42,9 +42,9 @@ def get_ip_from_interface(interface):
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 
-parser = argparse.ArgumentParser(description="SmartSim Process Launcher")
-parser.add_argument("--ifname", type=str, help="Network Interface name", default="lo")
-parser.add_argument("command", type=str, help="Command to run")
+parser = argparse.ArgumentParser(prefix_chars="+", description="SmartSim Process Launcher")
+parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
+parser.add_argument("+command", nargs="+", help="Command to run")
 args = parser.parse_args()
 
 def current_ip(interface="lo"):
@@ -55,9 +55,10 @@ def current_ip(interface="lo"):
         return get_ip_from_interface(interface)
 
 IP_ADDRESS = current_ip(args.ifname)
-cmd = args.command + f" --bind {IP_ADDRESS}"
-COMMAND = cmd.split(" ")
+#cmd = args.command + f" --bind {IP_ADDRESS}"
+#COMMAND = cmd.split(" ")
 
+COMMAND = args.command + [f"--bind {IP_ADDRESS}"]
 
 print("-"*10, "  Running  Command  ", "-"*10, "\n")
 print(f"cmd: {' '.join(COMMAND)}\n")
