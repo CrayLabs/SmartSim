@@ -81,8 +81,11 @@ cliargs = [
     f"--redis-password={args.redis_password}",
     args.ray_args.strip("\"'"), f"--node-ip-address={RAY_IP}",
 ]
+
+# On some systems, ssh to compute nodes (and port forwarding) is not allowed. We bind the dashboard to 0.0.0.0,
+# which means it is available from all interfaces.
 if args.head:
-    cliargs += [f"--port={args.port}", f"--dashboard-port={args.dashboard_port}"]
+    cliargs += [f"--port={args.port}", f"--dashboard-port={args.dashboard_port}", "--dashboard-host=0.0.0.0"]
 
 
 cmd = " ".join(cliargs)

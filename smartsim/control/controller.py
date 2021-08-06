@@ -252,6 +252,7 @@ class Controller:
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
                 self._jobs.set_launcher(self._launcher)
+            # Init LSF launcher
             elif launcher == "lsf":
                 self._launcher = LSFLauncher()
                 self._jobs.set_launcher(self._launcher)
@@ -406,8 +407,10 @@ class Controller:
             try:
                 ray_step_names = [ray_step[0].name for ray_step in ray_steps]
                 nodes = self._launcher.get_step_nodes(ray_step_names)
-                for ray_node, node in zip(ray_cluster, nodes):
-                    ray_node._host = node[0]
+                ray_cluster._hosts = []
+                for _, node in zip(ray_cluster, nodes):
+                    #ray_node._host = node[0]
+                    ray_cluster._hosts.append(node[0])
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:

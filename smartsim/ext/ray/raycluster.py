@@ -125,7 +125,6 @@ class RayCluster(EntityList):
             ray_args=self._ray_args,
             interface = self._interface,
             alloc=self._alloc,
-            batch=self.batch,
         )
 
         self.entities.append(self.ray_head)
@@ -141,7 +140,6 @@ class RayCluster(EntityList):
                 interface=self._interface,
                 launcher=self._launcher,
                 alloc=self._alloc,
-                batch=self.batch,
             )
             self.entities.append(self.worker_model)
 
@@ -258,7 +256,6 @@ class RayHead(SmartSimEntity):
         ray_password,
         ray_port=6789,
         run_args=None,
-        batch=False,
         ray_args=None,
         launcher="slurm",
         interface="eth0",
@@ -281,7 +278,6 @@ class RayHead(SmartSimEntity):
 
         run_settings = self._build_run_settings(
             launcher,
-            batch,
             alloc,
             run_args,
             ray_exe_args
@@ -317,21 +313,18 @@ class RayHead(SmartSimEntity):
 
     def _build_run_settings(self,
                             launcher,
-                            batch,
                             alloc,
                             run_args,
                             ray_exe_args):
 
         if launcher == "slurm":
             run_settings = self._build_srun_settings(
-                batch,
                 alloc,
                 run_args,
                 ray_exe_args
             )
         elif launcher == "pbs":
             run_settings = self._build_pbs_settings(
-                batch,
                 run_args,
                 ray_exe_args
             )
@@ -359,13 +352,11 @@ class RayHead(SmartSimEntity):
 
         return aprun_settings
 
-    def _build_srun_settings(self, batch, alloc, run_args, ray_args):
+    def _build_srun_settings(self, alloc, run_args, ray_args):
 
         delete_elements(run_args, ["oversubscribe"])
 
         run_args["unbuffered"] = None
-        if not batch and not alloc:
-            run_args["overcommit"] = None
 
         srun_settings = SrunSettings(
             "python",
@@ -385,7 +376,6 @@ class RayWorker(SmartSimEntity):
         path,
         ray_password,
         ray_port,
-        batch=False,
         run_args=None,
         ray_args=None,
         interface="eth0",
@@ -408,7 +398,6 @@ class RayWorker(SmartSimEntity):
 
         run_settings = self._build_run_settings(
             launcher,
-            batch,
             alloc,
             run_args,
             ray_exe_args
@@ -447,21 +436,18 @@ class RayWorker(SmartSimEntity):
 
     def _build_run_settings(self,
                             launcher,
-                            batch,
                             alloc,
                             run_args,
                             ray_exe_args):
 
         if launcher == "slurm":
             run_settings = self._build_srun_settings(
-                batch,
                 alloc,
                 run_args,
                 ray_exe_args
             )
         elif launcher == "pbs":
             run_settings = self._build_pbs_settings(
-                batch,
                 run_args,
                 ray_exe_args
             )
@@ -489,12 +475,9 @@ class RayWorker(SmartSimEntity):
 
         return aprun_settings
 
-    def _build_srun_settings(self, batch, alloc, run_args, ray_args):
+    def _build_srun_settings(self, alloc, run_args, ray_args):
         delete_elements(run_args, ["oversubscribe"])
-
         run_args["unbuffered"] = None
-        if not batch and not alloc:
-            run_args["overcommit"] = None
 
         srun_settings = SrunSettings(
             "python",
