@@ -51,7 +51,7 @@ SmartSim supports the following ML libraries.
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
 | PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.0       |
+| TensorFlow\Keras  |       2.4.2       |
 | ONNX              |       1.7.0       |
 
 A [number of other libraries](https://github.com/onnx/onnxmltools) are
@@ -770,7 +770,7 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
 | PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.0       |
+| TensorFlow\Keras  |       2.4.2       |
 | ONNX              |       1.7.0       |
 
 Note, it's important to remember that SmartSim utilizes a client-server model. To run

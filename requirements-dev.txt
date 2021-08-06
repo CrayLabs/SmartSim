@@ -18,5 +18,5 @@ pytest-cov>=2.10.1
 scikit-learn==0.24.2
 skl2onnx==1.9.0
 onnxmltools==1.7.0
-tensorflow==2.4.0
+tensorflow==2.4.2
 
