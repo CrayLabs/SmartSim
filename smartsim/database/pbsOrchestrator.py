@@ -42,7 +42,7 @@ class PBSOrchestrator(Orchestrator):
         batch=True,
         hosts=None,
         run_command="aprun",
-        interface="ib0",
+        interface="ipogif0",
         account=None,
         time=None,
         queue=None,
