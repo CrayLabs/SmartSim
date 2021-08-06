@@ -27,11 +27,7 @@
 import os
 import os.path as osp
 import time
-
-from pandas.core.base import NoNewAttributesMixin
-
-from smartsim.error.errors import SmartSimError
-
+from ..error import SmartSimError
 from ..utils import get_logger
 from .entity import SmartSimEntity
 

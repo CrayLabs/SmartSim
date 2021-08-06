@@ -29,8 +29,6 @@ import pickle
 import threading
 import time
 
-from smartsim.database.lsfOrchestrator import LSFOrchestrator
-
 from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
@@ -45,7 +43,6 @@ from ..launcher import (
 )
 from ..utils import get_logger
 from .jobmanager import JobManager
-from .manifest import Manifest
 
 logger = get_logger(__name__)
 
@@ -372,6 +369,7 @@ class Controller:
                         raise
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
+
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop

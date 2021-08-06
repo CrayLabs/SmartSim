@@ -25,20 +25,17 @@ def test_orc_parameters():
     assert "INTER_OP_PARALLELISM" in module_str
 
 
-@pytest.mark.skip(reason="Skip until SmartRedis 2.0 is released")
 def test_is_not_active():
     db = Orchestrator(db_nodes=1)
     assert not db.is_active()
 
 
-@pytest.mark.skip(reason="Skip until SmartRedis 2.0 is released")
 def test_inactive_orc_get_address():
     db = Orchestrator()
     with pytest.raises(SmartSimError):
         db.get_address()
 
 
-@pytest.mark.skip(reason="Skip until SmartRedis 2.0 is released")
 def test_orc_active_functions(fileutils):
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local")
