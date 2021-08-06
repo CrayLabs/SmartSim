@@ -184,7 +184,7 @@ class LSFOrchestrator(Orchestrator):
         """Specify the hosts for the ``LSFOrchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
-        :type host_list: list[str]
+        :type host_list: str | list[str]
         :raises TypeError: if wrong type
         """
         if isinstance(host_list, str):

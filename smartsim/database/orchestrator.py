@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
-import multiprocessing as mp
 import socket
 import time
 from os import getcwd
@@ -91,7 +90,7 @@ class Orchestrator(EntityList):
     def hosts(self):
         """Return the hostnames of orchestrator instance hosts
 
-        Note that this will only be popluated after the orchestrator
+        Note that this will only be populated after the orchestrator
         has been launched by SmartSim.
 
         :return: hostnames
@@ -110,7 +109,7 @@ class Orchestrator(EntityList):
     def create_cluster(self):  # cov-wlm
         """Connect launched cluster instances.
 
-        Should only be used in the case where cluster initilization
+        Should only be used in the case where cluster initialization
         needs to occur manually which is not often.
 
         :raises SmartSimError: if cluster creation fails
@@ -144,32 +143,17 @@ class Orchestrator(EntityList):
 
         :raises SmartSimError: If cluster status cannot be verified
         """
-        try:
-            # SmartRedis needs only one cluster host/port to connect
-            host = self.hosts[0]
-            port = self.ports[0]
-        except SmartSimError as e:
-            raise SmartSimError("Database is not active") from e
-
-        address = ":".join((host, str(port)))
-
         trials = 10
         logger.debug("Beginning database cluster status check...")
         while trials > 0:
             # wait for cluster to spin up
             time.sleep(2)
             try:
-                # init new client each time so if it fails we dont
-                # throw a connection error
-                client = Client(address=address, cluster=True)
-
-                client.put_tensor("cluster_test", np.array([1, 2, 3, 4]))
-                receive_tensor = client.get_tensor("cluster_test")
-                logger.debug("Cluster status verified")
+                self.is_active()
                 break
             except (RedisReplyError, RedisConnectionError):
                 logger.debug("Cluster still spinning up...")
-                time.sleep(5)
+                time.sleep(3)
                 trials -= 1
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
@@ -184,10 +168,11 @@ class Orchestrator(EntityList):
         """
         if not self._hosts:
             raise SmartSimError("Could not find database address")
-        if len(self._hosts) > 1:
-            self.check_cluster_status()
         elif not self.is_active():
             raise SmartSimError("Database is not active")
+        return self._get_address()
+
+    def _get_address(self):
         addresses = []
         for host, port in itertools.product(self._hosts, self.ports):
             addresses.append(":".join((host, str(port))))
@@ -199,20 +184,30 @@ class Orchestrator(EntityList):
         :returns: True if database is active, False otherwise
         :rtype: bool
         """
+        active = False
+
         if not self._hosts:
-            return False
-        host = self._hosts[0]
-        port = self.ports[0]
-        address = ":".join((host, str(port)))
-        active = True
+            return active
+        addresses = self._get_address()
+        cluster = True if self.num_shards > 1 else False
+
         try:
-            client_thread = ClientThread(address, cluster=False)
-            client_thread.start()
-            client_thread.join()
-            if client_thread.exitcode != 0:
-                active = False
-        except (mp.ProcessError):
-            active = False
+            client = Client(address=addresses[0], cluster=cluster)
+
+            # if we have more than one shard to get info on
+            if cluster:
+                db_info = client.get_db_cluster_info(addresses)
+                for info in db_info:
+                    if info["cluster_state"] != "ok":
+                        return False
+                active = True
+            else:
+                tensor = np.array([1, 2])
+                client.put_tensor("cluster_test", tensor)
+                _ = client.get_tensor("cluster_test")
+                active = True
+        except (RedisConnectionError, RedisReplyError):
+            return False
 
         return active
 
@@ -227,9 +222,9 @@ class Orchestrator(EntityList):
         if self.queue_threads:
             module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
         if self.inter_threads:
-            module.append(f"INTER_OP_THREADS {self.inter_threads}")
+            module.append(f"INTER_OP_PARALLELISM {self.inter_threads}")
         if self.intra_threads:
-            module.append(f"INTRA_OP_THREADS {self.intra_threads}")
+            module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
     @staticmethod
@@ -275,7 +270,7 @@ class Orchestrator(EntityList):
 
     @staticmethod
     def _get_cluster_args(name, port):
-        """Create the arguments neccessary for cluster creation"""
+        """Create the arguments necessary for cluster creation"""
         cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args
@@ -288,20 +283,6 @@ class Orchestrator(EntityList):
             else:
                 hosts.extend(dbnode.hosts)
         return hosts
-
-
-# Hack to avoid a bug in SmartRedis 1.1 where
-# client will segfault because of a uncaught error
-class ClientThread(mp.Process):
-    def __init__(self, address, cluster=False):
-        mp.Process.__init__(self, name="ClientThread")
-        self.address = address
-        self.cluster = cluster
-
-    def run(self):
-        client = Client(self.address, cluster=self.cluster)
-        client.put_tensor("db_test", np.array([1]))
-        receive_tensor = client.get_tensor("db_test")
 
 
 def get_ip_from_host(host):

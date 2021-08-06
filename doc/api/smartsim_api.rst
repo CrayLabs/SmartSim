@@ -141,12 +141,12 @@ AprunSettings
 
 .. _aprun_api:
 
-``AprunSettings`` can be used on any system that suppports the
+``AprunSettings`` can be used on any system that supports the
 Cray ALPS layer. SmartSim supports using ``AprunSettings``
 on PBSPro and Cobalt WLM systems.
 
 ``AprunSettings`` can be used in interactive session (on allocation)
-and within batch launches (e.g. ``QsubBatchSettings``)
+and within batch launches (e.g., ``QsubBatchSettings``)
 
 
 .. autosummary::
@@ -378,7 +378,7 @@ Slurm
 .. _slurm_module_api:
 
 .. note::
-    This module is importable through smartsim e.g. from smartsim import slurm
+    This module is importable through smartsim e.g., from smartsim import slurm
 
 
 
