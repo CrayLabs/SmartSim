@@ -385,12 +385,13 @@ class Controller:
         :type orchestrator: RayCluster
         """
         # if the Ray cluster was launched as a batch workload
+        ray_cluster._update_workers()
+
         if ray_cluster.batch:
-            head_batch_step = self._create_batch_job_step(ray_cluster.head_model)
-            self._launch_step(head_batch_step, ray_cluster.head_model)
-            ray_cluster._parse_ray_head_node_address()
+            ray_batch_step = self._create_batch_job_step(ray_cluster)
+            self._launch_step(ray_batch_step, ray_cluster)
             try:
-                nodelist = self._launcher.get_step_nodes([head_batch_step.name])
+                nodelist = self._launcher.get_step_nodes([ray_batch_step.name])
                 ray_cluster._hosts = nodelist[0]
 
             # catch if it fails or launcher doesn't support it
@@ -398,58 +399,21 @@ class Controller:
                 logger.debug("WLM Ray head node acquisition failed")
             except SSUnsupportedError:
                 logger.debug("WLM Ray head node acquisition unsupported")
-
-            if ray_cluster.worker_model:
-                ray_cluster._update_worker_model()
-                worker_batch_step = self._create_batch_job_step(
-                    ray_cluster.worker_model
-                )
-                self._launch_step(worker_batch_step, ray_cluster.worker_model)
-                try:
-                    time.sleep(5)
-                    nodelist = self._launcher.get_step_nodes([worker_batch_step.name])
-                    ray_cluster._hosts.extend(nodelist[0])
-                    # catch if it fails or launcher doesn't support it
-                except LauncherError:
-                    logger.debug("WLM Ray worker node acquisition failed")
-                except SSUnsupportedError:
-                    logger.debug("WLM Ray worker node acquisition unsupported")
         else:
-            head_step = self._create_job_step(ray_cluster.head_model)
-            self._launch_step(head_step, ray_cluster.head_model)
-            ray_cluster._parse_ray_head_node_address()
+            ray_steps = [(self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster]
+            for ray_step in ray_steps:
+                self._launch_step(*ray_step)
             try:
-                time.sleep(1)
-                nodelist = self._launcher.get_step_nodes([head_step.name])
-                ray_cluster._hosts = nodelist[0]
-                ray_cluster.head_model._hosts = nodelist[0]
+                ray_step_names = [ray_step[0].name for ray_step in ray_steps]
+                nodes = self._launcher.get_step_nodes(ray_step_names)
+                for ray_node, node in zip(ray_cluster, nodes):
+                    ray_node._host = node[0]
 
             # catch if it fails or launcher doesn't support it
             except LauncherError:
                 logger.debug("WLM Ray head node acquisition failed")
             except SSUnsupportedError:
                 logger.debug("WLM Ray head node acquisition unsupported")
-
-            if ray_cluster.worker_model:
-                ray_cluster._update_worker_model()
-                # Don't launch on head host
-                if isinstance(self._launcher, SlurmLauncher):
-                    ray_cluster.worker_model.run_settings.set_excluded_hosts(
-                        ray_cluster.head_model._hosts
-                    )
-                worker_step = self._create_job_step(ray_cluster.worker_model)
-                self._launch_step(worker_step, ray_cluster.worker_model)
-
-                try:
-                    time.sleep(5)
-                    nodelist = self._launcher.get_step_nodes([worker_step.name])
-                    ray_cluster._hosts.extend(nodelist[0])
-
-                # catch if it fails or launcher doesn't support it
-                except LauncherError:
-                    logger.debug("WLM Ray worker node acquisition failed")
-                except SSUnsupportedError:
-                    logger.debug("WLM Ray worker node acquisition unsupported")
 
         if ray_cluster._hosts:
             logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")

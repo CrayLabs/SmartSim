@@ -19,12 +19,12 @@ try:
 except ImportError:
     pass
 
+pytestmark = pytest.mark.skip(reason="Local launch is currently disabled for Ray")
 
-pytestmark = pytest.mark.skipif(
-    ("ray" not in sys.modules),
-    reason="requires Ray",
-)
-
+# pytestmark = pytest.mark.skipif(
+#     ("ray" not in sys.modules),
+#     reason="requires Ray",
+# )
 
 def test_ray_local_launch_and_shutdown(fileutils, caplog):
     """Start a local (single node) Ray cluster and

@@ -30,7 +30,7 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
-
+# TODO find available interface 
 def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
     if launcher != "slurm":
@@ -49,6 +49,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         alloc=None,
         batch=False,
         time="00:05:00",
+        interface="ipogif0"
     )
 
     exp.generate(cluster)
@@ -77,7 +78,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         pytest.skip("Test only runs on systems with Slurm as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown-batch")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -88,6 +89,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         workers=1,
         alloc=None,
         batch=True,
+        interface="ipogif0"
     )
 
     exp.generate(cluster)
@@ -118,7 +120,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         pytest.skip("Test can not be run inside an allocation")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown-in-alloc")
 
     alloc = slurm.get_allocation(4, time="00:05:00")
 
@@ -131,6 +133,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         workers=2,
         alloc=alloc,
         batch=False,
+        interface="ipogif0"
     )
 
     exp.generate(cluster)

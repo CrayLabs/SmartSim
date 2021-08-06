@@ -24,7 +24,7 @@ orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
 
-rc = RayCluster(name="ray-cluster", workers=0, launcher="local")
+rc = RayCluster(name="ray-cluster", workers=0, launcher="slurm")
 
 
 def test_separate():

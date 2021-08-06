@@ -117,7 +117,7 @@ class Experiment:
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
             for rc in stop_manifest.ray_clusters:
-                self._control.stop_ray_cluster(rc)
+                self._control.stop_entity_list(rc)
             orchestrator = stop_manifest.db
             if orchestrator:
                 self._control.stop_entity_list(orchestrator)
@@ -464,11 +464,11 @@ class Experiment:
                 )
                 if batch:
                     batch_settings = colorize(
-                        "Head batch Settings: \n" + str(rc.head_model.batch_settings),
+                        "Ray batch Settings: \n" + str(rc.batch_settings),
                         color="green",
                     )
                 head_run_settings = colorize(
-                    "Head run Settings: \n" + str(rc.head_model.run_settings),
+                    "Head run Settings: \n" + str(rc.ray_head.run_settings),
                     color="green",
                 )
                 if batch:
@@ -476,15 +476,9 @@ class Experiment:
                 else:
                     run_settings = head_run_settings
                 if rc._workers > 0:
-                    if batch:
-                        batch_settings += colorize(
-                            "\nWorkers batch Settings: \n"
-                            + str(rc.worker_model.batch_settings),
-                            color="green",
-                        )
                     worker_run_settings = colorize(
                         "\nWorkers run Settings: \n"
-                        + str(rc.worker_model.run_settings),
+                        + str(rc.entities[1].run_settings),
                         color="green",
                     )
                     if batch:
