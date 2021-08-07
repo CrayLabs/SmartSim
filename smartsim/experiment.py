@@ -477,8 +477,7 @@ class Experiment:
                     run_settings = head_run_settings
                 if rc._workers > 0:
                     worker_run_settings = colorize(
-                        "\nWorkers run Settings: \n"
-                        + str(rc.entities[1].run_settings),
+                        "\nWorkers run Settings: \n" + str(rc.entities[1].run_settings),
                         color="green",
                     )
                     if batch:

@@ -30,7 +30,7 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
-# TODO find available interface 
+# TODO find available interface
 def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
     if launcher != "slurm":
@@ -49,7 +49,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         alloc=None,
         batch=False,
         time="00:05:00",
-        interface="ipogif0"
+        interface="ipogif0",
     )
 
     exp.generate(cluster)
@@ -89,7 +89,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         workers=1,
         alloc=None,
         batch=True,
-        interface="ipogif0"
+        interface="ipogif0",
     )
 
     exp.generate(cluster)
@@ -133,7 +133,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         workers=2,
         alloc=alloc,
         batch=False,
-        interface="ipogif0"
+        interface="ipogif0",
     )
 
     exp.generate(cluster)

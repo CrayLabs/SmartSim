@@ -29,7 +29,6 @@ import pickle
 import threading
 import time
 
-
 from ..config import CONFIG
 from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
@@ -401,7 +400,9 @@ class Controller:
             except SSUnsupportedError:
                 logger.debug("WLM Ray head node acquisition unsupported")
         else:
-            ray_steps = [(self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster]
+            ray_steps = [
+                (self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster
+            ]
             for ray_step in ray_steps:
                 self._launch_step(*ray_step)
             try:
@@ -409,7 +410,7 @@ class Controller:
                 nodes = self._launcher.get_step_nodes(ray_step_names)
                 ray_cluster._hosts = []
                 for _, node in zip(ray_cluster, nodes):
-                    #ray_node._host = node[0]
+                    # ray_node._host = node[0]
                     ray_cluster._hosts.append(node[0])
 
             # catch if it fails or launcher doesn't support it

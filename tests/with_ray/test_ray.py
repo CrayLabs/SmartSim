@@ -26,6 +26,7 @@ pytestmark = pytest.mark.skip(reason="Local launch is currently disabled for Ray
 #     reason="requires Ray",
 # )
 
+
 def test_ray_local_launch_and_shutdown(fileutils, caplog):
     """Start a local (single node) Ray cluster and
     shut it down.

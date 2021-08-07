@@ -1,3 +1,4 @@
+import sys
 from copy import deepcopy
 
 import pytest
@@ -8,6 +9,12 @@ from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.ext.ray import RayCluster
 from smartsim.settings import RunSettings
+
+try:
+    import ray
+except ImportError:
+    pass
+ray_ok = "ray" in sys.modules
 
 # ---- create entities for testing --------
 
@@ -23,8 +30,8 @@ orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
-
-rc = RayCluster(name="ray-cluster", workers=0, launcher="slurm")
+if ray_ok:
+    rc = RayCluster(name="ray-cluster", workers=0, launcher="slurm")
 
 
 def test_separate():
@@ -34,8 +41,9 @@ def test_separate():
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.db == orc
-    assert len(manifest.ray_clusters) == 1
-    assert manifest.ray_clusters[0] == rc
+    if ray_ok:
+        assert len(manifest.ray_clusters) == 1
+        assert manifest.ray_clusters[0] == rc
 
 
 def test_no_name():

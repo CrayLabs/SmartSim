@@ -4,15 +4,10 @@ import time as _time
 import uuid
 
 from ...entity import EntityList, SmartSimEntity
-from ...error import SSUnsupportedError, SSConfigError
-from ...settings import (
-    AprunSettings,
-    QsubBatchSettings,
-    SbatchSettings,
-    SrunSettings,
-)
+from ...error import SSConfigError, SSUnsupportedError
+from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
 from ...utils import get_logger
-from ...utils.helpers import init_default, expand_exe_path
+from ...utils.helpers import expand_exe_path, init_default
 
 logger = get_logger(__name__)
 
@@ -35,6 +30,7 @@ def delete_elements(dictionary, key_list):
 #  - use set_ray_address
 #  - refactor comments
 #  - add ray_cluster utilies so there aren't so many _methods called
+
 
 class RayCluster(EntityList):
     """Entity used to run a Ray cluster on a given number of hosts. Ray is launched on each host,
@@ -123,7 +119,7 @@ class RayCluster(EntityList):
             launcher=self._launcher,
             run_args=self._run_args,
             ray_args=self._ray_args,
-            interface = self._interface,
+            interface=self._interface,
             alloc=self._alloc,
         )
 
@@ -146,19 +142,14 @@ class RayCluster(EntityList):
     def _build_batch_settings(self):
         if self._launcher == "pbs":
             self.batch_settings = QsubBatchSettings(
-                nodes=self._workers+1,
-                time=self._time,
-                batch_args=self._batch_args
+                nodes=self._workers + 1, time=self._time, batch_args=self._batch_args
             )
         elif self._launcher == "slurm":
             self.batch_settings = SbatchSettings(
-                nodes=self._workers+1,
-                time=self._time,
-                batch_args=self._batch_args
+                nodes=self._workers + 1, time=self._time, batch_args=self._batch_args
             )
         else:
             raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
-                        
 
     def add_batch_args(self, batch_args):
         """Add batch arguments to Ray cluster
@@ -177,7 +168,7 @@ class RayCluster(EntityList):
         """
         # We can rely on the file name, because we set it when we create
         # the head model
-        head_log = os.path.join(self.ray_head.path, self.ray_head.name+".out")
+        head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
 
         max_attempts = 60
         attempts = 0
@@ -230,16 +221,18 @@ class RayCluster(EntityList):
 
     def _update_workers(self):
         """Update worker args before launching them."""
-        for worker in range(1,len(self.entities)):
-            self.entities[worker].run_settings.exe_args += [f"--head-log={os.path.join(self.ray_head.path, self.ray_head.name)}.out"]
+        for worker in range(1, len(self.entities)):
+            self.entities[worker].run_settings.exe_args += [
+                f"--head-log={os.path.join(self.ray_head.path, self.ray_head.name)}.out"
+            ]
+
 
 def find_ray_exe():
     try:
         ray_exe = expand_exe_path("ray")
         return ray_exe
     except SSConfigError as e:
-        raise SSConfigError(
-            "Could not find ray executable") from e
+        raise SSConfigError("Could not find ray executable") from e
 
 
 def find_ray_stater_script():
@@ -248,7 +241,6 @@ def find_ray_stater_script():
 
 
 class RayHead(SmartSimEntity):
-
     def __init__(
         self,
         name,
@@ -260,8 +252,8 @@ class RayHead(SmartSimEntity):
         launcher="slurm",
         interface="eth0",
         alloc=None,
-        dash_port=8265
-        ):
+        dash_port=8265,
+    ):
         self.dashboard_port = dash_port
         self.batch_settings = None
         self.files = None
@@ -270,18 +262,10 @@ class RayHead(SmartSimEntity):
         ray_args = init_default({}, ray_args, dict)
 
         ray_exe_args = self._build_ray_exe_args(
-            ray_port,
-            ray_password,
-            interface,
-            ray_args
+            ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = self._build_run_settings(
-            launcher,
-            alloc,
-            run_args,
-            ray_exe_args
-        )
+        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
         super().__init__(name, path, run_settings)
 
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
@@ -294,7 +278,7 @@ class RayHead(SmartSimEntity):
             f"--redis-password={ray_password}",
             f"--ifname={interface}",
             f"--ray-exe={find_ray_exe()}",
-            f"--head"
+            f"--head",
         ]
 
         if "dashboard-port" in ray_args:
@@ -310,44 +294,25 @@ class RayHead(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-
-    def _build_run_settings(self,
-                            launcher,
-                            alloc,
-                            run_args,
-                            ray_exe_args):
+    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
 
         if launcher == "slurm":
-            run_settings = self._build_srun_settings(
-                alloc,
-                run_args,
-                ray_exe_args
-            )
+            run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
         elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(
-                run_args,
-                ray_exe_args
-            )
+            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
         else:
-            raise SSUnsupportedError(
-            "Only slurm, and pbs launchers are supported."
-        )
+            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
 
         run_settings.set_tasks(1)
         run_settings.set_tasks_per_node(1)
         return run_settings
-
 
     def _build_pbs_settings(self, run_args, ray_args):
         # TODO: explain this
         run_args["sync-output"] = None
 
         # calls ray_starter.py with arguments for the ray head node
-        aprun_settings = AprunSettings(
-            "python",
-            exe_args=ray_args,
-            run_args=run_args
-        )
+        aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
         aprun_settings.set_tasks(1)
 
         return aprun_settings
@@ -369,7 +334,6 @@ class RayHead(SmartSimEntity):
 
 
 class RayWorker(SmartSimEntity):
-
     def __init__(
         self,
         name,
@@ -381,7 +345,7 @@ class RayWorker(SmartSimEntity):
         interface="eth0",
         launcher="slurm",
         alloc=None,
-        ):
+    ):
 
         self.batch_settings = None
         self.files = None
@@ -390,18 +354,10 @@ class RayWorker(SmartSimEntity):
         ray_args = init_default({}, ray_args, dict)
 
         ray_exe_args = self._build_ray_exe_args(
-            ray_password,
-            ray_args,
-            ray_port,
-            interface
+            ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = self._build_run_settings(
-            launcher,
-            alloc,
-            run_args,
-            ray_exe_args
-        )
+        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
         super().__init__(name, path, run_settings)
 
     @property
@@ -420,7 +376,7 @@ class RayWorker(SmartSimEntity):
             f"--redis-password={ray_password}",
             f"--ray-exe={find_ray_exe()}",
             f"--port={ray_port}",
-            f"--ifname={interface}"
+            f"--ifname={interface}",
         ]
 
         used = ["block", "redis-password", "start", "head", "port", "dashboard-port"]
@@ -432,34 +388,18 @@ class RayWorker(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-
-
-    def _build_run_settings(self,
-                            launcher,
-                            alloc,
-                            run_args,
-                            ray_exe_args):
+    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
 
         if launcher == "slurm":
-            run_settings = self._build_srun_settings(
-                alloc,
-                run_args,
-                ray_exe_args
-            )
+            run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
         elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(
-                run_args,
-                ray_exe_args
-            )
+            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
         else:
-            raise SSUnsupportedError(
-            "Only slurm, and pbs launchers are supported."
-        )
+            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
 
         run_settings.set_tasks(1)
         run_settings.set_tasks_per_node(1)
         return run_settings
-
 
     def _build_pbs_settings(self, run_args, ray_args):
 
@@ -467,11 +407,7 @@ class RayWorker(SmartSimEntity):
         run_args["sync-output"] = None
 
         # calls ray_starter.py with arguments for a ray worker node
-        aprun_settings = AprunSettings(
-            "python",
-            exe_args=ray_args,
-            run_args=run_args
-        )
+        aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
 
         return aprun_settings
 
@@ -487,4 +423,3 @@ class RayWorker(SmartSimEntity):
         )
         srun_settings.set_nodes(1)
         return srun_settings
-

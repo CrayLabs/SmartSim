@@ -31,6 +31,7 @@ import time
 from os import getcwd
 
 import numpy as np
+
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
 
