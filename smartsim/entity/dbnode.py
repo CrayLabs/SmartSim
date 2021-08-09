@@ -90,10 +90,17 @@ class DBNode(SmartSimEntity):
                     if osp.exists(conf_file):
                         os.remove(conf_file)
 
+       
         for file_ending in [".err", ".out", ".mpmd"]:
             file_name = osp.join(self.path, self.name + file_ending)
             if osp.exists(file_name):
                 os.remove(file_name)
+        if self._multihost:
+            for file_ending in [".err", ".out"]:
+                for shard_id in self._shard_ids:
+                    file_name = osp.join(self.path, self.name + "_" + str(shard_id) + file_ending)
+                    if osp.exists(file_name):
+                        os.remove(file_name)
 
     def _get_cluster_conf_filename(self, port):
         """Returns the .conf file name for the given port number
@@ -145,7 +152,7 @@ class DBNode(SmartSimEntity):
                         content = line.split()
                         if "IPADDRESS:" in content:
                             ip = content[-1]
-            # supress error
+            # suppress error
             except FileNotFoundError:
                 pass
 
@@ -176,7 +183,7 @@ class DBNode(SmartSimEntity):
 
         for shard_id in self._shard_ids:
             trials = 5
-            ips = None
+            ip = None
             filepath = osp.join(self.path, self.name + f"_{shard_id}.out")
             # try a few times to give the database files time to
             # populate on busy systems.
@@ -188,14 +195,16 @@ class DBNode(SmartSimEntity):
                             content = line.split()
                             if "IPADDRESS:" in content:
                                 ip = content[-1]
+
+                # suppress error
                 except FileNotFoundError:
-                    logger.debug("Waiting for RedisIP files to populate...")
-                    trials -= 1
-                    time.sleep(5)
+                    pass
 
                 logger.debug("Waiting for RedisIP files to populate...")
                 if not ip:
-                    time.sleep(1)
+                    # Larger sleep time, as this seems to be needed for 
+                    # multihost setups
+                    time.sleep(5)
                     trials -= 1
 
             if not ip:

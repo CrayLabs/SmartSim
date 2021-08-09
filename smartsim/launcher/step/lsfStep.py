@@ -123,6 +123,22 @@ class JsrunStep(Step):
         if not self.run_settings.in_batch:
             self._set_alloc()
 
+
+    def get_output_files(self):
+        """Return two paths to error and output files based on cwd"""
+        output = self.get_step_file(ending=".out")
+        error = self.get_step_file(ending=".err")
+
+        if self.run_settings.individual_suffix:
+            output_prefix = ".".join(output.split(".")[0:-1])+self.run_settings.individual_suffix
+            output_suffix = output.split(".")[-1]
+            output = ".".join([output_prefix, output_suffix])
+            error_prefix = ".".join(error.split(".")[0:-1])+self.run_settings.individual_suffix
+            error_suffix = error.split(".")[-1]
+            error = ".".join([error_prefix, error_suffix])
+            
+        return output, error
+
     def get_launch_cmd(self):
         """Get the command to launch this step
 

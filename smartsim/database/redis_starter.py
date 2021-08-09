@@ -64,10 +64,7 @@ print("-"*30, "\n\n")
 
 print("-"*10, "  Output  ", "-"*10, "\n\n")
 
-db_env = os.environ.copy()
-db_env["SS_REDISIP"] = str(IP_ADDRESS)
-
-p = Popen(COMMAND, stdout=PIPE, stderr=STDOUT, env=db_env)
+p = Popen(COMMAND, stdout=PIPE, stderr=STDOUT)
 
 for line in iter(p.stdout.readline, b""):
     print(line.decode("utf-8").rstrip(), flush=True)

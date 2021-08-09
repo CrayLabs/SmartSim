@@ -209,8 +209,12 @@ class LSFOrchestrator(Orchestrator):
         for shard_id, args in enumerate(exe_args):
             host = shard_id // dph
             run_args["launch_distribution"] = "packed"
+            
             run_settings = JsrunSettings(exe, args, run_args=run_args)
             run_settings.set_binding("none")
+
+            # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
+            run_settings.set_individual_output("_%t")
             # tell step to create a mpmd executable even if we only have one task
             # because we need to specify the host
             if host != old_host:
@@ -255,7 +259,6 @@ class LSFOrchestrator(Orchestrator):
 
         db_conf = CONFIG.redis_conf
         redis_exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
         start_script = self._find_redis_start_script()
 
@@ -275,11 +278,8 @@ class LSFOrchestrator(Orchestrator):
                     redis_exe,                     # redis-server
                     db_conf,                       # redis6.conf file
                     ai_module,                     # redisai.so
-                    ip_module,                     # libredisip.so
                     "--port",                      # redis port
                     str(next_port),                # port number
-                    "--logfile",                   # logfile flag
-                    db_shard_name + ".out",        # log file name
                 ]
                 if cluster:
                     node_exe_args += self._get_cluster_args(db_shard_name, next_port)
