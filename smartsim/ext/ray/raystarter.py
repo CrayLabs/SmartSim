@@ -14,9 +14,6 @@ def parse_ray_head_node_address(head_log):
     :return: address of the head host
     :rtype: str
     """
-    # We can rely on the file name, because we set it when we create
-    # the head model
-    # head_log = os.path.join(self.ray_head.path, self.ray_head.name+".out")
 
     max_attempts = 60
     attempts = 0
@@ -84,10 +81,12 @@ cliargs = [
     if args.head
     else f"--address={parse_ray_head_node_address(args.head_log)}:{args.port}",
     "--block",
-    f"--redis-password={args.redis_password}",
     args.ray_args.strip("\"'"),
     f"--node-ip-address={RAY_IP}",
 ]
+
+if args.redis_password:
+    cliargs += [f"--redis-password={args.redis_password}"]
 
 # On some systems, ssh to compute nodes (and port forwarding) is not allowed.
 # If that's the case, the user should bind the dashboard to 0.0.0.0,

@@ -60,6 +60,11 @@ class RayCluster(EntityList):
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
+    :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
+                     Can be set to `auto`, which means that a password will be generated internally, to
+                     a string which will be used as password, or to `None`, which means a password will not be
+                     passed to `ray start`. Defaults to `auto`
+    :type password: str
     """
 
     def __init__(
@@ -76,6 +81,7 @@ class RayCluster(EntityList):
         time="01:00:00",
         interface="eth0",
         alloc=None,
+        password='auto'
     ):
         launcher = launcher.lower()
         if launcher not in ["slurm", "pbs"]:
@@ -84,7 +90,13 @@ class RayCluster(EntityList):
             )
         self._workers = workers
         self._ray_port = ray_port
-        self._ray_password = str(uuid.uuid4())
+        if password:
+            if password == 'auto':
+                self._ray_password = str(uuid.uuid4())
+            else:
+                self._ray_password = password
+        else:
+            self._ray_password = None
         self._launcher = launcher
         self._run_args = run_args
         self._batch_args = batch_args
@@ -275,11 +287,13 @@ class RayHead(SmartSimEntity):
         ray_starter_args = [
             starter_script,
             f"--port={ray_port}",
-            f"--redis-password={ray_password}",
             f"--ifname={interface}",
             f"--ray-exe={find_ray_exe()}",
             f"--head",
         ]
+
+        if ray_password:
+            ray_starter_args += [f"--redis-password={ray_password}"]
 
         if "dashboard-port" in ray_args:
             self.dashboard_port = int(ray_args["dashboard-port"])
@@ -373,11 +387,12 @@ class RayWorker(SmartSimEntity):
         starter_script = find_ray_stater_script()
         ray_starter_args = [
             starter_script,
-            f"--redis-password={ray_password}",
             f"--ray-exe={find_ray_exe()}",
             f"--port={ray_port}",
             f"--ifname={interface}",
         ]
+        if ray_password:
+            ray_starter_args += [f"--redis-password={ray_password}"]
 
         used = ["block", "redis-password", "start", "head", "port", "dashboard-port"]
         extra_ray_args = []
