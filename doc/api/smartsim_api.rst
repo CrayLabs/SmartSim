@@ -372,6 +372,21 @@ Model
    :inherited-members:
 
 
+TensorFlow
+==========
+
+.. _smartsim_tf_api:
+
+.. currentmodule:: smartsim.tf.utils
+
+.. autosummary::
+
+    freeze_model
+
+.. automodule:: smartsim.tf.utils
+    :members:
+
+
 Slurm
 =====
 
