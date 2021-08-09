@@ -377,6 +377,8 @@ TensorFlow
 
 .. _smartsim_tf_api:
 
+SmartSim includes built-in utilities for supporting TensorFlow and Keras in SmartSim.
+
 .. currentmodule:: smartsim.tf.utils
 
 .. autosummary::
