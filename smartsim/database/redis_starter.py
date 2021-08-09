@@ -53,16 +53,14 @@ def current_ip(interface="lo"):
         return get_ip_from_interface(interface)
 
 IP_ADDRESS = current_ip(args.ifname)
-#cmd = args.command + f" --bind {IP_ADDRESS}"
-#COMMAND = cmd.split(" ")
-
 COMMAND = args.command + [f"--bind {IP_ADDRESS}"]
 
+
 print("-"*10, "  Running  Command  ", "-"*10, "\n")
-print(f"cmd: {' '.join(COMMAND)}\n")
-print(f"network: {args.ifname}\n")
-print(f"ip: {IP_ADDRESS}\n")
-print("-"*22, "\n")
+print(f"COMMAND: {' '.join(COMMAND)}\n")
+print(f"IPADDRESS: {IP_ADDRESS}\n")
+print(f"NETWORK: {args.ifname}\n")
+print("-"*30, "\n\n")
 
 print("-"*10, "  Output  ", "-"*10, "\n\n")
 

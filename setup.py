@@ -44,7 +44,6 @@ class Builder():
             shutil.copyfile(file, binary_dest)
             binary_dest.chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
 
-
     def copy_to_lib(self, files):
         lib_path = self.setup_path.joinpath("smartsim/lib/")
         if not lib_path.is_dir():
@@ -73,34 +72,6 @@ class Redis(Builder):
         to_export = [src_dir.joinpath(_bin) for _bin in binaries]
         self.copy_to_bin(to_export)
 
-class RedisIP(Builder):
-
-
-    def build(self, build_dir):
-        subprocess.check_call(["git", "clone", "https://github.com/Spartee/RedisIP.git",
-                               "--branch", "master" , "--depth", "1", "RedisIP"], cwd=build_dir)
-
-        cfg = 'Release'
-        build_args = ['--config', cfg]
-        build_args += ['--', f'-j{str(NPROC)}']
-
-        cmake_path = Path(os.path.abspath(build_dir), "RedisIP")
-        cmake_args = [
-            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={cmake_path}']
-        cmake_args += [f'-DCMAKE_BUILD_TYPE={cfg}']
-
-        # run cmake prep step
-        subprocess.check_call([self.cmake] + cmake_args,
-                              cwd=cmake_path,
-                              env=self.build_env)
-
-
-        cmake_cmd = [self.cmake, '--build', '.'] + build_args
-        subprocess.check_call(cmake_cmd,
-                              cwd=cmake_path)
-
-        to_export = cmake_path.joinpath("libredisip.so")
-        self.copy_to_lib([to_export])
 
 # Hacky workaround for solving CI build "purelib" issue
 # see https://github.com/google/or-tools/issues/616
@@ -136,9 +107,6 @@ class SmartSimBuild(build_py):
         redis_builder = Redis()
         redis_builder.build(build_dir)
 
-        redisip_builder = RedisIP()
-        redisip_builder.build(build_dir)
-
         # remove build directory
         shutil.rmtree(build_dir)
 
@@ -150,15 +118,15 @@ class SmartSimBuild(build_py):
 def check_prereq(command):
     try:
         out = subprocess.check_output([command, '--version'])
-    except OSError:
+    except OSError as e:
         raise RuntimeError(
-            f"{command} must be installed to build SmartSim")
+            f"{command} must be installed to build SmartSim") from e
 
 # Tested with wheel v0.29.0
 class BinaryDistribution(Distribution):
     """Distribution which always forces a binary package with platform name
 
-       We use this because we want to pre-package Redis and RedisIP for certain
+       We use this because we want to pre-package Redis for certain
        platforms to use.
     """
     def has_ext_modules(_placeholder):
@@ -169,8 +137,7 @@ setup(
 # ... in setup.cfg
     packages=["smartsim"],
     package_data={"smartsim": [
-        "bin/*",
-        "lib/*"
+        "bin/*"
     ]},
     cmdclass={
         "build_py": SmartSimBuild,

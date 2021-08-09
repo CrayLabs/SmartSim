@@ -252,12 +252,6 @@ def clean(install_path, _all=False):
             shutil.rmtree(backend_path, ignore_errors=True)
             print("Successfully removed ML runtimes")
 
-        # remove redisip
-        if _all:
-            ip_path = lib_path.joinpath("libredisip.so")
-            if ip_path.is_file():
-                ip_path.unlink()
-                print("Succesfully removed existing RedisIP installation")
 
     bin_path = install_path.joinpath("bin")
     if bin_path.is_dir() and _all:

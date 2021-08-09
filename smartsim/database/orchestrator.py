@@ -192,8 +192,7 @@ class Orchestrator(EntityList):
 
     def _get_address(self):
         addresses = []
-        for host, port in itertools.product(self._hosts, self.ports):
-            ip = get_ip_from_host(host)
+        for ip, port in itertools.product(self._hosts, self.ports):
             addresses.append(":".join((ip, str(port))))
         return addresses
 
@@ -211,7 +210,6 @@ class Orchestrator(EntityList):
             host = self._hosts[0]
             port = self.ports[0]
             try:
-                import redis
                 client = redis.Redis(host=host, port=port, db=0)
                 if client.ping():
                     return True
@@ -241,17 +239,6 @@ class Orchestrator(EntityList):
             module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
-    @staticmethod
-    def _get_IP_module_path():
-        """Get the RedisIP module from third-party installations
-
-        :raises SSConfigError: if retrieval fails
-        :return: path to module
-        :rtype: str
-        """
-        module_path = CONFIG.redisip
-        return " ".join(("--loadmodule", module_path))
-
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
@@ -269,7 +256,6 @@ class Orchestrator(EntityList):
         # collect database launch command information
         db_conf = CONFIG.redis_conf
         redis_exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
         start_script = self._find_redis_start_script()
 
@@ -280,7 +266,6 @@ class Orchestrator(EntityList):
             redis_exe,                     # redis-server
             db_conf,                       # redis6.conf file
             ai_module,                     # redisai.so
-            ip_module,                     # libredisip.so
             "--port",                      # redis port
             str(port),                     # port number
         ]

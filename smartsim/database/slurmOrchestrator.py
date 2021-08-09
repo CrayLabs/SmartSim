@@ -262,7 +262,6 @@ class SlurmOrchestrator(Orchestrator):
 
         db_conf = CONFIG.redis_conf
         redis_exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
         ai_module = self._get_AI_module()
         start_script = self._find_redis_start_script()
 
@@ -281,7 +280,6 @@ class SlurmOrchestrator(Orchestrator):
                     redis_exe,                     # redis-server
                     db_conf,                       # redis6.conf file
                     ai_module,                     # redisai.so
-                    ip_module,                     # libredisip.so
                     "--port",                      # redis port
                     str(next_port),                # port number
                 ]

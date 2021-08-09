@@ -26,7 +26,6 @@
 
 import os
 import os.path as osp
-import sys
 from pathlib import Path
 from shutil import which
 
@@ -98,7 +97,7 @@ class Config:
                 "redis": {
                     "bin": bin_path,
                     "config": conf_path,
-                    "modules": {"ai": lib_path, "ip": lib_path},
+                    "modules": {"ai": lib_path},
                 },
                 "smartsim": {"jm_interval": 15, "log_level": "info"},
                 "test": {"launcher": "local", "device": "CPU"},
@@ -128,20 +127,6 @@ class Config:
             raise SSConfigError(
                 "Could not find redis.modules.ai (path to redisai.so) in SmartSim config"
             )
-
-    @property
-    def redisip(self):
-        try:
-            redisip = self.conf["redis"]["modules"]["ip"]
-            if not osp.isfile(redisip):
-                redisip = osp.join(redisip, "libredisip.so")
-                if not osp.isfile(redisip):
-                    raise SSConfigError(
-                        "RedisIP library path provided in SmartSim config could not be found"
-                    )
-            return redisip
-        except KeyError:
-            raise SSConfigError("Could not find redis.ip in SmartSim config")
 
     @property
     def redis_conf(self):
