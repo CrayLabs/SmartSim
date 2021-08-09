@@ -51,7 +51,7 @@ SmartSim supports the following ML libraries.
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
 | PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.0       |
+| TensorFlow\Keras  |       2.4.2       |
 | ONNX              |       1.7.0       |
 
 A [number of other libraries](https://github.com/onnx/onnxmltools) are
@@ -81,9 +81,6 @@ independently.
     - [Local Launch](#local-launch)
     - [Interactive Launch](#interactive-launch)
     - [Batch Launch](#batch-launch)
-  - [Ray](#ray)
-    - [Ray on Slurm](#ray-on-slurm)
-    - [Ray on PBS](#ray-on-pbs)
 - [SmartRedis](#smartredis)
   - [Tensors](#tensors)
   - [Datasets](#datasets)
@@ -291,7 +288,6 @@ python hello_ensemble_pbs.py
 
 # Infrastructure Library Applications
  - Orchestrator - In-memory data store and Machine Learning Inference (Redis + RedisAI)
- - Ray - Distributed Reinforcement Learning (RL), Hyperparameter Optimization (HPO)
 
 ## Redis + RedisAI
 
@@ -418,30 +414,6 @@ exp.stop(db_cluster)
 # on PBS system
 python run_db_pbs_batch.py
 ```
-
------
-## Ray
-
-Ray is a distributed computation framework that supports a number of applications
- - RLlib - Distributed Reinforcement Learning (RL)
- - RaySGD - Distributed Training
- - Ray Tune - Hyperparameter Optimization (HPO)
- - Ray Serve - ML/DL inference
-As well as other integrations with frameworks like Modin, Mars, Dask, and Spark.
-
-Historically, Ray has not been well supported on HPC systems. A few examples exist,
-but none are well maintained. Because SmartSim already has launchers for HPC systems,
-launching Ray through SmartSim is a relatively simple task.
-
-### Ray on Slurm
-
-Below is an example of how to launch Ray on a Slurm system.
-
-
-### Ray on PBS
-
-Below is an example of how to launch Ray on a PBS system.
-
 
 ------
 # SmartRedis
@@ -798,7 +770,7 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
 | PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.0       |
+| TensorFlow\Keras  |       2.4.2       |
 | ONNX              |       1.7.0       |
 
 Note, it's important to remember that SmartSim utilizes a client-server model. To run

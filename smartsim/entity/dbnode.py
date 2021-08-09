@@ -134,50 +134,32 @@ class DBNode(SmartSimEntity):
         """
         filepath = osp.join(self.path, self.name + ".out")
         trials = 5
-        host = None
         ip = None
 
         # try a few times to give the database files time to
         # populate on busy systems.
-        while not host and trials > 0:
+        while not ip and trials > 0:
             try:
                 with open(filepath, "r") as f:
                     lines = f.readlines()
                     for line in lines:
                         content = line.split()
-                        if "Hostname:" in content:
-                            host = content[-1]
-                        if "IP:" in content:
+                        if "IPADDRESS:" in content:
                             ip = content[-1]
-                            break
+            # supress error
             except FileNotFoundError:
-                logger.debug("Waiting for RedisIP files to populate...")
-                trials -= 1
-                time.sleep(5)
-            logger.debug("Waiting for RedisIP files to populate...")
-            trials -= 1
-            if not host:
-                time.sleep(5)
+                pass
 
-        if not host and not ip:
+            logger.debug("Waiting for RedisIP files to populate...")
+            if not ip:
+                time.sleep(1)
+                trials -= 1
+
+        if not ip:
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        if self.host_map:
-            # Very unlikely case. In this case, the host_map
-            # should take IPs as input
-            if ip and not host:
-                host = ip
-            host = self.host_map[host]
-        else:
-            # prefer the ip address if present
-            # TODO do socket lookup and ensure IP address matches
-            # in the case where compute node returns 127.0.0.1 for its
-            # own IP address
-            if host and ip:
-                host = ip
-
-        return host
+        return ip
 
     def _parse_db_hosts(self):  # cov-lsf
         """Parse the database hosts/IPs from the output files

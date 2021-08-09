@@ -18,18 +18,6 @@ def test_redisai():
         config.redisai
 
 
-def test_redisip():
-    config = Config()
-
-    config.conf["redis"]["modules"]["ip"] = "not/a/path"
-    with pytest.raises(SSConfigError):
-        config.redisip
-
-    config.conf.pop("redis")
-    with pytest.raises(SSConfigError):
-        config.redisip
-
-
 def test_redis_conf():
     config = Config()
     config.conf["redis"]["config"] = "not/a/path"
