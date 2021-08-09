@@ -129,7 +129,7 @@ class BinaryDistribution(Distribution):
        We use this because we want to pre-package Redis for certain
        platforms to use.
     """
-    def has_ext_modules(self, _placeholder):
+    def has_ext_modules(_placeholder):
         return True
 
 
