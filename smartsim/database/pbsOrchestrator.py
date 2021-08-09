@@ -285,7 +285,7 @@ class PBSOrchestrator(Orchestrator):
             "N",
             "l",
             "node-list-file",
-            "pes‐per‐numa‐node",
+            "pes-per-numa-node",
             "S",
             "wdir",
         ]
