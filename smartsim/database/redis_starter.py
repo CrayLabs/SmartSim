@@ -1,5 +1,3 @@
-
-
 import os
 import argparse
 import psutil
@@ -68,7 +66,10 @@ print("-"*22, "\n")
 
 print("-"*10, "  Output  ", "-"*10, "\n\n")
 
-p = Popen(COMMAND, stdout=PIPE, stderr=STDOUT)
+db_env = os.environ.copy()
+db_env["SS_REDISIP"] = str(IP_ADDRESS)
+
+p = Popen(COMMAND, stdout=PIPE, stderr=STDOUT, env=db_env)
 
 for line in iter(p.stdout.readline, b""):
     print(line.decode("utf-8").rstrip(), flush=True)
