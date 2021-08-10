@@ -35,13 +35,7 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self,
-        exe,
-        exe_args=None,
-        run_command="",
-        run_args=None,
-        env_vars=None,
-        block_in_batch=False,
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None
     ):
         """Run parameters for a ``Model``
 
@@ -72,9 +66,6 @@ class RunSettings:
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with
         :type env_vars: dict[str, str], optional
-        :param block_in_batch: whether execution of the next ``Model`` in a batch
-                               should wait until completion of this ``Model``
-        :type block_in_batch: bool
         """
         self.exe = [expand_exe_path(exe)]
         self.exe_args = self._set_exe_args(exe_args)
@@ -82,7 +73,6 @@ class RunSettings:
         self.env_vars = init_default({}, env_vars, (dict, list))
         self._run_command = run_command
         self.in_batch = False
-        self.block_in_batch = block_in_batch
 
     @property
     def run_command(self):
@@ -111,7 +101,7 @@ class RunSettings:
         """Add executable arguments to executable
 
         :param args: executable arguments
-        :type args: str | list[str]
+        :type args: list[str]
         :raises TypeError: if exe args are not strings
         """
         if isinstance(args, str):
@@ -126,20 +116,9 @@ class RunSettings:
             if isinstance(exe_args, str):
                 return exe_args.split()
             if isinstance(exe_args, list):
-                plain_type = all([isinstance(arg, (str)) for arg in exe_args])
-                if not plain_type:
-                    nested_type = all(
-                        [
-                            all([isinstance(arg, (str)) for arg in exe_args_list])
-                            for exe_args_list in exe_args
-                        ]
-                    )
-                    if not nested_type:
-                        raise TypeError(
-                            "Executable arguments were not list of str or str"
-                        )
-                    else:
-                        return exe_args
+                correct_type = all([isinstance(arg, (str)) for arg in exe_args])
+                if not correct_type:
+                    raise TypeError("Executable arguments were not list of str or str")
                 return exe_args
             raise TypeError("Executable arguments were not list of str or str")
         else:

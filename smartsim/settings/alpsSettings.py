@@ -34,7 +34,6 @@ class AprunSettings(RunSettings):
         exe_args=None,
         run_args=None,
         env_vars=None,
-        block_in_batch=False,
     ):
         """Settings to run job with ``aprun`` command
 
@@ -49,9 +48,6 @@ class AprunSettings(RunSettings):
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
-        :param block_in_batch: whether the execution of this call should block when executed
-                               in a batch.
-        :type block_in_batch: bool
         """
         super().__init__(
             exe,
@@ -60,7 +56,6 @@ class AprunSettings(RunSettings):
             run_args=run_args,
             env_vars=env_vars,
         )
-        self.block_in_batch = block_in_batch
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):

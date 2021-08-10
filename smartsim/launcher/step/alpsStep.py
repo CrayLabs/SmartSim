@@ -46,7 +46,6 @@ class AprunStep(Step):
         """
         super().__init__(name, cwd)
         self.run_settings = run_settings
-        self.block_in_batch = run_settings.block_in_batch
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()

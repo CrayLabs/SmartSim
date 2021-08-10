@@ -37,7 +37,6 @@ class SrunSettings(RunSettings):
         run_args=None,
         env_vars=None,
         alloc=None,
-        block_in_batch=False,
     ):
         """Initialize run parameters for a slurm job with ``srun``
 
@@ -56,9 +55,6 @@ class SrunSettings(RunSettings):
         :type env_vars: dict[str, str], optional
         :param alloc: allocation ID if running on existing alloc
         :type alloc: str, optional
-        :param block_in_batch: whether the execution of this call should block when executed
-                               in a batch.
-        :type block_in_batch: bool
         """
         super().__init__(
             exe,
@@ -66,7 +62,6 @@ class SrunSettings(RunSettings):
             run_command="srun",
             run_args=run_args,
             env_vars=env_vars,
-            block_in_batch=block_in_batch,
         )
         self.alloc = alloc
         self.mpmd = False
