@@ -45,13 +45,17 @@ def parse_ray_head_node_address(head_log):
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 
-parser = argparse.ArgumentParser(prefix_chars="+", description="SmartSim Ray head launcher")
+parser = argparse.ArgumentParser(
+    prefix_chars="+", description="SmartSim Ray head launcher"
+)
 parser.add_argument(
     "+port", type=int, help="Port used by Ray to start the Redis server at"
 )
 parser.add_argument("+head", action="store_true")
 parser.add_argument("+redis-password", type=str, help="Password of Redis cluster")
-parser.add_argument("+ray-args", action='append', help="Additional arguments to start Ray")
+parser.add_argument(
+    "+ray-args", action="append", help="Additional arguments to start Ray"
+)
 parser.add_argument("+dashboard-port", type=str, help="Ray dashboard port")
 parser.add_argument("+ray-exe", type=str, help="Ray executable", default="ray")
 parser.add_argument("+ifname", type=str, help="Interface name", default="lo")

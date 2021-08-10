@@ -35,11 +35,9 @@ from tqdm import trange
 from smartsim.control.manifest import Manifest
 
 from .control import Controller, Manifest
-from .entity import Ensemble, EntityList, Model, SmartSimEntity
+from .entity import Ensemble, Model
 from .error import SmartSimError
-from .ext.ray import RayCluster
 from .generation import Generator
-from .launcher.util.shell import execute_cmd
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
 
@@ -459,7 +457,7 @@ class Experiment:
             for rc in ray_clusters:
                 name = colorize(rc.name, color="green", bold=True)
                 num_models = colorize(
-                    "# of workers: " + str(rc._workers), color="green"
+                    "# of workers: " + str(len(rc)), color="green"
                 )
                 if rc.batch:
                     batch_settings = colorize(
@@ -467,11 +465,11 @@ class Experiment:
                         color="green",
                     )
                 head_run_settings = colorize(
-                    "Head run Settings: \n" + str(rc.ray_head.run_settings),
+                    "Head run Settings: \n" + str(rc.entities[0].run_settings),
                     color="green",
                 )
                 run_settings = head_run_settings
-                if rc._workers > 0:
+                if len(rc) > 0:
                     worker_run_settings = colorize(
                         "\nWorker run Settings: \n" + str(rc.entities[1].run_settings),
                         color="green",
