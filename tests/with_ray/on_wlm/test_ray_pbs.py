@@ -65,8 +65,10 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
 
     if not right_resources:
         ctx.disconnect()
+        ray.shutdown()
         exp.stop(cluster)
         assert False
 
     ctx.disconnect()
+    ray.shutdown()
     exp.stop(cluster)
