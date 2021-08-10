@@ -77,9 +77,6 @@ class SlurmLauncher(WLMLauncher):
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
-            if isinstance(step_settings, RunSettings) and step_settings.in_batch:
-                step = LocalStep(name, cwd, step_settings)
-                return step
             raise SSUnsupportedError("RunSettings type not supported by Slurm")
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
