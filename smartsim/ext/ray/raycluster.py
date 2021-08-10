@@ -53,6 +53,10 @@ class RayCluster(EntityList):
     :type batch_args: dict[str,str]
     :param launcher: Name of launcher to use for starting the cluster.
     :type launcher: str
+    :param interface: Name of network interface the cluster nodes should bind to. This should be
+                      set to the highest-speed network available. Common high-speed networks are
+                      `ipogif0` (on Cray XC systems) and `ib0` (on InfiniBand-based systems)
+    :type interface: str
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
                   obtained with ``ray.slurm.get_allocation``
     :type alloc: int
@@ -178,8 +182,7 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
-        # We can rely on the file name, because we set it when we create
-        # the head model
+        
         head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
 
         max_attempts = 60
@@ -222,7 +225,7 @@ class RayCluster(EntityList):
         return self.ray_head_address
 
     def get_dashboard_address(self):
-        """Returns address of dashboard address
+        """Returns dashboard address
 
         The format is <head_ip>:<dashboard_port>
 
@@ -238,6 +241,8 @@ class RayCluster(EntityList):
 
 
 def find_ray_exe():
+    """Find ray executable in current path.
+    """
     try:
         ray_exe = expand_exe_path("ray")
         return ray_exe
@@ -246,6 +251,8 @@ def find_ray_exe():
 
 
 def find_ray_stater_script():
+    """Find location of script used to start Ray nodes.
+    """
     dir_path = os.path.dirname(os.path.realpath(__file__))
     return f"{dir_path}/raystarter.py"
 
@@ -321,7 +328,7 @@ class RayHead(SmartSimEntity):
 
     def _build_pbs_settings(self, run_args, ray_args):
         # TODO: explain this
-        run_args["sync-output"] = None
+        # run_args["sync-output"] = None
 
         # calls ray_starter.py with arguments for the ray head node
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
@@ -423,7 +430,7 @@ class RayWorker(SmartSimEntity):
     def _build_pbs_settings(self, run_args, ray_args):
 
         # TODO: explain this
-        run_args["sync-output"] = None
+        # run_args["sync-output"] = None
 
         # calls ray_starter.py with arguments for a ray worker node
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
