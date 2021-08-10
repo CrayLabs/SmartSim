@@ -29,6 +29,8 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
+INTERFACE = "ipogif0"
+
 # TODO find available interface
 def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
@@ -48,7 +50,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         alloc=None,
         batch=False,
         time="00:05:00",
-        interface="ib0",
+        interface=INTERFACE,
         password=None,
     )
 
@@ -93,7 +95,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         workers=2,
         alloc=alloc,
         batch=False,
-        interface="ib0",
+        interface=INTERFACE,
     )
 
     exp.generate(cluster)

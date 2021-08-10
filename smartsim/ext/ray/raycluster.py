@@ -211,13 +211,13 @@ class RayCluster(EntityList):
         
         head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
 
-        max_attempts = 60
+        max_attempts = 10
         attempts = 0
         while not os.path.isfile(head_log):
             _time.sleep(1)
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError("Could not find Ray cluster head address.")
+                raise RuntimeError(f"Could not find Ray cluster head log file {head_log}")
 
         attempts = 0
         head_ip = None
@@ -234,7 +234,7 @@ class RayCluster(EntityList):
                     line = fp.readline()
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError("Could not find Ray cluster head address.")
+                raise RuntimeError(f"Could not find Ray cluster head address in log file {head_log}.")
 
         self.ray_head_address = head_ip
 
