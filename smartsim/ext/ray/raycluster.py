@@ -81,7 +81,7 @@ class RayCluster(EntityList):
         time="01:00:00",
         interface="eth0",
         alloc=None,
-        password='auto'
+        password="auto",
     ):
         launcher = launcher.lower()
         if launcher not in ["slurm", "pbs"]:
@@ -91,7 +91,7 @@ class RayCluster(EntityList):
         self._workers = workers
         self._ray_port = ray_port
         if password:
-            if password == 'auto':
+            if password == "auto":
                 self._ray_password = str(uuid.uuid4())
             else:
                 self._ray_password = password

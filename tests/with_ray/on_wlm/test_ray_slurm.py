@@ -49,7 +49,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         batch=False,
         time="00:05:00",
         interface="ib0",
-        password=None
+        password=None,
     )
 
     exp.generate(cluster)

@@ -45,12 +45,12 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         workers=0,
         batch=True,
         ray_args={"num-cpus": "4", "dashboard-port": "8266"},
-        password=None
+        password=None,
     )
     exp.generate(cluster, overwrite=False)
     exp.start(cluster, block=False, summary=False)
 
-    ray.init("ray://"+cluster.get_head_address()+":10001")
+    ray.init("ray://" + cluster.get_head_address() + ":10001")
 
     right_size = len(ray.nodes()) == 1
     if not right_size:

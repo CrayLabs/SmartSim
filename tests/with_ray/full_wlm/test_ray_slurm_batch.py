@@ -48,7 +48,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         alloc=None,
         batch=True,
         interface="ib0",
-        password=None
+        password=None,
     )
 
     exp.generate(cluster)
@@ -69,4 +69,3 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
 
     ctx.disconnect()
     exp.stop(cluster)
-
