@@ -457,12 +457,11 @@ class Experiment:
         if ray_clusters:
             sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
             for rc in ray_clusters:
-                batch = rc.batch
                 name = colorize(rc.name, color="green", bold=True)
                 num_models = colorize(
                     "# of workers: " + str(rc._workers), color="green"
                 )
-                if batch:
+                if rc.batch:
                     batch_settings = colorize(
                         "Ray batch Settings: \n" + str(rc.batch_settings),
                         color="green",
@@ -471,28 +470,21 @@ class Experiment:
                     "Head run Settings: \n" + str(rc.ray_head.run_settings),
                     color="green",
                 )
-                if batch:
-                    batch_settings += head_run_settings
-                else:
-                    run_settings = head_run_settings
+                run_settings = head_run_settings
                 if rc._workers > 0:
                     worker_run_settings = colorize(
-                        "\nWorkers run Settings: \n" + str(rc.entities[1].run_settings),
+                        "\nWorker run Settings: \n" + str(rc.entities[1].run_settings),
                         color="green",
                     )
-                    if batch:
-                        batch_settings += worker_run_settings
-                    else:
-                        run_settings += worker_run_settings
+                    run_settings += worker_run_settings
                 batch = colorize(f"Launching as batch: {rc.batch}", color="green")
 
                 sprint(f"{name}")
                 sprint(f"{num_models}")
                 sprint(f"{batch}")
                 if rc.batch:
-                    print(f"{batch_settings}")
-                else:
-                    sprint(f"{run_settings}")
+                    sprint(f"{batch_settings}")
+                sprint(f"{run_settings}")
             sprint("\n")
 
         sprint("\n")

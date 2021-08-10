@@ -461,15 +461,10 @@ class Controller:
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
-        if isinstance(entity_list, EntityList):
-            for entity in entity_list.entities:
-                # tells step creation not to look for an allocation
-                entity.run_settings.in_batch = True
-                step = self._create_job_step(entity)
-                batch_step.add_to_batch(step)
-        elif isinstance(entity_list, SmartSimEntity):
-            entity_list.run_settings.in_batch = True
-            step = self._create_job_step(entity_list)
+        for entity in entity_list.entities:
+            # tells step creation not to look for an allocation
+            entity.run_settings.in_batch = True
+            step = self._create_job_step(entity)
             batch_step.add_to_batch(step)
         return batch_step
 
