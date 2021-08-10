@@ -277,22 +277,12 @@ class SlurmOrchestrator(Orchestrator):
                 start_script_args = [
                     start_script,  # redis_starter.py
                     f"+ifname={self._interface}",  # pass interface to start script
-<<<<<<< HEAD
                     "+command",                    # command flag for argparser
                     redis_exe,                     # redis-server
                     db_conf,                       # redis6.conf file
                     ai_module,                     # redisai.so
                     "--port",                      # redis port
                     str(next_port),                # port number
-=======
-                    "+command",  # command flag for argparser
-                    redis_exe,  # redis-server
-                    db_conf,  # redis6.conf file
-                    ai_module,  # redisai.so
-                    ip_module,  # libredisip.so
-                    "--port",  # redis port
-                    str(next_port),  # port number
->>>>>>> d370e05b9e665c2f1218d5133e492a0d2a050420
                 ]
                 if cluster:
                     start_script_args += self._get_cluster_args(db_node_name, next_port)
