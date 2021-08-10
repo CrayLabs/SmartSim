@@ -102,24 +102,24 @@ class RayCluster(EntityList):
         name,
         path=os.getcwd(),
         ray_port=6789,
-        ray_args={},
+        ray_args=None,
         workers=0,
-        run_args={},
-        batch_args={},
+        run_args=None,
+        batch_args=None,
         launcher="local",
         batch=False,
         time="01:00:00",
         interface="eth0",
         alloc=None,
         password="auto",
+        **kwargs,
     ):
         launcher = launcher.lower()
         if launcher not in ["slurm", "pbs"]:
             raise SSUnsupportedError(
-                "Only the Slurm and PBS launcher are supported by RayCluster"
+                "Only Slurm and PBS launchers are supported by RayCluster"
             )
-        self._workers = workers
-        self._ray_port = ray_port
+
         if password:
             if password == "auto":
                 self._ray_password = str(uuid.uuid4())
@@ -127,20 +127,29 @@ class RayCluster(EntityList):
                 self._ray_password = password
         else:
             self._ray_password = None
-        self._launcher = launcher
-        self._run_args = run_args
-        self._batch_args = batch_args
         self.ray_head = None
         self.alloc = None
         self.batch_settings = None
-        self._alloc = alloc
         self._hosts = None
-        self._time = time
-        self._interface = interface
+
+        run_args = init_default({}, run_args, dict)
+        batch_args = init_default({}, batch_args, dict)
+        ray_args = init_default({}, ray_args, dict)
+
         self._ray_args = ray_args
-        super().__init__(name=name, path=path)
+        super().__init__(
+            name=name,
+            path=path,
+            ray_args=ray_args,
+            run_args=run_args,
+            ray_port=ray_port,
+            launcher=launcher,
+            interface=interface,
+            alloc=alloc,
+            **kwargs,
+        )
         if batch:
-            self._build_batch_settings()
+            self._build_batch_settings(workers, time, batch_args)
         self.ray_head_address = None
 
     @property
@@ -152,17 +161,25 @@ class RayCluster(EntityList):
         except AttributeError:
             return False
 
-    def _initialize_entities(self):
+    def _initialize_entities(self, **kwargs):
+
+        ray_port = kwargs.get("ray_port", 6789)
+        launcher = kwargs.get("launcher", "slurm")
+        ray_args = kwargs.get("ray_args", None)
+        run_args = kwargs.get("run_args", None)
+        interface = kwargs.get("interface", "eth0")
+        alloc = kwargs.get("alloc", None)
+
         self.ray_head = RayHead(
             name="ray_head",
             path=self.path,
             ray_password=self._ray_password,
-            ray_port=self._ray_port,
-            launcher=self._launcher,
-            run_args=self._run_args,
-            ray_args=self._ray_args,
-            interface=self._interface,
-            alloc=self._alloc,
+            ray_port=ray_port,
+            launcher=launcher,
+            run_args=run_args,
+            ray_args=ray_args,
+            interface=interface,
+            alloc=alloc,
         )
 
         self.entities.append(self.ray_head)
@@ -171,24 +188,24 @@ class RayCluster(EntityList):
             self.worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
-                run_args=self._run_args,
-                ray_port=self._ray_port,
+                run_args=run_args,
+                ray_port=ray_port,
                 ray_password=self._ray_password,
-                ray_args=self._ray_args,
-                interface=self._interface,
-                launcher=self._launcher,
-                alloc=self._alloc,
+                ray_args=ray_args,
+                interface=interface,
+                launcher=launcher,
+                alloc=alloc,
             )
             self.entities.append(self.worker_model)
 
-    def _build_batch_settings(self):
+    def _build_batch_settings(self, workers, time, batch_args):
         if self._launcher == "pbs":
             self.batch_settings = QsubBatchSettings(
-                nodes=self._workers + 1, time=self._time, batch_args=self._batch_args
+                nodes=workers + 1, time=time, batch_args=batch_args
             )
         elif self._launcher == "slurm":
             self.batch_settings = SbatchSettings(
-                nodes=self._workers + 1, time=self._time, batch_args=self._batch_args
+                nodes=workers + 1, time=time, batch_args=batch_args
             )
         else:
             raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
@@ -208,7 +225,7 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
-        
+
         head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
 
         max_attempts = 10
@@ -217,7 +234,9 @@ class RayCluster(EntityList):
             _time.sleep(1)
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError(f"Could not find Ray cluster head log file {head_log}")
+                raise RuntimeError(
+                    f"Could not find Ray cluster head log file {head_log}"
+                )
 
         attempts = 0
         head_ip = None
@@ -234,7 +253,9 @@ class RayCluster(EntityList):
                     line = fp.readline()
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError(f"Could not find Ray cluster head address in log file {head_log}.")
+                raise RuntimeError(
+                    f"Could not find Ray cluster head address in log file {head_log}."
+                )
 
         self.ray_head_address = head_ip
 
@@ -263,12 +284,13 @@ class RayCluster(EntityList):
     def _update_workers(self):
         """Update worker args before launching them."""
         for worker in range(1, len(self.entities)):
-            self.entities[worker].set_head_log(f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out")
+            self.entities[worker].set_head_log(
+                f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out"
+            )
 
 
 def find_ray_exe():
-    """Find ray executable in current path.
-    """
+    """Find ray executable in current path."""
     try:
         ray_exe = expand_exe_path("ray")
         return ray_exe
@@ -277,8 +299,7 @@ def find_ray_exe():
 
 
 def find_ray_stater_script():
-    """Find location of script used to start Ray nodes.
-    """
+    """Find location of script used to start Ray nodes."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     return f"{dir_path}/raystarter.py"
 
@@ -411,7 +432,7 @@ class RayWorker(SmartSimEntity):
 
     def set_head_log(self, head_log):
         """Set head log file (with full path)
-        
+
         The head log file is used by the worker to discover
         the head IP address. This function is called by
         RayCluster before the cluster is launched.
@@ -431,7 +452,15 @@ class RayWorker(SmartSimEntity):
         if ray_password:
             ray_starter_args += [f"+redis-password={ray_password}"]
 
-        used = ["block", "redis-password", "start", "head", "port", "dashboard-port", "dashboard-host"]
+        used = [
+            "block",
+            "redis-password",
+            "start",
+            "head",
+            "port",
+            "dashboard-port",
+            "dashboard-host",
+        ]
         extra_ray_args = []
         for key, value in ray_args.items():
             if key not in used:
