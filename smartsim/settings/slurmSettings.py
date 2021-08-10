@@ -221,11 +221,6 @@ class SbatchSettings(BatchSettings):
         :type account: str, optional
         :param batch_args: extra batch arguments
         :type batch_args: dict[str, str], optional
-        :param preamble: list of instructions to be written in the sbatch
-                         file before the `srun` (or equivalent) commands.
-                         Typical usage is to load modules, set variables,
-                         or activate virtual environments.
-        :type preamble: list[str], optional
         """
         super().__init__("sbatch", batch_args=batch_args)
         if nodes:
