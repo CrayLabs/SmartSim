@@ -467,7 +467,7 @@ class Experiment:
                         color="green",
                     )
                 head_run_settings = colorize(
-                    "Head run Settings: \n" + str(rc.ray_head.run_settings),
+                    "Head run Settings: \n" + str(rc.entities[0].run_settings),
                     color="green",
                 )
                 run_settings = head_run_settings

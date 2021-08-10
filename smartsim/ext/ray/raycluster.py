@@ -226,7 +226,7 @@ class RayCluster(EntityList):
         :rtype: str
         """
 
-        head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
+        head_log = os.path.join(self.entities[0].path, self.entities[0].name + ".out")
 
         max_attempts = 10
         attempts = 0
@@ -279,13 +279,13 @@ class RayCluster(EntityList):
         :returns: Dashboard address
         :rtype: str
         """
-        return self.get_head_address() + ":" + str(self.ray_head.dashboard_port)
+        return self.get_head_address() + ":" + str(self.entities[0].dashboard_port)
 
     def _update_workers(self):
         """Update worker args before launching them."""
         for worker in range(1, len(self.entities)):
             self.entities[worker].set_head_log(
-                f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out"
+                f"{os.path.join(self.entities[0], self.entities[0])}.out"
             )
 
 
