@@ -220,46 +220,7 @@ class RayCluster(EntityList):
         """
         self._batch_args.update(batch_args)
 
-    def _parse_ray_head_node_address(self):
-        """Get the ray head node host address from the log file produced
-        by the head process.
 
-        :return: address of the head host
-        :rtype: str
-        """
-
-        head_log = os.path.join(self.entities[0].path, self.entities[0].name + ".out")
-
-        max_attempts = 10
-        attempts = 0
-        while not os.path.isfile(head_log):
-            _time.sleep(1)
-            attempts += 1
-            if attempts == max_attempts:
-                raise RuntimeError(
-                    f"Could not find Ray cluster head log file {head_log}"
-                )
-
-        attempts = 0
-        head_ip = None
-        while head_ip is None:
-            _time.sleep(1)
-            with open(head_log) as fp:
-                line = fp.readline()
-                while line:
-                    plain_line = re.sub("\033\\[([0-9]+)(;[0-9]+)*m", "", line)
-                    if "Local node IP:" in plain_line:
-                        matches = re.search(r"(?<=Local node IP: ).*", plain_line)
-                        head_ip = matches.group()
-                        break
-                    line = fp.readline()
-            attempts += 1
-            if attempts == max_attempts:
-                raise RuntimeError(
-                    f"Could not find Ray cluster head address in log file {head_log}."
-                )
-
-        self.ray_head_address = head_ip
 
     def get_head_address(self):
         """Return address of head node
@@ -270,7 +231,7 @@ class RayCluster(EntityList):
         :rtype: str
         """
         if not self.ray_head_address:
-            self._parse_ray_head_node_address()
+           self.ray_head_address = parse_ray_head_node_address(os.path.join(self.entities[0].path, self.entities[0].name + ".out"))
         return self.ray_head_address
 
     def get_dashboard_address(self):
@@ -305,6 +266,45 @@ def find_ray_stater_script():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     return f"{dir_path}/raystarter.py"
 
+def parse_ray_head_node_address(head_log):
+    """Get the ray head node host address from the log file produced
+    by the head process.
+
+    :param head_log: full path to log file of head node
+    :return: address of the head host
+    :rtype: str
+    """
+
+    max_attempts = 10
+    attempts = 0
+    while not os.path.isfile(head_log):
+        _time.sleep(1)
+        attempts += 1
+        if attempts == max_attempts:
+            raise RuntimeError(
+                f"Could not find Ray cluster head log file {head_log}"
+            )
+
+    attempts = 0
+    head_ip = None
+    while head_ip is None:
+        _time.sleep(1)
+        with open(head_log) as fp:
+            line = fp.readline()
+            while line:
+                plain_line = re.sub("\033\\[([0-9]+)(;[0-9]+)*m", "", line)
+                if "Local node IP:" in plain_line:
+                    matches = re.search(r"(?<=Local node IP: ).*", plain_line)
+                    head_ip = matches.group()
+                    break
+                line = fp.readline()
+        attempts += 1
+        if attempts == max_attempts:
+            raise RuntimeError(
+                f"Could not find Ray cluster head address in log file {head_log}."
+            )
+
+    return head_ip
 
 class RayHead(SmartSimEntity):
     def __init__(
