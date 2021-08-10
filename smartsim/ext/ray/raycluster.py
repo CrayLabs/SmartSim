@@ -146,6 +146,7 @@ class RayCluster(EntityList):
             launcher=launcher,
             interface=interface,
             alloc=alloc,
+            workers=workers,
             **kwargs,
         )
         if batch:
@@ -168,6 +169,7 @@ class RayCluster(EntityList):
         ray_args = kwargs.get("ray_args", None)
         run_args = kwargs.get("run_args", None)
         interface = kwargs.get("interface", "eth0")
+        workers = kwargs.get("workers", 0)
         alloc = kwargs.get("alloc", None)
 
         ray_head = RayHead(
@@ -184,7 +186,7 @@ class RayCluster(EntityList):
 
         self.entities.append(ray_head)
 
-        for worker_id in range(self._workers):
+        for worker_id in range(workers):
             worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
@@ -285,7 +287,7 @@ class RayCluster(EntityList):
         """Update worker args before launching them."""
         for worker in range(1, len(self.entities)):
             self.entities[worker].set_head_log(
-                f"{os.path.join(self.entities[0], self.entities[0])}.out"
+                f"{os.path.join(self.entities[0].path, self.entities[0].name)}.out"
             )
 
 
