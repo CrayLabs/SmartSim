@@ -94,6 +94,8 @@ class LSFOrchestrator(Orchestrator):
         :type time: str
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
+        :param interface: network interface to use
+        :type interface: str
         """
         self.cpus_per_shard = cpus_per_shard
         self.gpus_per_shard = gpus_per_shard
