@@ -24,18 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import time
-import redis
-import psutil
-import socket
-import logging
 import itertools
-from pathlib import Path
+import logging
+import os
+import socket
+import time
 from os import getcwd
+from pathlib import Path
 
+import psutil
+import redis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
+
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ..config import CONFIG
@@ -58,21 +59,21 @@ class Orchestrator(EntityList):
     def __init__(self, port=6379, interface="lo", **kwargs):
         """Initialize an Orchestrator reference for local launch
 
-        :param port: TCP/IP port
-        :type port: int
-        :param interface: network interface
-        :type interface: str
+        :param port: TCP/IP port, defaults to 6379
+        :type port: int, optional
+        :param interface: network interface, defaults to "lo"
+        :type interface: str, optional
 
         Extra configurations for RedisAI
 
         See https://oss.redislabs.com/redisai/configuration/
 
         :param threads_per_queue: threads per GPU device
-        :type threads_per_queue: int
+        :type threads_per_queue: int, optional
         :param inter_op_threads: threads accross CPU operations
-        :type inter_op_threads: int
+        :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
-        :type intra_op_threads: int
+        :type intra_op_threads: int, optional
         """
         self.ports = []
         self.path = getcwd()
@@ -147,9 +148,10 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {self.num_shards} shards")
 
-
-    def check_cluster_status(self, trials=10): # cov-wlm
+    def check_cluster_status(self, trials=10):  # cov-wlm
         """Check that a cluster is up and running
+        :param trials: number of attempts to verify cluster status
+        :type trials: int, optional
         :raises SmartSimError: If cluster status cannot be verified
         """
         host_list = []
@@ -182,7 +184,7 @@ class Orchestrator(EntityList):
         :return: addresses
         :rtype: list[str]
 
-        :raises SmartSimError: If database address cannot be found
+        :raises SmartSimError: If database address cannot be found or is not active
         """
         if not self._hosts:
             raise SmartSimError("Could not find database address")
@@ -199,7 +201,7 @@ class Orchestrator(EntityList):
     def is_active(self):
         """Check if the database is active
 
-        :return: if database is active
+        :return: True if database is active, False otherwise
         :rtype: bool
         """
         if not self._hosts:
@@ -260,7 +262,7 @@ class Orchestrator(EntityList):
         start_script = self._find_redis_start_script()
 
         start_script_args = [
-            start_script,                  # redis_starter.py
+            start_script,  # redis_starter.py
             f"+ifname={self._interface}",  # pass interface to start script
             "+command",                    # command flag for argparser
             redis_exe,                     # redis-server
@@ -312,10 +314,12 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this.")
             logger.warning(f"Found network interfaces are: {available}")
 
+
 def get_ip_from_host(host):
     """Return the IP address for the interconnect.
 
-    :param str host: hostname of the compute node e.g. nid00004
+    :param host: hostname of the compute node e.g. nid00004
+    :type host: str
     :returns: ip of host
     :rtype: str
     """

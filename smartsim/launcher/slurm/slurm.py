@@ -57,12 +57,12 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
 
     :param nodes: number of nodes for the allocation, defaults to 1
     :type nodes: int, optional
-    :param time: wall time of the allocation, HH:MM:SS format
-    :type time: str
-    :param account: account id for allocation
-    :type account: str
-    :param options: additional options for the slurm wlm
-    :type options: dict[str, str]
+    :param time: wall time of the allocation, HH:MM:SS format, defaults to None
+    :type time: str, optional
+    :param account: account id for allocation, defaults to None
+    :type account: str, optional
+    :param options: additional options for the slurm wlm, defaults to None
+    :type options: dict[str, str], optional
     :raises LauncherError: if the allocation is not successful
     :return: the id of the allocation
     :rtype: str
@@ -93,7 +93,7 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
 
 
 def release_allocation(alloc_id):
-    """Free an allocations resources
+    """Free an allocation's resources
 
     :param alloc_id: allocation id
     :type alloc_id: str
@@ -124,13 +124,14 @@ def validate(nodes=1, ppn=1, partition=None):
 
     if no partition is provided, the default partition is found and used.
 
-    :param str partition: partition to validate
-    :param nodes: Override the default node count to validate
-    :type nodes: int
-    :param ppn: Override the default processes per node to validate
-    :type ppn: int
+    :param nodes: Override the default node count to validate, defaults to 1
+    :type nodes: int, optional
+    :param ppn: Override the default processes per node to validate, defaults to 1
+    :type ppn: int, optional
+    :param partition: partition to validate, defaults to None
+    :type partition: str, optional
     :raises: LauncherError
-    :returns: True if resources are available
+    :returns: True if resources are available, False otherwise
     :rtype: bool
     """
     sys_partitions = _get_system_partition_info()

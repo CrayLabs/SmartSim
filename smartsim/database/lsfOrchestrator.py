@@ -71,8 +71,8 @@ class LSFOrchestrator(Orchestrator):
         in the allocation: for example, for 8 ``db_nodes`` and 2 ``db_per_host``
         the ``host_list`` must contain the addresses of hosts 1, 2, 3, and 4.
 
-        LSFOrchestrator is launched with only one ``jsrun`` command
-        as launch binary, and a Explicit Resource File (ERF) which is
+        ``LSFOrchestrator`` is launched with only one ``jsrun`` command
+        as launch binary, and an Explicit Resource File (ERF) which is
         automatically generated. The orchestrator is always launched on the
         first ``db_nodes//db_per_host`` compute nodes in the allocation.
 
@@ -82,26 +82,26 @@ class LSFOrchestrator(Orchestrator):
         network addresses (or hostnames). See the function ``convert_hostnames``
         for details.
 
-        :param port: TCP/IP port
+        :param port: TCP/IP port, defaults to 6379
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
-        :param cpus_per_shard: cpus to allocate per shard
-        :type cpus_per_shard: int
-        :param gpus_per_shard: gpus to allocate per shard
-        :type gpus_per_shard: int
+        :param cpus_per_shard: cpus to allocate per shard, defaults to 4
+        :type cpus_per_shard: int, optional
+        :param gpus_per_shard: gpus to allocate per shard, defaults to 0
+        :type gpus_per_shard: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
-        :type hosts: list[str]
+        :type hosts: list[str], optional
         :param project: project to run batch on
-        :type project: str
+        :type project: str, optional
         :param time: walltime for batch 'HH:MM' format
-        :type time: str
+        :type time: str, optional
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
         :param host_map: function to convert hostnames
-        :type host_map: callable function
+        :type host_map: callable function, optional
         """
         self.cpus_per_shard = cpus_per_shard
         self.gpus_per_shard = gpus_per_shard
@@ -143,6 +143,7 @@ class LSFOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "m", "n", etc.
 
         :param arg: batch argument to set e.g. "exclusive"
         :type arg: str
@@ -165,6 +166,7 @@ class LSFOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "chdir", "np"
 
         :param arg: run argument to set
         :type arg: str

@@ -56,24 +56,24 @@ class CobaltOrchestrator(Orchestrator):
 
         The Cobalt orchestrator does not support multiple databases per node.
 
-        :param port: TCP/IP port
+        :param port: TCP/IP port, defaults to 6379
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
-        :param hosts: specify hosts to launch on
+        :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
-        :type run_command: str
-        :param interface: network interface to use
-        :type interface: str
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to "aprun".
+        :type run_command: str, optional
+        :param interface: network interface to use, defaults to "ipogif0"
+        :type interface: str, optional
         :param account: account to run batch on
-        :type account: str
+        :type account: str, optional
         :param queue: queue to launch batch in
-        :type queue: str
+        :type queue: str, optional
         :param time: walltime for batch 'HH:MM:SS' format
-        :type time: str
+        :type time: str, optional
         """
         super().__init__(
             port,
@@ -81,7 +81,7 @@ class CobaltOrchestrator(Orchestrator):
             db_nodes=db_nodes,
             batch=batch,
             run_command=run_command,
-            **kwargs
+            **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
             db_nodes, batch, account, queue, time
@@ -153,6 +153,7 @@ class CobaltOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "cwd", "jobname", etc.
 
         :param arg: batch argument to set e.g. "exclusive"
         :type arg: str
@@ -175,6 +176,7 @@ class CobaltOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "wdir", "n", etc.
 
         :param arg: run argument to set
         :type arg: str
@@ -239,7 +241,7 @@ class CobaltOrchestrator(Orchestrator):
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
             start_script_args = [
-                start_script,                  # redis_starter.py
+                start_script,  # redis_starter.py
                 f"+ifname={self._interface}",  # pass interface to start script
                 "+command",                    # command flag for argparser
                 redis_exe,                     # redis-server
@@ -253,9 +255,9 @@ class CobaltOrchestrator(Orchestrator):
                 start_script_args += self._get_cluster_args(db_node_name, port)
 
             # Python because we use redis_starter.py to run redis
-            run_settings = self._build_run_settings("python",
-                                                    start_script_args,
-                                                    **kwargs)
+            run_settings = self._build_run_settings(
+                "python", start_script_args, **kwargs
+            )
             node = DBNode(db_node_name, self.path, run_settings, [port])
             self.entities.append(node)
         self.ports = [port]
