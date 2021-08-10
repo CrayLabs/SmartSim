@@ -72,12 +72,12 @@ class SlurmOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``srun``
-        :type run_command: str
+        :param run_command: specify launch binary. Options are "mpirun" and "srun", defaults to "srun"
+        :type run_command: str, optional
         :param account: account to run batch on
-        :type account: str
+        :type account: str, optional
         :param time: walltime for batch 'HH:MM:SS' format
-        :type time: str
+        :type time: str, optional
         :param alloc: allocation to launch on, defaults to None
         :type alloc: str, optional
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
@@ -180,6 +180,7 @@ class SlurmOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "n", "N", etc.
 
         :param arg: run argument to set
         :type arg: str
@@ -275,15 +276,15 @@ class SlurmOrchestrator(Orchestrator):
             for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
                 start_script_args = [
-                    start_script,                  # redis_starter.py
+                    start_script,  # redis_starter.py
                     f"+ifname={self._interface}",  # pass interface to start script
-                    "+command",                    # command flag for argparser
-                    redis_exe,                     # redis-server
-                    db_conf,                       # redis6.conf file
-                    ai_module,                     # redisai.so
-                    ip_module,                     # libredisip.so
-                    "--port",                      # redis port
-                    str(next_port),                # port number
+                    "+command",  # command flag for argparser
+                    redis_exe,  # redis-server
+                    db_conf,  # redis6.conf file
+                    ai_module,  # redisai.so
+                    ip_module,  # libredisip.so
+                    "--port",  # redis port
+                    str(next_port),  # port number
                 ]
                 if cluster:
                     start_script_args += self._get_cluster_args(db_node_name, next_port)

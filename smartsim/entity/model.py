@@ -57,7 +57,8 @@ class Model(SmartSimEntity):
         with that entity
 
         :param incoming_entity: The entity that data will be received from
-        :param incoming_entity: SmartSimEntity
+        :type incoming_entity: SmartSimEntity
+        :raises SmartSimError: if incoming entity has already been registered
         """
         if incoming_entity.name in [
             in_entity.name for in_entity in self.incoming_entities
@@ -87,7 +88,7 @@ class Model(SmartSimEntity):
         Attach files needed for the entity that, upon generation,
         will be located in the path of the entity.
 
-        During generation files "to_copy" are just copied into
+        During generation, files "to_copy" are copied into
         the path of the entity, and files "to_symlink" are
         symlinked into the path of the entity.
 
