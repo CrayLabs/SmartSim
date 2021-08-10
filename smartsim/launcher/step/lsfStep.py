@@ -139,11 +139,11 @@ class JsrunStep(Step):
         if self.run_settings.individual_suffix:
             partitioned_output = output.rpartition(".")
             output_prefix = partitioned_output[0]+self.run_settings.individual_suffix
-            output_suffix = partitioned_output[1]
+            output_suffix = partitioned_output[-1]
             output = ".".join([output_prefix, output_suffix])
             partitioned_error = error.rpartition(".")
             error_prefix = partitioned_error[0]+self.run_settings.individual_suffix
-            error_suffix = partitioned_error[1]
+            error_suffix = partitioned_error[-1]
             error = ".".join([error_prefix, error_suffix])
             
         return output, error
