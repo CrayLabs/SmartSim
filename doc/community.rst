@@ -30,4 +30,4 @@ Questions and discussion about SmartSim should be directed to the following area
 
 How to Behave?
 --------------
-We believe it is important for all users and contibutors to SmartSim to have a great experience. Please review our :ref:`Code of Conduct <conduct>` for community guidelines and expectations.
+We believe it is important for all users and contributors to SmartSim to have a great experience. Please review our :ref:`Code of Conduct <conduct>` for community guidelines and expectations.

@@ -111,7 +111,7 @@ class RunSettings:
         """Add executable arguments to executable
 
         :param args: executable arguments
-        :type args: list[str]
+        :type args: str | list[str]
         :raises TypeError: if exe args are not strings
         """
         if isinstance(args, str):

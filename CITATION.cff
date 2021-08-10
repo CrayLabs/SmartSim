@@ -1,0 +1,29 @@
+cff-version: 1.1.0
+authors:
+  - family-names: Partee
+    given-names: Sam
+    orcid: https://orcid.org/0000-0001-6005-5116
+    email: spartee@hpe.com
+  - family-names: Ellis
+    given-names: Matthew
+    orcid: https://orcid.org/0000-0002-5782-5447
+  - family-names: Rigazzi
+    given-names: Alessandro
+    orcid: https://orcid.org/0000-0003-2132-7726
+  - family-names: Bachman
+    given-names: Scott
+    orcid: https://orcid.org/0000-0002-6479-4300
+  - family-names: Marques
+    given-names: Gustavo
+    orcid: https://orcid.org/0000-0001-7238-0290
+  - family-names: Shao
+    given-names: Andrew
+    orcid: https://orcid.org/0000-0003-3658-512X
+  - family-names: Benjamin
+    given-names: Robbins
+    orcid: https://orcid.org/0000-0003-3658-512X
+
+title: "Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling"
+doi: 10.5281/zenodo.4682270
+date-released: 2021-4-12
+license: "BSD-2-Clause"

@@ -43,7 +43,7 @@ different applications, however, to be used with our clients (SmartRedis)
 the application will have to be written in Python, C, C++, or Fortran.
 
 Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel should
-be excuted with regards to the workload manager (e.g. Slurm) and the available
+be executed with regard to the workload manager (e.g. Slurm) and the available
 compute resources on the system.
 
 Each launcher supports specific types of ``RunSettings``.
@@ -111,7 +111,7 @@ workload manager and available compute resources.
   - :ref:`QsubBatchSettings <qsub_api>` for PBSPro
   - :ref:`CobaltBatchSettings <cqsub_api>` for Cobalt
 
-If only passed  ``RunSettings``, ``Ensemble`` objects will require either
+If only passed ``RunSettings``, ``Ensemble`` objects will require either
 a ``replicas`` argument or a ``params`` argument to expand parameters
 into ``Model`` instances. At launch, the ``Ensemble`` will look for
 interactive allocations to launch models in.

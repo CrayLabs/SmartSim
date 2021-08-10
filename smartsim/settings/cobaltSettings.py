@@ -90,8 +90,8 @@ class CobaltBatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -150,7 +150,6 @@ class CobaltBatchSettings(BatchSettings):
                 # attach "-" prefix if argument is 1 character otherwise "--"
                 short_arg = bool(len(str(opt)) == 1)
                 prefix = "-" if short_arg else "--"
-
                 if not value:
                     opts += [prefix + opt]
                 else:
