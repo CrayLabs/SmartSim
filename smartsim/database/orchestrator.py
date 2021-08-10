@@ -308,10 +308,9 @@ class Orchestrator(EntityList):
         if self._interface not in net_if_addrs:
             available = list(net_if_addrs.keys())
             logger.warning(
-                f"{self._interface} is not a valid network interface on this node. "
-                "This could be because the head node doesn't have the same networks, if so, ignore"
-                f"Found network interfaces are: {available}"
-            )
+                f"{self._interface} is not a valid network interface on this node. \n"
+                "This could be because the head node doesn't have the same networks, if so, ignore this.")
+            logger.warning(f"Found network interfaces are: {available}")
 
 def get_ip_from_host(host):
     """Return the IP address for the interconnect.

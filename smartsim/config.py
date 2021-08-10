@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import psutil
 import os.path as osp
 from pathlib import Path
 from shutil import which
@@ -100,7 +101,11 @@ class Config:
                     "modules": {"ai": lib_path},
                 },
                 "smartsim": {"jm_interval": 15, "log_level": "info"},
-                "test": {"launcher": "local", "device": "CPU"},
+                "test": {
+                    "launcher": "local",
+                    "device": "CPU",
+                    "interface": "ipogif0"
+                    },
             }
             return default
 
@@ -186,6 +191,25 @@ class Config:
                 return device
         except KeyError:
             return "CPU"  # cpu by default
+
+    @property
+    def test_interface(self):
+        try:
+            if "SMARTSIM_TEST_INTERFACE" in os.environ:
+                return os.environ["SMARTSIM_TEST_INTERFACE"]
+            else:
+                interface = self.conf["test"]["interface"]
+                return interface
+        except KeyError:
+            # try to pick a sensible one
+            net_if_addrs = psutil.net_if_addrs()
+            if "ipogif0" in net_if_addrs:
+                return "ipogif0"
+            elif "ib0" in net_if_addrs:
+                return "ib0"
+            # default to aries network
+            return "ipogif0"
+
 
     @property
     def log_level(self):

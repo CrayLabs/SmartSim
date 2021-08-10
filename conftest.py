@@ -3,12 +3,15 @@ import shutil
 import pytest
 import psutil
 import smartsim
-from smartsim.database import CobaltOrchestrator, SlurmOrchestrator
-from smartsim.database import PBSOrchestrator, Orchestrator
-from smartsim.database import LSFOrchestrator
-from smartsim.settings import SrunSettings, AprunSettings
-from smartsim.settings import JsrunSettings
-from smartsim.settings import RunSettings
+from smartsim.database import (
+    CobaltOrchestrator, SlurmOrchestrator,
+    PBSOrchestrator, Orchestrator,
+    LSFOrchestrator
+)
+from smartsim.settings import (
+    SrunSettings, AprunSettings,
+    JsrunSettings, RunSettings
+)
 from smartsim.config import CONFIG
 
 
@@ -17,6 +20,7 @@ test_path = os.path.dirname(os.path.abspath(__file__))
 test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
+test_nic = CONFIG.test_interface
 
 def get_account():
     global test_account
@@ -28,12 +32,14 @@ def print_test_configuration():
     global test_dir
     global test_launcher
     global test_account
-    print("TEST_SMARTSIM_LOCATION: ", smartsim.__path__)
+    global test_nic
+    print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
-    print("TEST_LAUNCHER", test_launcher)
+    print("TEST_LAUNCHER:", test_launcher)
     if test_account != "":
-        print("TEST_ACCOUNT", test_account)
-    print("TEST_DEVICE", test_device)
+        print("TEST_ACCOUNT:", test_account)
+    print("TEST_DEVICE:", test_device)
+    print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
@@ -95,6 +101,11 @@ class WLMUtils:
         return test_account
 
     @staticmethod
+    def get_test_interface():
+        global test_nic
+        return test_nic
+
+    @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
             run_args = {"nodes": nodes,
@@ -127,16 +138,17 @@ class WLMUtils:
     @staticmethod
     def get_orchestrator(nodes=1, port=6780, batch=False):
         global test_launcher
+        global test_nic
         if test_launcher == "slurm":
-            db = SlurmOrchestrator(db_nodes=nodes, port=port, batch=batch)
+            db = SlurmOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
         elif test_launcher == "pbs":
-            db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch)
+            db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
         elif test_launcher == "cobalt":
-            db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch)
+            db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
         elif test_launcher == "lsf":
-            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, project=get_account())
+            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, project=get_account(), interface=test_nic)
         else:
-            db = Orchestrator(port=port)
+            db = Orchestrator(port=port, interface="lo")
         return db
 
 

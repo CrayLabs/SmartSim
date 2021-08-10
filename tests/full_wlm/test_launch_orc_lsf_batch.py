@@ -18,9 +18,14 @@ def test_launch_lsf_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = LSFOrchestrator(
-        6780, batch=True, project=wlmutils.get_test_account(), time="00:05", smts=1
-    )
+    network_interface = wlmutils.get_test_interface()
+    orc = LSFOrchestrator(6780,
+                          batch=True,
+                          project=wlmutils.get_test_account(),
+                          interface=network_interface,
+                          time="00:05",
+                          smts=1
+                          )
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -43,11 +48,13 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
+    network_interface = wlmutils.get_test_interface()
     orc = LSFOrchestrator(
         6780,
         db_nodes=3,
         batch=True,
         project=wlmutils.get_test_account(),
+        interface=network_interface,
         time="00:03",
         smts=1,
     )
@@ -74,11 +81,13 @@ def test_launch_lsf_cluster_orc_reconnect(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
+    network_interface = wlmutils.get_test_interface()
     orc = LSFOrchestrator(
         6780,
         db_nodes=3,
         batch=True,
         project=wlmutils.get_test_account(),
+        interface=network_interface,
         time="00:05",
         smts=1,
     )

@@ -1,7 +1,12 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import Orchestrator
+from smartsim.database import (
+    Orchestrator,
+    PBSOrchestrator,
+    SlurmOrchestrator,
+    CobaltOrchestrator
+)
 from smartsim.error import SmartSimError
 
 
@@ -54,7 +59,6 @@ def test_orc_active_functions(fileutils):
 
     exp.stop(db)
 
-    # TODO: Update is_active code after smartredis 0.2.0 is released
     assert not db.is_active()
 
     # check if orchestrator.get_address() raises an exception
@@ -71,3 +75,83 @@ def test_catch_local_db_errors():
     # MPMD local orchestrator not allowed
     with pytest.raises(SmartSimError):
         db = Orchestrator(db_per_host=2)
+
+
+
+#####  PBS  ######
+
+def test_pbs_set_run_arg():
+    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
+    orc.set_run_arg("account", "ACCOUNT")
+    assert all(
+        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+    )
+    orc.set_run_arg("pes‐per‐numa‐node", "5")
+    assert all(
+        ["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities]
+    )
+
+
+def test_pbs_set_batch_arg():
+    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("account", "ACCOUNT")
+
+    orc2 = PBSOrchestrator(6780, db_nodes=3, batch=True)
+    orc2.set_batch_arg("account", "ACCOUNT")
+    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
+    orc2.set_batch_arg("N", "another_name")
+    assert "N" not in orc2.batch_settings.batch_args
+
+
+##### Slurm ######
+
+
+
+def test_slurm_set_run_arg():
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
+    orc.set_run_arg("account", "ACCOUNT")
+    assert all(
+        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+    )
+    orc.set_run_arg("nodefile", "nonexisting.txt")
+    assert all(["nodefile" not in db.run_settings.run_args for db in orc.entities])
+
+
+def test_slurm_set_batch_arg():
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("account", "ACCOUNT")
+
+    orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    orc2.set_batch_arg("account", "ACCOUNT")
+    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
+    orc2.set_batch_arg("nodelist", "host1,host2,host3")
+    assert "nodelist" not in orc2.batch_settings.batch_args
+
+
+###### Cobalt ######
+
+
+def test_set_run_arg():
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    orc.set_run_arg("account", "ACCOUNT")
+    assert all(
+        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
+    )
+    orc.set_run_arg("pes‐per‐numa‐node", "2")
+    assert all(
+        ["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities]
+    )
+
+
+def test_set_batch_arg():
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("account", "ACCOUNT")
+
+    orc2 = CobaltOrchestrator(6780, db_nodes=3, batch=True)
+    orc2.set_batch_arg("account", "ACCOUNT")
+    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
+    orc2.set_batch_arg("outputprefix", "new_output/")
+    assert "outputprefix" not in orc2.batch_settings.batch_args
