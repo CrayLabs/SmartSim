@@ -12,6 +12,15 @@ def test_catch_orc_errors_lsf():
             6780, db_nodes=2, db_per_host=2, batch=False
         )
 
+    orc = LSFOrchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        hosts=["batch", "host1", "host2"],
+    )
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("P", "MYPROJECT")
+
 def test_set_run_args():
 
     orc = LSFOrchestrator(
@@ -28,20 +37,10 @@ def test_set_batch_args():
     orc = LSFOrchestrator(
         6780,
         db_nodes=3,
-        batch=False,
-        hosts=["batch", "host1", "host2"],
-    )
-    assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
-
-    with pytest.raises(SmartSimError):
-        orc.set_batch_arg("P", "MYPROJECT")
-
-    orc2 = LSFOrchestrator(
-        6780,
-        db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
     )
 
-    orc2.set_batch_arg("D", "102400000")
-    assert orc2.batch_settings.batch_args["D"] == "102400000"
+    assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
+    orc.set_batch_arg("D", "102400000")
+    assert orc.batch_settings.batch_args["D"] == "102400000"
