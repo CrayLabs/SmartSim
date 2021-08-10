@@ -208,7 +208,7 @@ class RayCluster(EntityList):
         :return: address of the head host
         :rtype: str
         """
-        
+
         head_log = os.path.join(self.ray_head.path, self.ray_head.name + ".out")
 
         max_attempts = 10
@@ -217,7 +217,9 @@ class RayCluster(EntityList):
             _time.sleep(1)
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError(f"Could not find Ray cluster head log file {head_log}")
+                raise RuntimeError(
+                    f"Could not find Ray cluster head log file {head_log}"
+                )
 
         attempts = 0
         head_ip = None
@@ -234,7 +236,9 @@ class RayCluster(EntityList):
                     line = fp.readline()
             attempts += 1
             if attempts == max_attempts:
-                raise RuntimeError(f"Could not find Ray cluster head address in log file {head_log}.")
+                raise RuntimeError(
+                    f"Could not find Ray cluster head address in log file {head_log}."
+                )
 
         self.ray_head_address = head_ip
 
@@ -263,12 +267,13 @@ class RayCluster(EntityList):
     def _update_workers(self):
         """Update worker args before launching them."""
         for worker in range(1, len(self.entities)):
-            self.entities[worker].set_head_log(f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out")
+            self.entities[worker].set_head_log(
+                f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out"
+            )
 
 
 def find_ray_exe():
-    """Find ray executable in current path.
-    """
+    """Find ray executable in current path."""
     try:
         ray_exe = expand_exe_path("ray")
         return ray_exe
@@ -277,8 +282,7 @@ def find_ray_exe():
 
 
 def find_ray_stater_script():
-    """Find location of script used to start Ray nodes.
-    """
+    """Find location of script used to start Ray nodes."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     return f"{dir_path}/raystarter.py"
 
@@ -411,7 +415,7 @@ class RayWorker(SmartSimEntity):
 
     def set_head_log(self, head_log):
         """Set head log file (with full path)
-        
+
         The head log file is used by the worker to discover
         the head IP address. This function is called by
         RayCluster before the cluster is launched.
@@ -431,7 +435,15 @@ class RayWorker(SmartSimEntity):
         if ray_password:
             ray_starter_args += [f"+redis-password={ray_password}"]
 
-        used = ["block", "redis-password", "start", "head", "port", "dashboard-port", "dashboard-host"]
+        used = [
+            "block",
+            "redis-password",
+            "start",
+            "head",
+            "port",
+            "dashboard-port",
+            "dashboard-host",
+        ]
         extra_ray_args = []
         for key, value in ray_args.items():
             if key not in used:

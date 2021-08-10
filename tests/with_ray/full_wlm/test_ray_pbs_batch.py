@@ -29,6 +29,8 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
+INTERFACE = "ipogif0"
+
 
 def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
@@ -50,6 +52,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         ray_port=6830,
         time="00:05:00",
         password=None,
+        interface=INTERFACE,
     )
 
     exp.generate(cluster)

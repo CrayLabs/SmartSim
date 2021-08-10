@@ -16,6 +16,7 @@ from smartsim.ext.ray import RayCluster
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
+INTERFACE = "ipogif0"
 
 environ["OMP_NUM_THREADS"] = "1"
 try:
@@ -50,6 +51,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         time="00:05:00",
         ray_port=6830,
         password=None,
+        interface=INTERFACE,
     )
 
     exp.generate(cluster)
