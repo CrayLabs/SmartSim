@@ -127,7 +127,7 @@ class RayCluster(EntityList):
                 self._ray_password = password
         else:
             self._ray_password = None
-        self.ray_head = None
+        
         self.alloc = None
         self.batch_settings = None
         self._hosts = None
@@ -170,7 +170,7 @@ class RayCluster(EntityList):
         interface = kwargs.get("interface", "eth0")
         alloc = kwargs.get("alloc", None)
 
-        self.ray_head = RayHead(
+        ray_head = RayHead(
             name="ray_head",
             path=self.path,
             ray_password=self._ray_password,
@@ -182,10 +182,10 @@ class RayCluster(EntityList):
             alloc=alloc,
         )
 
-        self.entities.append(self.ray_head)
+        self.entities.append(ray_head)
 
         for worker_id in range(self._workers):
-            self.worker_model = RayWorker(
+            worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
                 run_args=run_args,
@@ -196,7 +196,7 @@ class RayCluster(EntityList):
                 launcher=launcher,
                 alloc=alloc,
             )
-            self.entities.append(self.worker_model)
+            self.entities.append(worker_model)
 
     def _build_batch_settings(self, workers, time, batch_args):
         if self._launcher == "pbs":
