@@ -222,13 +222,6 @@ The Python client for SmartRedis is installed through
 Build SmartRedis Library (C++, C, Fortran)
 ==========================================
 
-Building the SmartRedis library, in addition to the specified prerequisites,
-also requires the installation of the following tools
-
-  - autoconf
-  - automake
-  - libtool
-
 
 .. include:: ../smartredis/doc/install/lib.rst
 
