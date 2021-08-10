@@ -234,9 +234,7 @@ class RayCluster(EntityList):
     def _update_workers(self):
         """Update worker args before launching them."""
         for worker in range(1, len(self.entities)):
-            self.entities[worker].run_settings.exe_args += [
-                f"--head-log={os.path.join(self.ray_head.path, self.ray_head.name)}.out"
-            ]
+            self.entities[worker].set_head_log(f"{os.path.join(self.ray_head.path, self.ray_head.name)}.out")
 
 
 def find_ray_exe():
@@ -286,25 +284,25 @@ class RayHead(SmartSimEntity):
         starter_script = find_ray_stater_script()
         ray_starter_args = [
             starter_script,
-            f"--port={ray_port}",
-            f"--ifname={interface}",
-            f"--ray-exe={find_ray_exe()}",
-            f"--head",
+            f"+port={ray_port}",
+            f"+ifname={interface}",
+            f"+ray-exe={find_ray_exe()}",
+            f"+head",
         ]
 
         if ray_password:
-            ray_starter_args += [f"--redis-password={ray_password}"]
+            ray_starter_args += [f"+redis-password={ray_password}"]
 
         if "dashboard-port" in ray_args:
             self.dashboard_port = int(ray_args["dashboard-port"])
-        ray_starter_args += [f"--dashboard-port={self.dashboard_port}"]
+        ray_starter_args += [f"+dashboard-port={self.dashboard_port}"]
 
         used = ["block", "redis-password", "start", "head", "port", "dashboard-port"]
         extra_ray_args = []
         for key, value in ray_args.items():
             if key not in used:
-                extra_ray_args += [f"--{key}={value}"]
-        ray_starter_args += [f'--ray-args="{" ".join(extra_ray_args)}"']
+                extra_ray_args += [f"+ray-args=--{key}={value}"]
+        ray_starter_args += extra_ray_args
 
         return " ".join(ray_starter_args)
 
@@ -378,8 +376,14 @@ class RayWorker(SmartSimEntity):
     def batch(self):
         return False
 
-    def set_ray_address(self, address):
-        self.run_settings.add_exe_args([f"--address={address}"])
+    def set_head_log(self, head_log):
+        """Set head log file (with full path)
+        
+        The head log file is used by the worker to discover
+        the head IP address. This function is called by
+        RayCluster before the cluster is launched.
+        """
+        self.run_settings.add_exe_args([f"+head-log={head_log}"])
 
     def _build_ray_exe_args(self, ray_password, ray_args, ray_port, interface):
 
@@ -387,19 +391,19 @@ class RayWorker(SmartSimEntity):
         starter_script = find_ray_stater_script()
         ray_starter_args = [
             starter_script,
-            f"--ray-exe={find_ray_exe()}",
-            f"--port={ray_port}",
-            f"--ifname={interface}",
+            f"+ray-exe={find_ray_exe()}",
+            f"+port={ray_port}",
+            f"+ifname={interface}",
         ]
         if ray_password:
-            ray_starter_args += [f"--redis-password={ray_password}"]
+            ray_starter_args += [f"+redis-password={ray_password}"]
 
-        used = ["block", "redis-password", "start", "head", "port", "dashboard-port"]
+        used = ["block", "redis-password", "start", "head", "port", "dashboard-port", "dashboard-host"]
         extra_ray_args = []
         for key, value in ray_args.items():
             if key not in used:
-                extra_ray_args += [f"--{key}={value}"]
-        ray_starter_args += [f'--ray-args="{" ".join(extra_ray_args)}"']
+                extra_ray_args += [f"+ray-args=--{key}={value}"]
+        ray_starter_args += extra_ray_args
 
         return " ".join(ray_starter_args)
 
