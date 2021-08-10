@@ -2,12 +2,12 @@ import logging
 import sys
 import time
 from os import environ
-from shutil import which
 
 import pytest
 
 from smartsim import Experiment
 from smartsim.ext.ray import RayCluster
+from smartsim.launcher import slurm
 
 """Test Ray cluster Slurm launch and shutdown.
 """
@@ -30,13 +30,13 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
+def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
-    if launcher != "pbs":
-        pytest.skip("Test only runs on systems with PBS as WLM")
+    if launcher != "slurm":
+        pytest.skip("Test only runs on systems with Slurm as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-pbs-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown-batch")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -46,9 +46,8 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         launcher=launcher,
         workers=1,
         alloc=None,
-        batch=False,
-        time="00:05:00",
-        ray_port=6830,
+        batch=True,
+        interface="ib0",
         password=None
     )
 
@@ -70,3 +69,4 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
 
     ctx.disconnect()
     exp.stop(cluster)
+

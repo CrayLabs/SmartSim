@@ -30,13 +30,13 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
+def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
     if launcher != "pbs":
         pytest.skip("Test only runs on systems with PBS as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-pbs-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir("test-ray-pbs-launch-and-shutdown-batch")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -46,9 +46,9 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         launcher=launcher,
         workers=1,
         alloc=None,
-        batch=False,
-        time="00:05:00",
+        batch=True,
         ray_port=6830,
+        time="00:05:00",
         password=None
     )
 

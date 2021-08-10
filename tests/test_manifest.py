@@ -35,7 +35,10 @@ if ray_ok:
 
 
 def test_separate():
-    manifest = Manifest(model, ensemble, orc, rc)
+    if ray_ok:
+        manifest = Manifest(model, ensemble, orc, rc)
+    else:
+        manifest = Manifest(model, ensemble, orc)
     assert manifest.models[0] == model
     assert len(manifest.models) == 1
     assert manifest.ensembles[0] == ensemble
@@ -48,7 +51,7 @@ def test_separate():
 
 def test_no_name():
     with pytest.raises(AttributeError):
-        manifest = Manifest(model_no_name)
+        _ = Manifest(model_no_name)
 
 
 def test_two_orc():
@@ -59,12 +62,12 @@ def test_two_orc():
 
 def test_separate_type():
     with pytest.raises(TypeError):
-        manifest = Manifest([1, 2, 3])
+        _ = Manifest([1, 2, 3])
 
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        manifest = Manifest(model, model_2)
+        _ = Manifest(model, model_2)
 
 
 def test_corner_case():
@@ -77,4 +80,4 @@ def test_corner_case():
 
     p = Person()
     with pytest.raises(TypeError):
-        manifest = Manifest(p)
+        _ = Manifest(p)
