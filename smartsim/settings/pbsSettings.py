@@ -49,19 +49,19 @@ class QsubBatchSettings(BatchSettings):
         the value for select statement supplied in ``resources``
         will override.
 
-        :param nodes: number of nodes for batch
+        :param nodes: number of nodes for batch, defaults to None
         :type nodes: int, optional
-        :param ncpus: number of cpus per node
+        :param ncpus: number of cpus per node, defaults to None
         :type ncpus: int, optional
-        :param time: walltime for batch job
+        :param time: walltime for batch job, defaults to None
         :type time: str, optional
-        :param queue: queue to run batch in
-        :type queue: str
-        :param account: account for batch launch
+        :param queue: queue to run batch in, defaults to None
+        :type queue: str, optional
+        :param account: account for batch launch, defaults to None
         :type account: str, optional
-        :param resources: overrides for resource arguments
+        :param resources: overrides for resource arguments, defaults to None
         :type resources: dict[str, str], optional
-        :param batch_args: overrides for PBS batch arguments
+        :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
         super().__init__("qsub", batch_args=batch_args)

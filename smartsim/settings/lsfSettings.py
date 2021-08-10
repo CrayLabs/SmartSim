@@ -135,14 +135,14 @@ class JsrunSettings(RunSettings):
         self.run_args["bind"] = binding
 
     def make_mpmd(self, jsrun_settings=None):
-        """Make step a MPMD (or SPMD) job.
+        """Make step an MPMD (or SPMD) job.
 
         This method will activate job execution through an ERF file.
 
         Optionally, this method adds an instance of ``JsrunSettings`` to
         the list of settings to be launched in the same ERF file.
 
-        :param aprun_settings: ``JsrunSettings`` instance
+        :param aprun_settings: ``JsrunSettings`` instance, defaults to None
         :type aprun_settings: JsrunSettings, optional
         """
         if len(self.mpmd) == 0:
@@ -200,7 +200,7 @@ class JsrunSettings(RunSettings):
     def format_run_args(self):
         """Return a list of LSF formatted run arguments
 
-        :return: list LSF arguments for these settings
+        :return: list of LSF arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses
@@ -275,16 +275,16 @@ class BsubBatchSettings(BatchSettings):
     ):
         """Specify ``bsub`` batch parameters for a job
 
-        :param nodes: number of nodes for batch
+        :param nodes: number of nodes for batch, defaults to None
         :type nodes: int, optional
-        :param time: walltime for batch job in format hh:mm
+        :param time: walltime for batch job in format hh:mm, defaults to None
         :type time: str, optional
-        :param project: project for batch launch
+        :param project: project for batch launch, defaults to None
         :type project: str, optional
-        :param smts: SMTs
-        :type smts: int, optional
-        :param batch_args: overrides for LSF batch arguments
+        :param batch_args: overrides for LSF batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
+        :param smts: SMTs, defaults to None
+        :type smts: int, optional
         """
         super().__init__("bsub", batch_args=batch_args)
         if nodes:
@@ -303,7 +303,7 @@ class BsubBatchSettings(BatchSettings):
 
         This sets ``-W``.
 
-        :param time: Time in hh:mm format
+        :param time: Time in hh:mm format, e.g. "10:00" for 10 hours
         :type time: str
         """
         self.walltime = time
@@ -402,7 +402,7 @@ class BsubBatchSettings(BatchSettings):
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
-        :return: batch arguments for Qsub
+        :return: list of batch arguments for Qsub
         :rtype: list[str]
         """
         opts = []
