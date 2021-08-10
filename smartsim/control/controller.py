@@ -311,18 +311,6 @@ class Controller:
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
             self._launch_step(orc_batch_step, orchestrator)
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                nodelist = self._launcher.get_step_nodes([orc_batch_step.name])
-                orchestrator._hosts = nodelist[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node acquisition unsupported, moving to RedisIP fallback"
-                )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -330,21 +318,8 @@ class Controller:
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
-            # wait for orchestrator to spin up
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                db_step_names = [db_step[0].name for db_step in db_steps]
-                nodes = self._launcher.get_step_nodes(db_step_names)
-                for db, node in zip(orchestrator, nodes):
-                    db._host = node[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node acquisition unsupported, moving to RedisIP fallback"
-                )
+        # wait for orchestrator to spin up
+        self._orchestrator_launch_wait(orchestrator)
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each

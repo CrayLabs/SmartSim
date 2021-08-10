@@ -81,7 +81,7 @@ def test_catch_local_db_errors():
 #####  PBS  ######
 
 def test_pbs_set_run_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
+    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -93,11 +93,11 @@ def test_pbs_set_run_arg():
 
 
 def test_pbs_set_batch_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
+    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = PBSOrchestrator(6780, db_nodes=3, batch=True)
+    orc2 = PBSOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("N", "another_name")
@@ -109,7 +109,7 @@ def test_pbs_set_batch_arg():
 
 
 def test_slurm_set_run_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -119,11 +119,11 @@ def test_slurm_set_run_arg():
 
 
 def test_slurm_set_batch_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("nodelist", "host1,host2,host3")
@@ -134,7 +134,7 @@ def test_slurm_set_batch_arg():
 
 
 def test_set_run_arg():
-    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -146,11 +146,11 @@ def test_set_run_arg():
 
 
 def test_set_batch_arg():
-    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False)
+    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = CobaltOrchestrator(6780, db_nodes=3, batch=True)
+    orc2 = CobaltOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("outputprefix", "new_output/")

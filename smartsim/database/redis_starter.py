@@ -57,7 +57,6 @@ def current_ip(interface="lo"):
 IP_ADDRESS = current_ip(args.ifname)
 COMMAND = args.command + [f"--bind {IP_ADDRESS}"]
 
-
 print("-"*10, "  Running  Command  ", "-"*10, "\n")
 print(f"COMMAND: {' '.join(COMMAND)}\n")
 print(f"IPADDRESS: {IP_ADDRESS}\n")

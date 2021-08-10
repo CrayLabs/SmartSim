@@ -124,10 +124,6 @@ class DBNode(SmartSimEntity):
     def _parse_db_host(self):
         """Parse the database host/IP from the output file
 
-        this uses the RedisIP module that is built as a dependency
-        The IP address is preferred, but if hostname is only present
-        then a lookup to /etc/hosts is done through the socket library
-
         :raises SmartSimError: if host/ip could not be found
         :return: ip address | hostname
         :rtype: str
@@ -150,13 +146,13 @@ class DBNode(SmartSimEntity):
             except FileNotFoundError:
                 pass
 
-            logger.debug("Waiting for RedisIP files to populate...")
+            logger.debug("Waiting for Redis output files to populate...")
             if not ip:
                 time.sleep(1)
                 trials -= 1
 
         if not ip:
-            logger.error("RedisIP address lookup strategy failed.")
+            logger.error("Redis IP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
         return ip
