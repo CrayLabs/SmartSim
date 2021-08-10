@@ -25,11 +25,11 @@ def delete_elements(dictionary, key_list):
 
 
 ### TODO
-#  - refactor cluster
-#  - refactor controller launch (rename things)
-#  - use set_ray_address
-#  - refactor comments
-#  - add ray_cluster utilies so there aren't so many _methods called
+#  - refactor cluster -> Refactored, the nodes are all entities now, the RayCluster behaves like an EntityList
+#  - refactor controller launch (rename things) -> This is now basically an enhanced EntityList launch
+#  - use set_ray_address -> using set_head_log now to make launch easier
+#  - refactor comments -> Should be OK now
+#  - add ray_cluster utilies so there aren't so many _methods called -> STILL OPEN
 
 
 class RayCluster(EntityList):
