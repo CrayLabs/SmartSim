@@ -1,10 +1,10 @@
-
-
-import os
 import argparse
-import psutil
+import os
 import socket
 from subprocess import PIPE, STDOUT, Popen
+
+import psutil
+
 
 def get_lb_interface_name():
     """Use psutil to get loopback interface name"""
@@ -42,10 +42,13 @@ def get_ip_from_interface(interface):
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 
-parser = argparse.ArgumentParser(prefix_chars="+", description="SmartSim Process Launcher")
+parser = argparse.ArgumentParser(
+    prefix_chars="+", description="SmartSim Process Launcher"
+)
 parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
 parser.add_argument("+command", nargs="+", help="Command to run")
 args = parser.parse_args()
+
 
 def current_ip(interface="lo"):
     if interface == "lo":
@@ -54,16 +57,17 @@ def current_ip(interface="lo"):
     else:
         return get_ip_from_interface(interface)
 
+
 IP_ADDRESS = current_ip(args.ifname)
 COMMAND = args.command + [f"--bind {IP_ADDRESS}"]
 
-print("-"*10, "  Running  Command  ", "-"*10, "\n")
+print("-" * 10, "  Running  Command  ", "-" * 10, "\n")
 print(f"COMMAND: {' '.join(COMMAND)}\n")
 print(f"IPADDRESS: {IP_ADDRESS}\n")
 print(f"NETWORK: {args.ifname}\n")
-print("-"*30, "\n\n")
+print("-" * 30, "\n\n")
 
-print("-"*10, "  Output  ", "-"*10, "\n\n")
+print("-" * 10, "  Output  ", "-" * 10, "\n\n")
 
 p = Popen(COMMAND, stdout=PIPE, stderr=STDOUT)
 

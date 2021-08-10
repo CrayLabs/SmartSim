@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import psutil
 import os.path as osp
 from pathlib import Path
 from shutil import which
 
+import psutil
 import toml
 
 from .error import SSConfigError
@@ -101,11 +101,7 @@ class Config:
                     "modules": {"ai": lib_path},
                 },
                 "smartsim": {"jm_interval": 15, "log_level": "info"},
-                "test": {
-                    "launcher": "local",
-                    "device": "CPU",
-                    "interface": "ipogif0"
-                    },
+                "test": {"launcher": "local", "device": "CPU", "interface": "ipogif0"},
             }
             return default
 
@@ -209,7 +205,6 @@ class Config:
                 return "ib0"
             # default to aries network
             return "ipogif0"
-
 
     @property
     def log_level(self):

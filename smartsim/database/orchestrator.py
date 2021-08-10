@@ -264,12 +264,12 @@ class Orchestrator(EntityList):
         start_script_args = [
             start_script,  # redis_starter.py
             f"+ifname={self._interface}",  # pass interface to start script
-            "+command",                    # command flag for argparser
-            redis_exe,                     # redis-server
-            db_conf,                       # redis6.conf file
-            ai_module,                     # redisai.so
-            "--port",                      # redis port
-            str(port),                     # port number
+            "+command",  # command flag for argparser
+            redis_exe,  # redis-server
+            db_conf,  # redis6.conf file
+            ai_module,  # redisai.so
+            "--port",  # redis port
+            str(port),  # port number
         ]
 
         exe_args = " ".join(start_script_args)
@@ -311,7 +311,8 @@ class Orchestrator(EntityList):
             available = list(net_if_addrs.keys())
             logger.warning(
                 f"{self._interface} is not a valid network interface on this node. \n"
-                "This could be because the head node doesn't have the same networks, if so, ignore this.")
+                "This could be because the head node doesn't have the same networks, if so, ignore this."
+            )
             logger.warning(f"Found network interfaces are: {available}")
 
 

@@ -47,7 +47,7 @@ class LSFOrchestrator(Orchestrator):
         project=None,
         time=None,
         db_per_host=1,
-        host_map=None,
+        interface="ib0",
         **kwargs,
     ):
 
@@ -76,13 +76,7 @@ class LSFOrchestrator(Orchestrator):
         automatically generated. The orchestrator is always launched on the
         first ``db_nodes//db_per_host`` compute nodes in the allocation.
 
-        Database nodes should always be accessed using high-speed networks. If
-        the hostnames provided are not attached to high-speed networks,
-        ``host_map`` should provide a way to obtain the high-speed
-        network addresses (or hostnames). See the function ``convert_hostnames``
-        for details.
-
-        :param port: TCP/IP port, defaults to 6379
+        :param port: TCP/IP port
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
@@ -100,15 +94,15 @@ class LSFOrchestrator(Orchestrator):
         :type time: str, optional
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
-        :param host_map: function to convert hostnames
-        :type host_map: callable function, optional
+        :param interface: network interface to use
+        :type interface: str
         """
         self.cpus_per_shard = cpus_per_shard
         self.gpus_per_shard = gpus_per_shard
-        self.host_map = host_map
 
         super().__init__(
             port,
+            interface,
             db_nodes=db_nodes,
             batch=batch,
             run_command="jsrun",
@@ -195,18 +189,11 @@ class LSFOrchestrator(Orchestrator):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
 
-        if self.host_map:
-            high_speed_hosts = self.convert_hostnames(host_list)
-            while "" in high_speed_hosts:
-                high_speed_hosts.remove("")
-        else:
-            high_speed_hosts = host_list
-
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
         for db in self.entities:
-            db.set_hosts(high_speed_hosts)
+            db.set_hosts(host_list)
 
     def _build_batch_settings(self, db_nodes, batch, project, time, **kwargs):
         batch_settings = None
@@ -226,8 +213,12 @@ class LSFOrchestrator(Orchestrator):
         for shard_id, args in enumerate(exe_args):
             host = shard_id // dph
             run_args["launch_distribution"] = "packed"
+
             run_settings = JsrunSettings(exe, args, run_args=run_args)
             run_settings.set_binding("none")
+
+            # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
+            run_settings.set_individual_output("_%t")
             # tell step to create a mpmd executable even if we only have one task
             # because we need to specify the host
             if host != old_host:
@@ -271,41 +262,35 @@ class LSFOrchestrator(Orchestrator):
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
+        redis_exe = CONFIG.redis_exe
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
         exe_args = []
         for db_id in range(db_nodes // dph):
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-
             ports = []
             for port_offset in range(dph):
                 next_port = int(port) + port_offset
                 db_shard_name = "_".join((self.name, str(db_id * dph + port_offset)))
                 node_exe_args = [
-                    db_conf,
-                    ai_module,
-                    ip_module,
-                    "--port",
-                    str(next_port),
-                    "--logfile",
-                    db_shard_name + ".out",
+                    start_script,  # redis_starter.py
+                    f"+ifname={self._interface}",  # pass interface to start script
+                    "+command",  # command flag for argparser
+                    redis_exe,  # redis-server
+                    db_conf,  # redis6.conf file
+                    ai_module,  # redisai.so
+                    "--port",  # redis port
+                    str(next_port),  # port number
                 ]
                 if cluster:
                     node_exe_args += self._get_cluster_args(db_shard_name, next_port)
                 exe_args.append(node_exe_args)
                 ports.append(next_port)
 
-        run_settings = self._build_run_settings(exe, exe_args, **kwargs)
-        node = DBNode(
-            self.name,
-            self.path,
-            run_settings,
-            ports,
-            self.convert_hostnames if self.host_map else None,
-        )
+        run_settings = self._build_run_settings("python", exe_args, **kwargs)
+        node = DBNode(self.name, self.path, run_settings, ports)
         node._multihost = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
@@ -314,55 +299,6 @@ class LSFOrchestrator(Orchestrator):
     @property
     def num_shards(self):
         return self.db_nodes
-
-    def convert_hostnames(self, hosts):
-        """Convert hostnames (or IPs) to corresponding high-speed network
-        addresses.
-
-        This is used on systems where the hosts have different
-        names and addresses for the different networks they are
-        attached to. For example, on some systems, the host `host1`
-        can be reached over InfiniBand with the hostname `host1-IB`,
-        in that case, translator should be a function returning the
-        IP address of `host1-1B`. The function can also just return
-        the high-speed network hostname, but the IP is preferrable.
-
-        If and only if hostnames cannot be obtained,
-        ``self.host_map`` should take IP addresses as arguments.
-
-        If some hostnames should not be used (e.g. because they are
-        batch nodes), the converter should convert them to an empty
-        string.
-
-        This function does a minimum of sanitization, avoiding
-        addresses of more than 256 characters or containing spaces.
-
-        :hosts: list of hostnames or IPs to convert
-        :type hosts: list[str]
-        """
-        if self.host_map is None:
-            return hosts
-        converted_hosts = []
-        for host in hosts:
-            converted_host = self.host_map(host)
-            if not isinstance(converted_host, str):
-                raise TypeError("Converter function must return string")
-
-            if len(converted_host) > 256:
-                logger.warning(
-                    "Converter returned hostname or address "
-                    + f"longer than 256 characters for original hostname {host}, "
-                    + "the name will be truncated"
-                )
-                converted_host = converted_host[:256]
-            if len(converted_host.split()) > 1:
-                raise ValueError(
-                    f"Converter must return single value for hostname {host}, "
-                    f'but returned "{converted_host}".'
-                )
-            converted_hosts.append(converted_host)
-
-        return converted_hosts
 
     def _fill_reserved(self):
         """Fill the reserved batch and run arguments dictionaries"""

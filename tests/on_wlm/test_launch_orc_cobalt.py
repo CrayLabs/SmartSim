@@ -52,10 +52,9 @@ def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = CobaltOrchestrator(6780, db_nodes=3,
-                             batch=False,
-                             inter_op_threads=4,
-                             interface=network_interface)
+    orc = CobaltOrchestrator(
+        6780, db_nodes=3, batch=False, inter_op_threads=4, interface=network_interface
+    )
     orc.set_path(test_dir)
 
     orc.set_cpus(4)
@@ -72,5 +71,3 @@ def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
-
-

@@ -345,7 +345,6 @@ class Controller:
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop
 

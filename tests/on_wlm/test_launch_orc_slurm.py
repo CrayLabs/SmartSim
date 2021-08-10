@@ -3,7 +3,6 @@ import pytest
 from smartsim import Experiment, constants
 from smartsim.database import SlurmOrchestrator
 
-
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")

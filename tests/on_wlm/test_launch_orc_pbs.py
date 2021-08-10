@@ -56,7 +56,9 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, inter_op_threads=4, interface=network_interface)
+    orc = PBSOrchestrator(
+        6780, db_nodes=3, batch=False, inter_op_threads=4, interface=network_interface
+    )
     orc.set_path(test_dir)
 
     orc.set_cpus(4)

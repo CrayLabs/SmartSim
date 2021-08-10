@@ -54,6 +54,7 @@ class JsrunSettings(RunSettings):
         self.erf_sets = {"host": "*", "cpu": "*", "ranks": "1"}
         self.mpmd_preamble_lines = []
         self.mpmd = []
+        self.individual_suffix = None
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
@@ -196,6 +197,23 @@ class JsrunSettings(RunSettings):
             else:
                 format_str += f"-E {k} "
         return format_str.rstrip(" ")
+
+    def set_individual_output(self, suffix=None):
+        """Set individual std output.
+
+        This sets ``--stdio_mode individual``
+        and inserts the suffix into the output name. The resulting
+        output name will be ``self.name + suffix + .out``.
+
+        :param suffix: Optional suffix to add to output file names,
+                       it can contain `%j`, `%h`, `%p`, or `%t`,
+                       as specified by `jsrun` options.
+        :type suffix: str, optional
+
+        """
+        self.run_args["stdio_mode"] = "individual"
+        if suffix:
+            self.individual_suffix = suffix
 
     def format_run_args(self):
         """Return a list of LSF formatted run arguments

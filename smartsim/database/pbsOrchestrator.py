@@ -247,12 +247,12 @@ class PBSOrchestrator(Orchestrator):
             start_script_args = [
                 start_script,  # redis_starter.py
                 f"+ifname={self._interface}",  # pass interface to start script
-                "+command",                    # command flag for argparser
-                redis_exe,                     # redis-server
-                db_conf,                       # redis6.conf file
-                ai_module,                     # redisai.so
-                "--port",                      # redis port
-                str(port),                    # port number
+                "+command",  # command flag for argparser
+                redis_exe,  # redis-server
+                db_conf,  # redis6.conf file
+                ai_module,  # redisai.so
+                "--port",  # redis port
+                str(port),  # port number
             ]
 
             if cluster:
@@ -285,7 +285,7 @@ class PBSOrchestrator(Orchestrator):
             "N",
             "l",
             "node-list-file",
-            "pes‐per‐numa‐node",
+            "pes-per-numa-node",
             "S",
             "wdir",
         ]

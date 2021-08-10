@@ -19,13 +19,14 @@ def test_launch_lsf_orc(fileutils, wlmutils):
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
-    orc = LSFOrchestrator(6780,
-                          batch=True,
-                          project=wlmutils.get_test_account(),
-                          interface=network_interface,
-                          time="00:05",
-                          smts=1
-                          )
+    orc = LSFOrchestrator(
+        6780,
+        batch=True,
+        project=wlmutils.get_test_account(),
+        interface=network_interface,
+        time="00:05",
+        smts=1,
+    )
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)

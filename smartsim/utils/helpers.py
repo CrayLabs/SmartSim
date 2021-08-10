@@ -28,11 +28,14 @@
 A file of helper functions for SmartSim
 """
 import os
-import psutil
 import socket
 from os import environ
 from shutil import which
+
+import psutil
+
 from ..error import SSConfigError
+
 
 def get_ip_from_interface(interface):
     """Get IPV4 address of a network interface

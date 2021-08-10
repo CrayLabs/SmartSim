@@ -2,10 +2,10 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.database import (
+    CobaltOrchestrator,
     Orchestrator,
     PBSOrchestrator,
     SlurmOrchestrator,
-    CobaltOrchestrator
 )
 from smartsim.error import SmartSimError
 
@@ -77,8 +77,8 @@ def test_catch_local_db_errors():
         db = Orchestrator(db_per_host=2)
 
 
-
 #####  PBS  ######
+
 
 def test_pbs_set_run_arg():
     orc = PBSOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
@@ -105,7 +105,6 @@ def test_pbs_set_batch_arg():
 
 
 ##### Slurm ######
-
 
 
 def test_slurm_set_run_arg():

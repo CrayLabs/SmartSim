@@ -237,7 +237,7 @@ class Experiment:
 
         Ensembles require one of the following combinations
         of arguments
-        
+
             - ``run_settings`` and ``params``
             - ``run_settings`` and ``replicas``
             - ``batch_settings``

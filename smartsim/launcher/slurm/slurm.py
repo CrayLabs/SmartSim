@@ -52,7 +52,7 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
 
     For arguments without a value, pass None or and empty
     string as the value. For Slurm:
-    
+
         - exclusive=None
 
     :param nodes: number of nodes for the allocation, defaults to 1
