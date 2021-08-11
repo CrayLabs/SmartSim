@@ -86,9 +86,9 @@ def test_pbs_set_run_arg():
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
     )
-    orc.set_run_arg("pes‐per‐numa‐node", "5")
+    orc.set_run_arg("pes-per-numa-node", "5")
     assert all(
-        ["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities]
+        ["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities]
     )
 
 
@@ -138,9 +138,9 @@ def test_set_run_arg():
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
     )
-    orc.set_run_arg("pes‐per‐numa‐node", "2")
+    orc.set_run_arg("pes-per-numa-node", "2")
     assert all(
-        ["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities]
+        ["pes-per-numa-node" not in db.run_settings.run_args for db in orc.entities]
     )
 
 

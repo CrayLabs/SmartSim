@@ -81,8 +81,11 @@ def kill_all_test_spawned_processes():
     except psutil.Error:
         # could not find parent process id
         return
-    for child in parent.children(recursive=True):
-        child.kill()
+    try:
+        for child in parent.children(recursive=True):
+            child.kill()
+    except Exception:
+        print("Not all processes were killed after test")
 
 @pytest.fixture
 def wlmutils():
