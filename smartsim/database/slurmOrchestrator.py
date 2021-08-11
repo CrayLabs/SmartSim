@@ -324,10 +324,7 @@ class SlurmOrchestrator(Orchestrator):
             "J",
             "jobid",
             "multi-prog",
-            "nodelist",
             "w",
-            "nodefile",
-            "F",
             "chdir",
             "D",
         ]
@@ -345,10 +342,7 @@ class SlurmOrchestrator(Orchestrator):
             "J",
             "jobid",
             "multi-prog",
-            "nodelist",
             "w",
-            "nodefile",
-            "F",
             "chdir",
             "D",
         ]
