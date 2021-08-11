@@ -149,7 +149,7 @@ class WLMUtils:
         elif test_launcher == "cobalt":
             db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
         elif test_launcher == "lsf":
-            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, project=get_account(), interface=test_nic)
+            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, gpus_per_shard=1 if test_device=="GPU" else 0, project=get_account(), interface=test_nic)
         else:
             db = Orchestrator(port=port, interface="lo")
         return db
