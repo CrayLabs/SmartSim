@@ -7,7 +7,7 @@ from smartsim import Experiment
 from smartsim.control import Manifest
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 from smartsim.settings import RunSettings
 
 try:

@@ -28,7 +28,7 @@ from ..database import Orchestrator
 from ..entity import EntityList, SmartSimEntity
 from ..error import SmartSimError
 from ..error.errors import SmartSimError
-from ..ext.ray import RayCluster
+from ..exp.ray import RayCluster
 
 # List of types derived from EntityList which require specific behavior
 # A corresponding property needs to exist (like db for Orchestrator),

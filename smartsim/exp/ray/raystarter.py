@@ -5,7 +5,7 @@ import time
 from subprocess import PIPE, STDOUT, Popen
 
 from smartsim.utils.helpers import get_ip_from_interface, get_lb_interface_name
-from smartsim.ext.ray import parse_ray_head_node_address
+from smartsim.exp.ray import parse_ray_head_node_address
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 

@@ -7,7 +7,7 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 
 """Test Ray cluster Slurm launch and shutdown.
 """

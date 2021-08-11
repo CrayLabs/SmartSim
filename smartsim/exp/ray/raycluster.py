@@ -150,7 +150,7 @@ class RayCluster(EntityList):
             **kwargs,
         )
         if batch:
-            self._build_batch_settings(workers, time, batch_args)
+            self._build_batch_settings(workers, time, batch_args, launcher)
         self.ray_head_address = None
 
     @property
@@ -200,12 +200,12 @@ class RayCluster(EntityList):
             )
             self.entities.append(worker_model)
 
-    def _build_batch_settings(self, workers, time, batch_args):
-        if self._launcher == "pbs":
+    def _build_batch_settings(self, workers, time, batch_args, launcher):
+        if launcher == "pbs":
             self.batch_settings = QsubBatchSettings(
                 nodes=workers + 1, time=time, batch_args=batch_args
             )
-        elif self._launcher == "slurm":
+        elif launcher == "slurm":
             self.batch_settings = SbatchSettings(
                 nodes=workers + 1, time=time, batch_args=batch_args
             )
