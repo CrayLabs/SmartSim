@@ -162,10 +162,20 @@ By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
 
-To install the database ML backends for GPU, set the following environment variables.
+To install the database ML backends for GPU, set the following environment variables if
+CUDNN is not in your ``LD_LIBRARY_PATH`` or default loader locations.
 
   - ``CUDNN_INCLUDE_DIR``  - path to directory containing cudnn.h
   - ``CUDNN_LIBRARY``      - path to directory containing libcudnn.so
+
+For example, for bash do
+
+.. code-block:: bash
+
+    export CUDNN_LIBRARY=/lus/sonexion/spartee/cuda/lib64/
+    export CUDNN_INCLUDE_DIR=/lus/sonexion/spartee/cuda/include/
+    export LD_LIBRARY_PATH=$CUDNN_LIBRARY:$LD_LIBRARY_PATH
+
 
 .. code-block:: bash
 
@@ -221,13 +231,6 @@ The Python client for SmartRedis is installed through
 
 Build SmartRedis Library (C++, C, Fortran)
 ==========================================
-
-Building the SmartRedis library, in addition to the specified prerequisites,
-also requires the installation of the following tools
-
-  - autoconf
-  - automake
-  - libtool
 
 
 .. include:: ../smartredis/doc/install/lib.rst

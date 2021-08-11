@@ -28,11 +28,38 @@
 A file of helper functions for SmartSim
 """
 import os
-import stat
+import socket
 from os import environ
 from shutil import which
 
+import psutil
+
 from ..error import SSConfigError
+
+
+def get_ip_from_interface(interface):
+    """Get IPV4 address of a network interface
+
+    :param interface: interface name
+    :type interface: str
+    :raises ValueError: if the interface does not exist
+    :raises ValueError: if interface does not have an IPV4 address
+    :return: ip address of interface
+    :rtype: str
+    """
+    net_if_addrs = psutil.net_if_addrs()
+    if interface not in net_if_addrs:
+
+        available = list(net_if_addrs.keys())
+        raise ValueError(
+            f"{interface} is not a valid network interface. "
+            f"Valid network interfaces are: {available}"
+        )
+
+    for info in net_if_addrs[interface]:
+        if info.family == socket.AF_INET:
+            return info.address
+    raise ValueError(f"interface {interface} doesn't have an IPv4 address")
 
 
 def init_default(default, init_value, expected_type=None):

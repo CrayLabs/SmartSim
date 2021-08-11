@@ -20,7 +20,8 @@ def test_launch_pbs_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = PBSOrchestrator(6780, batch=False)
+    network_interface = wlmutils.get_test_interface()
+    orc = PBSOrchestrator(6780, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -54,7 +55,10 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, inter_op_threads=4)
+    network_interface = wlmutils.get_test_interface()
+    orc = PBSOrchestrator(
+        6780, db_nodes=3, batch=False, inter_op_threads=4, interface=network_interface
+    )
     orc.set_path(test_dir)
 
     orc.set_cpus(4)
@@ -71,27 +75,3 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
-
-
-def test_set_run_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
-    orc.set_run_arg("account", "ACCOUNT")
-    assert all(
-        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
-    )
-    orc.set_run_arg("pes‐per‐numa‐node", "5")
-    assert all(
-        ["pes‐per‐numa‐node" not in db.run_settings.run_args for db in orc.entities]
-    )
-
-
-def test_set_batch_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False)
-    with pytest.raises(SmartSimError):
-        orc.set_batch_arg("account", "ACCOUNT")
-
-    orc2 = PBSOrchestrator(6780, db_nodes=3, batch=True)
-    orc2.set_batch_arg("account", "ACCOUNT")
-    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
-    orc2.set_batch_arg("N", "another_name")
-    assert "N" not in orc2.batch_settings.batch_args

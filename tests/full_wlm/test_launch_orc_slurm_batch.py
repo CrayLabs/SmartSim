@@ -11,14 +11,15 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_launch_slurm_orc(fileutils):
+def test_launch_slurm_orc(fileutils, wlmutils):
     """test single node orchestrator"""
     exp_name = "test-launch-slurm-orc-batch"
     exp = Experiment(exp_name, launcher="slurm")
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, batch=True)
+    network_interface = wlmutils.get_test_interface()
+    orc = SlurmOrchestrator(6780, batch=True, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -34,14 +35,15 @@ def test_launch_slurm_orc(fileutils):
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
 
 
-def test_launch_slurm_cluster_orc(fileutils):
+def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     """test clustered 3-node orchestrator"""
     exp_name = "test-launch-slurm-cluster-orc-batch"
     exp = Experiment(exp_name, launcher="slurm")
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    network_interface = wlmutils.get_test_interface()
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -57,7 +59,7 @@ def test_launch_slurm_cluster_orc(fileutils):
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
 
 
-def test_launch_slurm_cluster_orc_reconnect(fileutils):
+def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
 
     exp_name = "test-launch-slurm-cluster-orc-batch-reconect"
@@ -65,7 +67,8 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True)
+    network_interface = wlmutils.get_test_interface()
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=True, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)

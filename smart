@@ -4,8 +4,8 @@ import site
 import shutil
 import argparse
 import subprocess
-import pkg_resources
 from pathlib import Path
+import pkg_resources
 
 
 class SetupError(Exception):
@@ -117,7 +117,6 @@ class Builder:
     @staticmethod
     def check_installed(package, supported):
         try:
-
             installed_version = pkg_resources.get_distribution(package).version
             installed_major, installed_minor, _ = installed_version.split(".")
             if int(installed_major) != supported.major or int(installed_minor) != supported.minor:
@@ -176,7 +175,7 @@ class Builder:
                 msg += f"Consider installing {' '.join(packages)} with pip"
                 print(Warning(msg))
             else:
-                print(Warning("ONNX installed in Python environment"))
+                print("ONNX installed in Python environment")
         except SetupError as e:
             print(Warning(str(e)))
 
@@ -189,7 +188,7 @@ class Builder:
                 msg += f"Consider installing tensorflow=={self.tf_version} with pip"
                 print(Warning(msg))
             else:
-                print(Warning("TensorFlow installed in Python environment"))
+                print("TensorFlow installed in Python environment")
         except SetupError as e:
             print(Warning(str(e)))
 
@@ -253,12 +252,6 @@ def clean(install_path, _all=False):
             shutil.rmtree(backend_path, ignore_errors=True)
             print("Successfully removed ML runtimes")
 
-        # remove redisip
-        if _all:
-            ip_path = lib_path.joinpath("libredisip.so")
-            if ip_path.is_file():
-                ip_path.unlink()
-                print("Succesfully removed existing RedisIP installation")
 
     bin_path = install_path.joinpath("bin")
     if bin_path.is_dir() and _all:

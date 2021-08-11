@@ -46,6 +46,7 @@ class SlurmOrchestrator(Orchestrator):
         time=None,
         alloc=None,
         db_per_host=1,
+        interface="ipogif0",
         **kwargs,
     ):
 
@@ -71,12 +72,12 @@ class SlurmOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``srun``
-        :type run_command: str
+        :param run_command: specify launch binary. Options are "mpirun" and "srun", defaults to "srun"
+        :type run_command: str, optional
         :param account: account to run batch on
-        :type account: str
+        :type account: str, optional
         :param time: walltime for batch 'HH:MM:SS' format
-        :type time: str
+        :type time: str, optional
         :param alloc: allocation to launch on, defaults to None
         :type alloc: str, optional
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
@@ -84,6 +85,7 @@ class SlurmOrchestrator(Orchestrator):
         """
         super().__init__(
             port,
+            interface,
             db_nodes=db_nodes,
             batch=batch,
             run_command=run_command,
@@ -178,6 +180,7 @@ class SlurmOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "n", "N", etc.
 
         :param arg: run argument to set
         :type arg: str
@@ -259,9 +262,9 @@ class SlurmOrchestrator(Orchestrator):
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
+        redis_exe = CONFIG.redis_exe
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
@@ -271,22 +274,26 @@ class SlurmOrchestrator(Orchestrator):
             exe_args = []
             for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
-                node_exe_args = [
-                    db_conf,
-                    ai_module,
-                    ip_module,
-                    "--port",
-                    str(next_port),
+                start_script_args = [
+                    start_script,  # redis_starter.py
+                    f"+ifname={self._interface}",  # pass interface to start script
+                    "+command",  # command flag for argparser
+                    redis_exe,  # redis-server
+                    db_conf,  # redis6.conf file
+                    ai_module,  # redisai.so
+                    "--port",  # redis port
+                    str(next_port),  # port number
                 ]
                 if cluster:
-                    node_exe_args += self._get_cluster_args(db_node_name, next_port)
-                exe_args.append(node_exe_args)
+                    start_script_args += self._get_cluster_args(db_node_name, next_port)
+
+                exe_args.append(" ".join(start_script_args))
                 ports.append(next_port)
 
             # if only launching 1 db_per_host, we don't need a list of exe args lists
             if db_per_host == 1:
                 exe_args = exe_args[0]
-            run_settings = self._build_run_settings(exe, exe_args, **kwargs)
+            run_settings = self._build_run_settings("python", exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             self.entities.append(node)
         self.ports = ports

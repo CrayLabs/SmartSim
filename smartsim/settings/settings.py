@@ -58,13 +58,13 @@ class RunSettings:
 
         :param exe: executable to run
         :type exe: str
-        :param exe_args: executable arguments
+        :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
-        :param run_command: launch binary e.g. srun
+        :param run_command: launch binary (e.g. "srun"), defaults to empty str
         :type run_command: str, optional
-        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`)
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
         :type run_args: dict[str, str], optional
-        :param env_vars: environment vars to launch job with
+        :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
         self.exe = [expand_exe_path(exe)]
@@ -171,7 +171,8 @@ class BatchSettings:
         """Return the batch command
 
         Tests to see if we can expand the batch command
-        path, and if not, returns the batch command as is
+        path. If we can, then returns the expanded batch
+        command. If we cannot, returns the batch command as is.
 
         :returns: batch command
         :type: str
