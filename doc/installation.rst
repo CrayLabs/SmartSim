@@ -452,8 +452,10 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   pushd smartsim
   pip install .
 
+  export Torch_DIR=/ccs/home/<USERNAME>/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
+  export CFLAGS="$CFLAGS -I/ccs/home/<USERNAME>/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
   # install PyTorch backend for the Orchestrator database.
-  smart --device=gpu --torch_dir /ccs/home/arigazzi/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/ -v
+  smart --device=gpu --torch_dir $Torch_DIR -v
 
 
 

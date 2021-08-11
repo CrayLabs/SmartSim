@@ -9,7 +9,7 @@ from smartredis import Client
 
 """
 Launch a distributed, in memory database cluster and use the
-SmartRedis python client to send and recieve some numpy arrays.
+SmartRedis python client to send and receive some numpy arrays.
 
 This example runs in an interactive allocation with at least three
 nodes and 1 processor per node.
