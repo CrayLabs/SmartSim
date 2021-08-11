@@ -62,16 +62,17 @@ class RayCluster(EntityList):
     """Entity used to run a Ray cluster on a given number of hosts. Ray is launched on each host,
     and the first host is used to launch the head node.
 
+    The total size of the cluster is ``workers`` + 1
+
     :param name: The name of the entity.
     :type name: str
     :param path: path to output, error, and configuration files
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
-    :param ray_args: Arguments to be passed to Ray executable. Each dictionary entry will be added
-                     to the Ray command line as `--key=value`, or `--key` if `value` is set to `None`.
+    :param ray_args: Arguments to be passed to Ray executable as `--key=value`, or `--key` if `value` is set to `None`.
     :type ray_args: dict[str,str]
-    :param workers: Number of workers (the total size of the cluster is ``workers``+1).
+    :param workers: Number of workers.
     :type workers: int
     :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
     :type run_args: dict[str,str]
@@ -79,9 +80,7 @@ class RayCluster(EntityList):
     :type batch_args: dict[str,str]
     :param launcher: Name of launcher to use for starting the cluster.
     :type launcher: str
-    :param interface: Name of network interface the cluster nodes should bind to. This should be
-                      set to the highest-speed network available. Common high-speed networks are
-                      `ipogif0` (on Cray XC systems) and `ib0` (on InfiniBand-based systems)
+    :param interface: Name of network interface the cluster nodes should bind to.
     :type interface: str
     :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
                   obtained with ``ray.slurm.get_allocation``
@@ -91,9 +90,11 @@ class RayCluster(EntityList):
     :param time: The walltime the cluster will be running for
     :type time: str
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
-                     Can be set to `auto`, which means that a password will be generated internally, to
-                     a string which will be used as password, or to `None`, which means a password will not be
-                     passed to `ray start`. Defaults to `auto`
+                     Can be set to
+                     - `auto`: a strong password will be generated internally
+                     - a string: it will be used as password
+                     - `None`: the default Ray password will be used.
+                     Defaults to `auto`
     :type password: str
     """
 
@@ -211,16 +212,6 @@ class RayCluster(EntityList):
             )
         else:
             raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
-
-    def add_batch_args(self, batch_args):
-        """Add batch arguments to Ray cluster
-
-        :param batch_args: batch arguments to add to Ray cluster
-        :type batch_args: dict[str,str]
-        """
-        self._batch_args.update(batch_args)
-
-
 
     def get_head_address(self):
         """Return address of head node
@@ -376,10 +367,7 @@ class RayHead(SmartSimEntity):
         return run_settings
 
     def _build_pbs_settings(self, run_args, ray_args):
-        # TODO: explain this
-        # run_args["sync-output"] = None
 
-        # calls ray_starter.py with arguments for the ray head node
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
         aprun_settings.set_tasks(1)
 
@@ -481,15 +469,10 @@ class RayWorker(SmartSimEntity):
             raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
 
         run_settings.set_tasks(1)
-        run_settings.set_tasks_per_node(1)
         return run_settings
 
     def _build_pbs_settings(self, run_args, ray_args):
 
-        # TODO: explain this
-        # run_args["sync-output"] = None
-
-        # calls ray_starter.py with arguments for a ray worker node
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
 
         return aprun_settings
