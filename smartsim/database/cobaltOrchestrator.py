@@ -280,7 +280,6 @@ class CobaltOrchestrator(Orchestrator):
             "pes-per-node",
             "N",
             "l",
-            "node-list-file",
             "pes-per-numa-node",
             "S",
             "wdir",

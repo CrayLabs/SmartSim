@@ -161,6 +161,12 @@ To install the database ML backends for CPU, run
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
+.. note::
+
+    If a re-build is needed for any reason, ``smart --clean`` will remove
+    all of the previous installs for the ML backends and ``smart --clobber`` will
+    remove all pre-built dependencies as well as the ML backends.
+
 
 To install the database ML backends for GPU, set the following environment variables if
 CUDNN is not in your ``LD_LIBRARY_PATH`` or default loader locations.
@@ -505,16 +511,17 @@ Override Pre-packaged Settings
 The following fields can be overridden in the SmartSim configuration
 file
 
- - Redis installation
- - Redis configuration
- - RedisAI installation
- - RedisIP installation
- - Test launcher default
+ - Redis installation location
+ - Redis configuration file location
+ - RedisAI module installation location
+ - Test launcher/device/network interface
  - Log level default
  - Job manager interval default
 
-If you want to override the configuration, you need
-to supply values for each of these.
+.. note::
+
+    If you want to override the configuration, you need
+    to supply values for each of these.
 
 Install the SmartSim user configuration file.
 Usually this is in your ``$HOME`` directory under
@@ -543,20 +550,21 @@ SmartSim
 
 .. code-block:: toml
 
-    [smartsim]
-    # number of seconds per job status update
-    # for jobs on WLM system (e.g. slurm, pbs, etc)
-    jm_interval = 15    # default
-    log_level = "info" # default
+  [smartsim]
+  # number of seconds per job status update
+  # for jobs on WLM system (e.g. slurm, pbs, etc)
+  jm_interval = 15    # default
+  log_level = "info" # default
 
-    [redis]
-    # path to where "redis-server" and "redis-cli" binaries are located
-    bin = "/path/to/redis/src/"
-    config = "/path/to/redis.conf" # optional!
+  [redis]
+  # path to where "redis-server" and "redis-cli" binaries are located
+  bin = "/path/to/redis/src/"
+  config = "/path/to/redis.conf" # optional!
 
-      [redis.modules]
-      ai = "/path/to/RedisAI/install-cpu/"
-      ip = "/path/to/RedisIP/build/"
+    [redis.modules]
+    ai = "/path/to/RedisAI/install-cpu/"
 
-    [test]
-    launcher = "local" # default
+  [test]
+  launcher = "local" # default
+  interface = "ib0" # network interface to use in tests
+  device = "CPU" # device to use for tests (CPU/GPU)

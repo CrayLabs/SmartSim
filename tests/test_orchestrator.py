@@ -113,8 +113,6 @@ def test_slurm_set_run_arg():
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
     )
-    orc.set_run_arg("nodefile", "nonexisting.txt")
-    assert all(["nodefile" not in db.run_settings.run_args for db in orc.entities])
 
 
 def test_slurm_set_batch_arg():
@@ -125,8 +123,6 @@ def test_slurm_set_batch_arg():
     orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
-    orc2.set_batch_arg("nodelist", "host1,host2,host3")
-    assert "nodelist" not in orc2.batch_settings.batch_args
 
 
 ###### Cobalt ######
