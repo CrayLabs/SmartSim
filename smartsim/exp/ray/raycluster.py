@@ -266,10 +266,10 @@ def parse_ray_head_node_address(head_log):
     :rtype: str
     """
 
-    max_attempts = 10
+    max_attempts = 12
     attempts = 0
     while not os.path.isfile(head_log):
-        _time.sleep(1)
+        _time.sleep(5)
         attempts += 1
         if attempts == max_attempts:
             raise RuntimeError(
@@ -279,7 +279,7 @@ def parse_ray_head_node_address(head_log):
     attempts = 0
     head_ip = None
     while head_ip is None:
-        _time.sleep(1)
+        _time.sleep(5)
         with open(head_log) as fp:
             line = fp.readline()
             while line:
