@@ -518,7 +518,7 @@ file
  - Log level default
  - Job manager interval default
 
-..note::
+.. note::
 
     If you want to override the configuration, you need
     to supply values for each of these.
