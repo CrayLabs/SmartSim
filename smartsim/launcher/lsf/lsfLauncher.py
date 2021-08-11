@@ -107,7 +107,7 @@ class LSFLauncher(WLMLauncher):
             if out:
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-        elif isinstance(step, MpirunSettings):
+        elif isinstance(step, MpirunStep):
             out, err = step.get_output_files()
             # mpirun doesn't direct output for us
             output = open(out, "w+")

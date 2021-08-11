@@ -6,7 +6,6 @@ from smartsim.database import LSFOrchestrator
 
 from smartredis import Client
 
-PROJECT="GEN150_SMARTSIM"
 
 """
 Launch a distributed, in memory database cluster and use the
@@ -30,7 +29,6 @@ def launch_cluster_orc(experiment, port):
                         batch=False,
                         cpus_per_shard=21,
                         gpus_per_shard=3,
-                        project=PROJECT,
                         interface="ib0")
 
 
