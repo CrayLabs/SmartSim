@@ -56,7 +56,7 @@ class MpirunSettings(RunSettings):
     def make_mpmd(self, mpirun_settings):
         """Make a mpmd workload by combining two ``mpirun`` commands
 
-        This connectes the two settings to be executed with a single
+        This connects the two settings to be executed with a single
         Model instance
 
         :param mpirun_settings: MpirunSettings instance
@@ -103,8 +103,8 @@ class MpirunSettings(RunSettings):
         """Set the hostlist for the ``mpirun`` command
 
         :param host_list: list of host names
-        :type host_list: list[str]
-        :raises TypeError: if not list of str
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -117,7 +117,7 @@ class MpirunSettings(RunSettings):
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments
 
-        :return: list OpenMPI arguments for these settings
+        :return: list of OpenMPI arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses

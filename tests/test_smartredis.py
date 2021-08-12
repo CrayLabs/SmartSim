@@ -22,15 +22,15 @@ REDIS_PORT = 6780
 
 
 try:
-    import torch
     import smartredis
+    import torch
 except ImportError:
     pass
 
 
 pytestmark = pytest.mark.skipif(
-    ("smartredis" not in sys.modules) or ("torch" not in sys.modules),
-    reason="requires smartredis and PyTorch",
+    ("torch" not in sys.modules),
+    reason="requires PyTorch",
 )
 
 
@@ -59,8 +59,8 @@ def test_exchange(fileutils):
         perm_strat="step",
     )
 
-    ensemble.register_incoming_entity(ensemble[0])
-    ensemble.register_incoming_entity(ensemble[1])
+    ensemble.register_incoming_entity(ensemble["producer_0"])
+    ensemble.register_incoming_entity(ensemble["producer_1"])
 
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
@@ -72,7 +72,9 @@ def test_exchange(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+        exp.stop(orc)
+        assert False  # client ensemble failed
 
     # stop the orchestrator
     exp.stop(orc)
@@ -109,8 +111,8 @@ def test_consumer(fileutils):
     )
     ensemble.add_model(consumer)
 
-    ensemble.register_incoming_entity(ensemble[0])
-    ensemble.register_incoming_entity(ensemble[1])
+    ensemble.register_incoming_entity(ensemble["producer_0"])
+    ensemble.register_incoming_entity(ensemble["producer_1"])
 
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
@@ -122,7 +124,9 @@ def test_consumer(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+        exp.stop(orc)
+        assert False  # client ensemble failed
 
     # stop the orchestrator
     exp.stop(orc)

@@ -1,6 +1,9 @@
-name: build-wheels
+name: deploy-release
 
-on: [release]
+on:
+  release:
+    types: [published]
+
 
 env:
   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
@@ -88,7 +91,7 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@master
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI }}

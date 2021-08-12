@@ -26,10 +26,10 @@
 
 import os
 import os.path as osp
-import sys
-from shutil import which
 from pathlib import Path
+from shutil import which
 
+import psutil
 import toml
 
 from .error import SSConfigError
@@ -94,12 +94,15 @@ class Config:
                 msg += " See documentation for instructions"
                 raise SSConfigError(msg)
 
-            default = {'redis': {'bin': bin_path,
-                                 'config': conf_path,
-                                 'modules': {'ai': lib_path,
-                                             'ip': lib_path}},
-                        'smartsim': {'jm_interval': 15, 'log_level': 'info'},
-                        'test': {'launcher': 'local'}}
+            default = {
+                "redis": {
+                    "bin": bin_path,
+                    "config": conf_path,
+                    "modules": {"ai": lib_path},
+                },
+                "smartsim": {"jm_interval": 15, "log_level": "info"},
+                "test": {"launcher": "local", "device": "CPU", "interface": "ipogif0"},
+            }
             return default
 
         conf_path = _load_from_home()
@@ -122,21 +125,9 @@ class Config:
                     )
             return redisai
         except KeyError:
-            raise SSConfigError("Could not find redis.modules.ai (path to redisai.so) in SmartSim config")
-
-    @property
-    def redisip(self):
-        try:
-            redisip = self.conf["redis"]["modules"]["ip"]
-            if not osp.isfile(redisip):
-                redisip = osp.join(redisip, "libredisip.so")
-                if not osp.isfile(redisip):
-                    raise SSConfigError(
-                    "RedisIP library path provided in SmartSim config could not be found"
-                )
-            return redisip
-        except KeyError:
-            raise SSConfigError("Could not find redis.ip in SmartSim config")
+            raise SSConfigError(
+                "Could not find redis.modules.ai (path to redisai.so) in SmartSim config"
+            )
 
     @property
     def redis_conf(self):
@@ -157,7 +148,9 @@ class Config:
         except KeyError:
             raise SSConfigError("Could not find redis.bin in SmartSim config")
         except SSConfigError as e:
-            raise SSConfigError("redis-server exe in SmartSim Config could not be used") from e
+            raise SSConfigError(
+                "redis-server exe in SmartSim Config could not be used"
+            ) from e
 
     @property
     def redis_cli(self):
@@ -167,9 +160,7 @@ class Config:
             exe = expand_exe_path(redis_cli)
             return exe
         except KeyError:
-            raise SSConfigError(
-                "Could not find redis.bin in SmartSim config"
-            )
+            raise SSConfigError("Could not find redis.bin in SmartSim config")
         except SSConfigError as e:
             raise SSConfigError(
                 "redis-cli executable in SmartSim Config could not be used"
@@ -185,6 +176,35 @@ class Config:
                 return launcher
         except KeyError:
             return "local"  # local by default
+
+    @property
+    def test_device(self):
+        try:
+            if "SMARTSIM_TEST_DEVICE" in os.environ:
+                return os.environ["SMARTSIM_TEST_DEVICE"]
+            else:
+                device = self.conf["test"]["device"]
+                return device
+        except KeyError:
+            return "CPU"  # cpu by default
+
+    @property
+    def test_interface(self):
+        try:
+            if "SMARTSIM_TEST_INTERFACE" in os.environ:
+                return os.environ["SMARTSIM_TEST_INTERFACE"]
+            else:
+                interface = self.conf["test"]["interface"]
+                return interface
+        except KeyError:
+            # try to pick a sensible one
+            net_if_addrs = psutil.net_if_addrs()
+            if "ipogif0" in net_if_addrs:
+                return "ipogif0"
+            elif "ib0" in net_if_addrs:
+                return "ib0"
+            # default to aries network
+            return "ipogif0"
 
     @property
     def log_level(self):
@@ -207,6 +227,18 @@ class Config:
                 return int(num_seconds)
         except KeyError:
             return 15  # 15 seconds by default
+
+    @property
+    def test_account(self):
+        try:
+            if "SMARTSIM_TEST_ACCOUNT" in os.environ:
+                return os.environ["SMARTSIM_TEST_ACCOUNT"]
+            else:
+                account = self.conf["test"]["account"]
+                return account
+        except KeyError:
+            return ""  # no account by default
+
 
 # initialize config instance
 CONFIG = Config()

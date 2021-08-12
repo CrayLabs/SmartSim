@@ -26,24 +26,20 @@
 
 import time
 
-import psutil
-
-from ...constants import STATUS_COMPLETED
-from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
+from ...error import LauncherError, SSConfigError
 from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from ...utils import get_logger
-from ..launcher import Launcher
+from ..launcher import WLMLauncher
 from ..step import AprunStep, MpirunStep, QsubBatchStep
-from ..stepInfo import PBSStepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMapping
-from ..taskManager import TaskManager
+from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
 
 logger = get_logger(__name__)
 
 
-class PBSLauncher(Launcher):
+class PBSLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
     to launch jobs on systems that use PBS as a workload manager.
 
@@ -54,11 +50,7 @@ class PBSLauncher(Launcher):
     i.e. a psutil.Popen object
     """
 
-    def __init__(self):
-        """Initialize a PBSLauncher"""
-        super().__init__()
-        self.task_manager = TaskManager()
-        self.step_mapping = StepMapping()
+    # init in WLMLauncher, launcher.py
 
     def create_step(self, name, cwd, step_settings):
         """Create a PBSpro job step
@@ -78,10 +70,10 @@ class PBSLauncher(Launcher):
             if isinstance(step_settings, AprunSettings):
                 step = AprunStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, QsubBatchSettings):
+            if isinstance(step_settings, QsubBatchSettings):
                 step = QsubBatchStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, MpirunSettings):
+            if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
@@ -89,40 +81,6 @@ class PBSLauncher(Launcher):
             )
         except SSConfigError as e:
             raise LauncherError("Job step creation failed: " + str(e)) from None
-
-    def get_step_update(self, step_names):
-        """Get update for a list of job steps
-
-        :param step_names: list of job steps to get updates for
-        :type step_names: list[str]
-        :return: list of job updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-
-        # get updates of jobs managed by PBS (just qsub batch for now)
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
-        if len(step_ids) > 0:
-            updates.extend(self._get_managed_step_update(step_ids))
-
-        # get updates of unmanaged jobs (Aprun, mpirun, etc)
-        task_ids = self.step_mapping.get_ids(step_names, managed=False)
-        if len(task_ids) > 0:
-            updates.extend(self._get_unmanaged_step_update(task_ids))
-
-        return updates
-
-    def get_step_nodes(self, step_name):
-        """Return the compute nodes of a specific job or allocation
-
-        This function returns the compute nodes of a specific job or allocation
-        in a list with the duplicates removed.
-
-        :param step_names: list of job step names
-        :type step_names: list[str]
-        :raises SSUnsupportedError: nodelist aquisition isn't supported on PBS
-        """
-        raise SSUnsupportedError("SmartSim does not support PBSPro node aquisition")
 
     def run(self, step):
         """Run a job step through PBSPro
@@ -139,7 +97,7 @@ class PBSLauncher(Launcher):
         cmd_list = step.get_launch_cmd()
         step_id = None
         task_id = None
-        if isinstance(step, QsubBatchStep):  # make this QsubBatchStep
+        if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
             if rc != 0:
@@ -160,10 +118,11 @@ class PBSLauncher(Launcher):
         if not step_id and step.managed:
             step_id = self._get_pbs_step_id(step)
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
+
         return step_id
 
     def stop(self, step_name):
-        """Step a job step
+        """Stop/cancel a job step
 
         :param step_name: name of the job to stop
         :type step_name: str
@@ -180,8 +139,8 @@ class PBSLauncher(Launcher):
         else:
             self.task_manager.remove_task(stepmap.task_id)
 
-        step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled"  # set status to cancelled instead of failed
+        _, step_info = self.get_step_update([step_name])[0]
+        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
     def _get_pbs_step_id(self, step, interval=2, trials=5):
@@ -212,11 +171,12 @@ class PBSLauncher(Launcher):
         :return: list of updates for managed jobs
         :rtype: list[StepInfo]
         """
-        qstat_out, _ = qstat(step_ids)
+        updates = []
 
+        qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
         # create PBSStepInfo objects to return
-        updates = []
+
         for stat, _ in zip(stats, step_ids):
             info = PBSStepInfo(stat, None)
             # account for case where job history is not logged by PBS
@@ -224,21 +184,6 @@ class PBSLauncher(Launcher):
                 info.returncode = 0
 
             updates.append(info)
-        return updates
-
-    def _get_unmanaged_step_update(self, task_ids):
-        """Get step updates for Popen managed jobs
-
-        :param task_ids: task id to check
-        :type task_ids: list[str]
-        :return: list of step updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-        for task_id in task_ids:
-            stat, rc, out, err = self.task_manager.get_task_update(task_id)
-            update = UnmanagedStepInfo(stat, rc, out, err)
-            updates.append(update)
         return updates
 
     def __str__(self):

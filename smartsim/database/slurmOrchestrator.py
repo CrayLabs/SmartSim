@@ -45,7 +45,8 @@ class SlurmOrchestrator(Orchestrator):
         account=None,
         time=None,
         alloc=None,
-        dpn=1,
+        db_per_host=1,
+        interface="ipogif0",
         **kwargs,
     ):
 
@@ -71,24 +72,25 @@ class SlurmOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``srun``
-        :type run_command: str
+        :param run_command: specify launch binary. Options are "mpirun" and "srun", defaults to "srun"
+        :type run_command: str, optional
         :param account: account to run batch on
-        :type account: str
+        :type account: str, optional
         :param time: walltime for batch 'HH:MM:SS' format
-        :type time: str
+        :type time: str, optional
         :param alloc: allocation to launch on, defaults to None
         :type alloc: str, optional
-        :param dpn: number of database per node (MPMD), defaults to 1
-        :type dpn: int, optional
+        :param db_per_host: number of database shards per system host (MPMD), defaults to 1
+        :type db_per_host: int, optional
         """
         super().__init__(
             port,
+            interface,
             db_nodes=db_nodes,
             batch=batch,
             run_command=run_command,
             alloc=alloc,
-            dpn=dpn,
+            db_per_host=db_per_host,
             **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
@@ -100,6 +102,9 @@ class SlurmOrchestrator(Orchestrator):
             raise SmartSimError(
                 "hosts argument is required when launching SlurmOrchestrator with mpirun"
             )
+        self._reserved_run_args = {}
+        self._reserved_batch_args = {}
+        self._fill_reserved()
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -132,7 +137,7 @@ class SlurmOrchestrator(Orchestrator):
         """Specify the hosts for the ``SlurmOrchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
-        :type host_list: list[str]
+        :type host_list: str, list[str]
         :raises TypeError: if wrong type
         """
         if isinstance(host_list, str):
@@ -162,16 +167,41 @@ class SlurmOrchestrator(Orchestrator):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
-        # TODO catch commonly used arguments we use for SmartSim here
-        self.batch_settings.batch_args[arg] = value
+        if arg in self._reserved_batch_args:
+            logger.warning(
+                f"Can not set batch argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+            )
+        else:
+            self.batch_settings.batch_args[arg] = value
+
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `jrun`)
+
+        Some commonly used arguments are used
+        by SmartSim and will not be allowed to be set.
+        For example, "n", "N", etc.
+
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+            )
+        else:
+            for db in self.entities:
+                db.run_settings.run_args[arg] = value
 
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
-            batch_args = {"ntasks-per-node": dpn}
+            batch_args = {"ntasks-per-node": db_per_host}
             batch_settings = SbatchSettings(
                 nodes=db_nodes, time=time, account=account, batch_args=batch_args
             )
@@ -189,30 +219,30 @@ class SlurmOrchestrator(Orchestrator):
 
     def _build_srun_settings(self, exe, exe_args, **kwargs):
         alloc = kwargs.get("alloc", None)
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         run_args = kwargs.get("run_args", {})
 
         # if user specified batch=False
         # also handles batch=False and alloc=False (alloc will be found by launcher)
         run_args["nodes"] = 1
-        run_args["ntasks"] = dpn
-        run_args["ntasks-per-node"] = dpn
+        run_args["ntasks"] = db_per_host
+        run_args["ntasks-per-node"] = db_per_host
         run_settings = SrunSettings(exe, exe_args, run_args=run_args, alloc=alloc)
-        if dpn > 1:
+        if db_per_host > 1:
             # tell step to create a mpmd executable
             run_settings.mpmd = True
         return run_settings
 
     def _build_mpirun_settings(self, exe, exe_args, **kwargs):
         alloc = kwargs.get("alloc", None)
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         if alloc:
             msg = (
                 "SlurmOrchestrator using OpenMPI cannot specify allocation to launch in"
             )
             msg += "\n User must launch in interactive allocation or as batch."
             logger.warning(msg)
-        if dpn > 1:
+        if db_per_host > 1:
             msg = "SlurmOrchestrator does not support multiple databases per node when launching with mpirun"
             raise SmartSimError(msg)
 
@@ -228,13 +258,13 @@ class SlurmOrchestrator(Orchestrator):
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        dpn = kwargs.get("dpn", 1)
+        db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
+        redis_exe = CONFIG.redis_exe
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
@@ -242,24 +272,77 @@ class SlurmOrchestrator(Orchestrator):
             # per node. also collect port range for dbnode
             ports = []
             exe_args = []
-            for port_offset in range(dpn):
+            for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
-                node_exe_args = [
-                    db_conf,
-                    ai_module,
-                    ip_module,
-                    "--port",
-                    str(next_port),
+                start_script_args = [
+                    start_script,  # redis_starter.py
+                    f"+ifname={self._interface}",  # pass interface to start script
+                    "+command",  # command flag for argparser
+                    redis_exe,  # redis-server
+                    db_conf,  # redis6.conf file
+                    ai_module,  # redisai.so
+                    "--port",  # redis port
+                    str(next_port),  # port number
                 ]
                 if cluster:
-                    node_exe_args += self._get_cluster_args(db_node_name, next_port)
-                exe_args.append(node_exe_args)
+                    start_script_args += self._get_cluster_args(db_node_name, next_port)
+
+                exe_args.append(" ".join(start_script_args))
                 ports.append(next_port)
 
-            # if only launching 1 dpn, we don't need a list of exe args lists
-            if dpn == 1:
+            # if only launching 1 db_per_host, we don't need a list of exe args lists
+            if db_per_host == 1:
                 exe_args = exe_args[0]
-            run_settings = self._build_run_settings(exe, exe_args, **kwargs)
+            run_settings = self._build_run_settings("python", exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             self.entities.append(node)
         self.ports = ports
+
+    def _fill_reserved(self):
+        """Fill the reserved batch and run arguments dictionaries"""
+        self._reserved_run_args[MpirunSettings] = [
+            "np",
+            "N",
+            "c",
+            "output-filename",
+            "n",
+            "wdir",
+            "wd",
+            "host",
+        ]
+        self._reserved_run_args[SrunSettings] = [
+            "nodes",
+            "N",
+            "ntasks",
+            "n",
+            "ntasks-per-node",
+            "output",
+            "o",
+            "error",
+            "e",
+            "job-name",
+            "J",
+            "jobid",
+            "multi-prog",
+            "w",
+            "chdir",
+            "D",
+        ]
+        self._reserved_batch_args = [
+            "nodes",
+            "N",
+            "ntasks",
+            "n",
+            "ntasks-per-node",
+            "output",
+            "o",
+            "error",
+            "e",
+            "job-name",
+            "J",
+            "jobid",
+            "multi-prog",
+            "w",
+            "chdir",
+            "D",
+        ]

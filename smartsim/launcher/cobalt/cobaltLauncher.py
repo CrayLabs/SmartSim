@@ -28,22 +28,20 @@ import time
 
 import psutil
 
-from ...constants import STATUS_COMPLETED
-from ...error import LauncherError, SSConfigError, SSUnsupportedError
+from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
+from ...error import LauncherError, SSConfigError
 from ...settings import AprunSettings, CobaltBatchSettings, MpirunSettings
 from ...utils import get_logger
-from ..launcher import Launcher
+from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
 from ..step import AprunStep, CobaltBatchStep, MpirunStep
-from ..stepInfo import CobaltStepInfo, UnmanagedStepInfo
-from ..stepMapping import StepMapping
-from ..taskManager import TaskManager
+from ..stepInfo import CobaltStepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
 
 logger = get_logger(__name__)
 
 
-class CobaltLauncher(Launcher):
+class CobaltLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
     to launch jobs on systems that use Cobalt as a workload manager.
 
@@ -55,10 +53,7 @@ class CobaltLauncher(Launcher):
     """
 
     def __init__(self):
-        """Initialize a PBSLauncher"""
         super().__init__()
-        self.task_manager = TaskManager()
-        self.step_mapping = StepMapping()
         self.user = psutil.Process().username()
 
     def create_step(self, name, cwd, step_settings):
@@ -79,10 +74,10 @@ class CobaltLauncher(Launcher):
             if isinstance(step_settings, AprunSettings):
                 step = AprunStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, CobaltBatchSettings):
+            if isinstance(step_settings, CobaltBatchSettings):
                 step = CobaltBatchStep(name, cwd, step_settings)
                 return step
-            elif isinstance(step_settings, MpirunSettings):
+            if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
             raise TypeError(
@@ -90,40 +85,6 @@ class CobaltLauncher(Launcher):
             )
         except SSConfigError as e:
             raise LauncherError("Job step creation failed: " + str(e)) from None
-
-    def get_step_update(self, step_names):
-        """Get update for a list of job steps
-
-        :param step_names: list of job steps to get updates for
-        :type step_names: list[str]
-        :return: list of job updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-
-        # get updates of jobs managed by Cobalt (just batch for now)
-        step_ids = self.step_mapping.get_ids(step_names, managed=True)
-        if len(step_ids) > 0:
-            updates.extend(self._get_managed_step_update(step_ids))
-
-        # get updates of unmanaged jobs (Aprun, mpirun, etc)
-        task_ids = self.step_mapping.get_ids(step_names, managed=False)
-        if len(task_ids) > 0:
-            updates.extend(self._get_unmanaged_step_update(task_ids))
-
-        return updates
-
-    def get_step_nodes(self, step_name):
-        """Return the compute nodes of a specific job or allocation
-
-        This function returns the compute nodes of a specific job or allocation
-        in a list with the duplicates removed.
-
-        :param step_names: list of job step names
-        :type step_names: list[str]
-        :raises SSUnsupportedError: nodelist aquisition isn't supported on PBS
-        """
-        raise SSUnsupportedError("SmartSim does not support Cobalt node aquisition")
 
     def run(self, step):
         """Run a job step through Cobalt
@@ -183,8 +144,8 @@ class CobaltLauncher(Launcher):
         else:
             self.task_manager.remove_task(stepmap.task_id)
 
-        step_info = self.get_step_update([step_name])[0]
-        step_info.status = "Cancelled"  # set status to cancelled instead of failed
+        _, step_info = self.get_step_update([step_name])[0]
+        step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
     def _get_cobalt_step_id(self, step, interval=4, trials=5):
@@ -229,21 +190,6 @@ class CobaltLauncher(Launcher):
                 info.returncode = 0
 
             updates.append(info)
-        return updates
-
-    def _get_unmanaged_step_update(self, task_ids):
-        """Get step updates for Popen managed jobs
-
-        :param task_ids: task id to check
-        :type task_ids: list[str]
-        :return: list of step updates
-        :rtype: list[StepInfo]
-        """
-        updates = []
-        for task_id in task_ids:
-            stat, rc, out, err = self.task_manager.get_task_update(task_id)
-            update = UnmanagedStepInfo(stat, rc, out, err)
-            updates.append(update)
         return updates
 
     def __str__(self):

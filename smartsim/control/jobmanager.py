@@ -210,9 +210,12 @@ class JobManager:
         self._lock.acquire()
         try:
             jobs = self().values()
-            job_names = [job.name for job in jobs]
-            statuses = self._launcher.get_step_update(job_names)
-            for status, job in zip(statuses, jobs):
+            job_name_map = dict([(job.name, job.ename) for job in jobs])
+
+            # returns (job step name, StepInfo) tuples
+            statuses = self._launcher.get_step_update(job_name_map.keys())
+            for job_name, status in statuses:
+                job = self[job_name_map[job_name]]
                 # uses abstract step interface
                 job.set_status(
                     status.status,
@@ -314,7 +317,10 @@ class JobManager:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
                 for dbnode in orchestrator:
-                    self.db_jobs[dbnode.name].hosts = [dbnode.host]
+                    if not dbnode._multihost:
+                        self.db_jobs[dbnode.name].hosts = [dbnode.host]
+                    else:
+                        self.db_jobs[dbnode.name].hosts = dbnode.hosts
         finally:
             self._lock.release()
 

@@ -64,15 +64,15 @@ class Ensemble(EntityList):
         :param params: parameters to expand into ``Model`` members
         :type params: dict[str, Any]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
-        :type batch_settings: BatchSettings
+        :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
-        :type run_settings: RunSettings
-        :param replicas: number of replicas to create
-        :type replicas: int
+        :type run_settings: RunSettings, optional
+        :param replicas: number of ``Model`` replicas to create - a keyword argument of kwargs
+        :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
                              options are "all_perm", "stepped", "random"
-                             or a callable function
+                             or a callable function. Defaults to "all_perm".
         :type perm_strategy: str
         :return: ``Ensemble`` instance
         :rtype: ``Ensemble``
@@ -89,7 +89,7 @@ class Ensemble(EntityList):
 
     def _initialize_entities(self, **kwargs):
         """Initialize all the models within the ensemble based
-        on the parameters passed to the ensemble and the permuation
+        on the parameters passed to the ensemble and the permutation
         strategy given at init.
 
         :raises UserStrategyError: if user generation strategy fails
@@ -155,8 +155,9 @@ class Ensemble(EntityList):
     def add_model(self, model):
         """Add a model to this ensemble
 
-        :param model: model instance
+        :param model: model instance to be added
         :type model: Model
+        :raises TypeError: if model is not an instance of ``Model``
         :raises EntityExistsError: if model already exists in this ensemble
         """
         if not isinstance(model, Model):
@@ -196,11 +197,34 @@ class Ensemble(EntityList):
         """Inquire as to whether each model within the ensemble will prefix its keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
-        :rtype: dict
+        :rtype: bool
         """
         return all([model.query_key_prefixing() for model in self.entities])
 
     def attach_generator_files(self, to_copy=None, to_symlink=None, to_configure=None):
+        """Attach files to each model within the ensemble for generation
+
+        Attach files needed for the entity that, upon generation,
+        will be located in the path of the entity.
+
+        During generation, files "to_copy" are copied into
+        the path of the entity, and files "to_symlink" are
+        symlinked into the path of the entity.
+
+        Files "to_configure" are text based model input files where
+        parameters for the model are set. Note that only models
+        support the "to_configure" field. These files must have
+        fields tagged that correspond to the values the user
+        would like to change. The tag is settable but defaults
+        to a semicolon e.g. THERMO = ;10;
+
+        :param to_copy: files to copy, defaults to []
+        :type to_copy: list, optional
+        :param to_symlink: files to symlink, defaults to []
+        :type to_symlink: list, optional
+        :param to_configure: input files with tagged parameters, defaults to []
+        :type to_configure: list, optional
+        """
         for model in self.entities:
             model.attach_generator_files(
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
@@ -234,7 +258,7 @@ class Ensemble(EntityList):
 
         :raises TypeError: if params are of the wrong type
         :return: param names and values for permutation strategy
-        :rtype: tuple
+        :rtype: tuple[list, list]
         """
         if not isinstance(self.params, dict):
             raise TypeError(
@@ -255,6 +279,3 @@ class Ensemble(EntityList):
                     + "Must be list, int, or string."
                 )
         return param_names, parameters
-
-    def __getitem__(self, index):
-        return self.entities[index]

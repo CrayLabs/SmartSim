@@ -34,9 +34,14 @@ from ..constants import STATUS_RUNNING, TERMINAL_STATUSES
 from ..database import Orchestrator
 from ..entity import DBNode, EntityList, SmartSimEntity
 from ..error import LauncherError, SmartSimError, SSConfigError, SSUnsupportedError
-from ..launcher import CobaltLauncher, LocalLauncher, PBSLauncher, SlurmLauncher
+from ..launcher import (
+    CobaltLauncher,
+    LocalLauncher,
+    LSFLauncher,
+    PBSLauncher,
+    SlurmLauncher,
+)
 from ..utils import get_logger
-from ..utils.entityutils import separate_entities
 from .jobmanager import JobManager
 
 logger = get_logger(__name__)
@@ -60,7 +65,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, *args, block=True):
+    def start(self, manifest, block=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -69,10 +74,8 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        entities, entity_lists, orchestrator = separate_entities(args)
-        self._sanity_check_launch(orchestrator, entity_lists)
-
-        self._launch(entities, entity_lists, orchestrator)
+        self._sanity_check_launch(manifest)
+        self._launch(manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
@@ -217,7 +220,8 @@ class Controller:
     def init_launcher(self, launcher):
         """Initialize the controller with a specific type of launcher.
 
-        SmartSim currently supports slurm, pbs(pro), and local launching
+        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        and local launching
 
         Since the JobManager and the controller share a launcher
         instance, set the JobManager launcher if we create a new
@@ -246,24 +250,24 @@ class Controller:
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
                 self._jobs.set_launcher(self._launcher)
+            elif launcher == "lsf":
+                self._launcher = LSFLauncher()
+                self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
         else:
             raise SSConfigError("Must provide a 'launcher' argument")
 
-    def _launch(self, entities, entity_lists, orchestrator):
+    def _launch(self, manifest):
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
         address of the database can be given to following entities
 
-        :param entities: entities to launch
-        :type entities: SmartSimEntity
-        :param entity_lists: entity lists to launch
-        :type entity_lists: EntityList
-        :param orchestrator: orchestrator to launch
-        :type orchestrator: Orchestrator
+        :param manifest: Manifest of deploayables to launch
+        :type manifest: Manifest
         """
+        orchestrator = manifest.db
         if orchestrator:
             if self.orchestrator_active:
                 msg = "Attempted to launch a second Orchestrator instance. "
@@ -273,19 +277,19 @@ class Controller:
 
         # create all steps prior to launch
         steps = []
-        if entity_lists:
-            for elist in entity_lists:
-                if elist.batch:
-                    batch_step = self._create_batch_job_step(elist)
-                    steps.append((batch_step, elist))
-                else:
-                    # if ensemble is to be run as seperate job steps, aka not in a batch
-                    job_steps = [(self._create_job_step(e), e) for e in elist.entities]
-                    steps.extend(job_steps)
-        if entities:
-            # models themselves cannot be batch steps
-            job_steps = [(self._create_job_step(e), e) for e in entities]
-            steps.extend(job_steps)
+
+        for elist in manifest.ensembles:
+            if elist.batch:
+                batch_step = self._create_batch_job_step(elist)
+                steps.append((batch_step, elist))
+            else:
+                # if ensemble is to be run as seperate job steps, aka not in a batch
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                steps.extend(job_steps)
+
+        # models themselves cannot be batch steps
+        job_steps = [(self._create_job_step(e), e) for e in manifest.models]
+        steps.extend(job_steps)
 
         # launch steps
         for job_step in steps:
@@ -307,18 +311,6 @@ class Controller:
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
             self._launch_step(orc_batch_step, orchestrator)
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                nodelist = self._launcher.get_step_nodes([orc_batch_step.name])
-                orchestrator._hosts = nodelist[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
-                )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -326,29 +318,30 @@ class Controller:
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
-            # wait for orchestrator to spin up
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                db_step_names = [db_step[0].name for db_step in db_steps]
-                nodes = self._launcher.get_step_nodes(db_step_names)
-                for db, node in zip(orchestrator, nodes):
-                    db._host = node[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node aquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node aquisition unsupported, moving to RedisIP fallback"
-                )
+        # wait for orchestrator to spin up
+        self._orchestrator_launch_wait(orchestrator)
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
         self._jobs.set_db_hosts(orchestrator)
 
         # create the database cluster
-        if len(orchestrator) > 2:
-            orchestrator.create_cluster()
+        if orchestrator.num_shards > 2:
+            num_trials = 5
+            cluster_created = False
+            while not cluster_created:
+                try:
+                    orchestrator.create_cluster()
+                    cluster_created = True
+                except SmartSimError:
+                    if num_trials > 0:
+                        logger.debug(
+                            "Cluster creation failed, attempting again in five seconds..."
+                        )
+                        num_trials -= 1
+                        time.sleep(5)
+                    else:
+                        raise
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
@@ -422,7 +415,11 @@ class Controller:
         client_env = {}
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
-            client_env["SSDB"] = ",".join(addresses)
+            if len(addresses) <= 128:
+                client_env["SSDB"] = ",".join(addresses)
+            else:
+                # Cap max length of SSDB
+                client_env["SSDB"] = ",".join(addresses[:128])
             if entity.incoming_entities:
                 client_env["SSKEYIN"] = ",".join(
                     [in_entity.name for in_entity in entity.incoming_entities]
@@ -431,25 +428,26 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
         entity.run_settings.update_env(client_env)
 
-    def _sanity_check_launch(self, orchestrator, entity_lists):
+    def _sanity_check_launch(self, manifest):
         """Check the orchestrator settings
 
         Sanity check the orchestrator settings in case the
         user tries to do something silly. This function will
         serve as the location of many such sanity checks to come.
 
-        :param orchestrator: Orchestrator instance
-        :type orchestrator: Orchestrator
+        :param manifest: Manifest with deployables to be launched
+        :type manifest: Manifest
         :raises SSConfigError: If local launcher is being used to
                                launch a database cluster
         """
-
+        orchestrator = manifest.db
         if isinstance(self._launcher, LocalLauncher) and orchestrator:
-            if len(orchestrator) > 1:
+            if orchestrator.num_shards > 1:
                 raise SSConfigError(
                     "Local launcher does not support launching multiple databases"
                 )
         # check for empty ensembles
+        entity_lists = manifest.ensembles
         for elist in entity_lists:
             if len(elist) < 1:
                 raise SSConfigError("User attempted to run an empty ensemble")

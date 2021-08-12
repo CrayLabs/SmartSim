@@ -24,9 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SmartSimError
-
-from ..error import SSConfigError
+from ..error import SmartSimError, SSConfigError
 from ..utils.helpers import init_default
 from .settings import BatchSettings
 
@@ -51,19 +49,19 @@ class QsubBatchSettings(BatchSettings):
         the value for select statement supplied in ``resources``
         will override.
 
-        :param nodes: number of nodes for batch
+        :param nodes: number of nodes for batch, defaults to None
         :type nodes: int, optional
-        :param ncpus: number of cpus per node
+        :param ncpus: number of cpus per node, defaults to None
         :type ncpus: int, optional
-        :param time: walltime for batch job
+        :param time: walltime for batch job, defaults to None
         :type time: str, optional
-        :param queue: queue to run batch in
-        :type queue: str
-        :param account: account for batch launch
+        :param queue: queue to run batch in, defaults to None
+        :type queue: str, optional
+        :param account: account for batch launch, defaults to None
         :type account: str, optional
-        :param resources: overrides for resource arguments
+        :param resources: overrides for resource arguments, defaults to None
         :type resources: dict[str, str], optional
-        :param batch_args: overrides for PBS batch arguments
+        :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
         super().__init__("qsub", batch_args=batch_args)
@@ -92,15 +90,15 @@ class QsubBatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
-            raise TypeError("host_list argument must be list of strings")
+            raise TypeError("host_list argument must be a list of strings")
         self._hosts = host_list
 
     def set_walltime(self, walltime):
@@ -129,7 +127,7 @@ class QsubBatchSettings(BatchSettings):
         """Set the number of cpus obtained in each node.
 
         If a select argument is provided in
-        ``QsubBatchSettings.resources`` then,
+        ``QsubBatchSettings.resources``, then
         this value will be overridden
 
         :param num_cpus: number of cpus per node in select

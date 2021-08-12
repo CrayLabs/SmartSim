@@ -7,16 +7,17 @@ SmartSim interfaces with a number of backends called `launchers` that
 are responsible for constructing jobs based on run parameters and
 launching them onto a system.
 
-The `launchers` allow Smartsim users to interact with their system
+The `launchers` allow SmartSim users to interact with their system
 programmatically through a python interface.
 Because of this, SmartSim users don’t have to leave the Jupyter Notebook,
 Python REPL, or Python script to launch, query, and interact with their jobs.
 
-SmartSim currently supports 4 `launchers`:
+SmartSim currently supports 5 `launchers`:
   1. ``local`` for single-node, workstation, or laptop
   2. ``slurm`` for systems using the Slurm scheduler
   3. ``pbs`` for systems using the PBSpro scheduler
   4. ``cobalt`` for systems using the Cobalt scheduler
+  5. ``lsf`` for systems using the LSF scheduler
 
 Support for other system types and schedulers are in progress.
 
@@ -31,6 +32,7 @@ to the ``Experiment`` initialization.
     exp = Experiment("name-of-experiment", launcher="slurm") # Slurm launcher
     exp = Experiment("name-of-experiment", launcher="pbs") # PBSpro launcher
     exp = Experiment("name-of-experiment", launcher="cobalt") # Cobalt launcher
+    exp = Experiment("name-of-experiment", launcher="lsf") # LSF launcher
 
 -------------------------------------------------------------------------
 
@@ -75,11 +77,11 @@ The Slurm launcher works directly with the Slurm scheduler to launch, query,
 monitor and stop applications. During the course of an ``Experiment``,
 launched entities can be queried for status, completion, and errors.
 
-The amount of communication between Smartsim and Slurm can tuned
+The amount of communication between SmartSim and Slurm can be tuned
 for specific guidelines of different sites by setting the
 value for ``jm_interval`` in the SmartSim configuration file.
 
-To use the Slurm launcher, specify at ``Experiment`` intialization:
+To use the Slurm launcher, specify at ``Experiment`` initialization:
 
 .. code-block:: python
 
@@ -157,7 +159,7 @@ Releasing Allocations
 The :ref:`smartsim.slurm <slurm_module_api>` interface
 also supports releasing allocations obtained in an experiment.
 
-The example below releases a the allocation in the example above.
+The example below releases the allocation in the example above.
 
 .. code-block:: python
 
@@ -180,14 +182,14 @@ The example below releases a the allocation in the example above.
 PBSPro
 ======
 
-Like, the Slurm launcher the PBSPro launcher works directly with the PBSPro
+Like the Slurm launcher, the PBSPro launcher works directly with the PBSPro
 scheduler to launch, query, monitor and stop applications.
 
-The amount of communication between Smartsim and PBSPro can tuned
+The amount of communication between SmartSim and PBSPro can be tuned
 for specific guidelines of different sites by setting the
 value for ``jm_interval`` in the SmartSim configuration file.
 
-To use the PBSpro launcher, specify at ``Experiment`` intialization:
+To use the PBSpro launcher, specify at ``Experiment`` initialization:
 
 .. code-block:: python
 
@@ -219,7 +221,7 @@ Cobalt
 The Cobalt Launcher works just like the PBSPro launcher and
 is compatible with ALPS and OpenMPI workloads as well.
 
-To use the Cobalt launcher, specify at ``Experiment`` intialization:
+To use the Cobalt launcher, specify at ``Experiment`` initialization:
 
 .. code-block:: python
 
@@ -240,4 +242,35 @@ As well as batch settings for ``qsub`` through:
 
 Both supported ``RunSettings`` types above can be added
 to a ``CobaltBatchSettings`` batch workload through ``Ensemble``
+creation.
+
+---------------------------------------------------------------------
+
+LSF
+===
+
+The LSF Launcher works like the PBSPro and Cobalt launchers and
+is compatible with LSF and OpenMPI workloads.
+
+To use the LSF launcher, specify at ``Experiment`` initialization:
+
+.. code-block:: python
+
+    from smartsim import Experiment
+
+    exp = Experiment("MOM6-double-gyre", launcher="lsf")
+
+
+Running on LSF
+--------------
+
+The LSF launcher supports two types of ``RunSettings``:
+  1. :ref:`JsrunSettings <jsrun_api>`
+  2. :ref:`MpirunSettings <openmpi_api>`
+
+As well as batch settings for ``bsub`` through:
+  1. :ref:`BsubBatchSettings <bsub_api>`
+
+Both supported ``RunSettings`` types above can be added
+to a ``BsubBatchSettings`` batch workload through ``Ensemble``
 creation.

@@ -38,15 +38,15 @@ class SrunSettings(RunSettings):
         If an allocation is specified, the instance receiving these run
         parameters will launch on that allocation.
 
-        :param exe: executable
+        :param exe: executable to run
         :type exe: str
-        :param exe_args: executable arguments
+        :param exe_args: executable arguments, defaults to Noe
         :type exe_args: list[str] | str, optional
-        :param run_args: srun arguments without dashes
+        :param run_args: srun arguments without dashes, defaults to None
         :type run_args: dict[str, str | None], optional
-        :param env_vars: environment variables for job
+        :param env_vars: environment variables for job, defaults to None
         :type env_vars: dict[str, str], optional
-        :param alloc: allocation ID if running on existing alloc
+        :param alloc: allocation ID if running on existing alloc, defaults to None
         :type alloc: str, optional
         """
         super().__init__(
@@ -69,8 +69,8 @@ class SrunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -113,7 +113,7 @@ class SrunSettings(RunSettings):
     def format_run_args(self):
         """return a list of slurm formatted run arguments
 
-        :return: list slurm arguments for these settings
+        :return: list of slurm arguments for these settings
         :rtype: list[str]
         """
         # add additional slurm arguments based on key length
@@ -133,7 +133,7 @@ class SrunSettings(RunSettings):
     def format_env_vars(self):
         """Build environment variable string for Slurm
 
-        Slurm takes exports in comma seperated lists
+        Slurm takes exports in comma separated lists
         the list starts with all as to not disturb the rest of the environment
         for more information on this, see the slurm documentation for srun
 
@@ -176,13 +176,13 @@ class SbatchSettings(BatchSettings):
         Initialization values provided (nodes, time, account)
         will overwrite the same arguments in ``batch_args`` if present
 
-        :param nodes: number of nodes
+        :param nodes: number of nodes, defaults to None
         :type nodes: int, optional
         :param time: walltime for job, e.g. "10:00:00" for 10 hours
         :type time: str, optional
-        :param account: account for job
+        :param account: account for job, defaults to None
         :type account: str, optional
-        :param batch_args: extra batch arguments
+        :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
         super().__init__("sbatch", batch_args=batch_args)
@@ -232,8 +232,8 @@ class SbatchSettings(BatchSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]

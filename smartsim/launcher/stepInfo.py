@@ -206,3 +206,36 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
         elif status in self.mapping:
             return self.mapping[status]
         return STATUS_FAILED
+
+
+class LSFStepInfo(StepInfo):  # cov-lsf
+
+    # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
+    mapping = {
+        "RUN": STATUS_RUNNING,
+        "PSUSP": STATUS_PAUSED,
+        "USUSP": STATUS_PAUSED,
+        "SSUSP": STATUS_PAUSED,
+        "PEND": STATUS_PAUSED,
+        "DONE": STATUS_COMPLETED,
+    }
+
+    def __init__(self, status="", returncode=None, output=None, error=None):
+        if status == "NOTFOUND":
+            if returncode is not None:
+                smartsim_status = "Completed" if returncode == 0 else "Failed"
+            else:
+                smartsim_status = "Completed"
+                returncode = 0
+        else:
+            smartsim_status = self._get_smartsim_status(status)
+        super().__init__(
+            smartsim_status, status, returncode, output=output, error=error
+        )
+
+    def _get_smartsim_status(self, status):
+        if status in SMARTSIM_STATUS:
+            return SMARTSIM_STATUS[status]
+        elif status in self.mapping:
+            return self.mapping[status]
+        return STATUS_FAILED

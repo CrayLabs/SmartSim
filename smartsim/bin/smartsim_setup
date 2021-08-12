@@ -50,6 +50,12 @@ else
         OS="unknown"
 fi
 
+# catch silly users
+if [[ $OS == "mac" && DEVICE == "gpu" ]]; then
+        echo "WARNING: You are using a GPU on a Mac. This is not supported. Switching to CPU."
+        DEVICE="cpu"
+fi
+
 # avoid wget warnings on macOS
 [[ $OS == macos ]] && export LC_ALL=en_US.UTF-8
 
@@ -72,14 +78,7 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-# Stage 2: Build RedisIP
-$DIR/scripts/build-redis-ip.sh
-if [ $? != 0 ]; then
-    echo "ERROR: RedisIP failed to build"
-    exit 1
-fi
-
-# Stage 3: Build RedisAI
+# Stage 2: Build RedisAI
 if [[ $RAI_BUILD_TYPE == "gpu" ]]; then
     source $DIR/scripts/build-redisai-gpu.sh $RAI_PT $RAI_TF $RAI_TFL $RAI_ONNX
     if [ $? != 0 ]; then

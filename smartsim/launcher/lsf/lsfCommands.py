@@ -24,48 +24,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..database import Orchestrator
-from ..entity import EntityList, SmartSimEntity
-from ..error import SmartSimError
+from ..util.shell import execute_cmd
 
 
-def separate_entities(args):
-    """Given multiple entities to launch, separate
-    by Class type
+def bjobs(args):
+    """Calls LSF bjobs with args
 
-    :returns: entities, entity list, and orchestrator
-    :rtype: tuple
+    :param args: List of command arguments
+    :type args: List of str
+    :returns: Output and error of bjobs
     """
-    _check_names(args)
-    entities = []
-    entity_lists = []
-    db = None
-
-    for arg in args:
-        if isinstance(arg, Orchestrator):
-            if db:
-                raise SmartSimError("Separate_entities was given two orchestrators")
-            db = arg
-        elif isinstance(arg, SmartSimEntity):
-            entities.append(arg)
-        elif isinstance(arg, EntityList):
-            entity_lists.append(arg)
-        else:
-            raise TypeError(
-                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
-            )
-
-    return entities, entity_lists, db
+    cmd = ["bjobs"] + args
+    _, out, error = execute_cmd(cmd)
+    return out, error
 
 
-def _check_names(args):
-    used = []
-    for arg in args:
-        name = getattr(arg, "name", None)
-        if not name:
-            raise TypeError(
-                f"Argument was of type {type(arg)}, not SmartSimEntity or EntityList"
-            )
-        if name in used:
-            raise SmartSimError("User provided two entities with the same name")
-        used.append(name)
+def bkill(args):
+    """Calls LSF bkill with args.
+
+    returncode is also supplied in this function.
+
+    :param args: list of command arguments
+    :type args: list of str
+    :return: output and error
+    :rtype: str
+    """
+    cmd = ["bkill"] + args
+    returncode, out, error = execute_cmd(cmd)
+    return returncode, out, error

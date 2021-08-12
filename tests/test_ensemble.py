@@ -1,7 +1,8 @@
 import pytest
 
+from smartsim import Experiment
 from smartsim.entity import Ensemble, Model
-from smartsim.error import SSUnsupportedError, UserStrategyError
+from smartsim.error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from smartsim.settings import RunSettings
 
 """
@@ -76,6 +77,17 @@ def test_random():
     assigned_params = [m.params["h"] for m in ensemble.entities]
     assert all([x in random_ints for x in assigned_params])
 
+    ensemble = Ensemble(
+        "random_test",
+        params,
+        run_settings=rs,
+        perm_strat="random",
+        n_models=len(random_ints) - 1,
+    )
+    assert len(ensemble) == len(random_ints) - 1
+    assigned_params = [m.params["h"] for m in ensemble.entities]
+    assert all([x in random_ints for x in assigned_params])
+
 
 def test_user_strategy():
     """Test a user provided strategy"""
@@ -125,3 +137,42 @@ def test_add_model_type():
     with pytest.raises(TypeError):
         # should be a Model not string
         e.add_model("model")
+
+
+def test_add_existing_model():
+    params_1 = {"h": 5}
+    params_2 = {"z": 6}
+    model_1 = Model("identical_name", params_1, "", rs)
+    model_2 = Model("identical_name", params_2, "", rs)
+    e = Ensemble("ensemble", params_1, run_settings=rs)
+    e.add_model(model_1)
+    with pytest.raises(EntityExistsError):
+        e.add_model(model_2)
+
+
+# ----- Other --------------------------------------
+
+
+def test_models_property():
+    params = {"h": [5, 6, 7, 8]}
+    e = Ensemble("test", params, run_settings=rs)
+    models = e.models
+    assert models == [model for model in e]
+
+
+def test_key_prefixing():
+    params_1 = {"h": [5, 6, 7, 8]}
+    params_2 = {"z": 6}
+    e = Ensemble("test", params_1, run_settings=rs)
+    model = Model("model", params_2, "", rs)
+    e.add_model(model)
+    assert e.query_key_prefixing() == False
+    e.enable_key_prefixing()
+    assert e.query_key_prefixing() == True
+
+
+def test_ensemble_type():
+    exp = Experiment("name")
+    ens_settings = RunSettings("python")
+    ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
+    assert ensemble.type == "Ensemble"

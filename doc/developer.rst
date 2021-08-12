@@ -41,14 +41,14 @@ runs by default and doesn't launch any jobs out onto
 a system through a workload manager like Cobalt.
 
 If any of the above commands are used, the test suite will
-run the the "light" test suite by default
+run the "light" test suite by default.
 
 
-PBSPro, Slurm, Cobalt
-=====================
+PBSPro, Slurm, Cobalt, LSF
+==========================
 
 To run the full test suite, users will have to be on a system
-with one of the above workload managers. Additionally users will
+with one of the above workload managers. Additionally, users will
 need to obtain an allocation of at least 3 nodes.
 
 .. code-block:: bash
@@ -56,22 +56,29 @@ need to obtain an allocation of at least 3 nodes.
   # for slurm (with srun)
   salloc -N 3 -A account --exclusive -t 00:10:00
 
-  # For PBSPro (with aprun)
+  # for PBSPro (with aprun)
   qsub -l select=3 -l place=scatter -l walltime=00:10:00 -q queue
 
   # for Cobalt (with aprun)
   qsub -n 3 -t 00:10:00 -A account -q queue -I
 
-Values for queue and account should be substituted appropriately.
+  # for LSF (with jsrun)
+  bsub -Is -W 00:30 -nnodes 3 -P project $SHELL 
 
-Once in an interative allocation, users will need to set the test
+Values for queue, account, or project should be substituted appropriately.
+
+Once in an iterative allocation, users will need to set the test
 launcher environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one
 of the following values
 
  - slurm
  - cobalt
  - pbs
+ - lsf
  - local
+
+If tests have to run on an account or project, 
+the environment variable ``SMARTSIM_TEST_ACCOUNT`` can be set.
 
 -------------------------------------------------------
 
@@ -82,7 +89,6 @@ Testing SmartRedis
 .. include:: ../smartredis/doc/testing.rst
    :start-line: 3
 
--------------------------------------------------------
 
 ============
 Git Workflow

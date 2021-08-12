@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SSConfigError
+from ..error import EntityExistsError
 from ..utils.helpers import init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
@@ -41,7 +41,7 @@ class Model(SmartSimEntity):
         :param path: path to output, error, and configuration files
         :type path: str
         :param run_settings: launcher settings specified in the experiment
-        :type run_settings: dict
+        :type run_settings: RunSettings
         """
         super().__init__(name, path, run_settings)
         self.params = params
@@ -57,12 +57,13 @@ class Model(SmartSimEntity):
         with that entity
 
         :param incoming_entity: The entity that data will be received from
-        :param incoming_entity: SmartSimEntity
+        :type incoming_entity: SmartSimEntity
+        :raises SmartSimError: if incoming entity has already been registered
         """
         if incoming_entity.name in [
             in_entity.name for in_entity in self.incoming_entities
         ]:
-            raise SSConfigError(
+            raise EntityExistsError(
                 f"'{incoming_entity.name}' has already "
                 + "been registered as an incoming entity"
             )
@@ -87,7 +88,7 @@ class Model(SmartSimEntity):
         Attach files needed for the entity that, upon generation,
         will be located in the path of the entity.
 
-        During generation files "to_copy" are just copied into
+        During generation, files "to_copy" are copied into
         the path of the entity, and files "to_symlink" are
         symlinked into the path of the entity.
 

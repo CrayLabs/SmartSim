@@ -28,7 +28,10 @@ from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import AprunSettings, CobaltBatchSettings, MpirunSettings
+from ..utils import get_logger
 from .orchestrator import Orchestrator
+
+logger = get_logger(__name__)
 
 
 class CobaltOrchestrator(Orchestrator):
@@ -39,6 +42,7 @@ class CobaltOrchestrator(Orchestrator):
         batch=True,
         hosts=None,
         run_command="aprun",
+        interface="ipogif0",
         account=None,
         queue=None,
         time=None,
@@ -52,25 +56,32 @@ class CobaltOrchestrator(Orchestrator):
 
         The Cobalt orchestrator does not support multiple databases per node.
 
-        :param port: TCP/IP port
+        :param port: TCP/IP port, defaults to 6379
         :type port: int
         :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
         :param batch: Run as a batch workload, defaults to True
         :type batch: bool, optional
-        :param hosts: specify hosts to launch on
+        :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``
-        :type run_command: str
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to "aprun".
+        :type run_command: str, optional
+        :param interface: network interface to use, defaults to "ipogif0"
+        :type interface: str, optional
         :param account: account to run batch on
-        :type account: str
+        :type account: str, optional
         :param queue: queue to launch batch in
-        :type queue: str
+        :type queue: str, optional
         :param time: walltime for batch 'HH:MM:SS' format
-        :type time: str
+        :type time: str, optional
         """
         super().__init__(
-            port, db_nodes=db_nodes, batch=batch, run_command=run_command, **kwargs
+            port,
+            interface,
+            db_nodes=db_nodes,
+            batch=batch,
+            run_command=run_command,
+            **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
             db_nodes, batch, account, queue, time
@@ -81,6 +92,9 @@ class CobaltOrchestrator(Orchestrator):
             raise SmartSimError(
                 "hosts argument is required when launching CobaltOrchestrator with OpenMPI"
             )
+        self._reserved_run_args = {}
+        self._reserved_batch_args = {}
+        self._fill_reserved()
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -91,8 +105,9 @@ class CobaltOrchestrator(Orchestrator):
         :param num_cpus: number of cpus to set
         :type num_cpus: int
         """
-        # unsure of how to add cpus per task to Cobalt batch settings
-        raise NotImplementedError("Cobalt batch doesn't support setting cpus per task")
+        for db in self.entities:
+            # Supported by MpirunSettings and AprunSettings
+            db.run_settings.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -111,7 +126,7 @@ class CobaltOrchestrator(Orchestrator):
         """Specify the hosts for the ``CobaltOrchestrator`` to launch on
 
         :param host_list: list of hosts (compute node names)
-        :type host_list: list[str]
+        :type host_list: str | list[str]
         :raises TypeError: if wrong type
         """
         if isinstance(host_list, str):
@@ -138,6 +153,7 @@ class CobaltOrchestrator(Orchestrator):
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
+        For example, "cwd", "jobname", etc.
 
         :param arg: batch argument to set e.g. "exclusive"
         :type arg: str
@@ -147,7 +163,33 @@ class CobaltOrchestrator(Orchestrator):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
-        self.batch_settings.batch_args[arg] = value
+        if arg in self._reserved_batch_args:
+            logger.warning(
+                f"Can not set batch argument {arg}: it is a reserved keyword in CobaltOrchestrator"
+            )
+        else:
+            self.batch_settings.batch_args[arg] = value
+
+    def set_run_arg(self, arg, value):
+        """Set a run argument the orchestrator should launch
+        each node with (it will be passed to `aprun`)
+
+        Some commonly used arguments are used
+        by SmartSim and will not be allowed to be set.
+        For example, "wdir", "n", etc.
+
+        :param arg: run argument to set
+        :type arg: str
+        :param value: run parameter - set to None if no parameter value
+        :type value: str | None
+        """
+        if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in CobaltOrchestrator"
+            )
+        else:
+            for db in self.entities:
+                db.run_settings.run_args[arg] = value
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
         run_command = kwargs.get("run_command", "aprun")
@@ -191,18 +233,65 @@ class CobaltOrchestrator(Orchestrator):
         port = kwargs.get("port", 6379)
 
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
+        redis_exe = CONFIG.redis_exe
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
         # Build DBNode instance for each node listed
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
-            node_exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
-            if cluster:
-                node_exe_args += self._get_cluster_args(db_node_name, port)
+            start_script_args = [
+                start_script,  # redis_starter.py
+                f"+ifname={self._interface}",  # pass interface to start script
+                "+command",  # command flag for argparser
+                redis_exe,  # redis-server
+                db_conf,  # redis6.conf file
+                ai_module,  # redisai.so
+                "--port",  # redis port
+                str(port),  # port number
+            ]
 
-            run_settings = self._build_run_settings(exe, node_exe_args, **kwargs)
+            if cluster:
+                start_script_args += self._get_cluster_args(db_node_name, port)
+
+            # Python because we use redis_starter.py to run redis
+            run_settings = self._build_run_settings(
+                "python", start_script_args, **kwargs
+            )
             node = DBNode(db_node_name, self.path, run_settings, [port])
             self.entities.append(node)
         self.ports = [port]
+
+    def _fill_reserved(self):
+        """Fill the reserved batch and run arguments dictionaries"""
+        self._reserved_run_args[MpirunSettings] = [
+            "np",
+            "N",
+            "c",
+            "output-filename",
+            "n",
+            "wdir",
+            "wd",
+            "host",
+        ]
+        self._reserved_run_args[AprunSettings] = [
+            "pes",
+            "n",
+            "pes-per-node",
+            "N",
+            "l",
+            "pes-per-numa-node",
+            "S",
+            "wdir",
+        ]
+        self._reserved_batch_args = [
+            "cwd",
+            "error",
+            "e",
+            "output",
+            "o",
+            "outputprefix",
+            "N",
+            "l",
+            "jobname",
+        ]

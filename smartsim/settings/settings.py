@@ -58,13 +58,13 @@ class RunSettings:
 
         :param exe: executable to run
         :type exe: str
-        :param exe_args: executable arguments
+        :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
-        :param run_command: launch binary e.g. srun
+        :param run_command: launch binary (e.g. "srun"), defaults to empty str
         :type run_command: str, optional
-        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`)
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
         :type run_args: dict[str, str], optional
-        :param env_vars: environment vars to launch job with
+        :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
         self.exe = [expand_exe_path(exe)]
@@ -101,7 +101,7 @@ class RunSettings:
         """Add executable arguments to executable
 
         :param args: executable arguments
-        :type args: list[str]
+        :type args: str | list[str]
         :raises TypeError: if exe args are not strings
         """
         if isinstance(args, str):
@@ -116,9 +116,20 @@ class RunSettings:
             if isinstance(exe_args, str):
                 return exe_args.split()
             if isinstance(exe_args, list):
-                correct_type = all([isinstance(arg, (str)) for arg in exe_args])
-                if not correct_type:
-                    raise TypeError("Executable arguments were not list of str or str")
+                plain_type = all([isinstance(arg, (str)) for arg in exe_args])
+                if not plain_type:
+                    nested_type = all(
+                        [
+                            all([isinstance(arg, (str)) for arg in exe_args_list])
+                            for exe_args_list in exe_args
+                        ]
+                    )
+                    if not nested_type:
+                        raise TypeError(
+                            "Executable arguments were not list of str or str"
+                        )
+                    else:
+                        return exe_args
                 return exe_args
             raise TypeError("Executable arguments were not list of str or str")
         else:
@@ -153,13 +164,15 @@ class BatchSettings:
     def __init__(self, batch_cmd, batch_args=None):
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
+        self._preamble = []
 
     @property
     def batch_cmd(self):
         """Return the batch command
 
         Tests to see if we can expand the batch command
-        path, and if not, returns the batch command as is
+        path. If we can, then returns the expanded batch
+        command. If we cannot, returns the batch command as is.
 
         :returns: batch command
         :type: str
@@ -189,6 +202,22 @@ class BatchSettings:
         :type command: str
         """
         self._batch_cmd = command
+
+    def add_preamble(self, lines):
+        """Add lines to the batch file preamble. The lines are just
+        written (unmodified) at the beginning of the batch file
+        (after the WLM directives) and can be used to e.g.
+        start virtual environments before running the executables.
+
+        :param line: lines to add to preamble.
+        :type line: str or list[str]
+        """
+        if isinstance(lines, str):
+            self._preamble += [lines]
+        elif isinstance(lines, list):
+            self._preamble += lines
+        else:
+            raise TypeError
 
     def __str__(self):
         string = f"Batch Command: {self._batch_cmd}\n"

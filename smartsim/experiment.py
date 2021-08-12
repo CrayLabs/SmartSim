@@ -32,12 +32,13 @@ from pprint import pformat
 import pandas as pd
 from tqdm import trange
 
-from .control import Controller
-from .entity import Ensemble, EntityList, Model, SmartSimEntity
+from smartsim.control.manifest import Manifest
+
+from .control import Controller, Manifest
+from .entity import Ensemble, Model
 from .error import SmartSimError
 from .generation import Generator
 from .utils import get_logger
-from .utils.entityutils import separate_entities
 from .utils.helpers import colorize, init_default
 
 logger = get_logger(__name__)
@@ -48,20 +49,25 @@ class Experiment:
 
     Experiments can create instances to launch called ``Model``
     and ``Ensemble``. Through the ``Experiment`` interface, users
-    can programmatically create, configure, start, stop, and
+    can programmatically create, configure, start, stop, poll and
     query the instances they create.
     """
 
     def __init__(self, name, exp_path=None, launcher="local"):
-        """Initialize an ``Experiment``
+        """Example initialization
+
+        .. highlight:: python
+        .. code-block:: python
+
+            exp = Experiment(name="my_exp", launcher="local")
 
         :param name: name for the ``Experiment``
         :type name: str
         :param exp_path: path to location of ``Experiment`` directory if generated
-        :type exp_path: str
-        :param launcher: type of launcher, options are "slurm", "pbs",
-                         "cobalt", or "local". Defaults to "local"
-        :type launcher: str
+        :type exp_path: str, optional
+        :param launcher: type of launcher being used, options are "slurm", "pbs",
+                         "cobalt", "lsf", or "local". Defaults to "local"
+        :type launcher: str, optional
         """
         self.name = name
         if exp_path:
@@ -81,6 +87,7 @@ class Experiment:
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to the start method.
+        Passing more than one ``Orchestrator`` as arguments is forbidden.
 
         :param block: block execution until all non-database
                       jobs are finished, defaults to True
@@ -89,10 +96,11 @@ class Experiment:
                         defaults to False
         :type summary: bool, optional
         """
+        start_manifest = Manifest(*args)
         try:
             if summary:
-                self._launch_summary(*args)
-            self._control.start(*args, block=block)
+                self._launch_summary(start_manifest)
+            self._control.start(manifest=start_manifest, block=block)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -101,21 +109,20 @@ class Experiment:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
-        can all be passed as arguments to the start method.
+        can all be passed as arguments to the stop method.
 
         :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
         try:
-            for entity in args:
-                if isinstance(entity, SmartSimEntity):
-                    self._control.stop_entity(entity)
-                elif isinstance(entity, EntityList):
-                    self._control.stop_entity_list(entity)
-                else:
-                    raise TypeError(
-                        f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
-                    )
+            stop_manifest = Manifest(*args)
+            for entity in stop_manifest.models:
+                self._control.stop_entity(entity)
+            for entity_list in stop_manifest.ensembles:
+                self._control.stop_entity_list(entity_list)
+            orchestrator = stop_manifest.db
+            if orchestrator:
+                self._control.stop_entity_list(orchestrator)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -136,7 +143,8 @@ class Experiment:
 
         :param tag: tag used in `to_configure` generator files
         :type tag: str, optional
-        :param overwrite: overwrite existing folders and contents
+        :param overwrite: overwrite existing folders and contents,
+               defaults to False
         :type overwrite: bool, optional
         """
         try:
@@ -154,10 +162,11 @@ class Experiment:
         This method should only be used if jobs were launched
         with ``Experiment.start(block=False)``
 
-        :param interval: frequency of logging to stdout
-        :type interval: int
-        :param verbose: set verbosity
-        :type verbose: bool
+        :param interval: frequency (in seconds) of logging to stdout,
+                         defaults to 10 seconds
+        :type interval: int, optional
+        :param verbose: set verbosity, defaults to True
+        :type verbose: bool, optional
         :raises SmartSimError:
         """
         try:
@@ -167,15 +176,17 @@ class Experiment:
             raise
 
     def finished(self, entity):
-        """Query if a job as completed
+        """Query if a job has completed
 
-        A instance of ``Model``, ``Ensemble`` can be passed
+        An instance of ``Model`` or ``Ensemble`` can be passed
         as an argument.
 
         :param entity: object launched by this ``Experiment``
-        :type entity: SmartSimEntity | EntityList
-        :returns: True if job has completed
+        :type entity: Model | Ensemble
+        :returns: True if job has completed, False otherwise
         :rtype: bool
+        :raises SmartSimError: if entity has not been launched
+                               by this ``Experiment``
         """
         try:
             return self._control.finished(entity)
@@ -184,27 +195,26 @@ class Experiment:
             raise
 
     def get_status(self, *args):
-        """Query the status of a job
+        """Query the status of the specific job(s)
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
         can all be passed as arguments to ``Experiment.get_status()``
 
-        :returns: status of the job
+        :returns: status of the specific job(s)
         :rtype: list[str]
         :raises SmartSimError: if status retrieval fails
         :raises TypeError:
         """
         try:
+            manifest = Manifest(*args)
             statuses = []
-            for entity in args:
-                if isinstance(entity, SmartSimEntity):
-                    statuses.append(self._control.get_entity_status(entity))
-                elif isinstance(entity, EntityList):
-                    statuses.extend(self._control.get_entity_list_status(entity))
-                else:
-                    raise TypeError(
-                        f"Argument was of type {type(entity)} not SmartSimEntity or EntityList"
-                    )
+            for entity in manifest.models:
+                statuses.append(self._control.get_entity_status(entity))
+            for entity_list in manifest.ensembles:
+                statuses.extend(self._control.get_entity_list_status(entity_list))
+            orchestrator = manifest.db
+            if orchestrator:
+                statuses.extend(self._control.get_entity_list_status(orchestrator))
             return statuses
         except SmartSimError as e:
             logger.error(e)
@@ -227,11 +237,12 @@ class Experiment:
 
         Ensembles require one of the following combinations
         of arguments
-          - ``run_settings`` and ``params``
-          - ``run_settings`` and ``replicas``
-          - ``batch_settings``
-          - ``batch_settings``, ``run_settings``, and ``params``
-          - ``batch_settings``, ``run_settings``, and ``replicas``
+
+            - ``run_settings`` and ``params``
+            - ``run_settings`` and ``replicas``
+            - ``batch_settings``
+            - ``batch_settings``, ``run_settings``, and ``params``
+            - ``batch_settings``, ``run_settings``, and ``replicas``
 
         If given solely batch settings, an empty ensemble
         will be created that models can be added to manually
@@ -246,6 +257,9 @@ class Experiment:
         or ``replicas`` must be passed and the ensemble members
         will each launch sequentially.
 
+        The kwargs argument can be used to pass custom input
+        parameters to the permutation strategy.
+
         :param name: name of the ensemble
         :type name: str
         :param params: parameters to expand into ``Model`` members
@@ -257,10 +271,10 @@ class Experiment:
         :param replicas: number of replicas to create
         :type replicas: int
         :param perm_strategy: strategy for expanding ``params`` into
-                             ``Model`` instances from params argument
-                             options are "all_perm", "stepped", "random"
-                             or a callable function
-        :type perm_strategy: str
+                              ``Model`` instances from params argument
+                              options are "all_perm", "stepped", "random"
+                              or a callable function. Default is "all_perm".
+        :type perm_strategy: str, optional
         :raises SmartSimError: if initialization fails
         :return: ``Ensemble`` instance
         :rtype: Ensemble
@@ -284,25 +298,25 @@ class Experiment:
         self, name, run_settings, params=None, path=None, enable_key_prefixing=False
     ):
         """Create a ``Model``
-
         By default, all ``Model`` instances start with the cwd
-        as their path unless specified. If specified or not, upon
-        user passing the instance to ``Experiment.generate()``,
-        the ``Model`` path will be overwritten and replaced
-        with the created directory for the ``Model``
+        as their path unless specified. Regardless of if path is
+        specified, upon user passing the instance to
+        ``Experiment.generate()``, the ``Model`` path will be
+        overwritten and replaced with the created directory for the ``Model``
 
         :param name: name of the model
         :type name: str
         :param run_settings: defines how ``Model`` should be run,
-        :type run_settings: dict
+        :type run_settings: RunSettings
         :param params: model parameters for writing into configuration files
         :type params: dict, optional
         :param path: path to where the model should be executed at runtime
         :type path: str, optional
-        :param enable_key_prefixing: If true, data sent to the Orchestrator
+        :param enable_key_prefixing: If True, data sent to the Orchestrator
                                      using SmartRedis from this ``Model`` will
                                      be prefixed with the ``Model`` name.
-        :type enable_key_prefixing: bool
+                                     Default is True.
+        :type enable_key_prefixing: bool, optional
         :raises SmartSimError: if initialization fails
         :return: the created ``Model``
         :rtype: Model
@@ -343,7 +357,7 @@ class Experiment:
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :return: Dataframe of ``Experiment`` history
+        :return: pandas Dataframe of ``Experiment`` history
         :rtype: pd.DataFrame
         """
         index = 0
@@ -373,14 +387,19 @@ class Experiment:
                 index += 1
         return df
 
-    def _launch_summary(self, *args):
-        """Experiment pre-launch summary of entities that will be launched"""
+    def _launch_summary(self, manifest):
+        """Experiment pre-launch summary of entities that will be launched
+        :param manifest: Manifest of deployables.
+        :type manifest: Manifest
+        """
 
         def sprint(p):
             print(p, flush=True)
 
         sprint("\n")
-        models, ensembles, orchestrator = separate_entities(args)
+        models = manifest.models
+        ensembles = manifest.ensembles
+        orchestrator = manifest.db
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)
@@ -439,7 +458,7 @@ class Experiment:
         if orchestrator:
             sprint(colorize("=== DATABASE ===", color="cyan", bold=True))
             size = colorize(
-                "# of database nodes: " + str(len(orchestrator)), color="green"
+                "# of database shards: " + str(orchestrator.num_shards), color="green"
             )
             batch = colorize(f"Launching as batch: {orchestrator.batch}", color="green")
             sprint(f"{batch}")

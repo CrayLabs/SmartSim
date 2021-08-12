@@ -49,7 +49,7 @@ class AprunSettings(RunSettings):
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):
-        """Make job a MPMD job
+        """Make job an MPMD job
 
         This method combines two ``AprunSettings``
         into a single MPMD command joined with ':'
@@ -93,8 +93,8 @@ class AprunSettings(RunSettings):
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -102,12 +102,12 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be a list of strings")
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
-        self.run_args["nodelist"] = ",".join(host_list)
+        self.run_args["node-list"] = ",".join(host_list)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
 
-        :return: list ALPS arguments for these settings
+        :return: list of ALPS arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses
