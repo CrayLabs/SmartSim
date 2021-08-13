@@ -12,7 +12,8 @@ config = "/path/to/redis.conf" # optional!
 
   [redis.modules]
   ai = "/path/to/RedisAI/install-cpu/"
-  ip = "/path/to/RedisIP/build/"
 
 [test]
 launcher = "local" # default
+interface = "ib0" # network interface to use in tests
+device = "CPU" # device to use for tests (CPU/GPU)

@@ -39,12 +39,12 @@ to an in-memory database called the Orchestrator, built on an in-memory database
 called Redis.
 
 Applications integrated with the SmartRedis clients, written in Fortran, C, C++ and Python,
-can stream tensors and datasets to and from the Orchestrator This Client-Server
+can stream tensors and datasets to and from the Orchestrator. The distributed Client-Server
 paradigm allows for data to be seemlessly exchanged between applications at runtime.
 
 In addition to exchanging data between langauges, any of the SmartRedis clients can
 remotely execute Machine Learning models and TorchScript code on data stored in
-the Orchestrator dispite which langauge the data originated from.
+the Orchestrator despite which language the data originated from.
 
 SmartSim supports the following ML libraries.
 
@@ -103,7 +103,7 @@ independently.
 # SmartSim Infrastructure Library
 
 The Infrastructure Library (IL), the ``smartsim`` python package,
-facilitates the launch of ML and Simulation
+facilitates the launch of Machine Learning and simulation
 workflows. The Python interface of the IL creates, configures, launches and monitors
 applications.
 
