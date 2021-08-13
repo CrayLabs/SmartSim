@@ -458,12 +458,13 @@ from which these instructions are executed.
   pushd smartsim
   pip install .
 
-  # install PyTorch and TensorFlow backend for the Orchestrator database.
-  # pip-installed cmake won't use the correct CMAKE_PREFIX_PATH
-  pip uninstall cmake -y
-  conda install cmake -y
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
-  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/tensorflow/include"
+  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
+  pip uninstall cmake
+  conda install cmake
+  conda install git-lfs
+  conda install make
+  # install PyTorch and TensorFlow backend for the Orchestrator database.
   smart --device=gpu --torch_dir $Torch_DIR -v
 
 
