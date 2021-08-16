@@ -442,25 +442,29 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.2.0/include/
 
   # clone SmartRedis and build
-  git clone https://github.com/SmartRedis.git smartredis
+  git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   pushd smartredis
   make lib && pip install .
   popd
 
   # clone SmartSim and build
-  git clone https://github.com/SmartSim.git smartsim
+  git clone https://github.com/CrayLabs/SmartSim.git smartsim
   pushd smartsim
   pip install .
 
+  pip uninstall cmake
+  conda install cmake -y
+  conda install git-lfs -y
+  conda install make -y
+  # install PyTorch and TensorFlow backend for the Orchestrator database.
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
-  pip uninstall cmake
-  conda install cmake
-  conda install git-lfs
-  conda install make
-  # install PyTorch and TensorFlow backend for the Orchestrator database.
   smart --device=gpu --torch_dir $Torch_DIR -v
 
+Before executing SmartSim, you will need to add the PyTorch library path to the environment with:
+
+.. code-block:: bash
+  export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
 
 
 SmartSim on Cheyenne at NCAR
