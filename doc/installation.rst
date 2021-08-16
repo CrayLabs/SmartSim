@@ -431,7 +431,7 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   module load open-ce
   conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
   conda activate smartsim
-  # Fix broken cmake module
+  # fix broken cmake module
   pip uninstall cmake
   pip install cmake
   conda install git-lfs make -y
@@ -456,6 +456,9 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   pip install .
 
   # install PyTorch and TensorFlow backend for the Orchestrator database.
+  # pip-installed cmake won't use the correct CMAKE_PREFIX_PATH
+  pip uninstall cmake
+  conda install cmake -y
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
   smart --device=gpu --torch_dir $Torch_DIR -v
