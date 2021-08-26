@@ -365,39 +365,16 @@ class Controller:
         if ray_cluster.batch:
             ray_batch_step = self._create_batch_job_step(ray_cluster)
             self._launch_step(ray_batch_step, ray_cluster)
-            try:
-                nodelist = self._launcher.get_step_nodes([ray_batch_step.name])
-                ray_cluster._hosts = nodelist[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node acquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
+            
         else:
             ray_steps = [
                 (self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster
             ]
             for ray_step in ray_steps:
                 self._launch_step(*ray_step)
-            try:
-                ray_step_names = [ray_step[0].name for ray_step in ray_steps]
-                nodes = self._launcher.get_step_nodes(ray_step_names)
-                ray_cluster._hosts = []
-                for _, node in zip(ray_cluster, nodes):
-                    # ray_node._host = node[0]
-                    ray_cluster._hosts.append(node[0])
+            
+        logger.info("Ray cluster launched.")
 
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node acquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
-
-        if ray_cluster._hosts:
-            logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
-        else:
-            logger.info("Ray cluster launched.")
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop
