@@ -25,14 +25,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
+import logging
+import os
 import socket
 import time
 from os import getcwd
+from pathlib import Path
 
-import numpy as np
+import psutil
+import redis
+from rediscluster import RedisCluster
+from rediscluster.exceptions import ClusterDownError, RedisClusterException
 
-from smartredis import Client
-from smartredis.error import RedisConnectionError, RedisReplyError
+logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
@@ -51,26 +56,30 @@ class Orchestrator(EntityList):
     within an entity.
     """
 
-    def __init__(self, port=6379, **kwargs):
+    def __init__(self, port=6379, interface="lo", **kwargs):
         """Initialize an Orchestrator reference for local launch
 
-        :param port: TCP/IP port
-        :type port: int
+        :param port: TCP/IP port, defaults to 6379
+        :type port: int, optional
+        :param interface: network interface, defaults to "lo"
+        :type interface: str, optional
 
         Extra configurations for RedisAI
 
         See https://oss.redislabs.com/redisai/configuration/
 
         :param threads_per_queue: threads per GPU device
-        :type threads_per_queue: int
+        :type threads_per_queue: int, optional
         :param inter_op_threads: threads accross CPU operations
-        :type inter_op_threads: int
+        :type inter_op_threads: int, optional
         :param intra_op_threads: threads per CPU operation
-        :type intra_op_threads: int
+        :type intra_op_threads: int, optional
         """
         self.ports = []
-        self._hosts = []
         self.path = getcwd()
+        self._hosts = []
+        self._interface = interface
+        self._check_network_interface()
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
@@ -139,22 +148,32 @@ class Orchestrator(EntityList):
         self.check_cluster_status()
         logger.info(f"Database cluster created with {self.num_shards} shards")
 
-    def check_cluster_status(self):  # cov-wlm
+    def check_cluster_status(self, trials=10):  # cov-wlm
         """Check that a cluster is up and running
-
+        :param trials: number of attempts to verify cluster status
+        :type trials: int, optional
         :raises SmartSimError: If cluster status cannot be verified
         """
-        trials = 10
+        host_list = []
+        for host in self.hosts:
+            for port in self.ports:
+                host_dict = dict()
+                host_dict["host"] = get_ip_from_host(host)
+                host_dict["port"] = port
+                host_list.append(host_dict)
+
         logger.debug("Beginning database cluster status check...")
         while trials > 0:
             # wait for cluster to spin up
-            time.sleep(2)
+            time.sleep(5)
             try:
-                self.is_active()
-                break
-            except (RedisReplyError, RedisConnectionError):
+                redis_tester = RedisCluster(startup_nodes=host_list)
+                redis_tester.set("__test__", "__test__")
+                redis_tester.delete("__test__")
+                logger.debug("Cluster status verified")
+                return
+            except (ClusterDownError, RedisClusterException, redis.RedisError):
                 logger.debug("Cluster still spinning up...")
-                time.sleep(3)
                 trials -= 1
         if trials == 0:
             raise SmartSimError("Cluster setup could not be verified")
@@ -165,7 +184,7 @@ class Orchestrator(EntityList):
         :return: addresses
         :rtype: list[str]
 
-        :raises SmartSimError: If database address cannot be found
+        :raises SmartSimError: If database address cannot be found or is not active
         """
         if not self._hosts:
             raise SmartSimError("Could not find database address")
@@ -175,42 +194,36 @@ class Orchestrator(EntityList):
 
     def _get_address(self):
         addresses = []
-        for host, port in itertools.product(self._hosts, self.ports):
-            addresses.append(":".join((host, str(port))))
+        for ip, port in itertools.product(self._hosts, self.ports):
+            addresses.append(":".join((ip, str(port))))
         return addresses
 
     def is_active(self):
-        """Check if database is running
+        """Check if the database is active
 
-        :returns: True if database is active, False otherwise
+        :return: True if database is active, False otherwise
         :rtype: bool
         """
-        active = False
-
         if not self._hosts:
-            return active
-        addresses = self._get_address()
-        cluster = True if self.num_shards > 1 else False
-
-        try:
-            client = Client(address=addresses[0], cluster=cluster)
-
-            # if we have more than one shard to get info on
-            if cluster:
-                db_info = client.get_db_cluster_info(addresses)
-                for info in db_info:
-                    if info["cluster_state"] != "ok":
-                        return False
-                active = True
-            else:
-                tensor = np.array([1, 2])
-                client.put_tensor("cluster_test", tensor)
-                _ = client.get_tensor("cluster_test")
-                active = True
-        except (RedisConnectionError, RedisReplyError):
             return False
 
-        return active
+        # if single shard
+        if self.num_shards < 2:
+            host = self._hosts[0]
+            port = self.ports[0]
+            try:
+                client = redis.Redis(host=host, port=port, db=0)
+                if client.ping():
+                    return True
+            except redis.RedisError:
+                return False
+        # if a cluster
+        else:
+            try:
+                self.check_cluster_status(trials=1)
+                return True
+            except SmartSimError:
+                return False
 
     def _get_AI_module(self):
         """Get the RedisAI module from third-party installations
@@ -228,17 +241,6 @@ class Orchestrator(EntityList):
             module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
-    @staticmethod
-    def _get_IP_module_path():
-        """Get the RedisIP module from third-party installations
-
-        :raises SSConfigError: if retrieval fails
-        :return: path to module
-        :rtype: str
-        """
-        module_path = CONFIG.redisip
-        return " ".join(("--loadmodule", module_path))
-
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
@@ -255,13 +257,25 @@ class Orchestrator(EntityList):
 
         # collect database launch command information
         db_conf = CONFIG.redis_conf
-        exe = CONFIG.redis_exe
-        ip_module = self._get_IP_module_path()
+        redis_exe = CONFIG.redis_exe
         ai_module = self._get_AI_module()
+        start_script = self._find_redis_start_script()
 
-        # create single DBNode instance for Local Orchestrator
-        exe_args = [db_conf, ai_module, ip_module, "--port", str(port)]
-        run_settings = RunSettings(exe, exe_args)
+        start_script_args = [
+            start_script,  # redis_starter.py
+            f"+ifname={self._interface}",  # pass interface to start script
+            "+command",  # command flag for argparser
+            redis_exe,  # redis-server
+            db_conf,  # redis6.conf file
+            ai_module,  # redisai.so
+            "--port",  # redis port
+            str(port),  # port number
+        ]
+
+        exe_args = " ".join(start_script_args)
+
+        # python is exe because we are using redis_starter.py to start redis
+        run_settings = RunSettings("python", exe_args)
         db_node_name = self.name + "_0"
         node = DBNode(db_node_name, self.path, run_settings, [port])
 
@@ -285,11 +299,28 @@ class Orchestrator(EntityList):
                 hosts.extend(dbnode.hosts)
         return hosts
 
+    @staticmethod
+    def _find_redis_start_script():
+        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+        script_path = current_dir.joinpath("redis_starter.py").resolve()
+        return str(script_path)
+
+    def _check_network_interface(self):
+        net_if_addrs = psutil.net_if_addrs()
+        if self._interface not in net_if_addrs and self._interface != "lo":
+            available = list(net_if_addrs.keys())
+            logger.warning(
+                f"{self._interface} is not a valid network interface on this node. \n"
+                "This could be because the head node doesn't have the same networks, if so, ignore this."
+            )
+            logger.warning(f"Found network interfaces are: {available}")
+
 
 def get_ip_from_host(host):
     """Return the IP address for the interconnect.
 
-    :param str host: hostname of the compute node e.g. nid00004
+    :param host: hostname of the compute node e.g. nid00004
+    :type host: str
     :returns: ip of host
     :rtype: str
     """

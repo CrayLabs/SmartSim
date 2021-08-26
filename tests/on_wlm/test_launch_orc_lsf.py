@@ -4,7 +4,6 @@ import pytest
 
 from smartsim import Experiment, constants
 from smartsim.database import LSFOrchestrator
-from smartsim.error import SSUnsupportedError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -22,7 +21,8 @@ def test_launch_lsf_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = LSFOrchestrator(6780, batch=False)
+    network_interface = wlmutils.get_test_interface()
+    orc = LSFOrchestrator(6780, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -53,7 +53,8 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = LSFOrchestrator(6780, db_nodes=3, batch=False)
+    network_interface = wlmutils.get_test_interface()
+    orc = LSFOrchestrator(6780, db_nodes=3, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)

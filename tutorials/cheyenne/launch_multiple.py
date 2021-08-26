@@ -1,6 +1,6 @@
 import os
 
-from smartsim import Experiment, constants
+from smartsim import Experiment
 from smartsim.database import PBSOrchestrator
 from smartsim.settings import MpirunSettings
 
@@ -40,40 +40,45 @@ def collect_db_hosts(num_hosts):
         raise Exception(f"PBS_NODEFILE had {len(hosts)} hosts, not {num_hosts}")
 
 
-def launch_cluster_orc(exp, db_hosts, port):
+def launch_cluster_orc(experiment, hosts, port):
     """Just spin up a database cluster, check the status
        and tear it down"""
 
-    print(f"Starting Orchestrator on hosts: {db_hosts}")
+    print(f"Starting Orchestrator on hosts: {hosts}")
     # batch = False to launch on existing allocation
-    db = PBSOrchestrator(port=port, db_nodes=3, batch=False,
-                          run_command="mpirun", hosts=db_hosts)
+    db_cluster = PBSOrchestrator(port=port,
+                                db_nodes=3,
+                                batch=False,
+                                interface="ib0",
+                                run_command="mpirun",
+                                hosts=hosts)
 
     # generate directories for output files
     # pass in objects to make dirs for
-    exp.generate(db, overwrite=True)
+    experiment.generate(db_cluster, overwrite=True)
 
     # start the database on interactive allocation
-    exp.start(db, block=True)
+    experiment.start(db_cluster, block=True)
 
     # get the status of the database
-    statuses = exp.get_status(db)
+    statuses = experiment.get_status(db_cluster)
     print(f"Status of all database nodes: {statuses}")
 
-    return db
+    return db_cluster
 
-def create_producer(exp):
+def create_producer(experiment):
 
-    mpirun = MpirunSettings("python", "producer.py")
+    mpirun = MpirunSettings(exe="python",
+                            exe_args="producer.py")
     mpirun.set_tasks(1)
-    model = exp.create_model("producer", mpirun)
+    producer = experiment.create_model("producer", mpirun)
 
     # create directories for the output files and copy
     # scripts to execution location inside newly created dir
     # only necessary if its not an executable (python is executable here)
-    model.attach_generator_files(to_copy="./producer.py")
-    exp.generate(model, overwrite=True)
-    return model
+    producer.attach_generator_files(to_copy="./producer.py")
+    experiment.generate(producer, overwrite=True)
+    return producer
 
 # create the experiment and specify PBS because cheyenne is a PBS system
 exp = Experiment("launch_multiple", launcher="pbs")

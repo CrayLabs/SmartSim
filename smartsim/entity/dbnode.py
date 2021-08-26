@@ -28,10 +28,7 @@ import os
 import os.path as osp
 import time
 
-from pandas.core.base import NoNewAttributesMixin
-
-from smartsim.error.errors import SmartSimError
-
+from ..error import SmartSimError
 from ..utils import get_logger
 from .entity import SmartSimEntity
 
@@ -47,7 +44,7 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports, host_map=None):
+    def __init__(self, name, path, run_settings, ports):
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
@@ -55,7 +52,6 @@ class DBNode(SmartSimEntity):
         self._multihost = False
         self._shard_ids = None
         self._hosts = None
-        self.host_map = host_map
 
     @property
     def host(self):
@@ -99,6 +95,14 @@ class DBNode(SmartSimEntity):
             file_name = osp.join(self.path, self.name + file_ending)
             if osp.exists(file_name):
                 os.remove(file_name)
+        if self._multihost:
+            for file_ending in [".err", ".out"]:
+                for shard_id in self._shard_ids:
+                    file_name = osp.join(
+                        self.path, self.name + "_" + str(shard_id) + file_ending
+                    )
+                    if osp.exists(file_name):
+                        os.remove(file_name)
 
     def _get_cluster_conf_filename(self, port):
         """Returns the .conf file name for the given port number
@@ -128,60 +132,38 @@ class DBNode(SmartSimEntity):
     def _parse_db_host(self):
         """Parse the database host/IP from the output file
 
-        this uses the RedisIP module that is built as a dependency
-        The IP address is preferred, but if hostname is only present
-        then a lookup to /etc/hosts is done through the socket library
-
         :raises SmartSimError: if host/ip could not be found
         :return: ip address | hostname
         :rtype: str
         """
         filepath = osp.join(self.path, self.name + ".out")
         trials = 5
-        host = None
         ip = None
 
         # try a few times to give the database files time to
         # populate on busy systems.
-        while not host and trials > 0:
+        while not ip and trials > 0:
             try:
                 with open(filepath, "r") as f:
                     lines = f.readlines()
                     for line in lines:
                         content = line.split()
-                        if "Hostname:" in content:
-                            host = content[-1]
-                        if "IP:" in content:
+                        if "IPADDRESS:" in content:
                             ip = content[-1]
-                            break
+            # suppress error
             except FileNotFoundError:
-                logger.debug("Waiting for RedisIP files to populate...")
-                trials -= 1
-                time.sleep(5)
-            logger.debug("Waiting for RedisIP files to populate...")
-            trials -= 1
-            if not host:
-                time.sleep(5)
+                pass
 
-        if not host and not ip:
-            logger.error("RedisIP address lookup strategy failed.")
+            logger.debug("Waiting for Redis output files to populate...")
+            if not ip:
+                time.sleep(1)
+                trials -= 1
+
+        if not ip:
+            logger.error("Redis IP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        if self.host_map:
-            # Very unlikely case. In this case, the host_map
-            # should take IPs as input
-            if ip and not host:
-                host = ip
-            host = self.host_map[host]
-        else:
-            # prefer the ip address if present
-            # TODO do socket lookup and ensure IP address matches
-            # in the case where compute node returns 127.0.0.1 for its
-            # own IP address
-            if host and ip:
-                host = ip
-
-        return host
+        return ip
 
     def _parse_db_hosts(self):  # cov-lsf
         """Parse the database hosts/IPs from the output files
@@ -195,54 +177,40 @@ class DBNode(SmartSimEntity):
         :return: ip addresses | hostnames
         :rtype: list[str]
         """
-        hosts = []
+        ips = []
 
         for shard_id in self._shard_ids:
             trials = 5
-            host = None
             ip = None
             filepath = osp.join(self.path, self.name + f"_{shard_id}.out")
             # try a few times to give the database files time to
             # populate on busy systems.
-            while not host and trials > 0:
+            while not ip and trials > 0:
                 try:
                     with open(filepath, "r") as f:
                         lines = f.readlines()
                         for line in lines:
                             content = line.split()
-                            if "Hostname:" in content:
-                                host = content[-1]
-                            if "IP:" in content:
+                            if "IPADDRESS:" in content:
                                 ip = content[-1]
-                                break
-                except FileNotFoundError:
-                    logger.debug("Waiting for RedisIP files to populate...")
-                    trials -= 1
-                    time.sleep(5)
-                logger.debug("Waiting for RedisIP files to populate...")
-                trials -= 1
-                if not host:
-                    time.sleep(5)
 
-            if not host and not ip:
+                # suppress error
+                except FileNotFoundError:
+                    pass
+
+                logger.debug("Waiting for RedisIP files to populate...")
+                if not ip:
+                    # Larger sleep time, as this seems to be needed for
+                    # multihost setups
+                    time.sleep(5)
+                    trials -= 1
+
+            if not ip:
                 logger.error("RedisIP address lookup strategy failed.")
                 raise SmartSimError("Failed to obtain database hostname")
 
-            if self.host_map:
-                # Very unlikely case. In this case, the host_map
-                # should take IPs as input
-                if ip and not host:
-                    host = ip
-                host = self.host_map(host)
-            else:
-                # prefer the ip address if present
-                # TODO do socket lookup and ensure IP address matches
-                # in the case where compute node returns 127.0.0.1 for its
-                # own IP address
-                if host and ip:
-                    host = ip
-            hosts.append(host)
+            ips.append(ip)
 
-        hosts = list(dict.fromkeys(hosts))
+        ips = list(dict.fromkeys(ips))
 
-        return hosts
+        return ips

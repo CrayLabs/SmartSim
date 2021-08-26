@@ -2,7 +2,6 @@ import pytest
 
 from smartsim import Experiment, constants
 from smartsim.database import SlurmOrchestrator
-from smartsim.error import SmartSimError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -20,7 +19,8 @@ def test_launch_slurm_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, batch=False)
+    network_interface = wlmutils.get_test_interface()
+    orc = SlurmOrchestrator(6780, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -49,7 +49,8 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     # batch = False to launch on existing allocation
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
+    network_interface = wlmutils.get_test_interface()
+    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -63,27 +64,3 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == constants.STATUS_CANCELLED for stat in status])
-
-
-def test_set_run_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
-    orc.set_run_arg("account", "ACCOUNT")
-    assert all(
-        [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
-    )
-    orc.set_run_arg("nodefile", "nonexisting.txt")
-    assert all(["nodefile" not in db.run_settings.run_args for db in orc.entities])
-    orc.set_cpus(4)
-    assert all([db.run_settings.run_args["cpus-per-task"] == 4 for db in orc.entities])
-
-
-def test_set_batch_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False)
-    with pytest.raises(SmartSimError):
-        orc.set_batch_arg("account", "ACCOUNT")
-
-    orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True)
-    orc2.set_batch_arg("account", "ACCOUNT")
-    assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
-    orc2.set_batch_arg("nodelist", "host1,host2,host3")
-    assert "nodelist" not in orc2.batch_settings.batch_args

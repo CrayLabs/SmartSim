@@ -59,7 +59,7 @@ class AprunSettings(RunSettings):
         self.mpmd = []
 
     def make_mpmd(self, aprun_settings):
-        """Make job a MPMD job
+        """Make job an MPMD job
 
         This method combines two ``AprunSettings``
         into a single MPMD command joined with ':'
@@ -132,7 +132,7 @@ class AprunSettings(RunSettings):
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
 
-        :return: list ALPS arguments for these settings
+        :return: list of ALPS arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses

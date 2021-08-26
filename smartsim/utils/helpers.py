@@ -37,15 +37,6 @@ import psutil
 from ..error import SSConfigError
 
 
-def get_lb_interface_name():
-    """Use psutil to get loopback interface name"""
-    net_if_addrs = list(psutil.net_if_addrs())
-    for interface in net_if_addrs:
-        if interface.startswith("lo"):
-            return interface
-    raise OSError("Could not find loopback interface name")
-
-
 def get_ip_from_interface(interface):
     """Get IPV4 address of a network interface
 

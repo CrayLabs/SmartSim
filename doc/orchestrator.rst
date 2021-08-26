@@ -26,6 +26,7 @@ SmartSim supports.
  - :ref:`SlurmOrchestrator <slurm_orc_api>` for Slurm managed systems
  - :ref:`CobaltOrchestrator <cobalt_orc_api>` for Cobalt managed systems
  - :ref:`PBSOrchestrator <pbs_orc_api>` for PBSPro managed systems.
+ - :ref:`LSFOrchestrator <lsf_orc_api>` for LSF managed systems.
 
 The base ``Orchestrator`` class can be used for launching Redis
 locally on single node workstations or laptops.
