@@ -41,15 +41,15 @@ class CobaltBatchSettings(BatchSettings):
         Initialization values provided (nodes, time, account)
         will overwrite the same arguments in ``batch_args`` if present
 
-        :param nodes: number of nodes
+        :param nodes: number of nodes, defaults to None
         :type nodes: int, optional
-        :param time: walltime for job, e.g. "10:00:00" for 10 hours
+        :param time: walltime for job, e.g. "10:00:00" for 10 hours, defaults to empty str
         :type time: str, optional
-        :param queue: queue to launch job in
-        :type queue: str
-        :param account: account for job
+        :param queue: queue to launch job in, defaults to None
+        :type queue: str, optional
+        :param account: account for job, defaults to None
         :type account: str, optional
-        :param batch_args: extra batch arguments
+        :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
         super().__init__("qsub", batch_args=batch_args)
@@ -131,7 +131,7 @@ class CobaltBatchSettings(BatchSettings):
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
-        :return: batch arguments for Sbatch
+        :return: list of batch arguments for Sbatch
         :rtype: list[str]
         """
         restricted = [

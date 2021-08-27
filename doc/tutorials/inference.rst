@@ -1,6 +1,6 @@
 
 ================
-Online Inference
+Machine Learning
 ================
 
 Compiling TensorFlow or PyTorch runtimes into each existing simulation is
@@ -8,14 +8,17 @@ difficult. Maintaining that type of integration with the rapidly growing and cha
 APIs of libraries like TensorFlow and PyTorch is even more difficult.
 
 Instead of forcing dependencies on the simulation code, SmartSim itself maintains those dependencies
-and provides them in the ``Orchestrator`` database through RedisAI.
+and provides simulations runtime access to them through the ``Orchestrator`` database.
 
-Because of this, simulations in Fortran, C, C++ and Python can call into PyTorch, TensorFlow,
-and any library that supports the ONNX format without having to compile in those libraries.
+Simulations in Fortran, C, C++ and Python can call into PyTorch, TensorFlow,
+and any library that supports the ONNX format without compiling in ML libraries into the
+simulation.
 
-Therefore we define *Online Inference* as the execution of machine learning models via
-requests to an application (Orchestrator) running separately from the client program (Simulation)
-without exchanging data over the filesystem.
+.. note::
+
+    While the SmartRedis examples below are written in Python, SmartRedis is implemented
+    in C, C++ and Fortran as well. Fortran, C, and C++ applications can all call the
+    same Machine Learning libraries/models as the examples below.
 
 
 4.1 Your First Inference Session
@@ -180,13 +183,8 @@ Currently TensorFlow 2.4.2 is supported, but the graph of the model must be froz
 before it is placed in the database. This is the same process for both Keras and
 TensorFlow.
 
-SmartSim include a utility to freeze the graph of a TensorFlow or Keras model in
-``smartsim.tf``. To use TensorFlow or Keras in SmartSim, specify
-``TF`` as the argument for *backend* in the call to ``client.set_model`` or
-``client.set_model_from_file``.
-
-The example below shows how to use the utility to freeze an MNIST model created in
-Keras. This script can be used with the :ref:`SmartSim code <infrastructure_code>`
+The example below shows how to prepare a simple Keras model for use with SmartSim.
+This script can be used with the :ref:`SmartSim code <infrastructure_code>`
 above to launch an inference session with a TensorFlow or Keras model.
 
 First, a simple Keras Convolutional Neural Network is defined.
@@ -215,15 +213,20 @@ First, a simple Keras Convolutional Neural Network is defined.
                 metrics=["accuracy"])
 
 
-After our simple model is created, we can freeze the graph of the model (even
-though we haven't trained it yet), and save it to file so the client
-method ``client.set_model_from_file`` can load it into the database.
+After a model is created (trained or not), the graph of the model is
+frozen saved to file so the client method ``client.set_model_from_file``
+can load it into the database.
+
+SmartSim includes a utility to freeze the graph of a TensorFlow or Keras model in
+:ref:`smartsim.tf <smartsim_tf_api>`. To use TensorFlow or Keras in SmartSim, specify
+``TF`` as the argument for *backend* in the call to ``client.set_model`` or
+``client.set_model_from_file``.
 
 Note that TensorFlow and Keras, unlike the other ML libraries supported by
 SmartSim, requires an ``input`` and ``output`` argument in the call to
 ``set_model``. These arguments correspond to the layer names of the
-created model. The ``smartsim.tf.freeze_model`` utility returns these
-values for convenience as shown below.
+created model. The :ref:`smartsim.tf.freeze_model <smartsim_tf_api>` utility
+returns these values for convenience as shown below.
 
 .. code-block:: python
 

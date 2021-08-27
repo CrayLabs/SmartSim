@@ -123,6 +123,30 @@ class JsrunStep(Step):
         if not self.run_settings.in_batch:
             self._set_alloc()
 
+    def get_output_files(self):
+        """Return two paths to error and output files based on cwd"""
+        output = self.get_step_file(ending=".out")
+        error = self.get_step_file(ending=".err")
+
+        # The individual_suffix (containing %t and similar placeholders) is
+        # appended to the output (and error) file name, but just before the ending.
+        # So if the collective output file name would be "entity_name.out", adding
+        # a typical suffix "_%t", will result in "entity_name_%t.out" passed to
+        # --stdio_stdout (similarly for error). This in turn, will be processed
+        # by jsrun, replacing each occurrence of "%t" with the task number and
+        # writing output to "entity_name_0.out", "entity_name_1.out"...
+        if self.run_settings.individual_suffix:
+            partitioned_output = output.rpartition(".")
+            output_prefix = partitioned_output[0] + self.run_settings.individual_suffix
+            output_suffix = partitioned_output[-1]
+            output = ".".join([output_prefix, output_suffix])
+            partitioned_error = error.rpartition(".")
+            error_prefix = partitioned_error[0] + self.run_settings.individual_suffix
+            error_suffix = partitioned_error[-1]
+            error = ".".join([error_prefix, error_suffix])
+
+        return output, error
+
     def get_launch_cmd(self):
         """Get the command to launch this step
 

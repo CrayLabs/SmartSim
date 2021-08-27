@@ -7,6 +7,24 @@ from tensorflow.python.framework.convert_to_constants import (
 
 
 def freeze_model(model, output_dir, file_name):
+    """Freeze a Keras or TensorFlow Graph
+
+    to use a Keras or TensorFlow model in SmartSim, the model
+    must be frozen and the inputs and outputs provided to the
+    smartredis.client.set_model_from_file() method.
+
+    This utiliy function provides everything users need to take
+    a trained model and put it inside an ``orchestrator`` instance
+
+    :param model: TensorFlow or Keras model
+    :type model: tf.Module
+    :param output_dir: output dir to save model file to
+    :type output_dir: str
+    :param file_name: name of model file to create
+    :type file_name: str
+    :return: path to model file, model input layer names, model output layer names
+    :rtype: str, list[str], list[str]
+    """
 
     if not file_name.endswith(".pb"):
         file_name = file_name + ".pb"

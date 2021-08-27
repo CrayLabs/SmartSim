@@ -7,7 +7,7 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 
 """Test Ray cluster Slurm launch and shutdown.
 """
@@ -16,7 +16,6 @@ from smartsim.ext.ray import RayCluster
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
-INTERFACE = "ipogif0"
 
 environ["OMP_NUM_THREADS"] = "1"
 try:
@@ -50,8 +49,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         batch=False,
         time="00:05:00",
         ray_port=6830,
-        password=None,
-        interface=INTERFACE,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(cluster)
@@ -67,8 +65,10 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
 
     if not right_resources:
         ctx.disconnect()
+        ray.shutdown()
         exp.stop(cluster)
         assert False
 
     ctx.disconnect()
+    ray.shutdown()
     exp.stop(cluster)

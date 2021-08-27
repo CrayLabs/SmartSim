@@ -6,7 +6,7 @@ from os import environ
 import pytest
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 from smartsim.launcher import slurm
 
 """Test Ray cluster Slurm launch and shutdown.
@@ -29,9 +29,7 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
-INTERFACE = "ipogif0"
 
-# TODO find available interface
 def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
     if launcher != "slurm":
@@ -50,8 +48,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         alloc=None,
         batch=False,
         time="00:05:00",
-        interface=INTERFACE,
-        password=None,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(cluster)
@@ -67,10 +64,12 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
 
     if not right_resources:
         ctx.disconnect()
+        ray.shutdown()
         exp.stop(cluster)
         assert False
 
     ctx.disconnect()
+    ray.shutdown()
     exp.stop(cluster)
 
 
@@ -95,7 +94,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         workers=2,
         alloc=alloc,
         batch=False,
-        interface=INTERFACE,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(cluster)
@@ -111,10 +110,12 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
 
     if not right_resources:
         ctx.disconnect()
+        ray.shutdown()
         exp.stop(cluster)
         slurm.release_allocation(alloc)
         assert False
 
     ctx.disconnect()
+    ray.shutdown()
     exp.stop(cluster)
     slurm.release_allocation(alloc)

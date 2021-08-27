@@ -7,7 +7,7 @@ from shutil import which
 import pytest
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 
 """Test Ray cluster Slurm launch and shutdown.
 """
@@ -29,8 +29,6 @@ pytestmark = pytest.mark.skipif(
     reason="requires Ray",
 )
 
-INTERFACE = "ipogif0"
-
 
 def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
@@ -51,8 +49,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         batch=True,
         ray_port=6830,
         time="00:05:00",
-        password=None,
-        interface=INTERFACE,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(cluster)
@@ -68,8 +65,10 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
 
     if not right_resources:
         ctx.disconnect()
+        ray.shutdown()
         exp.stop(cluster)
         assert False
 
     ctx.disconnect()
+    ray.shutdown()
     exp.stop(cluster)

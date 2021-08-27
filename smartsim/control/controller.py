@@ -316,18 +316,6 @@ class Controller:
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
             self._launch_step(orc_batch_step, orchestrator)
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                nodelist = self._launcher.get_step_nodes([orc_batch_step.name])
-                orchestrator._hosts = nodelist[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node acquisition unsupported, moving to RedisIP fallback"
-                )
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
@@ -335,21 +323,8 @@ class Controller:
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
-            # wait for orchestrator to spin up
-            self._orchestrator_launch_wait(orchestrator)
-            try:
-                db_step_names = [db_step[0].name for db_step in db_steps]
-                nodes = self._launcher.get_step_nodes(db_step_names)
-                for db, node in zip(orchestrator, nodes):
-                    db._host = node[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM node acquisition failed, moving to RedisIP fallback")
-            except SSUnsupportedError:
-                logger.debug(
-                    "WLM node acquisition unsupported, moving to RedisIP fallback"
-                )
+        # wait for orchestrator to spin up
+        self._orchestrator_launch_wait(orchestrator)
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
@@ -390,39 +365,16 @@ class Controller:
         if ray_cluster.batch:
             ray_batch_step = self._create_batch_job_step(ray_cluster)
             self._launch_step(ray_batch_step, ray_cluster)
-            try:
-                nodelist = self._launcher.get_step_nodes([ray_batch_step.name])
-                ray_cluster._hosts = nodelist[0]
-
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node acquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
+            
         else:
             ray_steps = [
                 (self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster
             ]
             for ray_step in ray_steps:
                 self._launch_step(*ray_step)
-            try:
-                ray_step_names = [ray_step[0].name for ray_step in ray_steps]
-                nodes = self._launcher.get_step_nodes(ray_step_names)
-                ray_cluster._hosts = []
-                for _, node in zip(ray_cluster, nodes):
-                    # ray_node._host = node[0]
-                    ray_cluster._hosts.append(node[0])
+            
+        logger.info("Ray cluster launched.")
 
-            # catch if it fails or launcher doesn't support it
-            except LauncherError:
-                logger.debug("WLM Ray head node acquisition failed")
-            except SSUnsupportedError:
-                logger.debug("WLM Ray head node acquisition unsupported")
-
-        if ray_cluster._hosts:
-            logger.info(f"Ray cluster launched on nodes: {ray_cluster._hosts}")
-        else:
-            logger.info("Ray cluster launched.")
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop

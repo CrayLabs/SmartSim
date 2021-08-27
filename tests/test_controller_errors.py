@@ -59,7 +59,8 @@ def test_no_launcher():
 
 
 def test_wrong_orchestrator():
-    orc = PBSOrchestrator(6780, db_nodes=3)
+    # lo interface to avoid warning from SmartSim
+    orc = PBSOrchestrator(6780, db_nodes=3, interface="lo")
     cont = Controller(launcher="local")
     manifest = Manifest(orc)
     with pytest.raises(SSConfigError):

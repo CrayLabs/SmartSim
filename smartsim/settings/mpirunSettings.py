@@ -117,7 +117,7 @@ class MpirunSettings(RunSettings):
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments
 
-        :return: list OpenMPI arguments for these settings
+        :return: list of OpenMPI arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses

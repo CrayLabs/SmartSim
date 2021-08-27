@@ -1,47 +1,19 @@
 import argparse
 import os
-import re
-import time
+import psutil
 from subprocess import PIPE, STDOUT, Popen
 
-from smartsim.utils.helpers import get_ip_from_interface, get_lb_interface_name
+from smartsim.utils.helpers import get_ip_from_interface
+from smartsim.exp.ray import parse_ray_head_node_address
 
 
-def parse_ray_head_node_address(head_log):
-    """Get the ray head node host address from the log file produced
-    by the head process.
-
-    :return: address of the head host
-    :rtype: str
-    """
-
-    max_attempts = 60
-    attempts = 0
-    while not os.path.isfile(head_log):
-        time.sleep(1)
-        attempts += 1
-        if attempts == max_attempts:
-            raise RuntimeError("Could not find Ray cluster head address.")
-
-    attempts = 0
-    head_ip = None
-    while head_ip is None:
-        time.sleep(1)
-        with open(head_log) as fp:
-            line = fp.readline()
-            while line:
-                plain_line = re.sub("\033\\[([0-9]+)(;[0-9]+)*m", "", line)
-                if "Local node IP:" in plain_line:
-                    matches = re.search(r"(?<=Local node IP: ).*", plain_line)
-                    head_ip = matches.group()
-                    break
-                line = fp.readline()
-        attempts += 1
-        if attempts == max_attempts:
-            raise RuntimeError("Could not find Ray cluster head address.")
-
-    return head_ip
-
+def get_lb_interface_name():
+    """Use psutil to get loopback interface name"""
+    net_if_addrs = list(psutil.net_if_addrs())
+    for interface in net_if_addrs:
+        if interface.startswith("lo"):
+            return interface
+    raise OSError("Could not find loopback interface name")
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 

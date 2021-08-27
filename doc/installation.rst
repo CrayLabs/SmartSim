@@ -161,11 +161,27 @@ To install the database ML backends for CPU, run
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
+.. note::
 
-To install the database ML backends for GPU, set the following environment variables.
+    If a re-build is needed for any reason, ``smart --clean`` will remove
+    all of the previous installs for the ML backends and ``smart --clobber`` will
+    remove all pre-built dependencies as well as the ML backends.
+
+
+To install the database ML backends for GPU, set the following environment variables if
+CUDNN is not in your ``LD_LIBRARY_PATH`` or default loader locations.
 
   - ``CUDNN_INCLUDE_DIR``  - path to directory containing cudnn.h
   - ``CUDNN_LIBRARY``      - path to directory containing libcudnn.so
+
+For example, for bash do
+
+.. code-block:: bash
+
+    export CUDNN_LIBRARY=/lus/sonexion/spartee/cuda/lib64/
+    export CUDNN_INCLUDE_DIR=/lus/sonexion/spartee/cuda/include/
+    export LD_LIBRARY_PATH=$CUDNN_LIBRARY:$LD_LIBRARY_PATH
+
 
 .. code-block:: bash
 
@@ -221,13 +237,6 @@ The Python client for SmartRedis is installed through
 
 Build SmartRedis Library (C++, C, Fortran)
 ==========================================
-
-Building the SmartRedis library, in addition to the specified prerequisites,
-also requires the installation of the following tools
-
-  - autoconf
-  - automake
-  - libtool
 
 
 .. include:: ../smartredis/doc/install/lib.rst
@@ -443,8 +452,10 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   pushd smartsim
   pip install .
 
+  export Torch_DIR=/ccs/home/<USERNAME>/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
+  export CFLAGS="$CFLAGS -I/ccs/home/<USERNAME>/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
   # install PyTorch backend for the Orchestrator database.
-  smart --device=gpu --torch_dir /ccs/home/arigazzi/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/ -v
+  smart --device=gpu --torch_dir $Torch_DIR -v
 
 
 
@@ -502,16 +513,17 @@ Override Pre-packaged Settings
 The following fields can be overridden in the SmartSim configuration
 file
 
- - Redis installation
- - Redis configuration
- - RedisAI installation
- - RedisIP installation
- - Test launcher default
+ - Redis installation location
+ - Redis configuration file location
+ - RedisAI module installation location
+ - Test launcher/device/network interface
  - Log level default
  - Job manager interval default
 
-If you want to override the configuration, you need
-to supply values for each of these.
+.. note::
+
+    If you want to override the configuration, you need
+    to supply values for each of these.
 
 Install the SmartSim user configuration file.
 Usually this is in your ``$HOME`` directory under
@@ -540,20 +552,21 @@ SmartSim
 
 .. code-block:: toml
 
-    [smartsim]
-    # number of seconds per job status update
-    # for jobs on WLM system (e.g. slurm, pbs, etc)
-    jm_interval = 15    # default
-    log_level = "info" # default
+  [smartsim]
+  # number of seconds per job status update
+  # for jobs on WLM system (e.g. slurm, pbs, etc)
+  jm_interval = 15    # default
+  log_level = "info" # default
 
-    [redis]
-    # path to where "redis-server" and "redis-cli" binaries are located
-    bin = "/path/to/redis/src/"
-    config = "/path/to/redis.conf" # optional!
+  [redis]
+  # path to where "redis-server" and "redis-cli" binaries are located
+  bin = "/path/to/redis/src/"
+  config = "/path/to/redis.conf" # optional!
 
-      [redis.modules]
-      ai = "/path/to/RedisAI/install-cpu/"
-      ip = "/path/to/RedisIP/build/"
+    [redis.modules]
+    ai = "/path/to/RedisAI/install-cpu/"
 
-    [test]
-    launcher = "local" # default
+  [test]
+  launcher = "local" # default
+  interface = "ib0" # network interface to use in tests
+  device = "CPU" # device to use for tests (CPU/GPU)
