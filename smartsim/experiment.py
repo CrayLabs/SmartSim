@@ -471,7 +471,7 @@ class Experiment:
             for rc in ray_clusters:
                 name = colorize(rc.name, color="green", bold=True)
                 num_models = colorize(
-                    "# of workers: " + str(len(rc)), color="green"
+                    "# of nodes: " + str(len(rc)), color="green"
                 )
                 if rc.batch:
                     batch_settings = colorize(
