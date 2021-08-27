@@ -495,7 +495,7 @@ Slurm
 Ray
 ===
 
-.. currentmodule:: smartsim.ext.ray
+.. currentmodule:: smartsim.exp.ray
 
 .. _ray_api:
 
