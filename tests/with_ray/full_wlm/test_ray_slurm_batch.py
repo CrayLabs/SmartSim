@@ -16,8 +16,6 @@ from smartsim.launcher import slurm
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
-INTERFACE = "ipogif0"
-
 environ["OMP_NUM_THREADS"] = "1"
 try:
     import ray
@@ -48,8 +46,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         workers=1,
         alloc=None,
         batch=True,
-        interface=INTERFACE,
-        password=None,
+        interface=wlmutils.get_test_interface(),
     )
 
     exp.generate(cluster)

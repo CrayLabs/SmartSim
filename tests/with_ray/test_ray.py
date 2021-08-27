@@ -45,7 +45,6 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         workers=0,
         batch=True,
         ray_args={"num-cpus": "4", "dashboard-port": "8266"},
-        password=None,
     )
     exp.generate(cluster, overwrite=False)
     exp.start(cluster, block=False, summary=False)
