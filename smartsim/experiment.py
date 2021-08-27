@@ -470,9 +470,7 @@ class Experiment:
             sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
             for rc in ray_clusters:
                 name = colorize(rc.name, color="green", bold=True)
-                num_models = colorize(
-                    "# of nodes: " + str(len(rc)), color="green"
-                )
+                num_models = colorize("# of nodes: " + str(len(rc)), color="green")
                 if rc.batch:
                     batch_settings = colorize(
                         "Ray batch Settings: \n" + str(rc.batch_settings),

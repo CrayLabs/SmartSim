@@ -365,16 +365,15 @@ class Controller:
         if ray_cluster.batch:
             ray_batch_step = self._create_batch_job_step(ray_cluster)
             self._launch_step(ray_batch_step, ray_cluster)
-            
+
         else:
             ray_steps = [
                 (self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster
             ]
             for ray_step in ray_steps:
                 self._launch_step(*ray_step)
-            
-        logger.info("Ray cluster launched.")
 
+        logger.info("Ray cluster launched.")
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop

@@ -1,10 +1,11 @@
 import argparse
 import os
-import psutil
 from subprocess import PIPE, STDOUT, Popen
 
-from smartsim.utils.helpers import get_ip_from_interface
+import psutil
+
 from smartsim.exp.ray import parse_ray_head_node_address
+from smartsim.utils.helpers import get_ip_from_interface
 
 
 def get_lb_interface_name():
@@ -14,6 +15,7 @@ def get_lb_interface_name():
         if interface.startswith("lo"):
             return interface
     raise OSError("Could not find loopback interface name")
+
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 

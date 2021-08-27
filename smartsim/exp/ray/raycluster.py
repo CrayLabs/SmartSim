@@ -128,7 +128,7 @@ class RayCluster(EntityList):
                 self._ray_password = password
         else:
             self._ray_password = None
-        
+
         self.alloc = None
         self.batch_settings = None
         self._hosts = None
@@ -222,7 +222,9 @@ class RayCluster(EntityList):
         :rtype: str
         """
         if not self.ray_head_address:
-           self.ray_head_address = parse_ray_head_node_address(os.path.join(self.entities[0].path, self.entities[0].name + ".out"))
+            self.ray_head_address = parse_ray_head_node_address(
+                os.path.join(self.entities[0].path, self.entities[0].name + ".out")
+            )
         return self.ray_head_address
 
     def get_dashboard_address(self):
@@ -257,6 +259,7 @@ def find_ray_stater_script():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     return f"{dir_path}/raystarter.py"
 
+
 def parse_ray_head_node_address(head_log):
     """Get the ray head node host address from the log file produced
     by the head process.
@@ -272,9 +275,7 @@ def parse_ray_head_node_address(head_log):
         _time.sleep(5)
         attempts += 1
         if attempts == max_attempts:
-            raise RuntimeError(
-                f"Could not find Ray cluster head log file {head_log}"
-            )
+            raise RuntimeError(f"Could not find Ray cluster head log file {head_log}")
 
     attempts = 0
     head_ip = None
@@ -296,6 +297,7 @@ def parse_ray_head_node_address(head_log):
             )
 
     return head_ip
+
 
 class RayHead(SmartSimEntity):
     def __init__(
