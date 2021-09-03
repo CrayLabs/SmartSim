@@ -424,7 +424,9 @@ an IBM system are slightly different than other systems.
 
 Luckily for us, Summit has an environment with many of the ML dependencies
 that SmartSim needs already built into it. Users can follow these instructions
-to get a working SmartSim build with PyTorch for GPU on Summit.
+to get a working SmartSim build with PyTorch and TensorFlow for GPU on Summit.
+Note that SmartSim and SmartRedis will be downloaded to the working directory
+from which these instructions are executed.
 
 .. code-block:: bash
   # setup Python and build environment
