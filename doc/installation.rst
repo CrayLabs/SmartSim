@@ -453,11 +453,12 @@ to get a working SmartSim build with PyTorch for GPU on Summit.
   # clone SmartSim and build
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   pushd smartsim
+  git lfs install
   pip install .
 
   # install PyTorch and TensorFlow backend for the Orchestrator database.
   # pip-installed cmake won't use the correct CMAKE_PREFIX_PATH
-  pip uninstall cmake
+  pip uninstall cmake -y
   conda install cmake -y
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
