@@ -437,6 +437,7 @@ from which these instructions are executed.
   pip uninstall cmake
   pip install cmake
   conda install git-lfs make -y
+  git lfs install
   module load gcc/8.1.1
   module load cuda/11.2.0
   module unload xalt
@@ -455,7 +456,6 @@ from which these instructions are executed.
   # clone SmartSim and build
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   pushd smartsim
-  git lfs install
   pip install .
 
   # install PyTorch and TensorFlow backend for the Orchestrator database.
@@ -463,7 +463,7 @@ from which these instructions are executed.
   pip uninstall cmake -y
   conda install cmake -y
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
-  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
+  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/tensorflow/include"
   smart --device=gpu --torch_dir $Torch_DIR -v
 
 
