@@ -119,7 +119,7 @@ class JsrunStep(Step):
         super().__init__(name, cwd)
         self.run_settings = run_settings
         self.alloc = None
-        self.managed = False
+        self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
 

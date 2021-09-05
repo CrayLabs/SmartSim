@@ -218,6 +218,10 @@ class LSFStepInfo(StepInfo):  # cov-lsf
         "SSUSP": STATUS_PAUSED,
         "PEND": STATUS_PAUSED,
         "DONE": STATUS_COMPLETED,
+        "Killed": STATUS_COMPLETED,
+        "Running": STATUS_RUNNING,
+        "Queued": STATUS_PAUSED,
+        "Complete": STATUS_COMPLETED,
     }
 
     def __init__(self, status="", returncode=None, output=None, error=None):
@@ -228,14 +232,18 @@ class LSFStepInfo(StepInfo):  # cov-lsf
                 smartsim_status = "Completed"
                 returncode = 0
         else:
-            smartsim_status = self._get_smartsim_status(status)
+            smartsim_status = self._get_smartsim_status(status, returncode)
         super().__init__(
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status, returncode):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
-            return self.mapping[status]
+            print(returncode)
+            if int(returncode) != 0:
+                return STATUS_FAILED
+            else:
+                return self.mapping[status]
         return STATUS_FAILED
