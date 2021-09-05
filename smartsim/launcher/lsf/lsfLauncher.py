@@ -32,7 +32,7 @@ from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
 from ..step import BsubBatchStep, JsrunStep, MpirunStep
-from ..stepInfo import LSFStepInfo
+from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
 from .lsfCommands import bjobs, bkill, jslist, jskill
 from .lsfParser import parse_jslist_stepid, parse_bjobs_jobid, parse_bsub, parse_max_step_id_from_jslist
 
@@ -186,13 +186,13 @@ class LSFLauncher(WLMLauncher):
                 jsrun_step_id = step_id.rpartition(".")[-1]
                 jslist_out, _ = jslist([])
                 stat, return_code = parse_jslist_stepid(jslist_out, jsrun_step_id)
-                info = LSFStepInfo(stat, return_code)
+                info = LSFJsrunStepInfo(stat, return_code)
             else:
                 bjobs_args = ["-a"] + step_ids
                 bjobs_out, _ = bjobs(bjobs_args)
                 stat = parse_bjobs_jobid(bjobs_out, str(step_id))
-                # create LSFStepInfo objects to return
-                info = LSFStepInfo(stat, None)
+                # create LSFBatchStepInfo objects to return
+                info = LSFBatchStepInfo(stat, None)
                 # account for case where job history is not logged by LSF
                 if info.status == STATUS_COMPLETED:
                     info.returncode = 0
