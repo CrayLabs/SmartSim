@@ -433,19 +433,19 @@ from which these instructions are executed.
   module load open-ce
   conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
   conda activate smartsim
-  # fix broken cmake module
+  # fix broken cmake module if present
   pip uninstall cmake
   pip install cmake
   conda install git-lfs make -y
   git lfs install
-  module load gcc/8.1.1
-  module load cuda/11.2.0
+  module load gcc/9.3.0
+  module load cuda/11.4.0
   module unload xalt
   export CC=$(which gcc)
   export CXX=$(which g++)
   export LDFLAGS="$LDFLAGS -pthread"
-  export CUDNN_LIBRARY=/sw/summit/cuda/11.2.0/lib64
-  export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.2.0/include/
+  export CUDNN_LIBRARY=/sw/summit/cuda/11.4.0/lib64
+  export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.4.0/include/
 
   # clone SmartRedis and build
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
