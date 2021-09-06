@@ -227,7 +227,7 @@ class LSFOrchestrator(Orchestrator):
             old_host = host
 
             erf_sets = {
-                "rank": str(shard_id),
+                "rank_count": "1",
                 "host": str(1 + host),
                 "cpu": "{" + f"{assigned_smts}:{self.cpus_per_shard}" + "}",
             }
