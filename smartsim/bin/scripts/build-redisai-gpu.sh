@@ -31,7 +31,7 @@ else
 
     if [[ ! -d "$DIR/../../.third-party/RedisAI" ]]; then
         GIT_LFS_SKIP_SMUDGE=1 git clone --recursive https://github.com/RedisAI/RedisAI.git --branch v1.2.3 --depth=1 $DIR/../../.third-party/RedisAI
-	    cp $DIR/../../../modules/FindTensorFlow.cmake $DIR/../../.third-party/RedisAI/opt/cmake/modules/ 
+	    cp $DIR/../modules/FindTensorFlow.cmake $DIR/../../.third-party/RedisAI/opt/cmake/modules/ 
         echo "RedisAI downloaded"
     fi
     echo "Downloading RedisAI GPU ML Runtimes"
