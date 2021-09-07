@@ -208,7 +208,7 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
         return STATUS_FAILED
 
 
-class LSFStepInfo(StepInfo):  # cov-lsf
+class LSFBatchStepInfo(StepInfo):  # cov-lsf
 
     # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
     mapping = {
@@ -228,14 +228,47 @@ class LSFStepInfo(StepInfo):  # cov-lsf
                 smartsim_status = "Completed"
                 returncode = 0
         else:
-            smartsim_status = self._get_smartsim_status(status)
+            smartsim_status = self._get_smartsim_status(status, returncode)
         super().__init__(
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status, returncode):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
             return self.mapping[status]
+        return STATUS_FAILED
+
+class LSFJsrunStepInfo(StepInfo):  # cov-lsf
+
+    # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
+    mapping = {
+        "Killed": STATUS_COMPLETED,
+        "Running": STATUS_RUNNING,
+        "Queued": STATUS_PAUSED,
+        "Complete": STATUS_COMPLETED,
+    }
+
+    def __init__(self, status="", returncode=None, output=None, error=None):
+        if status == "NOTFOUND":
+            if returncode is not None:
+                smartsim_status = "Completed" if returncode == 0 else "Failed"
+            else:
+                smartsim_status = "Completed"
+                returncode = 0
+        else:
+            smartsim_status = self._get_smartsim_status(status, returncode)
+        super().__init__(
+            smartsim_status, status, returncode, output=output, error=error
+        )
+
+    def _get_smartsim_status(self, status, returncode):
+        if status in SMARTSIM_STATUS:
+            return SMARTSIM_STATUS[status]
+        elif status in self.mapping:
+            if returncode is not None and int(returncode) != 0:
+                return STATUS_FAILED
+            else:
+                return self.mapping[status]
         return STATUS_FAILED
