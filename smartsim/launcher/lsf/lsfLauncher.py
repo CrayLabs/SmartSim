@@ -113,13 +113,17 @@ class LSFLauncher(WLMLauncher):
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
             )
-        else:  # JsrunStep
-            task_id = self.task_manager.start_task(cmd_list, step.cwd)
-            time.sleep(5)
-            step_id = f"{step.alloc}.{self._get_lsf_step_id()}"
-
+        elif isinstance(step, JsrunStep):  # Explicit for clarity
+            self.task_manager.start_task(cmd_list, step.cwd)
+            time.sleep(1)
+            step_id = self._get_lsf_step_id(step)
+            logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
+        else:
+            raise TypeError(
+                f"Step type {type(step)} not supported by LSF"
+            )
+        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
-
         return step_id
 
     def stop(self, step_name):
@@ -147,7 +151,7 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, interval=2, trials=5):  # pragma: no cover
+    def _get_lsf_step_id(self, step, interval=2, trials=5):  # pragma: no cover
         """Get the step_id of last launched step from jslist
 
         """
@@ -163,8 +167,7 @@ class LSFLauncher(WLMLauncher):
                 trials -= 1
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
-        logger.debug(f"Step id retrieved by jslist: {step_id}")
-        return step_id
+        return f"{step.alloc}.{step_id}"
 
     # TODO: use jslist here if it is a JsrunStep
     def _get_managed_step_update(self, step_ids):
