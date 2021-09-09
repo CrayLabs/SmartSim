@@ -151,7 +151,7 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2, trials=5):  # pragma: no cover
+    def _get_lsf_step_id(self, step, interval=2, trials=5): 
         """Get the step_id of last launched step from jslist
 
         """
@@ -169,7 +169,6 @@ class LSFLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return f"{step.alloc}.{step_id}"
 
-    # TODO: use jslist here if it is a JsrunStep
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
 
