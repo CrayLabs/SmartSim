@@ -109,6 +109,31 @@ class WLMUtils:
         return test_nic
 
     @staticmethod
+    def get_base_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
+        if test_launcher == "slurm":
+            run_args = {"--nodes": nodes,
+                        "--ntasks": ntasks,
+                        "--time": "00:10:00"}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
+            return settings
+        if test_launcher == "pbs":
+            run_args = {"--pes": ntasks}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="qsub", run_args=run_args)
+            return settings
+        if test_launcher == "cobalt":
+            run_args = {"--pes": ntasks}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="qsub", run_args=run_args)
+            return settings
+        if test_launcher == "lsf":
+            raise SSUnsupportedError("SmartSim LSF launcher does not support custom run settings at this time.")
+        # TODO allow user to pick aprun vs MPIrun
+        return RunSettings(exe, args)
+        
+
+    @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
             run_args = {"nodes": nodes,

@@ -30,11 +30,11 @@ import psutil
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
-from ...settings import AprunSettings, CobaltBatchSettings, MpirunSettings
+from ...settings import AprunSettings, CobaltBatchSettings, MpirunSettings, RunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
-from ..step import AprunStep, CobaltBatchStep, MpirunStep
+from ..step import AprunStep, CobaltBatchStep, LocalStep, MpirunStep
 from ..stepInfo import CobaltStepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
 
@@ -79,6 +79,9 @@ class CobaltLauncher(WLMLauncher):
                 return step
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
+                return step
+            if isinstance(step_settings, RunSettings):
+                step = LocalStep(name, cwd, step_settings)
                 return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by Cobalt"
