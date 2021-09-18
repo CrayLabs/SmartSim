@@ -28,10 +28,10 @@ import time
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
-from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings
+from ...settings import AprunSettings, MpirunSettings, QsubBatchSettings, RunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import AprunStep, MpirunStep, QsubBatchStep
+from ..step import AprunStep, LocalStep, MpirunStep, QsubBatchStep
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
@@ -75,6 +75,9 @@ class PBSLauncher(WLMLauncher):
                 return step
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
+                return step
+            if isinstance(step_settings, RunSettings):
+                step = LocalStep(name, cwd, step_settings)
                 return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by PBSPro"
