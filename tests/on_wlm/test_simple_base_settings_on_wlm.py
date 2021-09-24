@@ -6,7 +6,7 @@ from smartsim import Experiment, constants
 from smartsim.settings.settings import RunSettings
 
 """
-Test the launch and stop of simple models and ensembles that use base
+Test the launch and stop of simple models and ensembles using base
 RunSettings while on WLM.
 """
 
