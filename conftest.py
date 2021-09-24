@@ -120,12 +120,12 @@ class WLMUtils:
         if test_launcher == "pbs":
             run_args = {"--pes": ntasks}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="qsub", run_args=run_args)
+            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
             return settings
         if test_launcher == "cobalt":
             run_args = {"--pes": ntasks}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="qsub", run_args=run_args)
+            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
             return settings
         if test_launcher == "lsf":
             raise SSUnsupportedError("SmartSim LSF launcher does not support custom run settings at this time.")
