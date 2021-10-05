@@ -429,6 +429,7 @@ Note that SmartSim and SmartRedis will be downloaded to the working directory
 from which these instructions are executed.
 
 .. code-block:: bash
+
   # setup Python and build environment
   module load open-ce
   conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
@@ -471,6 +472,7 @@ When executing SmartSim, if you want to use the PyTorch backend in the orchestra
 you will need to add the PyTorch library path to the environment with:
 
 .. code-block:: bash
+
   export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
 
 
