@@ -51,10 +51,8 @@ def delete_elements(dictionary, key_list):
 
 
 class RayCluster(EntityList):
-    """Entity used to run a Ray cluster on a given number of hosts. Ray is launched on each host,
-    and the first host is used to launch the head node.
-
-    The total size of the cluster is ``workers`` + 1
+    """Entity used to run a Ray cluster on a given number of hosts. One Ray node is
+    launched on each host, and the first host is used to launch the head node.
 
     :param name: The name of the entity.
     :type name: str
@@ -64,8 +62,8 @@ class RayCluster(EntityList):
     :type ray_port: int
     :param ray_args: Arguments to be passed to Ray executable as `--key=value`, or `--key` if `value` is set to `None`.
     :type ray_args: dict[str,str]
-    :param workers: Number of workers.
-    :type workers: int
+    :param num_nodes: Number of hosts, includes 1 head node and all worker nodes.
+    :type num_nodes: int
     :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
     :type run_args: dict[str,str]
     :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
@@ -96,7 +94,7 @@ class RayCluster(EntityList):
         path=os.getcwd(),
         ray_port=6789,
         ray_args=None,
-        workers=0,
+        num_nodes=1,
         run_args=None,
         batch_args=None,
         launcher="local",
@@ -121,6 +119,9 @@ class RayCluster(EntityList):
         else:
             self._ray_password = None
 
+        if num_nodes < 1:
+            raise ValueError("Number of nodes must be larger than 0.")
+
         self.alloc = None
         self.batch_settings = None
         self._hosts = None
@@ -139,11 +140,11 @@ class RayCluster(EntityList):
             launcher=launcher,
             interface=interface,
             alloc=alloc,
-            workers=workers,
+            num_nodes=num_nodes,
             **kwargs,
         )
         if batch:
-            self._build_batch_settings(workers, time, batch_args, launcher)
+            self._build_batch_settings(num_nodes, time, batch_args, launcher)
         self.ray_head_address = None
 
     @property
@@ -162,7 +163,7 @@ class RayCluster(EntityList):
         ray_args = kwargs.get("ray_args", None)
         run_args = kwargs.get("run_args", None)
         interface = kwargs.get("interface", "ipogif0")
-        workers = kwargs.get("workers", 0)
+        num_nodes = kwargs.get("num_nodes", 0)
         alloc = kwargs.get("alloc", None)
 
         ray_head = RayHead(
@@ -179,7 +180,7 @@ class RayCluster(EntityList):
 
         self.entities.append(ray_head)
 
-        for worker_id in range(workers):
+        for worker_id in range(num_nodes-1):
             worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
@@ -193,14 +194,14 @@ class RayCluster(EntityList):
             )
             self.entities.append(worker_model)
 
-    def _build_batch_settings(self, workers, time, batch_args, launcher):
+    def _build_batch_settings(self, num_nodes, time, batch_args, launcher):
         if launcher == "pbs":
             self.batch_settings = QsubBatchSettings(
-                nodes=workers + 1, time=time, batch_args=batch_args
+                nodes=num_nodes, time=time, batch_args=batch_args
             )
         elif launcher == "slurm":
             self.batch_settings = SbatchSettings(
-                nodes=workers + 1, time=time, batch_args=batch_args
+                nodes=num_nodes, time=time, batch_args=batch_args
             )
         else:
             raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
