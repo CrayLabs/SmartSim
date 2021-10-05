@@ -424,39 +424,54 @@ an IBM system are slightly different than other systems.
 
 Luckily for us, Summit has an environment with many of the ML dependencies
 that SmartSim needs already built into it. Users can follow these instructions
-to get a working SmartSim build with PyTorch for GPU on Summit.
+to get a working SmartSim build with PyTorch and TensorFlow for GPU on Summit.
+Note that SmartSim and SmartRedis will be downloaded to the working directory
+from which these instructions are executed.
 
 .. code-block:: bash
-
   # setup Python and build environment
   module load open-ce
-  conda create -p /ccs/home/<USERNAME>/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
+  conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
   conda activate smartsim
-  module load gcc/8.1.1
-  module load cuda/11.2.0
+  # fix broken cmake module if present
+  pip uninstall cmake
+  pip install cmake
+  conda install git-lfs make -y
+  git lfs install
+  module load gcc/9.3.0
+  module load cuda/11.4.0
   module unload xalt
   export CC=$(which gcc)
   export CXX=$(which g++)
   export LDFLAGS="$LDFLAGS -pthread"
-  export CUDNN_LIBRARY=/sw/summit/cuda/11.2.0/lib64
-  export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.2.0/include/
+  export CUDNN_LIBRARY=/sw/summit/cuda/11.4.0/lib64
+  export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.4.0/include/
 
   # clone SmartRedis and build
-  git clone https://github.com/SmartRedis.git smartredis
+  git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   pushd smartredis
   make lib && pip install .
   popd
 
   # clone SmartSim and build
-  git clone https://github.com/SmartSim.git smartsim
+  git clone https://github.com/CrayLabs/SmartSim.git smartsim
   pushd smartsim
   pip install .
 
-  export Torch_DIR=/ccs/home/<USERNAME>/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
-  export CFLAGS="$CFLAGS -I/ccs/home/<USERNAME>/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
-  # install PyTorch backend for the Orchestrator database.
+  # install PyTorch and TensorFlow backend for the Orchestrator database.
+  # pip-installed cmake won't use the correct CMAKE_PREFIX_PATH
+  pip uninstall cmake -y
+  conda install cmake -y
+  export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
+  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/tensorflow/include"
   smart --device=gpu --torch_dir $Torch_DIR -v
 
+
+When executing SmartSim, if you want to use the PyTorch backend in the orchestrator,
+you will need to add the PyTorch library path to the environment with:
+
+.. code-block:: bash
+  export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
 
 
 SmartSim on Cheyenne at NCAR
