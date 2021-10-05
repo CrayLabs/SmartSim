@@ -68,9 +68,6 @@ if args.ray_args:
 if args.redis_password:
     cliargs += [f"--redis-password={args.redis_password}"]
 
-# On some systems, ssh to compute nodes (and port forwarding) is not allowed.
-# If that's the case, the user should bind the dashboard to 0.0.0.0,
-# which means it is available from all interfaces.
 if args.head:
     cliargs += [f"--port={args.port}", f"--dashboard-port={args.dashboard_port}"]
 

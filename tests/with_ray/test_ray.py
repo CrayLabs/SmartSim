@@ -13,16 +13,17 @@ from smartsim.exp.ray import RayCluster
 """
 
 environ["OMP_NUM_THREADS"] = "1"
+shouldrun = True
 try:
     import ray
-    import ray.util
 except ImportError:
-    pass
+    shouldrun = False
+
 
 pytestmark = pytest.mark.skip(reason="Local launch is currently disabled for Ray")
 
 # pytestmark = pytest.mark.skipif(
-#     ("ray" not in sys.modules),
+#     not shouldrun,
 #     reason="requires Ray",
 # )
 

@@ -10,11 +10,11 @@ from smartsim.error import SmartSimError
 from smartsim.exp.ray import RayCluster
 from smartsim.settings import RunSettings
 
+ray_ok = True
 try:
     import ray
 except ImportError:
-    pass
-ray_ok = "ray" in sys.modules
+    ray_ok = False
 
 # ---- create entities for testing --------
 

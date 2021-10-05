@@ -50,14 +50,6 @@ def delete_elements(dictionary, key_list):
             del dictionary[key]
 
 
-### TODO
-#  - refactor cluster -> Refactored, the nodes are all entities now, the RayCluster behaves like an EntityList
-#  - refactor controller launch (rename things) -> This is now basically an enhanced EntityList launch
-#  - use set_ray_address -> using set_head_log now to make launch easier
-#  - refactor comments -> Should be OK now
-#  - add ray_cluster utilies so there aren't so many _methods called -> STILL OPEN
-
-
 class RayCluster(EntityList):
     """Entity used to run a Ray cluster on a given number of hosts. Ray is launched on each host,
     and the first host is used to launch the head node.
@@ -110,7 +102,7 @@ class RayCluster(EntityList):
         launcher="local",
         batch=False,
         time="01:00:00",
-        interface="eth0",
+        interface="ipogif0",
         alloc=None,
         password="auto",
         **kwargs,
@@ -169,7 +161,7 @@ class RayCluster(EntityList):
         launcher = kwargs.get("launcher", "slurm")
         ray_args = kwargs.get("ray_args", None)
         run_args = kwargs.get("run_args", None)
-        interface = kwargs.get("interface", "eth0")
+        interface = kwargs.get("interface", "ipogif0")
         workers = kwargs.get("workers", 0)
         alloc = kwargs.get("alloc", None)
 
@@ -309,7 +301,7 @@ class RayHead(SmartSimEntity):
         run_args=None,
         ray_args=None,
         launcher="slurm",
-        interface="eth0",
+        interface="ipogif0",
         alloc=None,
         dash_port=8265,
     ):
@@ -400,7 +392,7 @@ class RayWorker(SmartSimEntity):
         ray_port,
         run_args=None,
         ray_args=None,
-        interface="eth0",
+        interface="ipogif0",
         launcher="slurm",
         alloc=None,
     ):

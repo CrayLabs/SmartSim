@@ -18,14 +18,15 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 
 environ["OMP_NUM_THREADS"] = "1"
+shouldrun = True
 try:
     import ray
 except ImportError:
-    pass
+    shouldrun = False
 
 
 pytestmark = pytest.mark.skipif(
-    ("ray" not in sys.modules),
+    not shouldrun,
     reason="requires Ray",
 )
 
