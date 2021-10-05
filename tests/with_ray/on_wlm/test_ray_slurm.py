@@ -45,7 +45,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
         run_args={},
         ray_args={"num-cpus": 4},
         launcher=launcher,
-        workers=1,
+        num_nodes=2,
         alloc=None,
         batch=False,
         time="00:05:00",

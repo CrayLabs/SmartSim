@@ -19,15 +19,12 @@ try:
 except ImportError:
     shouldrun = False
 
+pytestmark = pytest.mark.skipif(
+    not shouldrun,
+    reason="requires Ray",
+)
 
-pytestmark = pytest.mark.skip(reason="Local launch is currently disabled for Ray")
-
-# pytestmark = pytest.mark.skipif(
-#     not shouldrun,
-#     reason="requires Ray",
-# )
-
-
+@pytest.mark.skip(reason="Local launch is currently disabled for Ray")
 def test_ray_local_launch_and_shutdown(fileutils, caplog):
     """Start a local (single node) Ray cluster and
     shut it down.
@@ -43,7 +40,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
         run_args={},
         launcher="local",
         ray_port=6830,
-        workers=0,
+        num_nodes=1,
         batch=True,
         ray_args={"num-cpus": "4", "dashboard-port": "8266"},
     )
@@ -88,13 +85,22 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
 def test_ray_errors(fileutils):
     """Try to start a local Ray cluster with incorrect settings."""
 
-    test_dir = fileutils.make_test_dir("ray_test")
+    test_dir = fileutils.make_test_dir("test-ray-errors")
 
     with pytest.raises(SSUnsupportedError):
         _ = RayCluster(
-            name="ray-cluster",
+            name="local-ray-cluster",
             path=test_dir,
             run_args={},
-            launcher="notsupportedlauncher",
-            workers=1,
+            launcher="local",
+            num_nodes=1,
+        )
+
+    with pytest.raises(ValueError):
+        _ = RayCluster(
+            name="small-ray-cluster",
+            path=test_dir,
+            run_args={},
+            launcher="slurm",
+            num_nodes=0,
         )
