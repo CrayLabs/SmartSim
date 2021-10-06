@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from smartsim.settings.settings import RunSettings
 import time
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
@@ -31,7 +32,7 @@ from ...error import LauncherError, SSConfigError
 from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, MpirunStep
+from ..step import BsubBatchStep, JsrunStep, MpirunStep, LocalStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
 from .lsfCommands import bjobs, bkill, jslist, jskill
 from .lsfParser import parse_jslist_stepid, parse_bjobs_jobid, parse_bsub, parse_max_step_id_from_jslist
@@ -76,6 +77,9 @@ class LSFLauncher(WLMLauncher):
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
+            if isinstance(step_settings, RunSettings):
+                step = LocalStep(name, cwd, step_settings)
+                return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by LSF"
             )
@@ -105,23 +109,20 @@ class LSFLauncher(WLMLauncher):
             if out:
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-        elif isinstance(step, MpirunStep):
+        elif isinstance(step, JsrunStep):
+            self.task_manager.start_task(cmd_list, step.cwd)
+            time.sleep(1)
+            step_id = self._get_lsf_step_id(step)
+            logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
+        else:  # isinstance(step, MpirunStep) or isinstance(step, LocalStep)
             out, err = step.get_output_files()
-            # mpirun doesn't direct output for us
+            # mpirun and local launch don't direct output for us
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
             )
-        elif isinstance(step, JsrunStep):  # Explicit for clarity
-            self.task_manager.start_task(cmd_list, step.cwd)
-            time.sleep(1)
-            step_id = self._get_lsf_step_id(step)
-            logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
-        else:
-            raise TypeError(
-                f"Step type {type(step)} not supported by LSF"
-            )
+
         
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
