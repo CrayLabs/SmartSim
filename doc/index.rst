@@ -14,6 +14,8 @@
    :caption: Tutorials
 
    tutorials/01_getting_started/01_getting_started
+   tutorlals/03_online_analysis/03_online_analysis
+   tutorials/05_starting_ray/05_starting_ray
    tutorials/using_clients
    tutorials/lattice_boltz_analysis
    tutorials/inference

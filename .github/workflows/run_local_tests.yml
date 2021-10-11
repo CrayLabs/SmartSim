@@ -47,13 +47,13 @@ jobs:
         if: matrix.python-version != '3.9'
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-          python -m pip install -vvv .[dev,ml]
+          python -m pip install -vvv .[dev,ml,ray]
 
       - name: Install SmartSim
         if: matrix.python-version == '3.9'
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-          python -m pip install -vvv .[dev]
+          python -m pip install -vvv .[dev,ray]
 
       - name: Install ML Runtimes with Smart (with pt and tf)
         if: contains(matrix.os, 'macos')

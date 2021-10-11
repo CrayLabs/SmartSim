@@ -23,9 +23,6 @@ def test_launch_slurm_orc(fileutils, wlmutils):
     orc = SlurmOrchestrator(6780, batch=False, interface=network_interface)
     orc.set_path(test_dir)
 
-    orc.set_cpus(4)
-    assert all([db.run_settings.run_args["cpus-per-task"] == 4 for db in orc.entities])
-
     exp.start(orc, block=True)
     status = exp.get_status(orc)
 

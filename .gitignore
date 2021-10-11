@@ -4,6 +4,7 @@ __pycache__
 .pytest_cache/
 .coverage*
 htmlcov
+smartsim.egg-info
 
 # Dependencies
 third-party
