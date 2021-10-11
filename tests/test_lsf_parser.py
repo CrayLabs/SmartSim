@@ -51,11 +51,21 @@ def test_parse_bsub_nodes(fileutils):
     assert nodes == parsed_nodes
 
 
-def test_parse_bjobs_jobid():
-    """Parse jobid from bjobs called with -w"""
+def test_parse_max_step_id():
+    """Get max step id from jslist"""
     output = (
-        "JOBID   USER       STAT   SLOTS    QUEUE       START_TIME    FINISH_TIME   JOB_NAME                      \n"
-        "1234567 smartsim   RUN    85       debug       -             -             SmartSim   \n"
+    "         parent                cpus      gpus      exit               \n"
+   "ID   ID       nrs    per RS    per RS    status         status\n"
+"===============================================================================\n"
+"    3    0         1         1         0         1       Complete\n"
+"    6    0         1         1         0         0       Complete\n"
+"    7    0         1         1         0         0       Complete\n"
+"    8    0         1         1         0         0       Complete\n"
+"    9    0         1         1         0         0       Complete\n"
+"    2    0         3   various   various       137         Killed\n"
+"    4    0         1   various   various       137         Killed\n"
+"    5    0         3   various   various       137         Killed\n"
+
     )
-    parsed_id = lsfParser.parse_step_id_from_bjobs(output, step_name="SmartSim")
-    assert parsed_id == "1234567"
+    parsed_id = lsfParser.parse_max_step_id_from_jslist(output)
+    assert parsed_id == "9"
