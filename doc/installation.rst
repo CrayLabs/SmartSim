@@ -434,11 +434,6 @@ from which these instructions are executed.
   module load open-ce
   conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
   conda activate smartsim
-  # fix broken cmake module if present
-  pip uninstall cmake
-  pip install cmake
-  conda install git-lfs make -y
-  git lfs install
   module load gcc/9.3.0
   module load cuda/11.4.0
   module unload xalt
@@ -459,20 +454,20 @@ from which these instructions are executed.
   pushd smartsim
   pip install .
 
+  pip uninstall cmake
+  conda install cmake
+  conda install git-lfs
+  conda install make
   # install PyTorch and TensorFlow backend for the Orchestrator database.
-  # pip-installed cmake won't use the correct CMAKE_PREFIX_PATH
-  pip uninstall cmake -y
-  conda install cmake -y
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
-  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/tensorflow/include"
+  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
   smart --device=gpu --torch_dir $Torch_DIR -v
-
 
 When executing SmartSim, if you want to use the PyTorch backend in the orchestrator,
 you will need to add the PyTorch library path to the environment with:
 
 .. code-block:: bash
-
+  
   export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
 
 

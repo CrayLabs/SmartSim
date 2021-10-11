@@ -24,19 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from smartsim.settings.settings import RunSettings
 import time
-
-import psutil
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError, SSConfigError
 from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, MpirunStep
-from ..stepInfo import LSFStepInfo
-from .lsfCommands import bjobs, bkill
-from .lsfParser import parse_bjobs_jobid, parse_bsub, parse_step_id_from_bjobs
+from ..step import BsubBatchStep, JsrunStep, MpirunStep, LocalStep
+from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
+from .lsfCommands import bjobs, bkill, jslist, jskill
+from .lsfParser import parse_jslist_stepid, parse_bjobs_jobid, parse_bsub, parse_max_step_id_from_jslist
 
 logger = get_logger(__name__)
 
@@ -78,6 +77,9 @@ class LSFLauncher(WLMLauncher):
             if isinstance(step_settings, MpirunSettings):
                 step = MpirunStep(name, cwd, step_settings)
                 return step
+            if isinstance(step_settings, RunSettings):
+                step = LocalStep(name, cwd, step_settings)
+                return step
             raise TypeError(
                 f"RunSettings type {type(step_settings)} not supported by LSF"
             )
@@ -107,24 +109,22 @@ class LSFLauncher(WLMLauncher):
             if out:
                 step_id = parse_bsub(out)
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-        elif isinstance(step, MpirunStep):
+        elif isinstance(step, JsrunStep):
+            self.task_manager.start_task(cmd_list, step.cwd)
+            time.sleep(1)
+            step_id = self._get_lsf_step_id(step)
+            logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
+        else:  # isinstance(step, MpirunStep) or isinstance(step, LocalStep)
             out, err = step.get_output_files()
-            # mpirun doesn't direct output for us
+            # mpirun and local launch don't direct output for us
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output, err=error
             )
-        else:
-            task_id = self.task_manager.start_task(cmd_list, step.cwd)
 
-        # if batch submission did not successfully retrieve job ID
-        if not step_id and step.managed:  # pragma: no cover
-            step_id = self._get_lsf_step_id(step)
+        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
-
-        time.sleep(5)
-
         return step_id
 
     def stop(self, step_name):
@@ -137,8 +137,11 @@ class LSFLauncher(WLMLauncher):
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
-            qdel_rc, _, err = bkill([str(stepmap.step_id)])
-            if qdel_rc != 0:
+            if "." in stepmap.step_id:
+                rc, _, err = jskill([stepmap.step_id.rpartition(".")[-1]])
+            else:
+                rc, _, err = bkill([str(stepmap.step_id)])
+            if rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
                 self.task_manager.remove_task(stepmap.task_id)
@@ -149,21 +152,15 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    # TODO: use jslist here if it is a JsrunStep
-    # otherwise, this is only reached in a very rare case where a batch
-    # job is submitted but no message is receieved
-    # We exclude this from coverage
-    def _get_lsf_step_id(self, step, interval=2, trials=5):  # pragma: no cover
-        """Get the step_id of a step from bjobs (rarely used)
+    def _get_lsf_step_id(self, step, interval=2, trials=5): 
+        """Get the step_id of last launched step from jslist
 
-        Parses bjobs output by looking for the step name
         """
         time.sleep(interval)
         step_id = "unassigned"
-        username = psutil.Process.username()
         while trials > 0:
-            output, _ = bjobs(["-w", "-u", username])
-            step_id = parse_step_id_from_bjobs(output, step.name)
+            output, _ = jslist([])
+            step_id = parse_max_step_id_from_jslist(output)
             if step_id:
                 break
             else:
@@ -171,9 +168,8 @@ class LSFLauncher(WLMLauncher):
                 trials -= 1
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
-        return step_id
+        return f"{step.alloc}.{step_id}"
 
-    # TODO: use jslist here if it is a JsrunStep
     def _get_managed_step_update(self, step_ids):
         """Get step updates for WLM managed jobs
 
@@ -183,17 +179,26 @@ class LSFLauncher(WLMLauncher):
         :rtype: list[StepInfo]
         """
         updates = []
-        # Include recently finished jobs
-        bjobs_args = ["-a"] + step_ids
-        bjobs_out, _ = bjobs(bjobs_args)
-        stats = [parse_bjobs_jobid(bjobs_out, str(step_id)) for step_id in step_ids]
-        # create LSFStepInfo objects to return
 
-        for stat, _ in zip(stats, step_ids):
-            info = LSFStepInfo(stat, None)
-            # account for case where job history is not logged by LSF
-            if info.status == STATUS_COMPLETED:
-                info.returncode = 0
+        for step_id in step_ids:
+
+            # Batch jobs have integer step id,
+            # Jsrun processes have {alloc}.{task_id}
+            # Include recently finished jobs
+            if "." in str(step_id):
+                jsrun_step_id = step_id.rpartition(".")[-1]
+                jslist_out, _ = jslist([])
+                stat, return_code = parse_jslist_stepid(jslist_out, jsrun_step_id)
+                info = LSFJsrunStepInfo(stat, return_code)
+            else:
+                bjobs_args = ["-a"] + step_ids
+                bjobs_out, _ = bjobs(bjobs_args)
+                stat = parse_bjobs_jobid(bjobs_out, str(step_id))
+                # create LSFBatchStepInfo objects to return
+                info = LSFBatchStepInfo(stat, None)
+                # account for case where job history is not logged by LSF
+                if info.status == STATUS_COMPLETED:
+                    info.returncode = 0
 
             updates.append(info)
         return updates

@@ -187,16 +187,16 @@ class JsrunSettings(RunSettings):
         to be passed with ``--env``. If a variable is set to ``None``,
         its value is propagated from the current environment.
 
-        :returns: formatted string to export variables
-        :rtype: str
+        :returns: formatted list of strings to export variables
+        :rtype: list[str]
         """
-        format_str = ""
+        format_str = []
         for k, v in self.env_vars.items():
             if v:
-                format_str += f"-E {k}={v} "
+                format_str += ["-E", f"{k}={v}"]
             else:
-                format_str += f"-E {k} "
-        return format_str.rstrip(" ")
+                format_str += ["-E", f"{k}"]
+        return format_str
 
     def set_individual_output(self, suffix=None):
         """Set individual std output.
