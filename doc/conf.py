@@ -41,8 +41,7 @@ extensions = [
     'sphinxfortran.fortran_domain',
     'sphinxfortran.fortran_autodoc',
     'breathe',
-    'nbsphinx',
-    'myst_parser'
+    'nbsphinx'
 ]
 
 

@@ -92,6 +92,18 @@ class Manifest:
                 _ray_cluster.append(deployable)
         return _ray_cluster
 
+    @property
+    def all_entity_lists(self):
+        """All entity lists, including ensembles and
+        exceptional ones like Orchestrator and Ray Clusters
+        """
+        _all_entity_lists = self.ray_clusters + self.ensembles
+        db = self.db
+        if db is not None:
+            _all_entity_lists.append(db)
+
+        return _all_entity_lists
+
     def _check_names(self, deployables):
         used = []
         for deployable in deployables:

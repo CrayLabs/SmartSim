@@ -118,13 +118,8 @@ class Experiment:
             stop_manifest = Manifest(*args)
             for entity in stop_manifest.models:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.ensembles:
+            for entity_list in stop_manifest.all_entity_lists:
                 self._control.stop_entity_list(entity_list)
-            for rc in stop_manifest.ray_clusters:
-                self._control.stop_entity_list(rc)
-            orchestrator = stop_manifest.db
-            if orchestrator:
-                self._control.stop_entity_list(orchestrator)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -477,13 +472,14 @@ class Experiment:
                         color="green",
                     )
                 head_run_settings = colorize(
-                    "Head run Settings: \n" + str(rc.entities[0].run_settings),
+                    "Ray head run Settings: \n" + str(rc.entities[0].run_settings),
                     color="green",
                 )
                 run_settings = head_run_settings
-                if len(rc) > 0:
+                if len(rc) > 1:
                     worker_run_settings = colorize(
-                        "\nWorker run Settings: \n" + str(rc.entities[1].run_settings),
+                        "\nRay worker run Settings: \n"
+                        + str(rc.entities[1].run_settings),
                         color="green",
                     )
                     run_settings += worker_run_settings

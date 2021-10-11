@@ -278,12 +278,12 @@ class Controller:
             self._launch_orchestrator(orchestrator)
 
         for rc in manifest.ray_clusters:
-            self._launch_ray_cluster(rc)
+            rc._update_workers()
 
         # create all steps prior to launch
         steps = []
-
-        for elist in manifest.ensembles:
+        all_entity_lists = manifest.ensembles + manifest.ray_clusters
+        for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
@@ -349,31 +349,6 @@ class Controller:
                         raise
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
-
-    def _launch_ray_cluster(self, ray_cluster):
-        """Launch a Ray Cluster instance
-        This function will launch the Ray Cluster instance and
-        if on WLM, find the nodes where it was launched and
-        set them in the JobManager
-
-        :param orchestrator: ray cluster to launch
-        :type orchestrator: RayCluster
-        """
-        # if the Ray cluster was launched as a batch workload
-        ray_cluster._update_workers()
-
-        if ray_cluster.batch:
-            ray_batch_step = self._create_batch_job_step(ray_cluster)
-            self._launch_step(ray_batch_step, ray_cluster)
-
-        else:
-            ray_steps = [
-                (self._create_job_step(ray_node), ray_node) for ray_node in ray_cluster
-            ]
-            for ray_step in ray_steps:
-                self._launch_step(*ray_step)
-
-        logger.info("Ray cluster launched.")
 
     def _launch_step(self, job_step, entity):
         """Use the launcher to launch a job stop

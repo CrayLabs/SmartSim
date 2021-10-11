@@ -32,22 +32,10 @@ import uuid
 from ...entity import EntityList, SmartSimEntity
 from ...error import SSConfigError, SSUnsupportedError
 from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
-from ...utils import get_logger
+from ...utils import delete_elements, get_logger
 from ...utils.helpers import expand_exe_path, init_default
 
 logger = get_logger(__name__)
-
-
-def delete_elements(dictionary, key_list):
-    """Delete elements from a dictionary.
-    :param dictionary: the dictionary from which the elements must be deleted.
-    :type dictionary: dict
-    :param key_list: the list of keys to delete from the dictionary.
-    :type key: any
-    """
-    for key in key_list:
-        if key in dictionary:
-            del dictionary[key]
 
 
 class RayCluster(EntityList):
@@ -180,7 +168,7 @@ class RayCluster(EntityList):
 
         self.entities.append(ray_head)
 
-        for worker_id in range(num_nodes-1):
+        for worker_id in range(num_nodes - 1):
             worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,

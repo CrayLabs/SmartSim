@@ -64,6 +64,8 @@ cliargs = [
 
 if args.ray_args:
     cliargs += args.ray_args
+    if not any([arg.startswith("--dashboard-host") for arg in args.ray_args]):
+        cliargs += [f"--dashboard-host={RAY_IP}"]
 
 if args.redis_password:
     cliargs += [f"--redis-password={args.redis_password}"]
