@@ -97,7 +97,7 @@ independently.
   - [Online Processing](#online-processing)
     - [Singular Value Decomposition](#singular-value-decomposition)
   - [Online Inference](#online-inference)
-    - [PyTorch CNN Example](#pytorch)
+    - [PyTorch CNN Example](#pytorch-cnn-example)
 - [Publications](#publications)
 - [Cite](#cite)
   - [bibtex](#bibtex)
@@ -445,19 +445,19 @@ allocated nodes.
 import ray
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 
 exp = Experiment("ray-cluster", launcher='slurm')
 # 3 workers + 1 head node = 4 node-cluster
 cluster = RayCluster(name="ray-cluster", run_args={},
                      ray_args={"num-cpus": 24},
-                     launcher=launcher, workers=3, batch=True)
+                     launcher=launcher, num_nodes=4, batch=True)
 
 exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the Ray cluster
-ray.util.connect(cluster.head_model.address+":10001")
+ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
@@ -475,19 +475,19 @@ allocated nodes.
 import ray
 
 from smartsim import Experiment
-from smartsim.ext.ray import RayCluster
+from smartsim.exp.ray import RayCluster
 
 exp = Experiment("ray-cluster", launcher='pbs')
 # 3 workers + 1 head node = 4 node-cluster
 cluster = RayCluster(name="ray-cluster", run_args={},
                      ray_args={"num-cpus": 24},
-                     launcher=launcher, workers=3, batch=True)
+                     launcher=launcher, num_nodes=4, batch=True)
 
 exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the ray cluster
-ray.util.connect(cluster.head_model.address+":10001")
+ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
