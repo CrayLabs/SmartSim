@@ -80,8 +80,9 @@ def parse_sacct(output, job_id):
     for line in output.split("\n"):
         if line.strip().startswith(job_id):
             line = line.split("|")
-            # Check that job_id is right and not
-            # prefix of another job_id, like 1 and 11
+            # Check that job_id is an exact match and not
+            # the prefix of another job_id, like 1 and 11
+            # or 1.1 and 1.10
             if "." in job_id:
                 if line[0] != job_id:
                     pass
@@ -113,8 +114,9 @@ def parse_sstat_nodes(output, job_id):
         # sometimes there are \n that we need to ignore
         if len(sstat_string) >= 2:
             if sstat_string[0].startswith(job_id):
-                # Check that job_id is right and not
-                # prefix of another job_id, like 1 and 11
+                # Check that job_id is an exact match and not
+                # the prefix of another job_id, like 1 and 11
+                # or 1.1 and 1.10
                 if "." in job_id:
                     if sstat_string[0] != job_id:
                         pass
