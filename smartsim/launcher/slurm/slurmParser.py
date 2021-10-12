@@ -66,6 +66,16 @@ def parse_salloc_error(output):
     return None
 
 
+def jobid_exact_match(parsed_id, job_id):
+    """Check that job_id is an exact match and not
+       the prefix of another job_id, like 1 and 11
+       or 1.1 and 1.10
+    """
+    if "." in job_id:
+        return parsed_id == job_id
+    else:
+        return parsed_id.split('.')[0] == job_id
+
 def parse_sacct(output, job_id):
     """Parse and return output of the sacct command
 
@@ -78,17 +88,8 @@ def parse_sacct(output, job_id):
     """
     result = ("PENDING", None)
     for line in output.split("\n"):
-        if line.strip().startswith(job_id):
-            line = line.split("|")
-            # Check that job_id is an exact match and not
-            # the prefix of another job_id, like 1 and 11
-            # or 1.1 and 1.10
-            if "." in job_id:
-                if line[0] != job_id:
-                    pass
-            else:
-                if line[0].split('.')[0] != job_id:
-                    pass
+        line = line.split("|")
+        if jobid_exact_match(line[0], job_id):
             stat = line[1]
             code = line[2].split(":")[0]
             result = (stat, code)
@@ -113,16 +114,7 @@ def parse_sstat_nodes(output, job_id):
 
         # sometimes there are \n that we need to ignore
         if len(sstat_string) >= 2:
-            if sstat_string[0].startswith(job_id):
-                # Check that job_id is an exact match and not
-                # the prefix of another job_id, like 1 and 11
-                # or 1.1 and 1.10
-                if "." in job_id:
-                    if sstat_string[0] != job_id:
-                        pass
-                else:
-                    if sstat_string[0].split('.')[0] != job_id:
-                        pass
+            if jobid_exact_match(sstat_string[0], job_id):
                 node = sstat_string[1]
                 nodes.append(node)
     return list(set(nodes))

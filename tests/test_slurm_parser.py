@@ -251,7 +251,7 @@ def test_parse_sacct_status_2():
     """test retrieval of status and exitcode
     PrologFlags=Alloc
     """
-    output = "22999.1|FAILED|1:0|\n22999.10|COMPLETED|0:0|\n"
+    output = "22999.10|COMPLETED|0:0|\n22999.1|FAILED|1:0|\n"
     status = ("FAILED", "1")
     parsed_status = slurmParser.parse_sacct(output, "22999.1")
     assert status == parsed_status
