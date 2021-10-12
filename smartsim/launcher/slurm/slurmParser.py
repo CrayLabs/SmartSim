@@ -78,8 +78,16 @@ def parse_sacct(output, job_id):
     """
     result = ("PENDING", None)
     for line in output.split("\n"):
-        if line.split()[0] == job_id:
+        if line.strip().startswith(job_id):
             line = line.split("|")
+            # Check that job_id is right and not
+            # prefix of another job_id, like 1 and 11
+            if "." in job_id:
+                if line[0] != job_id:
+                    pass
+            else:
+                if line[0].split('.')[0] != job_id:
+                    pass
             stat = line[1]
             code = line[2].split(":")[0]
             result = (stat, code)
@@ -104,7 +112,15 @@ def parse_sstat_nodes(output, job_id):
 
         # sometimes there are \n that we need to ignore
         if len(sstat_string) >= 2:
-            if sstat_string[0].split()[0] == job_id:
+            if sstat_string[0].startswith(job_id):
+                # Check that job_id is right and not
+                # prefix of another job_id, like 1 and 11
+                if "." in job_id:
+                    if sstat_string[0] != job_id:
+                        pass
+                else:
+                    if sstat_string[0].split('.')[0] != job_id:
+                        pass
                 node = sstat_string[1]
                 nodes.append(node)
     return list(set(nodes))
