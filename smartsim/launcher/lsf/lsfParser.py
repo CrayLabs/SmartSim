@@ -73,7 +73,7 @@ def parse_bsub_error(output):
 
 def parse_jslist_stepid(output, step_id):
     """Parse and return output of the jslist command run with
-    options to obrain step status
+    options to obtain step status
 
     :param output: output of the bjobs command
     :type output: str
