@@ -451,7 +451,7 @@ exp = Experiment("ray-cluster", launcher='slurm')
 # 3 workers + 1 head node = 4 node-cluster
 cluster = RayCluster(name="ray-cluster", run_args={},
                      ray_args={"num-cpus": 24},
-                     launcher=launcher, num_nodes=4, batch=True)
+                     launcher='slurm', num_nodes=4, batch=True)
 
 exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
@@ -481,7 +481,7 @@ exp = Experiment("ray-cluster", launcher='pbs')
 # 3 workers + 1 head node = 4 node-cluster
 cluster = RayCluster(name="ray-cluster", run_args={},
                      ray_args={"num-cpus": 24},
-                     launcher=launcher, num_nodes=4, batch=True)
+                     launcher='pbs', num_nodes=4, batch=True)
 
 exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
