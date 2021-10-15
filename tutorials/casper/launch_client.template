@@ -1,0 +1,10 @@
+#!/bin/bash                                                                                                                                
+#PBS -N ss_client
+#PBS -l select=$member_nodes:ncpus=36:mpiprocs=36
+#PBS -l walltime=$walltime
+#PBS -j oe
+#PBS -k oed
+#PBS -A $account                                                                                                                          
+
+np=$(expr $member_nodes \* 36)
+mpirun -np $np ./smartredis_put_get_3D

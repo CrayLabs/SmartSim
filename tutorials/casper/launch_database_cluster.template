@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+#PBS -N smartsimtest
+#PBS  -r n
+#PBS  -j oe
+#PBS  -V
+#PBS  -l walltime=$walltime
+#PBS  -A $account
+##PBS  -q regular
+#PBS  -V
+#PBS  -l select=$db_nodes:ncpus=1:ompthreads=1:mpiprocs=1$ngpus
+
+import os, sys, time
+
+# The python environment is not passed properly to submitted jobs on casper
+_LIBDIR = $python_sys_path
+sys.path.extend(_LIBDIR)
+
+import socket, subprocess
+import numpy as np
+from utils import run_cmd
+from smartsim import Experiment, constants
+from smartsim.database import PBSOrchestrator
+
+"""
+Launch a distributed, in memory database cluster and use the
+SmartRedis python client to send and recieve some numpy arrays.
+
+i.e. qsub -l select=3:ncpus=1 -l walltime=00:10:00 -A <account> -q premium -I
+"""
+
+def collect_db_hosts(num_hosts):
+    """A simple method to collect hostnames because we are using
+       openmpi. (not needed for aprun(ALPS), Slurm, etc.
+    """
+
+    hosts = []
+    if "PBS_NODEFILE" in os.environ:
+        node_file = os.environ["PBS_NODEFILE"]
+        with open(node_file, "r") as f:
+            for line in f.readlines():
+                host = line.split(".")[0]
+                hosts.append(host)
+    else:
+        raise Exception("could not parse allocation nodes from PBS_NODEFILE")
+
+    # account for mpiprocs causing repeats in PBS_NODEFILE
+    hosts = list(set(hosts))
+    if len(hosts) >= num_hosts:
+        return hosts[:num_hosts]
+    else:
+        raise Exception("PBS_NODEFILE {} had {} hosts, not {}".format(node_file, len(hosts),num_hosts))
+
+
+def launch_cluster_orc(exp, db_hosts, port):
+    """Just spin up a database cluster, check the status
+       and tear it down"""
+
+    print(f"Starting Orchestrator on hosts: {db_hosts}")
+    # batch = False to launch on existing allocation
+    db = PBSOrchestrator(port=port, db_nodes=len(db_hosts), batch=False,
+                          run_command="mpirun", hosts=db_hosts)
+
+    # generate directories for output files
+    # pass in objects to make dirs for
+    exp.generate(db, overwrite=True)
+
+    # start the database within the reservation allocation
+    exp.start(db, block=True)
+
+    # get the status of the database
+    statuses = exp.get_status(db)
+    print(f"Status of all database nodes: {statuses}")
+
+    return db
+
+def monitor_client_jobs(rsvname):
+    jobs_done=False
+    while not jobs_done:
+        s, o, e = run_cmd("qstat -q {}".format(rsvname), verbose=True) 
+        jobs_left = o.split()[-2:]
+        print("Jobs left: Running {} Queued {}".format(int(jobs_left[0]),int(jobs_left[1])))
+        if int(jobs_left[0]) + int(jobs_left[1]) == 1:
+            jobs_done = True
+        else:
+            time.sleep(60)
+
+
+
+
+
+# create the experiment and specify PBS because cheyenne is a PBS system
+exp = Experiment("launch_cluster_db", launcher="pbs")
+
+db_port = $db_port
+db_hosts = collect_db_hosts($db_nodes)
+# start the database
+db = launch_cluster_orc(exp, db_hosts, db_port)
+
+rsvname = os.environ["RSVNAME"]
+# stay alive until client jobs have completed
+monitor_client_jobs(rsvname)
+
+# shutdown the database because we don't need it anymore
+exp.stop(db)
+# delete the job reservation
+run_cmd("pbs_rdel {}".format(rsvname))
