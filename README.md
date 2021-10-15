@@ -81,6 +81,9 @@ independently.
     - [Local Launch](#local-launch)
     - [Interactive Launch](#interactive-launch)
     - [Batch Launch](#batch-launch)
+  - [Ray](#ray)
+    - [Ray on Slurm](#ray-on-slurm)
+    - [Ray on PBS](#ray-on-pbs)
 - [SmartRedis](#smartredis)
   - [Tensors](#tensors)
   - [Datasets](#datasets)
@@ -94,7 +97,7 @@ independently.
   - [Online Processing](#online-processing)
     - [Singular Value Decomposition](#singular-value-decomposition)
   - [Online Inference](#online-inference)
-    - [PyTorch CNN Example](#pytorch)
+    - [PyTorch CNN Example](#pytorch-cnn-example)
 - [Publications](#publications)
 - [Cite](#cite)
   - [bibtex](#bibtex)
@@ -288,6 +291,7 @@ python hello_ensemble_pbs.py
 
 # Infrastructure Library Applications
  - Orchestrator - In-memory data store and Machine Learning Inference (Redis + RedisAI)
+ - Ray - Distributed Reinforcement Learning (RL), Hyperparameter Optimization (HPO)
 
 ## Redis + RedisAI
 
@@ -414,6 +418,80 @@ exp.stop(db_cluster)
 # on PBS system
 python run_db_pbs_batch.py
 ```
+
+-----
+## Ray
+
+Ray is a distributed computation framework that supports a number of applications
+ - RLlib - Distributed Reinforcement Learning (RL)
+ - RaySGD - Distributed Training
+ - Ray Tune - Hyperparameter Optimization (HPO)
+ - Ray Serve - ML/DL inference
+As well as other integrations with frameworks like Modin, Mars, Dask, and Spark.
+
+Historically, Ray has not been well supported on HPC systems. A few examples exist,
+but none are well maintained. Because SmartSim already has launchers for HPC systems,
+launching Ray through SmartSim is a relatively simple task.
+
+### Ray on Slurm
+
+Below is an example of how to launch a Ray cluster on a Slurm system and connect to it.
+In this example, we set `batch=True`, which means that the cluster will be started
+requesting an allocation through Slurm. If this code is run within a sufficiently large
+interactive allocation, setting `batch=False` will spin the Ray cluster on the
+allocated nodes.
+
+```Python
+import ray
+
+from smartsim import Experiment
+from smartsim.exp.ray import RayCluster
+
+exp = Experiment("ray-cluster", launcher='slurm')
+# 3 workers + 1 head node = 4 node-cluster
+cluster = RayCluster(name="ray-cluster", run_args={},
+                     ray_args={"num-cpus": 24},
+                     launcher='slurm', num_nodes=4, batch=True)
+
+exp.generate(cluster, overwrite=True)
+exp.start(cluster, block=False, summary=True)
+
+# Connect to the Ray cluster
+ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+
+# <run Ray tune, RLlib, HPO...>
+```
+
+
+### Ray on PBS
+
+Below is an example of how to launch a Ray cluster on a PBS system and connect to it.
+In this example, we set `batch=True`, which means that the cluster will be started
+requesting an allocation through Slurm. If this code is run within a sufficiently large
+interactive allocation, setting `batch=False` will spin the Ray cluster on the
+allocated nodes.
+
+```Python
+import ray
+
+from smartsim import Experiment
+from smartsim.exp.ray import RayCluster
+
+exp = Experiment("ray-cluster", launcher='pbs')
+# 3 workers + 1 head node = 4 node-cluster
+cluster = RayCluster(name="ray-cluster", run_args={},
+                     ray_args={"num-cpus": 24},
+                     launcher='pbs', num_nodes=4, batch=True)
+
+exp.generate(cluster, overwrite=True)
+exp.start(cluster, block=False, summary=True)
+
+# Connect to the ray cluster
+ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+
+# <run Ray tune, RLlib, HPO...>
+```
+
 
 ------
 # SmartRedis

@@ -79,7 +79,7 @@ def test_jsrun_format_env():
     env_vars = {"OMP_NUM_THREADS": None, "LOGGING": "verbose"}
     settings = JsrunSettings("python", env_vars=env_vars)
     formatted = settings.format_env_vars()
-    assert formatted == "-E OMP_NUM_THREADS -E LOGGING=verbose"
+    assert formatted == ["-E", "OMP_NUM_THREADS", "-E", "LOGGING=verbose"]
 
 
 def test_jsrun_mpmd():

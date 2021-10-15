@@ -490,3 +490,21 @@ Slurm
 
 .. automodule:: smartsim.launcher.slurm.slurm
     :members:
+
+
+Ray
+===
+
+.. currentmodule:: smartsim.exp.ray
+
+.. _ray_api:
+
+``RayCluster`` is used to launch a Ray cluster 
+ and can be launched as a batch or in an interactive allocation.
+
+.. autoclass:: RayCluster
+    :show-inheritance:
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :exclude-members: batch set_path type

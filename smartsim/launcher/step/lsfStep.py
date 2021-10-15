@@ -119,7 +119,7 @@ class JsrunStep(Step):
         super().__init__(name, cwd)
         self.run_settings = run_settings
         self.alloc = None
-        self.managed = False
+        self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
 
@@ -168,8 +168,8 @@ class JsrunStep(Step):
         ]
 
         if self.run_settings.env_vars:
-            env_var_str = self.run_settings.format_env_vars()
-            jsrun_cmd += [env_var_str]
+            env_var_str_list = self.run_settings.format_env_vars()
+            jsrun_cmd += env_var_str_list
 
         jsrun_cmd += self.run_settings.format_run_args()
         jsrun_cmd += self._build_exe()
@@ -233,9 +233,9 @@ class JsrunStep(Step):
             distr_line = "launch_distribution : packed"
 
         with open(erf_file, "w+") as f:
-            f.write(distr_line)
+            f.write(distr_line + "\n")
             for line in preamble_lines:
-                f.write(line)
+                f.write(line + "\n")
             f.write("\n")
 
             # First we list the apps

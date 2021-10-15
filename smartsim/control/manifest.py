@@ -28,11 +28,12 @@ from ..database import Orchestrator
 from ..entity import EntityList, SmartSimEntity
 from ..error import SmartSimError
 from ..error.errors import SmartSimError
+from ..exp.ray import RayCluster
 
 # List of types derived from EntityList which require specific behavior
 # A corresponding property needs to exist (like db for Orchestrator),
 # otherwise they will not be accessible
-entity_list_exception_types = [Orchestrator]
+entity_list_exception_types = [Orchestrator, RayCluster]
 
 
 class Manifest:
@@ -82,6 +83,26 @@ class Manifest:
                     _ensembles.append(deployable)
 
         return _ensembles
+
+    @property
+    def ray_clusters(self):
+        _ray_cluster = []
+        for deployable in self._deployables:
+            if isinstance(deployable, RayCluster):
+                _ray_cluster.append(deployable)
+        return _ray_cluster
+
+    @property
+    def all_entity_lists(self):
+        """All entity lists, including ensembles and
+        exceptional ones like Orchestrator and Ray Clusters
+        """
+        _all_entity_lists = self.ray_clusters + self.ensembles
+        db = self.db
+        if db is not None:
+            _all_entity_lists.append(db)
+
+        return _all_entity_lists
 
     def _check_names(self, deployables):
         used = []
