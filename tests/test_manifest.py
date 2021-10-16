@@ -1,3 +1,4 @@
+import sys
 from copy import deepcopy
 
 import pytest
@@ -6,7 +7,14 @@ from smartsim import Experiment
 from smartsim.control import Manifest
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
+from smartsim.exp.ray import RayCluster
 from smartsim.settings import RunSettings
+
+ray_ok = True
+try:
+    import ray
+except ImportError:
+    ray_ok = False
 
 # ---- create entities for testing --------
 
@@ -16,24 +24,34 @@ exp = Experiment("util-test", launcher="local")
 model = exp.create_model("model_1", run_settings=rs)
 model_2 = exp.create_model("model_1", run_settings=rs)
 ensemble = exp.create_ensemble("ensemble", run_settings=rs, replicas=1)
+
+
 orc = Orchestrator()
 orc_1 = deepcopy(orc)
 orc_1.name = "orc2"
 model_no_name = exp.create_model(name=None, run_settings=rs)
+if ray_ok:
+    rc = RayCluster(name="ray-cluster", workers=0, launcher="slurm")
 
 
 def test_separate():
-    manifest = Manifest(model, ensemble, orc)
+    if ray_ok:
+        manifest = Manifest(model, ensemble, orc, rc)
+    else:
+        manifest = Manifest(model, ensemble, orc)
     assert manifest.models[0] == model
     assert len(manifest.models) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
     assert manifest.db == orc
+    if ray_ok:
+        assert len(manifest.ray_clusters) == 1
+        assert manifest.ray_clusters[0] == rc
 
 
 def test_no_name():
     with pytest.raises(AttributeError):
-        manifest = Manifest(model_no_name)
+        _ = Manifest(model_no_name)
 
 
 def test_two_orc():
@@ -44,12 +62,12 @@ def test_two_orc():
 
 def test_separate_type():
     with pytest.raises(TypeError):
-        manifest = Manifest([1, 2, 3])
+        _ = Manifest([1, 2, 3])
 
 
 def test_name_collision():
     with pytest.raises(SmartSimError):
-        manifest = Manifest(model, model_2)
+        _ = Manifest(model, model_2)
 
 
 def test_corner_case():
@@ -62,4 +80,4 @@ def test_corner_case():
 
     p = Person()
     with pytest.raises(TypeError):
-        manifest = Manifest(p)
+        _ = Manifest(p)

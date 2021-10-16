@@ -118,11 +118,8 @@ class Experiment:
             stop_manifest = Manifest(*args)
             for entity in stop_manifest.models:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.ensembles:
+            for entity_list in stop_manifest.all_entity_lists:
                 self._control.stop_entity_list(entity_list)
-            orchestrator = stop_manifest.db
-            if orchestrator:
-                self._control.stop_entity_list(orchestrator)
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -400,6 +397,7 @@ class Experiment:
         models = manifest.models
         ensembles = manifest.ensembles
         orchestrator = manifest.db
+        ray_clusters = manifest.ray_clusters
 
         header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
         exname = colorize("Experiment: " + self.name, color="green", bold=True)
@@ -463,6 +461,37 @@ class Experiment:
             batch = colorize(f"Launching as batch: {orchestrator.batch}", color="green")
             sprint(f"{batch}")
             sprint(f"{size}")
+        if ray_clusters:
+            sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
+            for rc in ray_clusters:
+                name = colorize(rc.name, color="green", bold=True)
+                num_models = colorize("# of nodes: " + str(len(rc)), color="green")
+                if rc.batch:
+                    batch_settings = colorize(
+                        "Ray batch Settings: \n" + str(rc.batch_settings),
+                        color="green",
+                    )
+                head_run_settings = colorize(
+                    "Ray head run Settings: \n" + str(rc.entities[0].run_settings),
+                    color="green",
+                )
+                run_settings = head_run_settings
+                if len(rc) > 1:
+                    worker_run_settings = colorize(
+                        "\nRay worker run Settings: \n"
+                        + str(rc.entities[1].run_settings),
+                        color="green",
+                    )
+                    run_settings += worker_run_settings
+                batch = colorize(f"Launching as batch: {rc.batch}", color="green")
+
+                sprint(f"{name}")
+                sprint(f"{num_models}")
+                sprint(f"{batch}")
+                if rc.batch:
+                    sprint(f"{batch_settings}")
+                sprint(f"{run_settings}")
+            sprint("\n")
 
         sprint("\n")
 

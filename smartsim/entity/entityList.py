@@ -43,8 +43,7 @@ class EntityList:
         try:
             if self.batch_settings:
                 return True
-            else:
-                return False
+            return False
         # local orchestrator cannot launch with batches
         except AttributeError:
             return False
