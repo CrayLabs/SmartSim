@@ -1,9 +1,9 @@
 import os
 
 import numpy as np
+from smartredis import Client
 from tensorflow import keras
 
-from smartredis import Client
 from smartsim.tf import freeze_model
 
 

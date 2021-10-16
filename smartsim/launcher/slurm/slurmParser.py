@@ -68,18 +68,18 @@ def parse_salloc_error(output):
 
 def jobid_exact_match(parsed_id, job_id):
     """Check that job_id is an exact match and not
-       the prefix of another job_id, like 1 and 11
-       or 1.1 and 1.10. Works with job id or step
-       id (i.e. with or without a '.' in the id)
-       :param parsed_id: the id read from the line
-       :type paserd_id: str
-       :param job_id: the id to check for equality
-       :type job_id: str
+    the prefix of another job_id, like 1 and 11
+    or 1.1 and 1.10. Works with job id or step
+    id (i.e. with or without a '.' in the id)
+    :param parsed_id: the id read from the line
+    :type paserd_id: str
+    :param job_id: the id to check for equality
+    :type job_id: str
     """
     if "." in job_id:
         return parsed_id == job_id
     else:
-        return parsed_id.split('.')[0] == job_id
+        return parsed_id.split(".")[0] == job_id
 
 
 def parse_sacct(output, job_id):

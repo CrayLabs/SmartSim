@@ -240,6 +240,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
             return self.mapping[status]
         return STATUS_FAILED
 
+
 class LSFJsrunStepInfo(StepInfo):  # cov-lsf
 
     # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states

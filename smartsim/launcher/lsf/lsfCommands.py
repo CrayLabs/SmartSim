@@ -69,6 +69,7 @@ def jskill(args):
     returncode, out, error = execute_cmd(cmd)
     return returncode, out, error
 
+
 def jslist(args):
     """Calls LSF jslist with args
 

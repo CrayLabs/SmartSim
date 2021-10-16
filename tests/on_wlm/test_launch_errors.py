@@ -56,10 +56,17 @@ def test_bad_run_command_args(fileutils, wlmutils):
     with pytest.raises(SmartSimError):
         exp.start(model)
 
-def test_unsupported_run_settings(fileutils, wlmutils):
+
+def test_unsupported_run_settings_on_wlm(fileutils, wlmutils):
+    """Fails at launch because the model has
+    an unsupported run settings
+
+    This test ensures that the launcher does not try to launch an
+    instance of a child class of RunSettings as a LocalStep
+    """
     launcher = wlmutils.get_test_launcher()
-    
-    exp_name = "test-unsupported-run-settings"
+
+    exp_name = "test-unsupported-run-settings-on-wlm"
     exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir(exp_name)
 
@@ -72,10 +79,12 @@ def test_unsupported_run_settings(fileutils, wlmutils):
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
 
-    # change test launcher back to the original
+    # change test launcher back to its original state
     wlmutils.set_test_launcher(launcher)
 
-    model = exp.create_model("unsupported-rs-model", path=test_dir, run_settings=settings)
-    
+    model = exp.create_model(
+        "unsupported-rs-model", path=test_dir, run_settings=settings
+    )
+
     with pytest.raises(SSUnsupportedError):
         exp.start(model)

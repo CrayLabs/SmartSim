@@ -31,10 +31,15 @@ from ...error import LauncherError
 from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings, RunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, MpirunStep, LocalStep
+from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
-from .lsfCommands import bjobs, bkill, jslist, jskill
-from .lsfParser import parse_jslist_stepid, parse_bjobs_jobid, parse_bsub, parse_max_step_id_from_jslist
+from .lsfCommands import bjobs, bkill, jskill, jslist
+from .lsfParser import (
+    parse_bjobs_jobid,
+    parse_bsub,
+    parse_jslist_stepid,
+    parse_max_step_id_from_jslist,
+)
 
 logger = get_logger(__name__)
 
@@ -49,6 +54,7 @@ class LSFLauncher(WLMLauncher):
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
+
     # init in WLMLauncher, launcher.py
 
     # RunSettings types supported by this launcher
@@ -56,7 +62,7 @@ class LSFLauncher(WLMLauncher):
         JsrunSettings: JsrunStep,
         BsubBatchSettings: BsubBatchStep,
         MpirunSettings: MpirunStep,
-        RunSettings: LocalStep
+        RunSettings: LocalStep,
     }
 
     def run(self, step):
@@ -96,7 +102,6 @@ class LSFLauncher(WLMLauncher):
                 cmd_list, step.cwd, out=output, err=error
             )
 
-
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
@@ -126,9 +131,7 @@ class LSFLauncher(WLMLauncher):
         return step_info
 
     def _get_lsf_step_id(self, step, interval=2, trials=5):
-        """Get the step_id of last launched step from jslist
-
-        """
+        """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:

@@ -26,7 +26,7 @@
 
 import abc
 
-from ..error import SSUnsupportedError, SSConfigError, LauncherError
+from ..error import LauncherError, SSConfigError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
@@ -99,7 +99,8 @@ class WLMLauncher(Launcher):  # cov-wlm
                 step = step_class(name, cwd, step_settings)
                 return step
             raise SSUnsupportedError(
-                f"RunSettings type {type(step_settings)} not supported by this launcher")
+                f"RunSettings type {type(step_settings)} not supported by this launcher"
+            )
         except SSConfigError as e:
             raise LauncherError("Step creation failed: " + str(e)) from None
 

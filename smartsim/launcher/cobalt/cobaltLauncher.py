@@ -61,7 +61,7 @@ class CobaltLauncher(WLMLauncher):
         AprunSettings: AprunStep,
         CobaltBatchSettings: CobaltBatchStep,
         MpirunSettings: MpirunStep,
-        RunSettings: LocalStep
+        RunSettings: LocalStep,
     }
 
     def run(self, step):

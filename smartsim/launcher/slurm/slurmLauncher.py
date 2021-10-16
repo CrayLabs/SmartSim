@@ -50,6 +50,7 @@ class SlurmLauncher(WLMLauncher):
     and are managed through references to their launching process ID
     i.e. a psutil.Popen object
     """
+
     # init in launcher.py (WLMLauncher)
 
     # RunSettings types supported by this launcher
@@ -57,7 +58,7 @@ class SlurmLauncher(WLMLauncher):
         SrunSettings: SrunStep,
         SbatchSettings: SbatchStep,
         MpirunSettings: MpirunStep,
-        RunSettings: LocalStep
+        RunSettings: LocalStep,
     }
 
     def get_step_nodes(self, step_names):

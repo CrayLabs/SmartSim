@@ -57,7 +57,7 @@ class PBSLauncher(WLMLauncher):
         AprunSettings: AprunStep,
         QsubBatchSettings: QsubBatchStep,
         MpirunSettings: MpirunStep,
-        RunSettings: LocalStep
+        RunSettings: LocalStep,
     }
 
     def run(self, step):
