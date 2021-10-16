@@ -94,6 +94,11 @@ def wlmutils():
 class WLMUtils:
 
     @staticmethod
+    def set_test_launcher(new_test_launcher):
+        global test_launcher
+        test_launcher = new_test_launcher
+
+    @staticmethod
     def get_test_launcher():
         global test_launcher
         return test_launcher
