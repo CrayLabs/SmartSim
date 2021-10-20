@@ -24,18 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.settings.settings import RunSettings
 import time
 
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
-from ...error import LauncherError, SSConfigError
-from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings
+from ...error import LauncherError
+from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings, RunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, MpirunStep, LocalStep
+from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
-from .lsfCommands import bjobs, bkill, jslist, jskill
-from .lsfParser import parse_jslist_stepid, parse_bjobs_jobid, parse_bsub, parse_max_step_id_from_jslist
+from .lsfCommands import bjobs, bkill, jskill, jslist
+from .lsfParser import (
+    parse_bjobs_jobid,
+    parse_bsub,
+    parse_jslist_stepid,
+    parse_max_step_id_from_jslist,
+)
 
 logger = get_logger(__name__)
 
@@ -53,38 +57,13 @@ class LSFLauncher(WLMLauncher):
 
     # init in WLMLauncher, launcher.py
 
-    def create_step(self, name, cwd, step_settings):
-        """Create a LSF job step
-
-        :param name: name of the entity to be launched
-        :type name: str
-        :param cwd: path to launch dir
-        :type cwd: str
-        :param step_settings: batch or run settings for entity
-        :type step_settings: BatchSettings | RunSettings
-        :raises SSUnsupportedError: if batch or run settings type isnt supported
-        :raises LauncherError: if step creation fails
-        :return: step instance
-        :rtype: Step
-        """
-        try:
-            if isinstance(step_settings, JsrunSettings):
-                step = JsrunStep(name, cwd, step_settings)
-                return step
-            if isinstance(step_settings, BsubBatchSettings):
-                step = BsubBatchStep(name, cwd, step_settings)
-                return step
-            if isinstance(step_settings, MpirunSettings):
-                step = MpirunStep(name, cwd, step_settings)
-                return step
-            if isinstance(step_settings, RunSettings):
-                step = LocalStep(name, cwd, step_settings)
-                return step
-            raise TypeError(
-                f"RunSettings type {type(step_settings)} not supported by LSF"
-            )
-        except SSConfigError as e:
-            raise LauncherError("Job step creation failed: " + str(e)) from None
+    # RunSettings types supported by this launcher
+    supported_rs = {
+        JsrunSettings: JsrunStep,
+        BsubBatchSettings: BsubBatchStep,
+        MpirunSettings: MpirunStep,
+        RunSettings: LocalStep,
+    }
 
     def run(self, step):
         """Run a job step through LSF
@@ -123,7 +102,6 @@ class LSFLauncher(WLMLauncher):
                 cmd_list, step.cwd, out=output, err=error
             )
 
-        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
@@ -152,10 +130,8 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2, trials=5): 
-        """Get the step_id of last launched step from jslist
-
-        """
+    def _get_lsf_step_id(self, step, interval=2, trials=5):
+        """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id = "unassigned"
         while trials > 0:

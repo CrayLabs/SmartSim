@@ -28,11 +28,11 @@ import time
 from shutil import which
 
 from ...constants import STATUS_CANCELLED
-from ...error import LauncherError, SSConfigError, SSUnsupportedError
-from ...settings import MpirunSettings, SbatchSettings, SrunSettings
+from ...error import LauncherError
+from ...settings import MpirunSettings, RunSettings, SbatchSettings, SrunSettings
 from ...utils import get_logger
 from ..launcher import WLMLauncher
-from ..step import MpirunStep, SbatchStep, SrunStep
+from ..step import LocalStep, MpirunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
@@ -53,33 +53,13 @@ class SlurmLauncher(WLMLauncher):
 
     # init in launcher.py (WLMLauncher)
 
-    def create_step(self, name, cwd, step_settings):
-        """Create a Slurm job step
-
-        :param name: name of the entity to be launched
-        :type name: str
-        :param cwd: path to launch dir
-        :type cwd: str
-        :param step_settings: batch or run settings for entity
-        :type step_settings: BatchSettings | RunSettings
-        :raises SSUnsupportedError: if batch or run settings type isnt supported
-        :raises LauncherError: if step creation fails
-        :return: step instance
-        :rtype: Step
-        """
-        try:
-            if isinstance(step_settings, SrunSettings):
-                step = SrunStep(name, cwd, step_settings)
-                return step
-            if isinstance(step_settings, SbatchSettings):
-                step = SbatchStep(name, cwd, step_settings)
-                return step
-            if isinstance(step_settings, MpirunSettings):
-                step = MpirunStep(name, cwd, step_settings)
-                return step
-            raise SSUnsupportedError("RunSettings type not supported by Slurm")
-        except SSConfigError as e:
-            raise LauncherError("Step creation failed: " + str(e)) from None
+    # RunSettings types supported by this launcher
+    supported_rs = {
+        SrunSettings: SrunStep,
+        SbatchSettings: SbatchStep,
+        MpirunSettings: MpirunStep,
+        RunSettings: LocalStep,
+    }
 
     def get_step_nodes(self, step_names):
         """Return the compute nodes of a specific job or allocation

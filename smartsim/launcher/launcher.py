@@ -26,7 +26,7 @@
 
 import abc
 
-from ..error import SSUnsupportedError
+from ..error import LauncherError, SSConfigError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
@@ -76,8 +76,33 @@ class WLMLauncher(Launcher):  # cov-wlm
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
+    # every launcher utilizing this interface must have a map
+    # of supported RunSettings types (see slurmLauncher.py for ex)
     def create_step(self, name, cwd, step_settings):
-        raise NotImplementedError
+        """Create a WLM job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param step_settings: batch or run settings for entity
+        :type step_settings: BatchSettings | RunSettings
+        :raises SSUnsupportedError: if batch or run settings type isnt supported
+        :raises LauncherError: if step creation fails
+        :return: step instance
+        :rtype: Step
+        """
+        try:
+            settings_class = step_settings.__class__
+            if settings_class in self.supported_rs:
+                step_class = self.supported_rs[settings_class]
+                step = step_class(name, cwd, step_settings)
+                return step
+            raise SSUnsupportedError(
+                f"RunSettings type {type(step_settings)} not supported by this launcher"
+            )
+        except SSConfigError as e:
+            raise LauncherError("Step creation failed: " + str(e)) from None
 
     def get_step_nodes(self, step_names):
         raise SSUnsupportedError("Node aquisition not supported for this launcher")
