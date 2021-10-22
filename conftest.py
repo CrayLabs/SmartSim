@@ -8,6 +8,7 @@ from smartsim.database import (
     PBSOrchestrator, Orchestrator,
     LSFOrchestrator
 )
+from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import (
     SrunSettings, AprunSettings,
     JsrunSettings, RunSettings

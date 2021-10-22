@@ -41,7 +41,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     cluster = RayCluster(
         name="ray-cluster",
         run_args={},
-        ray_args={"num-cpus": 4, "temp-dir": osp.join(exp.exp_path, "ray-tmp")},
+        ray_args={"num-cpus": 4},
         launcher=launcher,
         num_nodes=2,
         alloc=None,
@@ -49,6 +49,8 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         ray_port=6830,
         time="00:05:00",
         interface=wlmutils.get_test_interface(),
+        batch_args={"A": wlmutils.get_test_account(),
+                    "queue": "debug-flat-quad"}  # this is Theta-specific
     )
 
     exp.generate(cluster)
