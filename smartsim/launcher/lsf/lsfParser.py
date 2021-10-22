@@ -94,6 +94,7 @@ def parse_jslist_stepid(output, step_id):
 
     return result
 
+
 def parse_bjobs_jobid(output, job_id):
     """Parse and return output of the bjobs command run with options
     to obtain job status.
@@ -164,4 +165,3 @@ def parse_max_step_id_from_jslist(output):
         return str(max_step_id)
     else:
         return None
-

@@ -31,7 +31,14 @@ import uuid
 
 from ...entity import EntityList, SmartSimEntity
 from ...error import SSConfigError, SSUnsupportedError
-from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
+from ...settings import (
+    AprunSettings,
+    CobaltBatchSettings,
+    MpirunSettings,
+    QsubBatchSettings,
+    SbatchSettings,
+    SrunSettings,
+)
 from ...utils import delete_elements, get_logger
 from ...utils.helpers import expand_exe_path, init_default
 
@@ -67,6 +74,11 @@ class RayCluster(EntityList):
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
+    :param run_command: specify launch binary. This is currently used only if launcher is Cobalt.
+                        Options are ``mpirun`` and ``aprun``, defaults to ``aprun``.
+    :type run_command: str, optional
+    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
+    :type hosts: str, list[str]
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
                      Can be set to
                      - `auto`: a strong password will be generated internally
@@ -90,11 +102,13 @@ class RayCluster(EntityList):
         time="01:00:00",
         interface="ipogif0",
         alloc=None,
+        run_command=None,
+        host_list=None,
         password="auto",
         **kwargs,
     ):
         launcher = launcher.lower()
-        if launcher not in ["slurm", "pbs"]:
+        if launcher not in ["slurm", "pbs", "cobalt"]:
             raise SSUnsupportedError(
                 "Only Slurm and PBS launchers are supported by RayCluster"
             )
@@ -129,11 +143,16 @@ class RayCluster(EntityList):
             interface=interface,
             alloc=alloc,
             num_nodes=num_nodes,
+            run_command=run_command,
+            host_list=host_list,
             **kwargs,
         )
         if batch:
             self._build_batch_settings(num_nodes, time, batch_args, launcher)
         self.ray_head_address = None
+
+        if host_list:
+            self.set_hosts(host_list=host_list)
 
     @property
     def batch(self):
@@ -144,6 +163,32 @@ class RayCluster(EntityList):
         except AttributeError:
             return False
 
+
+    def set_hosts(self, host_list):
+        """Specify the hosts for the ``RayCluster`` to launch on. This is
+        optional, unless ``run_command`` is `mpirun`.
+
+        :param host_list: list of hosts (compute node names)
+        :type host_list: str | list[str]
+        :raises TypeError: if wrong type
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        # TODO check length
+        if self.batch:
+            self.batch_settings.set_hostlist(host_list)
+        for host, node in zip(host_list, self.entities):    
+            # Aprun doesn't like settings hosts in batch launch
+            if isinstance(node.run_settings, AprunSettings):
+                if not self.batch:
+                    node.run_settings.set_hostlist([host])
+            else:
+                node.run_settings.set_hostlist([host])
+
     def _initialize_entities(self, **kwargs):
 
         ray_port = kwargs.get("ray_port", 6789)
@@ -153,6 +198,7 @@ class RayCluster(EntityList):
         interface = kwargs.get("interface", "ipogif0")
         num_nodes = kwargs.get("num_nodes", 0)
         alloc = kwargs.get("alloc", None)
+        run_command = kwargs.get("run_command", None)
 
         ray_head = RayHead(
             name="ray_head",
@@ -160,9 +206,10 @@ class RayCluster(EntityList):
             ray_password=self._ray_password,
             ray_port=ray_port,
             launcher=launcher,
-            run_args=run_args,
-            ray_args=ray_args,
+            run_args=run_args.copy(),
+            ray_args=ray_args.copy(),
             interface=interface,
+            run_command=run_command,
             alloc=alloc,
         )
 
@@ -172,15 +219,17 @@ class RayCluster(EntityList):
             worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
-                run_args=run_args,
+                run_args=run_args.copy(),
                 ray_port=ray_port,
                 ray_password=self._ray_password,
-                ray_args=ray_args,
+                ray_args=ray_args.copy(),
                 interface=interface,
+                run_command=run_command,
                 launcher=launcher,
                 alloc=alloc,
             )
             self.entities.append(worker_model)
+
 
     def _build_batch_settings(self, num_nodes, time, batch_args, launcher):
         if launcher == "pbs":
@@ -189,6 +238,10 @@ class RayCluster(EntityList):
             )
         elif launcher == "slurm":
             self.batch_settings = SbatchSettings(
+                nodes=num_nodes, time=time, batch_args=batch_args
+            )
+        elif launcher == "cobalt":
+            self.batch_settings = CobaltBatchSettings(
                 nodes=num_nodes, time=time, batch_args=batch_args
             )
         else:
@@ -291,6 +344,7 @@ class RayHead(SmartSimEntity):
         ray_args=None,
         launcher="slurm",
         interface="ipogif0",
+        run_command=None,
         alloc=None,
         dash_port=8265,
     ):
@@ -305,7 +359,9 @@ class RayHead(SmartSimEntity):
             ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
+        run_settings = self._build_run_settings(
+            launcher, alloc, run_args, ray_exe_args, run_command
+        )
         super().__init__(name, path, run_settings)
 
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
@@ -336,24 +392,35 @@ class RayHead(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
+    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args, run_command):
 
         if launcher == "slurm":
             run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
         elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
+            run_settings = self._build_aprun_settings(run_args, ray_exe_args)
+        elif launcher == "cobalt":
+            if run_command is None or run_command == "aprun":
+                run_settings = self._build_aprun_settings(run_args, ray_exe_args)
+            elif run_command == "mpirun":
+                run_settings = self._build_mpirun_settings(run_args, ray_exe_args)
+            else:
+                raise SSUnsupportedError(
+                    "Only run commands supported for Cobalt are "
+                    + f"aprun and mpirun, but {run_command} was given"
+                )
         else:
-            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
+            raise SSUnsupportedError(
+                "Only slurm, cobalt, and pbs launchers are supported."
+            )
 
-        run_settings.set_tasks(1)
-        run_settings.set_tasks_per_node(1)
         return run_settings
 
-    def _build_pbs_settings(self, run_args, ray_args):
+    def _build_aprun_settings(self, run_args, ray_args):
 
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
         aprun_settings.set_tasks(1)
-
+        aprun_settings.set_tasks(1)
+        aprun_settings.set_tasks_per_node(1)
         return aprun_settings
 
     def _build_srun_settings(self, alloc, run_args, ray_args):
@@ -369,7 +436,19 @@ class RayHead(SmartSimEntity):
             alloc=alloc,
         )
         srun_settings.set_nodes(1)
+        srun_settings.set_tasks(1)
+        srun_settings.set_tasks_per_node(1)
         return srun_settings
+
+    def _build_mpirun_settings(self, run_args, ray_args):
+
+        mpirun_settings = MpirunSettings(
+            "python",
+            exe_args=ray_args,
+            run_args=run_args,
+        )
+        mpirun_settings.set_tasks(1)
+        return mpirun_settings
 
 
 class RayWorker(SmartSimEntity):
@@ -383,6 +462,7 @@ class RayWorker(SmartSimEntity):
         ray_args=None,
         interface="ipogif0",
         launcher="slurm",
+        run_command=None,
         alloc=None,
     ):
 
@@ -396,7 +476,9 @@ class RayWorker(SmartSimEntity):
             ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
+        run_settings = self._build_run_settings(
+            launcher, alloc, run_args, ray_exe_args, run_command
+        )
         super().__init__(name, path, run_settings)
 
     @property
@@ -442,22 +524,35 @@ class RayWorker(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
+    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args, run_command):
 
         if launcher == "slurm":
             run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
         elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
+            run_settings = self._build_aprun_settings(run_args, ray_exe_args)
+        elif launcher == "cobalt":
+            if run_command is None or run_command == "aprun":
+                run_settings = self._build_aprun_settings(run_args, ray_exe_args)
+            elif run_command == "mpirun":
+                run_settings = self._build_mpirun_settings(run_args, ray_exe_args)
+            else:
+                raise SSUnsupportedError(
+                    "Only run commands supported for Cobalt are "
+                    + f"aprun and mpirun, but {run_command} was given"
+                )
         else:
-            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
+            raise SSUnsupportedError(
+                "Only slurm, cobalt, and pbs launchers are supported."
+            )
 
-        run_settings.set_tasks(1)
         return run_settings
 
-    def _build_pbs_settings(self, run_args, ray_args):
+    def _build_aprun_settings(self, run_args, ray_args):
 
         aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
 
+        aprun_settings.set_tasks(1)
+        aprun_settings.set_tasks_per_node(1)
         return aprun_settings
 
     def _build_srun_settings(self, alloc, run_args, ray_args):
@@ -471,4 +566,13 @@ class RayWorker(SmartSimEntity):
             alloc=alloc,
         )
         srun_settings.set_nodes(1)
+        srun_settings.set_tasks(1)
+        srun_settings.set_tasks_per_node(1)
         return srun_settings
+
+    def _build_mpirun_settings(self, run_args, ray_args):
+
+        mpirun_settings = MpirunSettings("python", exe_args=ray_args, run_args=run_args)
+
+        mpirun_settings.set_tasks(1)
+        return mpirun_settings

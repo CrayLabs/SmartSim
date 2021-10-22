@@ -54,18 +54,17 @@ def test_parse_bsub_nodes(fileutils):
 def test_parse_max_step_id():
     """Get max step id from jslist"""
     output = (
-    "         parent                cpus      gpus      exit               \n"
-   "ID   ID       nrs    per RS    per RS    status         status\n"
-"===============================================================================\n"
-"    3    0         1         1         0         1       Complete\n"
-"    6    0         1         1         0         0       Complete\n"
-"    7    0         1         1         0         0       Complete\n"
-"    8    0         1         1         0         0       Complete\n"
-"    9    0         1         1         0         0       Complete\n"
-"    2    0         3   various   various       137         Killed\n"
-"    4    0         1   various   various       137         Killed\n"
-"    5    0         3   various   various       137         Killed\n"
-
+        "         parent                cpus      gpus      exit               \n"
+        "ID   ID       nrs    per RS    per RS    status         status\n"
+        "===============================================================================\n"
+        "    3    0         1         1         0         1       Complete\n"
+        "    6    0         1         1         0         0       Complete\n"
+        "    7    0         1         1         0         0       Complete\n"
+        "    8    0         1         1         0         0       Complete\n"
+        "    9    0         1         1         0         0       Complete\n"
+        "    2    0         3   various   various       137         Killed\n"
+        "    4    0         1   various   various       137         Killed\n"
+        "    5    0         3   various   various       137         Killed\n"
     )
     parsed_id = lsfParser.parse_max_step_id_from_jslist(output)
     assert parsed_id == "9"
