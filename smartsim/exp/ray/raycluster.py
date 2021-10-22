@@ -301,7 +301,7 @@ def parse_ray_head_node_address(head_log):
     :rtype: str
     """
 
-    max_attempts = 12
+    max_attempts = 24
     attempts = 0
     while not os.path.isfile(head_log):
         _time.sleep(5)
