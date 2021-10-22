@@ -68,3 +68,27 @@ def test_parse_max_step_id():
     )
     parsed_id = lsfParser.parse_max_step_id_from_jslist(output)
     assert parsed_id == "9"
+
+
+def test_parse_jslist():
+    """Parse status and return code from jslist."""
+    output = (
+        "****************************************************************************\n"
+        "   parent                cpus      gpus      exit  \n"
+        "ID   ID       nrs    per RS    per RS    status         status\n"
+        "===============================================================================\n"
+        "    2    1       168         1         1         1       Complete\n"
+        "    3    1         1         1         1         1       Complete\n"
+        "    4    1       168         1         1         1       Complete\n"
+        "    5    1         1         1         1         1       Complete\n"
+        "    6    1       168         1         1         1       Complete\n"
+        "    7    1         1         1         1         1       Complete\n"
+        "    8    1       168         1         1         1       Complete\n"
+        "    9    1         1         1         1         1       Complete\n"
+        "   10    1       168         1         1         1       Complete\n"
+        "    1    1         4   various   various         0        Running\n"
+        "   11    1         1         1         1         1        Running\n"
+    )
+    parsed_result = lsfParser.parse_jslist_stepid(output, "1")
+    result = ("Running", "0")
+    assert parsed_result == result

@@ -28,7 +28,7 @@
 def parse_cobalt_step_status(output, step_id):
     status = "NOTFOUND"
     for line in output.split("\n"):
-        if line.strip().startswith(step_id):
+        if line.split()[0] == step_id:
             line = line.split()
             status = line[1]
             break
@@ -47,7 +47,7 @@ def parse_cobalt_step_id(output, step_name):
     """
     step_id = None
     for line in output.split("\n"):
-        if line.strip().startswith(step_name):
+        if line.split()[0] == step_name:
             line = line.split()
             step_id = line[1]
             break

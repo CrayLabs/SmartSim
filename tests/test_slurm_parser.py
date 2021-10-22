@@ -147,6 +147,41 @@ def test_parse_sstat_nodes_4():
     assert nodes == parsed_nodes
 
 
+def test_parse_sstat_nodes_4():
+    """Parse nodes from sstat called with args -i -a -p -n
+
+    with extra steps
+
+    PrologFlags=Alloc,Contain
+    """
+    output = (
+        "30000.extern|nid00034|44860|\n"
+        "30000.batch|nid00034|42352"
+        "30000.0|nid00034|44887,45151,45152,45153,45154,45155|\n"
+        "30000.1|nid00035|45174|\n"
+        "30000.2|nid00036|45174,32435|\n"
+    )
+    nodes = set(["nid00034", "nid00035", "nid00036"])
+    parsed_nodes = set(slurmParser.parse_sstat_nodes(output, "30000"))
+    assert nodes == parsed_nodes
+
+
+def test_parse_sstat_nodes_5():
+    """Parse nodes from sstat called with args -i -a -p -n
+    Special case where interactive queue also causes there
+    to be a constantly running .0 job
+    PrologFlags=Alloc,Contain
+    """
+    output = (
+        "29917893.extern|nid00034|44860|\n"
+        "29917893.20|nid00034|44887,45151,45152,45153,45154,45155|\n"
+        "29917893.2|nid00034|45174|\n"
+    )
+    nodes = ["nid00034"]
+    parsed_nodes = slurmParser.parse_sstat_nodes(output, "29917893.2")
+    assert nodes == parsed_nodes
+
+
 # -- sacct ---------------------------------------------------------
 
 
@@ -209,4 +244,14 @@ def test_parse_sacct_status_1():
     output = "22999.0|FAILED|1:0|\n"
     status = ("FAILED", "1")
     parsed_status = slurmParser.parse_sacct(output, "22999.0")
+    assert status == parsed_status
+
+
+def test_parse_sacct_status_2():
+    """test retrieval of status and exitcode
+    PrologFlags=Alloc
+    """
+    output = "22999.10|COMPLETED|0:0|\n22999.1|FAILED|1:0|\n"
+    status = ("FAILED", "1")
+    parsed_status = slurmParser.parse_sacct(output, "22999.1")
     assert status == parsed_status
