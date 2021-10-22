@@ -1,6 +1,7 @@
 import logging
 import time
 from os import environ
+import os.path as osp
 
 import pytest
 
@@ -41,7 +42,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     cluster = RayCluster(
         name="ray-cluster",
         run_args={},
-        ray_args={"num-cpus": 4},
+        ray_args={"num-cpus": 4, "temp-dir": osp.join(exp.exp_path, "ray-tmp")},
         launcher=launcher,
         num_nodes=2,
         alloc=None,
