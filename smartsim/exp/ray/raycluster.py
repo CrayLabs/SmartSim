@@ -163,7 +163,6 @@ class RayCluster(EntityList):
         except AttributeError:
             return False
 
-
     def set_hosts(self, host_list):
         """Specify the hosts for the ``RayCluster`` to launch on. This is
         optional, unless ``run_command`` is `mpirun`.
@@ -181,7 +180,7 @@ class RayCluster(EntityList):
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
-        for host, node in zip(host_list, self.entities):    
+        for host, node in zip(host_list, self.entities):
             # Aprun doesn't like settings hosts in batch launch
             if isinstance(node.run_settings, AprunSettings):
                 if not self.batch:
@@ -229,7 +228,6 @@ class RayCluster(EntityList):
                 alloc=alloc,
             )
             self.entities.append(worker_model)
-
 
     def _build_batch_settings(self, num_nodes, time, batch_args, launcher):
         if launcher == "pbs":
