@@ -54,7 +54,7 @@ def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
 
     exp.generate(cluster)
     exp.start(cluster, block=False, summary=False)
-    ctx = ray.client(cluster.get_head_address() + ":10001").connect()
+    ctx = ray.client("ray://" + cluster.get_head_address() + ":10001").connect()
 
     right_resources = False
     trials = 20

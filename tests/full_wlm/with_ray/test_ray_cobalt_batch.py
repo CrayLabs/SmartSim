@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from os import environ
 
@@ -7,7 +6,6 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.exp.ray import RayCluster
-from smartsim.launcher import slurm
 
 """Test Ray cluster Slurm launch and shutdown.
 """
@@ -15,6 +13,7 @@ from smartsim.launcher import slurm
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
+
 
 environ["OMP_NUM_THREADS"] = "1"
 shouldrun = True
@@ -32,11 +31,11 @@ pytestmark = pytest.mark.skipif(
 
 def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
-    if launcher != "slurm":
-        pytest.skip("Test only runs on systems with Slurm as WLM")
+    if launcher != "cobalt":
+        pytest.skip("Test only runs on systems with Cobalt as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown-batch")
+    test_dir = fileutils.make_test_dir("test-ray-cobalt-launch-and-shutdown-batch")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -47,6 +46,8 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         num_nodes=2,
         alloc=None,
         batch=True,
+        ray_port=6830,
+        time="00:05:00",
         interface=wlmutils.get_test_interface(),
     )
 
