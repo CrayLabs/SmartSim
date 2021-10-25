@@ -247,9 +247,11 @@ class Controller:
             elif launcher == "pbs":
                 self._launcher = PBSLauncher()
                 self._jobs.set_launcher(self._launcher)
+            # Init Cobalt launcher
             elif launcher == "cobalt":
                 self._launcher = CobaltLauncher()
                 self._jobs.set_launcher(self._launcher)
+            # Init LSF launcher
             elif launcher == "lsf":
                 self._launcher = LSFLauncher()
                 self._jobs.set_launcher(self._launcher)
@@ -275,10 +277,13 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
+        for rc in manifest.ray_clusters:
+            rc._update_workers()
+
         # create all steps prior to launch
         steps = []
-
-        for elist in manifest.ensembles:
+        all_entity_lists = manifest.ensembles + manifest.ray_clusters
+        for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
@@ -498,7 +503,7 @@ class Controller:
                 if not self._jobs.actively_monitoring:
                     self._jobs.check_jobs()
 
-                # _jobs.get_status aquires JM lock for main thread, no need for locking
+                # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
                 if all([stat == STATUS_RUNNING for stat in statuses]):
                     ready = True

@@ -71,6 +71,30 @@ def parse_bsub_error(output):
     return base_err
 
 
+def parse_jslist_stepid(output, step_id):
+    """Parse and return output of the jslist command run with
+    options to obtain step status
+
+    :param output: output of the bjobs command
+    :type output: str
+    :param job_id: allocation id or job step id
+    :type job_id: str
+    :return: status and return code
+    :rtype: (str, str)
+    """
+    result = ("NOTFOUND", None)
+
+    for line in output.split("\n"):
+        if line.split()[0] == step_id:
+            line = line.split()
+            stat = line[6]
+            return_code = line[5]
+            result = (stat, return_code)
+            break
+
+    return result
+
+
 def parse_bjobs_jobid(output, job_id):
     """Parse and return output of the bjobs command run with options
     to obtain job status.
@@ -84,7 +108,7 @@ def parse_bjobs_jobid(output, job_id):
     """
     result = "NOTFOUND"
     for line in output.split("\n"):
-        if line.strip().startswith(job_id):
+        if line.split()[0] == job_id:
             line = line.split()
             stat = line[2]
             result = stat
@@ -113,8 +137,11 @@ def parse_bjobs_nodes(output):
     return list(dict.fromkeys(nodes))
 
 
-def parse_step_id_from_bjobs(output, step_name):
-    """Parse and return the step id from a bjobs command without args
+def parse_max_step_id_from_jslist(output):
+    """Parse and return the maximum step id from a jslist command.
+    This function must be called immedietaly after a call to jsrun,
+    and before the next one, to ensure the id of the last spawned task is
+    properly returned
 
     :param output: output bjobs
     :type output: str
@@ -123,13 +150,18 @@ def parse_step_id_from_bjobs(output, step_name):
     :return: the step_id
     :rtype: str
     """
-    step_id = None
+    max_step_id = None
 
     for line in output.split("\n"):
+        if line.startswith("="):
+            continue
         fields = line.split()
         if len(fields) >= 7:
-            if fields[7] == step_name:
-                step_id = fields[0]
-                return step_id
+            if fields[0].isdigit():
+                if (max_step_id is None) or (int(fields[0]) > max_step_id):
+                    max_step_id = int(fields[0])
 
-    return ""
+    if max_step_id:
+        return str(max_step_id)
+    else:
+        return None

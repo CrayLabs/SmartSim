@@ -245,7 +245,7 @@ def clean(install_path, _all=False):
         rai_path = lib_path.joinpath("redisai.so")
         if rai_path.is_file():
             rai_path.unlink()
-            print("Succesfully removed existing RedisAI installation")
+            print("Successfully removed existing RedisAI installation")
 
         backend_path = lib_path.joinpath("backends")
         if backend_path.is_dir():

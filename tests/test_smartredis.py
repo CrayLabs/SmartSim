@@ -20,17 +20,17 @@ from smartsim.settings import RunSettings
 
 REDIS_PORT = 6780
 
-
+shouldrun = True
 try:
     import smartredis
     import torch
 except ImportError:
-    pass
+    shouldrun = False
 
 
 pytestmark = pytest.mark.skipif(
-    ("torch" not in sys.modules),
-    reason="requires PyTorch",
+    not shouldrun,
+    reason="requires PyTorch and SmartRedis",
 )
 
 

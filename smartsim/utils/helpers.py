@@ -129,3 +129,15 @@ def colorize(string, color, bold=False, highlight=False):
     if bold:
         attr.append("1")
     return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
+
+
+def delete_elements(dictionary, key_list):
+    """Delete elements from a dictionary.
+    :param dictionary: the dictionary from which the elements must be deleted.
+    :type dictionary: dict
+    :param key_list: the list of keys to delete from the dictionary.
+    :type key: any
+    """
+    for key in key_list:
+        if key in dictionary:
+            del dictionary[key]

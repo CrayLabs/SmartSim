@@ -30,7 +30,14 @@ from .settings import BatchSettings, RunSettings
 
 
 class SrunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None):
+    def __init__(
+        self,
+        exe,
+        exe_args=None,
+        run_args=None,
+        env_vars=None,
+        alloc=None,
+    ):
         """Initialize run parameters for a slurm job with ``srun``
 
         ``SrunSettings`` should only be used on Slurm based systems.
@@ -50,7 +57,11 @@ class SrunSettings(RunSettings):
         :type alloc: str, optional
         """
         super().__init__(
-            exe, exe_args, run_command="srun", run_args=run_args, env_vars=env_vars
+            exe,
+            exe_args,
+            run_command="srun",
+            run_args=run_args,
+            env_vars=env_vars,
         )
         self.alloc = alloc
         self.mpmd = False
@@ -79,6 +90,21 @@ class SrunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
+
+    def set_excluded_hosts(self, host_list):
+        """Specify a list of hosts to exclude for launching this job
+
+        :param host_list: hosts to exclude
+        :type host_list: list[str]
+        :raises TypeError:
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["exclude"] = ",".join(host_list)
 
     def set_cpus_per_task(self, num_cpus):
         """Set the number of cpus to use per task
@@ -109,6 +135,17 @@ class SrunSettings(RunSettings):
         :type num_tpn: int
         """
         self.run_args["ntasks-per-node"] = int(num_tpn)
+
+    def set_walltime(self, walltime):
+        """Set the walltime of the job
+
+        format = "HH:MM:SS"
+
+        :param walltime: wall time
+        :type walltime: str
+        """
+        # TODO check for errors here
+        self.run_args["time"] = walltime
 
     def format_run_args(self):
         """return a list of slurm formatted run arguments
