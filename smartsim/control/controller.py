@@ -421,12 +421,12 @@ class Controller:
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
             if len(addresses) <= 128:
-                client_env["SSDB"] = ";".join(addresses)
+                client_env["SSDB"] = ",".join(addresses)
             else:
                 # Cap max length of SSDB
-                client_env["SSDB"] = ";".join(addresses[:128])
+                client_env["SSDB"] = ",".join(addresses[:128])
             if entity.incoming_entities:
-                client_env["SSKEYIN"] = ";".join(
+                client_env["SSKEYIN"] = ",".join(
                     [in_entity.name for in_entity in entity.incoming_entities]
                 )
             if entity.query_key_prefixing():

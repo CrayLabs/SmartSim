@@ -180,6 +180,8 @@ class SrunSettings(RunSettings):
         # TODO make these overridable by user
         presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
 
+        comma_separated_format_str = []
+
         def add_env_var(var, format_str):
             try:
                 value = os.environ[var]
@@ -196,8 +198,12 @@ class SrunSettings(RunSettings):
 
         # add user supplied variables
         for k, v in self.env_vars.items():
-            format_str += "=".join((k, str(v))) + ","
-        return format_str.rstrip(",")
+            if "," in str(v):
+                comma_separated_format_str += ["=".join((k, str(v)))]
+                format_str += k + ","
+            else:
+                format_str += "=".join((k, str(v))) + ","
+        return format_str.rstrip(","), comma_separated_format_str
 
 
 class SbatchSettings(BatchSettings):
