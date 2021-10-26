@@ -130,12 +130,16 @@ class SrunStep(Step):
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
 
+
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            env_var_str = self.run_settings.format_env_vars()
+            env_var_str, comma_separated_env_vars = self.run_settings.format_env_vars()
             srun_cmd += ["--export", env_var_str]
+
+            if comma_separated_env_vars:
+                srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
 
         srun_cmd += self.run_settings.format_run_args()
         srun_cmd += self._build_exe()
