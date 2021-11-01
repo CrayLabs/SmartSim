@@ -133,7 +133,10 @@ class WLMUtils:
             settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
             return settings
         if test_launcher == "lsf":
-            raise SSUnsupportedError("SmartSim LSF launcher does not support custom run settings at this time.")
+            run_args = {"--np": ntasks, "--nrs": nodes}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="jsrun", run_args=run_args)
+            return settings
         # TODO allow user to pick aprun vs MPIrun
         return RunSettings(exe, args)
         

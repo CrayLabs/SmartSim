@@ -3,7 +3,6 @@ import time
 import pytest
 
 from smartsim import Experiment, constants
-from smartsim.settings.settings import RunSettings
 
 """
 Test the launch and stop of models and ensembles using base
@@ -17,8 +16,8 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 def test_model_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt"]:
-        pytest.skip("Test only runs on systems with PBSPro, Slurm, or Cobalt as WLM")
+    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
+        pytest.skip("Test only runs on systems with PBSPro, Slurm, LSF, or Cobalt as WLM")
 
     exp_name = "test-base-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
@@ -39,8 +38,8 @@ def test_model_on_wlm(fileutils, wlmutils):
 
 def test_model_stop_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt"]:
-        pytest.skip("Test only runs on systems with PBSPro, Slurm, or Cobalt as WLM")
+    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
+        pytest.skip("Test only runs on systems with PBSPro, Slurm, LSF, or Cobalt as WLM")
 
     exp_name = "test-base-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
@@ -64,8 +63,8 @@ def test_model_stop_on_wlm(fileutils, wlmutils):
 
 def test_ensemble_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt"]:
-        pytest.skip("Test only runs on systems with PBSPro, Slurm, or Cobalt as WLM")
+    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
+        pytest.skip("Test only runs on systems with PBSPro, Slurm, LSF, or Cobalt as WLM")
 
     exp_name = "test-base-settings-ensemble-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
@@ -85,8 +84,8 @@ def test_ensemble_on_wlm(fileutils, wlmutils):
 
 def test_ensemble_stop_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
-    if launcher not in ["pbs", "slurm", "cobalt"]:
-        pytest.skip("Test only runs on systems with PBSPro, Slurm, or Cobalt as WLM")
+    if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
+        pytest.skip("Test only runs on systems with PBSPro, Slurm, LSF, or Cobalt as WLM")
 
     exp_name = "test-base-settings-ensemble-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
