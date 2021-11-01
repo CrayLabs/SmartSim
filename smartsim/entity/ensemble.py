@@ -35,7 +35,7 @@ from ..error import (
 )
 from ..settings.base import BatchSettings, RunSettings
 from ..utils import get_logger
-from ..utils.helpers import cat_arg_and_value, init_default
+from ..utils.helpers import init_default, cat_arg_and_value
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
@@ -52,7 +52,7 @@ class Ensemble(EntityList):
         self,
         name,
         params,
-        params_as_args=None,
+        arg_params=None,
         batch_settings=None,
         run_settings=None,
         perm_strat="all_perm",
@@ -67,10 +67,8 @@ class Ensemble(EntityList):
         :type name: str
         :param params: parameters to expand into ``Model`` members
         :type params: dict[str, Any]
-        :param params_as_args: list of params which should be used as command line arguments
-                               to the ``Model`` member executables and not written to generator
-                               files
-        :type arg_params: list[str]
+        :param arg_params: command line parameters to expand into ``Model`` members
+        :type arg_params: dict[str, Any]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
@@ -86,7 +84,7 @@ class Ensemble(EntityList):
         :rtype: ``Ensemble``
         """
         self.params = init_default({}, params, dict)
-        self.params_as_args = init_default({}, params_as_args, (list, str))
+        self.arg_params = init_default({}, arg_params, dict)
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
@@ -105,16 +103,14 @@ class Ensemble(EntityList):
         """
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
-
+        
         # If param dictionaries are empty, empty lists will be returned
         param_names, params, arg_names, arg_params = self._read_model_parameters()
 
         # Pre-compute parameterized command line arguments and model
         # parameters, as we need them in different branches, if they are given
         if self.params or self.arg_params:
-            all_params = strategy(
-                param_names + arg_names, params + arg_params, **kwargs
-            )
+            all_params = strategy(param_names+arg_names, params+arg_params, **kwargs)
             if not isinstance(all_params, list):
                 raise UserStrategyError(strategy)
 
@@ -126,7 +122,7 @@ class Ensemble(EntityList):
                     raise UserStrategyError(strategy)
                 model_param_dict = {}
                 arg_param_dict = {}
-                for k, v in all_param_list.items():
+                for k,v in all_param_list.items():
                     if k in param_names:
                         model_param_dict[k] = v
                     elif k in arg_names:
@@ -146,37 +142,28 @@ class Ensemble(EntityList):
                         raise UserStrategyError(strategy)
                     run_settings = deepcopy(self.run_settings)
                     for arg_param_name, arg_param_value in arg_param_set.items():
-                        run_settings.add_exe_args(
-                            cat_arg_and_value(arg_param_name, arg_param_value)
-                        )
+                        run_settings.add_exe_args(cat_arg_and_value(arg_param_name, arg_param_value))
                     model_run_settings.append(run_settings)
 
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member
         if self.params:
             if self.run_settings:
-                param_names, params = self._read_model_parameters()
-
-                # Compute all combinations of model parameters and arguments
-                all_model_params = strategy(param_names, params, **kwargs)
-                if not isinstance(all_model_params, list):
-                    raise UserStrategyError(strategy)
+                for i, param_set in enumerate(all_model_params):
 
                     if self.arg_params:
                         run_settings = model_run_settings[i]
                     else:
                         run_settings = deepcopy(self.run_settings)
-
+                        
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
                         model_name,
                         param_set,
                         self.path,
                         run_settings=run_settings,
-                        params_as_args=self.params_as_args,
                     )
                     model.enable_key_prefixing()
-                    model.params_to_args()
                     logger.debug(
                         f"Created ensemble member: {model_name} in {self.name}"
                     )
@@ -184,7 +171,26 @@ class Ensemble(EntityList):
             # cannot generate models without run settings
             else:
                 raise SmartSimError(
-                    "Ensembles without 'params' or 'replicas' argument to expand into members cannot be given run settings"
+                    "Ensembles without 'params', 'arg_params', or 'replicas' argument to expand into members cannot be given run settings"
+                )
+        elif self.arg_params:
+            if self.run_settings:
+                for i, run_settings in enumerate(model_run_settings):
+                    model_name = "_".join((self.name, str(i)))
+                    model = Model(
+                        model_name,
+                        {},
+                        self.path,
+                        run_settings=run_settings,
+                    )
+                    model.enable_key_prefixing()
+                    logger.debug(
+                        f"Created ensemble member: {model_name} in {self.name}"
+                    )
+                    self.add_model(model)
+            else:
+                raise SmartSimError(
+                    "Ensembles without 'params', 'arg_params', or 'replicas' argument to expand into members cannot be given run settings"
                 )
         else:
             if self.run_settings:
@@ -204,7 +210,7 @@ class Ensemble(EntityList):
                         self.add_model(model)
                 else:
                     raise SmartSimError(
-                        "Ensembles without 'params' or 'replicas' argument to expand into members cannot be given run settings"
+                        "Ensembles without 'params', 'arg_params', or 'replicas' argument to expand into members cannot be given run settings"
                     )
             # if no params, no run settings and no batch settings, error because we
             # don't know how to run the ensemble
@@ -333,7 +339,7 @@ class Ensemble(EntityList):
             raise TypeError(
                 "Ensemble initialization argument 'params' must be of type dict"
             )
-
+        
         def list_params(params):
             param_names = []
             parameters = []
@@ -353,9 +359,4 @@ class Ensemble(EntityList):
 
         packed_params = list_params(self.params)
         packed_arg_params = list_params(self.arg_params)
-        return (
-            packed_params[0],
-            packed_params[1],
-            packed_arg_params[0],
-            packed_arg_params[1],
-        )
+        return packed_params[0], packed_params[1], packed_arg_params[0], packed_arg_params[1]
