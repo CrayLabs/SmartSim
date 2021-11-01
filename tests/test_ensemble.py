@@ -194,7 +194,6 @@ def test_arg_and_model_params_all_perms():
 
 
 
-
 # ----- Error Handling --------------------------------------
 
 # unknown permuation strategy
