@@ -35,7 +35,7 @@ from ..error import (
 )
 from ..settings.base import BatchSettings, RunSettings
 from ..utils import get_logger
-from ..utils.helpers import init_default
+from ..utils.helpers import cat_arg_and_value, init_default
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
@@ -106,6 +106,51 @@ class Ensemble(EntityList):
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
 
+        # If param dictionaries are empty, empty lists will be returned
+        param_names, params, arg_names, arg_params = self._read_model_parameters()
+
+        # Pre-compute parameterized command line arguments and model
+        # parameters, as we need them in different branches, if they are given
+        if self.params or self.arg_params:
+            all_params = strategy(
+                param_names + arg_names, params + arg_params, **kwargs
+            )
+            if not isinstance(all_params, list):
+                raise UserStrategyError(strategy)
+
+            all_model_params = []
+            all_arg_params = []
+
+            for all_param_list in all_params:
+                if not isinstance(all_param_list, dict):
+                    raise UserStrategyError(strategy)
+                model_param_dict = {}
+                arg_param_dict = {}
+                for k, v in all_param_list.items():
+                    if k in param_names:
+                        model_param_dict[k] = v
+                    elif k in arg_names:
+                        arg_param_dict[k] = v
+                    else:
+                        raise UserStrategyError(strategy)
+                if model_param_dict:
+                    all_model_params.append(model_param_dict)
+                if arg_param_dict:
+                    all_arg_params.append(arg_param_dict)
+
+            if self.arg_params:
+                # run settings with exe_args modified according to params
+                model_run_settings = []
+                for arg_param_set in all_arg_params:
+                    if not isinstance(arg_param_set, dict):
+                        raise UserStrategyError(strategy)
+                    run_settings = deepcopy(self.run_settings)
+                    for arg_param_name, arg_param_value in arg_param_set.items():
+                        run_settings.add_exe_args(
+                            cat_arg_and_value(arg_param_name, arg_param_value)
+                        )
+                    model_run_settings.append(run_settings)
+
         # if a ensemble has parameters and run settings, create
         # the ensemble and assign run_settings to each member
         if self.params:
@@ -117,10 +162,11 @@ class Ensemble(EntityList):
                 if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
-                for i, param_set in enumerate(all_model_params):
-                    if not isinstance(param_set, dict):
-                        raise UserStrategyError(strategy)
-                    run_settings = deepcopy(self.run_settings)
+                    if self.arg_params:
+                        run_settings = model_run_settings[i]
+                    else:
+                        run_settings = deepcopy(self.run_settings)
+
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
                         model_name,
@@ -283,18 +329,33 @@ class Ensemble(EntityList):
                 "Ensemble initialization argument 'params' must be of type dict"
             )
 
-        param_names = []
-        parameters = []
-        for name, val in self.params.items():
-            param_names.append(name)
+        if not isinstance(self.arg_params, dict):
+            raise TypeError(
+                "Ensemble initialization argument 'params' must be of type dict"
+            )
 
-            if isinstance(val, list):
-                parameters.append(val)
-            elif isinstance(val, (int, str)):
-                parameters.append([val])
-            else:
-                raise TypeError(
-                    "Incorrect type for ensemble parameters\n"
-                    + "Must be list, int, or string."
-                )
-        return param_names, parameters
+        def list_params(params):
+            param_names = []
+            parameters = []
+            for name, val in params.items():
+                param_names.append(name)
+
+                if isinstance(val, list):
+                    parameters.append(val)
+                elif isinstance(val, (int, str)):
+                    parameters.append([val])
+                else:
+                    raise TypeError(
+                        "Incorrect type for ensemble parameters\n"
+                        + "Must be list, int, or string."
+                    )
+            return param_names, parameters
+
+        packed_params = list_params(self.params)
+        packed_arg_params = list_params(self.arg_params)
+        return (
+            packed_params[0],
+            packed_params[1],
+            packed_arg_params[0],
+            packed_arg_params[1],
+        )
