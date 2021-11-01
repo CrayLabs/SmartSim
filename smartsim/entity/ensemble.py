@@ -32,7 +32,7 @@ from smartsim.error.errors import SmartSimError
 from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError
 from ..settings.settings import BatchSettings, RunSettings
 from ..utils import get_logger
-from ..utils.helpers import init_default, cat_arg_and_value
+from ..utils.helpers import cat_arg_and_value, init_default
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
@@ -100,14 +100,16 @@ class Ensemble(EntityList):
         """
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
-        
+
         # If param dictionaries are empty, empty lists will be returned
         param_names, params, arg_names, arg_params = self._read_model_parameters()
 
         # Pre-compute parameterized command line arguments and model
         # parameters, as we need them in different branches, if they are given
         if self.params or self.arg_params:
-            all_params = strategy(param_names+arg_names, params+arg_params, **kwargs)
+            all_params = strategy(
+                param_names + arg_names, params + arg_params, **kwargs
+            )
             if not isinstance(all_params, list):
                 raise UserStrategyError(strategy)
 
@@ -119,7 +121,7 @@ class Ensemble(EntityList):
                     raise UserStrategyError(strategy)
                 model_param_dict = {}
                 arg_param_dict = {}
-                for k,v in all_param_list.items():
+                for k, v in all_param_list.items():
                     if k in param_names:
                         model_param_dict[k] = v
                     elif k in arg_names:
@@ -139,7 +141,9 @@ class Ensemble(EntityList):
                         raise UserStrategyError(strategy)
                     run_settings = deepcopy(self.run_settings)
                     for arg_param_name, arg_param_value in arg_param_set.items():
-                        run_settings.add_exe_args(cat_arg_and_value(arg_param_name, arg_param_value))
+                        run_settings.add_exe_args(
+                            cat_arg_and_value(arg_param_name, arg_param_value)
+                        )
                     model_run_settings.append(run_settings)
 
         # if a ensemble has parameters and run settings, create
@@ -152,7 +156,7 @@ class Ensemble(EntityList):
                         run_settings = model_run_settings[i]
                     else:
                         run_settings = deepcopy(self.run_settings)
-                        
+
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
                         model_name,
@@ -336,7 +340,7 @@ class Ensemble(EntityList):
             raise TypeError(
                 "Ensemble initialization argument 'params' must be of type dict"
             )
-        
+
         def list_params(params):
             param_names = []
             parameters = []
@@ -356,4 +360,9 @@ class Ensemble(EntityList):
 
         packed_params = list_params(self.params)
         packed_arg_params = list_params(self.arg_params)
-        return packed_params[0], packed_params[1], packed_arg_params[0], packed_arg_params[1]
+        return (
+            packed_params[0],
+            packed_params[1],
+            packed_arg_params[0],
+            packed_arg_params[1],
+        )
