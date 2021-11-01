@@ -135,15 +135,15 @@ def test_dir_files(fileutils):
 
 
 def test_multiple_tags(fileutils):
-    """Test substitution of multiple tagged parameters on same line
-    """
+    """Test substitution of multiple tagged parameters on same line"""
     test_dir = fileutils.make_test_dir("multiple_tags")
 
     exp = Experiment("test-multiple-tags", test_dir)
     model_params = {"port": 6379, "password": "unbreakable_password"}
     model_settings = RunSettings("bash", "multi_tags_template.sh")
-    parameterized_model = exp.create_model("multi-tags", 
-                                    run_settings=model_settings, params=model_params)
+    parameterized_model = exp.create_model(
+        "multi-tags", run_settings=model_settings, params=model_params
+    )
     config = fileutils.get_test_conf_path("multi_tags_template.sh")
     parameterized_model.attach_generator_files(to_configure=[config])
     exp.generate(parameterized_model, overwrite=True)
@@ -151,4 +151,6 @@ def test_multiple_tags(fileutils):
 
     with open(osp.join(parameterized_model.path, "multi-tags.out")) as f:
         line = f.readline()
-        assert line.strip() == "My two parameters are 6379 and unbreakable_password, OK?"
+        assert (
+            line.strip() == "My two parameters are 6379 and unbreakable_password, OK?"
+        )
