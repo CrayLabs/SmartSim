@@ -107,6 +107,7 @@ class Ensemble(EntityList):
         # Pre-compute parameterized command line arguments and model
         # parameters, as we need them in different branches, if they are given
         if self.params or self.arg_params:
+            # Compute all combinations of model parameters and arguments
             all_params = strategy(
                 param_names + arg_names, params + arg_params, **kwargs
             )
@@ -116,6 +117,8 @@ class Ensemble(EntityList):
             all_model_params = []
             all_arg_params = []
 
+            # Separate model parameters and model arguments
+            # into two lists
             for all_param_list in all_params:
                 if not isinstance(all_param_list, dict):
                     raise UserStrategyError(strategy)
@@ -147,11 +150,15 @@ class Ensemble(EntityList):
                     model_run_settings.append(run_settings)
 
         # if a ensemble has parameters and run settings, create
-        # the ensemble and copy run_settings to each member
+        # the ensemble and assign run_settings to each member
         if self.params:
             if self.run_settings:
                 for i, param_set in enumerate(all_model_params):
-
+                    
+                    # if there are parameterized arguments,
+                    # pick the model_run_settings corresponding 
+                    # to this combination of model parameters
+                    # otherwise just copy run_settings
                     if self.arg_params:
                         run_settings = model_run_settings[i]
                     else:
@@ -174,6 +181,8 @@ class Ensemble(EntityList):
                 raise SmartSimError(
                     "Ensembles without 'params', 'arg_params', or 'replicas' argument to expand into members cannot be given run settings"
                 )
+        # if there are only parameterized arguments and no model parameter
+        # just iterate over all model_run_settings
         elif self.arg_params:
             if self.run_settings:
                 for i, run_settings in enumerate(model_run_settings):
