@@ -109,15 +109,15 @@ def test_user_strategy():
 
 def test_arg_params():
     """Test parameterized exe arguments"""
-    arg_params = {"H": [5, 6], "g_param": ["a", "b"]}
+    params = {"H": [5, 6], "g_param": ["a", "b"]}
 
     # Copy rs to avoid modifying referenced object
     rs_copy = deepcopy(rs)
     rs_orig_args = rs_copy.exe_args
     ensemble = Ensemble(
         "step",
-        params=None,
-        arg_params=arg_params,
+        params=params,
+        params_as_args=list(params.keys()),
         run_settings=rs_copy,
         perm_strat="step",
     )
@@ -134,14 +134,13 @@ def test_arg_and_model_params_step():
     """Test parameterized exe arguments combined with
     model parameters and step strategy
     """
-    arg_params = {"H": [5, 6], "g_param": ["a", "b"]}
-    params = {"h": [5, 6], "g": [7, 8]}
+    params = {"H": [5, 6], "g_param": ["a", "b"], "h": [5, 6], "g": [7, 8]}
 
     # Copy rs to avoid modifying referenced object
     rs_copy = deepcopy(rs)
     rs_orig_args = rs_copy.exe_args
     ensemble = Ensemble(
-        "step", params, arg_params=arg_params, run_settings=rs_copy, perm_strat="step"
+        "step", params, params_as_args=["H", "g_param"], run_settings=rs_copy, perm_strat="step"
     )
     assert len(ensemble) == 2
 
@@ -151,10 +150,10 @@ def test_arg_and_model_params_step():
     exe_args_1 = rs_orig_args + ["-H", "6", "--g_param=b"]
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
 
-    model_1_params = {"h": 5, "g": 7}
+    model_1_params = {"H": 5, "g_param": "a", "h": 5, "g": 7}
     assert ensemble.entities[0].params == model_1_params
 
-    model_2_params = {"h": 6, "g": 8}
+    model_2_params = {"H": 6, "g_param": "b", "h": 6, "g": 8}
     assert ensemble.entities[1].params == model_2_params
 
 
@@ -162,8 +161,7 @@ def test_arg_and_model_params_all_perms():
     """Test parameterized exe arguments combined with
     model parameters and all_perm strategy
     """
-    params = {"h": [5, 6]}
-    arg_params = {"g_param": ["a", "b"]}
+    params = {"h": [5, 6], "g_param": ["a", "b"]}
 
     # Copy rs to avoid modifying referenced object
     rs_copy = deepcopy(rs)
@@ -171,7 +169,7 @@ def test_arg_and_model_params_all_perms():
     ensemble = Ensemble(
         "step",
         params,
-        arg_params=arg_params,
+        params_as_args=["g_param"],
         run_settings=rs_copy,
         perm_strat="all_perm",
     )
@@ -185,13 +183,14 @@ def test_arg_and_model_params_all_perms():
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
     assert ensemble.entities[3].run_settings.exe_args == exe_args_1
 
-    model_0_params = {"h": 5}
+    model_0_params = {"g_param": "a", "h": 5}
     assert ensemble.entities[0].params == model_0_params
-    assert ensemble.entities[1].params == model_0_params
-
-    model_2_params = {"h": 6}
+    model_1_params = {"g_param": "b", "h": 5}
+    assert ensemble.entities[1].params == model_1_params
+    model_2_params = {"g_param": "a", "h": 6}
     assert ensemble.entities[2].params == model_2_params
-    assert ensemble.entities[3].params == model_2_params
+    model_3_params = {"g_param": "b", "h": 6}
+    assert ensemble.entities[3].params == model_3_params
 
 
 # ----- Error Handling --------------------------------------
