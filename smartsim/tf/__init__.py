@@ -29,3 +29,4 @@ except AssertionError:
 
 
 from .utils import freeze_model
+from .train import DataGenerator, TrainingDataUploader

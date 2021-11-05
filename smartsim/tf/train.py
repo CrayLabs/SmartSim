@@ -7,7 +7,8 @@ import tensorflow.keras as keras
 import time
 
 def form_name(*args):
-    return "_".join(str(args))
+    return "_".join(str(arg) for arg in args)
+
 
 class TrainingDataUploader():
     def __init__(self, 
@@ -36,7 +37,7 @@ class TrainingDataUploader():
         info_ds = Dataset(form_name(self.name, "info"))
         info_ds.add_meta_string("sample_prefix", self.sample_prefix)
         if self.target_prefix:
-            info_ds.add_meta_string("label_prefix", self.target_prefix)
+            info_ds.add_meta_string("target_prefix", self.target_prefix)
         if self.producer_prefix:
             info_ds.add_meta_string("producer_prefix", self.producer_prefix)
         if self.num_classes:
@@ -45,14 +46,17 @@ class TrainingDataUploader():
 
     def put_batch(self, samples, targets=None):
 
-        batch_key = form_name(self.batch_prefix, str(self.batch_idx))
+        batch_key = form_name(self.sample_prefix, self.batch_idx)
         self.client.put_tensor(batch_key, samples)
+        print("Put batch")
 
-        if targets and self.target_prefix and (self.target_prefix != self.sample_prefix):
-            labels_key = form_name(self.target_prefix, str(self.batch_idx))
+        if targets is not None and self.target_prefix and (self.target_prefix != self.sample_prefix):
+            labels_key = form_name(self.target_prefix, self.batch_idx)
             self.client.put_tensor(labels_key, targets)
         
         self.batch_idx += 1
+
+
 
 class DataGenerator(keras.utils.Sequence):
     def __init__(self,
@@ -97,8 +101,10 @@ class DataGenerator(keras.utils.Sequence):
         self.indices = None
         while self.samples is None:
             self.on_epoch_end()
-            if not self.samples:
+            if self.samples is None:
                 time.sleep(10)
+
+        print("Generator initialization complete")
 
 
     @property
@@ -108,23 +114,28 @@ class DataGenerator(keras.utils.Sequence):
 
     def get_uploader_info(self, uploader_name):
         dataset_name = form_name(uploader_name, "info")
+        print(dataset_name)
         while not self.client.dataset_exists(dataset_name):
             time.sleep(10)
         
         uploader_info = self.client.get_dataset(dataset_name)
-        self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")
+        self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")[0]
+        print(self.sample_prefix)
         try:
-            self.target_prefix = uploader_info.get_meta_strings("target_prefix")
+            self.target_prefix = uploader_info.get_meta_strings("target_prefix")[0]
         except RedisReplyError:
             self.target_prefix = None
+        print(self.target_prefix)
         try:
-            self.producer_prefix = uploader_info.get_meta_strings("producer_prefix")
+            self.producer_prefix = uploader_info.get_meta_strings("producer_prefix")[0]
         except RedisReplyError:
             self.producer_prefix = ""
+        print(self.producer_prefix)
         try:
-            self.num_classes = uploader_info.get_meta_scalars("num_classes")
+            self.num_classes = uploader_info.get_meta_scalars("num_classes")[0]
         except RedisReplyError:
             self.num_classes = None
+        print(self.num_classes)
 
 
     def __len__(self):
@@ -139,7 +150,7 @@ class DataGenerator(keras.utils.Sequence):
         # Generate data
         x, y = self.__data_generation(indices)
 
-        if y:
+        if y is not None:
             return x, y
         else:
             return x
@@ -151,10 +162,15 @@ class DataGenerator(keras.utils.Sequence):
         while self.client.tensor_exists(batch_name):
             if self.samples is None:
                 self.samples = self.client.get_tensor(batch_name)
-                self.num_samples = self.samples.shape[1:]
             else:
                 self.samples = np.concatenate((self.samples,self.client.get_tensor(batch_name)))
             print("Success!")
+            self.num_samples = self.samples.shape[0]
+
+            self.indices = np.arange(self.num_samples)
+            print(f"New dataset size: {self.num_samples}")
+            if self.shuffle:
+                np.random.shuffle(self.indices)
             self.next_index[entity] += 1
             batch_name = form_name(self.sample_prefix, self.next_index[entity])
             print(f"Retrieving {batch_name}...")
@@ -163,15 +179,19 @@ class DataGenerator(keras.utils.Sequence):
     def get_samples_and_targets(self, entity):
         batch_name = form_name(self.sample_prefix, self.next_index[entity])
         target_name = form_name(self.target_prefix, self.next_index[entity])
-        print(f"Retrieving {batch_name} from {entity}...")
+        print(f"Retrieving {batch_name} and {target_name} from {entity}...")
         while self.client.tensor_exists(batch_name) and self.client.tensor_exists(target_name):
             if self.samples is None:
                 self.samples = self.client.get_tensor(batch_name)
-                self.labels = self.client.get_tensor(target_name)
-                self.num_samples = self.samples.shape[1:]
+                self.targets = self.client.get_tensor(target_name)
             else:
                 self.samples = np.concatenate((self.samples,self.client.get_tensor(batch_name)))
-                self.labels = np.concatenate((self.labels, self.client.get_tensor(target_name)))
+                self.targets = np.concatenate((self.targets, self.client.get_tensor(target_name)))
+            self.num_samples = self.samples.shape[0]
+            self.indices = np.arange(self.num_samples)
+            print(f"New dataset size: {self.num_samples}")
+            if self.shuffle:
+                np.random.shuffle(self.indices)
             print("Success!")
             self.next_index[entity] += 1
             batch_name = form_name(self.sample_prefix, self.next_index[entity])
@@ -187,11 +207,7 @@ class DataGenerator(keras.utils.Sequence):
                 self.get_samples_and_targets(entity)
             else:
                 self.get_samples(entity)
-                
-        self.indices = np.arange(self.num_samples)
-        print(f"New dataset size: {self.num_samples}")
-        if self.shuffle:
-            np.random.shuffle(self.indices)
+        
         self.batch_id = 0
 
 
