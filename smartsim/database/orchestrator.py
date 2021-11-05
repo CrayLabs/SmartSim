@@ -34,10 +34,14 @@ from pathlib import Path
 
 import psutil
 import redis
+import smartredis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
+from smartredis.error import RedisReplyError
 
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
+
+from smartredis import Client
 
 from ..config import CONFIG
 from ..entity import DBNode, EntityList
@@ -314,6 +318,66 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this."
             )
             logger.warning(f"Found network interfaces are: {available}")
+
+    def enable_checkpoints(self, frequency):
+        pass
+
+    def set_max_memory(self, mem):
+        """Changes the max memory configuration. By default there is no memory limit.
+        Setting max memory to zero also results in no memory limit. Once a limit is
+        surpassed, keys will be removed according to the eviction strategy. The
+        specified memory size is case insensitive and supports the typical forms of:
+        1k => 1000 bytes
+        1kb => 1024 bytes
+        1m => 1000000 bytes
+        1mb => 1024*1024 bytes
+        1g => 1000000000 bytes
+        1gb => 1024*1024*1024 bytes
+
+        :param mem: the desired max memory size e.g. 3gb
+        :type mem: str
+
+        :raises SmartSimError: If 'mem' is an invalid memory value
+        :raises SmartSimError: If database is not active
+        """
+        self.set_db_conf("maxmemory", mem)
+
+    def set_eviction_strategy(self, strategy):
+        pass
+
+    def set_max_clients(self, clients=50000):
+        pass
+
+    def set_max_message_size(self, gb=1):
+        # sets proto-max-bulk-len
+        pass
+
+    def set_db_conf(self, key, value):
+        # set arbitrary configuration line, can be used by user but is also used by all above methods
+        if self.is_active():
+            addresses = []
+            for host in self.hosts:
+                for port in self.ports:
+                    address = ":".join([get_ip_from_host(host), str(port)])
+                    addresses.append(address)
+
+            is_cluster = self.num_shards > 2
+            client = Client(address=addresses[0], cluster=is_cluster)
+            try:
+                for address in addresses:
+                    client.config_set(key, value, address)
+            except RedisReplyError:
+                raise SmartSimError(
+                    f"Invalid CONFIG key-value pair ({key}: {value})"
+                ) from None
+            except TypeError:
+                raise SmartSimError(
+                    "Incompatible function arguments. The key and value used for setting the database configurations must be strings."
+                ) from None
+        else:
+            raise SmartSimError(
+                "The SmartSim Orchestrator must be active in order to set the database's configurations."
+            )
 
 
 def get_ip_from_host(host):
