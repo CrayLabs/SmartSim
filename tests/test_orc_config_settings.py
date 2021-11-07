@@ -1,12 +1,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import (
-    CobaltOrchestrator,
-    Orchestrator,
-    PBSOrchestrator,
-    SlurmOrchestrator,
-)
+from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 
 
@@ -18,12 +13,16 @@ def test_config_methods(fileutils):
     db = Orchestrator(db_nodes=1)
     db.set_path(test_dir)
     exp.start(db)
-    db.enable_checkpoints(1)
-    db.set_max_memory("3gb")
-    db.set_eviction_strategy("allkeys-lru")
-    db.set_max_clients(50_000)
-    db.set_max_message_size(2_147_483_648)
-    exp.stop(db)
+    try:
+        db.enable_checkpoints(1)
+        db.set_max_memory("3gb")
+        db.set_eviction_strategy("allkeys-lru")
+        db.set_max_clients(50_000)
+        db.set_max_message_size(2_147_483_648)
+    except:
+        exp.stop(db)
+        assert False
+
 
 def test_config_methods_inactive(fileutils):
     """Ensure a SmartSimError is raised when trying to
@@ -49,6 +48,7 @@ def test_config_methods_inactive(fileutils):
         db.set_max_clients(50_000)
     with pytest.raises(SmartSimError):
         db.set_max_message_size(2_147_483_648)
+
 
 def test_bad_db_conf(fileutils):
     """Ensure SmartSimErrors are raised for all kinds
@@ -81,14 +81,15 @@ def test_bad_db_conf(fileutils):
         "proto-max-bulk-len": [
             100,  # max message size can't be smaller than 1mb
             101.1,  # max message size must be an integer
-            "9.9gb", # invalid memory form
+            "9.9gb",  # invalid memory form
         ],
         "maxmemory-policy": ["invalid-policy"],  # must use a valid maxmemory policy
-        "invalid-parameter": ["99"], # invalid key - no such configuration exists
+        "invalid-parameter": ["99"],  # invalid key - no such configuration exists
     }
 
     for key, value_list in bad_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
                 db.set_db_conf(key, value)
+
     exp.stop(db)
