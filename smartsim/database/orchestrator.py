@@ -320,10 +320,20 @@ class Orchestrator(EntityList):
             logger.warning(f"Found network interfaces are: {available}")
 
     def enable_checkpoints(self, frequency):
-        pass
+        """Sets the database's save configuration to save the
+        DB every 'frequency' seconds given that at least one
+        write operation against the DB occurred in that time.
+        For example, if `frequency` is 900, then the database
+        will save to disk after 900 seconds if there is at least
+        1 change to the dataset.
+
+        :param frequency: the given number of seconds before the DB saves
+        :type frequency: int
+        """
+        self.set_db_conf("save", str(frequency) + " 1")
 
     def set_max_memory(self, mem):
-        """Changes the max memory configuration. By default there is no memory limit.
+        """Sets the max memory configuration. By default there is no memory limit.
         Setting max memory to zero also results in no memory limit. Once a limit is
         surpassed, keys will be removed according to the eviction strategy. The
         specified memory size is case insensitive and supports the typical forms of:
@@ -343,17 +353,52 @@ class Orchestrator(EntityList):
         self.set_db_conf("maxmemory", mem)
 
     def set_eviction_strategy(self, strategy):
-        pass
+        """Sets how the database will select what to remove when
+        'maxmemory' is reached. The default is noeviction.
 
-    def set_max_clients(self, clients=50000):
-        pass
+        :param strategy: The max memory policy to use e.g. "volatile-lru", "allkeys-lru", etc.
+        :type strategy: str
 
-    def set_max_message_size(self, gb=1):
-        # sets proto-max-bulk-len
-        pass
+        :raises SmartSimError: If 'strategy' is an invalid maxmemory policy
+        :raises SmartSimError: If database is not active
+        """
+        self.set_db_conf("maxmemory-policy", strategy)
+
+    def set_max_clients(self, clients=50_000):
+        """Sets the max number of connected clients at the same time.
+        When the number of DB shards contained in the orchestrator is
+        more than two, then every node will use two connections, one
+        incoming and another outgoing.
+
+        :param clients: the maximum number of connected clients
+        :type clients: int, optional
+        """
+        self.set_db_conf("maxclients", str(clients))
+
+    def set_max_message_size(self, size=1_073_741_824):
+        """Sets the database's memory size limit for bulk requests,
+        which are elements representing single strings. The default
+        is 1 gigabyte. Message size must be greater than or equal to 1mb.
+        The specified memory size should be an integer that represents
+        the number of bytes. For example, to set the max message size
+        to 1gb, use 1024*1024*1024.
+
+        :param size: maximum message size in bytes
+        :type size: int, optional
+        """
+        self.set_db_conf("proto-max-bulk-len", str(size))
 
     def set_db_conf(self, key, value):
-        # set arbitrary configuration line, can be used by user but is also used by all above methods
+        """Set any valid configuration at runtime without the need
+        to restart the database. All configuration parameters
+        that are set are immediately loaded by the database and
+        will take effect starting with the next command executed.
+
+        :param key: the configuration parameter
+        :type key: str
+        :param value: the database configuration parameter's new value
+        :type value: str
+        """
         if self.is_active():
             addresses = []
             for host in self.hosts:
@@ -366,6 +411,7 @@ class Orchestrator(EntityList):
             try:
                 for address in addresses:
                     client.config_set(key, value, address)
+
             except RedisReplyError:
                 raise SmartSimError(
                     f"Invalid CONFIG key-value pair ({key}: {value})"
