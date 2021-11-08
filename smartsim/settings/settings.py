@@ -24,138 +24,150 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SmartSimError
-from ..utils.helpers import is_valid_cmd
-from ..wlm import detect_launcher
-from . import *
+from pprint import pformat
+
+from ..error import SSConfigError
+from ..utils import get_logger
+from ..utils.helpers import expand_exe_path, init_default
+
+logger = get_logger(__name__)
 
 
-def create_batch_settings(
-    launcher, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
-):
-    """Create a ``BatchSettings`` instance
+class RunSettings:
+    def __init__(
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+    ):
+        """Run parameters for a ``Model``
 
-    See Experiment.create_batch_settings for details
+        The base ``RunSettings`` class should only be used with the `local`
+        launcher on single node, workstations, or laptops.
 
-    :param launcher: launcher for this experiment, if set to 'auto', 
-                     an attempt will be made to find an available launcher on the system
-    :type launcher: str
-    :param nodes: number of nodes for batch job, defaults to 1
-    :type nodes: int, optional
-    :param time: length of batch job, defaults to ""
-    :type time: str, optional
-    :param queue: queue or partition (if slurm), defaults to ""
-    :type queue: str, optional
-    :param account: user account name for batch system, defaults to ""
-    :type account: str, optional
-    :param batch_args: additional batch arguments, defaults to None
-    :type batch_args: dict[str, str], optional
-    :return: a newly created BatchSettings instance
-    :rtype: BatchSettings
-    :raises SmartSimError: if batch creation fails
-    """
-    # all supported batch class implementations
-    by_launcher = {
-        "cobalt": CobaltBatchSettings,
-        "pbs": QsubBatchSettings,
-        "slurm": SbatchSettings,
-        "lsf": BsubBatchSettings,
-    }
+        If no ``run_command`` is specified, the executable will be launched
+        locally.
 
-    if launcher == "auto":
-        launcher = detect_launcher()
+        ``run_args`` passed as a dict will be interpreted literally for
+        local ``RunSettings`` and added directly to the ``run_command``
+        e.g. run_args = {"-np": 2} will be "-np 2"
 
-    if launcher == "local":
-        raise SmartSimError("Local launcher does not support batch workloads")
+        Example initialization
 
-    # detect the batch class to use based on the launcher provided by
-    # the user
-    try:
-        batch_class = by_launcher[launcher]
-        batch_settings = batch_class(
-            nodes=nodes,
-            time=time,
-            batch_args=batch_args,
-            queue=queue,
-            account=account,
-            **kwargs,
-        )
-        return batch_settings
+        .. highlight:: python
+        .. code-block:: python
 
-    except KeyError:
-        raise SmartSimError(
-            f"User attempted to make batch settings for unsupported launcher {launcher}"
-        ) from None
+            rs = RunSettings("echo", "hello", "mpirun", run_args={"-np": "2"})
 
+        :param exe: executable to run
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_command: launch binary (e.g. "srun"), defaults to empty str
+        :type run_command: str, optional
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        self.exe = [expand_exe_path(exe)]
+        self.exe_args = self._set_exe_args(exe_args)
+        self.run_args = init_default({}, run_args, (dict, list))
+        self.env_vars = init_default({}, env_vars, (dict, list))
+        self._run_command = run_command
+        self.in_batch = False
 
-def create_run_settings(
-    launcher,
-    exe,
-    exe_args=None,
-    run_command="auto",
-    run_args=None,
-    env_vars=None,
-    **kwargs,
-):
-    """Create a ``RunSettings`` instance.
+    def set_tasks(self, tasks):
+        """Set the number of tasks to launch
 
-    See Experiment.create_run_settings docstring for more details
+        :param tasks: number of tasks to launch
+        :type tasks: int
+        """
+        raise NotImplementedError(
+            f"Task specification not implemented for this RunSettings type: {type(self)}")
 
-    :param launcher: launcher to create settings for, if set to 'auto', 
-                     an attempt will be made to find an available launcher on the system
-    :type launcher: str
-    :param run_command: command to run the executable
-    :type run_command: str
-    :param exe: executable to run
-    :type exe: str
-    :param exe_args: arguments to pass to the executable
-    :type exe_args: list[str], optional
-    :param run_args: arguments to pass to the ``run_command``
-    :type run_args: list[str], optional
-    :param env_vars: environment variables to pass to the executable
-    :type env_vars: dict[str, str], optional
-    :return: the created ``RunSettings``
-    :rtype: RunSettings
-    :raises SmartSimError: if run_command=="auto" and detection fails
-    """
-    # all supported RunSettings child classes
-    supported = {
-        "aprun": AprunSettings,
-        "srun": SrunSettings,
-        "mpirun": MpirunSettings,
-        "jsrun": JsrunSettings,
-    }
+    def set_tasks_per_node(self, tasks_per_node):
+        """Set the number of tasks per node
 
-    # run commands supported by each launcher
-    # in order of suspected user preference
-    by_launcher = {
-        "slurm": ["srun", "mpirun"],
-        "pbs": ["aprun", "mpirun"],
-        "cobalt": ["aprun", "mpirun"],
-        "lsf": ["jsrun", "mpirun"],
-    }
+        :param tasks_per_node: number of tasks to launch per node
+        :type tasks_per_node: int
+        """
+        raise NotImplementedError(
+            f"Task per node specification not implemented for this RunSettings type: {type(self)}")
 
-    if launcher == "auto":
-        launcher = detect_launcher()
+    def set_cpus_per_task(self, cpus_per_task):
+        """Set the number of cpus per task
 
-    def _detect_command(launcher):
-        if launcher in by_launcher:
-            for cmd in by_launcher[launcher]:
-                if is_valid_cmd(cmd):
-                    return cmd
-        msg = f"Could not automatically detect a run command to use for launcher {launcher}"
-        msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
-        raise SmartSimError(msg)
+        :param cpus_per_task: number of cpus per task
+        :type cpus_per_task: int
+        """
+        raise NotImplementedError(
+            f"CPU per node specification not implemented for this RunSettings type: {type(self)}")
 
-    if run_command:
-        run_command = run_command.lower()
-    launcher = launcher.lower()
+    def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
 
-    # detect run_command automatically for all but local launcher
-    if run_command == "auto":
-        # no auto detection for local, revert to false
-        if launcher == "local":
-            run_command = None
+        :param host_list: hosts to launch on
+        :type host_list: str | list[str]
+        """
+        raise NotImplementedError(
+            f"Host list specification not implemented for this RunSettings type: {type(self)}")
+
+    @property
+    def run_command(self):
+        """Return the launch binary used to launch the executable
+
+        :returns: launch binary e.g. mpiexec
+        :type: str
+        """
+        try:
+            if self._run_command:
+                cmd = expand_exe_path(self._run_command)
+                return cmd
+            return None
+        except SSConfigError:
+            return self._run_command
+
+    def update_env(self, env_vars):
+        """Update the job environment variables
+
+        :param env_vars: environment variables to update or add
+        :type env_vars: dict[str, str]
+        """
+        self.env_vars.update(env_vars)
+
+    def add_exe_args(self, args):
+        """Add executable arguments to executable
+
+        :param args: executable arguments
+        :type args: str | list[str]
+        :raises TypeError: if exe args are not strings
+        """
+        if isinstance(args, str):
+            args = args.split()
+        for arg in args:
+            if not isinstance(arg, str):
+                raise TypeError("Executable arguments should be a list of str")
+            self.exe_args.append(arg)
+
+    def _set_exe_args(self, exe_args):
+        if exe_args:
+            if isinstance(exe_args, str):
+                return exe_args.split()
+            if isinstance(exe_args, list):
+                plain_type = all([isinstance(arg, (str)) for arg in exe_args])
+                if not plain_type:
+                    nested_type = all(
+                        [
+                            all([isinstance(arg, (str)) for arg in exe_args_list])
+                            for exe_args_list in exe_args
+                        ]
+                    )
+                    if not nested_type:
+                        raise TypeError(
+                            "Executable arguments were not list of str or str"
+                        )
+                    else:
+                        return exe_args
+                return exe_args
+            raise TypeError("Executable arguments were not list of str or str")
         else:
             run_command = _detect_command(launcher)
 

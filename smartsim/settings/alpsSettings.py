@@ -28,7 +28,14 @@ from .base import RunSettings
 
 
 class AprunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe,
+        exe_args=None,
+        run_args=None,
+        env_vars=None,
+        **kwargs
+    ):
         """Settings to run job with ``aprun`` command
 
         ``AprunSettings`` can be used for both the `pbs` and `cobalt`
@@ -49,7 +56,7 @@ class AprunSettings(RunSettings):
             run_command="aprun",
             run_args=run_args,
             env_vars=env_vars,
-            **kwargs,
+            **kwargs
         )
         self.mpmd = []
 

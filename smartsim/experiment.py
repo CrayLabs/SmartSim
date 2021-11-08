@@ -31,15 +31,14 @@ from pprint import pformat
 
 from tabulate import tabulate
 from tqdm import trange
-
+from . import settings
 from .control import Controller, Manifest
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .generation import Generator
 from .settings import settings
 from .utils import get_logger
-from .utils.helpers import colorize, init_default
-from .wlm import detect_launcher
+from .utils.helpers import colorize, init_default, is_valid_cmd
 
 logger = get_logger(__name__)
 
@@ -333,24 +332,20 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_run_settings(
-        self,
-        exe,
-        exe_args=None,
-        run_command="auto",
-        run_args=None,
-        env_vars=None,
-        **kwargs,
-    ):
+    def create_run_settings(self,
+                            exe,
+                            exe_args=None,
+                            run_command="auto",
+                            run_args=None,
+                            env_vars=None,
+                            skip_checks=False,
+                            **kwargs):
         """Create a ``RunSettings`` instance.
 
         run_command="auto" will attempt to automatically
         match a run command on the system with a RunSettings
         class in SmartSim. If found, the class corresponding
         to that run_command will be created and returned.
-
-        if the local launcher is being used, auto detection will
-        be turned off.
 
         If a recognized run command is passed, the ``RunSettings``
         instance will be a child class such as ``SrunSetttings``
@@ -378,70 +373,49 @@ class Experiment:
         :return: the created ``RunSettings``
         :rtype: RunSettings
         """
+        # all supported RunSettings child classes
+        supported = {
+            "aprun": settings.AprunSettings,
+            "srun": settings.SrunSettings,
+            "mpirun": settings.MpirunSettings,
+            "jsrun": settings.JsrunSettings
+        }
+
+        # run commands supported by each launcher
+        by_launcher = {
+            "slurm": ["srun", "mpirun"], # TODO support arun for slurm?
+            "pbs": ["aprun", "mpirun"],
+            "cobalt": ["aprun", "mpirun"],
+            "lsf": ["jsrun", "mpirun"]
+        }
+
+        def _make_settings(cmd):
+            run_settings = supported[cmd](
+                    exe, exe_args, run_args, env_vars, **kwargs
+                )
+            return run_settings
+
         try:
-            return settings.create_run_settings(
-                self._launcher,
-                exe,
-                exe_args=exe_args,
-                run_command=run_command,
-                run_args=run_args,
-                env_vars=env_vars,
-                **kwargs,
+            # if local launcher we want to skip detection as a user
+            # may not want to run with a run_command at all
+            if run_command == "auto" and self._launcher != "local":
+                if self._launcher in by_launcher:
+                    for cmd in by_launcher[self._launcher]:
+                        if skip_checks or is_valid_cmd(cmd):
+                            return _make_settings(cmd)
+                raise SmartSimError(
+                    f"Could not automatically detect a run command to use for launcher {self._launcher}")
+
+            if run_command and run_command in supported:
+                return _make_settings(run_command)
+
+            # if not auto detecting, custom run_command, or running without run_command
+            if run_command == "auto":
+                run_command = None
+            run_settings = settings.RunSettings(
+                exe, exe_args, run_command, run_args, env_vars
             )
-        except SmartSimError as e:
-            logger.error(e)
-            raise
-
-    def create_batch_settings(
-        self, nodes=1, time="", queue="", account="", batch_args=None, **kwargs
-    ):
-        """Create a ``BatchSettings`` instance
-
-        Batch settings parameterize batch workloads. The result of this
-        function can be passed to the ``Ensemble`` initialization.
-
-        the `batch_args` parameter can be used to pass in a dictionary
-        of additional batch command arguments that aren't supported through
-        the smartsim interface
-
-
-        .. highlight:: python
-        .. code-block:: python
-
-            # i.e. for Slurm
-            batch_args = {
-                "distribution": "block"
-                "exclusive": None
-            }
-            bs = exp.create_batch_settings(nodes=3,
-                                           time="10:00:00",
-                                           batch_args=batch_args)
-            bs.set_account("default")
-
-        :param nodes: number of nodes for batch job, defaults to 1
-        :type nodes: int, optional
-        :param time: length of batch job, defaults to ""
-        :type time: str, optional
-        :param queue: queue or partition (if slurm), defaults to ""
-        :type queue: str, optional
-        :param account: user account name for batch system, defaults to ""
-        :type account: str, optional
-        :param batch_args: additional batch arguments, defaults to None
-        :type batch_args: dict[str, str], optional
-        :return: a newly created BatchSettings instance
-        :rtype: BatchSettings
-        :raises SmartSimError: if batch creation fails
-        """
-        try:
-            return settings.create_batch_settings(
-                self._launcher,
-                nodes=nodes,
-                time=time,
-                queue=queue,
-                account=account,
-                batch_args=batch_args,
-                **kwargs,
-            )
+            return run_settings
         except SmartSimError as e:
             logger.error(e)
             raise
