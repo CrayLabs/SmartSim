@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from pprint import pformat
-from .settings import BatchSettings, RunSettings
+from .base import BatchSettings, RunSettings
 
 
 class JsrunSettings(RunSettings):
