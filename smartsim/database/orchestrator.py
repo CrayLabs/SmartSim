@@ -34,7 +34,6 @@ from pathlib import Path
 
 import psutil
 import redis
-import smartredis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
 from smartredis.error import RedisReplyError
