@@ -26,7 +26,7 @@
 
 import os
 
-from .settings import BatchSettings, RunSettings
+from .base import BatchSettings, RunSettings
 
 
 class SrunSettings(RunSettings):

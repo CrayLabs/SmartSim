@@ -43,7 +43,7 @@ from ..config import CONFIG
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError
 from ..launcher.util.shell import execute_cmd
-from ..settings.settings import RunSettings
+from ..settings.base import RunSettings
 from ..utils import get_logger
 
 logger = get_logger(__name__)
@@ -215,6 +215,7 @@ class Orchestrator(EntityList):
                 client = redis.Redis(host=host, port=port, db=0)
                 if client.ping():
                     return True
+                return False
             except redis.RedisError:
                 return False
         # if a cluster

@@ -12,7 +12,7 @@ def test_models(fileutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = RunSettings("python", f"{script} --time=5")
+    settings = exp.create_run_settings("python", f"{script} --time=5")
 
     M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)

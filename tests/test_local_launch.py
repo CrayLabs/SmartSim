@@ -1,5 +1,4 @@
 from smartsim import Experiment, constants
-from smartsim.settings import RunSettings
 
 """
 Test the launch of simple entity types with local launcher
@@ -12,7 +11,7 @@ def test_models(fileutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = RunSettings("python", f"{script} --time=3")
+    settings = exp.create_run_settings("python", f"{script} --time=3")
 
     M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
@@ -28,7 +27,7 @@ def test_ensemble(fileutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = RunSettings("python", f"{script} --time=3")
+    settings = exp.create_run_settings("python", f"{script} --time=3")
 
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
     ensemble.set_path(test_dir)
