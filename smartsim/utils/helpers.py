@@ -88,6 +88,14 @@ def expand_exe_path(exe):
     return os.path.abspath(in_path)
 
 
+def is_valid_cmd(command):
+    try:
+        expand_exe_path(command)
+        return True
+    except SSConfigError:
+        return False
+
+
 def get_env(env_var):
     """Retrieve an environment variable through os.environ
 

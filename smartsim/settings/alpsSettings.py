@@ -34,6 +34,7 @@ class AprunSettings(RunSettings):
         exe_args=None,
         run_args=None,
         env_vars=None,
+        **kwargs
     ):
         """Settings to run job with ``aprun`` command
 
@@ -55,6 +56,7 @@ class AprunSettings(RunSettings):
             run_command="aprun",
             run_args=run_args,
             env_vars=env_vars,
+            **kwargs
         )
         self.mpmd = []
 
@@ -69,35 +71,35 @@ class AprunSettings(RunSettings):
         """
         self.mpmd.append(aprun_settings)
 
-    def set_cpus_per_task(self, num_cpus):
+    def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus to use per task
 
         This sets ``--cpus-per-pe``
 
-        :param num_cpus: number of cpus to use per task
-        :type num_cpus: int
+        :param cpus_per_task: number of cpus to use per task
+        :type cpus_per_task: int
         """
-        self.run_args["cpus-per-pe"] = int(num_cpus)
+        self.run_args["cpus-per-pe"] = int(cpus_per_task)
 
-    def set_tasks(self, num_tasks):
+    def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
         This sets ``--pes``
 
-        :param num_tasks: number of tasks
-        :type num_tasks: int
+        :param tasks: number of tasks
+        :type tasks: int
         """
-        self.run_args["pes"] = int(num_tasks)
+        self.run_args["pes"] = int(tasks)
 
-    def set_tasks_per_node(self, num_tpn):
+    def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks for this job
 
         This sets ``--pes-per-node``
 
-        :param num_tpn: number of tasks per node
-        :type num_tpn: int
+        :param tasks_per_node: number of tasks per node
+        :type tasks_per_node: int
         """
-        self.run_args["pes-per-node"] = int(num_tpn)
+        self.run_args["pes-per-node"] = int(tasks_per_node)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job

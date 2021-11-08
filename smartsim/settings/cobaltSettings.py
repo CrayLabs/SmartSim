@@ -24,12 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SmartSimError
-
-from ..error import SSConfigError
-from ..utils.helpers import init_default
 from .settings import BatchSettings
-
 
 class CobaltBatchSettings(BatchSettings):
     def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):

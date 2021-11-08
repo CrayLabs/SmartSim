@@ -31,15 +31,13 @@ from pprint import pformat
 
 import pandas as pd
 from tqdm import trange
-
-from smartsim.control.manifest import Manifest
-
+from . import settings
 from .control import Controller, Manifest
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .generation import Generator
 from .utils import get_logger
-from .utils.helpers import colorize, init_default
+from .utils.helpers import colorize, init_default, is_valid_cmd
 
 logger = get_logger(__name__)
 
@@ -78,6 +76,7 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
         self._control = Controller(launcher=launcher)
+        self._launcher = launcher.lower()
 
     def start(self, *args, block=True, summary=False):
         """Launch instances passed as arguments
@@ -325,6 +324,94 @@ class Experiment:
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
             return new_model
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
+    def create_run_settings(self,
+                            exe,
+                            exe_args=None,
+                            run_command="auto",
+                            run_args=None,
+                            env_vars=None,
+                            skip_checks=False,
+                            **kwargs):
+        """Create a ``RunSettings`` instance.
+
+        run_command="auto" will attempt to automatically
+        match a run command on the system with a RunSettings
+        class in SmartSim. If found, the class corresponding
+        to that run_command will be created and returned.
+
+        If a recognized run command is passed, the ``RunSettings``
+        instance will be a child class such as ``SrunSetttings``
+
+        if not supported by smartsim, the base ``RunSettings`` class
+        will be created and returned with the specified run_command and run_args
+        will be evaluated literally.
+
+        Run Commands with implemented helper classes:
+         - aprun (ALPS)
+         - srun (SLURM)
+         - mpirun (OpenMPI)
+         - jsrun (LSF)
+
+        :param run_command: command to run the executable
+        :type run_command: str
+        :param exe: executable to run
+        :type exe: str
+        :param exe_args: arguments to pass to the executable
+        :type exe_args: list[str], optional
+        :param run_args: arguments to pass to the ``run_command``
+        :type run_args: list[str], optional
+        :param env_vars: environment variables to pass to the executable
+        :type env_vars: dict[str, str], optional
+        :return: the created ``RunSettings``
+        :rtype: RunSettings
+        """
+        # all supported RunSettings child classes
+        supported = {
+            "aprun": settings.AprunSettings,
+            "srun": settings.SrunSettings,
+            "mpirun": settings.MpirunSettings,
+            "jsrun": settings.JsrunSettings
+        }
+
+        # run commands supported by each launcher
+        by_launcher = {
+            "slurm": ["srun", "mpirun"], # TODO support arun for slurm?
+            "pbs": ["aprun", "mpirun"],
+            "cobalt": ["aprun", "mpirun"],
+            "lsf": ["jsrun", "mpirun"]
+        }
+
+        def _make_settings(cmd):
+            run_settings = supported[cmd](
+                    exe, exe_args, run_args, env_vars, **kwargs
+                )
+            return run_settings
+
+        try:
+            # if local launcher we want to skip detection as a user
+            # may not want to run with a run_command at all
+            if run_command == "auto" and self._launcher != "local":
+                if self._launcher in by_launcher:
+                    for cmd in by_launcher[self._launcher]:
+                        if skip_checks or is_valid_cmd(cmd):
+                            return _make_settings(cmd)
+                raise SmartSimError(
+                    f"Could not automatically detect a run command to use for launcher {self._launcher}")
+
+            if run_command and run_command in supported:
+                return _make_settings(run_command)
+
+            # if not auto detecting, custom run_command, or running without run_command
+            if run_command == "auto":
+                run_command = None
+            run_settings = settings.RunSettings(
+                exe, exe_args, run_command, run_args, env_vars
+            )
+            return run_settings
         except SmartSimError as e:
             logger.error(e)
             raise

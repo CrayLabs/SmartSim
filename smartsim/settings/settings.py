@@ -35,7 +35,7 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
     ):
         """Run parameters for a ``Model``
 
@@ -73,6 +73,42 @@ class RunSettings:
         self.env_vars = init_default({}, env_vars, (dict, list))
         self._run_command = run_command
         self.in_batch = False
+
+    def set_tasks(self, tasks):
+        """Set the number of tasks to launch
+
+        :param tasks: number of tasks to launch
+        :type tasks: int
+        """
+        raise NotImplementedError(
+            f"Task specification not implemented for this RunSettings type: {type(self)}")
+
+    def set_tasks_per_node(self, tasks_per_node):
+        """Set the number of tasks per node
+
+        :param tasks_per_node: number of tasks to launch per node
+        :type tasks_per_node: int
+        """
+        raise NotImplementedError(
+            f"Task per node specification not implemented for this RunSettings type: {type(self)}")
+
+    def set_cpus_per_task(self, cpus_per_task):
+        """Set the number of cpus per task
+
+        :param cpus_per_task: number of cpus per task
+        :type cpus_per_task: int
+        """
+        raise NotImplementedError(
+            f"CPU per node specification not implemented for this RunSettings type: {type(self)}")
+
+    def set_hostlist(self, host_list):
+        """Specify the hostlist for this job
+
+        :param host_list: hosts to launch on
+        :type host_list: str | list[str]
+        """
+        raise NotImplementedError(
+            f"Host list specification not implemented for this RunSettings type: {type(self)}")
 
     @property
     def run_command(self):

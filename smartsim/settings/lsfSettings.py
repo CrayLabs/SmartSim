@@ -25,9 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from pprint import pformat
-
-from ..error import SSConfigError
-from ..utils.helpers import init_default
 from .settings import BatchSettings, RunSettings
 
 
