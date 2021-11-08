@@ -81,8 +81,7 @@ class RunSettings:
         :type tasks: int
         """
         raise NotImplementedError(
-            f"Task specification not implemented for this RunSettings type: {type(self)}"
-        )
+            f"Task specification not implemented for this RunSettings type: {type(self)}")
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per node
@@ -91,8 +90,7 @@ class RunSettings:
         :type tasks_per_node: int
         """
         raise NotImplementedError(
-            f"Task per node specification not implemented for this RunSettings type: {type(self)}"
-        )
+            f"Task per node specification not implemented for this RunSettings type: {type(self)}")
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per task
@@ -101,8 +99,7 @@ class RunSettings:
         :type cpus_per_task: int
         """
         raise NotImplementedError(
-            f"CPU per node specification not implemented for this RunSettings type: {type(self)}"
-        )
+            f"CPU per node specification not implemented for this RunSettings type: {type(self)}")
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -111,8 +108,7 @@ class RunSettings:
         :type host_list: str | list[str]
         """
         raise NotImplementedError(
-            f"Host list specification not implemented for this RunSettings type: {type(self)}"
-        )
+            f"Host list specification not implemented for this RunSettings type: {type(self)}")
 
     @property
     def run_command(self):
@@ -201,14 +197,10 @@ class RunSettings:
 
 
 class BatchSettings:
-    def __init__(self, batch_cmd, batch_args=None, **kwargs):
+    def __init__(self, batch_cmd, batch_args=None):
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
         self._preamble = []
-        self.set_nodes(kwargs.get("nodes", None))
-        self.set_walltime(kwargs.get("time", None))
-        self.set_queue(kwargs.get("queue", None))
-        self.set_account(kwargs.get("account", None))
 
     @property
     def batch_cmd(self):
@@ -230,16 +222,10 @@ class BatchSettings:
     def set_nodes(self, num_nodes):
         raise NotImplementedError
 
-    def set_hostlist(self, host_list):
-        raise NotImplementedError
-
-    def set_queue(self, queue):
-        raise NotImplementedError
-
     def set_walltime(self, walltime):
         raise NotImplementedError
 
-    def set_account(self, account):
+    def set_account(self, acct):
         raise NotImplementedError
 
     def format_batch_args(self):
@@ -267,7 +253,7 @@ class BatchSettings:
         elif isinstance(lines, list):
             self._preamble += lines
         else:
-            raise TypeError("Expected str or List[str] for lines argument")
+            raise TypeError
 
     def __str__(self):
         string = f"Batch Command: {self._batch_cmd}\n"
