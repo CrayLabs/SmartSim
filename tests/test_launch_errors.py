@@ -3,7 +3,7 @@ import pytest
 from smartsim import Experiment, constants
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError, SSUnsupportedError
-from smartsim.settings import JsrunSettings, RunSettings
+from smartsim.settings import RunSettings, JsrunSettings
 
 
 def test_unsupported_run_settings(fileutils):
