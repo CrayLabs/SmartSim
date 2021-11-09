@@ -1,5 +1,5 @@
 import pytest
-
+from copy import deepcopy
 from smartsim import Experiment, constants
 
 """
@@ -7,6 +7,10 @@ Test the launch of simple entity types on pre-existing allocations.
 
 All entities will obtain the allocation from the environment of the
 user
+
+Each of the tests below will have their RunSettings automatically
+created which means that these tests may vary in run command that
+is used.
 """
 
 # retrieved from pytest fixtures
@@ -20,9 +24,11 @@ def test_models(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = wlmutils.get_run_settings("python", f"{script} --time=5")
+    settings = exp.create_run_settings("python", f"{script} --time=5")
+    settings.set_tasks(1)
+
     M1 = exp.create_model("m1", path=test_dir, run_settings=settings)
-    M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
+    M2 = exp.create_model("m2", path=test_dir, run_settings=deepcopy(settings))
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
@@ -35,7 +41,9 @@ def test_ensemble(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("sleep.py")
-    settings = wlmutils.get_run_settings("python", f"{script} --time=5")
+    settings = exp.create_run_settings("python", f"{script} --time=5")
+    settings.set_tasks(1)
+
     ensemble = exp.create_ensemble("e1", run_settings=settings, replicas=2)
     ensemble.set_path(test_dir)
 
@@ -53,8 +61,11 @@ def test_summary(fileutils, wlmutils):
 
     sleep = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")
-    sleep_settings = wlmutils.get_run_settings("python", f"{sleep} --time=3")
-    bad_settings = wlmutils.get_run_settings("python", f"{bad} --time=6")
+
+    sleep_settings = exp.create_run_settings("python", f"{sleep} --time=3")
+    sleep_settings.set_tasks(1)
+    bad_settings = exp.create_run_settings("python", f"{bad} --time=6")
+    bad_settings.set_tasks(1)
 
     sleep = exp.create_model("sleep", path=test_dir, run_settings=sleep_settings)
     bad = exp.create_model("bad", path=test_dir, run_settings=bad_settings)

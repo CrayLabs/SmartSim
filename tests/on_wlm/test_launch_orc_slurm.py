@@ -78,14 +78,17 @@ def test_incoming_entities(fileutils, wlmutils):
     orc.set_path(test_dir)
 
     sleep = fileutils.get_test_conf_path("sleep.py")
-    sleep_settings = wlmutils.get_run_settings("python", f"{sleep} --time=3")
+    sleep_settings = exp.create_run_settings("python", f"{sleep} --time=3")
+    sleep_settings.set_tasks(1)
 
     sleep_ensemble = exp.create_ensemble("sleep-ensemble",
                                          run_settings=sleep_settings,
                                          replicas=2)
 
     sskeyin_reader = fileutils.get_test_conf_path("incoming_entities_reader.py")
-    sskeyin_reader_settings = wlmutils.get_run_settings("python", f"{sskeyin_reader}")
+    sskeyin_reader_settings = exp.create_run_settings("python", f"{sskeyin_reader}")
+    sskeyin_reader_settings.set_tasks(1)
+
     sskeyin_reader_settings.env_vars["NAME_0"] = sleep_ensemble.entities[0].name
     sskeyin_reader_settings.env_vars["NAME_1"] = sleep_ensemble.entities[1].name
     sskeyin_reader = exp.create_model("sskeyin_reader", path=test_dir, run_settings=sskeyin_reader_settings)

@@ -12,15 +12,15 @@ def test_launch_openmpi_lsf(wlmutils, fileutils):
     launcher = wlmutils.get_test_launcher()
     if launcher != "lsf":
         pytest.skip("Test only runs on systems with LSF as WLM")
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings = MpirunSettings("python", script)
-    settings.set_cpus_per_task(1)
-    settings.set_tasks(2)
-
     exp_name = "test-launch-openmpi-lsf"
     exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir(exp_name)
+
+    script = fileutils.get_test_conf_path("sleep.py")
+    settings = exp.create_run_settings("python", script, "mpirun")
+    settings.set_cpus_per_task(1)
+    settings.set_tasks(1)
+
 
     model = exp.create_model("ompi-model", path=test_dir, run_settings=settings)
     exp.start(model, block=True)

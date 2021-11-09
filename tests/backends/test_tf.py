@@ -40,7 +40,7 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     db.set_path(test_dir)
     exp.start(db)
 
-    run_settings = wlmutils.get_run_settings(
+    run_settings = exp.create_run_settings(
         "python", f"run_tf.py --device={test_device}"
     )
     model = exp.create_model("tf_script", run_settings)
