@@ -18,9 +18,7 @@ def test_failed_status(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("bad.py")
-    settings = exp.create_run_settings(
-        "python", f"{script} --time=7", run_comamnd="auto"
-    )
+    settings = exp.create_run_settings("python", f"{script} --time=7", run_comamnd="auto")
 
     model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
 
