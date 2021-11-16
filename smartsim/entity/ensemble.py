@@ -49,6 +49,7 @@ class Ensemble(EntityList):
         self,
         name,
         params,
+        params_as_args=None,
         batch_settings=None,
         run_settings=None,
         perm_strat="all_perm",
@@ -63,6 +64,10 @@ class Ensemble(EntityList):
         :type name: str
         :param params: parameters to expand into ``Model`` members
         :type params: dict[str, Any]
+        :param params_as_args: list of params which should be used as command line arguments
+                               to the ``Model`` member executables and not written to generator
+                               files
+        :type arg_params: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
@@ -78,6 +83,7 @@ class Ensemble(EntityList):
         :rtype: ``Ensemble``
         """
         self.params = init_default({}, params, dict)
+        self.params_as_args = init_default({}, params_as_args, (list,str))
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
@@ -96,32 +102,42 @@ class Ensemble(EntityList):
         """
         strategy = self._set_strategy(kwargs.pop("perm_strat"))
         replicas = kwargs.pop("replicas", None)
+
         # if a ensemble has parameters and run settings, create
-        # the ensemble and copy run_settings to each member
+        # the ensemble and assign run_settings to each member
         if self.params:
             if self.run_settings:
-                names, params = self._read_model_parameters()
-                all_model_params = strategy(names, params, **kwargs)
+                param_names, params = self._read_model_parameters()
+
+                # Compute all combinations of model parameters and arguments
+                all_model_params = strategy(
+                    param_names, params, **kwargs
+                )
                 if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
                 for i, param_set in enumerate(all_model_params):
                     if not isinstance(param_set, dict):
                         raise UserStrategyError(strategy)
-
+                    run_settings = deepcopy(self.run_settings)
                     model_name = "_".join((self.name, str(i)))
                     model = Model(
                         model_name,
                         param_set,
                         self.path,
-                        run_settings=deepcopy(self.run_settings),
+                        run_settings=run_settings,
+                        params_as_args=self.params_as_args,
                     )
                     model.enable_key_prefixing()
+                    model.params_to_args()
+                    logger.debug(
+                        f"Created ensemble member: {model_name} in {self.name}"
+                    )
                     self.add_model(model)
             # cannot generate models without run settings
             else:
                 raise SmartSimError(
-                    "Ensembles supplied with 'params' argument must be provided run settings"
+                    "Ensembles without 'params' or 'replicas' argument to expand into members cannot be given run settings"
                 )
         else:
             if self.run_settings:
@@ -151,6 +167,7 @@ class Ensemble(EntityList):
                 )
             else:
                 logger.info("Empty ensemble created for batch launch")
+
 
     def add_model(self, model):
         """Add a model to this ensemble
@@ -260,10 +277,12 @@ class Ensemble(EntityList):
         :return: param names and values for permutation strategy
         :rtype: tuple[list, list]
         """
+
         if not isinstance(self.params, dict):
             raise TypeError(
                 "Ensemble initialization argument 'params' must be of type dict"
             )
+
         param_names = []
         parameters = []
         for name, val in self.params.items():

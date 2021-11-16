@@ -24,27 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from smartsim.error.errors import SSConfigError
 from ..error import EntityExistsError
-from ..utils.helpers import init_default
+from ..utils.helpers import cat_arg_and_value, init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
 
 class Model(SmartSimEntity):
-    def __init__(self, name, params, path, run_settings):
+    def __init__(self, name, params, path, run_settings, params_as_args=None):
         """Initialize a model entity within Smartsim
 
         :param name: name of the model
         :type name: str
-        :param params: model parameters for writing into configuration files.
+        :param params: model parameters for writing into configuration files or
+                       to be passed as command line arguments to executable.
         :type params: dict
         :param path: path to output, error, and configuration files
         :type path: str
         :param run_settings: launcher settings specified in the experiment
         :type run_settings: RunSettings
+        :param params_as_args: list of parameters which have to be
+                               interpreted as command line arguments to
+                               be added to run_settings
+        :type params_as_args: list[str]
         """
         super().__init__(name, path, run_settings)
         self.params = params
+        self.params_as_args = params_as_args
         self.incoming_entities = []
         self._key_prefixing_enabled = False
         self.files = None
@@ -110,6 +117,18 @@ class Model(SmartSimEntity):
         to_symlink = init_default([], to_symlink, (list, str))
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
+
+    def params_to_args(self):
+        """Convert parameters to command line arguments and update run settings.
+        """
+        for param in self.params_as_args:
+            if not param in self.params:
+                raise SSConfigError(f"Tried to convert {param} to command line argument " +
+                                    f"for Model {self.name}, but its value was not found in model params")
+            if self.run_settings is None:
+                raise SSConfigError(f"Tried to configure command line parameter for Model {self.name}, " +
+                                    "but no RunSettings are set.")
+            self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def __eq__(self, other):
         if self.name == other.name:

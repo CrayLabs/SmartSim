@@ -141,3 +141,36 @@ def delete_elements(dictionary, key_list):
     for key in key_list:
         if key in dictionary:
             del dictionary[key]
+
+
+def cat_arg_and_value(arg_name, value):
+    """Concatenate a command line argument and its value
+
+    This function returns ``arg_name`` and ``value
+    concatenated in the best possible way for a command
+    line execution, namely:
+    - if arg_name starts with `--` (e.g. `--arg`):
+      `arg_name=value` is returned (i.e. `--arg=val`)
+    - if arg_name starts with `-` (e.g. `-a`):
+      `arg_name value` is returned (i.e. `-a val`)
+    - if arg_name does not start with `-` and it is a
+      long option (e.g. `arg`):
+      `--arg_name=value` (i.e., `--arg=val`)
+    - if arg_name does not start with `-` and it is a
+      short option (e.g. `a`):
+      `-arg_name=value` (i.e., `-a val`)
+
+    :param arg_name: the command line argument name
+    :type arg_name: str
+    :param value: the command line argument value
+    :type value: str
+    """
+
+    if arg_name.startswith("--"):
+        return "=".join((arg_name, str(value)))
+    elif arg_name.startswith("-"):
+        return " ".join((arg_name, str(value)))
+    elif len(arg_name) == 1:
+        return " ".join(("-" + arg_name, str(value)))
+    else:
+        return "=".join(("--" + arg_name, str(value)))
