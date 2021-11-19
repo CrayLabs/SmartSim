@@ -3,7 +3,7 @@ from shutil import which
 
 import pytest
 
-from smartsim.settings import MpirunSettings, RunSettings
+from smartsim.settings import RunSettings, MpirunSettings
 from smartsim.settings.settings import create_run_settings
 
 
@@ -35,9 +35,7 @@ def test_create_run_settings_local():
         assert mpirun.run_command == _mpirun
         assert type(mpirun) == MpirunSettings
 
-
 ####### Base Run Settings tests #######
-
 
 def test_add_exe_args():
     settings = RunSettings("python")
