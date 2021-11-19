@@ -53,9 +53,8 @@ def create_run_settings(launcher,
     :type env_vars: dict[str, str], optional
     :return: the created ``RunSettings``
     :rtype: RunSettings
+    :raises SmartSimError: if run_command=="auto" and detection fails
     """
-    run_command = run_command.lower()
-    launcher = launcher.lower()
     # all supported RunSettings child classes
     supported = {
         "aprun": AprunSettings,
@@ -65,8 +64,9 @@ def create_run_settings(launcher,
     }
 
     # run commands supported by each launcher
+    # in order of suspected user preference
     by_launcher = {
-        "slurm": ["srun", "mpirun"], # TODO support arun for slurm?
+        "slurm": ["srun", "mpirun"],
         "pbs": ["aprun", "mpirun"],
         "cobalt": ["aprun", "mpirun"],
         "lsf": ["jsrun", "mpirun"]
@@ -77,18 +77,28 @@ def create_run_settings(launcher,
             for cmd in by_launcher[launcher]:
                 if is_valid_cmd(cmd):
                     return cmd
-        raise SmartSimError(
-            f"Could not automatically detect a run command to use for launcher {launcher}")
+        msg = f"Could not automatically detect a run command to use for launcher {launcher}"
+        msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
+        raise SmartSimError(msg)
 
-    # if local launcher we want to skip detection as a user
-    # may not want to run with a run_command at all
-    if run_command == "auto" and launcher != "local":
-        run_command = _detect_command(launcher)
 
+    if run_command:
+        run_command = run_command.lower()
+    launcher = launcher.lower()
+
+    # detect run_command automatically for all but local launcher
+    if run_command == "auto":
+        # no auto detection for local, revert to false
+        if launcher == "local":
+            run_command = None
+        else:
+            run_command = _detect_command(launcher)
+
+    # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
         return supported[run_command](exe, exe_args, run_args, env_vars, **kwargs)
 
-    # if not auto detecting, custom run_command, or running without run_command
-    if run_command == "auto":
-        run_command = None
+    # 1) user specified and not implementation in SmartSim
+    # 2) user supplied run_command=None
+    # 3) local launcher being used and default of "auto" was passed.
     return RunSettings(exe, exe_args, run_command, run_args, env_vars)
