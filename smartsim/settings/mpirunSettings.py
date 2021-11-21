@@ -49,7 +49,12 @@ class MpirunSettings(RunSettings):
         :type env_vars: dict[str, str], optional
         """
         super().__init__(
-            exe, exe_args, run_command="mpirun", run_args=run_args, env_vars=env_vars, **kwargs
+            exe,
+            exe_args,
+            run_command="mpirun",
+            run_args=run_args,
+            env_vars=env_vars,
+            **kwargs,
         )
         self.mpmd = []
 
