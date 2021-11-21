@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 import pytest
-from copy import deepcopy
+
 from smartsim import Experiment, constants
 
 # retrieved from pytest fixtures
