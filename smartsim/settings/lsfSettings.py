@@ -391,15 +391,7 @@ class BsubBatchSettings(BatchSettings):
         self.project = project
 
     def set_account(self, account):
-        """Set the project
-
-        this function is an alias for `set_project`.
-
-        :param account: project name
-        :type account: str
-        """
-        if account:
-            self.set_project(account)
+        self.project = account
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
