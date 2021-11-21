@@ -21,5 +21,6 @@ smartsim_separator = ","  # this is the current choice
 expected_sskeyin = smartsim_separator.join((name_0, name_1))
 
 if sskeyin != expected_sskeyin:
-    raise ValueError(f"SSKEYIN expected to be {expected_sskeyin}, " 
-                     f"but was {sskeyin}")
+    raise ValueError(
+        f"SSKEYIN expected to be {expected_sskeyin}, " f"but was {sskeyin}"
+    )

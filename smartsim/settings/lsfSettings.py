@@ -26,9 +26,7 @@
 
 from pprint import pformat
 
-from ..error import SSConfigError
-from ..utils.helpers import init_default
-from .settings import BatchSettings, RunSettings
+from .base import BatchSettings, RunSettings
 
 
 class JsrunSettings(RunSettings):

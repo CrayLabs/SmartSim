@@ -26,17 +26,12 @@
 
 import os
 
-from .settings import BatchSettings, RunSettings
+from .base import BatchSettings, RunSettings
 
 
 class SrunSettings(RunSettings):
     def __init__(
-        self,
-        exe,
-        exe_args=None,
-        run_args=None,
-        env_vars=None,
-        alloc=None,
+        self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None, **kwargs
     ):
         """Initialize run parameters for a slurm job with ``srun``
 
@@ -62,19 +57,20 @@ class SrunSettings(RunSettings):
             run_command="srun",
             run_args=run_args,
             env_vars=env_vars,
+            **kwargs,
         )
         self.alloc = alloc
         self.mpmd = False
 
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, nodes):
         """Set the number of nodes
 
         Effectively this is setting: ``srun --nodes <num_nodes>``
 
-        :param num_nodes: number of nodes to run with
-        :type num_nodes: int
+        :param nodes: number of nodes to run with
+        :type nodes: int
         """
-        self.run_args["nodes"] = int(num_nodes)
+        self.run_args["nodes"] = int(nodes)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -106,7 +102,7 @@ class SrunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude"] = ",".join(host_list)
 
-    def set_cpus_per_task(self, num_cpus):
+    def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus to use per task
 
         This sets ``--cpus-per-task``
@@ -114,27 +110,27 @@ class SrunSettings(RunSettings):
         :param num_cpus: number of cpus to use per task
         :type num_cpus: int
         """
-        self.run_args["cpus-per-task"] = int(num_cpus)
+        self.run_args["cpus-per-task"] = int(cpus_per_task)
 
-    def set_tasks(self, num_tasks):
+    def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
         This sets ``--ntasks``
 
-        :param num_tasks: number of tasks
-        :type num_tasks: int
+        :param tasks: number of tasks
+        :type tasks: int
         """
-        self.run_args["ntasks"] = int(num_tasks)
+        self.run_args["ntasks"] = int(tasks)
 
-    def set_tasks_per_node(self, num_tpn):
+    def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks for this job
 
         This sets ``--ntasks-per-node``
 
-        :param num_tpn: number of tasks per node
-        :type num_tpn: int
+        :param tasks_per_node: number of tasks per node
+        :type tasks_per_node: int
         """
-        self.run_args["ntasks-per-node"] = int(num_tpn)
+        self.run_args["ntasks-per-node"] = int(tasks_per_node)
 
     def set_walltime(self, walltime):
         """Set the walltime of the job

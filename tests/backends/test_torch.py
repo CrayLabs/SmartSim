@@ -37,7 +37,7 @@ def test_torch_model_and_script(fileutils, mlutils, wlmutils):
     db.set_path(test_dir)
     exp.start(db)
 
-    run_settings = wlmutils.get_run_settings(
+    run_settings = exp.create_run_settings(
         "python", f"run_torch.py --device={test_device}"
     )
     model = exp.create_model("torch_script", run_settings)

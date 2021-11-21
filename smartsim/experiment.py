@@ -32,12 +32,11 @@ from pprint import pformat
 import pandas as pd
 from tqdm import trange
 
-from smartsim.control.manifest import Manifest
-
 from .control import Controller, Manifest
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .generation import Generator
+from .settings import settings
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
 
@@ -78,6 +77,7 @@ class Experiment:
             exp_path = osp.abspath(exp_path)
         self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
         self._control = Controller(launcher=launcher)
+        self._launcher = launcher.lower()
 
     def start(self, *args, block=True, summary=False):
         """Launch instances passed as arguments
@@ -329,6 +329,65 @@ class Experiment:
             logger.error(e)
             raise
 
+    def create_run_settings(
+        self,
+        exe,
+        exe_args=None,
+        run_command="auto",
+        run_args=None,
+        env_vars=None,
+        **kwargs,
+    ):
+        """Create a ``RunSettings`` instance.
+
+        run_command="auto" will attempt to automatically
+        match a run command on the system with a RunSettings
+        class in SmartSim. If found, the class corresponding
+        to that run_command will be created and returned.
+
+        if the local launcher is being used, auto detection will
+        be turned off.
+
+        If a recognized run command is passed, the ``RunSettings``
+        instance will be a child class such as ``SrunSetttings``
+
+        if not supported by smartsim, the base ``RunSettings`` class
+        will be created and returned with the specified run_command and run_args
+        will be evaluated literally.
+
+        Run Commands with implemented helper classes:
+         - aprun (ALPS)
+         - srun (SLURM)
+         - mpirun (OpenMPI)
+         - jsrun (LSF)
+
+        :param run_command: command to run the executable
+        :type run_command: str
+        :param exe: executable to run
+        :type exe: str
+        :param exe_args: arguments to pass to the executable
+        :type exe_args: list[str], optional
+        :param run_args: arguments to pass to the ``run_command``
+        :type run_args: list[str], optional
+        :param env_vars: environment variables to pass to the executable
+        :type env_vars: dict[str, str], optional
+        :return: the created ``RunSettings``
+        :rtype: RunSettings
+        """
+        try:
+            return settings.create_run_settings(
+                self._launcher,
+                exe,
+                exe_args=exe_args,
+                run_command=run_command,
+                run_args=run_args,
+                env_vars=env_vars,
+                **kwargs,
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``
 
@@ -450,7 +509,8 @@ class Experiment:
                     color="green",
                 )
                 sprint(f"{model_name}")
-                sprint(f"{parameters}")
+                if model.params:
+                    sprint(f"{parameters}")
                 sprint(f"{run_settng}")
             sprint("\n")
         if orchestrator:

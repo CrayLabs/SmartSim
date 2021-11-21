@@ -142,7 +142,7 @@ class WLMUtils:
             raise SSConfigError(f"Base run settings are available for Slurm, PBS, Cobalt, and LSF, but launcher was {test_launcher}")
         # TODO allow user to pick aprun vs MPIrun
         return RunSettings(exe, args)
-        
+
 
     @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):

@@ -130,7 +130,6 @@ class SrunStep(Step):
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
 
-
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
 
