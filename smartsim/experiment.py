@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os.path as osp
 import time
+import os.path as osp
 from os import getcwd
 from pprint import pformat
 
@@ -385,6 +385,60 @@ class Experiment:
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
+                **kwargs,
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
+    def create_batch_settings(
+        self, nodes=1, time="", queue="", account="", batch_args=None, **kwargs
+    ):
+        """Create a ``BatchSettings`` instance
+
+        Batch settings parameterize batch workloads. The result of this
+        function can be passed to the ``Ensemble`` initialization.
+
+        the `batch_args` parameter can be used to pass in a dictionary
+        of additional batch command arguments that aren't supported through
+        the smartsim interface
+
+
+        .. highlight:: python
+        .. code-block:: python
+
+            # i.e. for Slurm
+            batch_args = {
+                "distribution": "block"
+                "exclusive": None
+            }
+            bs = exp.create_batch_settings(nodes=3,
+                                           time="10:00:00",
+                                           batch_args=batch_args)
+            bs.set_account("default")
+
+        :param nodes: number of nodes for batch job, defaults to 1
+        :type nodes: int, optional
+        :param time: length of batch job, defaults to ""
+        :type time: str, optional
+        :param queue: queue or partition (if slurm), defaults to ""
+        :type queue: str, optional
+        :param account: user account name for batch system, defaults to ""
+        :type account: str, optional
+        :param batch_args: additional batch arguments, defaults to None
+        :type batch_args: dict[str, str], optional
+        :return: a newly created BatchSettings instance
+        :rtype: BatchSettings
+        :raises SmartSimError: if batch creation fails
+        """
+        try:
+            return settings.create_batch_settings(
+                self._launcher,
+                nodes=nodes,
+                time=time,
+                queue=queue,
+                account=account,
+                batch_args=batch_args,
                 **kwargs,
             )
         except SmartSimError as e:
