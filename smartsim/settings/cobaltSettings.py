@@ -28,7 +28,9 @@ from .base import BatchSettings
 
 
 class CobaltBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
+    def __init__(
+        self, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
+    ):
         """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None

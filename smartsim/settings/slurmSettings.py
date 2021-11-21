@@ -203,7 +203,7 @@ class SrunSettings(RunSettings):
 
 
 class SbatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", account=None, batch_args=None):
+    def __init__(self, nodes=None, time="", account=None, batch_args=None, **kwargs):
         """Specify run parameters for a Slurm batch job
 
         Slurm `sbatch` arguments can be written into ``batch_args``
@@ -240,7 +240,7 @@ class SbatchSettings(BatchSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        # TODO check for errors here
+        # TODO check for formatting here
         self.batch_args["time"] = walltime
 
     def set_nodes(self, num_nodes):
@@ -251,13 +251,13 @@ class SbatchSettings(BatchSettings):
         """
         self.batch_args["nodes"] = int(num_nodes)
 
-    def set_account(self, acct):
+    def set_account(self, account):
         """Set the account for this batch job
 
-        :param acct: account id
-        :type acct: str
+        :param account: account id
+        :type account: str
         """
-        self.batch_args["account"] = acct
+        self.batch_args["account"] = account
 
     def set_partition(self, partition):
         """Set the partition for the batch job
@@ -266,6 +266,16 @@ class SbatchSettings(BatchSettings):
         :type partition: str
         """
         self.batch_args["partition"] = str(partition)
+
+    def set_queue(self, queue):
+        """alias for set_partition
+
+        Sets the partition for the slurm batch job
+
+        :param queue: the partition to run the batch job on
+        :type queue: str
+        """
+        self.set_partition(queue)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
