@@ -24,17 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from . import *
-from ..utils.helpers import is_valid_cmd
 from ..error import SmartSimError
+from ..utils.helpers import is_valid_cmd
+from . import *
 
-def create_run_settings(launcher,
-                        exe,
-                        exe_args=None,
-                        run_command="auto",
-                        run_args=None,
-                        env_vars=None,
-                        **kwargs):
+
+def create_run_settings(
+    launcher,
+    exe,
+    exe_args=None,
+    run_command="auto",
+    run_args=None,
+    env_vars=None,
+    **kwargs,
+):
     """Create a ``RunSettings`` instance.
 
     See Experiment.create_run_settings docstring for more details
@@ -60,7 +63,7 @@ def create_run_settings(launcher,
         "aprun": AprunSettings,
         "srun": SrunSettings,
         "mpirun": MpirunSettings,
-        "jsrun": JsrunSettings
+        "jsrun": JsrunSettings,
     }
 
     # run commands supported by each launcher
@@ -69,7 +72,7 @@ def create_run_settings(launcher,
         "slurm": ["srun", "mpirun"],
         "pbs": ["aprun", "mpirun"],
         "cobalt": ["aprun", "mpirun"],
-        "lsf": ["jsrun", "mpirun"]
+        "lsf": ["jsrun", "mpirun"],
     }
 
     def _detect_command(launcher):
@@ -80,7 +83,6 @@ def create_run_settings(launcher,
         msg = f"Could not automatically detect a run command to use for launcher {launcher}"
         msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
         raise SmartSimError(msg)
-
 
     if run_command:
         run_command = run_command.lower()

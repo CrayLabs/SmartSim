@@ -31,11 +31,12 @@ from pprint import pformat
 
 import pandas as pd
 from tqdm import trange
-from .settings import settings
+
 from .control import Controller, Manifest
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .generation import Generator
+from .settings import settings
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
 
@@ -328,13 +329,15 @@ class Experiment:
             logger.error(e)
             raise
 
-    def create_run_settings(self,
-                            exe,
-                            exe_args=None,
-                            run_command="auto",
-                            run_args=None,
-                            env_vars=None,
-                            **kwargs):
+    def create_run_settings(
+        self,
+        exe,
+        exe_args=None,
+        run_command="auto",
+        run_args=None,
+        env_vars=None,
+        **kwargs,
+    ):
         """Create a ``RunSettings`` instance.
 
         run_command="auto" will attempt to automatically
@@ -372,13 +375,15 @@ class Experiment:
         :rtype: RunSettings
         """
         try:
-            return settings.create_run_settings(self._launcher,
-                                                exe,
-                                                exe_args=exe_args,
-                                                run_command=run_command,
-                                                run_args=run_args,
-                                                env_vars=env_vars,
-                                                **kwargs)
+            return settings.create_run_settings(
+                self._launcher,
+                exe,
+                exe_args=exe_args,
+                run_command=run_command,
+                run_args=run_args,
+                env_vars=env_vars,
+                **kwargs,
+            )
         except SmartSimError as e:
             logger.error(e)
             raise

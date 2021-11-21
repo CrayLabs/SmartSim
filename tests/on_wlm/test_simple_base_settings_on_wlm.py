@@ -60,4 +60,3 @@ def test_simple_model_stop_on_wlm(fileutils, wlmutils):
     exp.stop(M)
     assert M.name in exp._control._jobs.completed
     assert exp.get_status(M)[0] == constants.STATUS_CANCELLED
-

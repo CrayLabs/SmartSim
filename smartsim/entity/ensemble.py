@@ -27,8 +27,12 @@
 from copy import deepcopy
 from os import getcwd
 
-
-from ..error import EntityExistsError, SSUnsupportedError, UserStrategyError, SmartSimError
+from ..error import (
+    EntityExistsError,
+    SmartSimError,
+    SSUnsupportedError,
+    UserStrategyError,
+)
 from ..settings.base import BatchSettings, RunSettings
 from ..utils import get_logger
 from ..utils.helpers import init_default

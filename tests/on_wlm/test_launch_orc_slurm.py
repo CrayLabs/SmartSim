@@ -81,9 +81,9 @@ def test_incoming_entities(fileutils, wlmutils):
     sleep_settings = exp.create_run_settings("python", f"{sleep} --time=3")
     sleep_settings.set_tasks(1)
 
-    sleep_ensemble = exp.create_ensemble("sleep-ensemble",
-                                         run_settings=sleep_settings,
-                                         replicas=2)
+    sleep_ensemble = exp.create_ensemble(
+        "sleep-ensemble", run_settings=sleep_settings, replicas=2
+    )
 
     sskeyin_reader = fileutils.get_test_conf_path("incoming_entities_reader.py")
     sskeyin_reader_settings = exp.create_run_settings("python", f"{sskeyin_reader}")
@@ -91,7 +91,9 @@ def test_incoming_entities(fileutils, wlmutils):
 
     sskeyin_reader_settings.env_vars["NAME_0"] = sleep_ensemble.entities[0].name
     sskeyin_reader_settings.env_vars["NAME_1"] = sleep_ensemble.entities[1].name
-    sskeyin_reader = exp.create_model("sskeyin_reader", path=test_dir, run_settings=sskeyin_reader_settings)
+    sskeyin_reader = exp.create_model(
+        "sskeyin_reader", path=test_dir, run_settings=sskeyin_reader_settings
+    )
     sskeyin_reader.register_incoming_entity(sleep_ensemble.entities[0])
     sskeyin_reader.register_incoming_entity(sleep_ensemble.entities[1])
 

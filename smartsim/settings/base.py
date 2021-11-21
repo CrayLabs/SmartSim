@@ -81,7 +81,8 @@ class RunSettings:
         :type tasks: int
         """
         raise NotImplementedError(
-            f"Task specification not implemented for this RunSettings type: {type(self)}")
+            f"Task specification not implemented for this RunSettings type: {type(self)}"
+        )
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per node
@@ -90,7 +91,8 @@ class RunSettings:
         :type tasks_per_node: int
         """
         raise NotImplementedError(
-            f"Task per node specification not implemented for this RunSettings type: {type(self)}")
+            f"Task per node specification not implemented for this RunSettings type: {type(self)}"
+        )
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per task
@@ -99,7 +101,8 @@ class RunSettings:
         :type cpus_per_task: int
         """
         raise NotImplementedError(
-            f"CPU per node specification not implemented for this RunSettings type: {type(self)}")
+            f"CPU per node specification not implemented for this RunSettings type: {type(self)}"
+        )
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -108,7 +111,8 @@ class RunSettings:
         :type host_list: str | list[str]
         """
         raise NotImplementedError(
-            f"Host list specification not implemented for this RunSettings type: {type(self)}")
+            f"Host list specification not implemented for this RunSettings type: {type(self)}"
+        )
 
     @property
     def run_command(self):

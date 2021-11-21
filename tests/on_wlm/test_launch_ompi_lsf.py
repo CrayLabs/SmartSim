@@ -21,7 +21,6 @@ def test_launch_openmpi_lsf(wlmutils, fileutils):
     settings.set_cpus_per_task(1)
     settings.set_tasks(1)
 
-
     model = exp.create_model("ompi-model", path=test_dir, run_settings=settings)
     exp.start(model, block=True)
     statuses = exp.get_status(model)

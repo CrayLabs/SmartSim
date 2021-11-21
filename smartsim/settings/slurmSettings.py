@@ -31,13 +31,7 @@ from .base import BatchSettings, RunSettings
 
 class SrunSettings(RunSettings):
     def __init__(
-        self,
-        exe,
-        exe_args=None,
-        run_args=None,
-        env_vars=None,
-        alloc=None,
-        **kwargs
+        self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None, **kwargs
     ):
         """Initialize run parameters for a slurm job with ``srun``
 
@@ -63,7 +57,7 @@ class SrunSettings(RunSettings):
             run_command="srun",
             run_args=run_args,
             env_vars=env_vars,
-            **kwargs
+            **kwargs,
         )
         self.alloc = alloc
         self.mpmd = False

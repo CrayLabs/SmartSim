@@ -1,5 +1,7 @@
-import pytest
 from copy import deepcopy
+
+import pytest
+
 from smartsim import Experiment, constants
 
 """
