@@ -125,7 +125,7 @@ class JsrunSettings(RunSettings):
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per resource set.
-
+         
         This function is an alias for `set_tasks_per_rs`.
 
         :param tasks_per_node: number of tasks per resource set
@@ -138,13 +138,13 @@ class JsrunSettings(RunSettings):
 
         This function is only available to unify LSFSettings
         to other WLM settings classes.
-
+        
         """
         pass
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
-
+         
         This function is an alias for `set_cpus_per_rs`.
 
         :param cpus_per_task: number of cpus per resource set
@@ -357,16 +357,10 @@ class BsubBatchSettings(BatchSettings):
 
         This sets ``-W``.
 
-        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
-                         if time is supplied in hh:mm:ss format, seconds
-                         will be ignored and walltime will be set as ``hh:mm``
+        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours
         :type walltime: str
         """
-        # For compatibility with other launchers, as explained in docstring
-        if walltime:
-            if len(walltime.split(":")) > 2:
-                walltime = ":".join(walltime.split(":")[:2])
-            self.walltime = walltime
+        self.walltime = walltime
 
     def set_queue(self, queue):
         """Set the queue
@@ -400,10 +394,7 @@ class BsubBatchSettings(BatchSettings):
         """
         self.project = project
 
-    def set_account(self, account):
-        self.project = account
-
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, nodes):
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
@@ -411,8 +402,7 @@ class BsubBatchSettings(BatchSettings):
         :param nodes: number of nodes
         :type nodes: int
         """
-        if num_nodes:
-            self.batch_args["nnodes"] = int(num_nodes)
+        self.batch_args["nnodes"] = int(nodes)
 
     def set_expert_mode_req(self, res_req, slots):
         """Set allocation for expert mode. This
@@ -450,15 +440,6 @@ class BsubBatchSettings(BatchSettings):
         :type tasks: int
         """
         self.batch_args["n"] = int(tasks)
-
-    def set_queue(self, queue):
-        """Set the queue for this job
-
-        :param queue: The queue to submit the job on
-        :type queue: str
-        """
-        if queue:
-            self.batch_args["q"] = queue
 
     def _format_alloc_flags(self):
         """Format ``alloc_flags`` checking if user already
