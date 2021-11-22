@@ -1,8 +1,8 @@
 import sys
 
-from ..constants import TF_VERSION
-from ..error import SmartSimError
-from ..utils.log import get_logger
+from smartsim.constants import TF_VERSION
+from smartsim.error import SmartSimError
+from smartsim.utils.log import get_logger
 
 logger = get_logger(__name__)
 
@@ -29,4 +29,4 @@ except AssertionError:
 
 
 from .utils import freeze_model
-from .train import DataGenerator, TrainingDataUploader
+from .data import StaticDataGenerator, DataGenerator
