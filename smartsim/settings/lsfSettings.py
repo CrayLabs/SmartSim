@@ -125,7 +125,7 @@ class JsrunSettings(RunSettings):
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per resource set.
-
+         
         This function is an alias for `set_tasks_per_rs`.
 
         :param tasks_per_node: number of tasks per resource set
@@ -138,13 +138,13 @@ class JsrunSettings(RunSettings):
 
         This function is only available to unify LSFSettings
         to other WLM settings classes.
-
+        
         """
         pass
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
-
+         
         This function is an alias for `set_cpus_per_rs`.
 
         :param cpus_per_task: number of cpus per resource set
@@ -362,16 +362,6 @@ class BsubBatchSettings(BatchSettings):
         """
         self.walltime = walltime
 
-    def set_queue(self, queue):
-        """Set the queue
-
-        This sets ``-q``.
-
-        :param queue: queue name
-        :type queue: str
-        """
-        self.batch_args["q"] = queue
-
     def set_smts(self, smts):
         """Set SMTs
 
@@ -394,10 +384,7 @@ class BsubBatchSettings(BatchSettings):
         """
         self.project = project
 
-    def set_account(self, account):
-        self.project = account
-
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, nodes):
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
