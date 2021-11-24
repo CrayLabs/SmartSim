@@ -3,16 +3,15 @@ from smartredis import Client, Dataset
 from smartredis.error import RedisReplyError
 
 import numpy as np
-import tensorflow.keras as keras
 import time
+
+import torch
+import torch.nn.functional as F
 
 from smartsim.ml import form_name
 
-
-class StaticDataGenerator(keras.utils.Sequence):
+class StaticDataGenerator(torch.utils.data.IterableDataset):
     def __init__(self,
-                 batch_size=32,
-                 shuffle=True,
                  uploader_info="auto",
                  uploader_name="training_data",
                  sample_prefix="samples",
@@ -23,9 +22,8 @@ class StaticDataGenerator(keras.utils.Sequence):
                  smartredis_cluster=True,
                  smartredis_address=None,
                  init_samples=True,
+                 device="cpu"
                 ):
-        self.batch_size = batch_size
-        self.shuffle = shuffle
         self.client = Client(smartredis_address, smartredis_cluster)
         if uploader_info == "manual":
             self.sample_prefix = sample_prefix
@@ -48,11 +46,12 @@ class StaticDataGenerator(keras.utils.Sequence):
         self.samples = None
         if self.need_targets:
             self.targets = None
-        self.indices = np.arange(0)
         self.num_samples = 0
 
         if init_samples:
             self.init_samples(None)
+
+        self.device = device
 
 
     def list_all_sources(self):
@@ -116,18 +115,12 @@ class StaticDataGenerator(keras.utils.Sequence):
 
 
     def __len__(self):
-        length = int(np.floor(self.num_samples / self.batch_size))
-        return length
+        return self.num_samples 
 
 
     def __getitem__(self, index):
-        if len(self) < 1:
-            raise ValueError("Not enough samples in generator for one batch. Please run init_samples() or initialize generator with init_samples=True")
-        # Generate indices of the batch
-        indices = self.indices[index*self.batch_size:(index+1)*self.batch_size]
-
         # Generate data
-        x, y = self.__data_generation(indices)
+        x, y = self.__data_generation(index)
 
         if y is not None:
             return x, y
@@ -144,18 +137,17 @@ class StaticDataGenerator(keras.utils.Sequence):
 
     def add_samples(self, batch_name, target_name):
         if self.samples is None:
-            self.samples = self.client.get_tensor(batch_name)
+            self.samples = torch.tensor(self.client.get_tensor(batch_name), device=self.device)
             if self.need_targets:
-                self.targets = self.client.get_tensor(target_name)
+                self.targets = torch.tensor(self.client.get_tensor(target_name), device=self.device)
         else:
-            self.samples = np.concatenate((self.samples,self.client.get_tensor(batch_name)))
+            self.samples = torch.cat((self.samples, torch.tensor(self.client.get_tensor(batch_name), device=self.device)))
             if self.need_targets:
-                self.targets = np.concatenate((self.targets, self.client.get_tensor(target_name)))
+                self.targets = torch.cat((self.targets, torch.tensor(self.client.get_tensor(target_name), device=self.device)))
 
         self.num_samples = self.samples.shape[0]
-        self.indices = np.arange(self.num_samples)
         print("Success!")
-        print(f"New dataset size: {self.num_samples}, batches: {len(self)}")
+        print(f"New dataset size: {self.num_samples}")
 
 
     def _update_samples_and_targets(self):
@@ -180,12 +172,6 @@ class StaticDataGenerator(keras.utils.Sequence):
         self._update_samples_and_targets()
 
 
-    def on_epoch_end(self):
-        if self.shuffle:
-            np.random.shuffle(self.indices)
-        self.batch_id = 0
-
-
     def __data_generation(self, indices):
         # Initialization
         x = self.samples[indices]
@@ -193,7 +179,7 @@ class StaticDataGenerator(keras.utils.Sequence):
         if self.need_targets:
             y = self.targets[indices]
             if self.num_classes is not None:
-                y = keras.utils.to_categorical(y, num_classes=self.num_classes)
+                y = F.one_hot(y, num_classes=self.num_classes)
         elif self.autoencoding:
             y = x
         else:
@@ -204,8 +190,6 @@ class StaticDataGenerator(keras.utils.Sequence):
 
 class DataGenerator(StaticDataGenerator):
     def __init__(self,
-                 batch_size=32,
-                 shuffle=True,
                  uploader_info="auto",
                  uploader_name="training_data",
                  sample_prefix="samples",
@@ -216,10 +200,9 @@ class DataGenerator(StaticDataGenerator):
                  smartredis_cluster=True,
                  smartredis_address=None,
                  init_samples=True,
+                 device="cpu",
                  ):
-        super().__init__(batch_size,
-                        shuffle,
-                        uploader_info,
+        super().__init__(uploader_info,
                         uploader_name,
                         sample_prefix,
                         target_prefix,
@@ -229,6 +212,7 @@ class DataGenerator(StaticDataGenerator):
                         smartredis_cluster,
                         smartredis_address,
                         init_samples,
+                        device
                         )
 
 
@@ -245,7 +229,7 @@ class DataGenerator(StaticDataGenerator):
             self.sources = self.list_all_sources()
 
         while len(self) < 1:
-            self.on_epoch_end()
+            self._update_samples_and_targets()
             if len(self) < 1:
                 time.sleep(10)
         print("Generator initialization complete")
@@ -262,7 +246,7 @@ class DataGenerator(StaticDataGenerator):
                 target_name = form_name(self.target_prefix, index, sub_index)
             else:
                 target_name = None
-            
+
             print(f"Retrieving {batch_name} from {entity}")
             # Poll next batch based on index, if available: retrieve it, update index and loop
             while self.data_exists(batch_name, target_name):
@@ -274,8 +258,3 @@ class DataGenerator(StaticDataGenerator):
                     target_name = form_name(self.target_prefix, index, sub_index)
 
                 print(f"Retrieving {batch_name}...")
-
-
-    def on_epoch_end(self):
-        self.update_data()
-        super().on_epoch_end()
