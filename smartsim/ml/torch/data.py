@@ -12,6 +12,8 @@ from smartsim.ml import form_name
 
 class StaticDataGenerator(torch.utils.data.IterableDataset):
     def __init__(self,
+                 batch_size=32,
+                 shuffle=True,
                  uploader_info="auto",
                  uploader_name="training_data",
                  sample_prefix="samples",
@@ -21,8 +23,7 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
-                 init_samples=True,
-                 device="cpu"
+                 init_samples=True
                 ):
         self.client = Client(smartredis_address, smartredis_cluster)
         if uploader_info == "manual":
@@ -47,11 +48,10 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
         if self.need_targets:
             self.targets = None
         self.num_samples = 0
-
+        self.indices = np.arange(0)
+        self.shuffle = shuffle
         if init_samples:
             self.init_samples(None)
-
-        self.device = device
 
 
     def list_all_sources(self):
@@ -120,13 +120,16 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
     def __getitem__(self, index):
         # Generate data
-        x, y = self.__data_generation(index)
+        x, y = self.__data_generation(self.indices[index])
 
         if y is not None:
             return x, y
         else:
             return x
 
+
+    def __iter__(self):
+        pass
 
     def data_exists(self, batch_name, target_name):
         if self.need_targets:
@@ -137,15 +140,16 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
     def add_samples(self, batch_name, target_name):
         if self.samples is None:
-            self.samples = torch.tensor(self.client.get_tensor(batch_name), device=self.device)
+            self.samples = torch.tensor(self.client.get_tensor(batch_name))
             if self.need_targets:
-                self.targets = torch.tensor(self.client.get_tensor(target_name), device=self.device)
+                self.targets = torch.tensor(self.client.get_tensor(target_name))
         else:
-            self.samples = torch.cat((self.samples, torch.tensor(self.client.get_tensor(batch_name), device=self.device)))
+            self.samples = torch.cat((self.samples, torch.tensor(self.client.get_tensor(batch_name))))
             if self.need_targets:
-                self.targets = torch.cat((self.targets, torch.tensor(self.client.get_tensor(target_name), device=self.device)))
+                self.targets = torch.cat((self.targets, torch.tensor(self.client.get_tensor(target_name))))
 
         self.num_samples = self.samples.shape[0]
+        self.indices = np.arange(self.num_samples)
         print("Success!")
         print(f"New dataset size: {self.num_samples}")
 
@@ -170,6 +174,8 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
     def update_data(self):
         self._update_samples_and_targets()
+        if self.shuffle:
+            np.random.shuffle(self.indices)
 
 
     def __data_generation(self, indices):
@@ -178,8 +184,9 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
         if self.need_targets:
             y = self.targets[indices]
-            if self.num_classes is not None:
-                y = F.one_hot(y, num_classes=self.num_classes)
+            # Pytorch does not need one-hot encoding
+            # if self.num_classes is not None:
+            #     y = F.one_hot(y, num_classes=self.num_classes)
         elif self.autoencoding:
             y = x
         else:
@@ -190,6 +197,8 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
 class DataGenerator(StaticDataGenerator):
     def __init__(self,
+                 batch_size=32,
+                 shuffle=True,
                  uploader_info="auto",
                  uploader_name="training_data",
                  sample_prefix="samples",
@@ -200,9 +209,10 @@ class DataGenerator(StaticDataGenerator):
                  smartredis_cluster=True,
                  smartredis_address=None,
                  init_samples=True,
-                 device="cpu",
                  ):
-        super().__init__(uploader_info,
+        super().__init__(batch_size,
+                        shuffle,
+                        uploader_info,
                         uploader_name,
                         sample_prefix,
                         target_prefix,
@@ -212,7 +222,6 @@ class DataGenerator(StaticDataGenerator):
                         smartredis_cluster,
                         smartredis_address,
                         init_samples,
-                        device
                         )
 
 
