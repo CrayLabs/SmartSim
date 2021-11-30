@@ -416,16 +416,11 @@ class Experiment:
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :param format: the style in which the summary table is formatted,
-                       for a full list of styles see:
-                       https://github.com/astanin/python-tabulate#table-format,
-                       defaults to "github"
-        :type format: str, optional
         :return: tabulate string of ``Experiment`` history
         :rtype: str
         """
         values = []
-        headers = [
+        headers=[
             "Name",
             "Entity-Type",
             "JobID",
@@ -438,18 +433,16 @@ class Experiment:
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
             for run in range(job.history.runs + 1):
-                values.append(
-                    [
-                        job.entity.name,
-                        job.entity.type,
-                        job.history.jids[run],
-                        run,
-                        job.history.job_times[run],
-                        job.history.statuses[run],
-                        job.history.returns[run],
-                    ]
-                )
-        return tabulate(values, headers, showindex=True, tablefmt=format)
+                values.append([
+                    job.entity.name,
+                    job.entity.type,
+                    job.history.jids[run],
+                    run,
+                    job.history.job_times[run],
+                    job.history.statuses[run],
+                    job.history.returns[run],
+                ])
+        return tabulate(values, headers, showindex=True)
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
