@@ -1,0 +1,46 @@
+import numpy as np
+import torchvision.models as models
+
+from smartsim.ml.torch import DataGenerator, DataLoader
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+
+if __name__ == '__main__':
+    torch.multiprocessing.set_start_method('spawn')
+    training_set = DataGenerator(smartredis_cluster=False, shuffle=True, batch_size=32)
+    trainloader = DataLoader(training_set, batch_size=None,
+                             num_workers=2)
+    model = models.mobilenet_v2().double().to('cuda')
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    print("starting training")
+
+    for epoch in range(1000):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        print(f"Epoch {epoch}")
+        for i, data in enumerate(trainloader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data[0].double().to('cuda'), data[1].to('cuda')
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            running_loss += loss.item()
+
+            output_period = 10
+            if i % output_period == (output_period-1):    # print every "output-period" mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                    (epoch + 1, i + 1, running_loss / output_period))
+                running_loss = 0.0
+                
+    print('Finished Training')

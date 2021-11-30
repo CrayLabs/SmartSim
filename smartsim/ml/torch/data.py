@@ -23,9 +23,11 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
-                 init_samples=True
                 ):
-        self.client = Client(smartredis_address, smartredis_cluster)
+        self.smartredis_address = smartredis_address
+        self.smartredis_cluster = smartredis_cluster
+        self.uploader_info = uploader_info
+        self.uploader_name = uploader_name
         if uploader_info == "manual":
             self.sample_prefix = sample_prefix
             self.target_prefix = target_prefix
@@ -35,23 +37,13 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
             else:
                 producer_prefixes = [""]
             self.num_classes = num_classes
-        elif uploader_info == "auto":
-            if not uploader_name:
-                raise ValueError("uploader_name can not be empty if uploader_info is 'auto'")
-            self.get_uploader_info(uploader_name)
-        else:
-            raise ValueError(f"uploader_info must be one of 'auto' or 'manual', but was {uploader_info}")
-
-        self.autoencoding = (self.sample_prefix == self.target_prefix)
 
         self.samples = None
-        if self.need_targets:
-            self.targets = None
+        self.targets = None
         self.num_samples = 0
         self.indices = np.arange(0)
         self.shuffle = shuffle
-        if init_samples:
-            self.init_samples(None)
+        self.batch_size = batch_size
 
 
     def list_all_sources(self):
@@ -66,11 +58,27 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
         return sources
 
     
+    def init_sources(self, client):
+        self.client = client
+        if self.uploader_info == "auto":
+            if not self.uploader_name:
+                raise ValueError("uploader_name can not be empty if uploader_info is 'auto'")
+            self.get_uploader_info(self.uploader_name)
+        else:
+            raise ValueError(f"uploader_info must be one of 'auto' or 'manual', but was {self.uploader_info}")
+
+        self.sources = self.list_all_sources()
+
+
     def init_samples(self, sources=None):
-        if sources is None:
+        self.autoencoding = (self.sample_prefix == self.target_prefix)
+
+        if sources is not None:
+            self.sources = sources
+        
+        if self.sources is None:
             self.sources = self.list_all_sources()
 
-        self.update_data()
         print("Generator initialization complete")
 
 
@@ -115,21 +123,27 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
 
     def __len__(self):
-        return self.num_samples 
-
-
-    def __getitem__(self, index):
-        # Generate data
-        x, y = self.__data_generation(self.indices[index])
-
-        if y is not None:
-            return x, y
-        else:
-            return x
+        length = int(np.floor(self.num_samples / self.batch_size))
+        return length
 
 
     def __iter__(self):
-        pass
+
+        self.update_data()
+        # Generate data
+        if len(self) < 1:
+            raise ValueError("Not enough samples in generator for one batch. Please run init_samples() or initialize generator with init_samples=True")
+
+        for index in range(len(self)):
+            indices = self.indices[index*self.batch_size:(index+1)*self.batch_size]
+
+            x, y = self.__data_generation(indices)
+
+            if y is not None:
+                yield x, y
+            else:
+                yield x
+
 
     def data_exists(self, batch_name, target_name):
         if self.need_targets:
@@ -208,7 +222,6 @@ class DataGenerator(StaticDataGenerator):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
-                 init_samples=True,
                  ):
         super().__init__(batch_size,
                         shuffle,
@@ -221,7 +234,6 @@ class DataGenerator(StaticDataGenerator):
                         producer_prefixes,
                         smartredis_cluster,
                         smartredis_address,
-                        init_samples,
                         )
 
 
@@ -234,7 +246,12 @@ class DataGenerator(StaticDataGenerator):
 
 
     def init_samples(self, sources=None):
-        if sources is None:
+        self.autoencoding = (self.sample_prefix == self.target_prefix)
+
+        if sources is not None:
+            self.sources = sources
+        
+        if self.sources is None:
             self.sources = self.list_all_sources()
 
         while len(self) < 1:
@@ -267,3 +284,33 @@ class DataGenerator(StaticDataGenerator):
                     target_name = form_name(self.target_prefix, index, sub_index)
 
                 print(f"Retrieving {batch_name}...")
+
+
+class DataLoader(torch.utils.data.DataLoader):
+    def __init__(self, dataset: StaticDataGenerator, **kwargs):
+        super().__init__(dataset,
+                         worker_init_fn=self.worker_init_fn,
+                         persistent_workers=True,
+                         **kwargs)
+
+    @staticmethod
+    def worker_init_fn(worker_id):
+        print("initing worker", flush=True)
+        worker_info = torch.utils.data.get_worker_info()
+        dataset = worker_info.dataset  # the dataset copy in this worker process
+        client = Client(dataset.smartredis_address, dataset.smartredis_cluster)
+        dataset.init_sources(client)
+        overall_sources = dataset.sources
+
+        # configure the dataset to only process the split workload
+        per_worker = int((len(overall_sources)) // worker_info.num_workers)
+        worker_id = worker_info.id
+        if worker_id < worker_info.num_workers-1:
+            sources = overall_sources[worker_id*per_worker:(worker_id+1)*per_worker]
+        else:
+            sources = overall_sources[worker_id*per_worker:]
+
+        print(f"{worker_id}: {sources}")
+        
+        dataset.init_samples(sources)
+        
