@@ -23,7 +23,6 @@ if __name__ == '__main__':
     for epoch in range(50):  # loop over the dataset multiple times
 
         running_loss = 0.0
-        epoch_running_loss = 0.0
         output_period = 100
         print(f"Epoch {epoch}")
         for i, data in enumerate(trainloader):
