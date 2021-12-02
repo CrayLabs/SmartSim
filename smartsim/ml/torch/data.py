@@ -1,5 +1,5 @@
 from os import environ
-from smartredis import Client, Dataset
+from smartredis import Client
 from smartredis.error import RedisReplyError
 
 import numpy as np
@@ -23,7 +23,12 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
+                 replica_rank=0,
+                 num_replicas=1,
+                 verbose=False,
                 ):
+        self.replica_rank = replica_rank
+        self.num_replicas = num_replicas
         self.smartredis_address = smartredis_address
         self.smartredis_cluster = smartredis_cluster
         self.uploader_info = uploader_info
@@ -44,6 +49,12 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
         self.indices = np.arange(0)
         self.shuffle = shuffle
         self.batch_size = batch_size
+        self.verbose = verbose
+
+
+    def log(self, message):
+        if self.verbose:
+            print(message)
 
 
     def list_all_sources(self):
@@ -55,6 +66,18 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
                     sources.extend([[uploader, sub_index] for sub_index in self.sub_indices])
                 else:
                     sources.append([uploader, None])
+
+        per_replica = len(sources)//self.num_replicas
+        if per_replica > 0:
+            if self.replica_rank < self.num_replicas-1:
+                sources = sources[self.replica_rank*per_replica:(self.replica_rank+1)*per_replica]
+            else:
+                sources = sources[self.replica_rank*per_replica:]
+        else:
+            self.log("Number of loader replicas is higher than number of sources, automatic split cannot be performed, "
+                  "all replicas will have the same dataset. If this is not intended, then implement a distribution strategy " 
+                  "and modify `sources`.")
+        
         return sources
 
     
@@ -79,7 +102,7 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
         if self.sources is None:
             self.sources = self.list_all_sources()
 
-        print("Generator initialization complete")
+        self.log("Generator initialization complete")
 
 
     @property
@@ -89,37 +112,37 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
     def get_uploader_info(self, uploader_name):
         dataset_name = form_name(uploader_name, "info")
-        print(f"Uploader dataset name: {dataset_name}")
+        self.log(f"Uploader dataset name: {dataset_name}")
         while not self.client.dataset_exists(dataset_name):
             time.sleep(10)
         
         uploader_info = self.client.get_dataset(dataset_name)
         self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")[0]
-        print(f"Uploader sample prefix: {self.sample_prefix}")
+        self.log(f"Uploader sample prefix: {self.sample_prefix}")
 
         try:
             self.target_prefix = uploader_info.get_meta_strings("target_prefix")[0]
         except:
             self.target_prefix = None
-        print(f"Uploader target prefix: {self.target_prefix}")
+        self.log(f"Uploader target prefix: {self.target_prefix}")
 
         try:
             self.producer_prefixes = uploader_info.get_meta_strings("producer_prefix")
         except:
             self.producer_prefixes = [""]
-        print(f"Uploader producer prefix: {self.producer_prefixes}")
+        self.log(f"Uploader producer prefix: {self.producer_prefixes}")
 
         try:
             self.num_classes = uploader_info.get_meta_scalars("num_classes")[0]
         except:
             self.num_classes = None
-        print(f"Uploader num classes: {self.num_classes}")
+        self.log(f"Uploader num classes: {self.num_classes}")
 
         try:
             self.sub_indices = uploader_info.get_meta_strings("sub_indices")
         except:
             self.sub_indices = None
-        print(f"Uploader sub-indices: {self.sub_indices}")
+        self.log(f"Uploader sub-indices: {self.sub_indices}")
 
 
     def __len__(self):
@@ -128,6 +151,9 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
 
     def __iter__(self):
+        
+        if not self.sources:
+            pass
 
         self.update_data()
         # Generate data
@@ -164,8 +190,8 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
 
         self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
-        print("Success!")
-        print(f"New dataset size: {self.num_samples}")
+        self.log("Success!")
+        self.log(f"New dataset size: {self.num_samples}")
 
 
     def _update_samples_and_targets(self):
@@ -179,7 +205,7 @@ class StaticDataGenerator(torch.utils.data.IterableDataset):
             else:
                 target_name = None
             
-            print(f"Retrieving {batch_name} from {entity}")
+            self.log(f"Retrieving {batch_name} from {entity}")
             while not self.data_exists(batch_name, target_name):
                 time.sleep(10)
 
@@ -222,6 +248,8 @@ class DataGenerator(StaticDataGenerator):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
+                 replica_rank=0,
+                 num_replicas=1
                  ):
         super().__init__(batch_size,
                         shuffle,
@@ -234,6 +262,8 @@ class DataGenerator(StaticDataGenerator):
                         producer_prefixes,
                         smartredis_cluster,
                         smartredis_address,
+                        replica_rank,
+                        num_replicas
                         )
 
 
@@ -254,11 +284,15 @@ class DataGenerator(StaticDataGenerator):
         if self.sources is None:
             self.sources = self.list_all_sources()
 
-        while len(self) < 1:
-            self._update_samples_and_targets()
-            if len(self) < 1:
-                time.sleep(10)
-        print("Generator initialization complete")
+        if sources:
+            while len(self) < 1:
+                self._update_samples_and_targets()
+                if len(self) < 1:
+                    time.sleep(10)
+            self.log("Generator initialization complete")
+        else:
+            self.log("Generator has no associated sources, this can happen if the number of "
+                  "loader workers is larger than the number of available sources.")
 
 
     def _update_samples_and_targets(self):
@@ -273,7 +307,7 @@ class DataGenerator(StaticDataGenerator):
             else:
                 target_name = None
 
-            print(f"Retrieving {batch_name} from {entity}")
+            self.log(f"Retrieving {batch_name} from {entity}")
             # Poll next batch based on index, if available: retrieve it, update index and loop
             while self.data_exists(batch_name, target_name):
                 self.add_samples(batch_name, target_name)
@@ -283,7 +317,7 @@ class DataGenerator(StaticDataGenerator):
                 if self.need_targets:
                     target_name = form_name(self.target_prefix, index, sub_index)
 
-                print(f"Retrieving {batch_name}...")
+                self.log(f"Retrieving {batch_name}...")
 
 
 class DataLoader(torch.utils.data.DataLoader):
@@ -293,24 +327,33 @@ class DataLoader(torch.utils.data.DataLoader):
                          persistent_workers=True,
                          **kwargs)
 
+
     @staticmethod
     def worker_init_fn(worker_id):
-        print("initing worker", flush=True)
         worker_info = torch.utils.data.get_worker_info()
         dataset = worker_info.dataset  # the dataset copy in this worker process
         client = Client(dataset.smartredis_address, dataset.smartredis_cluster)
         dataset.init_sources(client)
         overall_sources = dataset.sources
 
+        worker_id = worker_info.id
+
         # configure the dataset to only process the split workload
         per_worker = int((len(overall_sources)) // worker_info.num_workers)
-        worker_id = worker_info.id
-        if worker_id < worker_info.num_workers-1:
-            sources = overall_sources[worker_id*per_worker:(worker_id+1)*per_worker]
+
+        if per_worker>0:
+            if worker_id < worker_info.num_workers-1:
+                sources = overall_sources[worker_id*per_worker:(worker_id+1)*per_worker]
+            else:
+                sources = overall_sources[worker_id*per_worker:]
         else:
-            sources = overall_sources[worker_id*per_worker:]
+            if worker_id < len(overall_sources):
+                sources = overall_sources[worker_id]
+            else:
+                sources = []
 
         print(f"{worker_id}: {sources}")
         
         dataset.init_samples(sources)
+        
         

@@ -15,7 +15,7 @@ if environ["SSKEYOUT"] == "uploader_0":
     data_uploader.publish_info()
 
 
-while True:
+for _ in range(15):
     new_batch = np.random.normal(loc=float(mpi_rank), scale=5.0, size=(32*batches_per_loop, 3, 224, 224)).astype(float)
     new_labels = np.ones(shape=(32*batches_per_loop,)).astype(int) * mpi_rank
 

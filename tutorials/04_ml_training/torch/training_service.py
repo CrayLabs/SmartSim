@@ -16,13 +16,16 @@ if __name__ == '__main__':
     model = models.mobilenet_v2().double().to('cuda')
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
-    print("starting training")
+    print("Started training")
 
-    for epoch in range(1000):  # loop over the dataset multiple times
+    for epoch in range(50):  # loop over the dataset multiple times
 
         running_loss = 0.0
         print(f"Epoch {epoch}")
-        for i, data in enumerate(trainloader, 0):
+        for i, data in enumerate(trainloader):
+            if i==0:
+                output_period = max(10, len(trainloader)//10)
+                print(output_period)
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].double().to('cuda'), data[1].to('cuda')
             # zero the parameter gradients
@@ -37,8 +40,7 @@ if __name__ == '__main__':
             # print statistics
             running_loss += loss.item()
 
-            output_period = 10
-            if i % output_period == (output_period-1):    # print every "output-period" mini-batches
+            if i % output_period == (output_period-1):    # print every "output_period" mini-batches
                 print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i + 1, running_loss / output_period))
                 running_loss = 0.0

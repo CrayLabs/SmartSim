@@ -1,5 +1,5 @@
 from os import environ
-from smartredis import Client, Dataset
+from smartredis import Client
 from smartredis.error import RedisReplyError
 
 import numpy as np
@@ -7,6 +7,7 @@ import tensorflow.keras as keras
 import time
 
 from smartsim.ml import form_name
+
 
 
 class StaticDataGenerator(keras.utils.Sequence):
@@ -22,10 +23,15 @@ class StaticDataGenerator(keras.utils.Sequence):
                  producer_prefixes=None,
                  smartredis_cluster=True,
                  smartredis_address=None,
+                 replica_rank=0,
+                 num_replicas=1,
+                 verbose=False,
                  init_samples=True,
                 ):
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.replica_rank = replica_rank
+        self.num_replicas = num_replicas
         self.client = Client(smartredis_address, smartredis_cluster)
         if uploader_info == "manual":
             self.sample_prefix = sample_prefix
@@ -43,8 +49,6 @@ class StaticDataGenerator(keras.utils.Sequence):
         else:
             raise ValueError(f"uploader_info must be one of 'auto' or 'manual', but was {uploader_info}")
 
-        self.autoencoding = (self.sample_prefix == self.target_prefix)
-
         self.samples = None
         if self.need_targets:
             self.targets = None
@@ -53,6 +57,13 @@ class StaticDataGenerator(keras.utils.Sequence):
 
         if init_samples:
             self.init_samples(None)
+
+        self.verbose = verbose
+
+
+    def log(self, message):
+        if self.verbose:
+            print(message)
 
 
     def list_all_sources(self):
@@ -64,15 +75,28 @@ class StaticDataGenerator(keras.utils.Sequence):
                     sources.extend([[uploader, sub_index] for sub_index in self.sub_indices])
                 else:
                     sources.append([uploader, None])
+
+        per_replica = len(sources)//self.num_replicas
+        if per_replica > 0:
+            if self.replica_rank < self.num_replicas-1:
+                sources = sources[self.replica_rank*per_replica:(self.replica_rank+1)*per_replica]
+            else:
+                sources = sources[self.replica_rank*per_replica:]
+        else:
+            self.log("Number of loader replicas is higher than number of sources, automatic split cannot be performed, "
+                  "all replicas will have the same dataset. If this is not intended, then implement a distribution strategy " 
+                  "and modify `sources`.")
+        
         return sources
 
     
     def init_samples(self, sources=None):
+        self.autoencoding = (self.sample_prefix == self.target_prefix)
         if sources is None:
             self.sources = self.list_all_sources()
 
         self.update_data()
-        print("Generator initialization complete")
+        self.log("Generator initialization complete")
 
 
     @property
@@ -82,37 +106,37 @@ class StaticDataGenerator(keras.utils.Sequence):
 
     def get_uploader_info(self, uploader_name):
         dataset_name = form_name(uploader_name, "info")
-        print(f"Uploader dataset name: {dataset_name}")
+        self.log(f"Uploader dataset name: {dataset_name}")
         while not self.client.dataset_exists(dataset_name):
             time.sleep(10)
         
         uploader_info = self.client.get_dataset(dataset_name)
         self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")[0]
-        print(f"Uploader sample prefix: {self.sample_prefix}")
+        self.log(f"Uploader sample prefix: {self.sample_prefix}")
 
         try:
             self.target_prefix = uploader_info.get_meta_strings("target_prefix")[0]
         except:
             self.target_prefix = None
-        print(f"Uploader target prefix: {self.target_prefix}")
+        self.log(f"Uploader target prefix: {self.target_prefix}")
 
         try:
             self.producer_prefixes = uploader_info.get_meta_strings("producer_prefix")
         except:
             self.producer_prefixes = [""]
-        print(f"Uploader producer prefix: {self.producer_prefixes}")
+        self.log(f"Uploader producer prefix: {self.producer_prefixes}")
 
         try:
             self.num_classes = uploader_info.get_meta_scalars("num_classes")[0]
         except:
             self.num_classes = None
-        print(f"Uploader num classes: {self.num_classes}")
+        self.log(f"Uploader num classes: {self.num_classes}")
 
         try:
             self.sub_indices = uploader_info.get_meta_strings("sub_indices")
         except:
             self.sub_indices = None
-        print(f"Uploader sub-indices: {self.sub_indices}")
+        self.log(f"Uploader sub-indices: {self.sub_indices}")
 
 
     def __len__(self):
@@ -154,8 +178,8 @@ class StaticDataGenerator(keras.utils.Sequence):
 
         self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
-        print("Success!")
-        print(f"New dataset size: {self.num_samples}, batches: {len(self)}")
+        self.log("Success!")
+        self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
 
     def _update_samples_and_targets(self):
@@ -169,7 +193,7 @@ class StaticDataGenerator(keras.utils.Sequence):
             else:
                 target_name = None
             
-            print(f"Retrieving {batch_name} from {entity}")
+            self.log(f"Retrieving {batch_name} from {entity}")
             while not self.data_exists(batch_name, target_name):
                 time.sleep(10)
 
@@ -216,6 +240,9 @@ class DataGenerator(StaticDataGenerator):
                  smartredis_cluster=True,
                  smartredis_address=None,
                  init_samples=True,
+                 replica_rank=0,
+                 num_replicas=1,
+                 verbose=False
                  ):
         super().__init__(batch_size,
                         shuffle,
@@ -228,6 +255,9 @@ class DataGenerator(StaticDataGenerator):
                         producer_prefixes,
                         smartredis_cluster,
                         smartredis_address,
+                        replica_rank,
+                        num_replicas,
+                        verbose,
                         init_samples,
                         )
 
@@ -248,7 +278,7 @@ class DataGenerator(StaticDataGenerator):
             self.on_epoch_end()
             if len(self) < 1:
                 time.sleep(10)
-        print("Generator initialization complete")
+        self.log("Generator initialization complete")
 
 
     def _update_samples_and_targets(self):
@@ -263,7 +293,7 @@ class DataGenerator(StaticDataGenerator):
             else:
                 target_name = None
             
-            print(f"Retrieving {batch_name} from {entity}")
+            self.log(f"Retrieving {batch_name} from {entity}")
             # Poll next batch based on index, if available: retrieve it, update index and loop
             while self.data_exists(batch_name, target_name):
                 self.add_samples(batch_name, target_name)
@@ -273,7 +303,7 @@ class DataGenerator(StaticDataGenerator):
                 if self.need_targets:
                     target_name = form_name(self.target_prefix, index, sub_index)
 
-                print(f"Retrieving {batch_name}...")
+                self.log(f"Retrieving {batch_name}...")
 
 
     def on_epoch_end(self):
