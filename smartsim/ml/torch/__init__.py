@@ -1,1 +1,1 @@
-from .data import StaticDataGenerator, DataGenerator, DataLoader
+from .data import DataGenerator, DataLoader, StaticDataGenerator

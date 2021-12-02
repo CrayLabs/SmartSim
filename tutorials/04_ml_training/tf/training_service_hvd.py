@@ -18,19 +18,8 @@ if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
 
-training_generator = DataGenerator(smartredis_cluster=False, init_samples=False)
+training_generator = DataGenerator(smartredis_cluster=False, init_samples=True, replica_rank=hvd_rank, num_replicas=hvd_size)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
-
-# Only use subset of generated samples:
-sub_indices = training_generator.sub_indices
-num_sub_indices = len(sub_indices)//hvd_size
-if hvd_rank < hvd_size-1:
-    training_generator.sub_indices = sub_indices[(hvd_rank*num_sub_indices):((hvd_rank+1)*num_sub_indices)]
-else:
-    training_generator.sub_indices = sub_indices[(hvd_size-1)*num_sub_indices:]
-
-print(f"Rank {hvd_rank}, sub-indices: {training_generator.sub_indices}")
-training_generator.init_samples()
 
 opt = keras.optimizers.Adam(0.001 * hvd.size())
 # Horovod: add Horovod Distributed Optimizer.

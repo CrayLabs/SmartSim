@@ -1,1 +1,1 @@
-from .data import form_name, TrainingDataUploader
+from .data import TrainingDataUploader, form_name

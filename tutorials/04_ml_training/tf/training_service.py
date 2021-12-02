@@ -4,7 +4,7 @@ import tensorflow.keras as keras
 from smartsim.ml.tf import DataGenerator
 
 
-training_generator = DataGenerator(smartredis_cluster=False)
+training_generator = DataGenerator(smartredis_cluster=False, verbose=True)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
 model.compile(optimizer="Adam", loss="mse", metrics=["mae"])
 

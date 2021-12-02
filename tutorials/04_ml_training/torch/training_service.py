@@ -21,11 +21,9 @@ if __name__ == '__main__':
     for epoch in range(50):  # loop over the dataset multiple times
 
         running_loss = 0.0
+        output_period = 100
         print(f"Epoch {epoch}")
         for i, data in enumerate(trainloader):
-            if i==0:
-                output_period = max(10, len(trainloader)//10)
-                print(output_period)
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].double().to('cuda'), data[1].to('cuda')
             # zero the parameter gradients

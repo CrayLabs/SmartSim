@@ -28,5 +28,5 @@ except AssertionError:
     ) from None
 
 
+from .data import DataGenerator, StaticDataGenerator
 from .utils import freeze_model
-from .data import StaticDataGenerator, DataGenerator
