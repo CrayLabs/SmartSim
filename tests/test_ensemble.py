@@ -140,7 +140,11 @@ def test_arg_and_model_params_step():
     rs_copy = deepcopy(rs)
     rs_orig_args = rs_copy.exe_args
     ensemble = Ensemble(
-        "step", params, params_as_args=["H", "g_param"], run_settings=rs_copy, perm_strat="step"
+        "step",
+        params,
+        params_as_args=["H", "g_param"],
+        run_settings=rs_copy,
+        perm_strat="step",
     )
     assert len(ensemble) == 2
 

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from smartsim.error.errors import SSConfigError
+
 from ..error import EntityExistsError
 from ..utils.helpers import cat_arg_and_value, init_default
 from .entity import SmartSimEntity
@@ -119,15 +120,18 @@ class Model(SmartSimEntity):
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
     def params_to_args(self):
-        """Convert parameters to command line arguments and update run settings.
-        """
+        """Convert parameters to command line arguments and update run settings."""
         for param in self.params_as_args:
             if not param in self.params:
-                raise SSConfigError(f"Tried to convert {param} to command line argument " +
-                                    f"for Model {self.name}, but its value was not found in model params")
+                raise SSConfigError(
+                    f"Tried to convert {param} to command line argument "
+                    + f"for Model {self.name}, but its value was not found in model params"
+                )
             if self.run_settings is None:
-                raise SSConfigError(f"Tried to configure command line parameter for Model {self.name}, " +
-                                    "but no RunSettings are set.")
+                raise SSConfigError(
+                    f"Tried to configure command line parameter for Model {self.name}, "
+                    + "but no RunSettings are set."
+                )
             self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def __eq__(self, other):
