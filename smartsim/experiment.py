@@ -420,7 +420,7 @@ class Experiment:
         :rtype: str
         """
         values = []
-        headers=[
+        headers = [
             "Name",
             "Entity-Type",
             "JobID",
@@ -433,16 +433,18 @@ class Experiment:
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
             for run in range(job.history.runs + 1):
-                values.append([
-                    job.entity.name,
-                    job.entity.type,
-                    job.history.jids[run],
-                    run,
-                    job.history.job_times[run],
-                    job.history.statuses[run],
-                    job.history.returns[run],
-                ])
-        return tabulate(values, headers, showindex=True)
+                values.append(
+                    [
+                        job.entity.name,
+                        job.entity.type,
+                        job.history.jids[run],
+                        run,
+                        job.history.job_times[run],
+                        job.history.statuses[run],
+                        job.history.returns[run],
+                    ]
+                )
+        return tabulate(values, headers, showindex=True, tablefmt="plain")
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
