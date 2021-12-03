@@ -362,6 +362,16 @@ class BsubBatchSettings(BatchSettings):
         """
         self.walltime = walltime
 
+    def set_queue(self, queue):
+        """Set the queue
+
+        This sets ``-q``.
+
+        :param queue: queue name
+        :type queue: str
+        """
+        self.batch_args["q"] = queue
+
     def set_smts(self, smts):
         """Set SMTs
 
@@ -459,7 +469,7 @@ class BsubBatchSettings(BatchSettings):
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
-        :return: list of batch arguments for Qsub
+        :return: list of batch arguments for bsub
         :rtype: list[str]
         """
         opts = []
