@@ -22,10 +22,15 @@ if __name__ == '__main__':
 
     torch.multiprocessing.set_start_method('spawn')
     training_set = DataGenerator(smartredis_cluster=False, shuffle=True, 
-                                 batch_size=32, num_replicas=hvd_size,
-                                 replica_rank=hvd_rank)
+                                 batch_size=32, 
+                                 num_replicas=hvd_size,
+                                 replica_rank=hvd_rank,
+                                 verbose=True,
+                                 init_samples=False)
+
     trainloader = DataLoader(training_set, batch_size=None,
                              num_workers=2)
+
     model = models.mobilenet_v2().double().to('cuda')
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001*hvd_size)
@@ -36,6 +41,7 @@ if __name__ == '__main__':
     for epoch in range(100):  # loop over the dataset multiple times
 
         running_loss = 0.0
+        epoch_running_loss = 0.0
         if hvd_rank == 0:
             print(f"Epoch {epoch}")
         output_period = 100
@@ -54,11 +60,17 @@ if __name__ == '__main__':
 
             # print statistics
             running_loss += loss.item()
+            epoch_running_loss += loss.item()
 
             if hvd_rank == 0:
-                if i % output_period == (output_period-1):    # print every "output-period" mini-batches
+                if i % output_period == (output_period-1):    # print every "output_period" mini-batches
                     print('[%d, %5d] loss: %.3f' %
                         (epoch + 1, i + 1, running_loss / output_period))
                     running_loss = 0.0
+
+        if hvd_rank == 0:    
+            print('[%d, %5d] loss: %.3f' %
+                (epoch + 1, i + 1, epoch_running_loss / (i+1)))
+            epoch_running_loss = 0.0
                 
     print('Finished Training')

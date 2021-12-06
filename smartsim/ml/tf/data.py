@@ -13,15 +13,10 @@ from smartsim.ml.data import BatchDownloader, ContinuousBatchDownloader
 class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
     def __init__(
         self,
-        init_samples=True,
         **kwargs
     ):
         BatchDownloader.__init__(self, **kwargs)
         
-        if init_samples:
-            self.init_sources()
-            self.init_samples()
-
 
     def __getitem__(self, index):
         if len(self) < 1:
