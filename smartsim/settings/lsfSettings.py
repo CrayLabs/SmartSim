@@ -324,6 +324,16 @@ class BsubBatchSettings(BatchSettings):
         """
         self.walltime = time
 
+    def set_queue(self, queue):
+        """Set the queue
+
+        This sets ``-q``.
+
+        :param queue: queue name
+        :type queue: str
+        """
+        self.batch_args["q"] = queue
+
     def set_smts(self, smts):
         """Set SMTs
 
@@ -345,6 +355,9 @@ class BsubBatchSettings(BatchSettings):
         :type time: str
         """
         self.project = project
+
+    def set_account(self, account):
+        self.project = account
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -418,7 +431,7 @@ class BsubBatchSettings(BatchSettings):
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
-        :return: list of batch arguments for Qsub
+        :return: list of batch arguments for bsub
         :rtype: list[str]
         """
         opts = []
