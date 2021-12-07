@@ -43,7 +43,9 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     run_settings = exp.create_run_settings(
         "python", f"run_tf.py --device={test_device}"
     )
-    run_settings.set_tasks(1)
+
+    if wlmutils.get_test_launcher() != "local":
+        run_settings.set_tasks(1)
     model = exp.create_model("tf_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
