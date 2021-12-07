@@ -226,10 +226,16 @@ class BatchSettings:
     def set_nodes(self, num_nodes):
         raise NotImplementedError
 
+    def set_hostlist(self, host_list):
+        raise NotImplementedError
+
+    def set_queue(self, queue):
+        raise NotImplementedError
+
     def set_walltime(self, walltime):
         raise NotImplementedError
 
-    def set_account(self, acct):
+    def set_account(self, account):
         raise NotImplementedError
 
     def format_batch_args(self):
@@ -257,7 +263,7 @@ class BatchSettings:
         elif isinstance(lines, list):
             self._preamble += lines
         else:
-            raise TypeError
+            raise TypeError("Expected str or List[str] for lines argument")
 
     def __str__(self):
         string = f"Batch Command: {self._batch_cmd}\n"
