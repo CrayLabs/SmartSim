@@ -30,10 +30,10 @@ from .base import BatchSettings, RunSettings
 
 
 class JsrunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``jsrun`` command
 
-        ``JsrunSettings`` can be used for both the `lsf` launcher.
+        ``JsrunSettings`` should only be used on LSF-based systems.
 
         :param exe: executable
         :type exe: str
@@ -348,20 +348,14 @@ class BsubBatchSettings(BatchSettings):
 
         This sets ``-W``.
 
-        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours
+        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
+                         if time is supplied in hh:mm:ss format, seconds
+                         will be ignored and walltime will be set as ``hh:mm``
         :type walltime: str
         """
+        if walltime and len(walltime.split(":")) > 2:
+            walltime = ":".join(walltime.split(":")[:2])
         self.walltime = walltime
-
-    def set_queue(self, queue):
-        """Set the queue
-
-        This sets ``-q``.
-
-        :param queue: queue name
-        :type queue: str
-        """
-        self.batch_args["q"] = queue
 
     def set_smts(self, smts):
         """Set SMTs
@@ -386,7 +380,14 @@ class BsubBatchSettings(BatchSettings):
         self.project = project
 
     def set_account(self, account):
-        self.project = account
+        """Set the project
+
+        this function is an alias for `set_project`.
+
+        :param account: project name
+        :type account: str
+        """
+        self.set_project(account)
 
     def set_nodes(self, nodes):
         """Set the number of nodes for this batch job
@@ -435,6 +436,14 @@ class BsubBatchSettings(BatchSettings):
         """
         self.batch_args["n"] = int(tasks)
 
+    def set_queue(self, queue):
+        """Set the queue for this job
+
+        :param queue: The queue to submit the job on
+        :type queue: str
+        """
+        self.batch_args["q"] = queue
+
     def _format_alloc_flags(self):
         """Format ``alloc_flags`` checking if user already
         set it. Currently only adds SMT flag if missing
@@ -460,7 +469,7 @@ class BsubBatchSettings(BatchSettings):
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview
 
-        :return: list of batch arguments for bsub
+        :return: list of batch arguments for Qsub
         :rtype: list[str]
         """
         opts = []
