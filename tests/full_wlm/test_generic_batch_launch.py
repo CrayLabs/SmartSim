@@ -20,6 +20,8 @@ def test_batch_ensemble(fileutils, wlmutils):
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
+    if wlmutils.get_test_launcher() == "lsf":
+        batch.set_project(wlmutils.get_test_account())
     ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
     ensemble.add_model(M1)
     ensemble.add_model(M2)
@@ -39,6 +41,8 @@ def test_batch_ensemble_replicas(fileutils, wlmutils):
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
+    if wlmutils.get_test_launcher() == "lsf":
+        batch.set_project(wlmutils.get_test_account())
     ensemble = exp.create_ensemble(
         "batch-ens-replicas", batch_settings=batch, run_settings=settings, replicas=2
     )
