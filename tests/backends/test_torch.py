@@ -40,7 +40,8 @@ def test_torch_model_and_script(fileutils, mlutils, wlmutils):
     run_settings = exp.create_run_settings(
         "python", f"run_torch.py --device={test_device}"
     )
-    run_settings.set_tasks(1)
+    if wlmutils.get_test_launcher() != "local":
+        run_settings.set_tasks(1)
     model = exp.create_model("torch_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
