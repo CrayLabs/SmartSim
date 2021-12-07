@@ -78,19 +78,18 @@ def test_summary(fileutils, wlmutils):
     assert exp.get_status(sleep)[0] == constants.STATUS_COMPLETED
 
     summary_str = exp.summary()
-    rows = [s.split() for s in summary_str.split('\n')]
+    print(summary_str)
+
+    rows = [s.split() for s in summary_str.split("\n")]
     headers = ["Index"] + rows.pop(0)
 
-    print(summary_str)
-    row = { head: val for head, val in zip(headers, rows[0]) }
-
+    row = dict(zip(headers, rows[0]))
     assert sleep.name == row["Name"]
     assert sleep.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
-    row_1 = { head: val for head, val in zip(headers, rows[1]) }
-
+    row_1 = dict(zip(headers, rows[1]))
     assert bad.name == row_1["Name"]
     assert bad.type == row_1["Entity-Type"]
     assert 0 == int(row_1["RunID"])
