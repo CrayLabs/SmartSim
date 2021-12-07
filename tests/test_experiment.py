@@ -109,7 +109,7 @@ def test_summary(fileutils):
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )
     exp.start(m)
-    summary_str = exp.summary(format="plain")
+    summary_str = exp.summary()
     print(summary_str)
 
     summary_lines = summary_str.split("\n")
@@ -123,16 +123,3 @@ def test_summary(fileutils):
     assert m.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
-
-
-def test_launcher_detection(wlmutils):
-    exp = Experiment("test-launcher-detection", launcher="auto")
-
-    # We check whether the right launcher is found. But if
-    # the test launcher was set to local, we tolerate finding
-    # another one (this cannot be avoided)
-    if (
-        exp._launcher != wlmutils.get_test_launcher()
-        and wlmutils.get_test_launcher() != "local"
-    ):
-        assert False
