@@ -388,7 +388,7 @@ class BsubBatchSettings(BatchSettings):
     def set_account(self, account):
         self.project = account
 
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, nodes):
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
