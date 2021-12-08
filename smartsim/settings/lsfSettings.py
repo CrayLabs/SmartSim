@@ -333,6 +333,9 @@ class BsubBatchSettings(BatchSettings):
         """
         if project:
             kwargs.pop("account", None)
+        else:
+            project = kwargs.pop("account", None)
+            
         super().__init__("bsub",
                          batch_args=batch_args,
                          nodes=nodes,
