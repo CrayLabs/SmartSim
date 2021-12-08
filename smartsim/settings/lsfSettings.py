@@ -331,11 +331,12 @@ class BsubBatchSettings(BatchSettings):
         :param smts: SMTs, defaults to None
         :type smts: int, optional
         """
-        super().__init__("bsub", batch_args=batch_args)
-        if nodes:
-            self.set_nodes(nodes)
-        self.set_walltime(time)
-        self.set_project(project)
+        super().__init__("bsub",
+         batch_args=batch_args,
+                         nodes=nodes,
+                         time=time, 
+                         **kwargs)
+
         if smts:
             self.set_smts(smts)
         else:
@@ -353,9 +354,11 @@ class BsubBatchSettings(BatchSettings):
                          will be ignored and walltime will be set as ``hh:mm``
         :type walltime: str
         """
-        if walltime and len(walltime.split(":")) > 2:
-            walltime = ":".join(walltime.split(":")[:2])
-        self.walltime = walltime
+        # For compatibility with other launchers, as explained in docstring
+        if walltime:
+            if len(walltime.split(":")) > 2:
+                walltime = ":".join(walltime.split(":")[:2])
+            self.walltime = walltime
 
     def set_smts(self, smts):
         """Set SMTs
@@ -387,9 +390,10 @@ class BsubBatchSettings(BatchSettings):
         :param account: project name
         :type account: str
         """
-        self.set_project(account)
+        if account:
+            self.set_project(account)
 
-    def set_nodes(self, nodes):
+    def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
@@ -397,7 +401,8 @@ class BsubBatchSettings(BatchSettings):
         :param nodes: number of nodes
         :type nodes: int
         """
-        self.batch_args["nnodes"] = int(nodes)
+        if num_nodes:
+            self.batch_args["nnodes"] = int(num_nodes)
 
     def set_expert_mode_req(self, res_req, slots):
         """Set allocation for expert mode. This
@@ -442,7 +447,8 @@ class BsubBatchSettings(BatchSettings):
         :param queue: The queue to submit the job on
         :type queue: str
         """
-        self.batch_args["q"] = queue
+        if queue:
+            self.batch_args["q"] = queue
 
     def _format_alloc_flags(self):
         """Format ``alloc_flags`` checking if user already
