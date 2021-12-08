@@ -331,10 +331,13 @@ class BsubBatchSettings(BatchSettings):
         :param smts: SMTs, defaults to None
         :type smts: int, optional
         """
+        if project:
+            kwargs.pop("account", None)
         super().__init__("bsub",
-         batch_args=batch_args,
+                         batch_args=batch_args,
                          nodes=nodes,
-                         time=time, 
+                         account=project,
+                         time=time,
                          **kwargs)
 
         if smts:
