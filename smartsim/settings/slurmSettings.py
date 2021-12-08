@@ -224,14 +224,13 @@ class SbatchSettings(BatchSettings):
         :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        super().__init__(
-            "sbatch",
-            batch_args=batch_args,
-            nodes=nodes,
-            account=account,
-            time=time,
-            **kwargs,
-        )
+        print("SbatchSettings", kwargs)
+        super().__init__("sbatch",
+                         batch_args=batch_args,
+                         nodes=nodes, 
+                         account=account, 
+                         time=time,  
+                         **kwargs)
 
     def set_walltime(self, walltime):
         """Set the walltime of the job
@@ -242,7 +241,8 @@ class SbatchSettings(BatchSettings):
         :type walltime: str
         """
         # TODO check for formatting here
-        self.batch_args["time"] = walltime
+        if walltime:
+            self.batch_args["time"] = walltime
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -259,7 +259,8 @@ class SbatchSettings(BatchSettings):
         :param account: account id
         :type account: str
         """
-        self.batch_args["account"] = account
+        if account:
+            self.batch_args["account"] = account
 
     def set_partition(self, partition):
         """Set the partition for the batch job
@@ -277,7 +278,8 @@ class SbatchSettings(BatchSettings):
         :param queue: the partition to run the batch job on
         :type queue: str
         """
-        self.set_partition(queue)
+        if queue:
+            self.set_partition(queue)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
