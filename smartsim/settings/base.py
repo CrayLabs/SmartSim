@@ -205,7 +205,6 @@ class BatchSettings:
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
         self._preamble = []
-        print("BatchSettings", kwargs)
         self.set_nodes(kwargs.get("nodes", None))
         self.set_walltime(kwargs.get("time", None))
         self.set_queue(kwargs.get("queue", None))

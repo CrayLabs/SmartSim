@@ -224,7 +224,6 @@ class SbatchSettings(BatchSettings):
         :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        print("SbatchSettings", kwargs)
         super().__init__("sbatch",
                          batch_args=batch_args,
                          nodes=nodes, 
