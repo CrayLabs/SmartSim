@@ -74,11 +74,13 @@ def parse_qstat_jobid(output, job_id):
     result = "NOTFOUND"
     for line in output.split("\n"):
         fields = line.split()
-        if len(fields) >= 5:
-            if fields[0] == job_id:
-                stat = fields[4]
-                result = stat
-                break
+        if len(fields) < 5:
+            continue
+        if line.split()[0] == job_id:
+            line = line.split()
+            stat = line[4]
+            result = stat
+            break
     return result
 
 
