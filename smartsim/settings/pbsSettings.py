@@ -26,7 +26,7 @@
 
 from ..error import SmartSimError, SSConfigError
 from ..utils.helpers import init_default
-from .settings import BatchSettings
+from .base import BatchSettings
 
 
 class QsubBatchSettings(BatchSettings):

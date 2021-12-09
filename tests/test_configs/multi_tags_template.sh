@@ -1,0 +1,1 @@
+echo "My two parameters are ;port; and ;password;, OK?"

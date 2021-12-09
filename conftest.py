@@ -14,6 +14,7 @@ from smartsim.settings import (
     JsrunSettings, RunSettings
 )
 from smartsim.config import CONFIG
+from smartsim.error import SSConfigError
 
 
 # Globals, yes, but its a testing file
@@ -134,10 +135,15 @@ class WLMUtils:
             settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
             return settings
         if test_launcher == "lsf":
-            raise SSUnsupportedError("SmartSim LSF launcher does not support custom run settings at this time.")
+            run_args = {"--np": ntasks, "--nrs": nodes}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="jsrun", run_args=run_args)
+            return settings
+        elif test_launcher != "local":
+            raise SSConfigError(f"Base run settings are available for Slurm, PBS, Cobalt, and LSF, but launcher was {test_launcher}")
         # TODO allow user to pick aprun vs MPIrun
         return RunSettings(exe, args)
-        
+
 
     @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):

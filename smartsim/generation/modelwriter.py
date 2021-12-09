@@ -35,7 +35,7 @@ logger = get_logger(__name__)
 class ModelWriter:
     def __init__(self):
         self.tag = ";"
-        self.regex = "(;.+;)"
+        self.regex = "(;[^;]+;)"
         self.lines = []
 
     def set_tag(self, tag, regex=None):
@@ -108,21 +108,26 @@ class ModelWriter:
         for i, line in enumerate(self.lines):
             search = re.search(self.regex, line)
             if search:
-                tagged_line = search.group(0)
-                previous_value = self._get_prev_value(tagged_line)
-                if self._is_ensemble_spec(tagged_line, params):
-                    new_val = str(params[previous_value])
-                    new_line = re.sub(self.regex, new_val, line)
-                    edited.append(new_line)
+                while search:
+                    tagged_line = search.group(0)
+                    previous_value = self._get_prev_value(tagged_line)
+                    if self._is_ensemble_spec(tagged_line, params):
+                        new_val = str(params[previous_value])
+                        new_line = re.sub(self.regex, new_val, line, 1)
+                        search = re.search(self.regex, new_line)
+                        if not search:
+                            edited.append(new_line)
+                        else:
+                            line = new_line
 
-                # if a tag is found but is not in this model's configurations
-                # put in placeholder value
-                else:
-                    tag = tagged_line.split(self.tag)[1]
-                    if tag not in unused_tags:
-                        unused_tags[tag] = []
-                    unused_tags[tag].append(i + 1)
-                    edited.append(re.sub(self.regex, previous_value, line))
+                    # if a tag is found but is not in this model's configurations
+                    # put in placeholder value
+                    else:
+                        tag = tagged_line.split(self.tag)[1]
+                        if tag not in unused_tags:
+                            unused_tags[tag] = []
+                        unused_tags[tag].append(i + 1)
+                        edited.append(re.sub(self.regex, previous_value, line))
             else:
                 edited.append(line)
         for tag in unused_tags:

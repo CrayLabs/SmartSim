@@ -1,8 +1,6 @@
 import logging
-import sys
 import time
 from os import environ
-from shutil import which
 
 import pytest
 

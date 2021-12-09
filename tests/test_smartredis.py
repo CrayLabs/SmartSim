@@ -22,8 +22,9 @@ REDIS_PORT = 6780
 
 shouldrun = True
 try:
-    import smartredis
     import torch
+
+    import smartredis
 except ImportError:
     shouldrun = False
 
@@ -50,7 +51,7 @@ def test_exchange(fileutils):
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    rs = RunSettings("python", "producer.py --exchange")
+    rs = exp.create_run_settings("python", "producer.py --exchange")
     params = {"mult": [1, -10]}
     ensemble = Ensemble(
         name="producer",
@@ -99,8 +100,8 @@ def test_consumer(fileutils):
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    rs_prod = RunSettings("python", "producer.py")
-    rs_consumer = RunSettings("python", "consumer.py")
+    rs_prod = exp.create_run_settings("python", "producer.py")
+    rs_consumer = exp.create_run_settings("python", "consumer.py")
     params = {"mult": [1, -10]}
     ensemble = Ensemble(
         name="producer", params=params, run_settings=rs_prod, perm_strat="step"

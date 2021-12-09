@@ -3,7 +3,7 @@ import time
 import pytest
 
 from smartsim import Experiment, constants
-from smartsim.error import LauncherError, SmartSimError, SSUnsupportedError
+from smartsim.error import SmartSimError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -18,7 +18,9 @@ def test_failed_status(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
 
     script = fileutils.get_test_conf_path("bad.py")
-    settings = wlmutils.get_run_settings("python", f"{script} --time=7")
+    settings = exp.create_run_settings(
+        "python", f"{script} --time=7", run_comamnd="auto"
+    )
 
     model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
 
@@ -47,44 +49,11 @@ def test_bad_run_command_args(fileutils, wlmutils):
 
     # this argument will get turned into an argument for the run command
     # of the specific WLM of the system.
-    settings = wlmutils.get_run_settings(
-        "python", f"{script} --time=5", badarg="bad-arg"
+    settings = exp.create_run_settings(
+        "python", f"{script} --time=5", run_args={"badarg": "badvalue"}
     )
 
     model = exp.create_model("bad-model", path=test_dir, run_settings=settings)
 
     with pytest.raises(SmartSimError):
-        exp.start(model)
-
-
-def test_unsupported_run_settings_on_wlm(fileutils, wlmutils):
-    """Fails at launch because the model has
-    an unsupported run settings
-
-    This test ensures that the launcher does not try to launch an
-    instance of a child class of RunSettings as a LocalStep
-    """
-    launcher = wlmutils.get_test_launcher()
-
-    exp_name = "test-unsupported-run-settings-on-wlm"
-    exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
-
-    # temporarily change the test launcher in order to easily get an instance of an unsupported run settings
-    if launcher == "slurm":
-        wlmutils.set_test_launcher("cobalt")
-    else:
-        wlmutils.set_test_launcher("slurm")
-
-    script = fileutils.get_test_conf_path("sleep.py")
-    settings = wlmutils.get_run_settings("python", f"{script} --time=5")
-
-    # change test launcher back to its original state
-    wlmutils.set_test_launcher(launcher)
-
-    model = exp.create_model(
-        "unsupported-rs-model", path=test_dir, run_settings=settings
-    )
-
-    with pytest.raises(SSUnsupportedError):
         exp.start(model)

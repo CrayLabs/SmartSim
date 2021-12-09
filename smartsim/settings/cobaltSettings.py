@@ -24,15 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SmartSimError
-
-from ..error import SSConfigError
-from ..utils.helpers import init_default
-from .settings import BatchSettings
+from .base import BatchSettings
 
 
 class CobaltBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
+    def __init__(
+        self, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
+    ):
         """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None

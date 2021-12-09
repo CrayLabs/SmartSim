@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from os import environ
 
