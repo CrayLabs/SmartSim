@@ -470,6 +470,9 @@ class Experiment:
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
+        :param format: the style in which the summary table is formatted,
+                       defaults to "github"
+        :type format: str, optional
         :return: tabulate string of ``Experiment`` history
         :rtype: str
         """
@@ -498,7 +501,7 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        return tabulate(values, headers, showindex=True, tablefmt="plain")
+        return tabulate(values, headers, showindex=True, tablefmt=format)
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
