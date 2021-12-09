@@ -201,10 +201,14 @@ class RunSettings:
 
 
 class BatchSettings:
-    def __init__(self, batch_cmd, batch_args=None):
+    def __init__(self, batch_cmd, batch_args=None, **kwargs):
         self._batch_cmd = batch_cmd
         self.batch_args = init_default({}, batch_args, dict)
         self._preamble = []
+        self.set_nodes(kwargs.get("nodes", None))
+        self.set_walltime(kwargs.get("time", None))
+        self.set_queue(kwargs.get("queue", None))
+        self.set_account(kwargs.get("account", None))
 
     @property
     def batch_cmd(self):
