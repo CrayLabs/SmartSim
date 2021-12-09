@@ -109,7 +109,7 @@ def test_summary(fileutils):
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )
     exp.start(m)
-    summary_str = exp.summary()
+    summary_str = exp.summary(format="plain")
     print(summary_str)
 
     summary_lines = summary_str.split("\n")
