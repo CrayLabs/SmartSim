@@ -11,12 +11,12 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
 
     By default, the StaticDataGenerator has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
-    entities. 
-    
+    entities.
+
     All details about the batches must be defined in
     the constructor; two mechanisms are available, `manual` and
     `auto`.
-    
+
      - When specifying `auto`, the user must also specify
       `uploader_name`. StaticDataGenerator will get all needed information
       from the database (this expects a Dataset like the one created
@@ -33,7 +33,7 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
        named <target_prefix>.<sub_index>. If `producer_prefixes` is
        None, then all incoming entities will be treated as producers,
        and for each one, the corresponding batches will be downloaded.
-    
+
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
     be set up in the costructor.
@@ -43,8 +43,8 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
     `init_sources()` (which initializes the list of sources and the SmartRedis client)
     and `init_samples()`.  After `init_sources()` is called,
     a list of data sources is populated, representing the batches which
-    will be downloaded. 
-    
+    will be downloaded.
+
     Each source is represented as a tuple `(producer_name, sub_index)`.
     Before `init_samples()` is called, the user can modify the list.
     Once `init_samples()` is called, all data is downloaded and batches
@@ -95,12 +95,9 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
     :param init_samples: whether samples should be initialized in the constructor
     :type init_samples: bool
     """
-    def __init__(
-        self,
-        **kwargs
-    ):
+
+    def __init__(self, **kwargs):
         BatchDownloader.__init__(self, **kwargs)
-        
 
     def __getitem__(self, index):
         if len(self) < 1:
@@ -118,7 +115,6 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
         else:
             return x
 
-
     def on_epoch_end(self):
         """Callback called at the end of each training epoch
 
@@ -126,7 +122,6 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
         """
         if self.shuffle:
             np.random.shuffle(self.indices)
-
 
     def __data_generation(self, indices):
         # Initialization
@@ -149,12 +144,12 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
 
     By default, the DataGenerator has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
-    entities. 
-    
+    entities.
+
     All details about the batches must be defined in
     the constructor; two mechanisms are available, `manual` and
     `auto`.
-    
+
      - When specifying `auto`, the user must also specify
       `uploader_name`. BatchDownloader will get all needed information
       from the database (this expects a Dataset like the one created
@@ -171,7 +166,7 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
        named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
        None, then all incoming entities will be treated as producers,
        and for each one, the corresponding batches will be downloaded.
-    
+
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
     be set up in the costructor.
@@ -182,11 +177,11 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     and `init_samples()`.  After `init_sources()` is called,
     a list of data sources is populated, representing the batches which
     will be downloaded. See `init_sources()`
-    
+
     Each source is represented as a tuple `(producer_name, sub_index, iteration)`.
     Before `init_samples()` is called, the user can modify the list.
     Once `init_samples()` is called, all data is downloaded and batches
-    can be obtained with iter(). 
+    can be obtained with iter().
 
     After initialization, samples and targets can be updated calling `update_data()`,
     which shuffles the available samples, if `shuffle` is set to ``True`` at initialization.
@@ -233,16 +228,12 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     :param init_samples: whether samples should be initialized in the constructor
     :type init_samples: bool
     """
-    def __init__(
-        self,
-        **kwargs
-    ):
-        StaticDataGenerator.__init__(self, **kwargs)
 
+    def __init__(self, **kwargs):
+        StaticDataGenerator.__init__(self, **kwargs)
 
     def __data_generation(self, indices):
         return StaticDataGenerator.__data_generation(self, indices)
-
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch

@@ -1,11 +1,10 @@
+import time
 from os import environ
 
 import numpy as np
 
 from smartredis import Client, Dataset
 from smartredis.error import RedisReplyError
-
-import time
 
 
 def form_name(*args):
@@ -51,6 +50,7 @@ class TrainingDataUploader:
     :type verbose: bool
 
     """
+
     def __init__(
         self,
         name="training_data",
@@ -61,7 +61,7 @@ class TrainingDataUploader:
         smartredis_cluster=True,
         smartredis_address=None,
         sub_indices=None,
-        verbose=False
+        verbose=False,
     ):
         if not name:
             raise ValueError("Name can not be empty")
@@ -123,12 +123,12 @@ class BatchDownloader:
 
     By default, the BatchDownloader has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
-    entities. 
-    
+    entities.
+
     All details about the batches must be defined in
     the constructor; two mechanisms are available, `manual` and
     `auto`.
-    
+
      - When specifying `auto`, the user must also specify
       `uploader_name`. BatchDownloader will get all needed information
       from the database (this expects a Dataset like the one created
@@ -145,7 +145,7 @@ class BatchDownloader:
        named <target_prefix>.<sub_index>. If `producer_prefixes` is
        None, then all incoming entities will be treated as producers,
        and for each one, the corresponding batches will be downloaded.
-    
+
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
     be set up in the costructor.
@@ -155,8 +155,8 @@ class BatchDownloader:
     `init_sources()` (which initializes the list of sources and the SmartRedis client)
     and `init_samples()`.  After `init_sources()` is called,
     a list of data sources is populated, representing the batches which
-    will be downloaded. 
-    
+    will be downloaded.
+
     Each source is represented as a tuple `(producer_name, sub_index)`.
     Before `init_samples()` is called, the user can modify the list.
     Once `init_samples()` is called, all data is downloaded and batches
@@ -206,6 +206,7 @@ class BatchDownloader:
     :param init_samples: whether samples should be initialized in the constructor
     :type init_samples: bool
     """
+
     def __init__(
         self,
         batch_size=32,
@@ -223,7 +224,7 @@ class BatchDownloader:
         num_replicas=1,
         verbose=False,
         init_samples=True,
-        **kwargs
+        **kwargs,
     ):
         self.replica_rank = replica_rank
         self.num_replicas = num_replicas
@@ -258,11 +259,10 @@ class BatchDownloader:
             raise ValueError(
                 f"uploader_info must be one of 'auto' or 'manual', but was {self.uploader_info}"
             )
-        
+
         if init_samples:
             self.init_sources()
             self.init_samples()
-
 
     def log(self, message):
         """Log message if self.verbose is set to ``True``
@@ -272,7 +272,6 @@ class BatchDownloader:
         """
         if self.verbose:
             print(message)
-
 
     def _list_all_sources(self):
         uploaders = environ["SSKEYIN"].split(",")
@@ -310,7 +309,6 @@ class BatchDownloader:
 
         return sources
 
-
     def init_sources(self):
         """Initalize list of data sources based on incoming entitites and self.sub_indices.
 
@@ -339,7 +337,6 @@ class BatchDownloader:
 
         self.sources = self._list_all_sources()
 
-
     @property
     def need_targets(self):
         """Compute if targets have to be downloaded.
@@ -349,9 +346,8 @@ class BatchDownloader:
         """
         return self.target_prefix and not self.autoencoding
 
-
     def __iter__(self):
-        
+
         if not self.sources:
             pass
         else:
@@ -398,7 +394,6 @@ class BatchDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-
     def _data_exists(self, batch_name, target_name):
 
         if self.need_targets:
@@ -407,7 +402,6 @@ class BatchDownloader:
             )
         else:
             return self.client.tensor_exists(batch_name)
-
 
     def _add_samples(self, batch_name, target_name):
         if self.samples is None:
@@ -427,7 +421,6 @@ class BatchDownloader:
         self.indices = np.arange(self.num_samples)
         self.log("Success!")
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
-
 
     def _get_uploader_info(self, uploader_name):
         dataset_name = form_name(uploader_name, "info")
@@ -463,11 +456,9 @@ class BatchDownloader:
             self.sub_indices = None
         self.log(f"Uploader sub-indices: {self.sub_indices}")
 
-
     def __len__(self):
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
-
 
     def _update_samples_and_targets(self):
         for source in self.sources:
@@ -486,7 +477,6 @@ class BatchDownloader:
 
             self._add_samples(batch_name, target_name)
 
-
     def update_data(self):
         """Update data.
 
@@ -496,7 +486,6 @@ class BatchDownloader:
         """
         if self.shuffle:
             np.random.shuffle(self.indices)
-
 
     def __data_generation(self, indices):
         # Initialization
@@ -512,7 +501,6 @@ class BatchDownloader:
 
         return x, y
 
-
     def __len__(self):
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
@@ -523,12 +511,12 @@ class ContinuousBatchDownloader(BatchDownloader):
 
     By default, the ContinuousBatchDownloader has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
-    entities. 
-    
+    entities.
+
     All details about the batches must be defined in
     the constructor; two mechanisms are available, `manual` and
     `auto`.
-    
+
      - When specifying `auto`, the user must also specify
       `uploader_name`. BatchDownloader will get all needed information
       from the database (this expects a Dataset like the one created
@@ -545,7 +533,7 @@ class ContinuousBatchDownloader(BatchDownloader):
        named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
        None, then all incoming entities will be treated as producers,
        and for each one, the corresponding batches will be downloaded.
-    
+
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
     be set up in the costructor.
@@ -556,11 +544,11 @@ class ContinuousBatchDownloader(BatchDownloader):
     and `init_samples()`.  After `init_sources()` is called,
     a list of data sources is populated, representing the batches which
     will be downloaded. See `init_sources()`
-    
+
     Each source is represented as a tuple `(producer_name, sub_index, iteration)`.
     Before `init_samples()` is called, the user can modify the list.
     Once `init_samples()` is called, all data is downloaded and batches
-    can be obtained with iter(). 
+    can be obtained with iter().
 
     After initialization, samples and targets can be updated calling `update_data()`,
     which shuffles the available samples, if `shuffle` is set to ``True`` at initialization.
@@ -605,20 +593,16 @@ class ContinuousBatchDownloader(BatchDownloader):
     :param init_samples: whether samples should be initialized in the constructor
     :type init_samples: bool
     """
-    def __init__(
-        self,
-        **kwargs
-    ):
+
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    
     def _list_all_sources(self):
         sources = super()._list_all_sources()
         # Append the batch index to each source
         for source in sources:
             source.append(0)
         return sources
-
 
     def _update_samples_and_targets(self):
         for source in self.sources:
@@ -644,7 +628,6 @@ class ContinuousBatchDownloader(BatchDownloader):
 
                 self.log(f"Retrieving {batch_name}...")
 
-
     def update_data(self):
         """Update data.
 
@@ -654,7 +637,6 @@ class ContinuousBatchDownloader(BatchDownloader):
         self._update_samples_and_targets()
         if self.shuffle:
             np.random.shuffle(self.indices)
-
 
     def init_samples(self, sources=None):
         """Initialize samples (and targets, if needed).
@@ -676,7 +658,7 @@ class ContinuousBatchDownloader(BatchDownloader):
             self.sources = self._list_all_sources()
 
         if self.sources:
-            
+
             while len(self) < 1:
                 self._update_samples_and_targets()
                 if len(self) < 1:
