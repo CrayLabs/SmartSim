@@ -68,13 +68,8 @@ def create_batch_settings(
     try:
         batch_class = by_launcher[launcher]
         batch_settings = batch_class(
-            nodes=nodes, time=time, batch_args=batch_args, **kwargs
+            nodes=nodes, time=time, batch_args=batch_args, queue=queue, account=account, **kwargs
         )
-        # put these two in the init once classes like BsubBatch are unified
-        if queue:
-            batch_settings.set_queue(queue)
-        if account:
-            batch_settings.set_account(account)
         return batch_settings
 
     except KeyError:
