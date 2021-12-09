@@ -99,3 +99,27 @@ def test_poll(fileutils):
     exp.start(model, block=False)
     exp.poll(interval=1)
     exp.stop(model)
+
+
+def test_summary(fileutils):
+    exp_name = "test_exp_summary"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+    m = exp.create_model(
+        "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
+    )
+    exp.start(m)
+    summary_str = exp.summary(format="plain")
+    print(summary_str)
+
+    summary_lines = summary_str.split("\n")
+    assert 2 == len(summary_lines)
+
+    headers, values = [s.split() for s in summary_lines]
+    headers = ["Index"] + headers
+
+    row = dict(zip(headers, values))
+    assert m.name == row["Name"]
+    assert m.type == row["Entity-Type"]
+    assert 0 == int(row["RunID"])
+    assert 0 == int(row["Returncode"])

@@ -29,7 +29,7 @@ import os.path as osp
 from os import getcwd
 from pprint import pformat
 
-import pandas as pd
+from tabulate import tabulate
 from tqdm import trange
 
 from .control import Controller, Manifest
@@ -461,41 +461,46 @@ class Experiment:
             logger.error(e)
             raise
 
-    def summary(self):
+    def summary(self, format="github"):
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :return: pandas Dataframe of ``Experiment`` history
-        :rtype: pd.DataFrame
+        :param format: the style in which the summary table is formatted,
+                       for a full list of styles see:
+                       https://github.com/astanin/python-tabulate#table-format,
+                       defaults to "github"
+        :type format: str, optional
+        :return: tabulate string of ``Experiment`` history
+        :rtype: str
         """
-        index = 0
-        df = pd.DataFrame(
-            columns=[
-                "Name",
-                "Entity-Type",
-                "JobID",
-                "RunID",
-                "Time",
-                "Status",
-                "Returncode",
-            ]
-        )
+        values = []
+        headers = [
+            "Name",
+            "Entity-Type",
+            "JobID",
+            "RunID",
+            "Time",
+            "Status",
+            "Returncode",
+        ]
+
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
             for run in range(job.history.runs + 1):
-                df.loc[index] = [
-                    job.entity.name,
-                    job.entity.type,
-                    job.history.jids[run],
-                    run,
-                    job.history.job_times[run],
-                    job.history.statuses[run],
-                    job.history.returns[run],
-                ]
-                index += 1
-        return df
+                values.append(
+                    [
+                        job.entity.name,
+                        job.entity.type,
+                        job.history.jids[run],
+                        run,
+                        job.history.job_times[run],
+                        job.history.statuses[run],
+                        job.history.returns[run],
+                    ]
+                )
+        return tabulate(values, headers, showindex=True, tablefmt=format)
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
