@@ -18,8 +18,9 @@ if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
 
-training_generator = DataGenerator(smartredis_cluster=False, init_samples=True,
-                                   replica_rank=hvd_rank, num_replicas=hvd_size,
+training_generator = DataGenerator(smartredis_cluster=False,
+                                   replica_rank=hvd_rank, 
+                                   num_replicas=hvd_size,
                                    verbose=True)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
 

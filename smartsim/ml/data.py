@@ -139,7 +139,7 @@ class BatchDownloader:
        of batch naming. Specifically, for each incoming entity with
        a name starting with an element of `producer_prefixes`,
        BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index> for all index
+       for all batches named <sample_prefix>_<sub_index> for all indices
        in `sub_indexes` if supplied, and, if
        `target_prefix` is supplied, it will also query for all targets
        named <target_prefix>.<sub_index>. If `producer_prefixes` is
@@ -490,9 +490,9 @@ class BatchDownloader:
     def update_data(self):
         """Update data.
 
-        Since the `BatchDownloader` does not change
-        its list of samples at runtime, this function
-        only shuffles it if `self.shuffle` is ``True``.
+        Since the list of samples is not changed
+        at runtime, this function
+        only shuffles samples if `self.shuffle` is ``True``.
         """
         if self.shuffle:
             np.random.shuffle(self.indices)
@@ -539,7 +539,7 @@ class ContinuousBatchDownloader(BatchDownloader):
        of batch naming. Specifically, for each incoming entity with
        a name starting with an element of `producer_prefixes`,
        BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index>_<iteration> for all index
+       for all batches named <sample_prefix>_<sub_index>_<iteration> for all indices
        in `sub_indices` if supplied, and, if
        `target_prefix` is supplied, it will also query for all targets
        named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
@@ -684,6 +684,6 @@ class ContinuousBatchDownloader(BatchDownloader):
             self.log("Generator initialization complete")
         else:
             self.log(
-                "***Generator has no associated sources, this can happen if the number of "
+                "Generator has no associated sources, this can happen if the number of "
                 "loader workers is larger than the number of available sources."
             )

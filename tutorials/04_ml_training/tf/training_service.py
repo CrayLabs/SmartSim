@@ -8,7 +8,7 @@ training_generator = DataGenerator(smartredis_cluster=False, verbose=True)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
 model.compile(optimizer="Adam", loss="mse", metrics=["mae"])
 
-print("starting training")
+print("Starting training")
 
 for epoch in range(100):
     print(f"Epoch {epoch}")
