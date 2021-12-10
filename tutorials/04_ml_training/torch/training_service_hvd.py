@@ -21,12 +21,11 @@ if __name__ == '__main__':
     torch.cuda.set_device(hvd.local_rank())
 
     torch.multiprocessing.set_start_method('spawn')
-    training_set = DataGenerator(smartredis_cluster=False, shuffle=True, 
-                                 batch_size=32, 
-                                 num_replicas=hvd_size,
-                                 replica_rank=hvd_rank,
+    training_set = DataGenerator(smartredis_cluster=False,
                                  verbose=True,
-                                 init_samples=False)
+                                 init_samples=False,
+                                 num_replicas=hvd_size,
+                                 replica_rank=hvd_rank)
 
     trainloader = DataLoader(training_set, batch_size=None,
                              num_workers=2)
