@@ -453,8 +453,23 @@ the ``training_service`` would look like
                   verbose=2)
 
 
-4.2.2 Launching the workflow
-----------------------------
+Again, this is enough for simple simulations. If the simulation uses MPI,
+then the ``DataGenerator`` needs to know about the possible sub-indices. For example,
+if the simulation runs 8 MPI ranks, the ``DataGenerator`` initialization will
+need to be adapted as follows
+
+.. code-block:: python
+
+    generator = DataGenerator(
+        sample_prefix="points",
+        target_prefix="value",
+        batch_size=32,
+        smartredis_cluster=False,
+        sub_indices=8)
+
+
+4.2.2 Launching the experiment
+------------------------------
 
 To launch the ``producer`` and the ``training_service`` as models
 within a SmartSim ``Experiment``, we can use the following code:
@@ -466,6 +481,7 @@ within a SmartSim ``Experiment``, we can use the following code:
     from smartsim.settings import RunSettings
 
     db = Orchestrator(port=6780)
+    exp = ("online-training", launcher="local")
 
     # producer
     producer_script = "producer.py"

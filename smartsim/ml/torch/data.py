@@ -7,7 +7,7 @@ from smartsim.ml.data import BatchDownloader, ContinuousBatchDownloader
 class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
     """A class to download batches from the DB.
 
-    By default, the StaticDataGenerator has to be created in a process
+    By default, the ``StaticDataGenerator`` has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
     entities.
 
@@ -15,22 +15,21 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
     the constructor; two mechanisms are available, `manual` and
     `auto`.
 
-     - When specifying `auto`, the user must also specify
-      `uploader_name`. BatchDownloader will get all needed information
+    - When specifying `auto`, the user must also specify
+      `uploader_name`. ``StaticDataGenerator`` will get all needed information
       from the database (this expects a Dataset like the one created
-      by TrainingDataUploader to be available and stored as `uploader_name`
+      by ``TrainingDataUploader`` to be available and stored as `uploader_name`
       on the DB).
-
-     - When specifying `manual`, the user must also specify details
-       of batch naming. Specifically, for each incoming entity with
-       a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index> for all indices
-       in `sub_indexes` if supplied, and, if
-       `target_prefix` is supplied, it will also query for all targets
-       named <target_prefix>.<sub_index>. If `producer_prefixes` is
-       None, then all incoming entities will be treated as producers,
-       and for each one, the corresponding batches will be downloaded.
+    - When specifying `manual`, the user must also specify details
+      of batch naming. Specifically, for each incoming entity with
+      a name starting with an element of `producer_prefixes`,
+      BatchDownloader will query the DB
+      for all batches named <sample_prefix>_<sub_index> for all indices
+      in `sub_indexes` if supplied, and, if
+      `target_prefix` is supplied, it will also query for all targets
+      named <target_prefix>.<sub_index>. If `producer_prefixes` is
+      None, then all incoming entities will be treated as producers,
+      and for each one, the corresponding batches will be downloaded.
 
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
@@ -123,7 +122,7 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
 class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     """A class to download batches from the DB.
 
-    By default, the DataGenerator has to be created in a process
+    By default, the ``DataGenerator`` has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
     entities.
 
@@ -131,22 +130,21 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     the constructor; two mechanisms are available, `manual` and
     `auto`.
 
-     - When specifying `auto`, the user must also specify
-      `uploader_name`. DataGenerator will get all needed information
+    - When specifying `auto`, the user must also specify
+      `uploader_name`. ``DataGenerator`` will get all needed information
       from the database (this expects a Dataset like the one created
       by TrainingDataUploader to be available and stored as `uploader_name`
       on the DB).
-
-     - When specifying `manual`, the user must also specify details
-       of batch naming. Specifically, for each incoming entity with
-       a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index>_<iteration> for all indices
-       in `sub_indices` if supplied, and, if
-       `target_prefix` is supplied, it will also query for all targets
-       named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
-       None, then all incoming entities will be treated as producers,
-       and for each one, the corresponding batches will be downloaded.
+    - When specifying `manual`, the user must also specify details
+      of batch naming. Specifically, for each incoming entity with
+      a name starting with an element of `producer_prefixes`,
+      BatchDownloader will query the DB
+      for all batches named <sample_prefix>_<sub_index>_<iteration> for all indices
+      in `sub_indices` if supplied, and, if
+      `target_prefix` is supplied, it will also query for all targets
+      named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
+      `None`, then all incoming entities will be treated as producers,
+      and for each one, the corresponding batches will be downloaded.
 
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
@@ -225,6 +223,12 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
 
 
 class DataLoader(torch.utils.data.DataLoader):
+    """A PyTorch DataLoader, which can take in a SmartSim DataGenerator and
+    configure it so that workers can access separated subsets of the data set sources.
+
+    :param dataset: The data generator
+    :type torch: DataGenerator
+    """
     def __init__(self, dataset, **kwargs):
         super().__init__(
             dataset,

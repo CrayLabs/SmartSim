@@ -454,22 +454,61 @@ Model
    :inherited-members:
 
 
+Machine Learning
+================
+
+.. ml_api:
+
+SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
+
 TensorFlow
-==========
+----------
 
 .. _smartsim_tf_api:
 
-SmartSim includes built-in utilities for supporting TensorFlow and Keras in SmartSim.
+SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
-.. currentmodule:: smartsim.tf.utils
+.. currentmodule:: smartsim.ml.tf.utils
 
 .. autosummary::
 
     freeze_model
 
-.. automodule:: smartsim.tf.utils
+.. automodule:: smartsim.ml.tf.utils
     :members:
 
+
+.. currentmodule:: smartsim.ml.tf.data
+
+.. autoclass:: StaticDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+.. autoclass:: DataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+
+PyTorch
+----------
+
+.. _smartsim_torch_api:
+
+SmartSim includes built-in utilities for supporting PyTorch in training and inference.
+
+.. currentmodule:: smartsim.ml.torch.data
+
+.. autoclass:: StaticDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+.. autoclass:: DataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
 Slurm
 =====
