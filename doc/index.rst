@@ -18,7 +18,7 @@
    tutorials/05_starting_ray/05_starting_ray
    tutorials/using_clients
    tutorials/lattice_boltz_analysis
-   tutorials/inference
+   tutorials/machine_learning
 
 
 .. toctree::

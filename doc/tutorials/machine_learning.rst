@@ -66,8 +66,8 @@ by SmartSim.
     The following code examples do not include code to train the models shown.
 
 
-4.2 PyTorch
-===========
+4.1.1 PyTorch
+-------------
 
 .. _TorchScript: https://pytorch.org/docs/stable/jit.html
 .. _PyTorch: https://pytorch.org/
@@ -172,8 +172,8 @@ If running on CPU, be sure to change the argument in the ``set_model`` call
 above to ``CPU``.
 
 
-4.2 TensorFlow and Keras
-========================
+4.1.2 TensorFlow and Keras
+--------------------------
 
 .. _TensorFlow: https://www.tensorflow.org/
 .. _Keras: https://keras.io/
@@ -253,8 +253,8 @@ returns these values for convenience as shown below.
     print(pred)
 
 
-4.3 ONNX
-========
+4.1.3 ONNX
+----------
 
 .. _Scikit-learn: https://scikit-learn.org
 .. _XGBoost: https://xgboost.readthedocs.io
@@ -271,21 +271,21 @@ Libraries are supported by ONNX and can be readily used with SmartSim.
 
 Some popular ones are:
 
- - `Scikit-learn`_
- - `XGBoost`_
- - `CatBoost`_
- - `TensorFlow`_
- - `Keras`_
- - `PyTorch`_
- - `LightGBM`_
- - `libsvm`_
+- `Scikit-learn`_
+- `XGBoost`_
+- `CatBoost`_
+- `TensorFlow`_
+- `Keras`_
+- `PyTorch`_
+- `LightGBM`_
+- `libsvm`_
 
 As well as some that are not listed. There are also many tools to help convert
 models to ONNX.
 
- - `onnxmltools`_
- - `skl2onnx`_
- - `tensorflow-onnx`_
+- `onnxmltools`_
+- `skl2onnx`_
+- `tensorflow-onnx`_
 
 And PyTorch has it's own converter.
 
@@ -298,7 +298,7 @@ These scripts can be used with the :ref:`SmartSim code <infrastructure_code>`
 above to launch an inference session with any of the supported ONNX libraries.
 
 KMeans
-------
+++++++
 
 .. _skl2onnx.to_onnx: http://onnx.ai/sklearn-onnx/auto_examples/plot_convert_syntax.html
 
@@ -328,7 +328,7 @@ with two ``outputs``.
 
 
 Random Forest
--------------
++++++++++++++
 
 The Random Forest example uses the Iris dataset from Scikit Learn to train a
 RandomForestRegressor. As with the other examples, the skl2onnx function
@@ -351,3 +351,144 @@ RandomForestRegressor. As with the other examples, the skl2onnx function
     client.set_model("rf_regressor", model, "ONNX", device="CPU")
     client.run_model("rf_regressor", inputs="input", outputs="output")
     print(client.get_tensor("output"))
+
+
+4.2 Online training with SmartSim
+=================================
+
+A SmartSim ``Orchestrator`` can be used to store and retrieve samples and targets used to
+train a ML model. A typical example is one in which one simulation produces samples at
+each time step and another application needs to download the samples as they are produced 
+to train a Deep Neural Network (e.g. a surrogate model).
+
+In this section, we will use components implemented in ``smartsim.ml.tf.data``, to train a
+Neural Network implemented in TensorFlow and Keras. In particular, we will be using
+two classes:
+- ``smartsim.ml.data.TrainingUploader`` which streamlines the uploading of samples and corresponding targets to the DB
+- ``smartsim.ml.tf.data.DataGenerator`` which is a Keras ``Generator`` which can be used to train a DNN,
+and will download the samples from the DB updating the training set at the end of each epoch.
+
+The SmartSim ``Experiment`` will consist in one mock simulation (the ``producer``) uploading samples,
+and one application (the ``training_service``) downloading the samples to train a DNN.
+
+A richer example, entirely implemented in Python, is available as a Jupyter Notebook in the
+``tutorials`` section of the SmartSim repository.
+An equivalent example using PyTorch instead of TensorFlow is available in the same directory.
+
+
+4.2.1 Producing and uploading the samples
+-----------------------------------------
+
+.. _ml_training_producer_code:
+
+The first application in the workflow, the ``producer`` will upload batches of samples at regular intervals,
+mimicking the behavior of an iterative simulation. 
+
+Since the ``training_service`` will use a ``smartsim.ml.tf.DataGenerator`` two download the samples, their
+keys need to follow a pre-defined format. Assuming that only one process in the simulation
+uploads the data, this format is ``<sample_prefix>_<iteration>``. And for targets
+(which can also be integer labels), the key format is ``<target_prefix>_<iteration>``. Both ``<sample_prefix>``
+and ``<target_prefix>`` are user-defined, and will need to be used to initialize the
+``smartsim.ml.tf.DataGenerator`` object.
+
+Assuming the simulation is written in Python, then the code would look like
+
+.. code-block:: python
+
+    from SmartRedis import Client
+    # simulation initialization code
+    client = Client(cluster=False, address=None)
+
+    for iteration in range(num_iterations):
+        # simulation code producing two tensors, data_points
+        # and data_values
+        client.put_tensor(f"points_{iteration}", data_points)
+        client.put_tensor(f"values_{iteration}", data_values)
+
+
+For simple simulations, this is sufficient. But if the simulation
+uses MPI, then each rank could upload a portion of the data set. In that case,
+the format for sample and target keys will be ``<sample_prefix>_<sub-index>_<iteration>``
+and ``<target_prefix>_<sub-index>_<iteration>``, where ``<sub_index>`` can be, e.g.
+the MPI rank id.
+
+
+4.2.1 Downloading the samples and training the model
+----------------------------------------------------
+
+The second part of the workflow is the ``training_service``, an application that
+downloads the data uploaded by the ``producer`` and uses them to train a ML model.
+Most importantly, the ``training_service`` needs to keep looking for new samples,
+and download them as they are available. The training data set size thus needs to grow at
+each ``producer`` iteration.
+
+In Keras, a ``Sequence`` represents a data set and can be passed to ``model.fit()``.
+The class ``smartsim.ml.tf.DataGenerator`` is a Keras ``Sequence``, which updates
+its data set at the end of each training epoch, looking for newly produced batches of samples.
+A current limitation of the TensorFlow training algorithm is that it does not take
+into account changes of size in the data sets once the training has started, i.e. it is always
+assumed that the training (and validation) data does not change during the training. To
+overcome this limitation, we need to train one epoch at the time. Thus, 
+following what we defined in the :ref:`producer section <ml_training_produced_code>`,
+the ``training_service`` would look like
+
+.. code-block:: python
+
+    from smartsim.ml.tf.data import DataGenerator
+    generator = DataGenerator(
+        sample_prefix="points",
+        target_prefix="value",
+        batch_size=32,
+        smartredis_cluster=False)
+
+    model = # some ML model
+    # model initialization oce
+
+    for epoch in range(100):
+        model.fit(generator,
+                  steps_per_epoch=None, 
+                  epochs=epoch+1,
+                  initial_epoch=epoch, 
+                  batch_size=generator.batch_size,
+                  verbose=2)
+
+
+4.2.2 Launching the workflow
+----------------------------
+
+To launch the ``producer`` and the ``training_service`` as models
+within a SmartSim ``Experiment``, we can use the following code:
+
+.. code-block:: python
+    
+    from smartsim import Experiment
+    from smartsim.database import Orchestrator
+    from smartsim.settings import RunSettings
+
+    db = Orchestrator(port=6780)
+
+    # producer
+    producer_script = "producer.py"
+    settings = RunSettings("python", exe_args=producer_script)
+    uploader_model = exp.create_model("producer", settings)
+    uploader_model.attach_generator_files(to_copy=script)
+    uploader_model.enable_key_prefixing()
+
+    # training_service
+    training_script = "training_service.py"
+    settings = RunSettings("python", exe_args=training_script)
+    trainer_model = exp.create_model("training_service", settings)
+    trainer_model.register_incoming_entity(uploader_model)
+
+    exp.start(db)
+    exp.start(uploader_model, block=False, summary=False)
+    exp.start(trainer_model, block=True, summary=False)
+
+
+Two lines require attention, as they are needed by the ``DataGenerator`` to work:
+- ``uploader_model.enable_key_prefixing()`` will ensure that the ``producer`` prefixes
+all tensor keys with its name
+- ``trainer_model.register_incoming_entity(uploader_model)`` enables the ``DataGenerator``
+in the ``training_service`` to know that it needs to download samples produced by the ``producer``
+
+
