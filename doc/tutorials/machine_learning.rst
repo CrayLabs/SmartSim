@@ -442,7 +442,7 @@ the ``training_service`` would look like
         smartredis_cluster=False)
 
     model = # some ML model
-    # model initialization oce
+    # model initialization
 
     for epoch in range(100):
         model.fit(generator,
