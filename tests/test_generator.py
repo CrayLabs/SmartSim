@@ -172,3 +172,4 @@ def test_config_dir(fileutils):
     config = fileutils.get_test_conf_path("tag_dir_template")
     ensemble.attach_generator_files(to_configure=config)
     gen.generate_experiment(ensemble)
+    assert False

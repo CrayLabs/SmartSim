@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from os import path
+import os
 
 from ..error import SSConfigError
 
@@ -63,6 +64,7 @@ class EntityFiles:
         self.tagged = tagged
         self.copy = copy
         self.link = symlink
+        self.tagged_hierarchy = None
         self._check_files()
 
     def _check_files(self):
@@ -80,10 +82,12 @@ class EntityFiles:
 
         # check the paths provided by the user and ensure
         # that no directories were provided as tagged files
-        for i in range(len(self.tagged)):
-            self.tagged[i] = self._check_path(self.tagged[i])
-            if path.isdir(self.tagged[i]):
-                raise SSConfigError("Directories cannot be listed in tagged files")
+        # for i in range(len(self.tagged)):
+        #     self.tagged[i] = self._check_path(self.tagged[i])
+        #     if path.isdir(self.tagged[i]):
+        #         # TODO: Fix this!
+        #         raise SSConfigError("Directories cannot be listed in tagged files")
+        self.tagged_hierarchy = TaggedFilesHierarchy.from_list_paths(self.tagged)
 
         for i in range(len(self.copy)):
             self.copy[i] = self._check_path(self.copy[i])
@@ -114,7 +118,8 @@ class EntityFiles:
                     raise TypeError(f"Not all {file_type} files were of type str")
         return file_list
 
-    def _check_path(self, file_path):
+    @staticmethod
+    def _check_path(file_path):
         """Given a user provided path-like str, find the actual path to
            the directory or file and create a full path.
 
@@ -130,3 +135,33 @@ class EntityFiles:
         if path.isdir(full_path):
             return full_path
         raise SSConfigError(f"File or Directory {file_path} not found")
+
+
+class TaggedFilesHierarchy:
+    def __init__(self, base=""):
+        self.base = base
+        self.files = []
+        self.dirs = []
+
+    @classmethod
+    def from_list_paths(cls, file_list):
+        return cls()._add_paths(file_list)
+
+    def _add_file(self, f):
+        self.files.append(f)
+    
+    def _add_dir(self, d):
+        th = TaggedFilesHierarchy(path.join(self.base, path.basename(d)))
+        th._add_paths([path.join(d, f) for f in os.listdir(d)])
+        self.dirs.append(th)
+
+    def _add_paths(self, paths):
+        for p in paths:
+            p = EntityFiles._check_path(p)
+            if path.isdir(p):
+                if path.islink(p):
+                    raise SSConfigError("No link :(") # TODO: Make real message
+                self._add_dir(p)
+            else:
+                self._add_file(p)
+        return self
