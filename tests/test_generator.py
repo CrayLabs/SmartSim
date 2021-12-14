@@ -155,3 +155,20 @@ def test_multiple_tags(fileutils):
         assert (
             line.strip() == "My two parameters are 6379 and unbreakable_password, OK?"
         )
+
+
+@pytest.mark.skip(reason="Not Implimented")
+def test_config_dir(fileutils):
+    """Test the generation and configuration of models with
+    tagged files that are directories with subdirectories and files
+    """
+    exp = Experiment("config-dir", launcher="local")
+    test_dir = fileutils.make_test_dir("test_config_dir")
+    gen = Generator(test_dir)
+
+    params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
+    ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
+
+    config = fileutils.get_test_conf_path("tag_dir_template")
+    ensemble.attach_generator_files(to_configure=config)
+    gen.generate_experiment(ensemble)
