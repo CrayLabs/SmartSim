@@ -379,7 +379,6 @@ class RayHead(SmartSimEntity):
                                            run_args=run_args, 
                                            run_command=run_command, 
                                            **kwargs)
-        run_settings.set_tasks(1)
 
         super().__init__(name, path, run_settings)
 
@@ -503,7 +502,6 @@ class RayWorker(SmartSimEntity):
                                            run_args=run_args, 
                                            run_command=run_command, 
                                            **kwargs)
-        run_settings.set_tasks(1)
 
         super().__init__(name, path, run_settings)
 
