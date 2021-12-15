@@ -500,7 +500,7 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        return tabulate(values, headers, showindex=True, tablefmt=format)
+        return tabulate(values, headers, showindex=True, tablefmt=format, missingval="None")
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
