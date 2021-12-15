@@ -75,9 +75,8 @@ class RayCluster(EntityList):
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
-    :param run_command: specify launch binary. This is currently used only if launcher is Cobalt.
-                        Options are ``mpirun`` and ``aprun``, defaults to ``aprun``.
-    :type run_command: str, optional
+    :param run_command: specify launch binary. This is currently used only if launcher is Cobalt or PBS.
+    :type run_command: str
     :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
     :type hosts: str, list[str]
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
@@ -239,23 +238,6 @@ class RayCluster(EntityList):
                 alloc=alloc,
             )
             self.entities.append(worker_model)
-
-
-    # def _build_batch_settings(self, num_nodes, time, batch_args, launcher):
-    #     if launcher == "pbs":
-    #         self.batch_settings = QsubBatchSettings(
-    #             nodes=num_nodes, time=time, batch_args=batch_args
-    #         )
-    #     elif launcher == "slurm":
-    #         self.batch_settings = SbatchSettings(
-    #             nodes=num_nodes, time=time, batch_args=batch_args
-    #         )
-    #     elif launcher == "cobalt":
-    #         self.batch_settings = CobaltBatchSettings(
-    #             nodes=num_nodes, time=time, batch_args=batch_args
-    #         )
-    #     else:
-    #         raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
 
 
     def get_head_address(self):
