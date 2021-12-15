@@ -146,7 +146,7 @@ class RayCluster(EntityList):
             interface=interface,
             alloc=alloc,
             num_nodes=num_nodes,
-            run_command=run_command,
+            run_command=run_command if run_command else "auto",
             host_list=host_list,
             **kwargs,
         )
@@ -358,8 +358,9 @@ class RayHead(SmartSimEntity):
         run_settings = create_run_settings(launcher=launcher, 
                                            exe="python", 
                                            exe_args=ray_exe_args, 
-                                           run_args=run_args, 
-                                           run_command=run_command, 
+                                           run_args=run_args,
+                                           run_command=run_command if run_command else "auto",
+                                           alloc=alloc,
                                            **kwargs)
 
         super().__init__(name, path, run_settings)
@@ -393,64 +394,6 @@ class RayHead(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-    # def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args, run_command):
-
-    #     if launcher == "slurm":
-    #         run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
-    #     elif launcher == "pbs":
-    #         run_settings = self._build_aprun_settings(run_args, ray_exe_args)
-    #     elif launcher == "cobalt":
-    #         if run_command is None or run_command == "aprun":
-    #             run_settings = self._build_aprun_settings(run_args, ray_exe_args)
-    #         elif run_command == "mpirun":
-    #             run_settings = self._build_mpirun_settings(run_args, ray_exe_args)
-    #         else:
-    #             raise SSUnsupportedError(
-    #                 "Only run commands supported for Cobalt are "
-    #                 + f"aprun and mpirun, but {run_command} was given"
-    #             )
-    #     else:
-    #         raise SSUnsupportedError(
-    #             "Only slurm, cobalt, and pbs launchers are supported."
-    #         )
-
-    #     return run_settings
-
-    # def _build_aprun_settings(self, run_args, ray_args):
-
-    #     aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
-    #     aprun_settings.set_tasks(1)
-    #     aprun_settings.set_tasks(1)
-    #     aprun_settings.set_tasks_per_node(1)
-    #     return aprun_settings
-
-    # def _build_srun_settings(self, alloc, run_args, ray_args):
-
-    #     delete_elements(run_args, ["oversubscribe"])
-
-    #     run_args["unbuffered"] = None
-
-    #     srun_settings = SrunSettings(
-    #         "python",
-    #         exe_args=ray_args,
-    #         run_args=run_args,
-    #         alloc=alloc,
-    #     )
-    #     srun_settings.set_nodes(1)
-    #     srun_settings.set_tasks(1)
-    #     srun_settings.set_tasks_per_node(1)
-    #     return srun_settings
-
-    # def _build_mpirun_settings(self, run_args, ray_args):
-
-    #     mpirun_settings = MpirunSettings(
-    #         "python",
-    #         exe_args=ray_args,
-    #         run_args=run_args,
-    #     )
-    #     mpirun_settings.set_tasks(1)
-    #     return mpirun_settings
-
 
 class RayWorker(SmartSimEntity):
     def __init__(
@@ -482,7 +425,8 @@ class RayWorker(SmartSimEntity):
                                            exe="python", 
                                            exe_args=ray_exe_args, 
                                            run_args=run_args, 
-                                           run_command=run_command, 
+                                           run_command=run_command,
+                                           alloc=alloc,
                                            **kwargs)
 
         super().__init__(name, path, run_settings)
@@ -529,56 +473,3 @@ class RayWorker(SmartSimEntity):
         ray_starter_args += extra_ray_args
 
         return " ".join(ray_starter_args)
-
-    # def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args, run_command):
-
-    #     if launcher == "slurm":
-    #         run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
-    #     elif launcher == "pbs":
-    #         run_settings = self._build_aprun_settings(run_args, ray_exe_args)
-    #     elif launcher == "cobalt":
-    #         if run_command is None or run_command == "aprun":
-    #             run_settings = self._build_aprun_settings(run_args, ray_exe_args)
-    #         elif run_command == "mpirun":
-    #             run_settings = self._build_mpirun_settings(run_args, ray_exe_args)
-    #         else:
-    #             raise SSUnsupportedError(
-    #                 "Only run commands supported for Cobalt are "
-    #                 + f"aprun and mpirun, but {run_command} was given"
-    #             )
-    #     else:
-    #         raise SSUnsupportedError(
-    #             "Only slurm, cobalt, and pbs launchers are supported."
-    #         )
-
-    #     return run_settings
-
-    # def _build_aprun_settings(self, run_args, ray_args):
-
-    #     aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
-
-    #     aprun_settings.set_tasks(1)
-    #     aprun_settings.set_tasks_per_node(1)
-    #     return aprun_settings
-
-    # def _build_srun_settings(self, alloc, run_args, ray_args):
-    #     delete_elements(run_args, ["oversubscribe"])
-    #     run_args["unbuffered"] = None
-
-    #     srun_settings = SrunSettings(
-    #         "python",
-    #         exe_args=ray_args,
-    #         run_args=run_args,
-    #         alloc=alloc,
-    #     )
-    #     srun_settings.set_nodes(1)
-    #     srun_settings.set_tasks(1)
-    #     srun_settings.set_tasks_per_node(1)
-    #     return srun_settings
-
-    # def _build_mpirun_settings(self, run_args, ray_args):
-
-    #     mpirun_settings = MpirunSettings("python", exe_args=ray_args, run_args=run_args)
-
-    #     mpirun_settings.set_tasks(1)
-    #     return mpirun_settings

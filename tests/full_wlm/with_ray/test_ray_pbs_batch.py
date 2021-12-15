@@ -50,14 +50,13 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         batch=True,
         ray_port=6830,
         time="00:05:00",
-        run_command='aprun',
-        interface=wlmutils.get_test_interface(),
-    )
+        interface=wlmutils.get_test_interface()
+        )
 
     exp.generate(cluster)
     exp.start(cluster, block=False, summary=True)
-    ctx = ray.client("ray://" + cluster.get_head_address() + ":10001").connect()
-
+    ctx = ray.init("ray://" + cluster.get_head_address() + ":10001")    
+    
     right_resources = False
     trials = 10
     while not right_resources and trials > 0:
