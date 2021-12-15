@@ -80,14 +80,9 @@ class EntityFiles:
         self.copy = self._type_check_files(self.copy, "Copyable")
         self.link = self._type_check_files(self.link, "Symlink")
 
-        # check the paths provided by the user and ensure
-        # that no directories were provided as tagged files
-        # for i in range(len(self.tagged)):
-        #     self.tagged[i] = self._check_path(self.tagged[i])
-        #     if path.isdir(self.tagged[i]):
-        #         # TODO: Fix this!
-        #         raise SSConfigError("Directories cannot be listed in tagged files")
-        self.tagged_hierarchy = TaggedFilesHierarchy.from_list_paths(self.tagged)
+        self.tagged_hierarchy = TaggedFilesHierarchy.from_list_paths(
+            self.tagged, dir_contents_to_base=True
+        )
 
         for i in range(len(self.copy)):
             self.copy[i] = self._check_path(self.copy[i])
@@ -138,30 +133,91 @@ class EntityFiles:
 
 
 class TaggedFilesHierarchy:
+    """TaggedFilesHierarchy maintains a list of files and a list of child 
+    TaggedFilesHierarchies. The TaggedFilesHierarchy class is ment to be easily
+    converted into a directory file structure each with each dir containing a
+    copy of the specifed (possilby tagged) files specifed at each level of the
+    hierarchy via a simply depth first search over the hierarchy.
+    """
+
     def __init__(self, base=""):
+        """Initialize a TaggedFilesHierarchy
+
+        :param base: pathlike string specifing the generated directory
+                     files are located
+        :type base: str, optional
+        """
         self.base = base
-        self.files = []
-        self.dirs = []
+        self.files = set()
+        self.dirs = set()
 
     @classmethod
-    def from_list_paths(cls, file_list):
-        return cls()._add_paths(file_list)
+    def from_list_paths(cls, path_list, dir_contents_to_base=False):
+        """Given a list of absolute paths to files and dirs, create and return
+        a TaggedFilesHierarchy instance to representing the file hierarchy
+
+        :param path_list: list of absolute path like strings to tagged files
+                          or dirs containing tagged files
+        :type path_list: list of str
+        :param dir_contents_to_base: When a top level dir is encountered, if
+                                     this value is truthy, files in the dir are
+                                     put into the base hierarchy level.
+                                     Otherwise, a new sub level is created for
+                                     the dir
+        :type dir_contents_to_base: bool
+        :return: A built tagged file hierarchy for the given files
+        :rtype: TaggedFilesHierarchy
+        """
+        th = cls()
+        if dir_contents_to_base:
+            new_paths = []
+            for p in path_list:
+                if path.isdir(p):
+                    new_paths += [path.join(p, f) for f in os.listdir(p)]
+                else:
+                    new_paths.append(p)
+            path_list = new_paths
+        th._add_paths(path_list)
+        return th
 
     def _add_file(self, f):
-        self.files.append(f)
-    
+        """Add a file to the current level in the file hierarchy
+
+        :param f: absoute path to a file to add to the hierarchy
+        :type f: str
+        """
+        self.files.add(f)
+
     def _add_dir(self, d):
+        """Add a dir contianing tagged files by creating a new sub level in the
+        tagged file hierarchy. All paths within the directroy are added to the
+        the new level sub level tagged file hierarchy
+
+        :param d: absoute path to a dir to add to the hierarchy
+        :type d: str 
+        """
         th = TaggedFilesHierarchy(path.join(self.base, path.basename(d)))
         th._add_paths([path.join(d, f) for f in os.listdir(d)])
-        self.dirs.append(th)
+        self.dirs.add(th)
 
     def _add_paths(self, paths):
+        """Adds files and dirs from the specified in a list of pah like strings
+        to the tagged file hierarchy
+
+        :param paths: list of pathlike strings to files to add to the hierarchy
+        :type paths: list of str
+        :raises SSConfigError: if link to dir is found 
+                               (prevent chance of circular hierarchy)
+        """
         for p in paths:
+            # TODO: Tightly coupled method, move to module level
             p = EntityFiles._check_path(p)
             if path.isdir(p):
                 if path.islink(p):
-                    raise SSConfigError("No link :(") # TODO: Make real message
+                    raise SSConfigError(
+                        "Subdirectories of directories containing tagged files"
+                        + " cannot be links"
+                    )
                 self._add_dir(p)
             else:
                 self._add_file(p)
-        return self
