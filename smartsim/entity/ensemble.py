@@ -86,7 +86,7 @@ class Ensemble(EntityList):
         :rtype: ``Ensemble``
         """
         self.params = init_default({}, params, dict)
-        self.params_as_args = init_default({}, params_as_args, (list,str))
+        self.params_as_args = init_default({}, params_as_args, (list, str))
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
@@ -113,9 +113,7 @@ class Ensemble(EntityList):
                 param_names, params = self._read_model_parameters()
 
                 # Compute all combinations of model parameters and arguments
-                all_model_params = strategy(
-                    param_names, params, **kwargs
-                )
+                all_model_params = strategy(param_names, params, **kwargs)
                 if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
@@ -170,7 +168,6 @@ class Ensemble(EntityList):
                 )
             else:
                 logger.info("Empty ensemble created for batch launch")
-
 
     def add_model(self, model):
         """Add a model to this ensemble
