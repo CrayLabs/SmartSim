@@ -50,7 +50,8 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         time="00:05:00",
         interface=wlmutils.get_test_interface(),
         batch_args={"A": wlmutils.get_test_account(),
-                    "queue": "debug-flat-quad"}  # this is Theta-specific
+                    "queue": "debug-flat-quad"},  # this is Theta-specific
+        run_command='aprun'
     )
 
     exp.generate(cluster)
