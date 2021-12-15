@@ -215,7 +215,7 @@ class Generator:
             def _build_tagged_files(tagged):
                 """Using a TaggedFileHierarchy, reproduce the tagged file
                 directory structure
-                
+
                 :param tagged: a TaggedFileHierarchy to be built as a
                                directory structure
                 :type tagged: TaggedFilesHierarchy

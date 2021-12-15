@@ -224,12 +224,14 @@ class SbatchSettings(BatchSettings):
         :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        super().__init__("sbatch",
-                         batch_args=batch_args,
-                         nodes=nodes, 
-                         account=account, 
-                         time=time,  
-                         **kwargs)
+        super().__init__(
+            "sbatch",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=account,
+            time=time,
+            **kwargs,
+        )
 
     def set_walltime(self, walltime):
         """Set the walltime of the job

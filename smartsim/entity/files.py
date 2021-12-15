@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from os import path
 import os
+from os import path
 
 from ..error import SSConfigError
 
@@ -133,7 +133,7 @@ class EntityFiles:
 
 
 class TaggedFilesHierarchy:
-    """TaggedFilesHierarchy maintains a list of files and a list of child 
+    """TaggedFilesHierarchy maintains a list of files and a list of child
     TaggedFilesHierarchies. The TaggedFilesHierarchy class is ment to be easily
     converted into a directory file structure each with each dir containing a
     copy of the specifed (possilby tagged) files specifed at each level of the
@@ -194,7 +194,7 @@ class TaggedFilesHierarchy:
         the new level sub level tagged file hierarchy
 
         :param d: absoute path to a dir to add to the hierarchy
-        :type d: str 
+        :type d: str
         """
         th = TaggedFilesHierarchy(path.join(self.base, path.basename(d)))
         th._add_paths([path.join(d, f) for f in os.listdir(d)])
@@ -206,7 +206,7 @@ class TaggedFilesHierarchy:
 
         :param paths: list of pathlike strings to files to add to the hierarchy
         :type paths: list of str
-        :raises SSConfigError: if link to dir is found 
+        :raises SSConfigError: if link to dir is found
                                (prevent chance of circular hierarchy)
         """
         for p in paths:
