@@ -157,7 +157,6 @@ def test_multiple_tags(fileutils):
         )
 
 
-@pytest.mark.skip(reason="Not Implimented")
 def test_config_dir(fileutils):
     """Test the generation and configuration of models with
     tagged files that are directories with subdirectories and files
@@ -172,4 +171,24 @@ def test_config_dir(fileutils):
     config = fileutils.get_test_conf_path("tag_dir_template")
     ensemble.attach_generator_files(to_configure=config)
     gen.generate_experiment(ensemble)
-    assert False
+
+    assert osp.isdir(osp.join(test_dir, "test"))
+    # assert False
+    def _check_generated(test_num, param_0, param_1):
+        conf_test_dir = osp.join(test_dir, "test", f"test_{test_num}")
+        assert osp.isdir(conf_test_dir)
+        assert osp.isdir(osp.join(conf_test_dir, "nested_0"))
+        assert osp.isdir(osp.join(conf_test_dir, "nested_1"))
+
+        with open(osp.join(conf_test_dir, "nested_0", "tagged_0.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 0 = {param_0}"'
+
+        with open(osp.join(conf_test_dir, "nested_1", "tagged_1.sh")) as f:
+            line = f.readline()
+            assert line.strip() == f'echo "Hello with parameter 1 = {param_1}"'
+
+    _check_generated(0, 0, 2)
+    _check_generated(1, 0, 3)
+    _check_generated(2, 1, 2)
+    _check_generated(3, 1, 3)
