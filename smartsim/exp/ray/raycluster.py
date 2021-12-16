@@ -39,7 +39,7 @@ from ...settings import (
     SbatchSettings,
     SrunSettings,
 )
-from ...settings.settings import create_batch_settings,create_run_settings
+from ...settings.settings import create_batch_settings, create_run_settings
 from ...utils import delete_elements, get_logger
 from ...utils.helpers import expand_exe_path, init_default
 
@@ -113,7 +113,7 @@ class RayCluster(EntityList):
             raise SSUnsupportedError(
                 "The supported launchers for RayCluster are",
                 *[f"{launcher_name}," for launcher_name in supported_launchers],
-                f"but {launcher} was provided."
+                f"but {launcher} was provided.",
             )
 
         if password:
@@ -151,16 +151,17 @@ class RayCluster(EntityList):
             **kwargs,
         )
         if batch:
-            self.batch_settings = create_batch_settings(launcher=launcher,
-                                                        nodes=num_nodes, 
-                                                        time=time, 
-                                                        batch_args=batch_args,
-                                                        **kwargs)
+            self.batch_settings = create_batch_settings(
+                launcher=launcher,
+                nodes=num_nodes,
+                time=time,
+                batch_args=batch_args,
+                **kwargs,
+            )
         self.ray_head_address = None
 
         if host_list:
-            self.set_hosts(host_list=host_list)
-
+            self.set_hosts(host_list=host_list, launcher=launcher)
 
     @property
     def batch(self):
@@ -171,8 +172,7 @@ class RayCluster(EntityList):
         except AttributeError:
             return False
 
-
-    def set_hosts(self, host_list):
+    def set_hosts(self, host_list, launcher):
         """Specify the hosts for the ``RayCluster`` to launch on. This is
         optional, unless ``run_command`` is `mpirun`.
 
@@ -191,12 +191,11 @@ class RayCluster(EntityList):
             self.batch_settings.set_hostlist(host_list)
         for host, node in zip(host_list, self.entities):
             # Aprun doesn't like settings hosts in batch launch
-            if isinstance(node.run_settings, AprunSettings):
+            if launcher=='pbs' or launcher=='cobalt':
                 if not self.batch:
                     node.run_settings.set_hostlist([host])
             else:
                 node.run_settings.set_hostlist([host])
-
 
     def _initialize_entities(self, **kwargs):
 
@@ -239,7 +238,6 @@ class RayCluster(EntityList):
             )
             self.entities.append(worker_model)
 
-
     def get_head_address(self):
         """Return address of head node
 
@@ -254,7 +252,6 @@ class RayCluster(EntityList):
             )
         return self.ray_head_address
 
-
     def get_dashboard_address(self):
         """Returns dashboard address
 
@@ -264,7 +261,6 @@ class RayCluster(EntityList):
         :rtype: str
         """
         return self.get_head_address() + ":" + str(self.entities[0].dashboard_port)
-
 
     def _update_workers(self):
         """Update worker args before launching them."""
@@ -342,7 +338,7 @@ class RayHead(SmartSimEntity):
         run_command=None,
         alloc=None,
         dash_port=8265,
-        **kwargs
+        **kwargs,
     ):
         self.dashboard_port = dash_port
         self.batch_settings = None
@@ -355,16 +351,17 @@ class RayHead(SmartSimEntity):
             ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = create_run_settings(launcher=launcher, 
-                                           exe="python", 
-                                           exe_args=ray_exe_args, 
-                                           run_args=run_args,
-                                           run_command=run_command if run_command else "auto",
-                                           alloc=alloc,
-                                           **kwargs)
+        run_settings = create_run_settings(
+            launcher=launcher,
+            exe="python",
+            exe_args=ray_exe_args,
+            run_args=run_args,
+            run_command=run_command if run_command else "auto",
+            alloc=alloc,
+            **kwargs,
+        )
 
         super().__init__(name, path, run_settings)
-
 
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
 
@@ -408,7 +405,7 @@ class RayWorker(SmartSimEntity):
         launcher="slurm",
         run_command=None,
         alloc=None,
-        **kwargs
+        **kwargs,
     ):
 
         self.batch_settings = None
@@ -421,13 +418,15 @@ class RayWorker(SmartSimEntity):
             ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = create_run_settings(launcher=launcher, 
-                                           exe="python", 
-                                           exe_args=ray_exe_args, 
-                                           run_args=run_args, 
-                                           run_command=run_command,
-                                           alloc=alloc,
-                                           **kwargs)
+        run_settings = create_run_settings(
+            launcher=launcher,
+            exe="python",
+            exe_args=ray_exe_args,
+            run_args=run_args,
+            run_command=run_command,
+            alloc=alloc,
+            **kwargs,
+        )
 
         super().__init__(name, path, run_settings)
 

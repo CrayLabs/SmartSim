@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
 import os.path as osp
+import time
 from os import getcwd
 from pprint import pformat
 
@@ -500,7 +500,9 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        return tabulate(values, headers, showindex=True, tablefmt=format, missingval="None")
+        return tabulate(
+            values, headers, showindex=True, tablefmt=format, missingval="None"
+        )
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched

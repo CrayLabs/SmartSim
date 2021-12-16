@@ -47,8 +47,9 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         num_nodes=2,
         batch=True,
         interface=wlmutils.get_test_interface(),
-        batch_args={"A": wlmutils.get_test_account(),
-                    "queue": "debug-flat-quad"} if launcher=='cobalt' else None,
+        batch_args={"A": wlmutils.get_test_account(), "queue": "debug-flat-quad"}
+        if launcher == "cobalt"
+        else None,
     )
 
     exp.generate(cluster)
