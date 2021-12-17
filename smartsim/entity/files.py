@@ -210,8 +210,7 @@ class TaggedFilesHierarchy:
                                (prevent chance of circular hierarchy)
         """
         for p in paths:
-            # TODO: Tightly coupled method, move to module level
-            p = EntityFiles._check_path(p)
+            p = path.abspath(p)
             if path.isdir(p):
                 if path.islink(p):
                     raise SSConfigError(
@@ -219,5 +218,7 @@ class TaggedFilesHierarchy:
                         + " cannot be links"
                     )
                 self._add_dir(p)
-            else:
+            elif path.isfile(p):
                 self._add_file(p)
+            else:
+                raise SSConfigError(f"File or Directory {p} not found")
