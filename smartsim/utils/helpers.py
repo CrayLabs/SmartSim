@@ -187,17 +187,7 @@ def cat_arg_and_value(arg_name, value):
 
 def detect_launcher():
     """Detect available launcher."""
-    # Precedence: slurm, PBS, Cobalt, LSF, local
-    if (
-        which("sacct")
-        and which("srun")
-        and which("salloc")
-        and which("sbatch")
-        and which("scancel")
-        and which("sstat")
-        and which("sinfo")
-    ):
-        return "slurm"
+    # Precedence: PBS, Cobalt, LSF, Slurm, local
     if which("qsub") and which("qstat") and which("qdel"):
         qsub_version = run(
             ["qsub", "--version"], shell=False, capture_output=True, encoding="utf-8"
@@ -214,4 +204,14 @@ def detect_launcher():
         and which("bkill")
     ):
         return "lsf"
+    if (
+        which("sacct")
+        and which("srun")
+        and which("salloc")
+        and which("sbatch")
+        and which("scancel")
+        and which("sstat")
+        and which("sinfo")
+    ):
+        return "slurm"
     return "local"
