@@ -123,3 +123,8 @@ def test_summary(fileutils):
     assert m.type == row["Entity-Type"]
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
+
+
+def test_launcher_detection(wlmutils):
+    exp = Experiment("test-launcher-detection", launcher="auto")
+    assert(exp._launcher==wlmutils.get_test_launcher())

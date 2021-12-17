@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ..error import SmartSimError
-from ..utils.helpers import is_valid_cmd
+from ..utils.helpers import is_valid_cmd, detect_launcher
 from . import *
 
 
@@ -123,6 +123,9 @@ def create_run_settings(
         "cobalt": ["aprun", "mpirun"],
         "lsf": ["jsrun", "mpirun"],
     }
+
+    if launcher=='auto':
+        launcher = detect_launcher()
 
     def _detect_command(launcher):
         if launcher in by_launcher:

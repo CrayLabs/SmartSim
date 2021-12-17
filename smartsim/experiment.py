@@ -38,7 +38,7 @@ from .error import SmartSimError
 from .generation import Generator
 from .settings import settings
 from .utils import get_logger
-from .utils.helpers import colorize, init_default
+from .utils.helpers import colorize, init_default, detect_launcher
 
 logger = get_logger(__name__)
 
@@ -76,6 +76,10 @@ class Experiment:
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
         self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+
+        if launcher=="auto":
+            launcher = detect_launcher()
+
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
 
