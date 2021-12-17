@@ -186,18 +186,32 @@ def cat_arg_and_value(arg_name, value):
 
 
 def detect_launcher():
-    """Detect available launcher.
-
-    """
+    """Detect available launcher."""
     # Precedence: slurm, PBS, Cobalt, LSF, local
-    if which("sacct") and which("srun") and which("salloc") and which("sbatch") and which("scancel") and which("sstat") and which("sinfo"):
+    if (
+        which("sacct")
+        and which("srun")
+        and which("salloc")
+        and which("sbatch")
+        and which("scancel")
+        and which("sstat")
+        and which("sinfo")
+    ):
         return "slurm"
     if which("qsub") and which("qstat") and which("qdel"):
-        qsub_version = run(["qsub", "--version"], shell=False, capture_output=True, encoding="utf-8")
+        qsub_version = run(
+            ["qsub", "--version"], shell=False, capture_output=True, encoding="utf-8"
+        )
         if "pbs" in (qsub_version.stdout).lower():
             return "pbs"
         if "cobalt" in (qsub_version.stdout).lower():
             return "cobalt"
-    if which("bsub") and which("jsrun") and which("jslist") and which("bjobs") and which("bkill"):
+    if (
+        which("bsub")
+        and which("jsrun")
+        and which("jslist")
+        and which("bjobs")
+        and which("bkill")
+    ):
         return "lsf"
     return "local"

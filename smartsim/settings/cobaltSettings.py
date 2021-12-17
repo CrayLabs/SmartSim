@@ -50,14 +50,15 @@ class CobaltBatchSettings(BatchSettings):
         :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        super().__init__("qsub",
-                         batch_args=batch_args,
-                         nodes=nodes, 
-                         account=account, 
-                         queue=queue, 
-                         time=time,  
-                         **kwargs)
-                         
+        super().__init__(
+            "qsub",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=account,
+            queue=queue,
+            time=time,
+            **kwargs,
+        )
 
     def set_walltime(self, walltime):
         """Set the walltime of the job

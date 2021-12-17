@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ..error import SmartSimError
-from ..utils.helpers import is_valid_cmd, detect_launcher
+from ..utils.helpers import detect_launcher, is_valid_cmd
 from . import *
 
 
@@ -36,7 +36,8 @@ def create_batch_settings(
 
     See Experiment.create_batch_settings for details
 
-    :param launcher: launcher for this experiment
+    :param launcher: launcher for this experiment, if set to 'auto', 
+                     an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param nodes: number of nodes for batch job, defaults to 1
     :type nodes: int, optional
@@ -60,6 +61,9 @@ def create_batch_settings(
         "lsf": BsubBatchSettings,
     }
 
+    if launcher == "auto":
+        launcher = detect_launcher()
+
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")
 
@@ -68,7 +72,12 @@ def create_batch_settings(
     try:
         batch_class = by_launcher[launcher]
         batch_settings = batch_class(
-            nodes=nodes, time=time, batch_args=batch_args, queue=queue, account=account, **kwargs
+            nodes=nodes,
+            time=time,
+            batch_args=batch_args,
+            queue=queue,
+            account=account,
+            **kwargs,
         )
         return batch_settings
 
@@ -91,7 +100,8 @@ def create_run_settings(
 
     See Experiment.create_run_settings docstring for more details
 
-    :param launcher: launcher to create settings for
+    :param launcher: launcher to create settings for, if set to 'auto', 
+                     an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param run_command: command to run the executable
     :type run_command: str
@@ -124,7 +134,7 @@ def create_run_settings(
         "lsf": ["jsrun", "mpirun"],
     }
 
-    if launcher=='auto':
+    if launcher == "auto":
         launcher = detect_launcher()
 
     def _detect_command(launcher):

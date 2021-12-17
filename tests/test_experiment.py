@@ -127,4 +127,4 @@ def test_summary(fileutils):
 
 def test_launcher_detection(wlmutils):
     exp = Experiment("test-launcher-detection", launcher="auto")
-    assert(exp._launcher==wlmutils.get_test_launcher())
+    assert exp._launcher == wlmutils.get_test_launcher()
