@@ -133,11 +133,32 @@ class EntityFiles:
 
 
 class TaggedFilesHierarchy:
-    """TaggedFilesHierarchy maintains a list of files and a list of child
-    TaggedFilesHierarchies. The TaggedFilesHierarchy class is ment to be easily
-    converted into a directory file structure each with each dir containing a
-    copy of the specifed (possilby tagged) files specifed at each level of the
-    hierarchy via a simply depth first search over the hierarchy.
+    """The TaggedFilesHierarchy class maintains a list of files and a list of
+    child TaggedFilesHierarchy instances. Each instance describes how a
+    directory structure of tagged files.
+
+    TaggedFilesHierarchy represents a directory containing potentially tagged
+    files and subdirectories.
+
+    TaggedFilesHierarchy.base is the directory path from the the root of the
+    file structure
+    E.g.
+    TaggedFilesHierarchy.base = ""            => ./
+    TaggedFilesHierarchy.base = "dir_a"       => ./dir_a
+    TaggedFilesHierarchy.base = "dir_a/dir_b" => ./dir_a/dir_b
+
+    TaggedFilesHierarchy.files is a collection of paths to files that need
+    to be copied to directory that the TaggedFilesHierarchy represents
+
+    TaggedFilesHierarchy.dirs is a collection of child TaggedFilesHierarchy,
+    each with its own files and dirs, representing a directory that needs to
+    be created within the current directory represented by the current
+    TaggedFilesHierarchy
+
+    By performing a depth first search over the entire hierarchy starting at
+    the root (TaggedFilesHierarchy.base = ""), one could reconstruct the
+    tagged file directory structure with relative ease at any location deemed
+    necessary.
     """
 
     def __init__(self, base=""):
@@ -154,11 +175,13 @@ class TaggedFilesHierarchy:
     @classmethod
     def from_list_paths(cls, path_list, dir_contents_to_base=False):
         """Given a list of absolute paths to files and dirs, create and return
-        a TaggedFilesHierarchy instance to representing the file hierarchy
+        a TaggedFilesHierarchy instance representing the file hierarchy of
+        tagged files. All files in the path list will be placed in the base of
+        the file hierarchy.
 
-        :param path_list: list of absolute path like strings to tagged files
-                          or dirs containing tagged files
-        :type path_list: list of str
+        :param path_list: list of absolute paths to tagged files or dirs
+                          containing tagged files
+        :type path_list: list[str]
         :param dir_contents_to_base: When a top level dir is encountered, if
                                      this value is truthy, files in the dir are
                                      put into the base hierarchy level.
@@ -205,21 +228,21 @@ class TaggedFilesHierarchy:
         self.dirs.add(tagged_file_hierarchy)
 
     def _add_paths(self, paths):
-        """Adds files and dirs from the specified in a list of pah like strings
-        to the tagged file hierarchy
+        """Takes a list of paths and iterates over it, determining if each
+        path is to a file or a dir and then appropriatly adding it to the
+        TaggedFilesHierarchy.
 
-        :param paths: list of pathlike strings to files to add to the hierarchy
-        :type paths: list of str
-        :raises SSConfigError: if link to dir is found
-                               (prevent chance of circular hierarchy)
+        :param paths: list of paths to files or dirs to add to the hierarchy
+        :type paths: list[str]
+        :raises SSConfigError: if link to dir is found or path does not exist
         """
         for path in paths:
             path = os.path.abspath(path)
             if os.path.isdir(path):
                 if os.path.islink(path):
                     raise SSConfigError(
-                        "Subdirectories of directories containing tagged files"
-                        + " cannot be links"
+                        "Tagged directories and thier subdirectories cannot be links"
+                        + " to prevent circular directory structures"
                     )
                 self._add_dir(path)
             elif os.path.isfile(path):
