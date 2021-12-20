@@ -168,37 +168,41 @@ class TaggedFilesHierarchy:
         :return: A built tagged file hierarchy for the given files
         :rtype: TaggedFilesHierarchy
         """
-        th = cls()
+        tagged_file_hierarchy = cls()
         if dir_contents_to_base:
             new_paths = []
-            for p in path_list:
-                if path.isdir(p):
-                    new_paths += [path.join(p, f) for f in os.listdir(p)]
+            for path in path_list:
+                if os.path.isdir(path):
+                    new_paths += [os.path.join(path, file) for file in os.listdir(path)]
                 else:
-                    new_paths.append(p)
+                    new_paths.append(path)
             path_list = new_paths
-        th._add_paths(path_list)
-        return th
+        tagged_file_hierarchy._add_paths(path_list)
+        return tagged_file_hierarchy
 
-    def _add_file(self, f):
+    def _add_file(self, file):
         """Add a file to the current level in the file hierarchy
 
-        :param f: absoute path to a file to add to the hierarchy
-        :type f: str
+        :param file: absoute path to a file to add to the hierarchy
+        :type file: str
         """
-        self.files.add(f)
+        self.files.add(file)
 
-    def _add_dir(self, d):
+    def _add_dir(self, dir):
         """Add a dir contianing tagged files by creating a new sub level in the
         tagged file hierarchy. All paths within the directroy are added to the
         the new level sub level tagged file hierarchy
 
-        :param d: absoute path to a dir to add to the hierarchy
-        :type d: str
+        :param dir: absoute path to a dir to add to the hierarchy
+        :type dir: str
         """
-        th = TaggedFilesHierarchy(path.join(self.base, path.basename(d)))
-        th._add_paths([path.join(d, f) for f in os.listdir(d)])
-        self.dirs.add(th)
+        tagged_file_hierarchy = TaggedFilesHierarchy(
+            path.join(self.base, path.basename(dir))
+        )
+        tagged_file_hierarchy._add_paths(
+            [path.join(dir, file) for file in os.listdir(dir)]
+        )
+        self.dirs.add(tagged_file_hierarchy)
 
     def _add_paths(self, paths):
         """Adds files and dirs from the specified in a list of pah like strings
@@ -209,16 +213,16 @@ class TaggedFilesHierarchy:
         :raises SSConfigError: if link to dir is found
                                (prevent chance of circular hierarchy)
         """
-        for p in paths:
-            p = path.abspath(p)
-            if path.isdir(p):
-                if path.islink(p):
+        for path in paths:
+            path = os.path.abspath(path)
+            if os.path.isdir(path):
+                if os.path.islink(path):
                     raise SSConfigError(
                         "Subdirectories of directories containing tagged files"
                         + " cannot be links"
                     )
-                self._add_dir(p)
-            elif path.isfile(p):
-                self._add_file(p)
+                self._add_dir(path)
+            elif os.path.isfile(path):
+                self._add_file(path)
             else:
-                raise SSConfigError(f"File or Directory {p} not found")
+                raise SSConfigError(f"File or Directory {path} not found")

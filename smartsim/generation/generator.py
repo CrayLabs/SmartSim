@@ -220,14 +220,14 @@ class Generator:
                                directory structure
                 :type tagged: TaggedFilesHierarchy
                 """
-                for f in tagged.files:
-                    dst_path = path.join(entity.path, tagged.base, path.basename(f))
-                    shutil.copyfile(f, dst_path)
+                for file in tagged.files:
+                    dst_path = path.join(entity.path, tagged.base, path.basename(file))
+                    shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
 
-                for d in tagged.dirs:
-                    mkdir(path.join(entity.path, tagged.base, path.basename(d.base)))
-                    _build_tagged_files(d)
+                for dir in tagged.dirs:
+                    mkdir(path.join(entity.path, tagged.base, path.basename(dir.base)))
+                    _build_tagged_files(dir)
 
             _build_tagged_files(entity.files.tagged_hierarchy)
 
