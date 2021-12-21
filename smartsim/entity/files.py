@@ -129,7 +129,7 @@ class EntityFiles:
             return full_path
         if path.isdir(full_path):
             return full_path
-        raise SSConfigError(f"File or Directory {file_path} not found")
+        raise FileNotFoundError(f"File or Directory {file_path} not found")
 
 
 class TaggedFilesHierarchy:
@@ -240,7 +240,7 @@ class TaggedFilesHierarchy:
             path = os.path.abspath(path)
             if os.path.isdir(path):
                 if os.path.islink(path):
-                    raise SSConfigError(
+                    raise ValueError(
                         "Tagged directories and thier subdirectories cannot be links"
                         + " to prevent circular directory structures"
                     )
@@ -248,4 +248,4 @@ class TaggedFilesHierarchy:
             elif os.path.isfile(path):
                 self._add_file(path)
             else:
-                raise SSConfigError(f"File or Directory {path} not found")
+                raise FileNotFoundError(f"File or Directory {path} not found")
