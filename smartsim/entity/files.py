@@ -118,7 +118,7 @@ class EntityFiles:
 
         :param file_path: path to a specific file or directory
         :type file_path: str
-        :raises SSConfigError: if file or directory does not exist
+        :raises FileNotFoundError: if file or directory does not exist
         :return: full path to file or directory
         :rtype: str
         """
@@ -168,8 +168,12 @@ class TaggedFilesHierarchy:
         :type parent: TaggedFilesHierarchy | None, optional
         :param subdir_name: Name of subdirectory representd by the new hierarchy,
                             must be "" if creating a root hierarchy,
-                            must be anything else if subhierarchy
+                            must be any valid dir name if subhierarchy,
+                            invalid names are ".", ".." or contain path seperators
         :type subdir_name: str, optional
+        :raises ValueError: if given a subdir_name without a parent,
+                            if given a parent without a subdir_name,
+                            or if the subdir_name is invalid
         """
         if parent is None and subdir_name:
             raise ValueError(
@@ -180,14 +184,17 @@ class TaggedFilesHierarchy:
             raise ValueError(
                 "Child TaggedFilesHierarchies must have a subdirectory name"
             )
-        if path.sep in subdir_name:
+        if subdir_name in {".", ".."} or path.sep in subdir_name:
             raise ValueError(
                 "Child TaggedFilesHierarchies subdirectory names must not contain"
-                + " path seperators"
+                + " path seperators or be reserved dirs '.' or '..'"
             )
 
+        if parent:
+            parent.dirs.add(self)
+
         self._base = path.join(parent.base, subdir_name) if parent else ""
-        self._parent = parent
+        self.parent = parent
         self.files = set()
         self.dirs = set()
 
@@ -247,7 +254,6 @@ class TaggedFilesHierarchy:
         tagged_file_hierarchy._add_paths(
             [path.join(dir, file) for file in os.listdir(dir)]
         )
-        self.dirs.add(tagged_file_hierarchy)
 
     def _add_paths(self, paths):
         """Takes a list of paths and iterates over it, determining if each
@@ -256,7 +262,8 @@ class TaggedFilesHierarchy:
 
         :param paths: list of paths to files or dirs to add to the hierarchy
         :type paths: list[str]
-        :raises SSConfigError: if link to dir is found or path does not exist
+        :raises ValueError: if link to dir is found
+        :raises FileNotFoundError: if path does not exist
         """
         for path in paths:
             path = os.path.abspath(path)
