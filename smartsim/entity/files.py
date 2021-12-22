@@ -27,8 +27,6 @@
 import os
 from os import path
 
-from ..error import SSConfigError
-
 
 class EntityFiles:
     """EntityFiles are the files a user wishes to have available to
@@ -161,16 +159,42 @@ class TaggedFilesHierarchy:
     necessary.
     """
 
-    def __init__(self, base=""):
+    def __init__(self, parent=None, subdir_name=""):
         """Initialize a TaggedFilesHierarchy
 
-        :param base: pathlike string specifing the generated directory
-                     files are located
-        :type base: str, optional
+        :param parent: The parent hierarchy of the new hierarchy,
+                       must be None if creating a root hierarchy,
+                       must be provided if creating a subhierachy
+        :type parent: TaggedFilesHierarchy | None, optional
+        :param subdir_name: Name of subdirectory representd by the new hierarchy,
+                            must be "" if creating a root hierarchy,
+                            must be anything else if subhierarchy
+        :type subdir_name: str, optional
         """
-        self.base = base
+        if parent is None and subdir_name:
+            raise ValueError(
+                "TaggedFilesHierarchies should not have a subdirectory name without a"
+                + " parent"
+            )
+        if parent is not None and not subdir_name:
+            raise ValueError(
+                "Child TaggedFilesHierarchies must have a subdirectory name"
+            )
+        if path.sep in subdir_name:
+            raise ValueError(
+                "Child TaggedFilesHierarchies subdirectory names must not contain"
+                + " path seperators"
+            )
+
+        self._base = path.join(parent.base, subdir_name) if parent else ""
+        self._parent = parent
         self.files = set()
         self.dirs = set()
+
+    @property
+    def base(self):
+        """Property to ensure that self.base is read-only"""
+        return self._base
 
     @classmethod
     def from_list_paths(cls, path_list, dir_contents_to_base=False):
@@ -219,9 +243,7 @@ class TaggedFilesHierarchy:
         :param dir: absoute path to a dir to add to the hierarchy
         :type dir: str
         """
-        tagged_file_hierarchy = TaggedFilesHierarchy(
-            path.join(self.base, path.basename(dir))
-        )
+        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir))
         tagged_file_hierarchy._add_paths(
             [path.join(dir, file) for file in os.listdir(dir)]
         )
