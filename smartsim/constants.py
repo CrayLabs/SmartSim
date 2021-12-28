@@ -27,6 +27,7 @@
 # Constants for SmartSim
 
 from .log import get_logger
+
 logger = get_logger(__name__)
 
 dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"

@@ -1,11 +1,11 @@
-
 import os
-import sys
+import platform
 import site
 import subprocess
-import platform
-import pkg_resources
+import sys
 from pathlib import Path
+
+import pkg_resources
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
@@ -21,6 +21,7 @@ from pathlib import Path
 class SetupError(Exception):
     pass
 
+
 class Versioner:
 
     # compatible Python version
@@ -33,16 +34,19 @@ class Versioner:
 
     # Redis
     REDIS = os.environ.get("SMARTSIM_REDIS", "6.0.8")
-    REDIS_URL = os.environ.get("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
+    REDIS_URL = os.environ.get(
+        "SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/"
+    )
 
     # RedisAI
     REDISAI = os.environ.get("SMARTSIM_REDISAI", "1.2.3")
-    REDISAI_URL = os.environ.get("SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/")
+    REDISAI_URL = os.environ.get(
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
+    )
 
     # TORCH
     TORCH = os.environ.get("SMARTSIM_TORCH", "1.7.1")
     TORCHVISION = os.environ.get("SMARTSIM_TORCHVIS", "0.8.2")
-
 
     def __init__(self):
         # align RedisAI versions with ML packages
@@ -56,18 +60,21 @@ class Versioner:
 
     def get_sha(self, setup_py_dir) -> str:
         try:
-            sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
-                                           cwd=setup_py_dir).decode('ascii').strip()
+            sha = (
+                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=setup_py_dir)
+                .decode("ascii")
+                .strip()
+            )
             return sha[:7]
         except Exception:
-            return 'Unknown'
+            return "Unknown"
 
     def onnx_packages(self):
         return [
             f"skl2onnx=={self.SKL2ONNX}",
             f"onnx=={self.ONNX}",
-            f"onnxmltools=={self.ONNXML}"
-            ]
+            f"onnxmltools=={self.ONNXML}",
+        ]
 
     def write_version(self, setup_py_dir):
         """
@@ -89,12 +96,11 @@ class Versioner:
         return version
 
 
-
 class BuildEnv:
 
     # environment overrides
-    CC = os.environ.get('CC', "gcc")
-    CXX = os.environ.get('CXX', "g++")
+    CC = os.environ.get("CC", "gcc")
+    CXX = os.environ.get("CXX", "g++")
     MALLOC = os.environ.get("MALLOC", "libc")
     JOBS = os.environ.get("BUILD_JOBS", None)
 
@@ -114,11 +120,7 @@ class BuildEnv:
 
     def __call__(self):
         # return the build env for the build process
-        return {
-            "CC": self.CC,
-            "CXX": self.CXX,
-            "CFLAGS": self.CFLAGS
-        }
+        return {"CC": self.CC, "CXX": self.CXX, "CFLAGS": self.CFLAGS}
 
     @property
     def python_version(self):
@@ -130,12 +132,12 @@ class BuildEnv:
         return True
 
     def is_windows(self):
-        if self.PLATFORM in ['win32', 'cygwin', "msys"]:
+        if self.PLATFORM in ["win32", "cygwin", "msys"]:
             return True
         return False
 
     def is_macos(self):
-        if self.PLATFORM == 'darwin':
+        if self.PLATFORM == "darwin":
             return True
         return False
 
@@ -152,10 +154,9 @@ class BuildEnv:
 
     def check_prereq(self, command):
         try:
-            out = subprocess.check_output([command, '--version'])
+            out = subprocess.check_output([command, "--version"])
         except OSError as e:
-            raise RuntimeError(
-                f"{command} must be installed to build SmartSim") from e
+            raise RuntimeError(f"{command} must be installed to build SmartSim") from e
 
     @staticmethod
     def check_installed(package):
@@ -173,11 +174,12 @@ class BuildEnv:
                 installed_major, installed_minor, _ = installed_version.split(".")
                 supported_major, supported_minor, _ = version.split(".")
 
-                if int(installed_major) != int(supported_major) \
-                    or int(installed_minor) != int(supported_minor):
-                        msg = f"Incompatible version for {package} detected.\n"
-                        msg = f"{package} {version} requested but {package} {installed_version}"
-                        raise SetupError(msg)
+                if int(installed_major) != int(supported_major) or int(
+                    installed_minor
+                ) != int(supported_minor):
+                    msg = f"Incompatible version for {package} detected.\n"
+                    msg = f"{package} {version} requested but {package} {installed_version}"
+                    raise SetupError(msg)
             return True
         except pkg_resources.DistributionNotFound:
             return False

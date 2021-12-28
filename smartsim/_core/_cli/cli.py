@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
 import argparse
+import sys
 
 from smartsim._core._cli.build import Build
 from smartsim._core._cli.clean import Clean
@@ -15,23 +15,20 @@ def _usage():
         "\tbuild     Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
         "\tclean     Remove previous ML runtime installation",
         "\tclobber   Remove all previous dependency installations",
-
         "\nDeveloper:",
         "\tsite      Print the installation site of SmartSim",
-        "\tdbcli     Print the path to the redis-cli binary"
-        "\n\n"
-        ]
+        "\tdbcli     Print the path to the redis-cli binary" "\n\n",
+    ]
     return "\n".join(usage)
 
 
 class SmartCli:
-
     def __init__(self):
         parser = argparse.ArgumentParser(
-            description='SmartSim command line interface',
-            usage=_usage())
+            description="SmartSim command line interface", usage=_usage()
+        )
 
-        parser.add_argument('command', help='Subcommand to run')
+        parser.add_argument("command", help="Subcommand to run")
 
         args = parser.parse_args(sys.argv[1:2])
         if not hasattr(self, args.command):
@@ -60,6 +57,7 @@ class SmartCli:
         else:
             print("Redis dependencies not found")
             exit(1)
+
 
 def main():
     SmartCli()

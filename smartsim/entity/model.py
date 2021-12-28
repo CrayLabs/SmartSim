@@ -25,8 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..error import EntityExistsError
 from .._core.utils.helpers import cat_arg_and_value, init_default
+from ..error import EntityExistsError
 from .entity import SmartSimEntity
 from .files import EntityFiles
 

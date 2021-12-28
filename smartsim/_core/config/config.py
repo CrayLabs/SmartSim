@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from functools import lru_cache
 import os
 import os.path as osp
+from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
@@ -35,9 +35,8 @@ import psutil
 from ...error import SSConfigError
 from ..utils.helpers import expand_exe_path
 
+
 class Config:
-
-
     def __init__(self):
         # SmartSim/smartsim/_core
         core_path = Path(os.path.abspath(__file__)).parent.parent
@@ -51,7 +50,6 @@ class Config:
             msg += "Use the `smart` cli tool to install needed extensions\n"
             msg += "See documentation for more information"
             raise SSConfigError(msg)
-
 
     @property
     def redisai(self) -> str:
@@ -138,5 +136,6 @@ def get_config():
 
     # wrap into a function with a cached result
     return Config()
+
 
 CONFIG = get_config()

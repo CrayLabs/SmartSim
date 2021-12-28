@@ -1,11 +1,11 @@
-
 import time
-import psutil
 from subprocess import PIPE, TimeoutExpired
 
-from ...config import CONFIG
+import psutil
+
 from ....error import ShellError
 from ....log import get_logger
+from ...config import CONFIG
 
 logger = get_logger(__name__)
 verbose_shell = bool(CONFIG.log_level == "developer")

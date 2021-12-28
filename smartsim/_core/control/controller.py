@@ -29,17 +29,22 @@ import pickle
 import threading
 import time
 
-from ...error import SSInternalError, LauncherError
-from ..utils import create_cluster, check_cluster_status
-from ..config import CONFIG
-from ...status import STATUS_RUNNING, TERMINAL_STATUSES
 from ...database import Orchestrator
 from ...entity import DBNode, EntityList, SmartSimEntity
-from ...error import SmartSimError, SSConfigError, SSUnsupportedError
+from ...error import (
+    LauncherError,
+    SmartSimError,
+    SSConfigError,
+    SSInternalError,
+    SSUnsupportedError,
+)
+from ...log import get_logger
+from ...status import STATUS_RUNNING, TERMINAL_STATUSES
+from ..config import CONFIG
 from ..launcher import *
+from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 
-from ...log import get_logger
 logger = get_logger(__name__)
 
 # job manager lock
@@ -230,7 +235,7 @@ class Controller:
             "pbs": PBSLauncher,
             "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
-            "local": LocalLauncher
+            "local": LocalLauncher,
         }
 
         if launcher is not None:
@@ -323,7 +328,8 @@ class Controller:
                     create_cluster(orchestrator.hosts, orchestrator.ports)
                     check_cluster_status(orchestrator.hosts, orchestrator.ports)
                     logger.info(
-                        f"Database cluster created with {orchestrator.num_shards} shards")
+                        f"Database cluster created with {orchestrator.num_shards} shards"
+                    )
                     cluster_created = True
                 except SSInternalError:
                     if num_trials > 0:
@@ -566,5 +572,3 @@ class Controller:
             return orc
         finally:
             JM_LOCK.release()
-
-

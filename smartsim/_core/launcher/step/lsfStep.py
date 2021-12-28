@@ -26,10 +26,9 @@
 
 import os
 
-from .step import Step
 from ....error import AllocationError
 from ....log import get_logger
-
+from .step import Step
 
 logger = get_logger(__name__)
 

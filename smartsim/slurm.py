@@ -26,14 +26,13 @@
 
 from shutil import which
 
-from .error import LauncherError, AllocationError
-from ._core.utils.helpers import init_default
-from ._core.launcher.util.launcherUtil import ComputeNode, Partition
 from ._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo
 from ._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
-
-
+from ._core.launcher.util.launcherUtil import ComputeNode, Partition
+from ._core.utils.helpers import init_default
+from .error import AllocationError, LauncherError
 from .log import get_logger
+
 logger = get_logger(__name__)
 
 

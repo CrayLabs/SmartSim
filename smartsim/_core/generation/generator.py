@@ -29,11 +29,11 @@ import shutil
 from distutils import dir_util
 from os import mkdir, path, symlink
 
-from ..control import Manifest
 from ...entity import Model
+from ...log import get_logger
+from ..control import Manifest
 from .modelwriter import ModelWriter
 
-from ...log import get_logger
 logger = get_logger(__name__)
 logger.propagate = False
 

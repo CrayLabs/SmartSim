@@ -26,16 +26,16 @@
 
 import time
 
+from ....error import LauncherError
+from ....log import get_logger
+from ....settings import *
+from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ..launcher import WLMLauncher
 from ..step import AprunStep, LocalStep, MpirunStep, QsubBatchStep
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
 
-from ....error import LauncherError
-from ....status import STATUS_COMPLETED, STATUS_CANCELLED
-from ....settings import *
-from ....log import get_logger
 logger = get_logger(__name__)
 
 

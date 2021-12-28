@@ -28,15 +28,14 @@ import itertools
 import time
 from threading import Thread
 
-from ..config import CONFIG
-from ...status import TERMINAL_STATUSES
 from ...database import Orchestrator
 from ...entity import DBNode
 from ...error import SmartSimError
-from ..launcher import LocalLauncher
-
-from ..utils.helpers import get_ip_from_host
 from ...log import get_logger
+from ...status import TERMINAL_STATUSES
+from ..config import CONFIG
+from ..launcher import LocalLauncher
+from ..utils.helpers import get_ip_from_host
 from .job import Job
 
 logger = get_logger(__name__)

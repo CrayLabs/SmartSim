@@ -26,8 +26,10 @@
 
 import time
 
-
 from ....error import LauncherError
+from ....log import get_logger
+from ....settings import *
+from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ..launcher import WLMLauncher
 from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
@@ -39,9 +41,6 @@ from .lsfParser import (
     parse_max_step_id_from_jslist,
 )
 
-from ....status import STATUS_CANCELLED, STATUS_COMPLETED
-from ....settings import *
-from ....log import get_logger
 logger = get_logger(__name__)
 
 

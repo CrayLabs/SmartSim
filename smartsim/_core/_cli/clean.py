@@ -1,22 +1,26 @@
 import argparse
 import shutil
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from smartsim._core._cli.utils import get_install_path
 
+
 class Clean:
     def __init__(self):
-        parser = argparse.ArgumentParser(description="Remove previous ML runtime installation")
-        parser.add_argument('--clobber',
-                            action="store_true",
-                            default=False,
-                            help='Remove all SmartSim non-python dependencies as well')
+        parser = argparse.ArgumentParser(
+            description="Remove previous ML runtime installation"
+        )
+        parser.add_argument(
+            "--clobber",
+            action="store_true",
+            default=False,
+            help="Remove all SmartSim non-python dependencies as well",
+        )
         args = parser.parse_args(sys.argv[2:])
 
         self._core_path = get_install_path() / "_core"
         self.clean(_all=args.clobber)
-
 
     def clean(self, _all=False):
         """Remove pre existing installations of ML runtimes

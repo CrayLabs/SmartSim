@@ -25,13 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from ....log import get_logger
+from ....settings import RunSettings
 from ..step import LocalStep
 from ..stepInfo import UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 
-from ....settings import RunSettings
-from ....log import get_logger
 logger = get_logger(__name__)
 
 

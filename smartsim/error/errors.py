@@ -27,15 +27,19 @@
 
 # Exceptions
 
+
 class SmartSimError(Exception):
     """Base SmartSim error"""
+
 
 class SSUnsupportedError(Exception):
     """Raised in the event that a called method isn't supported by SmartSim yet"""
 
+
 class EntityExistsError(SmartSimError):
     """Raised when a user tries to create an entity or files/directories for
     an entity and either the entity/files/directories already exist"""
+
 
 class UserStrategyError(SmartSimError):
     """Raised when there is an error with model creation inside an ensemble
@@ -49,6 +53,8 @@ class UserStrategyError(SmartSimError):
         prefix = "User provided ensemble generation strategy"
         message = "failed to generate valid parameter names and values"
         return " ".join((prefix, str(perm_strat), message))
+
+
 class ParameterWriterError(SmartSimError):
     """Raised in the event that input parameter files for a model
     could not be written.
@@ -68,20 +74,26 @@ class ParameterWriterError(SmartSimError):
 
 # Internal Exceptions
 
+
 class SSInternalError(Exception):
     """
     SSInternalError is raised when an internal error is encountered.
     """
+
     pass
+
 
 class SSConfigError(SSInternalError):
     """Raised when there is an error in the configuration of SmartSim"""
 
+
 class LauncherError(SSInternalError):
     """Raised when there is an error in the launcher"""
 
+
 class AllocationError(LauncherError):
     """Raised when there is a problem with the user WLM allocation"""
+
 
 class ShellError(LauncherError):
     """Raised when error arises from function within launcher.shell

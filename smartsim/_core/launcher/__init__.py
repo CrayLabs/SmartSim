@@ -9,5 +9,5 @@ __all__ = [
     "LocalLauncher",
     "LSFLauncher",
     "PBSLauncher",
-    "SlurmLauncher"
+    "SlurmLauncher",
 ]

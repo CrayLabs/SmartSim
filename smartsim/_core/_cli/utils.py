@@ -1,5 +1,5 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 from smartsim._core.utils import colorize
 
@@ -7,14 +7,15 @@ from smartsim._core.utils import colorize
 class SetupError(Exception):
     pass
 
-class Warning_:
 
+class Warning_:
     def __init__(self, message):
         prefix = colorize("WARNING: ", "red", bold=True)
         self.message = prefix + message
 
     def __str__(self):
         return self.message
+
 
 def get_install_path():
     try:
@@ -49,7 +50,9 @@ def pip_install(packages, end_point=None, verbose=False):
 
     if verbose:
         print(f"Installing packages {packages}...")
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     _, err = proc.communicate()
     returncode = int(proc.returncode)
     if returncode != 0:

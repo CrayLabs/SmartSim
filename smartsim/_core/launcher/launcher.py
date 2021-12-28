@@ -26,8 +26,7 @@
 
 import abc
 
-
-from ...error import LauncherError, AllocationError, SSUnsupportedError
+from ...error import AllocationError, LauncherError, SSUnsupportedError
 from .stepInfo import UnmanagedStepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager

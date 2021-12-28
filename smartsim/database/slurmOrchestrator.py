@@ -27,8 +27,8 @@
 from .._core.config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
-from ..settings import MpirunSettings, SbatchSettings, SrunSettings
 from ..log import get_logger
+from ..settings import MpirunSettings, SbatchSettings, SrunSettings
 from .orchestrator import Orchestrator
 
 logger = get_logger(__name__)

@@ -27,17 +27,16 @@
 import time
 from shutil import which
 
-
+from ....error import LauncherError
+from ....log import get_logger
+from ....settings import *
+from ....status import STATUS_CANCELLED
 from ..launcher import WLMLauncher
 from ..step import LocalStep, MpirunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
-from ....error import LauncherError
-from ....status import STATUS_CANCELLED
-from ....settings import *
-from ....log import get_logger
 logger = get_logger(__name__)
 
 

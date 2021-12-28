@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SmartSimError, SSConfigError
 from .._core.utils import init_default
+from ..error import SmartSimError, SSConfigError
 from .base import BatchSettings
 
 

@@ -24,22 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
 import logging
+import time
 
 import redis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
+
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ...error import SSInternalError
-from .helpers import get_ip_from_host
-from ..launcher.util.shell import execute_cmd
-from ..config import CONFIG
-
 from ...log import get_logger
-logger = get_logger(__name__)
+from ..config import CONFIG
+from ..launcher.util.shell import execute_cmd
+from .helpers import get_ip_from_host
 
+logger = get_logger(__name__)
 
 
 def create_cluster(hosts, ports):  # cov-wlm
@@ -73,7 +73,6 @@ def create_cluster(hosts, ports):  # cov-wlm
         logger.error(err)
         raise SSInternalError("Database '--cluster create' command failed")
     logger.debug(out)
-
 
 
 def check_cluster_status(hosts, ports, trials=10):  # cov-wlm

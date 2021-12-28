@@ -25,21 +25,22 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import psutil
 from subprocess import PIPE
 from threading import RLock, Thread
 
+import psutil
 
 from ...error import LauncherError
+from ...log import get_logger
 from ..config import CONFIG
 from .util.shell import execute_async_cmd, execute_cmd
 
-from ...log import get_logger
 logger = get_logger(__name__)
 verbose_tm = bool(CONFIG.log_level == "developer")
 
 
 TM_INTERVAL = 1
+
 
 class TaskManager:
     """The Task Manager watches the subprocesses launched through

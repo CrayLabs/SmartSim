@@ -27,10 +27,10 @@
 from .._core.config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
+from ..log import get_logger
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from .orchestrator import Orchestrator
 
-from ..log import get_logger
 logger = get_logger(__name__)
 
 

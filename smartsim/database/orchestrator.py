@@ -32,14 +32,12 @@ from pathlib import Path
 import psutil
 import redis
 
-from .._core.utils import check_cluster_status
 from .._core.config import CONFIG
-
-from ..error import SSInternalError
+from .._core.utils import check_cluster_status
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError
-from ..settings.base import RunSettings
+from ..error import SmartSimError, SSInternalError
 from ..log import get_logger
+from ..settings.base import RunSettings
 
 logger = get_logger(__name__)
 
@@ -110,7 +108,6 @@ class Orchestrator(EntityList):
 
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
-
 
     def get_address(self):
         """Return database addresses
@@ -250,4 +247,3 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this."
             )
             logger.warning(f"Found network interfaces are: {available}")
-
