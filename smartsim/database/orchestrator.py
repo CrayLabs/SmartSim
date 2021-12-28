@@ -25,26 +25,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
-import logging
 import os
-import socket
-import time
 from os import getcwd
 from pathlib import Path
 
 import psutil
 import redis
-from rediscluster import RedisCluster
-from rediscluster.exceptions import ClusterDownError, RedisClusterException
 
-logging.getLogger("rediscluster").setLevel(logging.WARNING)
+from .._core.utils import check_cluster_status
+from .._core.config import CONFIG
 
-from ..config import CONFIG
+from ..error import SSInternalError
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError
-from ..launcher.util.shell import execute_cmd
 from ..settings.base import RunSettings
-from ..utils import get_logger
+from ..log import get_logger
 
 logger = get_logger(__name__)
 
@@ -116,67 +111,6 @@ class Orchestrator(EntityList):
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
 
-    def create_cluster(self):  # cov-wlm
-        """Connect launched cluster instances.
-
-        Should only be used in the case where cluster initialization
-        needs to occur manually which is not often.
-
-        :raises SmartSimError: if cluster creation fails
-        """
-        ip_list = []
-        for host in self.hosts:
-            ip = get_ip_from_host(host)
-            for port in self.ports:
-                address = ":".join((ip, str(port) + " "))
-                ip_list.append(address)
-
-        # call cluster command
-        redis_cli = CONFIG.redis_cli
-        cmd = [redis_cli, "--cluster", "create"]
-        cmd += ip_list
-        cmd += ["--cluster-replicas", "0"]
-        returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
-
-        if returncode != 0:
-            logger.error(out)
-            logger.error(err)
-            raise SmartSimError("Database '--cluster create' command failed")
-        logger.debug(out)
-
-        # Ensure cluster has been setup correctly
-        self.check_cluster_status()
-        logger.info(f"Database cluster created with {self.num_shards} shards")
-
-    def check_cluster_status(self, trials=10):  # cov-wlm
-        """Check that a cluster is up and running
-        :param trials: number of attempts to verify cluster status
-        :type trials: int, optional
-        :raises SmartSimError: If cluster status cannot be verified
-        """
-        host_list = []
-        for host in self.hosts:
-            for port in self.ports:
-                host_dict = dict()
-                host_dict["host"] = get_ip_from_host(host)
-                host_dict["port"] = port
-                host_list.append(host_dict)
-
-        logger.debug("Beginning database cluster status check...")
-        while trials > 0:
-            # wait for cluster to spin up
-            time.sleep(5)
-            try:
-                redis_tester = RedisCluster(startup_nodes=host_list)
-                redis_tester.set("__test__", "__test__")
-                redis_tester.delete("__test__")
-                logger.debug("Cluster status verified")
-                return
-            except (ClusterDownError, RedisClusterException, redis.RedisError):
-                logger.debug("Cluster still spinning up...")
-                trials -= 1
-        if trials == 0:
-            raise SmartSimError("Cluster setup could not be verified")
 
     def get_address(self):
         """Return database addresses
@@ -221,9 +155,10 @@ class Orchestrator(EntityList):
         # if a cluster
         else:
             try:
-                self.check_cluster_status(trials=1)
+                check_cluster_status(trials=1)
                 return True
-            except SmartSimError:
+            # we expect this to fail if the cluster is not active
+            except SSInternalError:
                 return False
 
     def _get_AI_module(self):
@@ -247,12 +182,12 @@ class Orchestrator(EntityList):
 
         db_per_host = kwargs.get("db_per_host", 1)
         if db_per_host > 1:
-            raise SmartSimError(
+            raise ValueError(
                 "Local Orchestrator does not support multiple databases per node (MPMD)"
             )
         db_nodes = kwargs.get("db_nodes", 1)
         if db_nodes > 1:
-            raise SmartSimError(
+            raise ValueError(
                 "Local Orchestrator does not support multiple database shards"
             )
 
@@ -316,14 +251,3 @@ class Orchestrator(EntityList):
             )
             logger.warning(f"Found network interfaces are: {available}")
 
-
-def get_ip_from_host(host):
-    """Return the IP address for the interconnect.
-
-    :param host: hostname of the compute node e.g. nid00004
-    :type host: str
-    :returns: ip of host
-    :rtype: str
-    """
-    ip_address = socket.gethostbyname(host)
-    return ip_address
