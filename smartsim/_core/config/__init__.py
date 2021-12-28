@@ -1,1 +1,3 @@
-from .config import CONFIG
+from .config import get_config
+
+CONFIG = get_config()

@@ -136,6 +136,3 @@ def get_config():
 
     # wrap into a function with a cached result
     return Config()
-
-
-CONFIG = get_config()

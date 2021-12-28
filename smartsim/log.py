@@ -23,14 +23,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import os
 import logging
 import sys
 
 import coloredlogs
 
-from ._core.config import CONFIG
-from .error import SSConfigError
 
 # constants for logging
 coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"
@@ -43,7 +41,7 @@ coloredlogs.DEFAULT_LOG_FORMAT = (
 
 def _get_log_level():
     """Get the logging level based on environment variable
-       SMARTSIM_LOG_LEVEL or SmartSim config
+       SMARTSIM_LOG_LEVEL.  If not set, default to info.
 
        Logging levels
          - quiet: Just shows errors and warnings
@@ -55,7 +53,7 @@ def _get_log_level():
     :return: Log level for coloredlogs
     :rtype: str
     """
-    log_level = CONFIG.log_level
+    log_level = os.environ.get("SMARTSIM_LOG_LEVEL", "info").lower()
     if log_level == "quiet":
         return "warning"
     if log_level == "info":
@@ -68,30 +66,42 @@ def _get_log_level():
     return "info"
 
 
-def get_logger(name=None, log_level=None):
-    """Returns a log handle that has had the appropriate style
-    set to ensure logging practices are consistent and clean across the
-    code base.
+def get_logger(name, log_level=None):
+    """Return a logger instance
+
+    levels:
+        - quiet
+        - info
+        - debug
+        - developer
+
+    examples:
+        # returns a logger with the name of the module
+        logger = get_logger(__name__)
+
+        logger.info("This is a message")
+        logger.debug("This is a debug message")
+        logger.error("This is an error message")
+        logger.warning("This is a warning message")
 
     :param name: the name of the desired logger
     :type name: str
 
     :param log_level: what level to set the logger to
+    :returns: logger instance
+    :rtype: logging.Logger
     """
     # if name is None, then logger is the root logger
     # if not root logger, get the name of file without prefix.
-    if name:
-        try:
-            user_log_level = CONFIG.log_level
-            if user_log_level not in ("developer"):
-                name = "SmartSim"
-        except SSConfigError:  # pragma: no cover
-            name = "SmartSim"
+    user_log_level = _get_log_level()
+    if user_log_level != "developer":
+        name = "SmartSim"
+
     logger = logging.getLogger(name)
     if log_level:
         logger.setLevel(log_level)
     else:
-        log_level = _get_log_level()
+        log_level = user_log_level
     coloredlogs.install(level=log_level, logger=logger, stream=sys.stdout)
     return logger
 
@@ -103,7 +113,7 @@ def log_to_file(filename, log_level="debug"):
     :param filename: the name of the desired log file.
     :type filename: str
 
-    :param log_level: as defiend in get_logger.  Can be specified
+    :param log_level: as defined in get_logger.  Can be specified
                       to allow the file to store more or less verbose
                       logging information.
     :type log_level: int | str

@@ -158,7 +158,8 @@ class Orchestrator(EntityList):
             except SSInternalError:
                 return False
 
-    def _get_AI_module(self):
+    @property
+    def _rai_module(self):
         """Get the RedisAI module from third-party installations
 
         :raises SSConfigError: if retrieval fails
@@ -174,6 +175,20 @@ class Orchestrator(EntityList):
             module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
+    @property
+    def _redis_launch_script(self):
+        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+        script_path = current_dir.joinpath("redis_starter.py").resolve()
+        return str(script_path)
+
+    @property
+    def _redis_exe(self):
+        return CONFIG.redis_exe
+
+    @property
+    def _redis_conf(self):
+        return CONFIG.redis_conf
+
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
@@ -188,19 +203,14 @@ class Orchestrator(EntityList):
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        # collect database launch command information
-        db_conf = CONFIG.redis_conf
-        redis_exe = CONFIG.redis_exe
-        ai_module = self._get_AI_module()
-        start_script = self._find_redis_start_script()
 
         start_script_args = [
-            start_script,  # redis_starter.py
+            self._redis_launch_script,  # redis_starter.py
             f"+ifname={self._interface}",  # pass interface to start script
             "+command",  # command flag for argparser
-            redis_exe,  # redis-server
-            db_conf,  # redis6.conf file
-            ai_module,  # redisai.so
+            self._redis_exe,  # redis-server
+            self._redis_conf,  # redis6.conf file
+            self._rai_module,  # redisai.so
             "--port",  # redis port
             str(port),  # port number
         ]
@@ -232,11 +242,6 @@ class Orchestrator(EntityList):
                 hosts.extend(dbnode.hosts)
         return hosts
 
-    @staticmethod
-    def _find_redis_start_script():
-        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-        script_path = current_dir.joinpath("redis_starter.py").resolve()
-        return str(script_path)
 
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()

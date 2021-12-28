@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
@@ -261,10 +260,6 @@ class SlurmOrchestrator(Orchestrator):
         db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
-        db_conf = CONFIG.redis_conf
-        redis_exe = CONFIG.redis_exe
-        ai_module = self._get_AI_module()
-        start_script = self._find_redis_start_script()
 
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
@@ -275,12 +270,12 @@ class SlurmOrchestrator(Orchestrator):
             for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
                 start_script_args = [
-                    start_script,  # redis_starter.py
+                    self._redis_launch_script,  # redis_starter.py
                     f"+ifname={self._interface}",  # pass interface to start script
                     "+command",  # command flag for argparser
-                    redis_exe,  # redis-server
-                    db_conf,  # redis6.conf file
-                    ai_module,  # redisai.so
+                    self._redis_exe,  # redis-server
+                    self._redis_conf,  # redis6.conf file
+                    self._rai_module,  # redisai.so
                     "--port",  # redis port
                     str(next_port),  # port number
                 ]

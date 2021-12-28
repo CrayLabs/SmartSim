@@ -4,11 +4,10 @@ from subprocess import PIPE, TimeoutExpired
 import psutil
 
 from ....error import ShellError
-from ....log import get_logger
-from ...config import CONFIG
+from ....log import get_logger, _get_log_level
 
 logger = get_logger(__name__)
-verbose_shell = bool(CONFIG.log_level == "developer")
+verbose_shell = bool(_get_log_level() == "developer")
 
 
 def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None):
