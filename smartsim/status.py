@@ -24,15 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Constants for SmartSim
-
-from .log import get_logger
-logger = get_logger(__name__)
-
-dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"
-dep_msg += "This module will be removed in the next release."
-logger.warning(dep_msg)
-
 
 # Statuses that are applied to jobs
 STATUS_RUNNING = "Running"
@@ -50,4 +41,16 @@ SMARTSIM_STATUS = {
     "Cancelled": STATUS_CANCELLED,
     "Failed": STATUS_FAILED,
     "New": STATUS_NEW,
+}
+
+# Status groupings
+TERMINAL_STATUSES = {
+    STATUS_CANCELLED,
+    STATUS_COMPLETED,
+    STATUS_FAILED
+}
+LIVE_STATUSES = {
+    STATUS_RUNNING,
+    STATUS_PAUSED,
+    STATUS_NEW
 }
