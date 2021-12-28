@@ -171,12 +171,13 @@ class QsubBatchSettings(BatchSettings):
 
         :return: batch arguments for Qsub
         :rtype: list[str]
+        :raises ValueError: if options are supplied without values
         """
         opts = self._create_resource_list()
         for opt, value in self.batch_args.items():
             prefix = "-"
             if not value:
-                raise SSConfigError("PBS options without values are not allowed")
+                raise ValueError("PBS options without values are not allowed")
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 

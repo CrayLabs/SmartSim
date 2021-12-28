@@ -34,7 +34,6 @@ from ...entity import DBNode, EntityList, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
-    SSConfigError,
     SSInternalError,
     SSUnsupportedError,
 )
@@ -427,29 +426,6 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
         entity.run_settings.update_env(client_env)
 
-    def _sanity_check_launch(self, manifest):
-        """Check the orchestrator settings
-
-        Sanity check the orchestrator settings in case the
-        user tries to do something silly. This function will
-        serve as the location of many such sanity checks to come.
-
-        :param manifest: Manifest with deployables to be launched
-        :type manifest: Manifest
-        :raises SSConfigError: If local launcher is being used to
-                               launch a database cluster
-        """
-        orchestrator = manifest.db
-        if isinstance(self._launcher, LocalLauncher) and orchestrator:
-            if orchestrator.num_shards > 1:
-                raise SSConfigError(
-                    "Local launcher does not support launching multiple databases"
-                )
-        # check for empty ensembles
-        entity_lists = manifest.ensembles
-        for elist in entity_lists:
-            if len(elist) < 1:
-                raise SSConfigError("User attempted to run an empty ensemble")
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

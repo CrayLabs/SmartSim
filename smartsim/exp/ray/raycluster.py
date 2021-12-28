@@ -29,10 +29,11 @@ import re
 import time as _time
 import uuid
 
+
 from ..._core.utils import delete_elements, init_default
 from ..._core.utils.helpers import expand_exe_path
 from ...entity import EntityList, SmartSimEntity
-from ...error import SSConfigError, SSUnsupportedError
+from ...error import SSUnsupportedError, SmartSimError
 from ...log import get_logger
 from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
 
@@ -264,12 +265,11 @@ class RayCluster(EntityList):
 
 def find_ray_exe():
     """Find ray executable in current path."""
+    #TODO add this to CONFIG?
     try:
-        ray_exe = expand_exe_path("ray")
-        return ray_exe
-    except SSConfigError as e:
-        raise SSConfigError("Could not find ray executable") from e
-
+        return expand_exe_path("ray")
+    except (TypeError, FileNotFoundError):
+        raise SmartSimError("Could not find ray executable")
 
 def find_ray_stater_script():
     """Find location of script used to start Ray nodes."""

@@ -48,9 +48,16 @@ class Manifest:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
+        self._check_entity_lists_nonempty
 
     @property
     def db(self):
+        """Return Orchestrator instances in Manifest
+
+        :raises SmartSimError: if user added to databases to manifest
+        :return: orchestrator instances
+        :rtype: Orchestrator
+        """
         _db = None
         for deployable in self._deployables:
             if isinstance(deployable, Orchestrator):
@@ -63,6 +70,11 @@ class Manifest:
 
     @property
     def models(self):
+        """Return Model instances in Manifest
+
+        :return: model instances
+        :rtype: List[Model]
+        """
         _models = []
         for deployable in self._deployables:
             if isinstance(deployable, SmartSimEntity):
@@ -71,6 +83,11 @@ class Manifest:
 
     @property
     def ensembles(self):
+        """Return Ensemble instances in Manifest
+
+        :return: list of ensembles
+        :rtype: List[Ensemble]
+        """
         _ensembles = []
         for deployable in self._deployables:
             if isinstance(deployable, EntityList):
@@ -85,6 +102,11 @@ class Manifest:
 
     @property
     def ray_clusters(self):
+        """Return all RayCluster instances in Manifest
+
+        :return: list of RayCluster instances
+        :rtype: List[RayCluster]
+        """
         _ray_cluster = []
         for deployable in self._deployables:
             if isinstance(deployable, RayCluster):
@@ -94,7 +116,10 @@ class Manifest:
     @property
     def all_entity_lists(self):
         """All entity lists, including ensembles and
-        exceptional ones like Orchestrator and Ray Clusters
+        exceptional ones like Orchestrator and RayCluster
+
+        :return: list of entity lists
+        :rtype: List[EntityList]
         """
         _all_entity_lists = self.ray_clusters + self.ensembles
         db = self.db
@@ -122,3 +147,10 @@ class Manifest:
                 raise TypeError(
                     f"Entity has type {type(deployable)}, not SmartSimEntity or EntityList"
                 )
+
+    def _check_entity_lists_nonempty(self):
+        """Check deployables for sanity before launching"""
+
+        for entity_list in self.all_entity_lists():
+            if len(entity_list) < 1:
+                raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")

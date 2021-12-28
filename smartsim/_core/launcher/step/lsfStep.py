@@ -178,7 +178,7 @@ class JsrunStep(Step):
     def _set_alloc(self):
         """Set the id of the allocation
 
-        :raises SSConfigError: allocation not listed or found
+        :raises AllocationError: allocation not listed or found
         """
         if "LSB_JOBID" in os.environ:
             self.alloc = os.environ["LSB_JOBID"]

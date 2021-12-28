@@ -146,7 +146,7 @@ class SrunStep(Step):
     def _set_alloc(self):
         """Set the id of the allocation
 
-        :raises SSConfigError: allocation not listed or found
+        :raises AllocationError: allocation not listed or found
         """
         if self.run_settings.alloc:
             self.alloc = str(self.run_settings.alloc)

@@ -26,7 +26,7 @@
 
 import os
 
-from ....error import SSConfigError
+from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
 
@@ -71,7 +71,7 @@ class AprunStep(Step):
     def _set_alloc(self):
         """Set the id of the allocation
 
-        :raises SSConfigError: allocation not listed or found
+        :raises AllocationError: allocation not listed or found
         """
         if "PBS_JOBID" in os.environ:
             self.alloc = os.environ["PBS_JOBID"]
@@ -84,7 +84,7 @@ class AprunStep(Step):
                 f"Running on Cobalt allocation {self.alloc} gleaned from user environment"
             )
         else:
-            raise SSConfigError(
+            raise AllocationError(
                 "No allocation specified or found and not running in batch"
             )
 
