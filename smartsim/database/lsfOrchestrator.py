@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from ..config import CONFIG
+from .._core.config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import BsubBatchSettings, JsrunSettings
-from ..utils import get_logger
+from ..log import get_logger
 from .orchestrator import Orchestrator
 
 logger = get_logger(__name__)

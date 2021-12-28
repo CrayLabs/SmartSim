@@ -1,8 +1,3 @@
-<<<<<<< HEAD:smartsim/launcher/util/shell.py
-import time
-from subprocess import PIPE, TimeoutExpired
-=======
->>>>>>> d81aa36... Change SmartSim dir structure:smartsim/_core/launcher/util/shell.py
 
 import time
 import psutil

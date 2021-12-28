@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # -*- coding: utf-8 -*-
-__version__ = "0.3.1"
+from .version import __version__ as __version__
 
 import sys
 
@@ -34,6 +34,3 @@ if sys.version_info < (3, 7):  # pragma: no cover
 
 # Main API module
 from .experiment import Experiment
-
-# Slurm helpers
-from .launcher import slurm

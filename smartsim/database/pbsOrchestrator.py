@@ -24,13 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..config import CONFIG
+from .._core.config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
-from ..utils import get_logger
 from .orchestrator import Orchestrator
 
+from ..log import get_logger
 logger = get_logger(__name__)
 
 

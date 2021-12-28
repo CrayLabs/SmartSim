@@ -31,10 +31,10 @@ import uuid
 
 from ...entity import EntityList, SmartSimEntity
 from ...error import SSConfigError, SSUnsupportedError
-from ...settings.settings import create_batch_settings, create_run_settings
-from ...utils import get_logger
-from ...utils.helpers import expand_exe_path, init_default
-
+from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
+from ..._core.utils import delete_elements, init_default
+from ..._core.utils.helpers import expand_exe_path
+from ...log import get_logger
 logger = get_logger(__name__)
 
 

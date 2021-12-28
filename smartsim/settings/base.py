@@ -27,9 +27,8 @@
 from pprint import pformat
 
 from ..error import SSConfigError
-from ..utils import get_logger
-from ..utils.helpers import expand_exe_path, init_default
-
+from .._core.utils.helpers import expand_exe_path, init_default
+from ..log import get_logger
 logger = get_logger(__name__)
 
 
