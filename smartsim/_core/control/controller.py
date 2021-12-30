@@ -74,7 +74,6 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        self._sanity_check_launch(manifest)
         self._launch(manifest)
 
         # start the job manager thread if not already started
@@ -121,7 +120,7 @@ class Controller:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
-        :type entity: Model | Ensemble
+        :type entity: Entity | EntityList
         :returns: bool
         :raises ValueError: if entity has not been launched yet
         """
@@ -132,7 +131,8 @@ class Controller:
                 return all([self.finished(ent) for ent in entity.entities])
             if not isinstance(entity, SmartSimEntity):
                 raise TypeError(
-                    f"Argument was of type {type(entity)} not Model or Ensemble"
+                    f"Argument was of type {type(entity)} not derived " \
+                    "from SmartSimEntity or EntityList"
                 )
 
             return self._jobs.is_finished(entity)
@@ -241,7 +241,7 @@ class Controller:
             launcher = launcher.lower()
             if launcher in launcher_map:
                 # create new instance of the launcher
-                self.launcher = launcher_map[launcher]()
+                self._launcher = launcher_map[launcher]()
                 self._jobs.set_launcher(self._launcher)
             else:
                 raise SSUnsupportedError("Launcher type not supported: " + launcher)
@@ -259,6 +259,9 @@ class Controller:
         """
         orchestrator = manifest.db
         if orchestrator:
+            if len(orchestrator) > 1 and isinstance(self._launcher, LocalLauncher):
+                raise SmartSimError(
+                    "Local launcher does not support multi-host orchestrators")
             if self.orchestrator_active:
                 msg = "Attempted to launch a second Orchestrator instance. "
                 msg += "Only 1 Orchestrator can be active at a time"

@@ -1,17 +1,12 @@
-import os.path as osp
-import pickle
-import sys
-from shutil import rmtree
 
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
-from smartsim.settings import RunSettings
 
 """Test smartredis integration for ensembles. Two copies of the same
-   program will be executed concurrently, and name collusions
+   program will be executed concurrently, and name collisions
    will be avoided through smartredis prefixing:
    smartredis will prefix each instance's tensors with a prefix
    set through environment variables by SmartSim.
@@ -73,7 +68,7 @@ def test_exchange(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 
@@ -125,7 +120,7 @@ def test_consumer(fileutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == constants.STATUS_COMPLETED for stat in statuses]):
+    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
         exp.stop(orc)
         assert False  # client ensemble failed
 

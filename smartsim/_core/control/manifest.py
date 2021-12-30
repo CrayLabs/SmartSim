@@ -48,7 +48,7 @@ class Manifest:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
-        self._check_entity_lists_nonempty
+        self._check_entity_lists_nonempty()
 
     @property
     def db(self):
@@ -151,6 +151,6 @@ class Manifest:
     def _check_entity_lists_nonempty(self):
         """Check deployables for sanity before launching"""
 
-        for entity_list in self.all_entity_lists():
+        for entity_list in self.all_entity_lists:
             if len(entity_list) < 1:
                 raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")

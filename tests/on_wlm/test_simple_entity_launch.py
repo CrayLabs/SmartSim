@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 
 """
 Test the launch of simple entity types on pre-existing allocations.
@@ -34,7 +34,7 @@ def test_models(fileutils, wlmutils):
 
     exp.start(M1, M2, block=True)
     statuses = exp.get_status(M1, M2)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils, wlmutils):
@@ -51,7 +51,7 @@ def test_ensemble(fileutils, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
 def test_summary(fileutils, wlmutils):
@@ -74,8 +74,8 @@ def test_summary(fileutils, wlmutils):
 
     # start and poll
     exp.start(sleep, bad)
-    assert exp.get_status(bad)[0] == constants.STATUS_FAILED
-    assert exp.get_status(sleep)[0] == constants.STATUS_COMPLETED
+    assert exp.get_status(bad)[0] == status.STATUS_FAILED
+    assert exp.get_status(sleep)[0] == status.STATUS_COMPLETED
 
     summary_str = exp.summary(format="plain")
     print(summary_str)

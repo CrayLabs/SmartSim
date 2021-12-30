@@ -1,6 +1,6 @@
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import SlurmOrchestrator
 
 # retrieved from pytest fixtures
@@ -27,13 +27,13 @@ def test_launch_slurm_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
 
 def test_launch_slurm_cluster_orc(fileutils, wlmutils):
@@ -57,13 +57,13 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
 
 def test_incoming_entities(fileutils, wlmutils):
@@ -104,7 +104,7 @@ def test_incoming_entities(fileutils, wlmutils):
     exp.start(orc, block=False)
     try:
         exp.start(sskeyin_reader, block=True)
-        assert exp.get_status(sskeyin_reader)[0] == constants.STATUS_COMPLETED
+        assert exp.get_status(sskeyin_reader)[0] == status.STATUS_COMPLETED
     except Exception as e:
         exp.stop(orc)
         raise e

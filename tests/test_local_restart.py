@@ -1,5 +1,4 @@
-from smartsim import Experiment, constants
-from smartsim.settings import RunSettings
+from smartsim import Experiment, status
 
 """
 Test restarting ensembles and models.
@@ -19,12 +18,12 @@ def test_restart(fileutils):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
     # restart the model
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
 def test_ensemble(fileutils):
@@ -40,9 +39,9 @@ def test_ensemble(fileutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
     # restart the ensemble
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])

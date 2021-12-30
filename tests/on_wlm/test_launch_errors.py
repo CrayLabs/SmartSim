@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.error import SmartSimError
 
 # retrieved from pytest fixtures
@@ -28,7 +28,7 @@ def test_failed_status(fileutils, wlmutils):
     while not exp.finished(model):
         time.sleep(2)
     status = exp.get_status(model)
-    assert status[0] == constants.STATUS_FAILED
+    assert status[0] == status.STATUS_FAILED
 
 
 def test_bad_run_command_args(fileutils, wlmutils):

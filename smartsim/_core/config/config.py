@@ -25,31 +25,71 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import os.path as osp
 from functools import lru_cache
 from pathlib import Path
-from shutil import which
 
 import psutil
 
 from ...error import SSConfigError
 from ..utils.helpers import expand_exe_path
 
+# Configuration Values
+#
+# These values can be set through environment variables to
+# override the default behavior of SmartSim.
+#
+# RAI_PATH
+#   - Path to the RAI shared library
+#   - Default: /smartsim/smartsim/_core/lib/redisai.so
+#
+# REDIS_CONF
+#   - Path to the redis.conf file
+#   - Default: /SmartSim/smartsim/config/redis6.conf
+#
+# REDIS_PATH
+#   - Path to the redis-server executable
+#   - Default: /SmartSim/smartsim/bin/redis-server
+#
+# REDIS_CLI_PATH
+#   - Path to the redis-cli executable
+#   - Default: /SmartSim/smartsim/bin/redis-cli
+#
+# SMARTSIM_LOG_LEVEL
+#   - Log level for SmartSim
+#   - Default: info
+#
+# JM_INTERVAL
+#   - polling interval for communication with scheduler
+#   - default: 10 seconds
+#
+
+
+# Testing Configuration Values
+#
+# TEST_INTERFACE
+#  - Network interface to use for testing
+#  - Default: auto-detected
+#
+# TEST_LAUNCHER
+#  - type of launcher to use for testing
+#  - Default: Local
+#
+# TEST_DEVICE
+#  - CPU or GPU for model serving tests
+#  - Default: CPU
+#
+# TEST_ACCOUNT
+#  - Account used to run full launcher test suite on external systems
+#  - Default: None
 
 class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
         core_path = Path(os.path.abspath(__file__)).parent.parent
-        self.lib_path = str(Path(core_path, "lib").resolve())
-        self.bin_path = str(Path(core_path, "bin").resolve())
-        self.conf_path = str(Path(core_path, "common", "redis6.conf"))
+        self.lib_path = Path(core_path, "lib").resolve()
+        self.bin_path = Path(core_path, "bin").resolve()
+        self.conf_path = Path(core_path, "config", "redis6.conf")
 
-        # are redis binaries present?
-        if not osp.isdir(self.bin_path):
-            msg = "SmartSim not installed with pre-built extensions\n"
-            msg += "Use the `smart` cli tool to install needed extensions\n"
-            msg += "See documentation for more information"
-            raise SSConfigError(msg)
 
     @property
     def redisai(self) -> str:
@@ -59,7 +99,7 @@ class Config:
             raise SSConfigError(
                 "RedisAI dependency not found. Build with `smart` cli or specify RAI_PATH"
             )
-        return redisai
+        return str(redisai)
 
     @property
     def redis_conf(self) -> str:
@@ -68,7 +108,7 @@ class Config:
             raise SSConfigError(
                 "Redis configuration file at REDIS_CONF could not be found"
             )
-        return conf
+        return str(conf)
 
     @property
     def redis_exe(self) -> str:
@@ -86,12 +126,12 @@ class Config:
     def redis_cli(self) -> str:
         try:
             redis_cli_exe = self.bin_path / "redis-cli"
-            redis_cli = Path(os.environ.get("REDIS_PATH", redis_cli_exe)).resolve()
+            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
             exe = expand_exe_path(str(redis_cli))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified Redis binary at REDIS_PATH could not be used"
+                "Specified Redis binary at REDIS_CLI_PATH could not be used"
             ) from e
 
     @property
@@ -100,7 +140,7 @@ class Config:
 
     @property
     def jm_interval(self) -> int:
-        return os.environ.get("SMARTSIM_JM_INTERVAL", 15)
+        return os.environ.get("SMARTSIM_JM_INTERVAL", 10)
 
     @property
     def test_launcher(self) -> str:

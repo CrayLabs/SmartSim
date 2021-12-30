@@ -1,8 +1,7 @@
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import PBSOrchestrator
-from smartsim.error import SmartSimError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -28,13 +27,13 @@ def test_launch_pbs_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
 
 def test_launch_pbs_cluster_orc(fileutils, wlmutils):
@@ -65,10 +64,10 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])

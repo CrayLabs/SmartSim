@@ -35,7 +35,7 @@ import redis
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSInternalError
+from ..error import SmartSimError, SSInternalError, SSConfigError
 from ..log import get_logger
 from ..settings.base import RunSettings
 
@@ -77,6 +77,23 @@ class Orchestrator(EntityList):
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
         super().__init__("orchestrator", self.path, port=port, **kwargs)
+
+        # detect if we can find at least the redis binaries. We
+        # don't want to force the user to launch with RedisAI so
+        # it's ok if that isn't present.
+        try:
+            # try to obtain redis binaries needed to launch Redis
+            # will raise SSConfigError if not found
+            self._redis_exe
+            self._redis_conf
+            CONFIG.redis_cli
+        except SSConfigError as e:
+            msg = "SmartSim not installed with pre-built extensions (Redis)\n"
+            msg += "Use the `smart` cli tool to install needed extensions\n"
+            msg += "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
+            msg += "See documentation for more information"
+            raise SSConfigError(msg) from e
+
 
     @property
     def num_shards(self):
@@ -162,8 +179,7 @@ class Orchestrator(EntityList):
     def _rai_module(self):
         """Get the RedisAI module from third-party installations
 
-        :raises SSConfigError: if retrieval fails
-        :return: path to module
+        :return: path to module or "" if not found
         :rtype: str
         """
         module = ["--loadmodule", CONFIG.redisai]

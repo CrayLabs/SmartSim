@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from os import environ
 
@@ -7,14 +6,14 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.exp.ray import RayCluster
-from smartsim._core.launcher import slurm
 
-"""Test Ray cluster Slurm launch and shutdown.
+"""Test Ray cluster launch and shutdown.
 """
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
+
 
 environ["OMP_NUM_THREADS"] = "1"
 shouldrun = True
@@ -32,11 +31,11 @@ pytestmark = pytest.mark.skipif(
 
 def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
-    if launcher == "local":
-        pytest.skip("Test cannot be run with local launcher")
+    if launcher != "pbs":
+        pytest.skip("Test only runs on systems with PBS as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-launch-and-shutdown-batch")
+    test_dir = fileutils.make_test_dir("test-ray-pbs-launch-and-shutdown-batch")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -45,16 +44,16 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         ray_args={"num-cpus": 4},
         launcher=launcher,
         num_nodes=2,
+        alloc=None,
         batch=True,
+        ray_port=6830,
+        time="00:05:00",
         interface=wlmutils.get_test_interface(),
-        batch_args={"A": wlmutils.get_test_account(), "queue": "debug-flat-quad"}
-        if launcher == "cobalt"
-        else None,
     )
 
     exp.generate(cluster)
     exp.start(cluster, block=False, summary=True)
-    ctx = ray.init("ray://" + cluster.get_head_address() + ":10001")
+    ctx = ray.client(cluster.get_head_address() + ":10001").connect()
 
     right_resources = False
     trials = 10

@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import SlurmOrchestrator
 
 # retrieved from pytest fixtures
@@ -26,13 +26,13 @@ def test_launch_slurm_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
 
 def test_launch_slurm_cluster_orc(fileutils, wlmutils):
@@ -50,13 +50,13 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
 
 def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
@@ -75,7 +75,7 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
 
     status = exp.get_status(orc)
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
@@ -92,7 +92,7 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
 
     statuses = exp_2.get_status(reloaded_orc)
     for stat in statuses:
-        if stat == constants.STATUS_FAILED:
+        if stat == status.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
 

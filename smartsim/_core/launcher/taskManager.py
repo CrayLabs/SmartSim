@@ -46,7 +46,7 @@ class TaskManager:
     the asyncronous shell interface. Each task is a wrapper
     around the Popen/Process instance.
 
-    The Task Managers polls processes on smartsim.constants.TM_INTERVAL
+    The Task Managers polls processes on TM_INTERVAL
     and detects job failure and completion. Upon termination, the
     task returncode, output, and error are added to the task history.
 
