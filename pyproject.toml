@@ -29,3 +29,18 @@ log_cli_level = "debug"
 skip = [
   "tests/test_configs/circular_config",  # Suppress circular import warning
 ]
+minversion = "6.0"
+testpaths = [
+    "tests"
+]
+
+[tool.coverage.run]
+source = ["smartsim"]
+# see test_configs/*_cov.cfg for "omit"
+
+[tool.coverage.report]
+ignore_errors = true
+# see test_configs/*_cov.cfg for "exclude_lines"
+
+[tool.coverage.html]
+directory = "htmlcov"

@@ -23,6 +23,7 @@ class SetupError(Exception):
 
 
 class Versioner:
+    """Buildtime configuration of third-party dependencies"""
 
     # compatible Python version
     PYTHON_MIN = (3, 7, 0)
@@ -59,6 +60,7 @@ class Versioner:
             raise SetupError("Unsupported version of RedisAI: {}".format(self.REDISAI))
 
     def get_sha(self, setup_py_dir) -> str:
+        """Get the git sha of the current branch"""
         try:
             sha = (
                 subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=setup_py_dir)
@@ -97,6 +99,7 @@ class Versioner:
 
 
 class BuildEnv:
+    """Environment for building third-party dependencies"""
 
     # environment overrides
     CC = os.environ.get("CC", "gcc")

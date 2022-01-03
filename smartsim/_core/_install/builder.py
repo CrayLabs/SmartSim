@@ -21,11 +21,17 @@ class SetupError(Exception):
 
 
 class Builder:
+    """Base class for building third-party libraries"""
+
     def __init__(self, jobs=None, verbose=False):
+
+        # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
         self.build_dir = _core_dir.joinpath(".third-party")
         self.bin_path = _core_dir.joinpath("bin/")
         self.lib_path = _core_dir.joinpath("lib/")
+
+        # Set wether build process will output to std output
         self.out = subprocess.DEVNULL
         self.verbose = verbose
         if self.verbose:
@@ -89,7 +95,6 @@ class Builder:
             else:
                 self.copy_file(content, dst / content.name, set_exe=set_exe)
 
-    # get setup path
     def copy_to_bin(self, files):
         for file in files:
             binary_dest = self.bin_path.joinpath(file.name)
@@ -106,7 +111,20 @@ class Builder:
 
 
 class RedisBuilder(Builder):
-    def __init__(self, c_compiler, cpp_compiler, malloc, jobs=None, verbose=False):
+    """Class to build Redis from Source
+
+    Supported build methods:
+     - from git
+
+    See buildenv.py for buildtime configuration of Redis
+    version and url.
+    """
+    def __init__(self,
+                 c_compiler,
+                 cpp_compiler,
+                 malloc,
+                 jobs=None,
+                 verbose=False):
         super().__init__(jobs=jobs, verbose=verbose)
         self.c = c_compiler
         self.cpp = cpp_compiler
@@ -114,11 +132,19 @@ class RedisBuilder(Builder):
 
     @property
     def is_built(self):
+        """Check if Redis is built"""
         server = self.bin_path.joinpath("redis-server").is_file()
         cli = self.bin_path.joinpath("redis-cli").is_file()
         return server and cli
 
     def build_from_git(self, git_url, branch):
+        """Build Redis from git
+
+        :param git_url: url from which to retrieve Redis
+        :type git_url: str
+        :param branch: branch to checkout
+        :type branch: str
+        """
         redis_build_path = Path(self.build_dir, "redis")
 
         # remove git directory if it exists as it should
@@ -158,6 +184,14 @@ class RedisBuilder(Builder):
 
 
 class RedisAIBuilder(Builder):
+    """Class to build RedisAI from Source
+
+    Supported build method:
+     - from git
+
+    See buildenv.py for buildtime configuration of RedisAI
+    version and url.
+    """
     def __init__(
         self,
         c_compiler,
@@ -187,6 +221,9 @@ class RedisAIBuilder(Builder):
         return server and cli
 
     def copy_tf_cmake(self):
+        """Copy the FindTensorFlow.cmake file to the build directory
+        as the version included in RedisAI is out of date for us.
+        """
         # remove the previous version
         rai_tf_cmake = self.rai_build_path.joinpath(
             "opt/cmake/modules/FindTensorFlow.cmake"
@@ -198,6 +235,15 @@ class RedisAIBuilder(Builder):
         )
 
     def build_from_git(self, git_url, branch, device):
+        """Build RedisAI from git
+
+        :param git_url: url from which to retrieve RedisAI
+        :type git_url: str
+        :param branch: branch to checkout
+        :type branch: str
+        :param device: cpu or gpu
+        :type device: str
+        """
 
         # delete previous build dir (should never be there)
         if self.rai_build_path.is_dir():
@@ -280,6 +326,11 @@ class RedisAIBuilder(Builder):
         # self.cleanup()
 
     def install_backends(self, device):
+        """Move backend libraries to smartsim/_core/lib/
+
+        :param device: cpu or cpu
+        :type device: str
+        """
         self.rai_install_path = self.rai_build_path.joinpath(
             f"install-{device}"
         ).resolve()
@@ -291,6 +342,12 @@ class RedisAIBuilder(Builder):
             self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
 
     def move_torch_libs(self):
+        """Move pip install torch libraries
+
+        Since we use pip installed torch libraries for building
+        RedisAI, we need to move them into the LD_runpath of redisai.so
+        in the smartsim/_core/lib directory.
+        """
 
         ss_rai_torch_path = self.lib_path / "backends" / "redisai_torch"
         ss_rai_torch_lib_path = ss_rai_torch_path / "lib"
