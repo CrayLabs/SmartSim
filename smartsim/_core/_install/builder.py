@@ -1,4 +1,3 @@
-import multiprocessing as mp
 import os
 import shutil
 import site
@@ -27,9 +26,9 @@ class Builder:
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
-        self.build_dir = _core_dir.joinpath(".third-party")
-        self.bin_path = _core_dir.joinpath("bin/")
-        self.lib_path = _core_dir.joinpath("lib/")
+        self.build_dir = _core_dir / ".third-party"
+        self.bin_path = _core_dir / "bin"
+        self.lib_path = _core_dir / "lib"
 
         # Set wether build process will output to std output
         self.out = subprocess.DEVNULL
@@ -94,16 +93,6 @@ class Builder:
                 self.copy_dir(content, dst / content.name, set_exe=set_exe)
             else:
                 self.copy_file(content, dst / content.name, set_exe=set_exe)
-
-    def copy_to_bin(self, files):
-        for file in files:
-            binary_dest = self.bin_path.joinpath(file.name)
-            self.copy_file(file, binary_dest, set_exe=True)
-
-    def copy_to_lib(self, files):
-        for file in files:
-            lib_dest = self.lib_path.joinpath(file.name)
-            self.copy_file(file, lib_dest)
 
     def cleanup(self):
         if self.build_dir.is_dir():
@@ -173,10 +162,11 @@ class RedisBuilder(Builder):
         )
 
         # move redis binaries to smartsim/smartsim/_core/bin
-        src_dir = redis_build_path.joinpath("src")
-        binaries = ["redis-server", "redis-cli"]
-        to_export = [src_dir.joinpath(_bin) for _bin in binaries]
-        self.copy_to_bin(to_export)
+        redis_src_dir = redis_build_path / "src"
+        self.copy_file(redis_src_dir / "redis-server",
+                       self.bin_path / "redis-server", set_exe=True)
+        self.copy_file(redis_src_dir / "redis-cli",
+                       self.bin_path / "redis-cli", set_exe=True)
 
 
 class RedisAIBuilder(Builder):
