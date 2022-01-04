@@ -93,8 +93,8 @@ docs:
 # help: cov                            - generate html coverage report for Python client
 .PHONY: cov
 cov:
-		@coverage html
-		@echo if data was present, coverage report is in ./htmlcov/index.html
+	@coverage html
+	@echo if data was present, coverage report is in ./htmlcov/index.html
 
 # help:
 # help: Test
@@ -103,17 +103,17 @@ cov:
 # help: test                           - Build and run all tests
 .PHONY: test
 test:
-	python -m pytest --ignore=tests/full_wlm/
+	@python -m pytest --ignore=tests/full_wlm/
 
 # help: test-verbose                   - Build and run all tests [verbosely]
 .PHONY: test-verbose
 test-verbose:
-	python -m pytest -vv --ignore=tests/full_wlm/
+	@python -m pytest -vv --ignore=tests/full_wlm/
 
 # help: test-debug                     - Build and run all tests with debug output
 .PHONY: test-debug
 test-debug:
-	SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/
+	@SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/
 
 # help: test-cov                       - run python tests with coverage
 .PHONY: test-cov
@@ -125,6 +125,6 @@ test-cov:
 # help:                                  WARNING: do not run test-full on shared systems.
 .PHONY: test-full
 test-full:
-	python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
+	@python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
 
 

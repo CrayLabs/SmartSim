@@ -66,4 +66,4 @@ jobs:
       - name: Run Pytest
         run: |
           echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
-          make test-verbose
+          py.test -s --import-mode=importlib -o log_cli=true --ignore=test/full_wlm/

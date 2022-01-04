@@ -171,7 +171,7 @@ class Config:
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
 
 
-@lru_cache
+@lru_cache(maxsize=128, typed=False)
 def get_config():
 
     # wrap into a function with a cached result
