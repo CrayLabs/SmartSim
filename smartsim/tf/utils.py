@@ -25,6 +25,8 @@ def freeze_model(model, output_dir, file_name):
     :return: path to model file, model input layer names, model output layer names
     :rtype: str, list[str], list[str]
     """
+    # TODO figure out why layer names don't match up to
+    # specified name in Model init.
 
     if not file_name.endswith(".pb"):
         file_name = file_name + ".pb"
