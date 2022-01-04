@@ -43,7 +43,7 @@ class Versioner:
     )
 
     # RedisAI
-    REDISAI = os.environ.get("SMARTSIM_REDISAI", "1.2.4")
+    REDISAI = os.environ.get("SMARTSIM_REDISAI", "1.2.3")
     REDISAI_URL = os.environ.get(
         "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
     )
@@ -54,7 +54,7 @@ class Versioner:
 
     def __init__(self):
         # align RedisAI versions with ML packages
-        if self.REDISAI == "1.2.4":
+        if self.REDISAI == "1.2.3":
             self.TENSORFLOW = "2.4.2"
             self.ONNX = "1.7.0"
             self.SKL2ONNX = "1.9.0"
