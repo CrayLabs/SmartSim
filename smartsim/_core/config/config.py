@@ -58,7 +58,7 @@ from ..utils.helpers import expand_exe_path
 #   - Log level for SmartSim
 #   - Default: info
 #
-# JM_INTERVAL
+# SMARTSIM_JM_INTERVAL
 #   - polling interval for communication with scheduler
 #   - default: 10 seconds
 #
@@ -66,19 +66,19 @@ from ..utils.helpers import expand_exe_path
 
 # Testing Configuration Values
 #
-# TEST_INTERFACE
+# SMARTSIM_TEST_INTERFACE
 #  - Network interface to use for testing
 #  - Default: auto-detected
 #
-# TEST_LAUNCHER
+# SMARTSIM_TEST_LAUNCHER
 #  - type of launcher to use for testing
 #  - Default: Local
 #
-# TEST_DEVICE
+# SMARTSIM_TEST_DEVICE
 #  - CPU or GPU for model serving tests
 #  - Default: CPU
 #
-# TEST_ACCOUNT
+# SMARTSIM_TEST_ACCOUNT
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
 
