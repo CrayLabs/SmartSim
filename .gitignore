@@ -18,7 +18,7 @@ smartredis
 smartsim/version.py
 
 smartsim/_core/bin/redis-server
-smartsim/_bin/redis-cli
+smartsim/_core/bin/redis-cli
 
 # created upon install
 smartsim/_core/lib
