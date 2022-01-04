@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim.status import STATUS_FAILED
 from smartsim.error import SmartSimError
+from smartsim.status import STATUS_FAILED
 
 should_run = True
 try:
@@ -75,11 +75,10 @@ def create_tf_model():
 
     # Compile model with optimizer
     model.compile(
-        optimizer="adam",
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
+        optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
     return model
+
 
 def test_freeze_model(fileutils):
     test_name = "test_tf_freeze_model"

@@ -4,7 +4,7 @@ from subprocess import PIPE, TimeoutExpired
 import psutil
 
 from ....error import ShellError
-from ....log import get_logger, _get_log_level
+from ....log import _get_log_level, get_logger
 
 logger = get_logger(__name__)
 verbose_shell = bool(_get_log_level() == "developer")

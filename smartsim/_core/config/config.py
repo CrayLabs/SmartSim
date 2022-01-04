@@ -82,6 +82,7 @@ from ..utils.helpers import expand_exe_path
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
 
+
 class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
@@ -89,7 +90,6 @@ class Config:
         self.lib_path = Path(core_path, "lib").resolve()
         self.bin_path = Path(core_path, "bin").resolve()
         self.conf_path = Path(core_path, "config", "redis6.conf")
-
 
     @property
     def redisai(self) -> str:

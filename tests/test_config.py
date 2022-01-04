@@ -1,7 +1,8 @@
 import os
+from pathlib import Path
 
 import pytest
-from pathlib import Path
+
 from smartsim._core.config.config import Config
 from smartsim.error import SSConfigError
 
@@ -34,6 +35,7 @@ def test_redisai():
         config.redisai
     os.environ.pop("RAI_PATH")
 
+
 def test_redis_conf():
     config = Config()
     assert Path(config.redis_conf).is_file()
@@ -44,6 +46,7 @@ def test_redis_conf():
     with pytest.raises(SSConfigError):
         config.redis_conf
     os.environ.pop("REDIS_CONF")
+
 
 def test_redis_exe():
     config = Config()
@@ -56,6 +59,7 @@ def test_redis_exe():
         config.redis_exe
     os.environ.pop("REDIS_PATH")
 
+
 def test_redis_cli():
     config = Config()
     assert Path(config.redisai).is_file()
@@ -66,4 +70,3 @@ def test_redis_cli():
     with pytest.raises(SSConfigError):
         config.redis_cli
     os.environ.pop("REDIS_CLI_PATH")
-

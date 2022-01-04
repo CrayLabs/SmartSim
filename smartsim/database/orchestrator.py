@@ -35,7 +35,7 @@ import redis
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSInternalError, SSConfigError
+from ..error import SmartSimError, SSConfigError, SSInternalError
 from ..log import get_logger
 from ..settings.base import RunSettings
 
@@ -93,7 +93,6 @@ class Orchestrator(EntityList):
             msg += "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
             msg += "See documentation for more information"
             raise SSConfigError(msg) from e
-
 
     @property
     def num_shards(self):
@@ -219,7 +218,6 @@ class Orchestrator(EntityList):
                 "Local Orchestrator does not support multiple database shards"
             )
 
-
         start_script_args = [
             self._redis_launch_script,  # redis_starter.py
             f"+ifname={self._interface}",  # pass interface to start script
@@ -257,7 +255,6 @@ class Orchestrator(EntityList):
             else:
                 hosts.extend(dbnode.hosts)
         return hosts
-
 
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()

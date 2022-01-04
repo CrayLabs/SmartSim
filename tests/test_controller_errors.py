@@ -66,6 +66,7 @@ def test_wrong_orchestrator():
     with pytest.raises(SmartSimError):
         cont._launch(manifest)
 
+
 def test_bad_orc_checkpoint():
     checkpoint = "./bad-checkpoint"
     cont = Controller(launcher="local")

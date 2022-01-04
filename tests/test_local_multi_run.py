@@ -1,4 +1,5 @@
 from smartsim import Experiment, status
+
 """
 Test the launch of simple entity types with local launcher
 """

@@ -6,8 +6,8 @@ from os import environ
 import pytest
 
 from smartsim import Experiment
-from smartsim.exp.ray import RayCluster
 from smartsim._core.launcher import slurm
+from smartsim.exp.ray import RayCluster
 
 """Test Ray cluster Slurm launch and shutdown.
 """

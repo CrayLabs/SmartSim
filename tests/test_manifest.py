@@ -75,6 +75,7 @@ def test_catch_empty_ensemble():
     with pytest.raises(ValueError):
         manifest = Manifest(e)
 
+
 def test_corner_case():
     """tricky corner case where some variable may have a
     name attribute

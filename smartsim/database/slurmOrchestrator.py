@@ -260,7 +260,6 @@ class SlurmOrchestrator(Orchestrator):
         db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
-
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases

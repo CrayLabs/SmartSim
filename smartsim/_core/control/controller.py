@@ -31,12 +31,7 @@ import time
 
 from ...database import Orchestrator
 from ...entity import DBNode, EntityList, SmartSimEntity
-from ...error import (
-    LauncherError,
-    SmartSimError,
-    SSInternalError,
-    SSUnsupportedError,
-)
+from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
@@ -131,7 +126,7 @@ class Controller:
                 return all([self.finished(ent) for ent in entity.entities])
             if not isinstance(entity, SmartSimEntity):
                 raise TypeError(
-                    f"Argument was of type {type(entity)} not derived " \
+                    f"Argument was of type {type(entity)} not derived "
                     "from SmartSimEntity or EntityList"
                 )
 
@@ -261,7 +256,8 @@ class Controller:
         if orchestrator:
             if len(orchestrator) > 1 and isinstance(self._launcher, LocalLauncher):
                 raise SmartSimError(
-                    "Local launcher does not support multi-host orchestrators")
+                    "Local launcher does not support multi-host orchestrators"
+                )
             if self.orchestrator_active:
                 msg = "Attempted to launch a second Orchestrator instance. "
                 msg += "Only 1 Orchestrator can be active at a time"
@@ -428,7 +424,6 @@ class Controller:
             if entity.query_key_prefixing():
                 client_env["SSKEYOUT"] = entity.name
         entity.run_settings.update_env(client_env)
-
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

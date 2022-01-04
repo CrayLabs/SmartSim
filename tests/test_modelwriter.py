@@ -5,8 +5,8 @@ from os import path
 
 import pytest
 
-from smartsim.error.errors import ParameterWriterError
 from smartsim._core.generation.modelwriter import ModelWriter
+from smartsim.error.errors import ParameterWriterError
 from smartsim.settings import RunSettings
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")

@@ -33,9 +33,9 @@ from rediscluster.exceptions import ClusterDownError, RedisClusterException
 
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
-from ..config import CONFIG
 from ...error import SSInternalError
 from ...log import get_logger
+from ..config import CONFIG
 from ..launcher.util.shell import execute_cmd
 from .helpers import get_ip_from_host
 

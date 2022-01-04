@@ -31,7 +31,7 @@ from threading import RLock, Thread
 import psutil
 
 from ...error import LauncherError
-from ...log import get_logger, _get_log_level
+from ...log import _get_log_level, get_logger
 from .util.shell import execute_async_cmd, execute_cmd
 
 logger = get_logger(__name__)

@@ -119,12 +119,8 @@ class RedisBuilder(Builder):
     See buildenv.py for buildtime configuration of Redis
     version and url.
     """
-    def __init__(self,
-                 c_compiler,
-                 cpp_compiler,
-                 malloc,
-                 jobs=None,
-                 verbose=False):
+
+    def __init__(self, c_compiler, cpp_compiler, malloc, jobs=None, verbose=False):
         super().__init__(jobs=jobs, verbose=verbose)
         self.c = c_compiler
         self.cpp = cpp_compiler
@@ -192,6 +188,7 @@ class RedisAIBuilder(Builder):
     See buildenv.py for buildtime configuration of RedisAI
     version and url.
     """
+
     def __init__(
         self,
         c_compiler,

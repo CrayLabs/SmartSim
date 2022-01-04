@@ -1,4 +1,3 @@
-
 import pytest
 
 from smartsim import Experiment, status
