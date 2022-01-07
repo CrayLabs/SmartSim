@@ -125,7 +125,7 @@ class JsrunSettings(RunSettings):
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per resource set.
-         
+
         This function is an alias for `set_tasks_per_rs`.
 
         :param tasks_per_node: number of tasks per resource set
@@ -138,13 +138,13 @@ class JsrunSettings(RunSettings):
 
         This function is only available to unify LSFSettings
         to other WLM settings classes.
-        
+
         """
         pass
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
-         
+
         This function is an alias for `set_cpus_per_rs`.
 
         :param cpus_per_task: number of cpus per resource set
