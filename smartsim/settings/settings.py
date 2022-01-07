@@ -68,7 +68,12 @@ def create_batch_settings(
     try:
         batch_class = by_launcher[launcher]
         batch_settings = batch_class(
-            nodes=nodes, time=time, batch_args=batch_args, queue=queue, account=account, **kwargs
+            nodes=nodes,
+            time=time,
+            batch_args=batch_args,
+            queue=queue,
+            account=account,
+            **kwargs,
         )
         return batch_settings
 

@@ -65,13 +65,15 @@ class QsubBatchSettings(BatchSettings):
         :type batch_args: dict[str, str], optional
         """
 
-        super().__init__("qsub", 
-                         batch_args=batch_args,
-                         nodes=nodes, 
-                         account=account, 
-                         queue=queue, 
-                         time=time, 
-                         **kwargs)
+        super().__init__(
+            "qsub",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=account,
+            queue=queue,
+            time=time,
+            **kwargs,
+        )
         self.resources = init_default({}, resources, dict)
 
         self._ncpus = ncpus
