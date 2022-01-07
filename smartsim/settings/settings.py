@@ -29,6 +29,60 @@ from ..utils.helpers import is_valid_cmd
 from . import *
 
 
+def create_batch_settings(
+    launcher, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
+):
+    """Create a ``BatchSettings`` instance
+
+    See Experiment.create_batch_settings for details
+
+    :param launcher: launcher for this experiment
+    :type launcher: str
+    :param nodes: number of nodes for batch job, defaults to 1
+    :type nodes: int, optional
+    :param time: length of batch job, defaults to ""
+    :type time: str, optional
+    :param queue: queue or partition (if slurm), defaults to ""
+    :type queue: str, optional
+    :param account: user account name for batch system, defaults to ""
+    :type account: str, optional
+    :param batch_args: additional batch arguments, defaults to None
+    :type batch_args: dict[str, str], optional
+    :return: a newly created BatchSettings instance
+    :rtype: BatchSettings
+    :raises SmartSimError: if batch creation fails
+    """
+    # all supported batch class implementations
+    by_launcher = {
+        "cobalt": CobaltBatchSettings,
+        "pbs": QsubBatchSettings,
+        "slurm": SbatchSettings,
+        "lsf": BsubBatchSettings,
+    }
+
+    if launcher == "local":
+        raise SmartSimError("Local launcher does not support batch workloads")
+
+    # detect the batch class to use based on the launcher provided by
+    # the user
+    try:
+        batch_class = by_launcher[launcher]
+        batch_settings = batch_class(
+            nodes=nodes,
+            time=time,
+            batch_args=batch_args,
+            queue=queue,
+            account=account,
+            **kwargs,
+        )
+        return batch_settings
+
+    except KeyError:
+        raise SmartSimError(
+            f"User attempted to make batch settings for unsupported launcher {launcher}"
+        ) from None
+
+
 def create_run_settings(
     launcher,
     exe,
