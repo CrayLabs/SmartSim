@@ -72,7 +72,7 @@ def test_incoming_entities(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher != "slurm":
         pytest.skip("Test only runs on systems with Slurm as WLM")
-        
+
     exp_name = "test-incoming-entities"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
     test_dir = fileutils.make_test_dir(exp_name)
