@@ -211,10 +211,25 @@ class Generator:
         """
         if entity.files:
             to_write = []
-            for tagged_file in entity.files.tagged:
-                dst_path = path.join(entity.path, path.basename(tagged_file))
-                shutil.copyfile(tagged_file, dst_path)
-                to_write.append(dst_path)
+
+            def _build_tagged_files(tagged):
+                """Using a TaggedFileHierarchy, reproduce the tagged file
+                directory structure
+
+                :param tagged: a TaggedFileHierarchy to be built as a
+                               directory structure
+                :type tagged: TaggedFilesHierarchy
+                """
+                for file in tagged.files:
+                    dst_path = path.join(entity.path, tagged.base, path.basename(file))
+                    shutil.copyfile(file, dst_path)
+                    to_write.append(dst_path)
+
+                for dir in tagged.dirs:
+                    mkdir(path.join(entity.path, tagged.base, path.basename(dir.base)))
+                    _build_tagged_files(dir)
+
+            _build_tagged_files(entity.files.tagged_hierarchy)
 
             # write in changes to configurations
             if isinstance(entity, Model):

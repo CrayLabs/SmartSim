@@ -25,7 +25,9 @@ if pytest.test_launcher not in pytest.wlm_options:
 def test_simple_model_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip("Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM")
+        pytest.skip(
+            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
+        )
 
     exp_name = "test-simplebase-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
@@ -44,7 +46,9 @@ def test_simple_model_on_wlm(fileutils, wlmutils):
 def test_simple_model_stop_on_wlm(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
     if launcher not in ["pbs", "slurm", "cobalt", "lsf"]:
-        pytest.skip("Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM")
+        pytest.skip(
+            "Test only runs on systems with LSF, PBSPro, Slurm, or Cobalt as WLM"
+        )
 
     exp_name = "test-simplebase-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
