@@ -131,32 +131,23 @@ class EntityFiles:
 
 
 class TaggedFilesHierarchy:
-    """The TaggedFilesHierarchy class maintains a list of files and a list of
-    child TaggedFilesHierarchy instances. Each instance describes how a
-    directory structure of tagged files.
+    """The TaggedFilesHierarchy represents a directory 
+    containing potentially tagged files and subdirectories.
 
-    TaggedFilesHierarchy represents a directory containing potentially tagged
-    files and subdirectories.
+    TaggedFilesHierarchy.base is the directory path from
+    the the root of the generated file structure
 
-    TaggedFilesHierarchy.base is the directory path from the the root of the
-    file structure
-    E.g.
-    TaggedFilesHierarchy.base = ""            => ./
-    TaggedFilesHierarchy.base = "dir_a"       => ./dir_a
-    TaggedFilesHierarchy.base = "dir_a/dir_b" => ./dir_a/dir_b
+    TaggedFilesHierarchy.files is a collection of paths to
+    files that need to be copied to directory that the
+    TaggedFilesHierarchy represents
 
-    TaggedFilesHierarchy.files is a collection of paths to files that need
-    to be copied to directory that the TaggedFilesHierarchy represents
+    TaggedFilesHierarchy.dirs is a collection of child
+    TaggedFilesHierarchy, each representing a subdirectory
+    that needs to generated
 
-    TaggedFilesHierarchy.dirs is a collection of child TaggedFilesHierarchy,
-    each with its own files and dirs, representing a directory that needs to
-    be created within the current directory represented by the current
-    TaggedFilesHierarchy
-
-    By performing a depth first search over the entire hierarchy starting at
-    the root (TaggedFilesHierarchy.base = ""), one could reconstruct the
-    tagged file directory structure with relative ease at any location deemed
-    necessary.
+    By performing a depth first search over the entire
+    hierarchy starting at the root directory structure, the
+    tagged file directory structure can be replicated
     """
 
     def __init__(self, parent=None, subdir_name=""):
