@@ -1,6 +1,5 @@
 from os import path as osp
 
-import numpy as np
 import pytest
 
 from smartsim import Experiment
@@ -192,3 +191,26 @@ def test_config_dir(fileutils):
     _check_generated(1, 0, 3)
     _check_generated(2, 1, 2)
     _check_generated(3, 1, 3)
+
+
+def test_no_gen_if_file_not_exist(fileutils):
+    """Test that generation of file with non-existant config
+    raises a FileNotFound exception
+    """
+    exp = Experiment("file-not-found", launcher="local")
+    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
+    config = fileutils.get_test_conf_path("path_not_exist")
+    with pytest.raises(FileNotFoundError):
+        ensemble.attach_generator_files(to_configure=config)
+
+
+def test_no_gen_if_symlink_to_dir(fileutils):
+    """Test that when configuring a directory containing a symlink
+    a ValueError exception is raised to prevent circular file
+    structure configuration
+    """
+    exp = Experiment("circular-config-files", launcher="local")
+    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
+    config = fileutils.get_test_conf_path("circular_config")
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(to_configure=config)
