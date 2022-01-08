@@ -111,7 +111,8 @@ class Build:
 
         # check to make sure user didn't request GPU build on Mac
         if self.build_env.PLATFORM == "darwin" and device == "gpu":
-            raise SetupError("SmartSim does not support GPU on MacOS")
+            logger.error("SmartSim does not support GPU on MacOS")
+            exit(1)
 
         # ONNX
         if onnx:
@@ -127,7 +128,8 @@ class Build:
             if torch_dir:
                 torch_dir = Path(torch_dir).resolve()
                 if not torch_dir.is_dir():
-                    raise SetupError("Could not find requested user Torch installation")
+                    logger.error("Could not find requested user Torch installation")
+                    exit(1)
             else:
                 self.install_torch(device=device)
                 torch_dir = self.build_env.torch_cmake_path
@@ -200,17 +202,13 @@ class Build:
             installed_ver = pkg_resources.get_distribution("torch").version
             _, _, patch = installed_ver.split(".")
             if "cpu" in patch and device == "gpu":
-                msg = "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages"
-                msg += (
-                    " and run the `smart` command again to obtain Torch GPU libraries"
-                )
+                msg = "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " \
+                      "and run the `smart build` command again to obtain Torch GPU libraries"
                 logger.warning(msg)
             if device == "cpu" and "cpu" not in patch and not self.build_env.is_macos():
-                msg = (
-                    "Torch GPU installed in python environment but requested Torch CPU."
-                )
-                msg += " Run `pip uninstall torch torchvision` and run `smart` again"
-                logger.warning(msg)
+                msg = "Torch GPU installed in python environment but requested Torch CPU. " \
+                      " Run `pip uninstall torch torchvision` and run `smart build` again"
+                logger.error(msg) # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
 
     def check_onnx_install(self):
@@ -223,8 +221,8 @@ class Build:
         ]
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
-                msg = f"ONNX {self.versions.ONNX} not installed in python environment\n"
-                msg += f"Consider installing {' '.join(packages)} with pip"
+                msg = f"ONNX {self.versions.ONNX} not installed in python environment. " \
+                    f"Consider installing {' '.join(packages)} with pip"
                 logger.warning(msg)
             else:
                 logger.info(f"ONNX {self.versions.ONNX} installed in Python environment")
@@ -238,8 +236,8 @@ class Build:
             if not self.build_env.check_installed(
                 "tensorflow", self.versions.TENSORFLOW
             ):
-                msg = f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment\n"
-                msg += f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
+                msg = f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. " \
+                        f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
                 logger.warning(msg)
             else:
                 logger.info(
