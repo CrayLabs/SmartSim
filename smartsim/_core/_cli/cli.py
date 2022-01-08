@@ -44,6 +44,9 @@ class SmartCli:
         Clean()
         exit(0)
 
+    def clobber(self):
+        Clean(clean_all=True)
+
     def site(self):
         print(get_install_path())
         exit(0)

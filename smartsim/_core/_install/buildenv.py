@@ -3,6 +3,7 @@ import platform
 import site
 import subprocess
 import sys
+import pprint
 from pathlib import Path
 
 import pkg_resources
@@ -104,11 +105,15 @@ class Versioner:
 class BuildEnv:
     """Environment for building third-party dependencies"""
 
-    # environment overrides
+    # Compiler overrides
     CC = os.environ.get("CC", "gcc")
     CXX = os.environ.get("CXX", "g++")
+    CFLAGS = os.environ.get("CFLAGS", "")
+    CXXFLAGS = os.environ.get("CXXFLAGS", "")
+
+    # build overrides
     MALLOC = os.environ.get("MALLOC", "libc")
-    JOBS = os.environ.get("BUILD_JOBS", None)
+    JOBS = os.environ.get("BUILD_JOBS", 1)
 
     # check for CC/GCC/ETC
     CHECKS = int(os.environ.get("NO_CHECKS", 0))
@@ -123,10 +128,31 @@ class BuildEnv:
             self.check_prereq(self.CC)
             self.check_prereq(self.CXX)
             self.check_prereq("make")
+            self.check_prereq("cmake")
 
     def __call__(self):
         # return the build env for the build process
-        return {"CC": self.CC, "CXX": self.CXX, "CFLAGS": self.CFLAGS}
+        env = os.environ.copy()
+        env.update({
+            "CC": self.CC,
+            "CXX": self.CXX,
+            "CFLAGS": self.CFLAGS,
+            "CXXFLAGS": self.CXXFLAGS
+            })
+        return env
+
+    def __str__(self):
+        env = {
+            "CC": self.CC,
+            "CXX": self.CXX,
+            "CFLAGS": self.CFLAGS,
+            "CXXFLAGS": self.CXXFLAGS,
+            "PYTHON_VERSION": self.python_version,
+            "PLATFORM": self.PLATFORM,
+            "MALLOC": self.MALLOC,
+            "JOBS": self.JOBS
+        }
+        return pprint.pformat(env)
 
     @property
     def python_version(self):
@@ -157,6 +183,32 @@ class BuildEnv:
         site_path = self.site_packages_path
         torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
         return str(torch_path)
+
+    @staticmethod
+    def get_cudnn_env():
+        env = {
+            "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", None),
+            "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", None),
+            "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", None),
+            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", None)
+        }
+        torch_cudnn_vars = ["CUDNN_LIBRARY", "CUDNN_INCLUDE_DIR"]
+        caffe_cudnn_vars = ["CUDNN_INCLUDE_PATH", "CUDNN_LIBRARY_PATH"]
+
+        torch_set = all([var in os.environ for var in torch_cudnn_vars])
+        caffe_set = all([var in os.environ for var in caffe_cudnn_vars])
+
+        # check for both sets, if only one exists, set the other
+        # this handles older versions which use different env vars
+        if not torch_set and not caffe_set:
+            return None # return None as we don't want to raise a warning here
+        if torch_set and not caffe_set:
+            env["CUDNN_INCLUDE_PATH"] = env["CUDNN_INCLUDE_DIR"]
+            env["CUDNN_LIBRARY_PATH"] = env["CUDNN_LIBRARY"]
+        elif caffe_set and not torch_set:
+            env["CUDNN_INCLUDE_DIR"] = env["CUDNN_INCLUDE_PATH"]
+            env["CUDNN_LIBRARY"] = env["CUDNN_LIBRARY_PATH"]
+        return env
 
     def check_prereq(self, command):
         try:

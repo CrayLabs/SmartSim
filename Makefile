@@ -100,28 +100,28 @@ cov:
 # help: Test
 # help: -------
 
-# help: test                           - Build and run all tests
+# help: test                           - Run all tests
 .PHONY: test
 test:
 	@python -m pytest --ignore=tests/full_wlm/
 
-# help: test-verbose                   - Build and run all tests [verbosely]
+# help: test-verbose                   - Run all tests verbosely
 .PHONY: test-verbose
 test-verbose:
 	@python -m pytest -vv --ignore=tests/full_wlm/
 
-# help: test-debug                     - Build and run all tests with debug output
+# help: test-debug                     - Run all tests with debug output
 .PHONY: test-debug
 test-debug:
 	@SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/
 
-# help: test-cov                       - run python tests with coverage
+# help: test-cov                       - Run all tests with coverage
 .PHONY: test-cov
 test-cov:
 	@python -m pytest -vv --cov=./smartsim --cov-config=${COV_FILE} --ignore=tests/full_wlm/
 
 
-# help: test-full                      - run all WLM tests with Python coverage (full test suite)
+# help: test-full                      - Run all WLM tests with Python coverage (full test suite)
 # help:                                  WARNING: do not run test-full on shared systems.
 .PHONY: test-full
 test-full:

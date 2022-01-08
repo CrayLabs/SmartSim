@@ -65,7 +65,7 @@ def _get_log_level():
     return "info"
 
 
-def get_logger(name, log_level=None):
+def get_logger(name, log_level=None, fmt=None):
     """Return a logger instance
 
     levels:
@@ -85,8 +85,10 @@ def get_logger(name, log_level=None):
 
     :param name: the name of the desired logger
     :type name: str
-
     :param log_level: what level to set the logger to
+    :type log_level: str
+    :param fmt: the format of the log messages
+    :type fmt: str
     :returns: logger instance
     :rtype: logging.Logger
     """
@@ -101,7 +103,7 @@ def get_logger(name, log_level=None):
         logger.setLevel(log_level)
     else:
         log_level = user_log_level
-    coloredlogs.install(level=log_level, logger=logger, stream=sys.stdout)
+    coloredlogs.install(level=log_level, logger=logger, fmt=fmt, stream=sys.stdout)
     return logger
 
 

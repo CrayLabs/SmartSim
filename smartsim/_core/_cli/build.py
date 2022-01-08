@@ -1,15 +1,16 @@
-import argparse
-import os
-import site
-import subprocess
 import sys
+import argparse
 from pathlib import Path
 
 import pkg_resources
 
-from smartsim._core._cli.utils import SetupError, Warning_, color_bool, pip_install
+from smartsim._core._cli.utils import SetupError, color_bool, pip_install
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, Versioner
+from smartsim.log import get_logger
+
+smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
+logger = get_logger("Smart", fmt=smart_logger_format)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
@@ -65,7 +66,9 @@ class Build:
         tf = not args.no_tf
         onnx = args.onnx
 
-        print("Running SmartSim build process...")
+        logger.info("Running SmartSim build process...")
+        logger.info("Build Environment:")
+        print(str(self.build_env), "\n")
 
         # REDIS
         self.build_redis()
@@ -73,26 +76,25 @@ class Build:
         # REDISAI
         self.build_redis_ai(str(args.device), pt, tf, onnx, args.torch_dir)
 
-        print("SmartSim build complete!")
+        logger.info("SmartSim build complete!")
 
     def build_redis(self):
         # check redis installation
         redis_builder = builder.RedisBuilder(
-            self.build_env.CC,
-            self.build_env.CXX,
+            self.build_env(),
             self.build_env.MALLOC,
             self.build_env.JOBS,
-            self.verbose,
+            self.verbose
         )
 
         if not redis_builder.is_built:
-            print(
+            logger.info(
                 f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
 
             redis_builder.build_from_git(self.versions.REDIS_URL, self.versions.REDIS)
             redis_builder.cleanup()
-        print("Redis build complete!")
+        logger.info("Redis build complete!")
 
     def build_redis_ai(self, device, torch=True, tf=True, onnx=False, torch_dir=None):
 
@@ -101,8 +103,8 @@ class Build:
         print("-----------------------")
         print(f"    PyTorch {self.versions.TORCH}: {color_bool(torch)}")
         print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
-        print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}")
-        print("\n")
+        print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
+        print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
         # sanity check for platform and RAI deps
         self.build_env.check_prereq("git-lfs")
@@ -131,28 +133,45 @@ class Build:
                 torch_dir = self.build_env.torch_cmake_path
 
         rai_builder = builder.RedisAIBuilder(
-            self.build_env.CC,
-            self.build_env.CXX,
-            str(torch_dir),
-            torch,
-            tf,
-            onnx,
-            self.build_env.JOBS,
-            self.verbose,
+            build_env=self.build_env(),
+            torch_dir=str(torch_dir),
+            build_torch=torch,
+            build_tf=tf,
+            build_onnx=onnx,
+            jobs=self.build_env.JOBS,
+            verbose=self.verbose,
         )
 
         if rai_builder.is_built:
-            print("RedisAI installed. Run `smart clean` to remove.")
+            logger.info("RedisAI installed. Run `smart clean` to remove.")
         else:
+            # get the build environment, update with CUDNN env vars
+            # if present and building for GPU, otherwise warn the user
+            build_env = self.build_env()
             if device == "gpu":
-                if "CUDNN_LIBRARY" not in os.environ:
-                    print(Warning_("CUDNN_LIBRARY not set!"))
-                if "CUDNN_INCLUDE_DIR" not in os.environ:
-                    print(Warning_("CUDNN_INCLUDE_DIR not set!"))
+                gpu_env = self.build_env.get_cudnn_env()
+                cudnn_env_vars = ["CUDNN_LIBRARY",
+                                  "CUDNN_INCLUDE_DIR",
+                                  "CUDNN_INCLUDE_PATH",
+                                  "CUDNN_LIBRARY_PATH"]
+                if not gpu_env:
+                    logger.warning(f"CUDNN environment variables not found.\n" \
+                        f"Looked for {cudnn_env_vars}")
+                else:
+                    build_env.update(gpu_env)
+            # update RAI build env
+            rai_builder.env = build_env
+
+            logger.info(
+                f"Building RedisAI version {self.versions.REDISAI}" \
+                    f" from {self.versions.REDISAI_URL}")
 
             rai_builder.build_from_git(
-                self.versions.REDISAI_URL, self.versions.REDISAI, device
+                self.versions.REDISAI_URL,
+                self.versions.REDISAI,
+                device
             )
+            logger.info("ML Backends and RedisAI build complete!")
 
     def install_torch(self, device="cpu"):
         """Torch shared libraries installed by pip are used in the build
@@ -185,14 +204,14 @@ class Build:
                 msg += (
                     " and run the `smart` command again to obtain Torch GPU libraries"
                 )
-                print(Warning_(msg))
+                logger.warning(msg)
             if device == "cpu" and "cpu" not in patch and not self.build_env.is_macos():
                 msg = (
                     "Torch GPU installed in python environment but requested Torch CPU."
                 )
                 msg += " Run `pip uninstall torch torchvision` and run `smart` again"
-                print(Warning_(msg))
-            print("Torch installed in Python environment")
+                logger.warning(msg)
+            logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
@@ -206,11 +225,11 @@ class Build:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = f"ONNX {self.versions.ONNX} not installed in python environment\n"
                 msg += f"Consider installing {' '.join(packages)} with pip"
-                print(Warning_(msg))
+                logger.warning(msg)
             else:
-                print("ONNX installed in Python environment")
+                logger.info(f"ONNX {self.versions.ONNX} installed in Python environment")
         except SetupError as e:
-            print(Warning_(str(e)))
+            logger.warning(str(e))
 
     def check_tf_install(self):
         """Check Python environment for TensorFlow installation"""
@@ -221,8 +240,9 @@ class Build:
             ):
                 msg = f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment\n"
                 msg += f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
-                print(Warning_(msg))
+                logger.warning(msg)
             else:
-                print("TensorFlow installed in Python environment")
+                logger.info(
+                    f"TensorFlow {self.versions.TENSORFLOW} installed in Python environment")
         except SetupError as e:
-            print(Warning_(str(e)))
+            logger.warning(str(e))

@@ -4,7 +4,6 @@ import site
 import stat
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # NOTE: This will be imported by setup.py and hence no
@@ -22,7 +21,10 @@ class SetupError(Exception):
 class Builder:
     """Base class for building third-party libraries"""
 
-    def __init__(self, jobs=None, verbose=False):
+    def __init__(self, env, jobs=1, verbose=False):
+
+        # build environment from buildenv
+        self.env = env
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
@@ -44,10 +46,7 @@ class Builder:
         if not self.lib_path.is_dir():
             self.lib_path.mkdir()
 
-        # set jobs to 1 if not specified
         self.jobs = jobs
-        if not jobs:
-            self.jobs = 1
 
     # implemented in base classes
     @property
@@ -63,20 +62,6 @@ class Builder:
         if make_bin:
             return make_bin
         raise SetupError("Could not find Make binary")
-
-    @property
-    def cmake(self):
-        """Find and use pip installed cmake if possible"""
-        try:
-            import cmake
-
-            return os.path.join(cmake.CMAKE_BIN_DIR, "cmake")
-        except ImportError:
-            cmake_bin = shutil.which("cmake")
-            if cmake_bin:
-                return cmake_bin
-            else:
-                raise SetupError("Could not locate cmake in env or python packages")
 
     def copy_file(self, src, dst, set_exe=False):
         shutil.copyfile(src, dst)
@@ -109,10 +94,12 @@ class RedisBuilder(Builder):
     version and url.
     """
 
-    def __init__(self, c_compiler, cpp_compiler, malloc, jobs=None, verbose=False):
-        super().__init__(jobs=jobs, verbose=verbose)
-        self.c = c_compiler
-        self.cpp = cpp_compiler
+    def __init__(self,
+                 build_env={},
+                 malloc="libc",
+                 jobs=None,
+                 verbose=False):
+        super().__init__(build_env, jobs=jobs, verbose=verbose)
         self.malloc = malloc
 
     @property
@@ -140,15 +127,12 @@ class RedisBuilder(Builder):
         # get the source code
         subprocess.check_call(
             ["git", "clone", git_url, "--branch", branch, "--depth", "1", "redis"],
-            stdout=self.out,
-            stderr=self.out,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             cwd=self.build_dir,
         )
 
-        print(f"Building Redis {branch} ...")
         cmd = [
-            f"CC={self.c}",
-            f"CXX={self.cpp}",
             self.make,
             f"-j {self.jobs}",
             f"MALLOC={self.malloc}",
@@ -159,6 +143,7 @@ class RedisBuilder(Builder):
             stderr=self.out,
             cwd=str(redis_build_path),
             shell=True,
+            env=self.env
         )
 
         # move redis binaries to smartsim/smartsim/_core/bin
@@ -181,24 +166,21 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
-        c_compiler,
-        cpp_compiler,
-        torch_dir=None,
-        torch=True,
-        tf=True,
-        onnx=False,
+        build_env={},
+        torch_dir="",
+        build_torch=True,
+        build_tf=True,
+        build_onnx=False,
         jobs=None,
         verbose=False,
     ):
-        super().__init__(jobs=jobs, verbose=verbose)
-        self.c = c_compiler
-        self.cpp = cpp_compiler
+        super().__init__(build_env, jobs=jobs, verbose=verbose)
         self.rai_build_path = Path(self.build_dir, "RedisAI")
 
-        # convert to int for RAI build scipt
-        self.torch = 1 if torch else 0
-        self.tf = 1 if tf else 0
-        self.onnx = 1 if onnx else 0
+        # convert to int for RAI build script
+        self.torch = 1 if build_torch else 0
+        self.tf = 1 if build_tf else 0
+        self.onnx = 1 if build_onnx else 0
         self.torch_dir = torch_dir
 
     @property
@@ -236,7 +218,6 @@ class RedisAIBuilder(Builder):
         if self.rai_build_path.is_dir():
             shutil.rmtree(self.rai_build_path)
 
-        print("Downloading ML Backend dependencies...")
         # clone the repo
         clone_cmd = [
             "GIT_LFS_SKIP_SMUDGE=1",
@@ -250,7 +231,11 @@ class RedisAIBuilder(Builder):
         ]
         clone_cmd = " ".join(clone_cmd)
         subprocess.check_call(
-            clone_cmd, stdout=self.out, stderr=self.out, cwd=self.build_dir, shell=True
+            clone_cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            cwd=self.build_dir,
+            shell=True
         )
 
         # copy FindTensorFlow.cmake to RAI cmake dir
@@ -258,8 +243,6 @@ class RedisAIBuilder(Builder):
 
         # get RedisAI dependencies
         dep_cmd = [
-            f"CC={self.c}",
-            f"CXX={self.cpp}",
             f"WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
             f"WITH_TF={self.tf}",
             f"WITH_TFLITE=0",  # never build with TF lite
@@ -272,15 +255,12 @@ class RedisAIBuilder(Builder):
         subprocess.check_call(
             dep_cmd,
             cwd=self.rai_build_path,
-            stdout=self.out,
-            stderr=self.out,
+            stdout=subprocess.DEVNULL, # always mute this as it not helpful
+            stderr=subprocess.DEVNULL,
             shell=True,
         )
 
-        print(f"Building ML backends and RedisAI {branch}")
         build_cmd = [
-            f"CC={self.c}",
-            f"CXX={self.cpp}",
             f"WITH_PT={self.torch}",  # but we built it in if the user specified it
             f"WITH_TF={self.tf}",
             f"WITH_TFLITE=0",  # never build TF Lite
@@ -294,23 +274,22 @@ class RedisAIBuilder(Builder):
             build_cmd.append("GPU=0")
 
         if self.torch_dir:
-            build_cmd.append(f"Torch_DIR={str(self.torch_dir)}")
+            self.env["Torch_DIR"] = str(self.torch_dir)
 
-        build_cmd.extend(["make", "-C", "opt", "-j", f"{self.jobs}", "build"])
-        build_cmd = " ".join(build_cmd)
+        build_cmd.extend([self.make, "-C", "opt", "-j", f"{self.jobs}", "build"])
         subprocess.check_call(
-            build_cmd,
+            " ".join(build_cmd),
             cwd=self.rai_build_path,
             shell=True,
             stdout=self.out,
             stderr=self.out,
-            env=os.environ.copy().update({"Torch_DIR": self.torch_dir}),
+            env=self.env
         )
-        time.sleep(2)
+
         self.install_backends(device)
         if self.torch:
             self.move_torch_libs()
-        # self.cleanup()
+        self.cleanup()
 
     def install_backends(self, device):
         """Move backend libraries to smartsim/_core/lib/

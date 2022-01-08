@@ -1,21 +1,14 @@
 import subprocess
 from pathlib import Path
-
 from smartsim._core.utils import colorize
+from smartsim.log import get_logger
+
+smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
+logger = get_logger("Smart", fmt=smart_logger_format)
 
 
 class SetupError(Exception):
     pass
-
-
-class Warning_:
-    def __init__(self, message):
-        prefix = colorize("WARNING: ", "red", bold=True)
-        self.message = prefix + message
-
-    def __str__(self):
-        return self.message
-
 
 def get_install_path():
     try:
