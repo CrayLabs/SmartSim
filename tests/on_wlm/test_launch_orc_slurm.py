@@ -24,10 +24,10 @@ def test_launch_slurm_orc(fileutils, wlmutils):
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
-    status = exp.get_status(orc)
+    statuses = exp.get_status(orc)
 
     # don't use assert so that we don't leave an orphan process
-    if status.STATUS_FAILED in status:
+    if status.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
@@ -54,10 +54,10 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
-    status = exp.get_status(orc)
+    statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in status:
+    if status.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
