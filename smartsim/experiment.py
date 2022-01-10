@@ -39,7 +39,7 @@ from .generation import Generator
 from .settings import settings
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
-from .utils.wlm import detect_launcher
+from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
