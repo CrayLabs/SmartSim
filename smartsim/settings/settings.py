@@ -25,7 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ..error import SmartSimError
-from ..utils.helpers import detect_launcher, is_valid_cmd
+from ..utils.helpers import is_valid_cmd
+from ..utils.wlm import detect_launcher
 from . import *
 
 
