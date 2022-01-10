@@ -31,8 +31,8 @@ def test_launch_slurm_orc(fileutils, wlmutils):
         assert False
 
     exp.stop(orc)
-    status = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in status])
+    statuses = exp.get_status(orc)
+    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_slurm_cluster_orc(fileutils, wlmutils):
@@ -55,8 +55,8 @@ def test_launch_slurm_cluster_orc(fileutils, wlmutils):
         assert False
 
     exp.stop(orc)
-    status = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in status])
+    statuses = exp.get_status(orc)
+    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):

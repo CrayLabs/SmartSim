@@ -27,8 +27,8 @@ def test_failed_status(fileutils, wlmutils):
     exp.start(model, block=False)
     while not exp.finished(model):
         time.sleep(2)
-    status = exp.get_status(model)
-    assert status[0] == status.STATUS_FAILED
+    stat = exp.get_status(model)
+    assert stat[0] == status.STATUS_FAILED
 
 
 def test_bad_run_command_args(fileutils, wlmutils):
