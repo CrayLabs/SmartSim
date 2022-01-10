@@ -31,16 +31,9 @@ import uuid
 
 from ...entity import EntityList, SmartSimEntity
 from ...error import SSConfigError, SSUnsupportedError
-from ...settings import (
-    AprunSettings,
-    CobaltBatchSettings,
-    MpirunSettings,
-    QsubBatchSettings,
-    SbatchSettings,
-    SrunSettings,
-)
+
 from ...settings.settings import create_batch_settings, create_run_settings
-from ...utils import delete_elements, get_logger
+from ...utils import get_logger
 from ...utils.helpers import expand_exe_path, init_default
 
 logger = get_logger(__name__)
