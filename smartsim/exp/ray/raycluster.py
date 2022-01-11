@@ -61,8 +61,7 @@ class RayCluster(EntityList):
     :type launcher: str
     :param interface: Name of network interface the cluster nodes should bind to.
     :type interface: str
-    :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
-                  obtained with ``ray.slurm.get_allocation``
+    :param alloc: ID of allocation to run on, if obtained with ``smartsim.slurm.get_allocation``
     :type alloc: int
     :param batch: Whether cluster should be launched as batch file, ignored when ``launcher`` is `local`
     :type batch: bool
