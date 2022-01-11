@@ -31,7 +31,6 @@ import uuid
 
 from ...entity import EntityList, SmartSimEntity
 from ...error import SSConfigError, SSUnsupportedError
-
 from ...settings.settings import create_batch_settings, create_run_settings
 from ...utils import get_logger
 from ...utils.helpers import expand_exe_path, init_default
@@ -49,11 +48,11 @@ class RayCluster(EntityList):
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
-    :param ray_args: Arguments to be passed to Ray executable as `--key=value`, or `--key` if `value` is set to `None`.
+    :param ray_args: Arguments to be passed to Ray executable.
     :type ray_args: dict[str,str]
     :param num_nodes: Number of hosts, includes 1 head node and all worker nodes.
     :type num_nodes: int
-    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
+    :param run_args: Arguments to pass to launcher to specify details such as partition or time.
     :type run_args: dict[str,str]
     :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
     :type batch_args: dict[str,str]
@@ -67,9 +66,9 @@ class RayCluster(EntityList):
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
-    :param run_command: specify launch binary. This is currently used only if launcher is Cobalt or PBS.
+    :param run_command: specify launch binary, defaults to automatic selection.
     :type run_command: str
-    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
+    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI.
     :type hosts: str, list[str]
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
                      Can be set to
@@ -183,7 +182,7 @@ class RayCluster(EntityList):
             self.batch_settings.set_hostlist(host_list)
         for host, node in zip(host_list, self.entities):
             # Aprun doesn't like settings hosts in batch launch
-            if launcher=='pbs' or launcher=='cobalt':
+            if launcher == "pbs" or launcher == "cobalt":
                 if not self.batch:
                     node.run_settings.set_hostlist([host])
             else:
