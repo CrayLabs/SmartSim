@@ -132,7 +132,7 @@ class BuildEnv:
             self.CC,
             self.CXX
         ]
-        if int(self.CHECKS) != 0:
+        if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)
 
