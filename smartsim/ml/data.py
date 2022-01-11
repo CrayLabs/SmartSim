@@ -328,7 +328,14 @@ class BatchDownloader:
         self.sources = self.list_all_sources()
 
 
-        self.log("Generator initialization complete")
+    @property
+    def need_targets(self):
+        """Compute if targets have to be downloaded.
+        :return: Whether targets (or labels) should be downloaded
+        :rtype: bool
+        """
+        return self.target_prefix and not self.autoencoding
+        
 
     def __iter__(self):
 
