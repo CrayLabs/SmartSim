@@ -68,7 +68,7 @@ class Build:
 
         logger.info("Running SmartSim build process...")
         logger.info("Checking for build tools...")
-        self.check_build_prereqs()
+        self.check_build_dependencies()
 
         logger.info("Build Environment:")
         print(str(self.build_env), "\n")
@@ -108,9 +108,6 @@ class Build:
         print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
         print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
-
-        # sanity check for platform and RAI deps
-        self.build_env.check_prereq("git-lfs")
 
         # check to make sure user didn't request GPU build on Mac
         if self.build_env.PLATFORM == "darwin" and device == "gpu":
@@ -249,7 +246,7 @@ class Build:
             logger.warning(str(e))
 
 
-    def check_build_prereqs(self):
+    def check_build_dependencies(self):
         """Use BuildEnv to check for compilers, make, cmake, etc"""
         try:
             self.build_env.check_dependencies()

@@ -124,12 +124,17 @@ class BuildEnv:
             self.check_dependencies()
 
     def check_dependencies(self):
+        deps = [
+            "git",
+            "git-lfs",
+            "make",
+            "cmake",
+            self.CC,
+            self.CXX
+        ]
         if int(self.CHECKS) != 0:
-            self.check_prereq("git")
-            self.check_prereq(self.CC)
-            self.check_prereq(self.CXX)
-            self.check_prereq("make")
-            self.check_prereq("cmake")
+            for dep in deps:
+                self.check_build_dependency(dep)
 
     def __call__(self):
         # return the build env for the build process
@@ -211,10 +216,11 @@ class BuildEnv:
             env["CUDNN_LIBRARY"] = env["CUDNN_LIBRARY_PATH"]
         return env
 
-    def check_prereq(self, command):
+    def check_build_dependency(self, command):
+        # TODO expand this to parse and check versions.
         try:
             out = subprocess.check_output([command, "--version"])
-        except OSError as e:
+        except OSError:
             raise RuntimeError(f"{command} must be installed to build SmartSim") from None
 
     @staticmethod
