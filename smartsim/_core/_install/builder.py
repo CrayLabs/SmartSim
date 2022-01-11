@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import site
 import stat
@@ -20,6 +21,16 @@ class SetupError(Exception):
 
 class Builder:
     """Base class for building third-party libraries"""
+
+    url_regex = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE
+    )
+
 
     def __init__(self, env, jobs=1, verbose=False):
 
@@ -79,6 +90,9 @@ class Builder:
             else:
                 self.copy_file(content, dst / content.name, set_exe=set_exe)
 
+    def is_valid_url(self, url):
+        return re.match(self.url_regex, url) is not None
+
     def cleanup(self):
         if self.build_dir.is_dir():
             shutil.rmtree(str(self.build_dir))
@@ -123,6 +137,11 @@ class RedisBuilder(Builder):
         # really never exist as we delete after build
         if redis_build_path.is_dir():
             shutil.rmtree(str(redis_build_path))
+
+        # Check Redis URL
+        if not self.is_valid_url(git_url):
+            raise SetupError(f"Malformed Redis URL: {git_url}")
+
 
         # get the source code
         subprocess.check_call(
@@ -218,6 +237,11 @@ class RedisAIBuilder(Builder):
         if self.rai_build_path.is_dir():
             shutil.rmtree(self.rai_build_path)
 
+        # Check RedisAI URL
+        if not self.is_valid_url(git_url):
+            raise SetupError(f"Malformed RedisAI URL: {git_url}")
+
+
         # clone the repo
         clone_cmd = [
             "GIT_LFS_SKIP_SMUDGE=1",
@@ -286,12 +310,12 @@ class RedisAIBuilder(Builder):
             env=self.env
         )
 
-        self.install_backends(device)
+        self._install_backends(device)
         if self.torch:
-            self.move_torch_libs()
+            self._move_torch_libs()
         self.cleanup()
 
-    def install_backends(self, device):
+    def _install_backends(self, device):
         """Move backend libraries to smartsim/_core/lib/
 
         :param device: cpu or cpu
@@ -307,7 +331,7 @@ class RedisAIBuilder(Builder):
             self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
             self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
 
-    def move_torch_libs(self):
+    def _move_torch_libs(self):
         """Move pip install torch libraries
 
         Since we use pip installed torch libraries for building

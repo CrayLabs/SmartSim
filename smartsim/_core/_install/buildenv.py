@@ -25,6 +25,8 @@ import pkg_resources
 class SetupError(Exception):
     pass
 
+def get_env(var, default):
+    return os.environ.get(var, default)
 
 class Versioner:
     """Buildtime configuration of third-party dependencies"""
@@ -33,21 +35,19 @@ class Versioner:
     PYTHON_MIN = (3, 7, 0)
 
     # Versions
-    SMARTSIM = os.environ.get("SMARTSIM_VERSION", "0.3.2")
-    SMARTSIM_SUFFIX = os.environ.get("SMARTSIM_SUFFIX", "")
-    SMARTREDIS = os.environ.get("SMARTREDIS_VERSION", "0.2.0")
+    SMARTSIM = get_env("SMARTSIM_VERSION", "0.3.2")
+    SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
+    SMARTREDIS = get_env("SMARTREDIS_VERSION", "0.2.0")
 
     # Redis
-    REDIS = os.environ.get("SMARTSIM_REDIS", "6.0.8")
-    REDIS_URL = os.environ.get(
-        "SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/"
-    )
+    REDIS = get_env("SMARTSIM_REDIS", "6.0.8")
+    REDIS_URL = get_env("SMARTSIM_REDIS_URL",
+                        "https://github.com/redis/redis.git/")
 
     # RedisAI
-    REDISAI = os.environ.get("SMARTSIM_REDISAI", "1.2.3")
-    REDISAI_URL = os.environ.get(
-        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
-    )
+    REDISAI = get_env("SMARTSIM_REDISAI", "1.2.3")
+    REDISAI_URL = get_env("SMARTSIM_REDISAI_URL",
+                          "https://github.com/RedisAI/RedisAI.git/")
 
     # TORCH
     TORCH = os.environ.get("SMARTSIM_TORCH", "1.7.1")
