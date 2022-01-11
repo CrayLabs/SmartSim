@@ -119,8 +119,9 @@ class BuildEnv:
     CHECKS = int(os.environ.get("NO_CHECKS", 0))
     PLATFORM = sys.platform
 
-    def __init__(self):
-        self.check_dependencies()
+    def __init__(self, run_checks=True):
+        if run_checks:
+            self.check_dependencies()
 
     def check_dependencies(self):
         if int(self.CHECKS) != 0:
@@ -214,7 +215,7 @@ class BuildEnv:
         try:
             out = subprocess.check_output([command, "--version"])
         except OSError as e:
-            raise RuntimeError(f"{command} must be installed to build SmartSim") from e
+            raise RuntimeError(f"{command} must be installed to build SmartSim") from None
 
     @staticmethod
     def check_installed(package):

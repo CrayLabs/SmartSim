@@ -18,7 +18,7 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 
 class Build:
     def __init__(self):
-        self.build_env = BuildEnv()
+        self.build_env = BuildEnv(run_checks=False)
         self.versions = Versioner()
 
         parser = argparse.ArgumentParser()
@@ -67,6 +67,9 @@ class Build:
         onnx = args.onnx
 
         logger.info("Running SmartSim build process...")
+        logger.info("Checking for build tools...")
+        self.check_build_prereqs()
+
         logger.info("Build Environment:")
         print(str(self.build_env), "\n")
 
@@ -244,3 +247,12 @@ class Build:
                     f"TensorFlow {self.versions.TENSORFLOW} installed in Python environment")
         except SetupError as e:
             logger.warning(str(e))
+
+
+    def check_build_prereqs(self):
+        """Use BuildEnv to check for compilers, make, cmake, etc"""
+        try:
+            self.build_env.check_dependencies()
+        except RuntimeError as e:
+            logger.error(str(e))
+            exit(1)
