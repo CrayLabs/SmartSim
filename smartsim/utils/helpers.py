@@ -73,7 +73,7 @@ def init_default(default, init_value, expected_type=None):
 def expand_exe_path(exe):
     """Takes an executable and returns the full path to that executable
 
-    :param exe: exectable or file
+    :param exe: executable or file
     :type exe: str
     """
 
