@@ -3,7 +3,6 @@ import platform
 import site
 import subprocess
 import sys
-import pprint
 import pkg_resources
 
 from pathlib import Path
@@ -18,16 +17,27 @@ InvalidVersion = packaging.version.InvalidVersion
 #       smartsim related items or non-standand library
 #       items should be imported here.
 
-# TODO:
-#  - check versions of prequisites
-#  - include Ray versions
-
 
 class SetupError(Exception):
+    """A simple execption class for errors in _install.builenv file.
+    This is primarily used to interrupt the setup.py build in case
+    of a failure, and is caught frequently in the CLI which attempts
+    to suppress and log the errors thrown here.
+
+    One note is that this errror must be imported from here to be
+    caught and not defined anywhere else. Since we use this class
+    in the installation, having a separate error file would mean
+    another module to manually import into setup.py
+
+    See setup.py for more
+"""
     pass
 
 # so as to not conflict with pkg_resources.packaging.version.Version
 class Version_(str):
+    """A subclass of pkg_resources.packaging.version.Version that
+    includes some helper methods for comparing versions.
+    """
     def _convert_to_version(self, vers):
         if isinstance(vers, Version):
             return vers
@@ -40,15 +50,17 @@ class Version_(str):
 
     @property
     def major(self):
-        return Version(self).major
+        # Version(self).major doesn't work for all Python distributions
+        # see https://github.com/lebedov/python-pdfbox/issues/28
+        return int(pkg_resources.parse_version(self).base_version.split('.')[0])
 
     @property
     def minor(self):
-        return Version(self).minor
+        return int(pkg_resources.parse_version(self).base_version.split('.')[1])
 
     @property
     def micro(self):
-        return Version(self).micro
+        return int(pkg_resources.parse_version(self).base_version.split('.')[2])
 
     def __gt__(self, cmp):
         try:
@@ -85,6 +97,18 @@ def get_env(var, default):
     return os.environ.get(var, default)
 
 class RedisAIVersion(Version_):
+    """A subclass of Version_ that holds the dependency sets for RedisAI
+
+    this class serves two purposes:
+
+    1. It is used to populate the [ml] ``extras_require`` of the setup.py.
+    This is because the RedisAI version will determine which ML based
+    dependencies are required.
+
+    2. Used to set the default values for PyTorch, TF, and ONNX
+    given the SMARTSIM_REDISAI env var set by the user.
+
+    """
 
     defaults = {
         "1.2.3": {
@@ -130,7 +154,23 @@ class RedisAIVersion(Version_):
 
 
 class Versioner:
-    """Buildtime configuration of third-party dependencies"""
+    """Versioner is responsible fo managing all the versions
+    within SmartSim including SmartSim itself.
+
+    SmartSim's version is written into version.py upon pip install
+    by using this class in setup.py. By setting SMARTSIM_SUFFIX,
+    the version will be written as a "dirty" version with the
+    git-sha appended.
+    i.e.
+        export SMARTSIM_SUFFIX=nightly
+        pip install -e .
+        smartsim.__version__ == 0.3.2+nightly-3fe23ff
+
+    Versioner manages third party dependencies and their versions
+    as well. These versions are used by the ``smart`` cli in the
+    ``smart build`` command to determine which dependency versions
+    to look for and download.
+    """
 
     # compatible Python version
     PYTHON_MIN = Version_("3.7.0")
@@ -204,7 +244,7 @@ class Versioner:
         version = self.SMARTSIM
         if self.SMARTSIM_SUFFIX:
             git_sha = self.get_sha(setup_py_dir)
-            version = f"{version}-{self.SMARTSIM_SUFFIX}-{git_sha}"
+            version = f"{version}+{self.SMARTSIM_SUFFIX}-{git_sha}"
 
         version_file = setup_py_dir / "smartsim" / "version.py"
         with open(version_file, "w") as f:
@@ -216,7 +256,22 @@ class Versioner:
 
 
 class BuildEnv:
-    """Environment for building third-party dependencies"""
+    """Environment for building third-party dependencies
+
+    BuildEnv provides a method for configuring how the third-party
+    dependencies within SmartSim are built, namely Redis/KeyDB
+    and RedisAI.
+
+    The environment variables listed here can be set to control the
+    Redis build in the pip wheel build as well as the Redis and RedisAI
+    build executed by the CLI.
+
+    Build tools are also checked for here and if they are not found
+    then a SetupError is raised.
+
+    Adding the -v flag to ``smart build`` will show the build environment
+    being used.
+    """
 
     # Compiler overrides
     CC = os.environ.get("CC", "gcc")
@@ -294,17 +349,29 @@ class BuildEnv:
 
     @property
     def site_packages_path(self):
+        """Find location of user pip packages for this py env"""
         site_path = Path(site.getsitepackages()[0]).resolve()
         return site_path
 
     @property
     def torch_cmake_path(self):
+        """Find the path to the cmake directory within a
+        pip installed pytorch package"""
+
         site_path = self.site_packages_path
         torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
         return str(torch_path)
 
     @staticmethod
     def get_cudnn_env():
+        """Collect the environment variables needed for Caffe (Pytorch)
+        and throw an error if they are not found
+
+        Specifically make sure to set at least one set of:
+            - CUDNN_LIBRARY and CUDNN_INCLUDE_DIR
+                or
+            - CUDNN_LIBRARY_PATH and CUDNN_INCLUDE_PATH
+        """
         env = {
             "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", None),
             "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", None),

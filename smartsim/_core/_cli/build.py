@@ -6,7 +6,7 @@ import pkg_resources
 
 from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, Versioner, SetupError
+from smartsim._core._install.buildenv import BuildEnv, Versioner, SetupError, Version_
 from smartsim._core._install.builder import BuildError
 from smartsim.log import get_logger
 
@@ -119,7 +119,7 @@ class Build:
 
     def build_redis_ai(self, device, torch=True, tf=True, onnx=False, torch_dir=None):
 
-        # check to make sure user didn't request GPU build on Mac
+        # make sure user isn't trying to do something silly on MacOS
         if self.build_env.PLATFORM == "darwin":
             if device == "gpu":
                 logger.error("SmartSim does not support GPU on MacOS")
@@ -128,7 +128,7 @@ class Build:
                 logger.error("RedisAI does not support ONNX on MacOS")
                 exit(1)
             if self.versions.REDISAI > "1.2.3":
-                logger.error("RedisAI deprecated support for MacOS after 1.2.3 :(")
+                logger.error("RedisAI removed support for MacOS after 1.2.3")
                 exit(1)
 
         # decide which runtimes to build
@@ -139,13 +139,12 @@ class Build:
         print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
-        # ONNX
-        if onnx:
-            self.check_onnx_install()
-
-        # TF
-        if tf == 1:
-            self.check_tf_install()
+        # Check for onnx and tf in user python environemnt and prompt user
+        # to download them if they are not installed. this should not break
+        # the build however, as we use onnx and tf directly from RAI instead
+        # of pip like we do PyTorch.
+        if onnx: self.check_onnx_install()
+        if tf: self.check_tf_install()
 
         cmd = []
         # TORCH
@@ -153,9 +152,14 @@ class Build:
             if torch_dir:
                 torch_dir = Path(torch_dir).resolve()
                 if not torch_dir.is_dir():
+                    # we will always be able to find a torch version downloaded by
+                    # pip so if we can't find it we know the user suggested a torch
+                    # installation path that doesn't exist
                     logger.error("Could not find requested user Torch installation")
                     exit(1)
             else:
+                # install pytorch wheel, and get the path to the cmake dir
+                # we will use in the RAI build
                 self.install_torch(device=device)
                 torch_dir = self.build_env.torch_cmake_path
 
@@ -186,13 +190,15 @@ class Build:
                         f"Looked for {cudnn_env_vars}")
                 else:
                     build_env.update(gpu_env)
-            # update RAI build env
+            # update RAI build env with cudnn env vars
             rai_builder.env = build_env
 
             logger.info(
                 f"Building RedisAI version {self.versions.REDISAI}" \
                     f" from {self.versions.REDISAI_URL}")
 
+            # NOTE: have the option to add other builds here in the future
+            # like "from_tarball"
             rai_builder.build_from_git(
                 self.versions.REDISAI_URL,
                 self.versions.REDISAI,
@@ -220,23 +226,28 @@ class Build:
 
             pip_install(packages, end_point=end_point, verbose=self.verbose)
 
-        # if torch already installed, check the versions
+        # if torch already installed, check the versions to make sure correct
+        # torch version is downloaded for that particular device
         else:
-            installed_ver = pkg_resources.get_distribution("torch").version
-            _, _, patch = installed_ver.split(".")
-            if "cpu" in patch and device == "gpu":
-                msg = ("Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " +
-                      "and run the `smart build` command again to obtain Torch GPU libraries")
-                logger.warning(msg)
-            if device == "cpu" and "cpu" not in patch and not self.build_env.is_macos():
-                msg = ("Torch GPU installed in python environment but requested Torch CPU. " +
-                      " Run `pip uninstall torch torchvision` and run `smart build` again")
-                logger.error(msg) # error because this is usually fatal
+            installed = Version_(pkg_resources.get_distribution("torch").version)
+            if device == "gpu":
+                # if torch version is x.x.x+cpu
+                if "cpu" in installed.micro:
+                    msg = ("Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " +
+                        "and run the `smart build` command again to obtain Torch GPU libraries")
+                    logger.warning(msg)
+
+            if device == "cpu":
+                # if torch version if x.x.x then we need to install the cpu version
+                if "cpu" not in installed.micro and not self.build_env.is_macos():
+                    msg = ("Torch GPU installed in python environment but requested Torch CPU. " +
+                        " Run `pip uninstall torch torchvision` and run `smart build` again")
+                    logger.error(msg) # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
+
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
-        # conversions tools for ONNX
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (f"ONNX {self.versions.ONNX} not installed in python environment. " +
