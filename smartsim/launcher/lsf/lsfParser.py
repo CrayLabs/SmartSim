@@ -85,12 +85,13 @@ def parse_jslist_stepid(output, step_id):
     result = ("NOTFOUND", None)
 
     for line in output.split("\n"):
-        if line.split()[0] == step_id:
-            line = line.split()
-            stat = line[6]
-            return_code = line[5]
-            result = (stat, return_code)
-            break
+        fields = line.split()
+        if len(fields) >= 7:
+            if fields[0] == step_id:
+                stat = fields[6]
+                return_code = fields[5]
+                result = (stat, return_code)
+                break
 
     return result
 
@@ -108,11 +109,12 @@ def parse_bjobs_jobid(output, job_id):
     """
     result = "NOTFOUND"
     for line in output.split("\n"):
-        if line.split()[0] == job_id:
-            line = line.split()
-            stat = line[2]
-            result = stat
-            break
+        fields = line.split()
+        if len(fields) >= 3:
+            if fields[0] == job_id:
+                stat = fields[2]
+                result = stat
+                break
     return result
 
 

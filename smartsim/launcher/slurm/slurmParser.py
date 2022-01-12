@@ -95,11 +95,12 @@ def parse_sacct(output, job_id):
     result = ("PENDING", None)
     for line in output.split("\n"):
         line = line.split("|")
-        if jobid_exact_match(line[0], job_id):
-            stat = line[1]
-            code = line[2].split(":")[0]
-            result = (stat, code)
-            break
+        if len(line) >= 3:
+            if jobid_exact_match(line[0], job_id):
+                stat = line[1]
+                code = line[2].split(":")[0]
+                result = (stat, code)
+                break
     return result
 
 
@@ -140,8 +141,7 @@ def parse_step_id_from_sacct(output, step_name):
     step_id = None
     for line in output.split("\n"):
         sacct_string = line.split("|")
-        if len(sacct_string) < 2:
-            continue
-        if sacct_string[0] == step_name:
-            step_id = sacct_string[1]
+        if len(sacct_string) >= 2:
+            if sacct_string[0] == step_name:
+                step_id = sacct_string[1]
     return step_id
