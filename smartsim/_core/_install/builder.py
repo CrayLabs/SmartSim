@@ -6,6 +6,7 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
+from subprocess import SubprocessError
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -15,9 +16,8 @@ from pathlib import Path
 #   - check cmake version and use system if possible to avoid conflicts
 
 
-class SetupError(Exception):
+class BuildError(Exception):
     pass
-
 
 class Builder:
     """Base class for building third-party libraries"""
@@ -72,7 +72,7 @@ class Builder:
         make_bin = shutil.which("make")
         if make_bin:
             return make_bin
-        raise SetupError("Could not find Make binary")
+        raise BuildError("Could not find Make binary")
 
     def copy_file(self, src, dst, set_exe=False):
         shutil.copyfile(src, dst)
@@ -97,6 +97,24 @@ class Builder:
         if self.build_dir.is_dir():
             shutil.rmtree(str(self.build_dir))
 
+    def run_command(self, cmd, shell=True, out=None, cwd=None):
+        # option to manually disable output if necessary
+        if not out:
+            out = self.out
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                stderr=subprocess.PIPE,
+                stdout=out,
+                cwd=cwd,
+                shell=shell,
+                env=self.env
+            )
+            error = proc.communicate()[1].decode("utf-8")
+            if proc.returncode != 0:
+                raise BuildError(error)
+        except (OSError, SubprocessError) as e:
+            raise BuildError(e)
 
 class RedisBuilder(Builder):
     """Class to build Redis from Source
@@ -140,30 +158,18 @@ class RedisBuilder(Builder):
 
         # Check Redis URL
         if not self.is_valid_url(git_url):
-            raise SetupError(f"Malformed Redis URL: {git_url}")
+            raise BuildError(f"Malformed Redis URL: {git_url}")
 
 
-        # get the source code
-        subprocess.check_call(
-            ["git", "clone", git_url, "--branch", branch, "--depth", "1", "redis"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd=self.build_dir,
-        )
+        # clone Redis
+        clone_cmd = ["git", "clone", git_url,
+                     "--branch", branch,
+                     "--depth", "1", "redis"]
+        self.run_command(" ".join(clone_cmd), shell=True, cwd=self.build_dir)
 
-        cmd = [
-            self.make,
-            f"-j {self.jobs}",
-            f"MALLOC={self.malloc}",
-        ]
-        subprocess.check_call(
-            " ".join(cmd),
-            stdout=self.out,
-            stderr=self.out,
-            cwd=str(redis_build_path),
-            shell=True,
-            env=self.env
-        )
+        # build Redis
+        cmd = [self.make,"-j", str(self.jobs), f"MALLOC={self.malloc}"]
+        self.run_command(" ".join(cmd), shell=True, cwd=str(redis_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
         redis_src_dir = redis_build_path / "src"
@@ -211,16 +217,17 @@ class RedisAIBuilder(Builder):
     def copy_tf_cmake(self):
         """Copy the FindTensorFlow.cmake file to the build directory
         as the version included in RedisAI is out of date for us.
+
+        Note: opt/cmake/modules removed in RedisAI v1.2.5
         """
         # remove the previous version
-        rai_tf_cmake = self.rai_build_path.joinpath(
-            "opt/cmake/modules/FindTensorFlow.cmake"
-        ).resolve()
-        rai_tf_cmake.unlink()
-        # copy ours in
-        self.copy_file(
-            self.bin_path / "modules/FindTensorFlow.cmake", rai_tf_cmake, set_exe=False
-        )
+        tf_cmake = self.rai_build_path.joinpath("opt/cmake/modules/FindTensorFlow.cmake").resolve()
+        if tf_cmake.is_file():
+            tf_cmake.unlink()
+            # copy ours in
+            self.copy_file(
+                self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
+            )
 
     def build_from_git(self, git_url, branch, device):
         """Build RedisAI from git
@@ -239,10 +246,10 @@ class RedisAIBuilder(Builder):
 
         # Check RedisAI URL
         if not self.is_valid_url(git_url):
-            raise SetupError(f"Malformed RedisAI URL: {git_url}")
+            raise BuildError(f"Malformed RedisAI URL: {git_url}")
 
 
-        # clone the repo
+        # clone RedisAI
         clone_cmd = [
             "GIT_LFS_SKIP_SMUDGE=1",
             "git",
@@ -254,12 +261,11 @@ class RedisAIBuilder(Builder):
             "RedisAI",
         ]
         clone_cmd = " ".join(clone_cmd)
-        subprocess.check_call(
+        self.run_command(
             clone_cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd=self.build_dir,
-            shell=True
+            out=subprocess.DEVNULL,
+            shell=True,
+            cwd=self.build_dir
         )
 
         # copy FindTensorFlow.cmake to RAI cmake dir
@@ -269,19 +275,19 @@ class RedisAIBuilder(Builder):
         dep_cmd = [
             f"WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
             f"WITH_TF={self.tf}",
-            f"WITH_TFLITE=0",  # never build with TF lite
+            f"WITH_TFLITE=0",  # never build with TF lite (for now)
             f"WITH_ORT={self.onnx}",
+            "VERBOSE=1",
             "bash",
             "get_deps.sh",
             device,
         ]
         dep_cmd = " ".join(dep_cmd)
-        subprocess.check_call(
+        self.run_command(
             dep_cmd,
-            cwd=self.rai_build_path,
-            stdout=subprocess.DEVNULL, # always mute this as it not helpful
-            stderr=subprocess.DEVNULL,
             shell=True,
+            out=subprocess.DEVNULL, # suppress this as it's not useful
+            cwd=self.rai_build_path
         )
 
         build_cmd = [
@@ -301,13 +307,10 @@ class RedisAIBuilder(Builder):
             self.env["Torch_DIR"] = str(self.torch_dir)
 
         build_cmd.extend([self.make, "-C", "opt", "-j", f"{self.jobs}", "build"])
-        subprocess.check_call(
+        self.run_command(
             " ".join(build_cmd),
             cwd=self.rai_build_path,
             shell=True,
-            stdout=self.out,
-            stderr=self.out,
-            env=self.env
         )
 
         self._install_backends(device)

@@ -146,6 +146,26 @@ deps = [
 # Add SmartRedis at specific version
 deps.append("smartredis=={}".format(versions.SMARTREDIS))
 
+extras_require = {
+    "dev": [
+        "black>=20.8b1",
+        "isort>=5.6.4",
+        "pylint>=2.6.0",
+        "pytest>=6.0.0",
+        "pytest-cov>=2.10.1"
+    ],
+    # see smartsim/_core/_install/buildenv.py for more details
+    "ml": versions.ml_extras_required(),
+    "doc": [
+        "sphinx==3.1.1",
+        "breathe==4.27.0",
+        "sphinx_rtd_theme>=0.5.0",
+        "sphinx-fortran==1.1.1",
+        "nbsphinx>=0.8.2",
+    ],
+    "ray": "ray>=1.6"
+    }
+
 
 # rest in setup.cfg
 setup(
@@ -160,6 +180,7 @@ setup(
         "install": InstallPlatlib
     },
     zip_safe=False,
+    extras_require=extras_require,
     distclass=BinaryDistribution,
     entry_points={
         "console_scripts": [

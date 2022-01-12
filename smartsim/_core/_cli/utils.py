@@ -1,14 +1,13 @@
 import subprocess
 from pathlib import Path
 from smartsim._core.utils import colorize
+from smartsim._core._install.buildenv import SetupError
+from smartsim._core._install.builder import BuildError
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=smart_logger_format)
 
-
-class SetupError(Exception):
-    pass
 
 def get_install_path():
     try:
@@ -42,7 +41,7 @@ def pip_install(packages, end_point=None, verbose=False):
     cmd = " ".join(cmd)
 
     if verbose:
-        print(f"Installing packages {packages}...")
+        logger.info(f"Installing packages {packages}...")
     proc = subprocess.Popen(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
@@ -51,6 +50,6 @@ def pip_install(packages, end_point=None, verbose=False):
     if returncode != 0:
         error = f"{packages} installation failed with exitcode {returncode}\n"
         error += err.decode("utf-8")
-        raise SetupError(error)
+        raise BuildError(error)
     if verbose:
-        print(f"{packages} installed successfully")
+        logger.info(f"{packages} installed successfully")

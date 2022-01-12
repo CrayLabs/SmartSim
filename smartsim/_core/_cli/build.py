@@ -1,12 +1,13 @@
 import sys
 import argparse
 from pathlib import Path
-
+from tabulate import tabulate
 import pkg_resources
 
-from smartsim._core._cli.utils import SetupError, color_bool, pip_install
+from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, Versioner
+from smartsim._core._install.buildenv import BuildEnv, Versioner, SetupError
+from smartsim._core._install.builder import BuildError
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -18,9 +19,6 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 
 class Build:
     def __init__(self):
-        self.build_env = BuildEnv(run_checks=False)
-        self.versions = Versioner()
-
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "-v",
@@ -67,17 +65,36 @@ class Build:
         onnx = args.onnx
 
         logger.info("Running SmartSim build process...")
-        logger.info("Checking for build tools...")
-        self.check_build_dependencies()
+        try:
+            logger.info("Checking for build tools...")
+            self.build_env = BuildEnv()
 
-        logger.info("Build Environment:")
-        print(str(self.build_env), "\n")
+            if self.verbose:
+                logger.info("Build Environment:")
+                env = self.build_env.as_dict()
+                print(tabulate(env,
+                               headers=env.keys(),
+                               tablefmt="github"), "\n")
 
-        # REDIS
-        self.build_redis()
+            logger.info("Checking requested versions...")
+            self.versions = Versioner()
 
-        # REDISAI
-        self.build_redis_ai(str(args.device), pt, tf, onnx, args.torch_dir)
+            if self.verbose:
+                logger.info("Version Information:")
+                vers = self.versions.as_dict()
+                print(tabulate(vers,
+                               headers=vers.keys(),
+                               tablefmt="github"), "\n")
+
+            # REDIS
+            self.build_redis()
+
+            # REDISAI
+            self.build_redis_ai(str(args.device), pt, tf, onnx, args.torch_dir)
+
+        except (SetupError, BuildError) as e:
+            logger.error(str(e))
+            exit(1)
 
         logger.info("SmartSim build complete!")
 
@@ -95,11 +112,24 @@ class Build:
                 f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
 
-            redis_builder.build_from_git(self.versions.REDIS_URL, self.versions.REDIS)
+            redis_builder.build_from_git(self.versions.REDIS_URL,
+                                         self.versions.REDIS)
             redis_builder.cleanup()
         logger.info("Redis build complete!")
 
     def build_redis_ai(self, device, torch=True, tf=True, onnx=False, torch_dir=None):
+
+        # check to make sure user didn't request GPU build on Mac
+        if self.build_env.PLATFORM == "darwin":
+            if device == "gpu":
+                logger.error("SmartSim does not support GPU on MacOS")
+                exit(1)
+            if onnx:
+                logger.error("RedisAI does not support ONNX on MacOS")
+                exit(1)
+            if self.versions.REDISAI > "1.2.3":
+                logger.error("RedisAI deprecated support for MacOS after 1.2.3 :(")
+                exit(1)
 
         # decide which runtimes to build
         print("\nML Backends Requested")
@@ -108,11 +138,6 @@ class Build:
         print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
         print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
-
-        # check to make sure user didn't request GPU build on Mac
-        if self.build_env.PLATFORM == "darwin" and device == "gpu":
-            logger.error("SmartSim does not support GPU on MacOS")
-            exit(1)
 
         # ONNX
         if onnx:
@@ -157,7 +182,7 @@ class Build:
                                   "CUDNN_INCLUDE_PATH",
                                   "CUDNN_LIBRARY_PATH"]
                 if not gpu_env:
-                    logger.warning(f"CUDNN environment variables not found.\n" \
+                    logger.warning(f"CUDNN environment variables not found.\n" +
                         f"Looked for {cudnn_env_vars}")
                 else:
                     build_env.update(gpu_env)
@@ -178,8 +203,6 @@ class Build:
     def install_torch(self, device="cpu"):
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
-
-        :raises SetupError: if incompatible version is installed
         """
         packages = []
         end_point = None
@@ -202,27 +225,22 @@ class Build:
             installed_ver = pkg_resources.get_distribution("torch").version
             _, _, patch = installed_ver.split(".")
             if "cpu" in patch and device == "gpu":
-                msg = "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " \
-                      "and run the `smart build` command again to obtain Torch GPU libraries"
+                msg = ("Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " +
+                      "and run the `smart build` command again to obtain Torch GPU libraries")
                 logger.warning(msg)
             if device == "cpu" and "cpu" not in patch and not self.build_env.is_macos():
-                msg = "Torch GPU installed in python environment but requested Torch CPU. " \
-                      " Run `pip uninstall torch torchvision` and run `smart build` again"
+                msg = ("Torch GPU installed in python environment but requested Torch CPU. " +
+                      " Run `pip uninstall torch torchvision` and run `smart build` again")
                 logger.error(msg) # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
         # conversions tools for ONNX
-        packages = [
-            f"skl2onnx=={self.versions.SKL2ONNX}",
-            f"onnxmltools=={self.versions.ONNXML}",
-            f"onnx=={self.versions.ONNX}",
-        ]
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
-                msg = f"ONNX {self.versions.ONNX} not installed in python environment. " \
-                    f"Consider installing {' '.join(packages)} with pip"
+                msg = (f"ONNX {self.versions.ONNX} not installed in python environment. " +
+                    f"Consider installing onnx=={self.versions.ONNX} with pip")
                 logger.warning(msg)
             else:
                 logger.info(f"ONNX {self.versions.ONNX} installed in Python environment")
@@ -236,8 +254,8 @@ class Build:
             if not self.build_env.check_installed(
                 "tensorflow", self.versions.TENSORFLOW
             ):
-                msg = f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. " \
-                        f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
+                msg = (f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. " +
+                        f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip")
                 logger.warning(msg)
             else:
                 logger.info(
@@ -245,11 +263,3 @@ class Build:
         except SetupError as e:
             logger.warning(str(e))
 
-
-    def check_build_dependencies(self):
-        """Use BuildEnv to check for compilers, make, cmake, etc"""
-        try:
-            self.build_env.check_dependencies()
-        except RuntimeError as e:
-            logger.error(str(e))
-            exit(1)
