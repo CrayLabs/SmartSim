@@ -26,8 +26,6 @@
 
 import time
 
-from smartsim.settings.settings import RunSettings
-
 from ...constants import STATUS_CANCELLED, STATUS_COMPLETED
 from ...error import LauncherError
 from ...settings import BsubBatchSettings, JsrunSettings, MpirunSettings, RunSettings

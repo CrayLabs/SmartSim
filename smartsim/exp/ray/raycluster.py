@@ -352,6 +352,9 @@ class RayHead(SmartSimEntity):
             **kwargs,
         )
 
+        run_settings.set_tasks_per_node(1)
+        run_settings.set_tasks(1)
+
         super().__init__(name, path, run_settings)
 
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
@@ -418,6 +421,9 @@ class RayWorker(SmartSimEntity):
             alloc=alloc,
             **kwargs,
         )
+
+        run_settings.set_tasks_per_node(1)
+        run_settings.set_tasks(1)
 
         super().__init__(name, path, run_settings)
 
