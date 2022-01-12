@@ -94,3 +94,8 @@ def test_summary(fileutils, wlmutils):
     assert bad.type == row_1["Entity-Type"]
     assert 0 == int(row_1["RunID"])
     assert 0 != int(row_1["Returncode"])
+
+
+def test_launcher_detection(wlmutils):
+    exp = Experiment("test-launcher-detection", launcher="auto")
+    assert exp._launcher == wlmutils.get_test_launcher()
