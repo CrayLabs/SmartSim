@@ -139,9 +139,15 @@ class RedisAIVersion(Version_):
 
     def __init__(self, vers):
         if vers not in self.defaults:
-            raise SetupError(
-                f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}")
-        self.version = vers
+            if vers.startswith("1.2"):
+                # resolve to latest version for 1.2.x
+                # the str representation will still be 1.2.x
+                self.version = "1.2.5"
+            else:
+                raise SetupError(
+                    f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}")
+        else:
+            self.version = vers
 
     def __getattr__(self, name):
         return self.defaults[self.version][name]

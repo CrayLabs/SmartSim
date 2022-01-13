@@ -124,12 +124,12 @@ class Build:
             if device == "gpu":
                 logger.error("SmartSim does not support GPU on MacOS")
                 exit(1)
-            #if onnx:
-            #    logger.error("RedisAI does not support ONNX on MacOS")
-            #    exit(1)
-            #if self.versions.REDISAI > "1.2.3":
-            #    logger.error("RedisAI removed support for MacOS after 1.2.3")
-            #    exit(1)
+            if onnx and self.versions.REDISAI < "1.2.6":
+                logger.error("RedisAI < 1.2.6 does not support ONNX on MacOS")
+                exit(1)
+            if self.versions.REDISAI == "1.2.4" or self.versions.REDISAI == "1.2.5":
+                logger.error("RedisAI support for MacOS is broken in 1.2.4 and 1.2.5")
+                exit(1)
 
         # decide which runtimes to build
         print("\nML Backends Requested")
