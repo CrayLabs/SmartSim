@@ -29,12 +29,12 @@ import re
 import time as _time
 import uuid
 
-from ..._core.utils import delete_elements, init_default
+from ..._core.utils import init_default
 from ..._core.utils.helpers import expand_exe_path
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError, SSUnsupportedError
+from ...settings import settings
 from ...log import get_logger
-from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
 
 logger = get_logger(__name__)
 
@@ -143,7 +143,7 @@ class RayCluster(EntityList):
             **kwargs,
         )
         if batch:
-            self.batch_settings = create_batch_settings(
+            self.batch_settings = settings.create_batch_settings(
                 launcher=launcher,
                 nodes=num_nodes,
                 time=time,
@@ -343,7 +343,7 @@ class RayHead(SmartSimEntity):
             ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = create_run_settings(
+        run_settings = settings.create_run_settings(
             launcher=launcher,
             exe="python",
             exe_args=ray_exe_args,
@@ -413,7 +413,7 @@ class RayWorker(SmartSimEntity):
             ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = create_run_settings(
+        run_settings = settings.create_run_settings(
             launcher=launcher,
             exe="python",
             exe_args=ray_exe_args,

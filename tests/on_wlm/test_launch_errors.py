@@ -28,6 +28,7 @@ def test_failed_status(fileutils, wlmutils):
     while not exp.finished(model):
         time.sleep(2)
     stat = exp.get_status(model)
+    assert len(stat) == 1
     assert stat[0] == status.STATUS_FAILED
 
 

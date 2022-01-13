@@ -112,11 +112,6 @@ class RedisAIVersion(Version_):
 
     2. Used to set the default values for PyTorch, TF, and ONNX
     given the SMARTSIM_REDISAI env var set by the user.
-            "onnx": "1.7.0",
-            "skl2onnx": "1.9.0",
-            "onnxmltools": "1.7.0",
-            "scikit-learn": "0.24.2",
-
     """
 
     defaults = {
@@ -344,14 +339,10 @@ class BuildEnv:
         return True
 
     def is_windows(self):
-        if self.PLATFORM in ["win32", "cygwin", "msys"]:
-            return True
-        return False
+        return self.PLATFORM in ["win32", "cygwin", "msys"]
 
     def is_macos(self):
-        if self.PLATFORM == "darwin":
-            return True
-        return False
+        return self.PLATFORM == "darwin"
 
     @property
     def site_packages_path(self):

@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .._core.utils import init_default
-from ..error import SmartSimError, SSConfigError
+from ..error import SmartSimError
 from .base import BatchSettings
 
 

@@ -6,10 +6,9 @@ from smartsim.error import SmartSimError, SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
 
 
-def test_unsupported_run_settings(fileutils):
+def test_unsupported_run_settings():
     exp_name = "test-unsupported-run-settings"
     exp = Experiment(exp_name, launcher="slurm")
-    test_dir = fileutils.make_test_dir(exp_name)
     bad_settings = JsrunSettings("echo", "hello")
     model = exp.create_model("bad_rs", bad_settings)
 
