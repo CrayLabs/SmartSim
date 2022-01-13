@@ -113,7 +113,7 @@ class Build:
             )
 
             redis_builder.build_from_git(self.versions.REDIS_URL,
-                                         self.versions.REDIS)
+                                         self.versions.REDIS_BRANCH)
             redis_builder.cleanup()
         logger.info("Redis build complete!")
 
@@ -124,12 +124,12 @@ class Build:
             if device == "gpu":
                 logger.error("SmartSim does not support GPU on MacOS")
                 exit(1)
-            if onnx:
-                logger.error("RedisAI does not support ONNX on MacOS")
-                exit(1)
-            if self.versions.REDISAI > "1.2.3":
-                logger.error("RedisAI removed support for MacOS after 1.2.3")
-                exit(1)
+            #if onnx:
+            #    logger.error("RedisAI does not support ONNX on MacOS")
+            #    exit(1)
+            #if self.versions.REDISAI > "1.2.3":
+            #    logger.error("RedisAI removed support for MacOS after 1.2.3")
+            #    exit(1)
 
         # decide which runtimes to build
         print("\nML Backends Requested")
@@ -201,7 +201,7 @@ class Build:
             # like "from_tarball"
             rai_builder.build_from_git(
                 self.versions.REDISAI_URL,
-                self.versions.REDISAI,
+                self.versions.REDISAI_BRANCH,
                 device
             )
             logger.info("ML Backends and RedisAI build complete!")

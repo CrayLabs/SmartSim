@@ -256,7 +256,8 @@ class RedisAIBuilder(Builder):
             "clone",
             "--recursive",
             git_url,
-            f"--branch v{branch}",
+            "--branch",
+            branch,
             "--depth=1",
             "RedisAI",
         ]

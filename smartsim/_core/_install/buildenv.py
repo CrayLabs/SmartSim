@@ -19,12 +19,12 @@ InvalidVersion = packaging.version.InvalidVersion
 
 
 class SetupError(Exception):
-    """A simple execption class for errors in _install.builenv file.
+    """A simple exception class for errors in _install.buildenv file.
     This is primarily used to interrupt the setup.py build in case
     of a failure, and is caught frequently in the CLI which attempts
     to suppress and log the errors thrown here.
 
-    One note is that this errror must be imported from here to be
+    One note is that this error must be imported from here to be
     caught and not defined anywhere else. Since we use this class
     in the installation, having a separate error file would mean
     another module to manually import into setup.py
@@ -181,11 +181,13 @@ class Versioner:
     REDIS = Version_(get_env("SMARTSIM_REDIS", "6.0.8"))
     REDIS_URL = get_env("SMARTSIM_REDIS_URL",
                         "https://github.com/redis/redis.git/")
+    REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
     # RedisAI
     REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.3"))
     REDISAI_URL = get_env("SMARTSIM_REDISAI_URL",
                           "https://github.com/RedisAI/RedisAI.git/")
+    REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
     # ML/DL (based on RedisAI version defaults)
     # torch can be set by the user because we download that for them
