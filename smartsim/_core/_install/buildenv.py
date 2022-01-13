@@ -30,7 +30,7 @@ class SetupError(Exception):
     another module to manually import into setup.py
 
     See setup.py for more
-"""
+    """
     pass
 
 # so as to not conflict with pkg_resources.packaging.version.Version
@@ -61,6 +61,11 @@ class Version_(str):
     @property
     def micro(self):
         return int(pkg_resources.parse_version(self).base_version.split('.')[2])
+
+    @property
+    def patch(self):
+        # return micro with string modifier i.e. 1.2.3+cpu -> 3+cpu
+        return str(pkg_resources.parse_version(self)).split('.')[2]
 
     def __gt__(self, cmp):
         try:
@@ -107,25 +112,20 @@ class RedisAIVersion(Version_):
 
     2. Used to set the default values for PyTorch, TF, and ONNX
     given the SMARTSIM_REDISAI env var set by the user.
+            "onnx": "1.7.0",
+            "skl2onnx": "1.9.0",
+            "onnxmltools": "1.7.0",
+            "scikit-learn": "0.24.2",
 
     """
 
     defaults = {
         "1.2.3": {
-            "tensorflow": "2.4.2",
-            "onnx": "1.7.0",
-            "skl2onnx": "1.9.0",
-            "onnxmltools": "1.7.0",
-            "scikit-learn": "0.24.2",
-            "torch": "1.7.1",
-            "torchvision": "0.8.2"
-        },
-        "1.2.4": {
-            "tensorflow": "2.4.2",
-            "onnx": "1.7.0",
-            "skl2onnx": "1.9.0",
-            "onnxmltools": "1.7.0",
-            "scikit-learn": "0.24.2",
+            "tensorflow": "2.5.2",
+            "onnx": "1.9.0",
+            "skl2onnx": "1.10.3",
+            "onnxmltools": "1.10.0",
+            "scikit-learn": "1.0.2",
             "torch": "1.7.1",
             "torchvision": "0.8.2"
         },
@@ -139,6 +139,8 @@ class RedisAIVersion(Version_):
             "torchvision": "0.10.1"
         }
     }
+    # deps are the same between the following versions
+    defaults["1.2.4"] = defaults["1.2.3"]
 
     def __init__(self, vers):
         if vers not in self.defaults:
@@ -191,8 +193,12 @@ class Versioner:
                           "https://github.com/RedisAI/RedisAI.git/")
 
     # ML/DL (based on RedisAI version defaults)
+    # torch can be set by the user because we download that for them
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
+
+    # TensorFlow and ONNX only use the defaults, but these are not built into
+    # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
     ONNX = Version_(REDISAI.onnx)
 

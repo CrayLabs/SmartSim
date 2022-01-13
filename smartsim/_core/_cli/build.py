@@ -232,14 +232,14 @@ class Build:
             installed = Version_(pkg_resources.get_distribution("torch").version)
             if device == "gpu":
                 # if torch version is x.x.x+cpu
-                if "cpu" in installed.micro:
+                if "cpu" in installed.patch:
                     msg = ("Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " +
                         "and run the `smart build` command again to obtain Torch GPU libraries")
                     logger.warning(msg)
 
             if device == "cpu":
                 # if torch version if x.x.x then we need to install the cpu version
-                if "cpu" not in installed.micro and not self.build_env.is_macos():
+                if "cpu" not in installed.patch and not self.build_env.is_macos():
                     msg = ("Torch GPU installed in python environment but requested Torch CPU. " +
                         " Run `pip uninstall torch torchvision` and run `smart build` again")
                     logger.error(msg) # error because this is usually fatal
