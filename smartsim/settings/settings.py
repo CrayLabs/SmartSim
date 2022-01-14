@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SmartSimError
 from .._core.utils.helpers import is_valid_cmd
+from ..error import SmartSimError
 from . import *
 
 

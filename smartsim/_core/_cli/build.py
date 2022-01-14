@@ -1,12 +1,13 @@
-import sys
 import argparse
+import sys
 from pathlib import Path
-from tabulate import tabulate
+
 import pkg_resources
+from tabulate import tabulate
 
 from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, Versioner, SetupError, Version_
+from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner
 from smartsim._core._install.builder import BuildError
 from smartsim.log import get_logger
 
@@ -72,9 +73,7 @@ class Build:
             if self.verbose:
                 logger.info("Build Environment:")
                 env = self.build_env.as_dict()
-                print(tabulate(env,
-                               headers=env.keys(),
-                               tablefmt="github"), "\n")
+                print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
 
             logger.info("Checking requested versions...")
             self.versions = Versioner()
@@ -82,9 +81,7 @@ class Build:
             if self.verbose:
                 logger.info("Version Information:")
                 vers = self.versions.as_dict()
-                print(tabulate(vers,
-                               headers=vers.keys(),
-                               tablefmt="github"), "\n")
+                print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
             # REDIS
             self.build_redis()
@@ -101,10 +98,7 @@ class Build:
     def build_redis(self):
         # check redis installation
         redis_builder = builder.RedisBuilder(
-            self.build_env(),
-            self.build_env.MALLOC,
-            self.build_env.JOBS,
-            self.verbose
+            self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose
         )
 
         if not redis_builder.is_built:
@@ -112,8 +106,9 @@ class Build:
                 f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
 
-            redis_builder.build_from_git(self.versions.REDIS_URL,
-                                         self.versions.REDIS_BRANCH)
+            redis_builder.build_from_git(
+                self.versions.REDIS_URL, self.versions.REDIS_BRANCH
+            )
             redis_builder.cleanup()
         logger.info("Redis build complete!")
 
@@ -143,8 +138,10 @@ class Build:
         # to download them if they are not installed. this should not break
         # the build however, as we use onnx and tf directly from RAI instead
         # of pip like we do PyTorch.
-        if onnx: self.check_onnx_install()
-        if tf: self.check_tf_install()
+        if onnx:
+            self.check_onnx_install()
+        if tf:
+            self.check_tf_install()
 
         cmd = []
         # TORCH
@@ -181,28 +178,31 @@ class Build:
             build_env = self.build_env()
             if device == "gpu":
                 gpu_env = self.build_env.get_cudnn_env()
-                cudnn_env_vars = ["CUDNN_LIBRARY",
-                                  "CUDNN_INCLUDE_DIR",
-                                  "CUDNN_INCLUDE_PATH",
-                                  "CUDNN_LIBRARY_PATH"]
+                cudnn_env_vars = [
+                    "CUDNN_LIBRARY",
+                    "CUDNN_INCLUDE_DIR",
+                    "CUDNN_INCLUDE_PATH",
+                    "CUDNN_LIBRARY_PATH",
+                ]
                 if not gpu_env:
-                    logger.warning(f"CUDNN environment variables not found.\n" +
-                        f"Looked for {cudnn_env_vars}")
+                    logger.warning(
+                        f"CUDNN environment variables not found.\n"
+                        + f"Looked for {cudnn_env_vars}"
+                    )
                 else:
                     build_env.update(gpu_env)
             # update RAI build env with cudnn env vars
             rai_builder.env = build_env
 
             logger.info(
-                f"Building RedisAI version {self.versions.REDISAI}" \
-                    f" from {self.versions.REDISAI_URL}")
+                f"Building RedisAI version {self.versions.REDISAI}"
+                f" from {self.versions.REDISAI_URL}"
+            )
 
             # NOTE: have the option to add other builds here in the future
             # like "from_tarball"
             rai_builder.build_from_git(
-                self.versions.REDISAI_URL,
-                self.versions.REDISAI_BRANCH,
-                device
+                self.versions.REDISAI_URL, self.versions.REDISAI_BRANCH, device
             )
             logger.info("ML Backends and RedisAI build complete!")
 
@@ -233,28 +233,35 @@ class Build:
             if device == "gpu":
                 # if torch version is x.x.x+cpu
                 if "cpu" in installed.patch:
-                    msg = ("Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages " +
-                        "and run the `smart build` command again to obtain Torch GPU libraries")
+                    msg = (
+                        "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages "
+                        + "and run the `smart build` command again to obtain Torch GPU libraries"
+                    )
                     logger.warning(msg)
 
             if device == "cpu":
                 # if torch version if x.x.x then we need to install the cpu version
                 if "cpu" not in installed.patch and not self.build_env.is_macos():
-                    msg = ("Torch GPU installed in python environment but requested Torch CPU. " +
-                        " Run `pip uninstall torch torchvision` and run `smart build` again")
-                    logger.error(msg) # error because this is usually fatal
+                    msg = (
+                        "Torch GPU installed in python environment but requested Torch CPU. "
+                        + " Run `pip uninstall torch torchvision` and run `smart build` again"
+                    )
+                    logger.error(msg)  # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
-
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
-                msg = (f"ONNX {self.versions.ONNX} not installed in python environment. " +
-                    f"Consider installing onnx=={self.versions.ONNX} with pip")
+                msg = (
+                    f"ONNX {self.versions.ONNX} not installed in python environment. "
+                    + f"Consider installing onnx=={self.versions.ONNX} with pip"
+                )
                 logger.warning(msg)
             else:
-                logger.info(f"ONNX {self.versions.ONNX} installed in Python environment")
+                logger.info(
+                    f"ONNX {self.versions.ONNX} installed in Python environment"
+                )
         except SetupError as e:
             logger.warning(str(e))
 
@@ -265,12 +272,14 @@ class Build:
             if not self.build_env.check_installed(
                 "tensorflow", self.versions.TENSORFLOW
             ):
-                msg = (f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. " +
-                        f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip")
+                msg = (
+                    f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. "
+                    + f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
+                )
                 logger.warning(msg)
             else:
                 logger.info(
-                    f"TensorFlow {self.versions.TENSORFLOW} installed in Python environment")
+                    f"TensorFlow {self.versions.TENSORFLOW} installed in Python environment"
+                )
         except SetupError as e:
             logger.warning(str(e))
-

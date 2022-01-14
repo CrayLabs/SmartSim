@@ -33,8 +33,8 @@ from ..._core.utils import init_default
 from ..._core.utils.helpers import expand_exe_path
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError, SSUnsupportedError
-from ...settings import settings
 from ...log import get_logger
+from ...settings import settings
 
 logger = get_logger(__name__)
 

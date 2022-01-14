@@ -30,6 +30,11 @@ class SmartCli:
 
         parser.add_argument("command", help="Subcommand to run")
 
+        # smart
+        if len(sys.argv) < 2:
+            parser.print_help()
+            exit(0)
+
         args = parser.parse_args(sys.argv[1:2])
         if not hasattr(self, args.command):
             parser.print_help()
@@ -46,6 +51,7 @@ class SmartCli:
 
     def clobber(self):
         Clean(clean_all=True)
+        exit(0)
 
     def site(self):
         print(get_install_path())

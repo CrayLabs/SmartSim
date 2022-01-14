@@ -5,10 +5,9 @@ from os import environ
 import psutil
 import pytest
 
-from smartsim import Experiment
+from smartsim import Experiment, slurm
 from smartsim.error import SSUnsupportedError
 from smartsim.exp.ray import RayCluster
-from smartsim import slurm
 
 """Test Ray cluster Slurm launch and shutdown.
 """

@@ -26,13 +26,8 @@ log_cli = true
 log_cli_level = "debug"
 
 [tool.isort]
-skip = [
-  "tests/test_configs/circular_config",  # Suppress circular import warning
-]
-minversion = "6.0"
-testpaths = [
-    "tests"
-]
+# supress circular import warning
+skip = ["tests/test_configs/circular_config"]
 
 [tool.coverage.run]
 source = ["smartsim"]

@@ -1,4 +1,4 @@
-from .._core._install.buildenv import Versioner, Version_
+from .._core._install.buildenv import Version_, Versioner
 from ..error import SmartSimError
 from ..log import get_logger
 

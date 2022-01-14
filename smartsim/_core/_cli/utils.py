@@ -1,8 +1,9 @@
 import subprocess
 from pathlib import Path
-from smartsim._core.utils import colorize
+
 from smartsim._core._install.buildenv import SetupError
 from smartsim._core._install.builder import BuildError
+from smartsim._core.utils import colorize
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"

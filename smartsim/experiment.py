@@ -36,9 +36,9 @@ from ._core import Controller, Generator, Manifest
 from ._core.utils import colorize, init_default
 from .entity import Ensemble, Model
 from .error import SmartSimError
-from .wlm import detect_launcher
 from .log import get_logger
 from .settings import settings
+from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 

@@ -3,10 +3,10 @@ import platform
 import site
 import subprocess
 import sys
-import pkg_resources
-
 from pathlib import Path
 from typing import Iterable
+
+import pkg_resources
 from pkg_resources import packaging
 
 Version = packaging.version.Version
@@ -31,20 +31,23 @@ class SetupError(Exception):
 
     See setup.py for more
     """
+
     pass
+
 
 # so as to not conflict with pkg_resources.packaging.version.Version
 class Version_(str):
     """A subclass of pkg_resources.packaging.version.Version that
     includes some helper methods for comparing versions.
     """
+
     def _convert_to_version(self, vers):
         if isinstance(vers, Version):
             return vers
         elif isinstance(vers, str):
             return Version(vers)
         elif isinstance(vers, Iterable):
-            return Version('.'.join((str(item) for item in vers)))
+            return Version(".".join((str(item) for item in vers)))
         else:
             raise InvalidVersion(vers)
 
@@ -52,20 +55,20 @@ class Version_(str):
     def major(self):
         # Version(self).major doesn't work for all Python distributions
         # see https://github.com/lebedov/python-pdfbox/issues/28
-        return int(pkg_resources.parse_version(self).base_version.split('.')[0])
+        return int(pkg_resources.parse_version(self).base_version.split(".")[0])
 
     @property
     def minor(self):
-        return int(pkg_resources.parse_version(self).base_version.split('.')[1])
+        return int(pkg_resources.parse_version(self).base_version.split(".")[1])
 
     @property
     def micro(self):
-        return int(pkg_resources.parse_version(self).base_version.split('.')[2])
+        return int(pkg_resources.parse_version(self).base_version.split(".")[2])
 
     @property
     def patch(self):
         # return micro with string modifier i.e. 1.2.3+cpu -> 3+cpu
-        return str(pkg_resources.parse_version(self)).split('.')[2]
+        return str(pkg_resources.parse_version(self)).split(".")[2]
 
     def __gt__(self, cmp):
         try:
@@ -101,6 +104,7 @@ class Version_(str):
 def get_env(var, default):
     return os.environ.get(var, default)
 
+
 class RedisAIVersion(Version_):
     """A subclass of Version_ that holds the dependency sets for RedisAI
 
@@ -122,7 +126,7 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.7.1",
-            "torchvision": "0.8.2"
+            "torchvision": "0.8.2",
         },
         "1.2.5": {
             "tensorflow": "2.6.2",
@@ -131,8 +135,8 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.9.1",
-            "torchvision": "0.10.1"
-        }
+            "torchvision": "0.10.1",
+        },
     }
     # deps are the same between the following versions
     defaults["1.2.4"] = defaults["1.2.3"]
@@ -145,7 +149,8 @@ class RedisAIVersion(Version_):
                 self.version = "1.2.5"
             else:
                 raise SetupError(
-                    f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}")
+                    f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}"
+                )
         else:
             self.version = vers
 
@@ -185,14 +190,14 @@ class Versioner:
 
     # Redis
     REDIS = Version_(get_env("SMARTSIM_REDIS", "6.0.8"))
-    REDIS_URL = get_env("SMARTSIM_REDIS_URL",
-                        "https://github.com/redis/redis.git/")
+    REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
     # RedisAI
     REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.3"))
-    REDISAI_URL = get_env("SMARTSIM_REDISAI_URL",
-                          "https://github.com/RedisAI/RedisAI.git/")
+    REDISAI_URL = get_env(
+        "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
+    )
     REDISAI_BRANCH = get_env("SMARTSIM_REDISAI_BRANCH", f"v{REDISAI}")
 
     # ML/DL (based on RedisAI version defaults)
@@ -206,10 +211,24 @@ class Versioner:
     ONNX = Version_(REDISAI.onnx)
 
     def as_dict(self):
-        packages = ["SMARTSIM", "SMARTREDIS", "REDIS",
-                    "REDISAI", "TORCH", "TENSORFLOW", "ONNX"]
-        versions = [self.SMARTSIM, self.SMARTREDIS, self.REDIS,
-                    self.REDISAI, self.TORCH, self.TENSORFLOW, self.ONNX]
+        packages = [
+            "SMARTSIM",
+            "SMARTREDIS",
+            "REDIS",
+            "REDISAI",
+            "TORCH",
+            "TENSORFLOW",
+            "ONNX",
+        ]
+        versions = [
+            self.SMARTSIM,
+            self.SMARTREDIS,
+            self.REDIS,
+            self.REDISAI,
+            self.TORCH,
+            self.TENSORFLOW,
+            self.ONNX,
+        ]
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
@@ -300,15 +319,7 @@ class BuildEnv:
         self.check_dependencies()
 
     def check_dependencies(self):
-        deps = [
-            "git",
-            "git-lfs",
-            "make",
-            "wget",
-            "cmake",
-            self.CC,
-            self.CXX
-        ]
+        deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
         if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)
@@ -316,21 +327,37 @@ class BuildEnv:
     def __call__(self):
         # return the build env for the build process
         env = os.environ.copy()
-        env.update({
-            "CC": self.CC,
-            "CXX": self.CXX,
-            "CFLAGS": self.CFLAGS,
-            "CXXFLAGS": self.CXXFLAGS
-            })
+        env.update(
+            {
+                "CC": self.CC,
+                "CXX": self.CXX,
+                "CFLAGS": self.CFLAGS,
+                "CXXFLAGS": self.CXXFLAGS,
+            }
+        )
         return env
 
     def as_dict(self):
-        variables = ["CC", "CXX", "CFLAGS",
-                     "CXXFLAGS", "MALLOC", "JOBS",
-                     "PYTHON_VERSION", "PLATFORM"]
-        values = [self.CC, self.CXX, self.CFLAGS,
-                  self.CXXFLAGS, self.MALLOC, self.JOBS,
-                  self.python_version, self.PLATFORM]
+        variables = [
+            "CC",
+            "CXX",
+            "CFLAGS",
+            "CXXFLAGS",
+            "MALLOC",
+            "JOBS",
+            "PYTHON_VERSION",
+            "PLATFORM",
+        ]
+        values = [
+            self.CC,
+            self.CXX,
+            self.CFLAGS,
+            self.CXXFLAGS,
+            self.MALLOC,
+            self.JOBS,
+            self.python_version,
+            self.PLATFORM,
+        ]
         env = {"Environment": variables, "Values": values}
         return env
 
@@ -381,7 +408,7 @@ class BuildEnv:
             "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", None),
             "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", None),
             "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", None),
-            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", None)
+            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", None),
         }
         torch_cudnn_vars = ["CUDNN_LIBRARY", "CUDNN_INCLUDE_DIR"]
         caffe_cudnn_vars = ["CUDNN_INCLUDE_PATH", "CUDNN_LIBRARY_PATH"]
@@ -392,7 +419,7 @@ class BuildEnv:
         # check for both sets, if only one exists, set the other
         # this handles older versions which use different env vars
         if not torch_set and not caffe_set:
-            return None # return None as we don't want to raise a warning here
+            return None  # return None as we don't want to raise a warning here
         if torch_set and not caffe_set:
             env["CUDNN_INCLUDE_PATH"] = env["CUDNN_INCLUDE_DIR"]
             env["CUDNN_LIBRARY_PATH"] = env["CUDNN_LIBRARY"]
@@ -404,9 +431,11 @@ class BuildEnv:
     def check_build_dependency(self, command):
         # TODO expand this to parse and check versions.
         try:
-            out = subprocess.check_call([command, "--version"],
-                                        stdout=subprocess.DEVNULL,
-                                        stderr=subprocess.DEVNULL)
+            out = subprocess.check_call(
+                [command, "--version"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
@@ -419,8 +448,10 @@ class BuildEnv:
             if version:
                 # detect if major or minor versions differ
                 if installed.major != version.major or installed.minor != version.minor:
-                    msg = (f"Incompatible version for {package} detected.\n" +
-                          f"{package} {version} requested but {package} {installed} installed.")
+                    msg = (
+                        f"Incompatible version for {package} detected.\n"
+                        + f"{package} {version} requested but {package} {installed} installed."
+                    )
                     raise SetupError(msg)
             return True
         except pkg_resources.DistributionNotFound:

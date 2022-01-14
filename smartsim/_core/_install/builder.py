@@ -19,18 +19,19 @@ from subprocess import SubprocessError
 class BuildError(Exception):
     pass
 
+
 class Builder:
     """Base class for building third-party libraries"""
 
     url_regex = re.compile(
-        r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-        r'localhost|' #localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE
+        r"^(?:http|ftp)s?://"  # http:// or https://
+        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"  # domain...
+        r"localhost|"  # localhost...
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+        r"(?::\d+)?"  # optional port
+        r"(?:/?|[/?]\S+)$",
+        re.IGNORECASE,
     )
-
 
     def __init__(self, env, jobs=1, verbose=False):
 
@@ -108,13 +109,14 @@ class Builder:
                 stdout=out,
                 cwd=cwd,
                 shell=shell,
-                env=self.env
+                env=self.env,
             )
             error = proc.communicate()[1].decode("utf-8")
             if proc.returncode != 0:
                 raise BuildError(error)
         except (OSError, SubprocessError) as e:
             raise BuildError(e)
+
 
 class RedisBuilder(Builder):
     """Class to build Redis from Source
@@ -126,11 +128,7 @@ class RedisBuilder(Builder):
     version and url.
     """
 
-    def __init__(self,
-                 build_env={},
-                 malloc="libc",
-                 jobs=None,
-                 verbose=False):
+    def __init__(self, build_env={}, malloc="libc", jobs=None, verbose=False):
         super().__init__(build_env, jobs=jobs, verbose=verbose)
         self.malloc = malloc
 
@@ -160,23 +158,31 @@ class RedisBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed Redis URL: {git_url}")
 
-
         # clone Redis
-        clone_cmd = ["git", "clone", git_url,
-                     "--branch", branch,
-                     "--depth", "1", "redis"]
+        clone_cmd = [
+            "git",
+            "clone",
+            git_url,
+            "--branch",
+            branch,
+            "--depth",
+            "1",
+            "redis",
+        ]
         self.run_command(" ".join(clone_cmd), shell=True, cwd=self.build_dir)
 
         # build Redis
-        cmd = [self.make,"-j", str(self.jobs), f"MALLOC={self.malloc}"]
+        cmd = [self.make, "-j", str(self.jobs), f"MALLOC={self.malloc}"]
         self.run_command(" ".join(cmd), shell=True, cwd=str(redis_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
         redis_src_dir = redis_build_path / "src"
-        self.copy_file(redis_src_dir / "redis-server",
-                       self.bin_path / "redis-server", set_exe=True)
-        self.copy_file(redis_src_dir / "redis-cli",
-                       self.bin_path / "redis-cli", set_exe=True)
+        self.copy_file(
+            redis_src_dir / "redis-server", self.bin_path / "redis-server", set_exe=True
+        )
+        self.copy_file(
+            redis_src_dir / "redis-cli", self.bin_path / "redis-cli", set_exe=True
+        )
 
 
 class RedisAIBuilder(Builder):
@@ -221,7 +227,9 @@ class RedisAIBuilder(Builder):
         Note: opt/cmake/modules removed in RedisAI v1.2.5
         """
         # remove the previous version
-        tf_cmake = self.rai_build_path.joinpath("opt/cmake/modules/FindTensorFlow.cmake").resolve()
+        tf_cmake = self.rai_build_path.joinpath(
+            "opt/cmake/modules/FindTensorFlow.cmake"
+        ).resolve()
         if tf_cmake.is_file():
             tf_cmake.unlink()
             # copy ours in
@@ -248,7 +256,6 @@ class RedisAIBuilder(Builder):
         if not self.is_valid_url(git_url):
             raise BuildError(f"Malformed RedisAI URL: {git_url}")
 
-
         # clone RedisAI
         clone_cmd = [
             "GIT_LFS_SKIP_SMUDGE=1",
@@ -263,10 +270,7 @@ class RedisAIBuilder(Builder):
         ]
         clone_cmd = " ".join(clone_cmd)
         self.run_command(
-            clone_cmd,
-            out=subprocess.DEVNULL,
-            shell=True,
-            cwd=self.build_dir
+            clone_cmd, out=subprocess.DEVNULL, shell=True, cwd=self.build_dir
         )
 
         # copy FindTensorFlow.cmake to RAI cmake dir
@@ -287,8 +291,8 @@ class RedisAIBuilder(Builder):
         self.run_command(
             dep_cmd,
             shell=True,
-            out=subprocess.DEVNULL, # suppress this as it's not useful
-            cwd=self.rai_build_path
+            out=subprocess.DEVNULL,  # suppress this as it's not useful
+            cwd=self.rai_build_path,
         )
 
         build_cmd = [
