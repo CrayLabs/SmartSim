@@ -261,7 +261,8 @@ class Versioner:
             )
             return sha[:7]
         except Exception:
-            return "Unknown"
+            # return empty string if not in git-repo
+            return ""
 
     def write_version(self, setup_py_dir):
         """
@@ -272,7 +273,11 @@ class Versioner:
         version = self.SMARTSIM
         if self.SMARTSIM_SUFFIX:
             git_sha = self.get_sha(setup_py_dir)
-            version = f"{version}+{self.SMARTSIM_SUFFIX}-{git_sha}"
+            if git_sha:
+                version = f"{version}+{self.SMARTSIM_SUFFIX}.{git_sha}"
+            else:
+                # wheel build (python -m build) shouldn't include git sha
+                version = f"{version}+{self.SMARTSIM_SUFFIX}"
 
         version_file = setup_py_dir / "smartsim" / "version.py"
         with open(version_file, "w") as f:
@@ -369,9 +374,7 @@ class BuildEnv:
         """Detect if system Python is too old"""
         sys_py = sys.version_info
         system_python = Version_(f"{sys_py.major}.{sys_py.minor}.{sys_py.micro}")
-        if system_python < python_min:
-            return False
-        return True
+        return system_python > python_min
 
     def is_windows(self):
         return self.PLATFORM in ["win32", "cygwin", "msys"]

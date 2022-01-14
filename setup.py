@@ -173,7 +173,7 @@ setup(
     install_requires=deps,
     packages=["smartsim"],
     package_data={"smartsim": [
-        "bin/*"
+        "_core/bin/*"
     ]},
     cmdclass={
         "build_py": SmartSimBuild,
