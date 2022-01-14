@@ -70,7 +70,7 @@ This is all the SmartRedis code needed to stream the simulation data. Note that
 the client does not need to have an address explicitly stated because we
 are going to be launching the simulation through SmartSim.
 
-The full simulation code can be found here # PUT IN LINK
+The full simulation code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/fv_sim.py>`_.
 
 3.2 Creating the Analysis Driver
 --------------------------------
@@ -111,9 +111,10 @@ Executable arguments are used to pass the simulation parameters to the simulatio
     time_steps, seed = 3000, 42
 
     # define how simulation should be executed
-    settings = RunSettings("python", exe_args=["fv_sim.py",
-                                            f"--seed={seed}",
-                                            f"--steps={time_steps}"])
+    settings = exp.create_run_settings("python", 
+                                       exe_args=["fv_sim.py",
+                                                 f"--seed={seed}",
+                                                 f"--steps={time_steps}"])
     model = exp.create_model("fv_simulation", settings)
 
     # tell exp.generate to include this file in the created run directory
@@ -165,7 +166,9 @@ script, is shown for simplicity.
 
         plt.cla()
         ux[cylinder], uy[cylinder] = 0, 0
-        vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
+        vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (
+            np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1)
+        )
         vorticity[cylinder] = np.nan
         cmap = plt.cm.get_cmap("bwr").copy()
         cmap.set_bad(color='black')
