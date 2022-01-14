@@ -124,7 +124,7 @@ else()
     # However, only TensorFlow versions 1.9, 1.10 support all header files
     # for custom ops.
     set(_TensorFlow_KNOWN_VERSIONS ${TensorFlow_ADDITIONAL_VERSIONS}
-        "1.9" "1.9.0" "1.10" "1.10.0" "1.11" "1.11.0" "1.12" "1.12.0" "1.13" "1.13.1" "1.14" "2.4" )
+        "1.9" "1.9.0" "1.10" "1.10.0" "1.11" "1.11.0" "1.12" "1.12.0" "1.13" "1.13.1" "1.14" "2.4" "2.5" "2.6")
     set(_TensorFlow_TEST_VERSIONS)
 
     if(TF_FIND_VERSION)
@@ -276,7 +276,7 @@ else()
     set(TF_DISABLE_ASSERTS "TRUE")
   endif()
 
-endif() #-- End detection 
+endif() #-- End detection
 
 if(${TF_DISABLE_ASSERTS})
   message(STATUS "[WARNING] The TensorFlow version ${TF_DETECTED_VERSION} has a bug (see \#22766). We disable asserts using -DNDEBUG=True ")

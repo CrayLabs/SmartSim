@@ -346,7 +346,7 @@ class BuildEnv:
             "MALLOC",
             "JOBS",
             "PYTHON_VERSION",
-            "PLATFORM",
+            "PLATFORM"
         ]
         values = [
             self.CC,
@@ -356,7 +356,7 @@ class BuildEnv:
             self.MALLOC,
             self.JOBS,
             self.python_version,
-            self.PLATFORM,
+            self.PLATFORM
         ]
         env = {"Environment": variables, "Values": values}
         return env
