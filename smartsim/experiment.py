@@ -39,6 +39,7 @@ from .generation import Generator
 from .settings import settings
 from .utils import get_logger
 from .utils.helpers import colorize, init_default
+from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
@@ -65,7 +66,9 @@ class Experiment:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "cobalt", "lsf", or "local". Defaults to "local"
+                         "cobalt", "lsf", or "local". If set to "auto",
+                         an attempt will be made to find an available launcher on the system.
+                         Defaults to "local"
         :type launcher: str, optional
         """
         self.name = name
@@ -76,6 +79,10 @@ class Experiment:
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
         self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+
+        if launcher == "auto":
+            launcher = detect_launcher()
+
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
 
@@ -207,11 +214,8 @@ class Experiment:
             statuses = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
-            for entity_list in manifest.ensembles:
+            for entity_list in manifest.all_entity_lists:
                 statuses.extend(self._control.get_entity_list_status(entity_list))
-            orchestrator = manifest.db
-            if orchestrator:
-                statuses.extend(self._control.get_entity_list_status(orchestrator))
             return statuses
         except SmartSimError as e:
             logger.error(e)
@@ -500,7 +504,9 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        return tabulate(values, headers, showindex=True, tablefmt=format)
+        return tabulate(
+            values, headers, showindex=True, tablefmt=format, missingval="None"
+        )
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched

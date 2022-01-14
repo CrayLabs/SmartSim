@@ -1,5 +1,5 @@
 import time
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import PIPE, TimeoutExpired
 
 import psutil
 

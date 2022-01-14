@@ -64,7 +64,7 @@ class CobaltOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to "aprun".
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to ``aprun``.
         :type run_command: str, optional
         :param interface: network interface to use, defaults to "ipogif0"
         :type interface: str, optional
