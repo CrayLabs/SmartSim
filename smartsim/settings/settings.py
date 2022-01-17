@@ -26,6 +26,7 @@
 
 from ..error import SmartSimError
 from ..utils.helpers import is_valid_cmd
+from ..wlm import detect_launcher
 from . import *
 
 
@@ -36,7 +37,8 @@ def create_batch_settings(
 
     See Experiment.create_batch_settings for details
 
-    :param launcher: launcher for this experiment
+    :param launcher: launcher for this experiment, if set to 'auto', 
+                     an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param nodes: number of nodes for batch job, defaults to 1
     :type nodes: int, optional
@@ -59,6 +61,9 @@ def create_batch_settings(
         "slurm": SbatchSettings,
         "lsf": BsubBatchSettings,
     }
+
+    if launcher == "auto":
+        launcher = detect_launcher()
 
     if launcher == "local":
         raise SmartSimError("Local launcher does not support batch workloads")
@@ -96,7 +101,8 @@ def create_run_settings(
 
     See Experiment.create_run_settings docstring for more details
 
-    :param launcher: launcher to create settings for
+    :param launcher: launcher to create settings for, if set to 'auto', 
+                     an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param run_command: command to run the executable
     :type run_command: str
@@ -128,6 +134,9 @@ def create_run_settings(
         "cobalt": ["aprun", "mpirun"],
         "lsf": ["jsrun", "mpirun"],
     }
+
+    if launcher == "auto":
+        launcher = detect_launcher()
 
     def _detect_command(launcher):
         if launcher in by_launcher:
