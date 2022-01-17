@@ -13,7 +13,7 @@ from smartsim.settings import (
     SrunSettings, AprunSettings,
     JsrunSettings, RunSettings
 )
-from smartsim.config import CONFIG
+from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 
 

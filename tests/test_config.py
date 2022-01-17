@@ -1,76 +1,72 @@
 import os
+from pathlib import Path
 
 import pytest
 
-from smartsim.config import Config
+from smartsim._core.config.config import Config
 from smartsim.error import SSConfigError
+
+
+def test_all_config_defaults():
+    config = Config()
+    assert Path(config.redisai).is_file()
+    assert Path(config.redis_exe).is_file()
+    assert Path(config.redis_cli).is_file()
+    assert Path(config.redis_conf).is_file()
+
+    # these will be changed so we will just run them
+    assert config.log_level
+    assert config.jm_interval
+
+    config.test_interface
+    config.test_launcher
+    config.test_account
+    config.test_device
 
 
 def test_redisai():
     config = Config()
+    assert Path(config.redisai).is_file()
+    assert isinstance(config.redisai, str)
 
-    config.conf["redis"]["modules"]["ai"] = "not/a/path"
+    os.environ["RAI_PATH"] = "not/a/path"
+    config = Config()
     with pytest.raises(SSConfigError):
         config.redisai
-
-    config.conf.pop("redis")
-    with pytest.raises(SSConfigError):
-        config.redisai
+    os.environ.pop("RAI_PATH")
 
 
 def test_redis_conf():
     config = Config()
-    config.conf["redis"]["config"] = "not/a/path"
-    assert os.path.isfile(config.redis_conf)
+    assert Path(config.redis_conf).is_file()
+    assert isinstance(config.redis_conf, str)
+
+    os.environ["REDIS_CONF"] = "not/a/path"
+    config = Config()
+    with pytest.raises(SSConfigError):
+        config.redis_conf
+    os.environ.pop("REDIS_CONF")
 
 
 def test_redis_exe():
     config = Config()
-    config.conf["redis"]["bin"] = "not/a/path"
+    assert Path(config.redis_exe).is_file()
+    assert isinstance(config.redis_exe, str)
+
+    os.environ["REDIS_PATH"] = "not/a/path"
+    config = Config()
     with pytest.raises(SSConfigError):
         config.redis_exe
-    config.conf.pop("redis")
-    with pytest.raises(SSConfigError):
-        config.redis_exe
+    os.environ.pop("REDIS_PATH")
 
 
 def test_redis_cli():
     config = Config()
-    config.redis_cli
-    config.conf["redis"]["bin"] = "not/a/path"
-    with pytest.raises(SSConfigError):
-        config.redis_cli
-    config.conf.pop("redis")
-    with pytest.raises(SSConfigError):
-        config.redis_cli
+    assert Path(config.redisai).is_file()
+    assert isinstance(config.redisai, str)
 
-
-def test_launcher_log_interval_attributes():
+    os.environ["REDIS_CLI_PATH"] = "not/a/path"
     config = Config()
-    defaults = ["local", "info", "15"]
-    environ_keys = [
-        "SMARTSIM_TEST_LAUNCHER",
-        "SMARTSIM_LOG_LEVEL",
-        "SMARTSIM_JM_INTERVAL",
-    ]
-    environ_vals = [os.environ.get(val, None) for val in environ_keys]
-
-    for i, key in enumerate(environ_keys):
-        os.environ[key] = defaults[i]
-    assert config.test_launcher == defaults[0]
-    assert config.log_level == defaults[1]
-    assert config.jm_interval == int(defaults[2])
-
-    for key in environ_keys:  # test the KeyError exceptions
-        os.environ.pop(key)
-    config.conf.pop("test")
-    config.conf.pop("smartsim")
-    assert config.test_launcher == defaults[0]
-    assert config.log_level == defaults[1]
-    assert config.jm_interval == int(defaults[2])
-
-    for i in range(
-        len(environ_vals)
-    ):  # set environ key-val pairs back to their original state
-        if environ_vals[i]:
-            os.environ[environ_keys[i]] = environ_vals[i]
+    with pytest.raises(SSConfigError):
+        config.redis_cli
+    os.environ.pop("REDIS_CLI_PATH")

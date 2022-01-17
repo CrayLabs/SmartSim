@@ -24,10 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SSConfigError
 
+from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError
-from ..utils.helpers import cat_arg_and_value, init_default
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
@@ -123,12 +122,12 @@ class Model(SmartSimEntity):
         """Convert parameters to command line arguments and update run settings."""
         for param in self.params_as_args:
             if not param in self.params:
-                raise SSConfigError(
+                raise ValueError(
                     f"Tried to convert {param} to command line argument "
                     + f"for Model {self.name}, but its value was not found in model params"
                 )
             if self.run_settings is None:
-                raise SSConfigError(
+                raise ValueError(
                     f"Tried to configure command line parameter for Model {self.name}, "
                     + "but no RunSettings are set."
                 )

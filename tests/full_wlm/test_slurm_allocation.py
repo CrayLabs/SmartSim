@@ -3,7 +3,7 @@ import time
 import pytest
 
 from smartsim import slurm
-from smartsim.error import LauncherError
+from smartsim.error import AllocationError
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":
@@ -30,5 +30,5 @@ def test_get_release_allocation_w_options():
 
 def test_release_non_existant_alloc():
     """Release allocation that doesn't exist"""
-    with pytest.raises(LauncherError):
+    with pytest.raises(AllocationError):
         slurm.release_allocation(00000000)

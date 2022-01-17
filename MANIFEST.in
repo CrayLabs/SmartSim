@@ -1,5 +1,4 @@
 include requirements.txt
-include setup_env.sh
 include Makefile
 graft smartsim/
 

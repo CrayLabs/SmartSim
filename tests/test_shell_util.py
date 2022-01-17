@@ -1,7 +1,7 @@
 import psutil
 import pytest
 
-from smartsim.launcher.util.shell import *
+from smartsim._core.launcher.util.shell import *
 
 
 def test_execute_cmd():

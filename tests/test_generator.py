@@ -3,8 +3,8 @@ from os import path as osp
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.generation import Generator
 from smartsim.database import Orchestrator
-from smartsim.generation import Generator
 from smartsim.settings import RunSettings
 
 rs = RunSettings("python", exe_args="sleep.py")

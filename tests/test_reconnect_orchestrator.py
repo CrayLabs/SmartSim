@@ -1,7 +1,7 @@
 import os.path as osp
 import time
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import Orchestrator
 
 first_dir = ""
@@ -23,7 +23,7 @@ def test_local_orchestrator(fileutils):
 
     exp.start(orc)
     statuses = exp.get_status(orc)
-    assert [stat != constants.STATUS_FAILED for stat in statuses]
+    assert [stat != status.STATUS_FAILED for stat in statuses]
 
     # simulate user shutting down main thread
     exp._control._jobs.actively_monitoring = False
@@ -45,7 +45,7 @@ def test_reconnect_local_orc():
 
     statuses = exp_2.get_status(reloaded_orc)
     for stat in statuses:
-        if stat == constants.STATUS_FAILED:
+        if stat == status.STATUS_FAILED:
             exp_2.stop(reloaded_orc)
             assert False
     exp_2.stop(reloaded_orc)
