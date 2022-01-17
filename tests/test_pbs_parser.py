@@ -1,7 +1,7 @@
 from os.path import dirname
 from pathlib import Path
 
-from smartsim.launcher.pbs import pbsParser
+from smartsim._core.launcher.pbs import pbsParser
 
 # -- qsub ---------------------------------------------------------
 

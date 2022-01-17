@@ -1,4 +1,4 @@
-from smartsim.launcher.lsf import lsfParser
+from smartsim._core.launcher.lsf import lsfParser
 
 # -- bsub ---------------------------------------------------------
 

@@ -25,26 +25,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import itertools
-import logging
 import os
-import socket
-import time
 from os import getcwd
 from pathlib import Path
 
 import psutil
 import redis
-from rediscluster import RedisCluster
-from rediscluster.exceptions import ClusterDownError, RedisClusterException
 
-logging.getLogger("rediscluster").setLevel(logging.WARNING)
-
-from ..config import CONFIG
+from .._core.config import CONFIG
+from .._core.utils import check_cluster_status
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError
-from ..launcher.util.shell import execute_cmd
+from ..error import SmartSimError, SSConfigError, SSInternalError
+from ..log import get_logger
 from ..settings.base import RunSettings
-from ..utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -85,6 +78,22 @@ class Orchestrator(EntityList):
         self.intra_threads = kwargs.get("intra_op_threads", None)
         super().__init__("orchestrator", self.path, port=port, **kwargs)
 
+        # detect if we can find at least the redis binaries. We
+        # don't want to force the user to launch with RedisAI so
+        # it's ok if that isn't present.
+        try:
+            # try to obtain redis binaries needed to launch Redis
+            # will raise SSConfigError if not found
+            self._redis_exe
+            self._redis_conf
+            CONFIG.redis_cli
+        except SSConfigError as e:
+            msg = "SmartSim not installed with pre-built extensions (Redis)\n"
+            msg += "Use the `smart` cli tool to install needed extensions\n"
+            msg += "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
+            msg += "See documentation for more information"
+            raise SSConfigError(msg) from e
+
     @property
     def num_shards(self):
         """Return the number of DB shards contained in the orchestrator.
@@ -115,68 +124,6 @@ class Orchestrator(EntityList):
 
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
-
-    def create_cluster(self):  # cov-wlm
-        """Connect launched cluster instances.
-
-        Should only be used in the case where cluster initialization
-        needs to occur manually which is not often.
-
-        :raises SmartSimError: if cluster creation fails
-        """
-        ip_list = []
-        for host in self.hosts:
-            ip = get_ip_from_host(host)
-            for port in self.ports:
-                address = ":".join((ip, str(port) + " "))
-                ip_list.append(address)
-
-        # call cluster command
-        redis_cli = CONFIG.redis_cli
-        cmd = [redis_cli, "--cluster", "create"]
-        cmd += ip_list
-        cmd += ["--cluster-replicas", "0"]
-        returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
-
-        if returncode != 0:
-            logger.error(out)
-            logger.error(err)
-            raise SmartSimError("Database '--cluster create' command failed")
-        logger.debug(out)
-
-        # Ensure cluster has been setup correctly
-        self.check_cluster_status()
-        logger.info(f"Database cluster created with {self.num_shards} shards")
-
-    def check_cluster_status(self, trials=10):  # cov-wlm
-        """Check that a cluster is up and running
-        :param trials: number of attempts to verify cluster status
-        :type trials: int, optional
-        :raises SmartSimError: If cluster status cannot be verified
-        """
-        host_list = []
-        for host in self.hosts:
-            for port in self.ports:
-                host_dict = dict()
-                host_dict["host"] = get_ip_from_host(host)
-                host_dict["port"] = port
-                host_list.append(host_dict)
-
-        logger.debug("Beginning database cluster status check...")
-        while trials > 0:
-            # wait for cluster to spin up
-            time.sleep(5)
-            try:
-                redis_tester = RedisCluster(startup_nodes=host_list)
-                redis_tester.set("__test__", "__test__")
-                redis_tester.delete("__test__")
-                logger.debug("Cluster status verified")
-                return
-            except (ClusterDownError, RedisClusterException, redis.RedisError):
-                logger.debug("Cluster still spinning up...")
-                trials -= 1
-        if trials == 0:
-            raise SmartSimError("Cluster setup could not be verified")
 
     def get_address(self):
         """Return database addresses
@@ -221,16 +168,17 @@ class Orchestrator(EntityList):
         # if a cluster
         else:
             try:
-                self.check_cluster_status(trials=1)
+                check_cluster_status(trials=1)
                 return True
-            except SmartSimError:
+            # we expect this to fail if the cluster is not active
+            except SSInternalError:
                 return False
 
-    def _get_AI_module(self):
+    @property
+    def _rai_module(self):
         """Get the RedisAI module from third-party installations
 
-        :raises SSConfigError: if retrieval fails
-        :return: path to module
+        :return: path to module or "" if not found
         :rtype: str
         """
         module = ["--loadmodule", CONFIG.redisai]
@@ -242,33 +190,41 @@ class Orchestrator(EntityList):
             module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
         return " ".join(module)
 
+    @property
+    def _redis_launch_script(self):
+        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+        script_path = current_dir.joinpath("redis_starter.py").resolve()
+        return str(script_path)
+
+    @property
+    def _redis_exe(self):
+        return CONFIG.redis_exe
+
+    @property
+    def _redis_conf(self):
+        return CONFIG.redis_conf
+
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
 
         db_per_host = kwargs.get("db_per_host", 1)
         if db_per_host > 1:
-            raise SmartSimError(
+            raise ValueError(
                 "Local Orchestrator does not support multiple databases per node (MPMD)"
             )
         db_nodes = kwargs.get("db_nodes", 1)
         if db_nodes > 1:
-            raise SmartSimError(
+            raise ValueError(
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        # collect database launch command information
-        db_conf = CONFIG.redis_conf
-        redis_exe = CONFIG.redis_exe
-        ai_module = self._get_AI_module()
-        start_script = self._find_redis_start_script()
-
         start_script_args = [
-            start_script,  # redis_starter.py
+            self._redis_launch_script,  # redis_starter.py
             f"+ifname={self._interface}",  # pass interface to start script
             "+command",  # command flag for argparser
-            redis_exe,  # redis-server
-            db_conf,  # redis6.conf file
-            ai_module,  # redisai.so
+            self._redis_exe,  # redis-server
+            self._redis_conf,  # redis6.conf file
+            self._rai_module,  # redisai.so
             "--port",  # redis port
             str(port),  # port number
         ]
@@ -300,12 +256,6 @@ class Orchestrator(EntityList):
                 hosts.extend(dbnode.hosts)
         return hosts
 
-    @staticmethod
-    def _find_redis_start_script():
-        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-        script_path = current_dir.joinpath("redis_starter.py").resolve()
-        return str(script_path)
-
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()
         if self._interface not in net_if_addrs and self._interface != "lo":
@@ -315,15 +265,3 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this."
             )
             logger.warning(f"Found network interfaces are: {available}")
-
-
-def get_ip_from_host(host):
-    """Return the IP address for the interconnect.
-
-    :param host: hostname of the compute node e.g. nid00004
-    :type host: str
-    :returns: ip of host
-    :rtype: str
-    """
-    ip_address = socket.gethostbyname(host)
-    return ip_address

@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SmartSimError, SSConfigError
-from ..utils.helpers import init_default
+from .._core.utils import init_default
+from ..error import SmartSimError
 from .base import BatchSettings
 
 
@@ -171,12 +171,13 @@ class QsubBatchSettings(BatchSettings):
 
         :return: batch arguments for Qsub
         :rtype: list[str]
+        :raises ValueError: if options are supplied without values
         """
         opts = self._create_resource_list()
         for opt, value in self.batch_args.items():
             prefix = "-"
             if not value:
-                raise SSConfigError("PBS options without values are not allowed")
+                raise ValueError("PBS options without values are not allowed")
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 

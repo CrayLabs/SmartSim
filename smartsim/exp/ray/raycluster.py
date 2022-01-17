@@ -29,11 +29,12 @@ import re
 import time as _time
 import uuid
 
+from ..._core.utils import init_default
+from ..._core.utils.helpers import expand_exe_path
 from ...entity import EntityList, SmartSimEntity
-from ...error import SSConfigError, SSUnsupportedError
-from ...settings.settings import create_batch_settings, create_run_settings
-from ...utils import get_logger
-from ...utils.helpers import expand_exe_path, init_default
+from ...error import SmartSimError, SSUnsupportedError
+from ...log import get_logger
+from ...settings import settings
 
 logger = get_logger(__name__)
 
@@ -142,7 +143,7 @@ class RayCluster(EntityList):
             **kwargs,
         )
         if batch:
-            self.batch_settings = create_batch_settings(
+            self.batch_settings = settings.create_batch_settings(
                 launcher=launcher,
                 nodes=num_nodes,
                 time=time,
@@ -263,11 +264,11 @@ class RayCluster(EntityList):
 
 def find_ray_exe():
     """Find ray executable in current path."""
+    # TODO add this to CONFIG?
     try:
-        ray_exe = expand_exe_path("ray")
-        return ray_exe
-    except SSConfigError as e:
-        raise SSConfigError("Could not find ray executable") from e
+        return expand_exe_path("ray")
+    except (TypeError, FileNotFoundError):
+        raise SmartSimError("Could not find ray executable")
 
 
 def find_ray_stater_script():
@@ -342,7 +343,7 @@ class RayHead(SmartSimEntity):
             ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = create_run_settings(
+        run_settings = settings.create_run_settings(
             launcher=launcher,
             exe="python",
             exe_args=ray_exe_args,
@@ -412,7 +413,7 @@ class RayWorker(SmartSimEntity):
             ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = create_run_settings(
+        run_settings = settings.create_run_settings(
             launcher=launcher,
             exe="python",
             exe_args=ray_exe_args,

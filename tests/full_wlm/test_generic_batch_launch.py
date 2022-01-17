@@ -1,6 +1,6 @@
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -29,7 +29,7 @@ def test_batch_ensemble(fileutils, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
 def test_batch_ensemble_replicas(fileutils, wlmutils):
@@ -50,4 +50,4 @@ def test_batch_ensemble_replicas(fileutils, wlmutils):
 
     exp.start(ensemble, block=True)
     statuses = exp.get_status(ensemble)
-    assert all([stat == constants.STATUS_COMPLETED for stat in statuses])
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])

@@ -27,15 +27,15 @@
 from copy import deepcopy
 from os import getcwd
 
+from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
     SmartSimError,
     SSUnsupportedError,
     UserStrategyError,
 )
+from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
-from ..utils import get_logger
-from ..utils.helpers import init_default
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
