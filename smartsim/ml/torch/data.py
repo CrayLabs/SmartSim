@@ -104,20 +104,6 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
         BatchDownloader.__init__(self, **kwargs)
 
 
-    # def init_samples(self, sources=None):
-    #     self.autoencoding = self.sample_prefix == self.target_prefix
-
-    #     if sources is not None:
-    #         self.sources = sources
-
-    #     if self.sources is None:
-    #         self.sources = self.list_all_sources()
-
-    #     self.log("Generator initialization complete")
-
-    #     self.update_data()
-
-
     def _add_samples(self, batch_name, target_name):
         if self.samples is None:
             self.samples = torch.tensor(self.client.get_tensor(batch_name))
