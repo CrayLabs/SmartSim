@@ -4,10 +4,8 @@ from os import environ
 import numpy as np
 import tensorflow.keras as keras
 
-from smartredis import Client
-from smartredis.error import RedisReplyError
 from smartsim.ml import form_name
-
+from smartsim.ml.data import BatchDownloader, ContinuousBatchDownloader
 
 class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
     """A class to download batches from the DB, based on Keras ssSequence``s.
@@ -235,44 +233,10 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     def __init__(self, **kwargs):
         StaticDataGenerator.__init__(self, **kwargs)
 
-    def init_samples(self, sources=None):
-        self.autoencoding = self.sample_prefix == self.target_prefix
-        if sources is None:
-            self.sources = self.list_all_sources()
-
-        while len(self) < 1:
-            self._update_samples_and_targets()
-            if len(self) < 1:
-                time.sleep(10)
-        self.log("Generator initialization complete")
-
-
-    def _update_samples_and_targets(self):
-        for source in self.sources:
-            entity = source[0]
-            sub_index = source[1]
-            index = source[2]
-            self.client.set_data_source(entity)
-            batch_name = form_name(self.sample_prefix, index, sub_index)
-            if self.need_targets:
-                target_name = form_name(self.target_prefix, index, sub_index)
-            else:
-                target_name = None
-
-            self.log(f"Retrieving {batch_name} from {entity}")
-            # Poll next batch based on index, if available: retrieve it, update index and loop
-            while self.data_exists(batch_name, target_name):
-                self.add_samples(batch_name, target_name)
-                source[2] += 1
-                index = source[2]
-                batch_name = form_name(self.sample_prefix, index, sub_index)
-                if self.need_targets:
-                    target_name = form_name(self.target_prefix, index, sub_index)
-
-                self.log(f"Retrieving {batch_name}...")
 
     def __data_generation(self, indices):
         return StaticDataGenerator.__data_generation(self, indices)
+
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch

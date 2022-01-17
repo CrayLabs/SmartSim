@@ -35,7 +35,7 @@ class TrainingDataUploader:
     :param producer_prefixes: Prefixes of processes which will be producing batches.
                               This can be useful in case the consumer processes also
                               have other incoming entities.
-    :type producer_prefixes: str
+    :type producer_prefixes: str or list[str]
     :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
     :type smartredis_cluster: bool
     :param smartredis_address: Address of Redis client as <ip_address>:<port>
@@ -71,6 +71,8 @@ class TrainingDataUploader:
         self.name = name
         self.sample_prefix = sample_prefix
         self.target_prefix = target_prefix
+        if isinstance(producer_prefixes, str):
+            producer_prefixes = [producer_prefixes]
         self.producer_prefixes = producer_prefixes
         self.num_classes = num_classes
         if isinstance(sub_indices, int):
@@ -92,7 +94,8 @@ class TrainingDataUploader:
         if self.target_prefix:
             info_ds.add_meta_string("target_prefix", self.target_prefix)
         if self.producer_prefixes:
-            info_ds.add_meta_string("producer_prefixes", self.producer_prefixes)
+            for producer_prefix in self.producer_prefixes:
+                info_ds.add_meta_string("producer_prefixes", producer_prefix)
         if self.num_classes:
             info_ds.add_meta_scalar("num_classes", self.num_classes)
         if self.sub_indices:
@@ -317,7 +320,7 @@ class BatchDownloader:
                 raise ValueError(
                     "uploader_name can not be empty if uploader_info is 'auto'"
                 )
-            self.get_uploader_info(self.uploader_name)
+            self._get_uploader_info(self.uploader_name)
         elif self.uploader_info == "manual":
             pass
         else:
@@ -325,7 +328,7 @@ class BatchDownloader:
                 f"uploader_info must be one of 'auto' or 'manual', but was {self.uploader_info}"
             )
 
-        self.sources = self.list_all_sources()
+        self.sources = self._list_all_sources()
 
 
     @property
@@ -336,6 +339,12 @@ class BatchDownloader:
         :rtype: bool
         """
         return self.target_prefix and not self.autoencoding
+
+
+    def __len__(self):
+        length = int(np.floor(self.num_samples / self.batch_size))
+        return length
+
 
     def __iter__(self):
 
@@ -431,10 +440,10 @@ class BatchDownloader:
         self.log(f"Uploader target prefix: {self.target_prefix}")
 
         try:
-            self.producer_prefixes = uploader_info.get_meta_strings("producer_prefix")
+            self.producer_prefixes = uploader_info.get_meta_strings("producer_prefixes")
         except:
             self.producer_prefixes = [""]
-        self.log(f"Uploader producer prefix: {self.producer_prefixes}")
+        self.log(f"Uploader producer prefixes: {self.producer_prefixes}")
 
         try:
             self.num_classes = uploader_info.get_meta_scalars("num_classes")[0]
@@ -448,9 +457,6 @@ class BatchDownloader:
             self.sub_indices = None
         self.log(f"Uploader sub-indices: {self.sub_indices}")
 
-    def __len__(self):
-        length = int(np.floor(self.num_samples / self.batch_size))
-        return length
 
     def _update_samples_and_targets(self):
         for source in self.sources:
@@ -464,13 +470,15 @@ class BatchDownloader:
                 target_name = None
 
             self.log(f"Retrieving {batch_name} from {entity}")
-            while not self.data_exists(batch_name, target_name):
+            while not self._data_exists(batch_name, target_name):
                 time.sleep(10)
 
-            self.add_samples(batch_name, target_name)
+            self._add_samples(batch_name, target_name)
+
 
     def update_data(self):
         self._update_samples_and_targets()
+
 
     def __data_generation(self, indices):
         # Initialization
@@ -485,6 +493,7 @@ class BatchDownloader:
             y = None
 
         return x, y
+
 
     def __len__(self):
         length = int(np.floor(self.num_samples / self.batch_size))

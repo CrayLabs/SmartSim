@@ -15,7 +15,7 @@ data_uploader = TrainingDataUploader(num_classes=mpi_size,
                                      producer_prefixes="uploader",
                                      sub_indices=mpi_size)
 
-if environ["SSKEYOUT"] == "uploader_0":
+if environ["SSKEYOUT"] == "uploader_0" and mpi_rank==0:
     data_uploader.publish_info()
 
 
