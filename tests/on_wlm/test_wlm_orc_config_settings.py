@@ -7,6 +7,13 @@ from smartsim.error import SmartSimError
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
+try:
+    from smartredis import Client
+
+    config_setter = Client.config_set
+except AttributeError:
+    pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.0")
+
 
 def test_config_methods_on_wlm(fileutils, wlmutils):
     """test setting single node orchestrator configurations"""
@@ -29,6 +36,8 @@ def test_config_methods_on_wlm(fileutils, wlmutils):
     except:
         exp.stop(db)
         assert False
+
+    exp.stop(db)
 
 
 def test_config_methods_on_wlm_cluster(fileutils, wlmutils):

@@ -4,6 +4,13 @@ from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 
+try:
+    from smartredis import Client
+
+    config_setter = Client.config_set
+except AttributeError:
+    pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.0")
+
 
 def test_config_methods(fileutils):
     exp_name = "test_config_methods"
@@ -22,6 +29,8 @@ def test_config_methods(fileutils):
     except:
         exp.stop(db)
         assert False
+
+    exp.stop(db)
 
 
 def test_config_methods_inactive(fileutils):
