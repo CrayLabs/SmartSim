@@ -46,6 +46,9 @@ the fields into a dataset object.
 
 .. code-block:: python
 
+    # Select lines from updated simulation code highlighting
+    # the use of SmartRedis to stream data to another processes
+
     from smartredis import Client, Dataset
     client = Client() # Addresses passed to job through SmartSim launch
 
@@ -99,8 +102,9 @@ to be launched and used to stage data between the simulation and analysis code.
     db = Orchestrator(port=6780)
 
 The reference to the simulation is created through a call to `Experiment.create_model()`.
-The python script is "attached" to the model, such that when run directories are
-created for it, the python script will be placed in that run directory.
+The python script is "attached" to the model. This means that when run directories are
+created for the model, a copy of the python script will be placed in that run directory
+and be availible for use by the model itself.
 
 Executable arguments are used to pass the simulation parameters to the simulation.
 
@@ -111,7 +115,7 @@ Executable arguments are used to pass the simulation parameters to the simulatio
     time_steps, seed = 3000, 42
 
     # define how simulation should be executed
-    settings = exp.create_run_settings("python", 
+    settings = exp.create_run_settings("python",
                                        exe_args=["fv_sim.py",
                                                  f"--seed={seed}",
                                                  f"--steps={time_steps}"])
@@ -128,8 +132,9 @@ The next portion starts the database and immediately connects
 a client to it so that data can be retrieved by the analysis
 code and plotted.
 
-The simulation is started with `block=False`, so that the data
-being streamed from the simulation can be analyzed in real time.
+The simulation is started with the `block=False` argument. This runs the simulation
+in a nonblocking manner so that the data can being streamed from the simulation can be
+analyzed in real time.
 
 .. code-block:: python
 
@@ -148,7 +153,7 @@ Another `Model` could have been created to plot the results and launched
 in a similar manner to the simulation.
 
 Doing so would enable the analysis application to be executed on different
-resources such as GPU enabled nodes, or distributed across nodes.
+resources such as GPU enabled nodes, or distributed across many nodes.
 
 This version, where the driver and analysis code coexist in the same
 script, is shown for simplicity.
@@ -197,6 +202,10 @@ the `Experiment` object, the following can be called to stop any database instan
 
     # be sure to be in Python environment where SmartSim is installed
     $(smart --dbcli) -h 127.0.0.1 -p 6780 shutdown
+
+
+The full driver code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/driver.py>`_.
+
 
 3.4 Running the Example
 -----------------------
