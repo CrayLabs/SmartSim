@@ -39,8 +39,8 @@ client.poll_key("cylinder", 200, 100)
 cylinder = client.get_tensor("cylinder").astype(bool)
 
 for i in range(0, time_steps, 5): # plot every 5th timestep
-    client.poll_key(f"data_{str(i)}", 10, 1000)
-    dataset = client.get_dataset(f"data_{str(i)}")
+    client.poll_key(f"data_{i}", 10, 1000)
+    dataset = client.get_dataset(f"data_{i}")
     ux, uy = dataset.get_tensor("ux"), dataset.get_tensor("uy")
 
     plt.cla()

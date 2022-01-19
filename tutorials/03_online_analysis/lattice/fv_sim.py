@@ -56,7 +56,7 @@ def finite_volume_simulation(steps=4000, x_res=400, y_res=100,
 def create_dataset(time_step, ux, uy):
     """Create SmartRedis Dataset containing multiple NumPy arrays
     to be stored at a single key within the database"""
-    dataset = Dataset(f"data_{str(time_step)}")
+    dataset = Dataset(f"data_{time_step}")
     dataset.add_tensor("ux", ux)
     dataset.add_tensor("uy", uy)
     return dataset

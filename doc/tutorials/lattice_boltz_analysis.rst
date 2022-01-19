@@ -61,7 +61,7 @@ the fields into a dataset object.
     def create_dataset(time_step, ux, uy):
         """Create SmartRedis Dataset containing multiple NumPy arrays
         to be stored at a single key within the database"""
-        dataset = Dataset(f"data_{str(time_step)}")
+        dataset = Dataset(f"data_{time_step}")
         dataset.add_tensor("ux", ux)
         dataset.add_tensor("uy", uy)
         return dataset
@@ -160,8 +160,8 @@ script, is shown for simplicity.
     cylinder = client.get_tensor("cylinder").astype(bool)
 
     for i in range(0, time_steps, 5): # plot every 5th timestep
-        client.poll_key(f"data_{str(i)}", 10, 1000)
-        dataset = client.get_dataset(f"data_{str(i)}")
+        client.poll_key(f"data_{i}", 10, 1000)
+        dataset = client.get_dataset(f"data_{i}")
         ux, uy = dataset.get_tensor("ux"), dataset.get_tensor("uy")
 
         plt.cla()
