@@ -151,9 +151,18 @@ class SlurmOrchestrator(Orchestrator):
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
+        
         for host, db in zip(host_list, self.entities):
-            db.set_host(host)
-            db.run_settings.set_hostlist([host])
+            if db._multihost:
+                # Hack for Osprey, have to investigate
+                db.set_hosts([host+"-ib" for host in host_list])
+                db.run_settings.set_hostlist([host])
+                for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
+                    mpmd_runsettings.set_hostlist(host_list[i+1])
+            else:
+                # Hack for Osprey, have to investigate
+                db.set_host(host+"-ib")
+                db.run_settings.set_hostlist([host])
 
     def set_batch_arg(self, arg, value):
         """Set a Sbatch argument the orchestrator should launch with
@@ -263,11 +272,17 @@ class SlurmOrchestrator(Orchestrator):
             raise SmartSimError(msg)
 
         run_args = kwargs.get("run_args", {})
-        run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
-        if multihost_nodes:
+        if not multihost_nodes:
+            run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
+            run_settings.set_tasks(1)
+        else:
             # tell step to create a mpmd executable
-            run_settings.mpmd = True
-        run_settings.set_tasks(1)
+            run_settings = MpirunSettings(exe, exe_args[0], run_args=run_args.copy())
+            run_settings.set_tasks(1)
+            for exe_arg in exe_args[1:]:
+                mpmd_run_settings = MpirunSettings(exe, exe_arg, run_args.copy())
+                mpmd_run_settings.set_tasks(1)
+                run_settings.make_mpmd(mpmd_run_settings)
         return run_settings
 
     def _initialize_entities(self, **kwargs):
@@ -275,6 +290,7 @@ class SlurmOrchestrator(Orchestrator):
         db_nodes = kwargs.get("db_nodes", 1)
         self.db_nodes = db_nodes
         single_cmd = kwargs.get("single_cmd", True)
+
         multihost_nodes = single_cmd and db_nodes>1
         
         cluster = not bool(db_nodes < 3)
@@ -284,7 +300,7 @@ class SlurmOrchestrator(Orchestrator):
         db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
-        if multihost_nodes:
+        if multihost_nodes :
             exe_args = []
         for db_id in range(db_nodes):
             if not multihost_nodes:
@@ -331,6 +347,7 @@ class SlurmOrchestrator(Orchestrator):
             run_settings = self._build_run_settings("python", exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             node._shard_ids = range(db_nodes)
+            node._multihost = True
             self.entities.append(node)
 
         self.ports = ports
