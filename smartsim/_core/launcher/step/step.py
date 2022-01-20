@@ -44,10 +44,10 @@ class Step:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
-    def get_output_files(self):
+    def get_output_files(self, name_suffix=""):
         """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".out")
-        error = self.get_step_file(ending=".err")
+        output = self.get_step_file(ending=name_suffix+".out")
+        error = self.get_step_file(ending=name_suffix+".err")
         return output, error
 
     def get_step_file(self, ending=".sh"):
