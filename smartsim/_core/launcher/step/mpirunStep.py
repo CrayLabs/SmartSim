@@ -29,6 +29,7 @@ import os
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from shlex import split as sh_split
 
 logger = get_logger(__name__)
 
@@ -123,4 +124,6 @@ class MpirunStep(Step):
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
             cmd += mpmd.exe_args
+        
+        cmd = sh_split(" ".join(cmd))
         return cmd
