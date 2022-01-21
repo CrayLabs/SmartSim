@@ -29,6 +29,7 @@ from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from .orchestrator import Orchestrator
+from shlex import split as sh_split
 
 logger = get_logger(__name__)
 
@@ -45,6 +46,7 @@ class PBSOrchestrator(Orchestrator):
         account=None,
         time=None,
         queue=None,
+        single_cmd=True,
         **kwargs,
     ):
         """Initialize an Orchestrator reference for PBSPro based systems
@@ -83,6 +85,7 @@ class PBSOrchestrator(Orchestrator):
             db_nodes=db_nodes,
             batch=batch,
             run_command=run_command,
+            single_cmd=single_cmd,
             **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
@@ -206,15 +209,42 @@ class PBSOrchestrator(Orchestrator):
 
     def _build_aprun_settings(self, exe, exe_args, **kwargs):
         run_args = kwargs.get("run_args", {})
-        run_settings = AprunSettings(exe, exe_args, run_args=run_args)
-        run_settings.set_tasks(1)
-        run_settings.set_tasks_per_node(1)
+        db_nodes = kwargs.get("db_nodes", 1)
+        single_cmd = kwargs.get("single_cmd", True)
+        mpmd_nodes = single_cmd and db_nodes>1
+
+        if not mpmd_nodes:
+            run_settings = AprunSettings(exe, exe_args, run_args=run_args)
+            run_settings.set_tasks(1)
+            run_settings.set_tasks_per_node(1)
+        else:
+            run_settings = AprunSettings(exe, exe_args[0], run_args=run_args)
+            run_settings.set_tasks(1)
+            run_settings.set_tasks_per_node(1)
+            for exe_arg in exe_args[1:]:
+                mpmd_run_settings = AprunSettings(exe, exe_arg, run_args.copy())
+                mpmd_run_settings.set_tasks(1)
+                mpmd_run_settings.set_tasks_per_node(1)
+                run_settings.make_mpmd(mpmd_run_settings)
         return run_settings
 
     def _build_mpirun_settings(self, exe, exe_args, **kwargs):
         run_args = kwargs.get("run_args", {})
-        run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
-        run_settings.set_tasks(1)
+        db_nodes = kwargs.get("db_nodes", 1)
+        single_cmd = kwargs.get("single_cmd", True)
+        mpmd_nodes = single_cmd and db_nodes>1
+
+        if not mpmd_nodes:
+            run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
+            run_settings.set_tasks(1)
+        else:
+            # tell step to create a mpmd executable
+            run_settings = MpirunSettings(exe, exe_args[0], run_args=run_args.copy())
+            run_settings.set_tasks(1)
+            for exe_arg in exe_args[1:]:
+                mpmd_run_settings = MpirunSettings(exe, exe_arg, run_args.copy())
+                mpmd_run_settings.set_tasks(1)
+                run_settings.make_mpmd(mpmd_run_settings)
         return run_settings
 
     def _build_batch_settings(self, db_nodes, batch, account, time, queue):
@@ -228,6 +258,11 @@ class PBSOrchestrator(Orchestrator):
     def _initialize_entities(self, **kwargs):
         """Initialize DBNode instances for the orchestrator."""
         db_nodes = kwargs.get("db_nodes", 1)
+        self.db_nodes = db_nodes
+        single_cmd = kwargs.get("single_cmd", True)
+
+        mpmd_nodes = single_cmd and db_nodes>1
+
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
             raise SSUnsupportedError(
@@ -235,9 +270,18 @@ class PBSOrchestrator(Orchestrator):
             )
         port = kwargs.get("port", 6379)
 
+        if mpmd_nodes:
+            exe_args = []
+
         # Build DBNode instance for each node listed
         for db_id in range(db_nodes):
-            db_node_name = "_".join((self.name, str(db_id)))
+            if not mpmd_nodes:
+                db_node_name = "_".join((self.name, str(db_id)))
+                db_shard_name = db_node_name
+            else:
+                db_node_name = self.name
+                db_shard_name = "_".join((self.name, str(db_id)))
+
             start_script_args = [
                 self._redis_launch_script,  # redis_starter.py
                 f"+ifname={self._interface}",  # pass interface to start script
@@ -250,14 +294,26 @@ class PBSOrchestrator(Orchestrator):
             ]
 
             if cluster:
-                start_script_args += self._get_cluster_args(db_node_name, port)
+                start_script_args += self._get_cluster_args(db_shard_name, port)
 
-            # Python because we use redis_starter.py to run redis
-            run_settings = self._build_run_settings(
-                "python", start_script_args, **kwargs
-            )
+            if mpmd_nodes:
+                exe_args.append(" ".join(start_script_args))
+            else:
+                # Python because we use redis_starter.py to run redis
+                run_settings = self._build_run_settings(
+                    "python", start_script_args, **kwargs
+                )
+                node = DBNode(db_node_name, self.path, run_settings, [port])
+                self.entities.append(node)
+
+        if mpmd_nodes:
+            exe_args = [sh_split(exe_arg) for exe_arg in exe_args]
+            run_settings = self._build_run_settings("python", exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, [port])
+            node._shard_ids = range(db_nodes)
+            node._mpmd = True
             self.entities.append(node)
+
         self.ports = [port]
 
     def _fill_reserved(self):
@@ -283,3 +339,7 @@ class PBSOrchestrator(Orchestrator):
             "wdir",
         ]
         self._reserved_batch_args = ["e", "o", "N", "l"]
+
+    @property
+    def num_shards(self):
+        return self.db_nodes

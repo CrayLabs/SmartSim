@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-
+from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
@@ -112,4 +112,5 @@ class AprunStep(Step):
             cmd += mpmd.format_run_args()
             cmd += mpmd.exe
             cmd += mpmd.exe_args
+        cmd = sh_split(" ".join(cmd))
         return cmd
