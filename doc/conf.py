@@ -17,11 +17,17 @@ sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
 
 project = 'SmartSim'
-copyright = '2021, Hewlett Packard Enterprise'
-author = 'HPE AI & Advanced Productivity'
+copyright = '2022, Hewlett Packard Enterprise'
+author = 'Cray Labs'
+
+try:
+    import smartsim
+    version = smartsim.__version__
+except ImportError:
+    version = "0.3.2"
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.2'
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -68,7 +74,7 @@ fortran_src = [
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_book_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

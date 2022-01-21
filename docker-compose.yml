@@ -1,0 +1,11 @@
+
+
+version: '3'
+
+services:
+  docs-dev:
+    image: smartsim-docs:dev-latest
+    build:
+      context: .
+      dockerfile: ./docker/docs/dev/Dockerfile
+

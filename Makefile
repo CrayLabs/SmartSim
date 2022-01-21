@@ -90,6 +90,16 @@ check-lint:
 docs:
 	@cd doc; make html
 
+# help: docks                           - generate project documentation with docker
+.PHONY: docks
+docks:
+	@if [ -d "docs" ]; then rm -rf docs; fi
+	@mkdir -p docs/develop
+	@docker compose build docs-dev
+	@docker create -ti --name devdocs smartsim-docs:dev-latest
+	@docker cp devdocs:/usr/local/src/SmartSim/doc/_build/html/ ./docs/develop/
+	@docker container rm devdocs
+
 # help: cov                            - generate html coverage report for Python client
 .PHONY: cov
 cov:
