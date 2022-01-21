@@ -153,7 +153,7 @@ class SlurmOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         
         for host, db in zip(host_list, self.entities):
-            if db._multihost:
+            if db._mpmd:
                 # Hack for Osprey, have to investigate
                 db.set_hosts([host+"-ib" for host in host_list])
                 db.run_settings.set_hostlist([host])
@@ -234,7 +234,7 @@ class SlurmOrchestrator(Orchestrator):
         run_args = kwargs.get("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
-        multihost_nodes = single_cmd and db_nodes>1
+        mpmd_nodes = single_cmd and db_nodes>1
 
         # if user specified batch=False
         # also handles batch=False and alloc=False (alloc will be found by launcher)
@@ -248,10 +248,10 @@ class SlurmOrchestrator(Orchestrator):
             run_args["ntasks-per-node"] = db_per_host
             
         run_settings = SrunSettings(exe, exe_args, run_args=run_args, alloc=alloc)
-        if db_per_host > 1 or multihost_nodes:
+        if db_per_host > 1 or mpmd_nodes:
             # tell step to create a mpmd executable
             run_settings.mpmd = True
-        if multihost_nodes:
+        if mpmd_nodes:
             run_settings.set_output_suffix("_%t")
         return run_settings
 
@@ -260,7 +260,7 @@ class SlurmOrchestrator(Orchestrator):
         db_per_host = kwargs.get("db_per_host", 1)
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
-        multihost_nodes = single_cmd and db_nodes>1
+        mpmd_nodes = single_cmd and db_nodes>1
         if alloc:
             msg = (
                 "SlurmOrchestrator using OpenMPI cannot specify allocation to launch in"
@@ -272,7 +272,7 @@ class SlurmOrchestrator(Orchestrator):
             raise SmartSimError(msg)
 
         run_args = kwargs.get("run_args", {})
-        if not multihost_nodes:
+        if not mpmd_nodes:
             run_settings = MpirunSettings(exe, exe_args, run_args=run_args)
             run_settings.set_tasks(1)
         else:
@@ -291,7 +291,7 @@ class SlurmOrchestrator(Orchestrator):
         self.db_nodes = db_nodes
         single_cmd = kwargs.get("single_cmd", True)
 
-        multihost_nodes = single_cmd and db_nodes>1
+        mpmd_nodes = single_cmd and db_nodes>1
         
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
@@ -300,10 +300,10 @@ class SlurmOrchestrator(Orchestrator):
         db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
-        if multihost_nodes :
+        if mpmd_nodes :
             exe_args = []
         for db_id in range(db_nodes):
-            if not multihost_nodes:
+            if not mpmd_nodes:
                 db_node_name = "_".join((self.name, str(db_id)))
                 db_shard_name = db_node_name
             else:
@@ -313,7 +313,7 @@ class SlurmOrchestrator(Orchestrator):
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
             ports = []
-            if not multihost_nodes:
+            if not mpmd_nodes:
                 exe_args = []
             for port_offset in range(db_per_host):
                 next_port = int(port) + port_offset
@@ -333,7 +333,7 @@ class SlurmOrchestrator(Orchestrator):
                 exe_args.append(" ".join(start_script_args))
                 ports.append(next_port)
 
-            if not multihost_nodes:
+            if not mpmd_nodes:
                 # if only launching 1 db_per_host, we don't need a list of exe args lists
                 if db_per_host == 1:
                     exe_args = exe_args[0]
@@ -342,12 +342,12 @@ class SlurmOrchestrator(Orchestrator):
                 node = DBNode(db_node_name, self.path, run_settings, ports)
                 self.entities.append(node)
             
-        if multihost_nodes:
+        if mpmd_nodes:
             exe_args = [sh_split(exe_arg) for exe_arg in exe_args]
             run_settings = self._build_run_settings("python", exe_args, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, ports)
             node._shard_ids = range(db_nodes)
-            node._multihost = True
+            node._mpmd = True
             self.entities.append(node)
 
         self.ports = ports

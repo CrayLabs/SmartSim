@@ -49,7 +49,7 @@ class DBNode(SmartSimEntity):
         self.ports = ports
         self._host = None
         super().__init__(name, path, run_settings)
-        self._multihost = False
+        self._mpmd = False
         self._shard_ids = None
         self._hosts = None
 
@@ -78,7 +78,7 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            if not self._multihost:
+            if not self._mpmd:
                 conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
                 if osp.exists(conf_file):
                     os.remove(conf_file)
@@ -95,7 +95,7 @@ class DBNode(SmartSimEntity):
             file_name = osp.join(self.path, self.name + file_ending)
             if osp.exists(file_name):
                 os.remove(file_name)
-        if self._multihost:
+        if self._mpmd:
             for file_ending in [".err", ".out"]:
                 for shard_id in self._shard_ids:
                     file_name = osp.join(
@@ -117,7 +117,7 @@ class DBNode(SmartSimEntity):
     def _get_cluster_conf_filenames(self, port):  # cov-lsf
         """Returns the .conf file name for the given port number
 
-        This function should bu used if and only if ``_multihost==True``
+        This function should bu used if and only if ``_mpmd==True``
 
         :param port: port number
         :type port: int
@@ -171,7 +171,7 @@ class DBNode(SmartSimEntity):
         this uses the RedisIP module that is built as a dependency
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
-        This function must be called only if ``_multihost==True``.
+        This function must be called only if ``_mpmd==True``.
 
         :raises SmartSimError: if host/ip could not be found
         :return: ip addresses | hostnames

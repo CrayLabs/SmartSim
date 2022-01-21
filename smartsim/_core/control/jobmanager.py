@@ -317,7 +317,7 @@ class JobManager:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
                 for dbnode in orchestrator:
-                    if not dbnode._multihost:
+                    if not dbnode._mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts

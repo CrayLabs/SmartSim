@@ -250,7 +250,7 @@ class Orchestrator(EntityList):
     def _get_db_hosts(self):
         hosts = []
         for dbnode in self.entities:
-            if not dbnode._multihost:
+            if not dbnode._mpmd:
                 hosts.append(dbnode.host)
             else:
                 hosts.extend(dbnode.hosts)

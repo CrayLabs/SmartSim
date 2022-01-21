@@ -285,7 +285,7 @@ class LSFOrchestrator(Orchestrator):
 
         run_settings = self._build_run_settings("python", exe_args, **kwargs)
         node = DBNode(self.name, self.path, run_settings, ports)
-        node._multihost = True
+        node._mpmd = True
         node._shard_ids = range(db_nodes)
         self.entities.append(node)
         self.ports = ports
