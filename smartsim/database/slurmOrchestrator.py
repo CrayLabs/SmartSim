@@ -153,12 +153,10 @@ class SlurmOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         
         for host, db in zip(host_list, self.entities):
+            db.run_settings.set_hostlist([host])
             if db._mpmd:
-                db.run_settings.set_hostlist([host])
                 for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                     mpmd_runsettings.set_hostlist(host_list[i+1])
-            else:
-                db.run_settings.set_hostlist([host])
 
     def set_batch_arg(self, arg, value):
         """Set a Sbatch argument the orchestrator should launch with
