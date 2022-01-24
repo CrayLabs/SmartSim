@@ -21,7 +21,10 @@ def test_batch_ensemble(fileutils, wlmutils):
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
     if wlmutils.get_test_launcher() == "lsf":
-        batch.set_project(wlmutils.get_test_account())
+        batch.set_account(wlmutils.get_test_account())
+    if wlmutils.get_test_launcher() == "cobalt":
+        batch.set_account(wlmutils.get_test_account())
+        batch.set_queue("debug-flat-quad")
     ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
     ensemble.add_model(M1)
     ensemble.add_model(M2)
@@ -42,7 +45,10 @@ def test_batch_ensemble_replicas(fileutils, wlmutils):
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
     if wlmutils.get_test_launcher() == "lsf":
-        batch.set_project(wlmutils.get_test_account())
+        batch.set_account(wlmutils.get_test_account())
+    if wlmutils.get_test_launcher() == "cobalt":
+        batch.set_account(wlmutils.get_test_account())
+        batch.set_queue("debug-cache-quad")
     ensemble = exp.create_ensemble(
         "batch-ens-replicas", batch_settings=batch, run_settings=settings, replicas=2
     )

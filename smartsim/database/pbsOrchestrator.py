@@ -146,7 +146,7 @@ class PBSOrchestrator(Orchestrator):
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
         for host, db in zip(host_list, self.entities):
-            db.set_host(host)
+            #db.set_host(host)
 
             # Aprun doesn't like settings hosts in batch launch
             if isinstance(db.run_settings, AprunSettings):
@@ -154,6 +154,10 @@ class PBSOrchestrator(Orchestrator):
                     db.run_settings.set_hostlist([host])
             else:
                 db.run_settings.set_hostlist([host])
+
+            if db._mpmd:
+                for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
+                    mpmd_runsettings.set_hostlist(host_list[i+1])
 
     def set_batch_arg(self, arg, value):
         """Set a ``qsub`` argument the ``PBSOrchestrator`` should launch with
@@ -260,9 +264,7 @@ class PBSOrchestrator(Orchestrator):
         db_nodes = kwargs.get("db_nodes", 1)
         self.db_nodes = db_nodes
         single_cmd = kwargs.get("single_cmd", True)
-
         mpmd_nodes = single_cmd and db_nodes>1
-
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
             raise SSUnsupportedError(

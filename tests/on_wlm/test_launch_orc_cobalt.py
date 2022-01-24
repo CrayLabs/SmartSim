@@ -24,16 +24,16 @@ def test_launch_cobalt_orc(fileutils, wlmutils):
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
-    status = exp.get_status(orc)
+    statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in status:
+    if status.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
-    status = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in status])
+    statuses = exp.get_status(orc)
+    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
 
 def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
@@ -58,13 +58,13 @@ def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
-    status = exp.get_status(orc)
+    statuses = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if status.STATUS_FAILED in status:
+    if status.STATUS_FAILED in statuses:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
-    status = exp.get_status(orc)
-    assert all([stat == status.STATUS_CANCELLED for stat in status])
+    statuses = exp.get_status(orc)
+    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
