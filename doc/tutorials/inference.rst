@@ -38,23 +38,22 @@ script that uses the SmartRedis Python client to perform innovations of the ML r
 
     from smartsim import Experiment
     from smartsim.database import Orchestrator
-    from smartsim.settings import RunSettings
 
     exp = Experiment("inference-session", launcher="local")
     db = Orchestrator(port=6780)
 
     script = "inference.py"
-    settings = RunSettings("python", exe_args=script)
+    settings = exp.create_run_settings("python", exe_args=script)
     model = exp.create_model("model_using_ml", settings)
     model.attach_generator_files(to_copy=script)
 
     exp.start(db, model, block=True, summary=True)
     exp.stop(db)
 
-The above script will first launch the database, and then the script
-containing the SmartRedis client code Python script. The code here could
-easily be adapted to launch a C, C++, or Fortran application containing
-the SmartRedis clients in those languages as well.
+The above script will first launch the database, and then the Python script
+containing the SmartRedis client code. The code here could easily be adapted to
+launch a C, C++, or Fortran application containing the SmartRedis clients in
+those languages as well.
 
 Below are a few examples of scripts that could be used with the above
 code to perform online inference with various ML backends supported
@@ -179,7 +178,7 @@ above to ``CPU``.
 .. _Keras: https://keras.io/
 
 The Orchestrator, in addition to PyTorch, is built with `TensorFlow`_ and `Keras`_ support by default.
-Currently TensorFlow 2.4.2 is supported, but the graph of the model must be frozen
+Currently TensorFlow 2.5.2 is supported, but the graph of the model must be frozen
 before it is placed in the database. This is the same process for both Keras and
 TensorFlow.
 
@@ -194,7 +193,6 @@ First, a simple Keras Convolutional Neural Network is defined.
     import os
     import numpy as np
     from tensorflow import keras
-
 
     # create a simple Fully connected network in Keras
     model = keras.Sequential(
@@ -232,7 +230,6 @@ returns these values for convenience as shown below.
 
     from smartredis import Client
     from smartsim.tf import freeze_model
-
 
     # SmartSim utility for Freezing the model
     model_path, inputs, outputs = freeze_model(model, os.getcwd(), "fcn.pb")
