@@ -36,14 +36,17 @@ def test_stop_type():
         exp.stop("model")
 
 
-def test_finished_type():
+def test_finished_new_model():
+    # finished should fail as this model hasn't been
+    # launched yet.
+
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    with pytest.raises(SmartSimError):
+    with pytest.raises(ValueError):
         exp.finished(model)
 
 
-def test_status_type():
+def test_status_typeerror():
     exp = Experiment("test")
     with pytest.raises(TypeError):
         exp.get_status([])

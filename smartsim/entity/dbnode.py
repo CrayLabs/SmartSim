@@ -29,7 +29,7 @@ import os.path as osp
 import time
 
 from ..error import SmartSimError
-from ..utils import get_logger
+from ..log import get_logger
 from .entity import SmartSimEntity
 
 logger = get_logger(__name__)

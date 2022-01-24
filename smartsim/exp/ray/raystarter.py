@@ -4,8 +4,8 @@ from subprocess import PIPE, STDOUT, Popen
 
 import psutil
 
+from smartsim._core.utils.helpers import get_ip_from_interface
 from smartsim.exp.ray import parse_ray_head_node_address
-from smartsim.utils.helpers import get_ip_from_interface
 
 
 def get_lb_interface_name():

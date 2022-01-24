@@ -1,10 +1,9 @@
-import sys
 from copy import deepcopy
 
 import pytest
 
 from smartsim import Experiment
-from smartsim.control import Manifest
+from smartsim._core.control import Manifest
 from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.exp.ray import RayCluster
@@ -68,6 +67,13 @@ def test_separate_type():
 def test_name_collision():
     with pytest.raises(SmartSimError):
         _ = Manifest(model, model_2)
+
+
+def test_catch_empty_ensemble():
+    e = deepcopy(ensemble)
+    e.entities = []
+    with pytest.raises(ValueError):
+        manifest = Manifest(e)
 
 
 def test_corner_case():

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim.constants import STATUS_FAILED
+from smartsim.status import STATUS_FAILED
 
 should_run = True
 try:

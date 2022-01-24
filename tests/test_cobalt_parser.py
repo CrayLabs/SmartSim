@@ -1,5 +1,4 @@
-from smartsim.launcher import cobalt
-from smartsim.launcher.cobalt import cobaltParser
+from smartsim._core.launcher.cobalt import cobaltParser
 
 
 def test_parse_step_id():

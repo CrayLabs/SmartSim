@@ -26,17 +26,14 @@
 
 # Constants for SmartSim
 
-# ML backend versions
-TF_VERSION = "2.4.0"
-TORCH_VERSION = "1.7.1"
-ONNX_VERSION = "1.6.0"
+from .log import get_logger
 
+logger = get_logger(__name__)
 
-# Interval for Job Manager
-LOCAL_JM_INTERVAL = 2
+dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"
+dep_msg += "This module will be removed in the next release."
+logger.warning(dep_msg)
 
-# Task Manager Interval
-TM_INTERVAL = 1
 
 # Statuses that are applied to jobs
 STATUS_RUNNING = "Running"
@@ -48,13 +45,10 @@ STATUS_PAUSED = "Paused"
 
 # SmartSim status mapping
 SMARTSIM_STATUS = {
+    "Running": STATUS_RUNNING,
     "Paused": STATUS_PAUSED,
     "Completed": STATUS_COMPLETED,
     "Cancelled": STATUS_CANCELLED,
     "Failed": STATUS_FAILED,
     "New": STATUS_NEW,
 }
-
-# Status groupings
-TERMINAL_STATUSES = (STATUS_CANCELLED, STATUS_COMPLETED, STATUS_FAILED)
-LIVE_STATUSES = (STATUS_RUNNING, STATUS_PAUSED, STATUS_NEW)

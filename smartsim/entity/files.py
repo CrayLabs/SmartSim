@@ -131,7 +131,7 @@ class EntityFiles:
 
 
 class TaggedFilesHierarchy:
-    """The TaggedFilesHierarchy represents a directory 
+    """The TaggedFilesHierarchy represents a directory
     containing potentially tagged files and subdirectories.
 
     TaggedFilesHierarchy.base is the directory path from

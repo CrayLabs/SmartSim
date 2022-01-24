@@ -24,9 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
-from ..utils.helpers import is_valid_cmd
-from ..wlm import detect_launcher
 from . import *
 
 
@@ -37,7 +36,7 @@ def create_batch_settings(
 
     See Experiment.create_batch_settings for details
 
-    :param launcher: launcher for this experiment, if set to 'auto', 
+    :param launcher: launcher for this experiment, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param nodes: number of nodes for batch job, defaults to 1
@@ -101,7 +100,7 @@ def create_run_settings(
 
     See Experiment.create_run_settings docstring for more details
 
-    :param launcher: launcher to create settings for, if set to 'auto', 
+    :param launcher: launcher to create settings for, if set to 'auto',
                      an attempt will be made to find an available launcher on the system
     :type launcher: str
     :param run_command: command to run the executable

@@ -24,7 +24,7 @@ def test_orc_parameters():
     assert db.inter_threads == inter_op_threads
     assert db.intra_threads == intra_op_threads
 
-    module_str = db._get_AI_module()
+    module_str = db._rai_module
     assert "THREADS_PER_QUEUE" in module_str
     assert "INTRA_OP_PARALLELISM" in module_str
     assert "INTER_OP_PARALLELISM" in module_str
@@ -69,11 +69,11 @@ def test_orc_active_functions(fileutils):
 def test_catch_local_db_errors():
 
     # local database with more than one node not allowed
-    with pytest.raises(SmartSimError):
+    with pytest.raises(ValueError):
         db = Orchestrator(db_nodes=2)
 
     # MPMD local orchestrator not allowed
-    with pytest.raises(SmartSimError):
+    with pytest.raises(ValueError):
         db = Orchestrator(db_per_host=2)
 
 

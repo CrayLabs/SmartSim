@@ -24,16 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# -*- coding: utf-8 -*-
-__version__ = "0.3.1"
-
 import sys
+
+# -*- coding: utf-8 -*-
+from .version import __version__ as __version__
 
 if sys.version_info < (3, 7):  # pragma: no cover
     sys.exit("Python 3.7 or greater must be used with SmartSim.")
 
 # Main API module
 from .experiment import Experiment
-
-# Slurm helpers
-from .launcher import slurm

@@ -1,4 +1,4 @@
-from smartsim.launcher.slurm.slurm import _get_alloc_cmd
+from smartsim.slurm import _get_alloc_cmd
 
 
 def test_get_alloc_format():

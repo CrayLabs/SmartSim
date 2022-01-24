@@ -26,9 +26,8 @@
 
 from pprint import pformat
 
-from ..error import SSConfigError
-from ..utils import get_logger
-from ..utils.helpers import expand_exe_path, init_default
+from .._core.utils.helpers import expand_exe_path, init_default, is_valid_cmd
+from ..log import get_logger
 
 logger = get_logger(__name__)
 
@@ -118,16 +117,20 @@ class RunSettings:
     def run_command(self):
         """Return the launch binary used to launch the executable
 
+        Attempt to expand the path to the executable if possible
+
         :returns: launch binary e.g. mpiexec
-        :type: str
+        :type: str | None
         """
-        try:
-            if self._run_command:
-                cmd = expand_exe_path(self._run_command)
-                return cmd
-            return None
-        except SSConfigError:
+        if self._run_command:
+            if is_valid_cmd(self._run_command):
+                # command is valid and will be expanded
+                return expand_exe_path(self._run_command)
+            # command is not valid, so return it as is
+            # it may be on the compute nodes but not local machine
             return self._run_command
+        # run without run command
+        return None
 
     def update_env(self, env_vars):
         """Update the job environment variables
@@ -221,10 +224,9 @@ class BatchSettings:
         :returns: batch command
         :type: str
         """
-        try:
-            cmd = expand_exe_path(self._batch_cmd)
-            return cmd
-        except SSConfigError:
+        if is_valid_cmd(self._batch_cmd):
+            return expand_exe_path(self._batch_cmd)
+        else:
             return self._batch_cmd
 
     def set_nodes(self, num_nodes):
