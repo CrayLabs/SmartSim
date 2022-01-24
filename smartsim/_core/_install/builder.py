@@ -173,7 +173,7 @@ class RedisBuilder(Builder):
             "--debug=all",
             "-j",
             str(self.jobs),
-            f"MALLOC={self.malloc}"
+            f"MALLOC={self.malloc}",
         ]
         self.run_command(build_cmd, cwd=str(redis_build_path))
 
@@ -232,9 +232,7 @@ class RedisAIBuilder(Builder):
             tf_cmake.unlink()
             # copy ours in
             self.copy_file(
-                self.bin_path / "modules/FindTensorFlow.cmake",
-                tf_cmake,
-                set_exe=False
+                self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
             )
 
     def build_from_git(self, git_url, branch, device):
@@ -309,14 +307,16 @@ class RedisAIBuilder(Builder):
         if self.torch_dir:
             self.env["Torch_DIR"] = str(self.torch_dir)
 
-        build_cmd.extend([
-            self.binary_path("make"),
-            "-C",
-            str(self.rai_build_path / "opt"),
-            "-j",
-            f"{self.jobs}",
-            "build"
-        ])
+        build_cmd.extend(
+            [
+                self.binary_path("make"),
+                "-C",
+                str(self.rai_build_path / "opt"),
+                "-j",
+                f"{self.jobs}",
+                "build",
+            ]
+        )
         self.run_command(build_cmd, cwd=self.rai_build_path)
 
         self._install_backends(device)
