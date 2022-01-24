@@ -154,14 +154,10 @@ class SlurmOrchestrator(Orchestrator):
         
         for host, db in zip(host_list, self.entities):
             if db._mpmd:
-                # Hack for Osprey, have to investigate
-                db.set_hosts([host+"-ib" for host in host_list])
                 db.run_settings.set_hostlist([host])
                 for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                     mpmd_runsettings.set_hostlist(host_list[i+1])
             else:
-                # Hack for Osprey, have to investigate
-                db.set_host(host+"-ib")
                 db.run_settings.set_hostlist([host])
 
     def set_batch_arg(self, arg, value):
