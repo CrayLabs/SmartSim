@@ -1,4 +1,4 @@
-name: run-tests-local
+name: build-wheels
 
 on: [push, pull_request]
 

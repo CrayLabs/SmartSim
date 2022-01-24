@@ -68,12 +68,11 @@ class Builder:
     def build_from_git(self):
         raise NotImplementedError
 
-    @property
-    def make(self):
-        make_bin = shutil.which("make")
-        if make_bin:
-            return make_bin
-        raise BuildError("Could not find Make binary")
+    def binary_path(self, binary):
+        binary_ = shutil.which(binary)
+        if binary_:
+            return binary_
+        raise BuildError(f"{binary} not found in PATH")
 
     def copy_file(self, src, dst, set_exe=False):
         shutil.copyfile(src, dst)
@@ -98,7 +97,7 @@ class Builder:
         if self.build_dir.is_dir():
             shutil.rmtree(str(self.build_dir))
 
-    def run_command(self, cmd, shell=True, out=None, cwd=None):
+    def run_command(self, cmd, shell=False, out=None, cwd=None):
         # option to manually disable output if necessary
         if not out:
             out = self.out
@@ -120,10 +119,8 @@ class Builder:
 
 class RedisBuilder(Builder):
     """Class to build Redis from Source
-
     Supported build methods:
      - from git
-
     See buildenv.py for buildtime configuration of Redis
     version and url.
     """
@@ -141,7 +138,6 @@ class RedisBuilder(Builder):
 
     def build_from_git(self, git_url, branch):
         """Build Redis from git
-
         :param git_url: url from which to retrieve Redis
         :type git_url: str
         :param branch: branch to checkout
@@ -160,7 +156,7 @@ class RedisBuilder(Builder):
 
         # clone Redis
         clone_cmd = [
-            "git",
+            self.binary_path("git"),
             "clone",
             git_url,
             "--branch",
@@ -169,11 +165,17 @@ class RedisBuilder(Builder):
             "1",
             "redis",
         ]
-        self.run_command(" ".join(clone_cmd), shell=True, cwd=self.build_dir)
+        self.run_command(clone_cmd, cwd=self.build_dir)
 
         # build Redis
-        cmd = [self.make, "-j", str(self.jobs), f"MALLOC={self.malloc}"]
-        self.run_command(" ".join(cmd), shell=True, cwd=str(redis_build_path))
+        build_cmd = [
+            self.binary_path("make"),
+            "--debug=all",
+            "-j",
+            str(self.jobs),
+            f"MALLOC={self.malloc}"
+        ]
+        self.run_command(build_cmd, cwd=str(redis_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
         redis_src_dir = redis_build_path / "src"
@@ -187,10 +189,8 @@ class RedisBuilder(Builder):
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
-
     Supported build method:
      - from git
-
     See buildenv.py for buildtime configuration of RedisAI
     version and url.
     """
@@ -223,23 +223,22 @@ class RedisAIBuilder(Builder):
     def copy_tf_cmake(self):
         """Copy the FindTensorFlow.cmake file to the build directory
         as the version included in RedisAI is out of date for us.
-
         Note: opt/cmake/modules removed in RedisAI v1.2.5
         """
         # remove the previous version
-        tf_cmake = self.rai_build_path.joinpath(
-            "opt/cmake/modules/FindTensorFlow.cmake"
-        ).resolve()
+        tf_cmake = self.rai_build_path / "opt/cmake/modules/FindTensorFlow.cmake"
+        tf_cmake.resolve()
         if tf_cmake.is_file():
             tf_cmake.unlink()
             # copy ours in
             self.copy_file(
-                self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
+                self.bin_path / "modules/FindTensorFlow.cmake",
+                tf_cmake,
+                set_exe=False
             )
 
     def build_from_git(self, git_url, branch, device):
         """Build RedisAI from git
-
         :param git_url: url from which to retrieve RedisAI
         :type git_url: str
         :param branch: branch to checkout
@@ -258,6 +257,7 @@ class RedisAIBuilder(Builder):
 
         # clone RedisAI
         clone_cmd = [
+            self.binary_path("env"),
             "GIT_LFS_SKIP_SMUDGE=1",
             "git",
             "clone",
@@ -268,34 +268,32 @@ class RedisAIBuilder(Builder):
             "--depth=1",
             "RedisAI",
         ]
-        clone_cmd = " ".join(clone_cmd)
-        self.run_command(
-            clone_cmd, out=subprocess.DEVNULL, shell=True, cwd=self.build_dir
-        )
+        self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
 
         # copy FindTensorFlow.cmake to RAI cmake dir
         self.copy_tf_cmake()
 
         # get RedisAI dependencies
         dep_cmd = [
+            self.binary_path("env"),
             f"WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
             f"WITH_TF={self.tf}",
             f"WITH_TFLITE=0",  # never build with TF lite (for now)
             f"WITH_ORT={self.onnx}",
             "VERBOSE=1",
-            "bash",
-            "get_deps.sh",
+            self.binary_path("bash"),
+            self.rai_build_path / "get_deps.sh",
             device,
         ]
-        dep_cmd = " ".join(dep_cmd)
+
         self.run_command(
             dep_cmd,
-            shell=True,
             out=subprocess.DEVNULL,  # suppress this as it's not useful
             cwd=self.rai_build_path,
         )
 
         build_cmd = [
+            self.binary_path("env"),
             f"WITH_PT={self.torch}",  # but we built it in if the user specified it
             f"WITH_TF={self.tf}",
             f"WITH_TFLITE=0",  # never build TF Lite
@@ -311,12 +309,15 @@ class RedisAIBuilder(Builder):
         if self.torch_dir:
             self.env["Torch_DIR"] = str(self.torch_dir)
 
-        build_cmd.extend([self.make, "-C", "opt", "-j", f"{self.jobs}", "build"])
-        self.run_command(
-            " ".join(build_cmd),
-            cwd=self.rai_build_path,
-            shell=True,
-        )
+        build_cmd.extend([
+            self.binary_path("make"),
+            "-C",
+            str(self.rai_build_path / "opt"),
+            "-j",
+            f"{self.jobs}",
+            "build"
+        ])
+        self.run_command(build_cmd, cwd=self.rai_build_path)
 
         self._install_backends(device)
         if self.torch:
@@ -325,7 +326,6 @@ class RedisAIBuilder(Builder):
 
     def _install_backends(self, device):
         """Move backend libraries to smartsim/_core/lib/
-
         :param device: cpu or cpu
         :type device: str
         """
@@ -341,7 +341,6 @@ class RedisAIBuilder(Builder):
 
     def _move_torch_libs(self):
         """Move pip install torch libraries
-
         Since we use pip installed torch libraries for building
         RedisAI, we need to move them into the LD_runpath of redisai.so
         in the smartsim/_core/lib directory.
