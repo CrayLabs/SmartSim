@@ -254,7 +254,7 @@ class Controller:
         """
         orchestrator = manifest.db
         if orchestrator:
-            if len(orchestrator) > 1 and isinstance(self._launcher, LocalLauncher):
+            if orchestrator.num_shards > 1 and isinstance(self._launcher, LocalLauncher):
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
