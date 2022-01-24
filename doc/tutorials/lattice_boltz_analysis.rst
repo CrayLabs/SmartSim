@@ -73,7 +73,7 @@ This is all the SmartRedis code needed to stream the simulation data. Note that
 the client does not need to have an address explicitly stated because we
 are going to be launching the simulation through SmartSim.
 
-The full simulation code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/fv_sim.py>`_.
+The full simulation code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/fv_sim.py>`__.
 
 3.2 Creating the Analysis Driver
 --------------------------------
@@ -204,7 +204,7 @@ the `Experiment` object, the following can be called to stop any database instan
     $(smart --dbcli) -h 127.0.0.1 -p 6780 shutdown
 
 
-The full driver code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/driver.py>`_.
+The full driver code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/driver.py>`__.
 
 
 3.4 Running the Example
