@@ -180,27 +180,56 @@ class DBNode(SmartSimEntity):
         ips = []
 
 
-        # Find out if all shards' output streams are piped to same file
-        single_file = None
+        # Find out if all shards' output streams are piped to different file
+        multiple_files = None
         for _ in range(5):
-            filepath = osp.join(self.path, self.name+".out")
+            filepath = osp.join(self.path, self.name + f"_{self._shard_ids[0]}.out")
             if osp.isfile(filepath):
-                single_file = True
-            else:
-                filepath = osp.join(self.path, self.name + f"_{self._shard_ids[0]}.out")
-                if osp.isfile(filepath):
-                    single_file = False
-
-            if single_file is not None:
+                multiple_files = True
                 break
-            else:
-                time.sleep(5)
+            
+            # If we did not find separate files for each shard, it could
+            # be that all outputs are piped to same file OR that the separate
+            # files have not been created yet. To find out whether the
+            # streams are piped to the same file, we search the output file
+            # for "IPADDRESS": if we find it, we can set multiple_files to False
+            # and wait until the file contains enough IPs. Otherwise we
+            # go to next iteration, to check if there are multiple files.
+            filepath = osp.join(self.path, self.name+".out")
+            ips = []
+            try:
+                with open(filepath, "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        content = line.split()
+                        if "IPADDRESS:" in content:
+                            ip = content[-1]
+                            ips.append(ip)
 
-        if single_file is None:
+            # suppress error
+            except FileNotFoundError:
+                pass
+            
+            logger.debug("Waiting for RedisIP files to populate...")
+            if len(ips) < len(self._shard_ids):
+                # Larger sleep time, as this seems to be needed for
+                # multihost setups
+                if len(ips) > 0:
+                    # if we found at least one "IPADDRESS", we know
+                    # output streams all go to the same file
+                    multiple_files = False
+                    break
+                else:
+                    ips = []
+                    time.sleep(5)
+                    continue
+
+        if multiple_files is None:
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
-            
-        if not single_file:
+        
+        
+        if multiple_files == True:
             for shard_id in self._shard_ids:
                 trials = 5
                 ip = None

@@ -448,22 +448,54 @@ class Experiment:
 
 
     def create_orchestrator(self,
-                        launcher="auto",
-                        port=6379,
-                        db_nodes=1,
-                        batch=True,
-                        hosts=None,
-                        run_command="auto",
-                        interface="ipogif0",
-                        account=None,
-                        time=None,
-                        queue=None,
-                        single_cmd=True,
-                        **kwargs,
-                        ):
+                            port=6379,
+                            db_nodes=1,
+                            batch=True,
+                            hosts=None,
+                            run_command="auto",
+                            interface="ipogif0",
+                            account=None,
+                            time=None,
+                            queue=None,
+                            single_cmd=True,
+                            launcher="auto",
+                            **kwargs,
+                           ):
+        """Create an Orchestrator
 
-        return orchestrator.create_orchestrator(launcher=launcher,
-                                                port=port,
+        The returned object is an instance of a sub-class of Orchestrator,
+        such as SlurmOrchestrator, PBSOrchestrator, LSFOrchestrator, or CobaltOrchestrator,
+        depending on the selected (or detected) launcher. See corresponding documentation
+        for more details.
+
+        :param launcher: launcher used to start the orchestrator, defaults to "auto"
+        :type launcher: str, optional
+        :param port: TCP/IP port, defaults to 6379
+        :type port: int, optional
+        :param db_nodes: numver of database shards, defaults to 1
+        :type db_nodes: int, optional
+        :param batch: Run as a batch workload, defaults to True
+        :type batch: bool, optional
+        :param hosts: specify hosts to launch on, defaults to None
+        :type hosts: list[str], optional
+        :param run_command: specify launch binary or detect automatically, defaults to "auto"
+        :type run_command: str, optional
+        :param interface: Network interface, defaults to "ipogif0"
+        :type interface: str, optional
+        :param account: account to run batch on, defaults to None
+        :type account: str, optional
+        :param time: walltime for batch 'HH:MM:SS' format, defaults to None
+        :type time: str, optional
+        :param queue: queue to run the batch on, defaults to None
+        :type queue: str, optional
+        :param single_cmd: run all shards with one (MPMD) command, defaults to True
+        :type single_cmd: bool, optional
+        :raises SmartSimError: If detection of launcher or of run command fails
+        :raises SmartSimError: If user indicated an incompatible run command for the launcher
+        :return: Orchestrator
+        :rtype: Orchestrator or derived class
+        """
+        return orchestrator.create_orchestrator(port=port,
                                                 db_nodes=db_nodes,
                                                 batch=batch,
                                                 hosts=hosts,
@@ -473,6 +505,7 @@ class Experiment:
                                                 time=time,
                                                 queue=queue,
                                                 single_cmd=single_cmd,
+                                                launcher=launcher,
                                                 **kwargs)
 
     def reconnect_orchestrator(self, checkpoint):

@@ -83,6 +83,8 @@ class SlurmOrchestrator(Orchestrator):
         :type alloc: str, optional
         :param db_per_host: number of database shards per system host (MPMD), defaults to 1
         :type db_per_host: int, optional
+        :param single_cmd: run all shards with one (MPMD) command, defaults to True
+        :type single_cmd: bool
         """
         super().__init__(
             port,
