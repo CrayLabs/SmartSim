@@ -60,7 +60,7 @@ class SrunSettings(RunSettings):
             **kwargs,
         )
         self.alloc = alloc
-        self.mpmd = False
+        self.mpmd = []
         self.suffix = ""
 
     def set_nodes(self, nodes):
@@ -72,6 +72,18 @@ class SrunSettings(RunSettings):
         :type nodes: int
         """
         self.run_args["nodes"] = int(nodes)
+
+    def make_mpmd(self, srun_settings):
+        """Make a mpmd workload by combining two ``srun`` commands
+
+        This connects the two settings to be executed with a single
+        Model instance
+
+        :param srun_settings: SrunSettings instance
+        :type srun_settings: SrunSettings
+        """
+
+        self.mpmd.append(srun_settings)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job

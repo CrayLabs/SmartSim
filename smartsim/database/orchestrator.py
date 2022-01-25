@@ -290,7 +290,7 @@ def create_orchestrator(launcher="auto",
         "slurm": ["srun", "mpirun"],
         "pbs": ["aprun", "mpirun"],
         "cobalt": ["aprun", "mpirun"],
-        "lsf": ["jsrun", "mpirun"],
+        "lsf": ["jsrun"],
     }
 
     def _detect_command(launcher):

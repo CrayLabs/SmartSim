@@ -232,7 +232,7 @@ class SlurmOrchestrator(Orchestrator):
 
         # if user specified batch=False
         # also handles batch=False and alloc=False (alloc will be found by launcher)
-        if not (single_cmd and db_nodes>1):
+        if not mpmd_nodes:
             run_args["nodes"] = 1
             run_args["ntasks"] = db_per_host
             run_args["ntasks-per-node"] = db_per_host
@@ -240,11 +240,17 @@ class SlurmOrchestrator(Orchestrator):
             run_args["nodes"] = db_nodes//db_per_host
             run_args["ntasks"] = db_nodes
             run_args["ntasks-per-node"] = db_per_host
-            
-        run_settings = SrunSettings(exe, exe_args, run_args=run_args, alloc=alloc)
+
+         
         if db_per_host > 1 or mpmd_nodes:
             # tell step to create a mpmd executable
-            run_settings.mpmd = True
+            run_settings = SrunSettings(exe, exe_args[0], run_args=run_args, alloc=alloc)
+            for exe_arg in exe_args[1:]:
+                mpmd_run_settings = SrunSettings(exe, exe_arg, run_args=run_args, alloc=alloc)
+                run_settings.make_mpmd(mpmd_run_settings)
+        else:
+            run_settings = SrunSettings(exe, exe_args, run_args=run_args, alloc=alloc)
+            run_settings.set_tasks(1)
         if mpmd_nodes:
             run_settings.set_output_suffix("_%t")
         return run_settings
