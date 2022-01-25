@@ -119,7 +119,7 @@ First, a PyTorch model is defined.
 
 
 Next we create a function to "jit-trace" the model and save it to a buffer.
-If you aren't familier with the concept of tracing, take a look at the
+If you aren't familiar with the concept of tracing, take a look at the
 Torch documentation for `trace`_.
 
 .. code-block:: python
@@ -284,7 +284,7 @@ models to ONNX.
  - `skl2onnx`_
  - `tensorflow-onnx`_
 
-And PyTorch has it's own converter.
+And PyTorch has its own converter.
 
 Below are some examples of a few models in `Scikit-learn`_ that are converted
 into ONNX format for use with SmartSim. To use ONNX in SmartSim, specify
