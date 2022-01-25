@@ -30,7 +30,8 @@ from ..settings.settings import create_batch_settings, create_run_settings
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
-from ..settings import SrunSettings, MpirunSettings
+from ..settings import SrunSettings, MpirunSettings, AprunSettings
+from ..settings import CobaltBatchSettings, SbatchSettings, QsubBatchSettings
 from ..wlm import detect_launcher
 from .orchestrator import Orchestrator
 from .._core.utils.helpers import is_valid_cmd
@@ -50,7 +51,6 @@ class WLMOrchestrator(Orchestrator):
         account=None,
         time=None,
         alloc=None,
-        db_per_host=1,
         interface="ipogif0",
         single_cmd=True,
         **kwargs,
@@ -119,6 +119,8 @@ class WLMOrchestrator(Orchestrator):
                 msg+= f"Supported run commands for Orchestrator are: {by_launcher[launcher]}"
                 raise SmartSimError(msg)
 
+        self.launcher = launcher
+        self.run_command = run_command
         super().__init__(
             port,
             interface,
@@ -127,18 +129,17 @@ class WLMOrchestrator(Orchestrator):
             launcher=launcher,
             run_command=run_command,
             alloc=alloc,
-            db_per_host=db_per_host,
             single_cmd=single_cmd,
             **kwargs,
         )
         self.batch_settings = self._build_batch_settings(
-            db_nodes, alloc, batch, account, time, **kwargs
+            db_nodes, alloc, batch, account, time, launcher=launcher, **kwargs
         )
         if hosts:
             self.set_hosts(hosts)
         elif not hosts and run_command == "mpirun":
             raise SmartSimError(
-                "hosts argument is required when launching SlurmOrchestrator with mpirun"
+                "hosts argument is required when launching Orchestrator with mpirun"
             )
         self._reserved_run_args = {}
         self._reserved_batch_args = {}
@@ -154,9 +155,15 @@ class WLMOrchestrator(Orchestrator):
         :type num_cpus: int
         """
         if self.batch:
-            self.batch_settings.batch_args["cpus-per-task"] = num_cpus
+            if self.launcher == "pbs" or self.launcher == "cobalt":
+                self.batch_settings.set_ncpus(num_cpus)
+            if self.launcher == "slurm":
+                self.batch_settings.set_cpus_per_task(num_cpus)
         for db in self:
             db.run_settings.set_cpus_per_task(num_cpus)
+            if db.mpmd:
+                for mpmd in db.run_settings.mpmd:
+                    mpmd.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -172,7 +179,7 @@ class WLMOrchestrator(Orchestrator):
         self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list):
-        """Specify the hosts for the ``SlurmOrchestrator`` to launch on
+        """Specify the hosts for the ``WLMOrchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
         :type host_list: str, list[str]
@@ -189,13 +196,17 @@ class WLMOrchestrator(Orchestrator):
             self.batch_settings.set_hostlist(host_list)
         
         for host, db in zip(host_list, self.entities):
-            db.run_settings.set_hostlist([host])
+            if isinstance(db.run_settings, AprunSettings):
+                if not self.batch:
+                    db.run_settings.set_hostlist([host])
+            else:
+                db.run_settings.set_hostlist([host])
             if db._mpmd:
                 for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                     mpmd_runsettings.set_hostlist(host_list[i+1])
 
     def set_batch_arg(self, arg, value):
-        """Set a Sbatch argument the orchestrator should launch with
+        """Set a batch argument the orchestrator should launch with
 
         Some commonly used arguments such as --job-name are used
         by SmartSim and will not be allowed to be set.
@@ -208,9 +219,9 @@ class WLMOrchestrator(Orchestrator):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
-        if arg in self._reserved_batch_args:
+        if arg in self._reserved_batch_args[type(self.batch_settings)]:
             logger.warning(
-                f"Can not set batch argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+                f"Can not set batch argument {arg}: it is a reserved keyword in Orchestrator"
             )
         else:
             self.batch_settings.batch_args[arg] = value
@@ -230,71 +241,63 @@ class WLMOrchestrator(Orchestrator):
         """
         if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
             logger.warning(
-                f"Can not set run argument {arg}: it is a reserved keyword in SlurmOrchestrator"
+                f"Can not set run argument {arg}: it is a reserved keyword in Orchestrator"
             )
         else:
             for db in self.entities:
                 db.run_settings.run_args[arg] = value
+                if db.mpmd:
+                    for mpmd in db.run_settings.mpmd:
+                        mpmd.run_args[arg] = value
 
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
-        db_per_host = kwargs.get("db_per_host", 1)
-        launcher = kwargs.get("launcher")
+        launcher = kwargs.pop("launcher")
+        
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
-            batch_args = {"ntasks-per-node": db_per_host}
             batch_settings = create_batch_settings(launcher,
-                nodes=db_nodes, time=time, account=account, batch_args=batch_args, **kwargs
+                nodes=db_nodes, time=time, account=account, **kwargs
             )
+            
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
         run_command = kwargs.get("run_command")
-        alloc = kwargs.get("alloc", None)
-        db_per_host = kwargs.get("db_per_host", 1)
         run_args = kwargs.get("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
         mpmd_nodes = single_cmd and db_nodes>1
-        launcher = kwargs.get("launcher")
-
-        if db_per_host > 1 and run_command == "mpirun":
-            msg = "WLMOrchestrator does not support multiple databases per node when launching with mpirun"
-            raise SmartSimError(msg)
-
-        if db_per_host > 1 or mpmd_nodes:
-            run_settings = create_run_settings(launcher=launcher,
-                                                exe=exe,
-                                                exe_args=exe_args[0],
-                                                run_command=run_command,
-                                                run_args=run_args,
-                                                **kwargs)
+    
+        if mpmd_nodes:
+            run_settings = create_run_settings(exe=exe,
+                                               exe_args=exe_args[0],
+                                               run_args=run_args.copy(),
+                                               **kwargs)
+            
+            # srun has a different way of running MPMD jobs
             if run_command == "srun":
                 run_settings.set_tasks(db_nodes)
             else:
                 run_settings.set_tasks(1)
+            
             for exe_arg in exe_args[1:]:
-                mpmd_run_settings = create_run_settings(launcher=launcher,
-                                                        exe=exe, 
-                                                        exe_arg=exe_arg,
-                                                        run_args=run_args,
-                                                        run_command=run_command,
+                mpmd_run_settings = create_run_settings(exe=exe, 
+                                                        exe_args=exe_arg,
+                                                        run_args=run_args.copy(),
                                                         **kwargs)
-                mpmd_run_settings.set_tasks(1)
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
-            run_settings = create_run_settings(launcher=launcher,
-                                                exe=exe,
-                                                exe_args=exe_args,
-                                                run_command=run_command,
-                                                run_args=run_args,
-                                                **kwargs)
-            run_settings.set_tasks(db_per_host)
-        run_settings.set_tasks_per_node(db_per_host)
+            run_settings = create_run_settings(exe=exe,
+                                               exe_args=exe_args,
+                                               run_args=run_args,
+                                               **kwargs)
+            run_settings.set_tasks(1)
+        run_settings.set_tasks_per_node(1)
 
         if isinstance(run_settings, SrunSettings):
-            run_args["nodes"] = 1 if not mpmd_nodes else db_nodes//db_per_host
+            run_args["nodes"] = 1 if not mpmd_nodes else db_nodes
             if mpmd_nodes:
                 run_settings.set_output_suffix("%_t")
 
@@ -311,12 +314,10 @@ class WLMOrchestrator(Orchestrator):
         cluster = not bool(db_nodes < 3)
         if int(db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
-
-        db_per_host = kwargs.get("db_per_host", 1)
         port = kwargs.get("port", 6379)
 
-        if mpmd_nodes :
-            exe_args = []
+
+        exe_args_mpmd = []
         for db_id in range(db_nodes):
             if not mpmd_nodes:
                 db_node_name = "_".join((self.name, str(db_id)))
@@ -327,45 +328,39 @@ class WLMOrchestrator(Orchestrator):
 
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            ports = []
-            if not mpmd_nodes:
-                exe_args = []
-            for port_offset in range(db_per_host):
-                next_port = int(port) + port_offset
-                start_script_args = [
-                    self._redis_launch_script,  # redis_starter.py
-                    f"+ifname={self._interface}",  # pass interface to start script
-                    "+command",  # command flag for argparser
-                    self._redis_exe,  # redis-server
-                    self._redis_conf,  # redis6.conf file
-                    self._rai_module,  # redisai.so
-                    "--port",  # redis port
-                    str(next_port),  # port number
-                ]
-                if cluster:
-                    start_script_args += self._get_cluster_args(db_shard_name, next_port)
+            next_port = int(port)
+            start_script_args = [
+                self._redis_launch_script,  # redis_starter.py
+                f"+ifname={self._interface}",  # pass interface to start script
+                "+command",  # command flag for argparser
+                self._redis_exe,  # redis-server
+                self._redis_conf,  # redis6.conf file
+                self._rai_module,  # redisai.so
+                "--port",  # redis port
+                str(next_port),  # port number
+            ]
+            if cluster:
+                start_script_args += self._get_cluster_args(db_shard_name, next_port)
 
-                exe_args.append(" ".join(start_script_args))
-                ports.append(next_port)
+            exe_args = " ".join(start_script_args)
 
             if not mpmd_nodes:
                 # if only launching 1 db_per_host, we don't need a list of exe args lists
-                if db_per_host == 1:
-                    exe_args = exe_args[0]
                 run_settings = self._build_run_settings("python", exe_args, **kwargs)
 
-                node = DBNode(db_node_name, self.path, run_settings, ports)
+                node = DBNode(db_node_name, self.path, run_settings, [port])
                 self.entities.append(node)
+            else:
+                exe_args_mpmd.append(sh_split(exe_args))
             
         if mpmd_nodes:
-            exe_args = [sh_split(exe_arg) for exe_arg in exe_args]
-            run_settings = self._build_run_settings("python", exe_args, **kwargs)
-            node = DBNode(db_node_name, self.path, run_settings, ports)
-            node._shard_ids = range(db_nodes)
+            run_settings = self._build_run_settings("python", exe_args_mpmd, **kwargs)
+            node = DBNode(db_node_name, self.path, run_settings, [port])
             node._mpmd = True
+            node._shard_ids = range(db_nodes)
             self.entities.append(node)
 
-        self.ports = ports
+        self.ports = [port]
 
     @property
     def num_shards(self):
@@ -401,7 +396,17 @@ class WLMOrchestrator(Orchestrator):
             "chdir",
             "D",
         ]
-        self._reserved_batch_args = [
+        self._reserved_run_args[AprunSettings] = [
+            "pes",
+            "n",
+            "pes-per-node",
+            "N",
+            "l",
+            "pes-per-numa-node",
+            "S",
+            "wdir",
+        ]
+        self._reserved_batch_args[SbatchSettings] = [
             "nodes",
             "N",
             "ntasks",
@@ -419,3 +424,15 @@ class WLMOrchestrator(Orchestrator):
             "chdir",
             "D",
         ]
+        self._reserved_batch_args[CobaltBatchSettings] = [
+            "cwd",
+            "error",
+            "e",
+            "output",
+            "o",
+            "outputprefix",
+            "N",
+            "l",
+            "jobname",
+        ]
+        self._reserved_batch_args[QsubBatchSettings] = ["e", "o", "N", "l"]

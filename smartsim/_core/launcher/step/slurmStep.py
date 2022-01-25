@@ -125,7 +125,7 @@ class SrunStep(Step):
         :rtype: list[str]
         """
         srun = self.run_settings.run_command
-        output, error = self.get_output_files(name_suffix=self.run_settings.suffix)
+        output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
 
@@ -194,7 +194,6 @@ class SrunStep(Step):
             cmd_line.extend(run_settings.exe)
             cmd_line.extend(run_settings.exe_args)
             cmd_line.append("\n")
-            print(cmd_line)
             return cmd_line, proc_end+1
         
         proc_start = 0

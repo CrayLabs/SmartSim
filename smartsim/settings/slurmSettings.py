@@ -82,7 +82,6 @@ class SrunSettings(RunSettings):
         :param srun_settings: SrunSettings instance
         :type srun_settings: SrunSettings
         """
-
         self.mpmd.append(srun_settings)
 
     def set_hostlist(self, host_list):
