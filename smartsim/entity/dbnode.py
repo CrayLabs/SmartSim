@@ -223,6 +223,9 @@ class DBNode(SmartSimEntity):
                     ips = []
                     time.sleep(5)
                     continue
+            else:
+                ips = list(dict.fromkeys(ips))
+                return ips
 
         if multiple_files is None:
             logger.error("RedisIP address lookup strategy failed.")
