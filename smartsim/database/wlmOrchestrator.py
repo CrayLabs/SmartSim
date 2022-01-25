@@ -122,8 +122,8 @@ class WLMOrchestrator(Orchestrator):
         self.launcher = launcher
         self.run_command = run_command
         super().__init__(
-            port,
-            interface,
+            port=port,
+            interface=interface,
             db_nodes=db_nodes,
             batch=batch,
             launcher=launcher,
@@ -145,25 +145,6 @@ class WLMOrchestrator(Orchestrator):
         self._reserved_batch_args = {}
         self._fill_reserved()
 
-    def set_cpus(self, num_cpus):
-        """Set the number of CPUs available to each database shard
-
-        This effectively will determine how many cpus can be used for
-        compute threads, background threads, and network I/O.
-
-        :param num_cpus: number of cpus to set
-        :type num_cpus: int
-        """
-        if self.batch:
-            if self.launcher == "pbs" or self.launcher == "cobalt":
-                self.batch_settings.set_ncpus(num_cpus)
-            if self.launcher == "slurm":
-                self.batch_settings.set_cpus_per_task(num_cpus)
-        for db in self:
-            db.run_settings.set_cpus_per_task(num_cpus)
-            if db.mpmd:
-                for mpmd in db.run_settings.mpmd:
-                    mpmd.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime):
         """Set the batch walltime of the orchestrator
@@ -316,8 +297,8 @@ class WLMOrchestrator(Orchestrator):
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
         port = kwargs.get("port", 6379)
 
-
-        exe_args_mpmd = []
+        if mpmd_nodes:
+            exe_args_mpmd = []
         for db_id in range(db_nodes):
             if not mpmd_nodes:
                 db_node_name = "_".join((self.name, str(db_id)))
@@ -328,7 +309,6 @@ class WLMOrchestrator(Orchestrator):
 
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            next_port = int(port)
             start_script_args = [
                 self._redis_launch_script,  # redis_starter.py
                 f"+ifname={self._interface}",  # pass interface to start script
@@ -337,10 +317,10 @@ class WLMOrchestrator(Orchestrator):
                 self._redis_conf,  # redis6.conf file
                 self._rai_module,  # redisai.so
                 "--port",  # redis port
-                str(next_port),  # port number
+                str(port),  # port number
             ]
             if cluster:
-                start_script_args += self._get_cluster_args(db_shard_name, next_port)
+                start_script_args += self._get_cluster_args(db_shard_name, port)
 
             exe_args = " ".join(start_script_args)
 

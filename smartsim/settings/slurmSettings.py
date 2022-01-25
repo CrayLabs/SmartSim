@@ -61,7 +61,6 @@ class SrunSettings(RunSettings):
         )
         self.alloc = alloc
         self.mpmd = []
-        self.suffix = ""
 
     def set_nodes(self, nodes):
         """Set the number of nodes
@@ -213,21 +212,6 @@ class SrunSettings(RunSettings):
                 format_str += "=".join((k, str(v))) + ","
         return format_str.rstrip(","), comma_separated_format_str
 
-    def set_output_suffix(self, suffix=""):
-        """Add a special suffix to output and error files
-
-        Normally, output (error) file name is entity_name+".out"
-        (entity_name+".err"). The suffix will be inserted
-        before the file extension, to allow for special characters
-        such as "%t" and "%o" 
-        (see https://slurm.schedmd.com/srun.html#OPT_filename-pattern).
-
-        :param suffix: Suffix to append to file name, defaults to ""
-        :type suffix: str, optional
-        """
-
-        if suffix:
-            self.suffix = suffix
 
 class SbatchSettings(BatchSettings):
     def __init__(self, nodes=None, time="", account=None, batch_args=None, **kwargs):
