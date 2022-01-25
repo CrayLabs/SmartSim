@@ -170,25 +170,38 @@ class SrunStep(Step):
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
         if self.run_settings.mpmd:
-            cmd = self._make_mpmd(exe, args)
+            cmd = self._make_mpmd()
             mp_cmd = ["--multi-prog", cmd]
             return mp_cmd
         else:
             cmd = exe + args
             return cmd
 
-    def _make_mpmd(self, executable, exe_args):
+    def _make_mpmd(self):
         """Build Slurm multi-prog (MPMD) executable
 
         Launch multiple programs on separate CPUs on the same node using the
         slurm --multi-prog feature.
         """
         mpmd_file = self.get_step_file(ending=".mpmd")
-        launch_args = list(product(executable, exe_args))
+        
+
+        def mpmd_line(run_settings, proc_start):
+            proc_end = proc_start
+            procs = str(proc_start)
+
+            cmd_line = [procs]
+            cmd_line.extend(run_settings.exe)
+            cmd_line.extend(run_settings.exe_args)
+            cmd_line.append("\n")
+            print(cmd_line)
+            return cmd_line, proc_end+1
+        
+        proc_start = 0
         with open(mpmd_file, "w+") as f:
-            proc_num = 0
-            for exe, args in launch_args:
-                e_args = " ".join(args)
-                f.write(" ".join((str(proc_num), exe, e_args, "\n")))
-                proc_num += 1
+            cmd_line, proc_start = mpmd_line(self.run_settings, proc_start)
+            f.write(" ".join(cmd_line))
+            for mpmd in self.run_settings.mpmd:
+                cmd_line, proc_start = mpmd_line(mpmd, proc_start)
+                f.write(" ".join(cmd_line))
         return mpmd_file
