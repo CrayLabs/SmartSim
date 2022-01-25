@@ -60,7 +60,7 @@ class DBNode(SmartSimEntity):
         return self._host
 
     @property
-    def hosts(self):  # cov-lsf
+    def hosts(self):
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
         return self._hosts
@@ -68,7 +68,7 @@ class DBNode(SmartSimEntity):
     def set_host(self, host):
         self._host = str(host)
 
-    def set_hosts(self, hosts):  # cov-lsf
+    def set_hosts(self, hosts):
         self._hosts = [str(host) for host in hosts]
 
     def remove_stale_dbnode_files(self):
@@ -165,7 +165,7 @@ class DBNode(SmartSimEntity):
 
         return ip
 
-    def _parse_db_hosts(self):  # cov-lsf
+    def _parse_db_hosts(self):
         """Parse the database hosts/IPs from the output files
 
         this uses the RedisIP module that is built as a dependency
