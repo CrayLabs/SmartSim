@@ -31,9 +31,13 @@ from pathlib import Path
 
 import psutil
 import redis
+from ..database import CobaltOrchestrator, PBSOrchestrator, SlurmOrchestrator, LSFOrchestrator
+
+from ..wlm import detect_launcher
 
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
+from .._core.utils.helpers import is_valid_cmd
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError
 from ..log import get_logger
@@ -265,3 +269,67 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this."
             )
             logger.warning(f"Found network interfaces are: {available}")
+
+
+def create_orchestrator(launcher="auto",
+                        port=6379,
+                        db_nodes=1,
+                        batch=True,
+                        hosts=None,
+                        run_command="auto",
+                        interface="ipogif0",
+                        account=None,
+                        time=None,
+                        queue=None,
+                        single_cmd=True,
+                        **kwargs,
+                        ):
+
+    if launcher == "auto":
+        launcher = detect_launcher()
+
+    by_launcher = {
+        "slurm": ["srun", "mpirun"],
+        "pbs": ["aprun", "mpirun"],
+        "cobalt": ["aprun", "mpirun"],
+        "lsf": ["jsrun", "mpirun"],
+    }
+
+    def _detect_command(launcher):
+        if launcher in by_launcher:
+            for cmd in by_launcher[launcher]:
+                if is_valid_cmd(cmd):
+                    return cmd
+        msg = f"Could not automatically detect a run command to use for launcher {launcher}"
+        msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
+        raise SmartSimError(msg)
+
+    if run_command == "auto":
+        _detect_command(launcher)
+    else:
+        if run_command not in by_launcher[launcher]:
+            msg = f"Run command {run_command} is not supported by launcher {launcher}\n"
+            msg+= f"Supported run commands are: {by_launcher[launcher]}"
+            raise SmartSimError(msg)
+
+    
+    launcher_class = {'local': Orchestrator,
+                      'slurm': SlurmOrchestrator,
+                      'pbs': PBSOrchestrator,
+                      'cobalt': CobaltOrchestrator,
+                      'lsf': LSFOrchestrator}
+
+    return launcher_class(
+                          launcher=launcher,
+                          port=port,
+                          db_nodes=db_nodes,
+                          batch=batch,
+                          hosts=hosts,
+                          run_command=run_command,
+                          interface=interface,
+                          account=account,
+                          time=time,
+                          queue=queue,
+                          single_cmd=single_cmd,
+                          **kwargs,
+                         )
