@@ -94,7 +94,7 @@ docs:
 .PHONY: docks
 docks:
 	@if [ -d "docs" ]; then rm -rf docs; fi
-	@mkdir -p docs/develop
+	@mkdir -p docs
 	@docker compose build docs-dev
 	@docker create -ti --name devdocs smartsim-docs:dev-latest
 	@docker cp devdocs:/usr/local/src/SmartSim/doc/_build/html/ ./docs/develop/
