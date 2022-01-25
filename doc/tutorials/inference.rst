@@ -1,6 +1,6 @@
 
 ================
-Machine Learning
+Online Inference
 ================
 
 Compiling TensorFlow or PyTorch runtimes into each existing simulation is
