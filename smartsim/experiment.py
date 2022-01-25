@@ -34,6 +34,7 @@ from tqdm import trange
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import colorize, init_default
+from .database import orchestrator
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .log import get_logger
@@ -444,6 +445,35 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
+
+
+    def create_orchestrator(self,
+                        launcher="auto",
+                        port=6379,
+                        db_nodes=1,
+                        batch=True,
+                        hosts=None,
+                        run_command="auto",
+                        interface="ipogif0",
+                        account=None,
+                        time=None,
+                        queue=None,
+                        single_cmd=True,
+                        **kwargs,
+                        ):
+
+        return orchestrator.create_orchestrator(launcher=launcher,
+                                                port=port,
+                                                db_nodes=db_nodes,
+                                                batch=batch,
+                                                hosts=hosts,
+                                                run_command=run_command,
+                                                interface=interface,
+                                                account=account,
+                                                time=time,
+                                                queue=queue,
+                                                single_cmd=single_cmd,
+                                                **kwargs)
 
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``

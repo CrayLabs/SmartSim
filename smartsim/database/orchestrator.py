@@ -31,9 +31,6 @@ from pathlib import Path
 
 import psutil
 import redis
-from ..database import CobaltOrchestrator, PBSOrchestrator, SlurmOrchestrator, LSFOrchestrator
-
-from ..wlm import detect_launcher
 
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
@@ -42,6 +39,7 @@ from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError
 from ..log import get_logger
 from ..settings.base import RunSettings
+from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
 
@@ -305,21 +303,21 @@ def create_orchestrator(launcher="auto",
         raise SmartSimError(msg)
 
     if run_command == "auto":
-        _detect_command(launcher)
+        run_command = _detect_command(launcher)
     else:
         if run_command not in by_launcher[launcher]:
             msg = f"Run command {run_command} is not supported by launcher {launcher}\n"
             msg+= f"Supported run commands are: {by_launcher[launcher]}"
             raise SmartSimError(msg)
 
-    
+    from . import CobaltOrchestrator, PBSOrchestrator, SlurmOrchestrator, LSFOrchestrator    
     launcher_class = {'local': Orchestrator,
                       'slurm': SlurmOrchestrator,
                       'pbs': PBSOrchestrator,
                       'cobalt': CobaltOrchestrator,
                       'lsf': LSFOrchestrator}
 
-    return launcher_class(
+    return launcher_class[launcher](
                           launcher=launcher,
                           port=port,
                           db_nodes=db_nodes,
