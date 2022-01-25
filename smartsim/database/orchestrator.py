@@ -269,8 +269,7 @@ class Orchestrator(EntityList):
             logger.warning(f"Found network interfaces are: {available}")
 
 
-def create_orchestrator(launcher="auto",
-                        port=6379,
+def create_orchestrator(port=6379,
                         db_nodes=1,
                         batch=True,
                         hosts=None,
@@ -280,8 +279,40 @@ def create_orchestrator(launcher="auto",
                         time=None,
                         queue=None,
                         single_cmd=True,
+                        launcher="auto",
                         **kwargs,
                         ):
+    """Create an Orchestrator
+
+    See Experiment.create_orchestrator for more details
+
+    :param launcher: launcher used to start the orchestrator, defaults to "auto"
+    :type launcher: str, optional
+    :param port: TCP/IP port, defaults to 6379
+    :type port: int, optional
+    :param db_nodes: numver of database shards, defaults to 1
+    :type db_nodes: int, optional
+    :param batch: Run as a batch workload, defaults to True
+    :type batch: bool, optional
+    :param hosts: specify hosts to launch on, defaults to None
+    :type hosts: list[str], optional
+    :param run_command: specify launch binary or detect automatically, defaults to "auto"
+    :type run_command: str, optional
+    :param interface: Network interface, defaults to "ipogif0"
+    :type interface: str, optional
+    :param account: account to run batch on, defaults to None
+    :type account: str, optional
+    :param time: walltime for batch 'HH:MM:SS' format, defaults to None
+    :type time: str, optional
+    :param queue: queue to run the batch on, defaults to None
+    :type queue: str, optional
+    :param single_cmd: run all shards with one (MPMD) command, defaults to True
+    :type single_cmd: bool, optional
+    :raises SmartSimError: If detection of launcher or of run command fails
+    :raises SmartSimError: If user indicated an incompatible run command for the launcher
+    :return: Orchestrator
+    :rtype: Orchestrator or derived class
+    """
 
     if launcher == "auto":
         launcher = detect_launcher()
