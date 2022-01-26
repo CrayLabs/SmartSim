@@ -44,6 +44,7 @@ jobs:
 
       - name: Install GNU make for MacOS
         if: "contains( matrix.os, 'macos' )"
+        run: brew install make || true
 
       - name: Install SmartSim (with ML backends)
         run: |
