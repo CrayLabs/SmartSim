@@ -447,7 +447,8 @@ class Experiment:
             raise
 
 
-    def create_database(self,
+    def create_database(
+        self,
         port=6379,
         db_nodes=1,
         batch=True,
