@@ -42,14 +42,14 @@ jobs:
           sudo apt-get install -y build-essential
           sudo apt-get install -y wget
 
-      - name: Install GNU make for MacOS
+      - name: Install GNU make for MacOS and set GITHUB_PATH
         if: "contains( matrix.os, 'macos' )"
-        run: brew install make || true
+        run: |
+          brew install make || true
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
 
       - name: Install SmartSim (with ML backends)
-        run: |
-          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-          python -m pip install .[dev,ml,ray]
+        run: python -m pip install .[dev,ml,ray]
 
       - name: Install ML Runtimes with Smart
         if: contains( matrix.os, 'macos' )
