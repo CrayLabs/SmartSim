@@ -34,7 +34,7 @@ from tqdm import trange
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import colorize, init_default
-from .database import orchestrator
+from .database import Orchestrator
 from .entity import Ensemble, Model
 from .error import SmartSimError
 from .log import get_logger
@@ -495,18 +495,18 @@ class Experiment:
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
-        return orchestrator.create_orchestrator(port=port,
-                                                db_nodes=db_nodes,
-                                                batch=batch,
-                                                hosts=hosts,
-                                                run_command=run_command,
-                                                interface=interface,
-                                                account=account,
-                                                time=time,
-                                                queue=queue,
-                                                single_cmd=single_cmd,
-                                                launcher=launcher,
-                                                **kwargs)
+        return Orchestrator(port=port,
+                            db_nodes=db_nodes,
+                            batch=batch,
+                            hosts=hosts,
+                            run_command=run_command,
+                            interface=interface,
+                            account=account,
+                            time=time,
+                            queue=queue,
+                            single_cmd=single_cmd,
+                            launcher=launcher,
+                            **kwargs)
 
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``

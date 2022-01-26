@@ -96,6 +96,9 @@ class SlurmOrchestrator(Orchestrator):
             db_per_host=db_per_host,
             single_cmd=single_cmd,
             launcher="slurm",
+            account=account,
+            hosts=hosts,
+            time=time,
             **kwargs,
         )
     #     self.batch_settings = self._build_batch_settings(

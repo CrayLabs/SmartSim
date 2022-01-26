@@ -87,6 +87,10 @@ class PBSOrchestrator(Orchestrator):
             run_command=run_command,
             single_cmd=single_cmd,
             launcher="pbs",
+            hosts=hosts,
+            account=account,
+            queue=queue,
+            time=time,
             **kwargs,
         )
         # self.batch_settings = self._build_batch_settings(
