@@ -39,9 +39,16 @@ from .._core.utils.helpers import is_valid_cmd
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError, SSUnsupportedError
 from ..log import get_logger
-
-from ..settings import SrunSettings, MpirunSettings, AprunSettings, JsrunSettings
-from ..settings import CobaltBatchSettings, SbatchSettings, QsubBatchSettings, BsubBatchSettings
+from ..settings import (
+    AprunSettings,
+    BsubBatchSettings,
+    CobaltBatchSettings,
+    JsrunSettings,
+    MpirunSettings,
+    QsubBatchSettings,
+    SbatchSettings,
+    SrunSettings,
+)
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
@@ -56,19 +63,20 @@ class Orchestrator(EntityList):
     """
 
     def __init__(
-                self,
-                port=6379,
-                interface="lo",
-                launcher="local",
-                run_command="auto",
-                db_nodes=1,
-                batch=False,
-                hosts=None,
-                account=None,
-                time=None,
-                alloc=None,
-                single_cmd=True,
-                **kwargs,):
+        self,
+        port=6379,
+        interface="lo",
+        launcher="local",
+        run_command="auto",
+        db_nodes=1,
+        batch=False,
+        hosts=None,
+        account=None,
+        time=None,
+        alloc=None,
+        single_cmd=True,
+        **kwargs,
+    ):
         """Initialize an Orchestrator reference for local launch
 
         :param port: TCP/IP port, defaults to 6379
@@ -92,24 +100,23 @@ class Orchestrator(EntityList):
             launcher = detect_launcher()
 
         by_launcher = {
-                        "slurm": ["srun", "mpirun"],
-                        "pbs": ["aprun", "mpirun"],
-                        "cobalt": ["aprun", "mpirun"],
-                        "lsf": ["jsrun"],
-                        "local": [None]
-                        }
+            "slurm": ["srun", "mpirun"],
+            "pbs": ["aprun", "mpirun"],
+            "cobalt": ["aprun", "mpirun"],
+            "lsf": ["jsrun"],
+            "local": [None],
+        }
 
         def _detect_command(launcher):
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
-                    if launcher is "local":
+                    if launcher == "local":
                         return cmd
                     if is_valid_cmd(cmd):
                         return cmd
             msg = f"Could not automatically detect a run command to use for launcher {launcher}"
             msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
             raise SmartSimError(msg)
-
 
         if run_command == "auto":
             run_command = _detect_command(launcher)
@@ -118,8 +125,8 @@ class Orchestrator(EntityList):
             msg = f"Run command {run_command} is not supported on launcher {launcher}\n"
             msg += f"Supported run commands for the given launcher are: {by_launcher[launcher]}"
             raise SmartSimError(msg)
-        
-        if launcher is "local" and batch:
+
+        if launcher == "local" and batch:
             msg = "Local launcher can not be launched with batch=True"
             raise SmartSimError(msg)
 
@@ -134,10 +141,12 @@ class Orchestrator(EntityList):
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
-        gpus_per_shard = kwargs.pop("gpus_per_shard", None)
-        cpus_per_shard = kwargs.pop("cpus_per_shard", None)
-        
-        super().__init__("orchestrator", 
+        if self.launcher == "lsf":
+            gpus_per_shard = kwargs.pop("gpus_per_shard", 0)
+            cpus_per_shard = kwargs.pop("cpus_per_shard", 4)
+
+        super().__init__(
+            "orchestrator",
             self.path,
             port=port,
             interface=interface,
@@ -149,7 +158,8 @@ class Orchestrator(EntityList):
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
             cpus_per_shard=cpus_per_shard,
-            **kwargs)
+            **kwargs,
+        )
 
         # detect if we can find at least the redis binaries. We
         # don't want to force the user to launch with RedisAI so
@@ -169,7 +179,7 @@ class Orchestrator(EntityList):
 
         if launcher != "local":
             self.batch_settings = self._build_batch_settings(
-            db_nodes, alloc, batch, account, time, launcher=launcher, **kwargs
+                db_nodes, alloc, batch, account, time, launcher=launcher, **kwargs
             )
             if hosts:
                 self.set_hosts(hosts)
@@ -180,7 +190,6 @@ class Orchestrator(EntityList):
             self._reserved_run_args = {}
             self._reserved_batch_args = {}
             self._fill_reserved()
-
 
     @property
     def num_shards(self):
@@ -341,7 +350,7 @@ class Orchestrator(EntityList):
         # TODO check length
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
-        
+
         if self.launcher == "lsf":
             for db in self:
                 db.set_hosts(host_list)
@@ -354,7 +363,7 @@ class Orchestrator(EntityList):
                     db.run_settings.set_hostlist([host])
                 if db._mpmd:
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
-                        mpmd_runsettings.set_hostlist(host_list[i+1])
+                        mpmd_runsettings.set_hostlist(host_list[i + 1])
 
     def set_batch_arg(self, arg, value):
         """Set a batch argument the orchestrator should launch with
@@ -404,14 +413,14 @@ class Orchestrator(EntityList):
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
         launcher = kwargs.pop("launcher")
-        
+
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
         if not alloc and batch:
-            batch_settings = create_batch_settings(launcher,
-                nodes=db_nodes, time=time, account=account, **kwargs
+            batch_settings = create_batch_settings(
+                launcher, nodes=db_nodes, time=time, account=account, **kwargs
             )
-            
+
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
@@ -419,36 +428,33 @@ class Orchestrator(EntityList):
         run_args = kwargs.get("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
-        mpmd_nodes = single_cmd and db_nodes>1
-    
+        mpmd_nodes = single_cmd and db_nodes > 1
+
         if mpmd_nodes:
-            run_settings = create_run_settings(exe=exe,
-                                               exe_args=exe_args[0],
-                                               run_args=run_args.copy(),
-                                               **kwargs)
-            
+            run_settings = create_run_settings(
+                exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
+            )
+
             # srun has a different way of running MPMD jobs
             if run_command == "srun":
                 run_settings.set_tasks(db_nodes)
             else:
                 if self.launcher != "local":
                     run_settings.set_tasks(1)
-            
+
             for exe_arg in exe_args[1:]:
-                mpmd_run_settings = create_run_settings(exe=exe, 
-                                                        exe_args=exe_arg,
-                                                        run_args=run_args.copy(),
-                                                        **kwargs)
+                mpmd_run_settings = create_run_settings(
+                    exe=exe, exe_args=exe_arg, run_args=run_args.copy(), **kwargs
+                )
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
-            run_settings = create_run_settings(exe=exe,
-                                               exe_args=exe_args,
-                                               run_args=run_args,
-                                               **kwargs)
-            
+            run_settings = create_run_settings(
+                exe=exe, exe_args=exe_args, run_args=run_args, **kwargs
+            )
+
             if self.launcher != "local":
                 run_settings.set_tasks(1)
-        
+
         if self.launcher != "local":
             run_settings.set_tasks_per_node(1)
 
@@ -509,8 +515,8 @@ class Orchestrator(EntityList):
         self.db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
 
-        mpmd_nodes = single_cmd and self.db_nodes>1
-        
+        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
+
         cluster = not bool(self.db_nodes < 3)
         if int(self.db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
@@ -555,12 +561,16 @@ class Orchestrator(EntityList):
                 self.entities.append(node)
             else:
                 exe_args_mpmd.append(sh_split(exe_args))
-            
+
         if mpmd_nodes:
             if self.launcher == "lsf":
-                run_settings = self._build_run_settings_lsf("python", exe_args_mpmd, **kwargs)
+                run_settings = self._build_run_settings_lsf(
+                    "python", exe_args_mpmd, **kwargs
+                )
             else:
-                run_settings = self._build_run_settings("python", exe_args_mpmd, **kwargs)
+                run_settings = self._build_run_settings(
+                    "python", exe_args_mpmd, **kwargs
+                )
             node = DBNode(db_node_name, self.path, run_settings, [port])
             node._mpmd = True
             node._shard_ids = range(self.db_nodes)
@@ -702,6 +712,13 @@ class Orchestrator(EntityList):
             "b",
             "launch_distribution",
             "d",
-            ]
+        ]
 
-        self._reserved_batch_args[BsubBatchSettings] = ["J", "o", "e", "m", "n", "nnodes"]
+        self._reserved_batch_args[BsubBatchSettings] = [
+            "J",
+            "o",
+            "e",
+            "m",
+            "n",
+            "nnodes",
+        ]
