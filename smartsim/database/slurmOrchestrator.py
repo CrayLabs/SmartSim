@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shlex import split as sh_split
+
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
@@ -101,6 +102,7 @@ class SlurmOrchestrator(Orchestrator):
             time=time,
             **kwargs,
         )
+
     #     self.batch_settings = self._build_batch_settings(
     #         db_nodes, alloc, batch, account, time, **kwargs
     #     )
@@ -157,7 +159,7 @@ class SlurmOrchestrator(Orchestrator):
     #     # TODO check length
     #     if self.batch:
     #         self.batch_settings.set_hostlist(host_list)
-        
+
     #     for host, db in zip(host_list, self.entities):
     #         db.run_settings.set_hostlist([host])
     #         if db._mpmd:
@@ -247,7 +249,6 @@ class SlurmOrchestrator(Orchestrator):
     #         run_args["ntasks"] = db_nodes
     #         run_args["ntasks-per-node"] = db_per_host
 
-         
     #     if db_per_host > 1 or mpmd_nodes:
     #         # tell step to create a mpmd executable
     #         run_settings = SrunSettings(exe, exe_args[0], run_args=run_args, alloc=alloc)
@@ -296,7 +297,7 @@ class SlurmOrchestrator(Orchestrator):
     #     single_cmd = kwargs.get("single_cmd", True)
 
     #     mpmd_nodes = single_cmd and db_nodes>1
-        
+
     #     cluster = not bool(db_nodes < 3)
     #     if int(db_nodes) == 2:
     #         raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
@@ -345,7 +346,7 @@ class SlurmOrchestrator(Orchestrator):
 
     #             node = DBNode(db_node_name, self.path, run_settings, ports)
     #             self.entities.append(node)
-            
+
     #     if mpmd_nodes:
     #         exe_args = [sh_split(exe_arg) for exe_arg in exe_args]
     #         run_settings = self._build_run_settings("python", exe_args, **kwargs)

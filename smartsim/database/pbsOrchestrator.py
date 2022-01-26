@@ -24,12 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from shlex import split as sh_split
+
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
 from ..settings import AprunSettings, MpirunSettings, QsubBatchSettings
 from .orchestrator import Orchestrator
-from shlex import split as sh_split
 
 logger = get_logger(__name__)
 

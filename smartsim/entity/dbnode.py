@@ -179,7 +179,6 @@ class DBNode(SmartSimEntity):
         """
         ips = []
 
-
         # Find out if all shards' output streams are piped to different file
         multiple_files = None
         for _ in range(5):
@@ -187,7 +186,7 @@ class DBNode(SmartSimEntity):
             if osp.isfile(filepath):
                 multiple_files = True
                 break
-            
+
             # If we did not find separate files for each shard, it could
             # be that all outputs are piped to same file OR that the separate
             # files have not been created yet. To find out whether the
@@ -195,7 +194,7 @@ class DBNode(SmartSimEntity):
             # for "IPADDRESS": if we find it, we can set multiple_files to False
             # and wait until the file contains enough IPs. Otherwise we
             # go to next iteration, to check if there are multiple files.
-            filepath = osp.join(self.path, self.name+".out")
+            filepath = osp.join(self.path, self.name + ".out")
             ips = []
             try:
                 with open(filepath, "r") as f:
@@ -209,7 +208,7 @@ class DBNode(SmartSimEntity):
             # suppress error
             except FileNotFoundError:
                 pass
-            
+
             logger.debug("Waiting for RedisIP files to populate...")
             if len(ips) < len(self._shard_ids):
                 # Larger sleep time, as this seems to be needed for
@@ -230,8 +229,7 @@ class DBNode(SmartSimEntity):
         if multiple_files is None:
             logger.error("RedisIP address lookup strategy failed.")
             raise SmartSimError("Failed to obtain database hostname")
-        
-        
+
         if multiple_files == True:
             for shard_id in self._shard_ids:
                 trials = 5
@@ -267,7 +265,7 @@ class DBNode(SmartSimEntity):
                 ips.append(ip)
 
         else:
-            filepath = osp.join(self.path, self.name+".out")
+            filepath = osp.join(self.path, self.name + ".out")
             trials = 5
             ips = []
             while len(ips) < len(self._shard_ids) and trials > 0:
@@ -284,7 +282,6 @@ class DBNode(SmartSimEntity):
                 # suppress error
                 except FileNotFoundError:
                     pass
-                
 
                 logger.debug("Waiting for RedisIP files to populate...")
                 if len(ips) < len(self._shard_ids):
@@ -296,7 +293,6 @@ class DBNode(SmartSimEntity):
             if len(ips) < len(self._shard_ids):
                 logger.error("RedisIP address lookup strategy failed.")
                 raise SmartSimError("Failed to obtain database hostname")
-
 
         ips = list(dict.fromkeys(ips))
         return ips

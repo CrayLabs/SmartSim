@@ -1,8 +1,8 @@
 import logging
+import os.path as osp
 import sys
 import time
 from os import environ
-import os.path as osp
 
 import pytest
 
@@ -51,7 +51,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         batch_args={"A": wlmutils.get_test_account(), "queue": "debug-flat-quad"}
         if launcher == "cobalt"
         else None,
-        time="00:05:00"
+        time="00:05:00",
     )
 
     exp.generate(cluster)
@@ -63,7 +63,10 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         right_resources = False
         trials = 10
         while not right_resources and trials > 0:
-            right_resources = (len(ray.nodes()), ray.cluster_resources()["CPU"]) == (2, 8)
+            right_resources = (len(ray.nodes()), ray.cluster_resources()["CPU"]) == (
+                2,
+                8,
+            )
             trials -= 1
             time.sleep(1)
 

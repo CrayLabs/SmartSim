@@ -446,21 +446,21 @@ class Experiment:
             logger.error(e)
             raise
 
-
-    def create_orchestrator(self,
-                            port=6379,
-                            db_nodes=1,
-                            batch=True,
-                            hosts=None,
-                            run_command="auto",
-                            interface="ipogif0",
-                            account=None,
-                            time=None,
-                            queue=None,
-                            single_cmd=True,
-                            launcher="auto",
-                            **kwargs,
-                           ):
+    def create_orchestrator(
+        self,
+        port=6379,
+        db_nodes=1,
+        batch=True,
+        hosts=None,
+        run_command="auto",
+        interface="ipogif0",
+        account=None,
+        time=None,
+        queue=None,
+        single_cmd=True,
+        launcher="auto",
+        **kwargs,
+    ):
         """Create an Orchestrator
 
         The returned object is an instance of a sub-class of Orchestrator,
@@ -495,18 +495,20 @@ class Experiment:
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
-        return Orchestrator(port=port,
-                            db_nodes=db_nodes,
-                            batch=batch,
-                            hosts=hosts,
-                            run_command=run_command,
-                            interface=interface,
-                            account=account,
-                            time=time,
-                            queue=queue,
-                            single_cmd=single_cmd,
-                            launcher=launcher,
-                            **kwargs)
+        return Orchestrator(
+            port=port,
+            db_nodes=db_nodes,
+            batch=batch,
+            hosts=hosts,
+            run_command=run_command,
+            interface=interface,
+            account=account,
+            time=time,
+            queue=queue,
+            single_cmd=single_cmd,
+            launcher=launcher,
+            **kwargs,
+        )
 
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``
