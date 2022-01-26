@@ -144,6 +144,9 @@ class Orchestrator(EntityList):
         if self.launcher == "lsf":
             gpus_per_shard = kwargs.pop("gpus_per_shard", 0)
             cpus_per_shard = kwargs.pop("cpus_per_shard", 4)
+        else:
+            gpus_per_shard = None
+            cpus_per_shard = None
 
         super().__init__(
             "orchestrator",
