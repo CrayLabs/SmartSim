@@ -447,21 +447,21 @@ class Experiment:
             raise
 
 
-    def create_orchestrator(self,
-                            port=6379,
-                            db_nodes=1,
-                            batch=True,
-                            hosts=None,
-                            run_command="auto",
-                            interface="ipogif0",
-                            account=None,
-                            time=None,
-                            queue=None,
-                            single_cmd=True,
-                            launcher="auto",
-                            **kwargs,
-                           ):
-        """Create an Orchestrator
+    def create_database(self,
+                        port=6379,
+                        db_nodes=1,
+                        batch=True,
+                        hosts=None,
+                        run_command="auto",
+                        interface="ipogif0",
+                        account=None,
+                        time=None,
+                        queue=None,
+                        single_cmd=True,
+                        launcher="auto",
+                        **kwargs,
+                        ):
+        """Create a database
 
         The returned object is an instance of a sub-class of Orchestrator,
         such as SlurmOrchestrator, PBSOrchestrator, LSFOrchestrator, or CobaltOrchestrator,
