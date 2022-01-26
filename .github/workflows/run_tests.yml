@@ -44,17 +44,11 @@ jobs:
 
       - name: Install GNU make for MacOS
         if: "contains( matrix.os, 'macos' )"
-        run: brew install make || true
 
-      - name: Install SmartSim on MacOS
-        if: contains( matrix.os, 'macos' )
+      - name: Install SmartSim (with ML backends)
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
           python -m pip install .[dev,ml,ray]
-
-      - name: Install SmartSim on Ubuntu
-        if: contains( matrix.os, 'ubuntu' )
-        run: pip install -e .[dev,ml,ray]
 
       - name: Install ML Runtimes with Smart
         if: contains( matrix.os, 'macos' )

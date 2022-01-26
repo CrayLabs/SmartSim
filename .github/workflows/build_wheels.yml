@@ -20,6 +20,9 @@ jobs:
         os: [ubuntu-20.04, macos-10.15]
         python-version: [3.7, 3.8, 3.9]
 
+    env:
+      SMARTSIM_SUFFIX: "develop"
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -42,18 +45,10 @@ jobs:
         if: contains(matrix.os, 'macos')
         run: brew install make || true
 
-
       - name: Install SmartSim (with ML backends if not python 3.9)
-        if: matrix.python-version != '3.9'
         run: |
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-          python -m pip install -vvv .[dev,ml,ray]
-
-      - name: Install SmartSim
-        if: matrix.python-version == '3.9'
-        run: |
-          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
-          python -m pip install -vvv .[dev,ray]
+          python -m pip install .[dev,ml,ray]
 
       - name: Install ML Runtimes with Smart (with pt and tf)
         if: contains(matrix.os, 'macos')
