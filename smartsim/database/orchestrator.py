@@ -102,7 +102,7 @@ class Orchestrator(EntityList):
         def _detect_command(launcher):
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
-                    if launcher is "local":
+                    if launcher == "local":
                         return cmd
                     if is_valid_cmd(cmd):
                         return cmd
@@ -119,7 +119,7 @@ class Orchestrator(EntityList):
             msg += f"Supported run commands for the given launcher are: {by_launcher[launcher]}"
             raise SmartSimError(msg)
         
-        if launcher is "local" and batch:
+        if launcher == "local" and batch:
             msg = "Local launcher can not be launched with batch=True"
             raise SmartSimError(msg)
 
@@ -134,8 +134,8 @@ class Orchestrator(EntityList):
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
-        gpus_per_shard = kwargs.pop("gpus_per_shard", None)
-        cpus_per_shard = kwargs.pop("cpus_per_shard", None)
+        gpus_per_shard = kwargs.pop("gpus_per_shard", 0)
+        cpus_per_shard = kwargs.pop("cpus_per_shard", 4)
         
         super().__init__("orchestrator", 
             self.path,
@@ -509,7 +509,7 @@ class Orchestrator(EntityList):
         self.db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
 
-        mpmd_nodes = single_cmd and self.db_nodes>1
+        mpmd_nodes = (single_cmd and self.db_nodes>1) or self.launcher=="lsf"
         
         cluster = not bool(self.db_nodes < 3)
         if int(self.db_nodes) == 2:
