@@ -139,7 +139,6 @@ deps = [
     "tabulate>=0.8.9",
     "redis-py-cluster==2.1.3",
     "redis==3.5.3",
-    "numpy>=1.18.2",
     "tqdm>=4.50.2"
 ]
 
