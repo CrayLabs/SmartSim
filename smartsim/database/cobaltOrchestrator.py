@@ -86,6 +86,8 @@ class CobaltOrchestrator(Orchestrator):
             launcher="cobalt",
             hosts=hosts,
             account=account,
+            queue=queue,
+            time=time,
             **kwargs,
         )
     #     self.batch_settings = self._build_batch_settings(
