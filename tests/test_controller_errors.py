@@ -60,7 +60,7 @@ def test_no_launcher():
 
 def test_wrong_orchestrator():
     # lo interface to avoid warning from SmartSim
-    orc = PBSOrchestrator(6780, db_nodes=3, interface="lo")
+    orc = PBSOrchestrator(6780, db_nodes=3, interface="lo", run_command="aprun")
     cont = Controller(launcher="local")
     manifest = Manifest(orc)
     with pytest.raises(SmartSimError):
