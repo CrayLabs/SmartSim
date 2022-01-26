@@ -201,7 +201,7 @@ the `Experiment` object, the following can be called to stop any database instan
 .. code-block:: bash
 
     # be sure to be in Python environment where SmartSim is installed
-    $(smart --dbcli) -h 127.0.0.1 -p 6780 shutdown
+    $(smart dbcli) -h 127.0.0.1 -p 6780 shutdown
 
 
 The full driver code can be found `here  <https://github.com/CrayLabs/SmartSim/blob/develop/tutorials/03_online_analysis/lattice/driver.py>`__.
