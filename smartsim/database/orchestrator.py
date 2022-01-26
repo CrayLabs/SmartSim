@@ -40,8 +40,8 @@ from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError, SSUnsupportedError
 from ..log import get_logger
 
-from ..settings import SrunSettings, MpirunSettings, AprunSettings
-from ..settings import CobaltBatchSettings, SbatchSettings, QsubBatchSettings
+from ..settings import SrunSettings, MpirunSettings, AprunSettings, JsrunSettings
+from ..settings import CobaltBatchSettings, SbatchSettings, QsubBatchSettings, BsubBatchSettings
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
@@ -58,11 +58,11 @@ class Orchestrator(EntityList):
     def __init__(
                 self,
                 port=6379,
-                interface="ipogif0",
-                launcher="auto",
+                interface="lo",
+                launcher="local",
                 run_command="auto",
                 db_nodes=1,
-                batch=True,
+                batch=False,
                 hosts=None,
                 account=None,
                 time=None,
@@ -102,20 +102,26 @@ class Orchestrator(EntityList):
         def _detect_command(launcher):
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
+                    if launcher is "local":
+                        return cmd
                     if is_valid_cmd(cmd):
                         return cmd
             msg = f"Could not automatically detect a run command to use for launcher {launcher}"
             msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
             raise SmartSimError(msg)
 
-        if launcher != "local":
-            if run_command == "auto":
-                run_command = _detect_command(launcher)
-            else:
-                if run_command not in by_launcher[launcher]:
-                    msg = f"Run command {run_command} is not supported on launcher {launcher}\n"
-                    msg+= f"Supported run commands for Orchestrator are: {by_launcher[launcher]}"
-                    raise SmartSimError(msg)
+
+        if run_command == "auto":
+            run_command = _detect_command(launcher)
+
+        if run_command not in by_launcher[launcher]:
+            msg = f"Run command {run_command} is not supported on launcher {launcher}\n"
+            msg += f"Supported run commands for the given launcher are: {by_launcher[launcher]}"
+            raise SmartSimError(msg)
+        
+        if launcher is "local" and batch:
+            msg = "Local launcher can not be launched with batch=True"
+            raise SmartSimError(msg)
 
         self.launcher = launcher
         self.run_command = run_command
@@ -128,14 +134,22 @@ class Orchestrator(EntityList):
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
         self.intra_threads = kwargs.get("intra_op_threads", None)
-        super().__init__("orchestrator", self.path, port=port,
+        gpus_per_shard = kwargs.pop("gpus_per_shard", None)
+        cpus_per_shard = kwargs.pop("cpus_per_shard", None)
+        
+        super().__init__("orchestrator", 
+            self.path,
+            port=port,
             interface=interface,
             db_nodes=db_nodes,
             batch=batch,
             launcher=launcher,
             run_command=run_command,
             alloc=alloc,
-            single_cmd=single_cmd, **kwargs)
+            single_cmd=single_cmd,
+            gpus_per_shard=gpus_per_shard,
+            cpus_per_shard=cpus_per_shard,
+            **kwargs)
 
         # detect if we can find at least the redis binaries. We
         # don't want to force the user to launch with RedisAI so
@@ -294,7 +308,7 @@ class Orchestrator(EntityList):
                 self.batch_settings.set_cpus_per_task(num_cpus)
         for db in self:
             db.run_settings.set_cpus_per_task(num_cpus)
-            if db.mpmd:
+            if db._mpmd:
                 for mpmd in db.run_settings.mpmd:
                     mpmd.set_cpus_per_task(num_cpus)
 
@@ -328,15 +342,19 @@ class Orchestrator(EntityList):
         if self.batch:
             self.batch_settings.set_hostlist(host_list)
         
-        for host, db in zip(host_list, self.entities):
-            if isinstance(db.run_settings, AprunSettings):
-                if not self.batch:
+        if self.launcher == "lsf":
+            for db in self:
+                db.set_hosts(host_list)
+        else:
+            for host, db in zip(host_list, self.entities):
+                if isinstance(db.run_settings, AprunSettings):
+                    if not self.batch:
+                        db.run_settings.set_hostlist([host])
+                else:
                     db.run_settings.set_hostlist([host])
-            else:
-                db.run_settings.set_hostlist([host])
-            if db._mpmd:
-                for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
-                    mpmd_runsettings.set_hostlist(host_list[i+1])
+                if db._mpmd:
+                    for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
+                        mpmd_runsettings.set_hostlist(host_list[i+1])
 
     def set_batch_arg(self, arg, value):
         """Set a batch argument the orchestrator should launch with
@@ -379,7 +397,7 @@ class Orchestrator(EntityList):
         else:
             for db in self.entities:
                 db.run_settings.run_args[arg] = value
-                if db.mpmd:
+                if db._mpmd:
                     for mpmd in db.run_settings.mpmd:
                         mpmd.run_args[arg] = value
 
@@ -439,6 +457,52 @@ class Orchestrator(EntityList):
 
         return run_settings
 
+    def _build_run_settings_lsf(self, exe, exe_args, **kwargs):
+        run_args = kwargs.get("run_args", {}).copy()
+        cpus_per_shard = kwargs.get("cpus_per_shard", None)
+        gpus_per_shard = kwargs.get("gpus_per_shard", None)
+        old_host = None
+        erf_rs = None
+        for shard_id, args in enumerate(exe_args):
+            host = shard_id
+            run_args["launch_distribution"] = "packed"
+
+            run_settings = JsrunSettings(exe, args, run_args=run_args)
+            run_settings.set_binding("none")
+
+            # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
+            run_settings.set_individual_output("_%t")
+            # tell step to create a mpmd executable even if we only have one task
+            # because we need to specify the host
+            if host != old_host:
+                assigned_smts = 0
+                assigned_gpus = 0
+            old_host = host
+
+            erf_sets = {
+                "rank": str(shard_id),
+                "host": str(1 + host),
+                "cpu": "{" + f"{assigned_smts}:{cpus_per_shard}" + "}",
+            }
+
+            assigned_smts += cpus_per_shard
+            if gpus_per_shard > 1:  # pragma: no-cover
+                erf_sets["gpu"] = (
+                    "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
+                )
+            elif gpus_per_shard > 0:
+                erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
+            assigned_gpus += gpus_per_shard
+
+            run_settings.set_erf_sets(erf_sets)
+
+            if erf_rs:
+                erf_rs.make_mpmd(run_settings)
+            else:
+                run_settings.make_mpmd()
+                erf_rs = run_settings
+
+        return erf_rs
 
     def _initialize_entities(self, **kwargs):
         port = kwargs.get("port", 6379)
@@ -493,7 +557,10 @@ class Orchestrator(EntityList):
                 exe_args_mpmd.append(sh_split(exe_args))
             
         if mpmd_nodes:
-            run_settings = self._build_run_settings("python", exe_args_mpmd, **kwargs)
+            if self.launcher == "lsf":
+                run_settings = self._build_run_settings_lsf("python", exe_args_mpmd, **kwargs)
+            else:
+                run_settings = self._build_run_settings("python", exe_args_mpmd, **kwargs)
             node = DBNode(db_node_name, self.path, run_settings, [port])
             node._mpmd = True
             node._shard_ids = range(self.db_nodes)
@@ -597,6 +664,47 @@ class Orchestrator(EntityList):
             "jobname",
         ]
         self._reserved_batch_args[QsubBatchSettings] = ["e", "o", "N", "l"]
+        self._reserved_run_args[JsrunSettings] = [
+            "chdir",
+            "h",
+            "stdio_stdout",
+            "o",
+            "stdio_stderr",
+            "k",
+            "tasks_per_rs",
+            "a",
+            "np",
+            "p",
+            "cpu_per_rs",
+            "c",
+            "gpu_per_rs",
+            "g",
+            "latency_priority",
+            "l",
+            "memory_per_rs",
+            "m",
+            "nrs",
+            "n",
+            "rs_per_host",
+            "r",
+            "rs_per_socket",
+            "K",
+            "appfile",
+            "f",
+            "allocate_only",
+            "A",
+            "launch_node_task",
+            "H",
+            "use_reservation",
+            "J",
+            "use_resources",
+            "bind",
+            "b",
+            "launch_distribution",
+            "d",
+            ]
+
+        self._reserved_batch_args[BsubBatchSettings] = ["J", "o", "e", "m", "n", "nnodes"]
 
 def create_orchestrator(port=6379,
                         db_nodes=1,
