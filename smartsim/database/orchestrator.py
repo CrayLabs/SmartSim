@@ -326,7 +326,7 @@ class Orchestrator(EntityList):
         self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list):
-        """Specify the hosts for the ``WLMOrchestrator`` to launch on
+        """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
         :type host_list: str, list[str]
