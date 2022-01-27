@@ -9,25 +9,29 @@ ENV TZ=US/Seattle
 # - add tutorials from other sections
 # - add permissions to the craylabs user
 
-RUN useradd --create-home --shell /bin/bash craylabs
+RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y build-essential \
-    git gcc make git-lfs wget \
+    git gcc make git-lfs wget libopenmpi-dev openmpi-bin \
     python3-pip python3 python3-dev cmake \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /home/craylabs
-USER craylabs
-
 RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --depth=1 smartredis \
+    && chown -R craylabs:root smartredis \
     && cd smartredis \
     && python -m pip install .
 
 
 COPY . /home/craylabs/SmartSim
-RUN cd SmartSim && NO_CHECKS=1 SMARTSIM_SUFFIX=dev python -m pip install .
+RUN chown craylabs:root -R SmartSim
+USER craylabs
+
+RUN cd SmartSim && \
+    SMARTSIM_SUFFIX=dev python -m pip install .
+
 
 # TODO set SmartRedis version when thats put in
 #RUN git clone https://github.com/CrayLabs/SmartSim.git --branch develop --depth=1 \
