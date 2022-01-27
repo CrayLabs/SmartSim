@@ -41,7 +41,7 @@ def get_base_36_repr(positive_int):
     :return: base 36 representation of the given positive int
     :rtype: str
     """
-    digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     result = []
 
     while positive_int:
@@ -49,7 +49,7 @@ def get_base_36_repr(positive_int):
         result.append(next_digit)
         positive_int //= 36
 
-    return ''.join(reversed(result))
+    return "".join(reversed(result))
 
 
 def get_ip_from_host(host):
