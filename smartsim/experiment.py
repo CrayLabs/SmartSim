@@ -495,18 +495,20 @@ class Experiment:
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
-        return Orchestrator(port=port,
-                            db_nodes=db_nodes,
-                            batch=batch,
-                            hosts=hosts,
-                            run_command=run_command,
-                            interface=interface,
-                            account=account,
-                            time=time,
-                            queue=queue,
-                            single_cmd=single_cmd,
-                            launcher=launcher,
-                            **kwargs)
+        return Orchestrator(
+            port=port,
+            db_nodes=db_nodes,
+            batch=batch,
+            hosts=hosts,
+            run_command=run_command,
+            interface=interface,
+            account=account,
+            time=time,
+            queue=queue,
+            single_cmd=single_cmd,
+            launcher=launcher,
+            **kwargs,
+        )
 
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``

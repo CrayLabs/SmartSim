@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shlex import split as sh_split
+
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
@@ -90,6 +91,7 @@ class CobaltOrchestrator(Orchestrator):
             time=time,
             **kwargs,
         )
+
     #     self.batch_settings = self._build_batch_settings(
     #         db_nodes, batch, account, queue, time
     #     )
@@ -298,7 +300,6 @@ class CobaltOrchestrator(Orchestrator):
 
     #         if cluster:
     #             start_script_args += self._get_cluster_args(db_shard_name, port)
-
 
     #         if mpmd_nodes:
     #             exe_args.append(" ".join(start_script_args))

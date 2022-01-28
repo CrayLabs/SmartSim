@@ -184,7 +184,6 @@ class SrunStep(Step):
         slurm --multi-prog feature.
         """
         mpmd_file = self.get_step_file(ending=".mpmd")
-        
 
         def mpmd_line(run_settings, proc_start):
             proc_end = proc_start
@@ -194,8 +193,8 @@ class SrunStep(Step):
             cmd_line.extend(run_settings.exe)
             cmd_line.extend(run_settings.exe_args)
             cmd_line.append("\n")
-            return cmd_line, proc_end+1
-        
+            return cmd_line, proc_end + 1
+
         proc_start = 0
         with open(mpmd_file, "w+") as f:
             cmd_line, proc_start = mpmd_line(self.run_settings, proc_start)

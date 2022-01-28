@@ -96,7 +96,9 @@ class LSFOrchestrator(Orchestrator):
         """
 
         if single_cmd != True:
-            raise SSUnsupportedError("LSFOrchestrator can only be run with single_cmd=True (MPMD).")
+            raise SSUnsupportedError(
+                "LSFOrchestrator can only be run with single_cmd=True (MPMD)."
+            )
 
         super().__init__(
             port,
@@ -112,6 +114,7 @@ class LSFOrchestrator(Orchestrator):
             gpus_per_shard=gpus_per_shard,
             **kwargs,
         )
+
     #     self.db_nodes = db_nodes
     #     self.batch_settings = self._build_batch_settings(
     #         db_nodes, batch, project, time, **kwargs

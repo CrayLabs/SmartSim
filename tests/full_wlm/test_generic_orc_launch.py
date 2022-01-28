@@ -6,6 +6,7 @@ from smartsim import Experiment, status
 if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
+
 def test_launch_orc_auto(fileutils, wlmutils):
     """test single node orchestrator"""
     launcher = wlmutils.get_test_launcher()
@@ -17,8 +18,8 @@ def test_launch_orc_auto(fileutils, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(6780,
-                              batch=False, 
-                              interface=network_interface, 
+                              batch=False,
+                              interface=network_interface,
                               single_cmd=False)
     orc.set_path(test_dir)
 
