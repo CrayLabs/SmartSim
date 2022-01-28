@@ -133,7 +133,7 @@ a client to it so that data can be retrieved by the analysis
 code and plotted.
 
 The simulation is started with the `block=False` argument. This runs the simulation
-in a nonblocking manner so that the data can being streamed from the simulation can be
+in a nonblocking manner so that the data being streamed from the simulation can be
 analyzed in real time.
 
 .. code-block:: python
