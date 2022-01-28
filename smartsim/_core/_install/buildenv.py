@@ -383,18 +383,42 @@ class BuildEnv:
         return self.PLATFORM == "darwin"
 
     @property
-    def site_packages_path(self):
-        """Find location of user pip packages for this py env"""
-        site_path = Path(site.getsitepackages()[0]).resolve()
-        return site_path
-
-    @property
     def torch_cmake_path(self):
         """Find the path to the cmake directory within a
         pip installed pytorch package"""
 
-        site_path = self.site_packages_path
-        torch_path = site_path.joinpath("torch/share/cmake/Torch/").resolve()
+        def _torch_import_path():
+            """Find through importing torch"""
+            try:
+                import torch as t
+                torch_paths = [Path(p) for p in t.__path__]
+                for _path in torch_paths:
+                    torch_path = _path / "share/cmake/Torch"
+                    if torch_path.is_dir():
+                        return torch_path
+                return None
+            except ModuleNotFoundError:
+                return None
+
+        def _torch_site_path():
+            """find torch through site packages"""
+            site_paths = [Path(p) for p in site.getsitepackages()]
+
+            # check user site (~/.local/lib)
+            if Path(site.USER_SITE).is_dir():
+                site_paths.append(Path(site.USER_SITE))
+
+            for _path in site_paths:
+                torch_path = _path / "torch/share/cmake/Torch"
+                if torch_path.is_dir():
+                    return torch_path
+            return None
+
+        torch_path = _torch_import_path()
+        if not torch_path:
+            torch_path = _torch_site_path()
+        if not torch_path:
+            raise SetupError("Could not locate torch cmake path")
         return str(torch_path)
 
     @staticmethod
