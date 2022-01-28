@@ -34,6 +34,24 @@ from shutil import which
 import psutil
 
 
+def get_base_36_repr(positive_int):
+    """Converts a positive integer to its base 36 representation
+    :param positive_int: the positive integer to convert
+    :type positive_int: int
+    :return: base 36 representation of the given positive int
+    :rtype: str
+    """
+    digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = []
+
+    while positive_int:
+        next_digit = digits[positive_int % 36]
+        result.append(next_digit)
+        positive_int //= 36
+
+    return "".join(reversed(result))
+
+
 def get_ip_from_host(host):
     """Return the IP address for the interconnect.
 

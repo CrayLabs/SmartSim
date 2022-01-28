@@ -27,7 +27,7 @@
 import os.path as osp
 import time
 
-import numpy as np
+from ...utils.helpers import get_base_36_repr
 
 
 class Step:
@@ -41,7 +41,7 @@ class Step:
         raise NotImplementedError
 
     def _create_unique_name(self, entity_name):
-        step_name = entity_name + "-" + str(np.base_repr(time.time_ns(), 36))
+        step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
     def get_output_files(self):
