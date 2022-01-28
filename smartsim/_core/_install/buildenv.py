@@ -383,12 +383,6 @@ class BuildEnv:
         return self.PLATFORM == "darwin"
 
     @property
-    def site_packages_path(self):
-        """Find location of user pip packages for this py env"""
-        site_path = Path(site.getsitepackages()[0]).resolve()
-        return site_path
-
-    @property
     def torch_cmake_path(self):
         """Find the path to the cmake directory within a
         pip installed pytorch package"""
@@ -424,7 +418,7 @@ class BuildEnv:
         if not torch_path:
             torch_path = _torch_site_path()
         if not torch_path:
-            raise SetupError("Could not located torch cmake path")
+            raise SetupError("Could not locate torch cmake path")
         return str(torch_path)
 
     @staticmethod

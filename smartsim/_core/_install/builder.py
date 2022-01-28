@@ -1,7 +1,6 @@
 import os
 import re
 import shutil
-import site
 import stat
 import subprocess
 import sys

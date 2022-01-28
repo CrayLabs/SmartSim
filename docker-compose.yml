@@ -1,0 +1,18 @@
+
+
+version: '3'
+
+services:
+  docs-dev:
+    image: smartsim-docs:dev-latest
+    build:
+      context: .
+      dockerfile: ./docker/docs/dev/Dockerfile
+
+  tutorials:
+    image: smartsim-tutorials:dev-latest
+    build:
+      context: .
+      dockerfile: ./docker/dev/Dockerfile
+    ports:
+      - "8888:8888"
