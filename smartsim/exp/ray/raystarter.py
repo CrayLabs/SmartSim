@@ -4,8 +4,8 @@ from subprocess import PIPE, STDOUT, Popen
 
 import psutil
 
+from smartsim._core.utils.helpers import get_ip_from_interface
 from smartsim.exp.ray import parse_ray_head_node_address
-from smartsim.utils.helpers import get_ip_from_interface
 
 
 def get_lb_interface_name():
@@ -64,7 +64,9 @@ cliargs = [
 
 if args.ray_args:
     cliargs += args.ray_args
-    if args.head and not any([arg.startswith("--dashboard-host") for arg in args.ray_args]):
+    if args.head and not any(
+        [arg.startswith("--dashboard-host") for arg in args.ray_args]
+    ):
         cliargs += [f"--dashboard-host={RAY_IP}"]
 
 if args.redis_password:

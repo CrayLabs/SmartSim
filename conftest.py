@@ -8,11 +8,13 @@ from smartsim.database import (
     PBSOrchestrator, Orchestrator,
     LSFOrchestrator
 )
+from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import (
     SrunSettings, AprunSettings,
     JsrunSettings, RunSettings
 )
-from smartsim.config import CONFIG
+from smartsim._core.config import CONFIG
+from smartsim.error import SSConfigError
 
 
 # Globals, yes, but its a testing file
@@ -94,6 +96,11 @@ def wlmutils():
 class WLMUtils:
 
     @staticmethod
+    def set_test_launcher(new_test_launcher):
+        global test_launcher
+        test_launcher = new_test_launcher
+
+    @staticmethod
     def get_test_launcher():
         global test_launcher
         return test_launcher
@@ -107,6 +114,36 @@ class WLMUtils:
     def get_test_interface():
         global test_nic
         return test_nic
+
+    @staticmethod
+    def get_base_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
+        if test_launcher == "slurm":
+            run_args = {"--nodes": nodes,
+                        "--ntasks": ntasks,
+                        "--time": "00:10:00"}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
+            return settings
+        if test_launcher == "pbs":
+            run_args = {"--pes": ntasks}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
+            return settings
+        if test_launcher == "cobalt":
+            run_args = {"--pes": ntasks}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
+            return settings
+        if test_launcher == "lsf":
+            run_args = {"--np": ntasks, "--nrs": nodes}
+            run_args.update(kwargs)
+            settings = RunSettings(exe, args, run_command="jsrun", run_args=run_args)
+            return settings
+        elif test_launcher != "local":
+            raise SSConfigError(f"Base run settings are available for Slurm, PBS, Cobalt, and LSF, but launcher was {test_launcher}")
+        # TODO allow user to pick aprun vs MPIrun
+        return RunSettings(exe, args)
+
 
     @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):

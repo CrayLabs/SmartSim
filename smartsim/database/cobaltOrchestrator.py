@@ -24,11 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..config import CONFIG
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
+from ..log import get_logger
 from ..settings import AprunSettings, CobaltBatchSettings, MpirunSettings
-from ..utils import get_logger
 from .orchestrator import Orchestrator
 
 logger = get_logger(__name__)
@@ -64,7 +63,7 @@ class CobaltOrchestrator(Orchestrator):
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI
         :type hosts: list[str]
-        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to "aprun".
+        :param run_command: specify launch binary. Options are ``mpirun`` and ``aprun``, defaults to ``aprun``.
         :type run_command: str, optional
         :param interface: network interface to use, defaults to "ipogif0"
         :type interface: str, optional
@@ -232,21 +231,16 @@ class CobaltOrchestrator(Orchestrator):
             )
         port = kwargs.get("port", 6379)
 
-        db_conf = CONFIG.redis_conf
-        redis_exe = CONFIG.redis_exe
-        ai_module = self._get_AI_module()
-        start_script = self._find_redis_start_script()
-
         # Build DBNode instance for each node listed
         for db_id in range(db_nodes):
             db_node_name = "_".join((self.name, str(db_id)))
             start_script_args = [
-                start_script,  # redis_starter.py
+                self._redis_launch_script,  # redis_starter.py
                 f"+ifname={self._interface}",  # pass interface to start script
                 "+command",  # command flag for argparser
-                redis_exe,  # redis-server
-                db_conf,  # redis6.conf file
-                ai_module,  # redisai.so
+                self._redis_exe,  # redis-server
+                self._redis_conf,  # redis6.conf file
+                self._rai_module,  # redisai.so
                 "--port",  # redis port
                 str(port),  # port number
             ]

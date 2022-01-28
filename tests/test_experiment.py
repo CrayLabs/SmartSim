@@ -36,14 +36,17 @@ def test_stop_type():
         exp.stop("model")
 
 
-def test_finished_type():
+def test_finished_new_model():
+    # finished should fail as this model hasn't been
+    # launched yet.
+
     model = Model("name", {}, "./", RunSettings("python"))
     exp = Experiment("test")
-    with pytest.raises(SmartSimError):
+    with pytest.raises(ValueError):
         exp.finished(model)
 
 
-def test_status_type():
+def test_status_typeerror():
     exp = Experiment("test")
     with pytest.raises(TypeError):
         exp.get_status([])
@@ -99,3 +102,40 @@ def test_poll(fileutils):
     exp.start(model, block=False)
     exp.poll(interval=1)
     exp.stop(model)
+
+
+def test_summary(fileutils):
+    exp_name = "test_exp_summary"
+    exp = Experiment(exp_name)
+    test_dir = fileutils.make_test_dir(exp_name)
+    m = exp.create_model(
+        "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
+    )
+    exp.start(m)
+    summary_str = exp.summary(format="plain")
+    print(summary_str)
+
+    summary_lines = summary_str.split("\n")
+    assert 2 == len(summary_lines)
+
+    headers, values = [s.split() for s in summary_lines]
+    headers = ["Index"] + headers
+
+    row = dict(zip(headers, values))
+    assert m.name == row["Name"]
+    assert m.type == row["Entity-Type"]
+    assert 0 == int(row["RunID"])
+    assert 0 == int(row["Returncode"])
+
+
+def test_launcher_detection(wlmutils):
+    exp = Experiment("test-launcher-detection", launcher="auto")
+
+    # We check whether the right launcher is found. But if
+    # the test launcher was set to local, we tolerate finding
+    # another one (this cannot be avoided)
+    if (
+        exp._launcher != wlmutils.get_test_launcher()
+        and wlmutils.get_test_launcher() != "local"
+    ):
+        assert False

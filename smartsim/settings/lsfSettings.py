@@ -26,16 +26,14 @@
 
 from pprint import pformat
 
-from ..error import SSConfigError
-from ..utils.helpers import init_default
-from .settings import BatchSettings, RunSettings
+from .base import BatchSettings, RunSettings
 
 
 class JsrunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``jsrun`` command
 
-        ``JsrunSettings`` can be used for both the `lsf` launcher.
+        ``JsrunSettings`` should only be used on LSF-based systems.
 
         :param exe: executable
         :type exe: str
@@ -69,61 +67,90 @@ class JsrunSettings(RunSettings):
         else:
             self.run_args["nrs"] = int(num_rs)
 
-    def set_cpus_per_rs(self, num_cpus):
+    def set_cpus_per_rs(self, cpus_per_rs):
         """Set the number of cpus to use per resource set
 
         This sets ``--cpu_per_rs``
 
-        :param num_cpus: number of cpus to use per resource set or ALL_CPUS
-        :type num_cpus: int or str
+        :param cpus_per_rs: number of cpus to use per resource set or ALL_CPUS
+        :type cpus_per_rs: int or str
         """
-        if isinstance(num_cpus, str):
-            self.run_args["cpu_per_rs"] = num_cpus
+        if isinstance(cpus_per_rs, str):
+            self.run_args["cpu_per_rs"] = cpus_per_rs
         else:
-            self.run_args["cpu_per_rs"] = int(num_cpus)
+            self.run_args["cpu_per_rs"] = int(cpus_per_rs)
 
-    def set_gpus_per_rs(self, num_gpus):
+    def set_gpus_per_rs(self, gpus_per_rs):
         """Set the number of gpus to use per resource set
 
         This sets ``--gpu_per_rs``
 
-        :param num_cpus: number of gpus to use per resource set or ALL_GPUS
-        :type num_gpus: int or str
+        :param gpus_per_rs: number of gpus to use per resource set or ALL_GPUS
+        :type gpus_per_rs: int or str
         """
-        if isinstance(num_gpus, str):
-            self.run_args["gpu_per_rs"] = num_gpus
+        if isinstance(gpus_per_rs, str):
+            self.run_args["gpu_per_rs"] = gpus_per_rs
         else:
-            self.run_args["gpu_per_rs"] = int(num_gpus)
+            self.run_args["gpu_per_rs"] = int(gpus_per_rs)
 
-    def set_rs_per_host(self, num_rs):
+    def set_rs_per_host(self, rs_per_host):
         """Set the number of resource sets to use per host
 
         This sets ``--rs_per_host``
 
-        :param num_rs: number of resource sets to use per host
-        :type num_rs: int
+        :param rs_per_host: number of resource sets to use per host
+        :type rs_per_host: int
         """
-        self.run_args["rs_per_host"] = int(num_rs)
+        self.run_args["rs_per_host"] = int(rs_per_host)
 
-    def set_tasks(self, num_tasks):
+    def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
         This sets ``--np``
 
-        :param num_tasks: number of tasks
-        :type num_tasks: int
+        :param tasks: number of tasks
+        :type tasks: int
         """
-        self.run_args["np"] = int(num_tasks)
+        self.run_args["np"] = int(tasks)
 
-    def set_tasks_per_rs(self, num_tprs):
+    def set_tasks_per_rs(self, tasks_per_rs):
         """Set the number of tasks per resource set
 
         This sets ``--tasks_per_rs``
 
-        :param num_tpn: number of tasks per resource set
-        :type num_tpn: int
+        :param tasks_per_rs: number of tasks per resource set
+        :type tasks_per_rs: int
         """
-        self.run_args["tasks_per_rs"] = int(num_tprs)
+        self.run_args["tasks_per_rs"] = int(tasks_per_rs)
+
+    def set_tasks_per_node(self, tasks_per_node):
+        """Set the number of tasks per resource set.
+
+        This function is an alias for `set_tasks_per_rs`.
+
+        :param tasks_per_node: number of tasks per resource set
+        :type tasks_per_node: int
+        """
+        self.set_tasks_per_rs(tasks_per_node)
+
+    def set_hostlist(self, host_list):
+        """This function has no effect.
+
+        This function is only available to unify LSFSettings
+        to other WLM settings classes.
+
+        """
+        pass
+
+    def set_cpus_per_task(self, cpus_per_task):
+        """Set the number of cpus per tasks.
+
+        This function is an alias for `set_cpus_per_rs`.
+
+        :param cpus_per_task: number of cpus per resource set
+        :type cpus_per_task: int
+        """
+        self.set_cpus_per_rs(cpus_per_task)
 
     def set_binding(self, binding):
         """Set binding
@@ -304,11 +331,20 @@ class BsubBatchSettings(BatchSettings):
         :param smts: SMTs, defaults to None
         :type smts: int, optional
         """
-        super().__init__("bsub", batch_args=batch_args)
-        if nodes:
-            self.set_nodes(nodes)
-        self.set_walltime(time)
-        self.set_project(project)
+        if project:
+            kwargs.pop("account", None)
+        else:
+            project = kwargs.pop("account", None)
+
+        super().__init__(
+            "bsub",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=project,
+            time=time,
+            **kwargs,
+        )
+
         if smts:
             self.set_smts(smts)
         else:
@@ -316,15 +352,21 @@ class BsubBatchSettings(BatchSettings):
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
-    def set_walltime(self, time):
+    def set_walltime(self, walltime):
         """Set the walltime
 
         This sets ``-W``.
 
-        :param time: Time in hh:mm format, e.g. "10:00" for 10 hours
-        :type time: str
+        :param walltime: Time in hh:mm format, e.g. "10:00" for 10 hours,
+                         if time is supplied in hh:mm:ss format, seconds
+                         will be ignored and walltime will be set as ``hh:mm``
+        :type walltime: str
         """
-        self.walltime = time
+        # For compatibility with other launchers, as explained in docstring
+        if walltime:
+            if len(walltime.split(":")) > 2:
+                walltime = ":".join(walltime.split(":")[:2])
+            self.walltime = walltime
 
     def set_smts(self, smts):
         """Set SMTs
@@ -348,15 +390,27 @@ class BsubBatchSettings(BatchSettings):
         """
         self.project = project
 
+    def set_account(self, account):
+        """Set the project
+
+        this function is an alias for `set_project`.
+
+        :param account: project name
+        :type account: str
+        """
+        if account:
+            self.set_project(account)
+
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
 
-        :param num_nodes: number of nodes
-        :type num_nodes: int
+        :param nodes: number of nodes
+        :type nodes: int
         """
-        self.batch_args["nnodes"] = int(num_nodes)
+        if num_nodes:
+            self.batch_args["nnodes"] = int(num_nodes)
 
     def set_expert_mode_req(self, res_req, slots):
         """Set allocation for expert mode. This
@@ -385,15 +439,24 @@ class BsubBatchSettings(BatchSettings):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["m"] = '"' + " ".join(host_list) + '"'
 
-    def set_tasks(self, num_tasks):
+    def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
         This sets ``-n``
 
-        :param num_tasks: number of tasks
-        :type num_tasks: int
+        :param tasks: number of tasks
+        :type tasks: int
         """
-        self.batch_args["n"] = int(num_tasks)
+        self.batch_args["n"] = int(tasks)
+
+    def set_queue(self, queue):
+        """Set the queue for this job
+
+        :param queue: The queue to submit the job on
+        :type queue: str
+        """
+        if queue:
+            self.batch_args["q"] = queue
 
     def _format_alloc_flags(self):
         """Format ``alloc_flags`` checking if user already

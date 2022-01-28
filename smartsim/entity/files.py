@@ -24,9 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 from os import path
-
-from ..error import SSConfigError
 
 
 class EntityFiles:
@@ -63,6 +62,7 @@ class EntityFiles:
         self.tagged = tagged
         self.copy = copy
         self.link = symlink
+        self.tagged_hierarchy = None
         self._check_files()
 
     def _check_files(self):
@@ -78,12 +78,9 @@ class EntityFiles:
         self.copy = self._type_check_files(self.copy, "Copyable")
         self.link = self._type_check_files(self.link, "Symlink")
 
-        # check the paths provided by the user and ensure
-        # that no directories were provided as tagged files
-        for i in range(len(self.tagged)):
-            self.tagged[i] = self._check_path(self.tagged[i])
-            if path.isdir(self.tagged[i]):
-                raise SSConfigError("Directories cannot be listed in tagged files")
+        self.tagged_hierarchy = TaggedFilesHierarchy.from_list_paths(
+            self.tagged, dir_contents_to_base=True
+        )
 
         for i in range(len(self.copy)):
             self.copy[i] = self._check_path(self.copy[i])
@@ -114,13 +111,14 @@ class EntityFiles:
                     raise TypeError(f"Not all {file_type} files were of type str")
         return file_list
 
-    def _check_path(self, file_path):
+    @staticmethod
+    def _check_path(file_path):
         """Given a user provided path-like str, find the actual path to
            the directory or file and create a full path.
 
         :param file_path: path to a specific file or directory
         :type file_path: str
-        :raises SSConfigError: if file or directory does not exist
+        :raises FileNotFoundError: if file or directory does not exist
         :return: full path to file or directory
         :rtype: str
         """
@@ -129,4 +127,145 @@ class EntityFiles:
             return full_path
         if path.isdir(full_path):
             return full_path
-        raise SSConfigError(f"File or Directory {file_path} not found")
+        raise FileNotFoundError(f"File or Directory {file_path} not found")
+
+
+class TaggedFilesHierarchy:
+    """The TaggedFilesHierarchy represents a directory
+    containing potentially tagged files and subdirectories.
+
+    TaggedFilesHierarchy.base is the directory path from
+    the the root of the generated file structure
+
+    TaggedFilesHierarchy.files is a collection of paths to
+    files that need to be copied to directory that the
+    TaggedFilesHierarchy represents
+
+    TaggedFilesHierarchy.dirs is a collection of child
+    TaggedFilesHierarchy, each representing a subdirectory
+    that needs to generated
+
+    By performing a depth first search over the entire
+    hierarchy starting at the root directory structure, the
+    tagged file directory structure can be replicated
+    """
+
+    def __init__(self, parent=None, subdir_name=""):
+        """Initialize a TaggedFilesHierarchy
+
+        :param parent: The parent hierarchy of the new hierarchy,
+                       must be None if creating a root hierarchy,
+                       must be provided if creating a subhierachy
+        :type parent: TaggedFilesHierarchy | None, optional
+        :param subdir_name: Name of subdirectory representd by the new hierarchy,
+                            must be "" if creating a root hierarchy,
+                            must be any valid dir name if subhierarchy,
+                            invalid names are ".", ".." or contain path seperators
+        :type subdir_name: str, optional
+        :raises ValueError: if given a subdir_name without a parent,
+                            if given a parent without a subdir_name,
+                            or if the subdir_name is invalid
+        """
+        if parent is None and subdir_name:
+            raise ValueError(
+                "TaggedFilesHierarchies should not have a subdirectory name without a"
+                + " parent"
+            )
+        if parent is not None and not subdir_name:
+            raise ValueError(
+                "Child TaggedFilesHierarchies must have a subdirectory name"
+            )
+        if subdir_name in {".", ".."} or path.sep in subdir_name:
+            raise ValueError(
+                "Child TaggedFilesHierarchies subdirectory names must not contain"
+                + " path seperators or be reserved dirs '.' or '..'"
+            )
+
+        if parent:
+            parent.dirs.add(self)
+
+        self._base = path.join(parent.base, subdir_name) if parent else ""
+        self.parent = parent
+        self.files = set()
+        self.dirs = set()
+
+    @property
+    def base(self):
+        """Property to ensure that self.base is read-only"""
+        return self._base
+
+    @classmethod
+    def from_list_paths(cls, path_list, dir_contents_to_base=False):
+        """Given a list of absolute paths to files and dirs, create and return
+        a TaggedFilesHierarchy instance representing the file hierarchy of
+        tagged files. All files in the path list will be placed in the base of
+        the file hierarchy.
+
+        :param path_list: list of absolute paths to tagged files or dirs
+                          containing tagged files
+        :type path_list: list[str]
+        :param dir_contents_to_base: When a top level dir is encountered, if
+                                     this value is truthy, files in the dir are
+                                     put into the base hierarchy level.
+                                     Otherwise, a new sub level is created for
+                                     the dir
+        :type dir_contents_to_base: bool
+        :return: A built tagged file hierarchy for the given files
+        :rtype: TaggedFilesHierarchy
+        """
+        tagged_file_hierarchy = cls()
+        if dir_contents_to_base:
+            new_paths = []
+            for path in path_list:
+                if os.path.isdir(path):
+                    new_paths += [os.path.join(path, file) for file in os.listdir(path)]
+                else:
+                    new_paths.append(path)
+            path_list = new_paths
+        tagged_file_hierarchy._add_paths(path_list)
+        return tagged_file_hierarchy
+
+    def _add_file(self, file):
+        """Add a file to the current level in the file hierarchy
+
+        :param file: absoute path to a file to add to the hierarchy
+        :type file: str
+        """
+        self.files.add(file)
+
+    def _add_dir(self, dir):
+        """Add a dir contianing tagged files by creating a new sub level in the
+        tagged file hierarchy. All paths within the directroy are added to the
+        the new level sub level tagged file hierarchy
+
+        :param dir: absoute path to a dir to add to the hierarchy
+        :type dir: str
+        """
+        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir))
+        tagged_file_hierarchy._add_paths(
+            [path.join(dir, file) for file in os.listdir(dir)]
+        )
+
+    def _add_paths(self, paths):
+        """Takes a list of paths and iterates over it, determining if each
+        path is to a file or a dir and then appropriatly adding it to the
+        TaggedFilesHierarchy.
+
+        :param paths: list of paths to files or dirs to add to the hierarchy
+        :type paths: list[str]
+        :raises ValueError: if link to dir is found
+        :raises FileNotFoundError: if path does not exist
+        """
+        for path in paths:
+            path = os.path.abspath(path)
+            if os.path.isdir(path):
+                if os.path.islink(path):
+                    raise ValueError(
+                        "Tagged directories and thier subdirectories cannot be links"
+                        + " to prevent circular directory structures"
+                    )
+                self._add_dir(path)
+            elif os.path.isfile(path):
+                self._add_file(path)
+            else:
+                raise FileNotFoundError(f"File or Directory {path} not found")

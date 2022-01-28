@@ -46,11 +46,13 @@ def test_update_env():
 
 
 def test_format_env():
-    env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
+    env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
     settings = SrunSettings("python", env_vars=env_vars)
-    formatted = settings.format_env_vars()
+    formatted, comma_separated_formatted = settings.format_env_vars()
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
+    assert "SSKEYIN" in formatted
+    assert "SSKEYIN=name_0,name_1" in comma_separated_formatted
 
 
 # ---- Sbatch ---------------------------------------------------

@@ -29,17 +29,16 @@ import time
 from os import getcwd
 from pprint import pformat
 
-import pandas as pd
+from tabulate import tabulate
 from tqdm import trange
 
-from smartsim.control.manifest import Manifest
-
-from .control import Controller, Manifest
+from ._core import Controller, Generator, Manifest
+from ._core.utils import colorize, init_default
 from .entity import Ensemble, Model
 from .error import SmartSimError
-from .generation import Generator
-from .utils import get_logger
-from .utils.helpers import colorize, init_default
+from .log import get_logger
+from .settings import settings
+from .wlm import detect_launcher
 
 logger = get_logger(__name__)
 
@@ -66,7 +65,9 @@ class Experiment:
         :param exp_path: path to location of ``Experiment`` directory if generated
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
-                         "cobalt", "lsf", or "local". Defaults to "local"
+                         "cobalt", "lsf", or "local". If set to "auto",
+                         an attempt will be made to find an available launcher on the system.
+                         Defaults to "local"
         :type launcher: str, optional
         """
         self.name = name
@@ -77,7 +78,12 @@ class Experiment:
                 raise NotADirectoryError("Experiment path provided does not exist")
             exp_path = osp.abspath(exp_path)
         self.exp_path = init_default(osp.join(getcwd(), name), exp_path, str)
+
+        if launcher == "auto":
+            launcher = detect_launcher()
+
         self._control = Controller(launcher=launcher)
+        self._launcher = launcher.lower()
 
     def start(self, *args, block=True, summary=False):
         """Launch instances passed as arguments
@@ -207,11 +213,8 @@ class Experiment:
             statuses = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
-            for entity_list in manifest.ensembles:
+            for entity_list in manifest.all_entity_lists:
                 statuses.extend(self._control.get_entity_list_status(entity_list))
-            orchestrator = manifest.db
-            if orchestrator:
-                statuses.extend(self._control.get_entity_list_status(orchestrator))
             return statuses
         except SmartSimError as e:
             logger.error(e)
@@ -329,6 +332,119 @@ class Experiment:
             logger.error(e)
             raise
 
+    def create_run_settings(
+        self,
+        exe,
+        exe_args=None,
+        run_command="auto",
+        run_args=None,
+        env_vars=None,
+        **kwargs,
+    ):
+        """Create a ``RunSettings`` instance.
+
+        run_command="auto" will attempt to automatically
+        match a run command on the system with a RunSettings
+        class in SmartSim. If found, the class corresponding
+        to that run_command will be created and returned.
+
+        if the local launcher is being used, auto detection will
+        be turned off.
+
+        If a recognized run command is passed, the ``RunSettings``
+        instance will be a child class such as ``SrunSetttings``
+
+        if not supported by smartsim, the base ``RunSettings`` class
+        will be created and returned with the specified run_command and run_args
+        will be evaluated literally.
+
+        Run Commands with implemented helper classes:
+         - aprun (ALPS)
+         - srun (SLURM)
+         - mpirun (OpenMPI)
+         - jsrun (LSF)
+
+        :param run_command: command to run the executable
+        :type run_command: str
+        :param exe: executable to run
+        :type exe: str
+        :param exe_args: arguments to pass to the executable
+        :type exe_args: list[str], optional
+        :param run_args: arguments to pass to the ``run_command``
+        :type run_args: list[str], optional
+        :param env_vars: environment variables to pass to the executable
+        :type env_vars: dict[str, str], optional
+        :return: the created ``RunSettings``
+        :rtype: RunSettings
+        """
+        try:
+            return settings.create_run_settings(
+                self._launcher,
+                exe,
+                exe_args=exe_args,
+                run_command=run_command,
+                run_args=run_args,
+                env_vars=env_vars,
+                **kwargs,
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
+    def create_batch_settings(
+        self, nodes=1, time="", queue="", account="", batch_args=None, **kwargs
+    ):
+        """Create a ``BatchSettings`` instance
+
+        Batch settings parameterize batch workloads. The result of this
+        function can be passed to the ``Ensemble`` initialization.
+
+        the `batch_args` parameter can be used to pass in a dictionary
+        of additional batch command arguments that aren't supported through
+        the smartsim interface
+
+
+        .. highlight:: python
+        .. code-block:: python
+
+            # i.e. for Slurm
+            batch_args = {
+                "distribution": "block"
+                "exclusive": None
+            }
+            bs = exp.create_batch_settings(nodes=3,
+                                           time="10:00:00",
+                                           batch_args=batch_args)
+            bs.set_account("default")
+
+        :param nodes: number of nodes for batch job, defaults to 1
+        :type nodes: int, optional
+        :param time: length of batch job, defaults to ""
+        :type time: str, optional
+        :param queue: queue or partition (if slurm), defaults to ""
+        :type queue: str, optional
+        :param account: user account name for batch system, defaults to ""
+        :type account: str, optional
+        :param batch_args: additional batch arguments, defaults to None
+        :type batch_args: dict[str, str], optional
+        :return: a newly created BatchSettings instance
+        :rtype: BatchSettings
+        :raises SmartSimError: if batch creation fails
+        """
+        try:
+            return settings.create_batch_settings(
+                self._launcher,
+                nodes=nodes,
+                time=time,
+                queue=queue,
+                account=account,
+                batch_args=batch_args,
+                **kwargs,
+            )
+        except SmartSimError as e:
+            logger.error(e)
+            raise
+
     def reconnect_orchestrator(self, checkpoint):
         """Reconnect to a running ``Orchestrator``
 
@@ -348,41 +464,48 @@ class Experiment:
             logger.error(e)
             raise
 
-    def summary(self):
+    def summary(self, format="github"):
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
         launched and completed in this ``Experiment``
 
-        :return: pandas Dataframe of ``Experiment`` history
-        :rtype: pd.DataFrame
+        :param format: the style in which the summary table is formatted,
+                       for a full list of styles see:
+                       https://github.com/astanin/python-tabulate#table-format,
+                       defaults to "github"
+        :type format: str, optional
+        :return: tabulate string of ``Experiment`` history
+        :rtype: str
         """
-        index = 0
-        df = pd.DataFrame(
-            columns=[
-                "Name",
-                "Entity-Type",
-                "JobID",
-                "RunID",
-                "Time",
-                "Status",
-                "Returncode",
-            ]
-        )
+        values = []
+        headers = [
+            "Name",
+            "Entity-Type",
+            "JobID",
+            "RunID",
+            "Time",
+            "Status",
+            "Returncode",
+        ]
+
         # TODO should this include running jobs?
         for job in self._control._jobs.completed.values():
             for run in range(job.history.runs + 1):
-                df.loc[index] = [
-                    job.entity.name,
-                    job.entity.type,
-                    job.history.jids[run],
-                    run,
-                    job.history.job_times[run],
-                    job.history.statuses[run],
-                    job.history.returns[run],
-                ]
-                index += 1
-        return df
+                values.append(
+                    [
+                        job.entity.name,
+                        job.entity.type,
+                        job.history.jids[run],
+                        run,
+                        job.history.job_times[run],
+                        job.history.statuses[run],
+                        job.history.returns[run],
+                    ]
+                )
+        return tabulate(
+            values, headers, showindex=True, tablefmt=format, missingval="None"
+        )
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
@@ -450,7 +573,8 @@ class Experiment:
                     color="green",
                 )
                 sprint(f"{model_name}")
-                sprint(f"{parameters}")
+                if model.params:
+                    sprint(f"{parameters}")
                 sprint(f"{run_settng}")
             sprint("\n")
         if orchestrator:

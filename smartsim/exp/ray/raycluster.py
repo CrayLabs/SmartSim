@@ -29,11 +29,12 @@ import re
 import time as _time
 import uuid
 
+from ..._core.utils import init_default
+from ..._core.utils.helpers import expand_exe_path
 from ...entity import EntityList, SmartSimEntity
-from ...error import SSConfigError, SSUnsupportedError
-from ...settings import AprunSettings, QsubBatchSettings, SbatchSettings, SrunSettings
-from ...utils import delete_elements, get_logger
-from ...utils.helpers import expand_exe_path, init_default
+from ...error import SmartSimError, SSUnsupportedError
+from ...log import get_logger
+from ...settings import settings
 
 logger = get_logger(__name__)
 
@@ -48,11 +49,11 @@ class RayCluster(EntityList):
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
-    :param ray_args: Arguments to be passed to Ray executable as `--key=value`, or `--key` if `value` is set to `None`.
+    :param ray_args: Arguments to be passed to Ray executable.
     :type ray_args: dict[str,str]
     :param num_nodes: Number of hosts, includes 1 head node and all worker nodes.
     :type num_nodes: int
-    :param run_args: Arguments to pass to launcher to specify details such as partition, time, and so on.
+    :param run_args: Arguments to pass to launcher to specify details such as partition or time.
     :type run_args: dict[str,str]
     :param batch_args: Additional batch arguments passed to launcher when running batch jobs.
     :type batch_args: dict[str,str]
@@ -60,13 +61,16 @@ class RayCluster(EntityList):
     :type launcher: str
     :param interface: Name of network interface the cluster nodes should bind to.
     :type interface: str
-    :param alloc: ID of allocation to run on, only used if launcher is Slurm and allocation is
-                  obtained with ``ray.slurm.get_allocation``
+    :param alloc: ID of allocation to run on, if obtained with ``smartsim.slurm.get_allocation``
     :type alloc: int
     :param batch: Whether cluster should be launched as batch file, ignored when ``launcher`` is `local`
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
+    :param run_command: specify launch binary, defaults to automatic selection.
+    :type run_command: str
+    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI.
+    :type hosts: str, list[str]
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
                      Can be set to
                      - `auto`: a strong password will be generated internally
@@ -90,13 +94,18 @@ class RayCluster(EntityList):
         time="01:00:00",
         interface="ipogif0",
         alloc=None,
+        run_command=None,
+        host_list=None,
         password="auto",
         **kwargs,
     ):
         launcher = launcher.lower()
-        if launcher not in ["slurm", "pbs"]:
+        supported_launchers = ["slurm", "pbs", "cobalt"]
+        if launcher not in supported_launchers:
             raise SSUnsupportedError(
-                "Only Slurm and PBS launchers are supported by RayCluster"
+                "The supported launchers for RayCluster are",
+                *[f"{launcher_name}," for launcher_name in supported_launchers],
+                f"but {launcher} was provided.",
             )
 
         if password:
@@ -129,11 +138,22 @@ class RayCluster(EntityList):
             interface=interface,
             alloc=alloc,
             num_nodes=num_nodes,
+            run_command=run_command if run_command else "auto",
+            host_list=host_list,
             **kwargs,
         )
         if batch:
-            self._build_batch_settings(num_nodes, time, batch_args, launcher)
+            self.batch_settings = settings.create_batch_settings(
+                launcher=launcher,
+                nodes=num_nodes,
+                time=time,
+                batch_args=batch_args,
+                **kwargs,
+            )
         self.ray_head_address = None
+
+        if host_list:
+            self.set_hosts(host_list=host_list, launcher=launcher)
 
     @property
     def batch(self):
@@ -144,6 +164,31 @@ class RayCluster(EntityList):
         except AttributeError:
             return False
 
+    def set_hosts(self, host_list, launcher):
+        """Specify the hosts for the ``RayCluster`` to launch on. This is
+        optional, unless ``run_command`` is `mpirun`.
+
+        :param host_list: list of hosts (compute node names)
+        :type host_list: str | list[str]
+        :raises TypeError: if wrong type
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all([isinstance(host, str) for host in host_list]):
+            raise TypeError("host_list argument must be list of strings")
+        # TODO check length
+        if self.batch:
+            self.batch_settings.set_hostlist(host_list)
+        for host, node in zip(host_list, self.entities):
+            # Aprun doesn't like settings hosts in batch launch
+            if launcher == "pbs" or launcher == "cobalt":
+                if not self.batch:
+                    node.run_settings.set_hostlist([host])
+            else:
+                node.run_settings.set_hostlist([host])
+
     def _initialize_entities(self, **kwargs):
 
         ray_port = kwargs.get("ray_port", 6789)
@@ -153,6 +198,7 @@ class RayCluster(EntityList):
         interface = kwargs.get("interface", "ipogif0")
         num_nodes = kwargs.get("num_nodes", 0)
         alloc = kwargs.get("alloc", None)
+        run_command = kwargs.get("run_command", None)
 
         ray_head = RayHead(
             name="ray_head",
@@ -160,9 +206,10 @@ class RayCluster(EntityList):
             ray_password=self._ray_password,
             ray_port=ray_port,
             launcher=launcher,
-            run_args=run_args,
-            ray_args=ray_args,
+            run_args=run_args.copy(),
+            ray_args=ray_args.copy(),
             interface=interface,
+            run_command=run_command,
             alloc=alloc,
         )
 
@@ -172,27 +219,16 @@ class RayCluster(EntityList):
             worker_model = RayWorker(
                 name=f"ray_worker_{worker_id}",
                 path=self.path,
-                run_args=run_args,
+                run_args=run_args.copy(),
                 ray_port=ray_port,
                 ray_password=self._ray_password,
-                ray_args=ray_args,
+                ray_args=ray_args.copy(),
                 interface=interface,
+                run_command=run_command,
                 launcher=launcher,
                 alloc=alloc,
             )
             self.entities.append(worker_model)
-
-    def _build_batch_settings(self, num_nodes, time, batch_args, launcher):
-        if launcher == "pbs":
-            self.batch_settings = QsubBatchSettings(
-                nodes=num_nodes, time=time, batch_args=batch_args
-            )
-        elif launcher == "slurm":
-            self.batch_settings = SbatchSettings(
-                nodes=num_nodes, time=time, batch_args=batch_args
-            )
-        else:
-            raise SSUnsupportedError("Only PBS and Slurm launchers are supported")
 
     def get_head_address(self):
         """Return address of head node
@@ -228,11 +264,11 @@ class RayCluster(EntityList):
 
 def find_ray_exe():
     """Find ray executable in current path."""
+    # TODO add this to CONFIG?
     try:
-        ray_exe = expand_exe_path("ray")
-        return ray_exe
-    except SSConfigError as e:
-        raise SSConfigError("Could not find ray executable") from e
+        return expand_exe_path("ray")
+    except (TypeError, FileNotFoundError):
+        raise SmartSimError("Could not find ray executable")
 
 
 def find_ray_stater_script():
@@ -250,7 +286,7 @@ def parse_ray_head_node_address(head_log):
     :rtype: str
     """
 
-    max_attempts = 12
+    max_attempts = 24
     attempts = 0
     while not os.path.isfile(head_log):
         _time.sleep(5)
@@ -291,8 +327,10 @@ class RayHead(SmartSimEntity):
         ray_args=None,
         launcher="slurm",
         interface="ipogif0",
+        run_command=None,
         alloc=None,
         dash_port=8265,
+        **kwargs,
     ):
         self.dashboard_port = dash_port
         self.batch_settings = None
@@ -305,7 +343,19 @@ class RayHead(SmartSimEntity):
             ray_port, ray_password, interface, ray_args
         )
 
-        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
+        run_settings = settings.create_run_settings(
+            launcher=launcher,
+            exe="python",
+            exe_args=ray_exe_args,
+            run_args=run_args,
+            run_command=run_command if run_command else "auto",
+            alloc=alloc,
+            **kwargs,
+        )
+
+        run_settings.set_tasks_per_node(1)
+        run_settings.set_tasks(1)
+
         super().__init__(name, path, run_settings)
 
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
@@ -336,41 +386,6 @@ class RayHead(SmartSimEntity):
 
         return " ".join(ray_starter_args)
 
-    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
-
-        if launcher == "slurm":
-            run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
-        elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
-        else:
-            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
-
-        run_settings.set_tasks(1)
-        run_settings.set_tasks_per_node(1)
-        return run_settings
-
-    def _build_pbs_settings(self, run_args, ray_args):
-
-        aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
-        aprun_settings.set_tasks(1)
-
-        return aprun_settings
-
-    def _build_srun_settings(self, alloc, run_args, ray_args):
-
-        delete_elements(run_args, ["oversubscribe"])
-
-        run_args["unbuffered"] = None
-
-        srun_settings = SrunSettings(
-            "python",
-            exe_args=ray_args,
-            run_args=run_args,
-            alloc=alloc,
-        )
-        srun_settings.set_nodes(1)
-        return srun_settings
-
 
 class RayWorker(SmartSimEntity):
     def __init__(
@@ -383,7 +398,9 @@ class RayWorker(SmartSimEntity):
         ray_args=None,
         interface="ipogif0",
         launcher="slurm",
+        run_command=None,
         alloc=None,
+        **kwargs,
     ):
 
         self.batch_settings = None
@@ -396,7 +413,19 @@ class RayWorker(SmartSimEntity):
             ray_password, ray_args, ray_port, interface
         )
 
-        run_settings = self._build_run_settings(launcher, alloc, run_args, ray_exe_args)
+        run_settings = settings.create_run_settings(
+            launcher=launcher,
+            exe="python",
+            exe_args=ray_exe_args,
+            run_args=run_args,
+            run_command=run_command,
+            alloc=alloc,
+            **kwargs,
+        )
+
+        run_settings.set_tasks_per_node(1)
+        run_settings.set_tasks(1)
+
         super().__init__(name, path, run_settings)
 
     @property
@@ -441,34 +470,3 @@ class RayWorker(SmartSimEntity):
         ray_starter_args += extra_ray_args
 
         return " ".join(ray_starter_args)
-
-    def _build_run_settings(self, launcher, alloc, run_args, ray_exe_args):
-
-        if launcher == "slurm":
-            run_settings = self._build_srun_settings(alloc, run_args, ray_exe_args)
-        elif launcher == "pbs":
-            run_settings = self._build_pbs_settings(run_args, ray_exe_args)
-        else:
-            raise SSUnsupportedError("Only slurm, and pbs launchers are supported.")
-
-        run_settings.set_tasks(1)
-        return run_settings
-
-    def _build_pbs_settings(self, run_args, ray_args):
-
-        aprun_settings = AprunSettings("python", exe_args=ray_args, run_args=run_args)
-
-        return aprun_settings
-
-    def _build_srun_settings(self, alloc, run_args, ray_args):
-        delete_elements(run_args, ["oversubscribe"])
-        run_args["unbuffered"] = None
-
-        srun_settings = SrunSettings(
-            "python",
-            exe_args=ray_args,
-            run_args=run_args,
-            alloc=alloc,
-        )
-        srun_settings.set_nodes(1)
-        return srun_settings

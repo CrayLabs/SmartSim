@@ -1,12 +1,12 @@
 import filecmp
 from distutils import dir_util
 from glob import glob
-from os import chmod, path
+from os import path
 
 import pytest
 
+from smartsim._core.generation.modelwriter import ModelWriter
 from smartsim.error.errors import ParameterWriterError
-from smartsim.generation.modelwriter import ModelWriter
 from smartsim.settings import RunSettings
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")

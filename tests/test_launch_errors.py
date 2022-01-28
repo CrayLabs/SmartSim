@@ -1,13 +1,19 @@
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import Orchestrator
-from smartsim.error import SmartSimError
-from smartsim.settings import RunSettings
+from smartsim.error import SmartSimError, SSUnsupportedError
+from smartsim.settings import JsrunSettings, RunSettings
 
-"""
-Test the launch errors with local launcher
-"""
+
+def test_unsupported_run_settings():
+    exp_name = "test-unsupported-run-settings"
+    exp = Experiment(exp_name, launcher="slurm")
+    bad_settings = JsrunSettings("echo", "hello")
+    model = exp.create_model("bad_rs", bad_settings)
+
+    with pytest.raises(SSUnsupportedError):
+        exp.start(model)
 
 
 def test_model_failure(fileutils):
@@ -22,7 +28,7 @@ def test_model_failure(fileutils):
 
     exp.start(M1, block=True)
     statuses = exp.get_status(M1)
-    assert all([stat == constants.STATUS_FAILED for stat in statuses])
+    assert all([stat == status.STATUS_FAILED for stat in statuses])
 
 
 def test_orchestrator_relaunch(fileutils):

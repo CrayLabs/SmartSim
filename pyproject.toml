@@ -24,3 +24,18 @@ exclude = '''
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "debug"
+
+[tool.isort]
+# supress circular import warning
+skip = ["tests/test_configs/circular_config"]
+
+[tool.coverage.run]
+source = ["smartsim"]
+# see test_configs/*_cov.cfg for "omit"
+
+[tool.coverage.report]
+ignore_errors = true
+# see test_configs/*_cov.cfg for "exclude_lines"
+
+[tool.coverage.html]
+directory = "htmlcov"

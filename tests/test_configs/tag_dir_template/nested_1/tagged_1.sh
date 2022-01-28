@@ -1,0 +1,1 @@
+echo "Hello with parameter 1 = ;PARAM1;"

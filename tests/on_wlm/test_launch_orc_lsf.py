@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from smartsim import Experiment, constants
+from smartsim import Experiment, status
 from smartsim.database import LSFOrchestrator
 
 # retrieved from pytest fixtures
@@ -29,13 +29,13 @@ def test_launch_lsf_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
     time.sleep(5)
 
@@ -61,12 +61,12 @@ def test_launch_lsf_cluster_orc(fileutils, wlmutils):
     status = exp.get_status(orc)
 
     # don't use assert so that orc we don't leave an orphan process
-    if constants.STATUS_FAILED in status:
+    if status.STATUS_FAILED in status:
         exp.stop(orc)
         assert False
 
     exp.stop(orc)
     status = exp.get_status(orc)
-    assert all([stat == constants.STATUS_CANCELLED for stat in status])
+    assert all([stat == status.STATUS_CANCELLED for stat in status])
 
     time.sleep(5)

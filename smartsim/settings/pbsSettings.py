@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..error import SmartSimError, SSConfigError
-from ..utils.helpers import init_default
-from .settings import BatchSettings
+from .._core.utils import init_default
+from ..error import SmartSimError
+from .base import BatchSettings
 
 
 class QsubBatchSettings(BatchSettings):
@@ -64,16 +64,20 @@ class QsubBatchSettings(BatchSettings):
         :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        super().__init__("qsub", batch_args=batch_args)
+
+        super().__init__(
+            "qsub",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=account,
+            queue=queue,
+            time=time,
+            **kwargs,
+        )
         self.resources = init_default({}, resources, dict)
-        self._nodes = nodes
-        self._time = time
+
         self._ncpus = ncpus
         self._hosts = None
-        if account:
-            self.set_account(account)
-        if queue:
-            self.set_queue(queue)
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -84,7 +88,8 @@ class QsubBatchSettings(BatchSettings):
         :param num_nodes: number of nodes
         :type num_nodes: int
         """
-        self._nodes = int(num_nodes)
+        if num_nodes:
+            self._nodes = int(num_nodes)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -113,7 +118,8 @@ class QsubBatchSettings(BatchSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        self._time = walltime
+        if walltime:
+            self._time = walltime
 
     def set_queue(self, queue):
         """Set the queue for the batch job
@@ -121,7 +127,8 @@ class QsubBatchSettings(BatchSettings):
         :param queue: queue name
         :type queue: str
         """
-        self.batch_args["q"] = str(queue)
+        if queue:
+            self.batch_args["q"] = str(queue)
 
     def set_ncpus(self, num_cpus):
         """Set the number of cpus obtained in each node.
@@ -135,13 +142,14 @@ class QsubBatchSettings(BatchSettings):
         """
         self._ncpus = int(num_cpus)
 
-    def set_account(self, acct):
+    def set_account(self, account):
         """Set the account for this batch job
 
         :param acct: account id
         :type acct: str
         """
-        self.batch_args["A"] = str(acct)
+        if account:
+            self.batch_args["A"] = str(account)
 
     def set_resource(self, resource_name, value):
         """Set a resource value for the Qsub batch
@@ -163,12 +171,13 @@ class QsubBatchSettings(BatchSettings):
 
         :return: batch arguments for Qsub
         :rtype: list[str]
+        :raises ValueError: if options are supplied without values
         """
         opts = self._create_resource_list()
         for opt, value in self.batch_args.items():
             prefix = "-"
             if not value:
-                raise SSConfigError("PBS options without values are not allowed")
+                raise ValueError("PBS options without values are not allowed")
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 

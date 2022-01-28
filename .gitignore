@@ -7,14 +7,18 @@ htmlcov
 smartsim.egg-info
 
 # Dependencies
-third-party
+smartsim/_core/.third-party
 
 # Docs
 _build
 
 smartredis
 
-smartsim/bin/redis-server
-smartsim/bin/redis-cli
+# written upon install
+smartsim/version.py
 
-smartsim/lib
+smartsim/_core/bin/redis-server
+smartsim/_core/bin/redis-cli
+
+# created upon install
+smartsim/_core/lib

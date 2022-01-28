@@ -93,33 +93,38 @@ docs:
 # help: cov                            - generate html coverage report for Python client
 .PHONY: cov
 cov:
-		@cd ./tests/ && coverage html
-		@echo if data was present, coverage report is in ./tests/htmlcov/index.html
+	@coverage html
+	@echo if data was present, coverage report is in ./htmlcov/index.html
 
 # help:
 # help: Test
 # help: -------
 
-# help: test                           - Build and run all tests
+# help: test                           - Run all tests
 .PHONY: test
 test:
-	@cd ./tests/; python -m pytest --ignore=full_wlm/
+	@python -m pytest --ignore=tests/full_wlm/
 
-# help: test-verbose                   - Build and run all tests [verbosely]
+# help: test-verbose                   - Run all tests verbosely
 .PHONY: test-verbose
 test-verbose:
-	@cd ./tests/; python -m pytest -vv --ignore=full_wlm/
+	@python -m pytest -vv --ignore=tests/full_wlm/
 
-# help: test-cov                       - run python tests with coverage
+# help: test-debug                     - Run all tests with debug output
+.PHONY: test-debug
+test-debug:
+	@SMARTSIM_LOG_LEVEL=developer python -m pytest -s -o log_cli=true -vv --ignore=tests/full_wlm/
+
+# help: test-cov                       - Run all tests with coverage
 .PHONY: test-cov
 test-cov:
-	@cd ./tests/; python -m pytest --cov=../smartsim -vv --cov-config=${COV_FILE} --ignore=full_wlm/
+	@python -m pytest -vv --cov=./smartsim --cov-config=${COV_FILE} --ignore=tests/full_wlm/
 
 
-# help: test-full                      - run all WLM tests with Python coverage (full test suite)
+# help: test-full                      - Run all WLM tests with Python coverage (full test suite)
 # help:                                  WARNING: do not run test-full on shared systems.
 .PHONY: test-full
 test-full:
-	@cd ./tests/; python -m pytest --cov=../smartsim -vv --cov-config=${COV_FILE}
+	@python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
 
 

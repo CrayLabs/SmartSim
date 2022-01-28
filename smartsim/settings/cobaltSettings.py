@@ -24,15 +24,13 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from smartsim.error.errors import SmartSimError
-
-from ..error import SSConfigError
-from ..utils.helpers import init_default
-from .settings import BatchSettings
+from .base import BatchSettings
 
 
 class CobaltBatchSettings(BatchSettings):
-    def __init__(self, nodes=None, time="", queue=None, account=None, batch_args=None):
+    def __init__(
+        self, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
+    ):
         """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None
@@ -52,15 +50,15 @@ class CobaltBatchSettings(BatchSettings):
         :param batch_args: extra batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        super().__init__("qsub", batch_args=batch_args)
-        if nodes:
-            self.set_nodes(nodes)
-        if time:
-            self.set_walltime(time)
-        if account:
-            self.set_account(account)
-        if queue:
-            self.set_queue(queue)
+        super().__init__(
+            "qsub",
+            batch_args=batch_args,
+            nodes=nodes,
+            account=account,
+            queue=queue,
+            time=time,
+            **kwargs,
+        )
 
     def set_walltime(self, walltime):
         """Set the walltime of the job
@@ -75,7 +73,8 @@ class CobaltBatchSettings(BatchSettings):
         """
         # TODO check for formatting errors here
         # TODO catch existing "t" in batch_args
-        self.batch_args["time"] = walltime
+        if walltime:
+            self.batch_args["time"] = walltime
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
@@ -84,7 +83,8 @@ class CobaltBatchSettings(BatchSettings):
         :type num_nodes: int
         """
         # TODO catch existing "n" in batch_args
-        self.batch_args["nodecount"] = int(num_nodes)
+        if num_nodes:
+            self.batch_args["nodecount"] = int(num_nodes)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -117,16 +117,18 @@ class CobaltBatchSettings(BatchSettings):
         :type queue: str
         """
         # TODO catch existing "q" in batch args
-        self.batch_args["queue"] = str(queue)
+        if queue:
+            self.batch_args["queue"] = str(queue)
 
-    def set_account(self, acct):
+    def set_account(self, account):
         """Set the account for this batch job
 
         :param acct: account id
         :type acct: str
         """
         # TODO catch existing "A" in batch_args
-        self.batch_args["project"] = acct
+        if account:
+            self.batch_args["project"] = account
 
     def format_batch_args(self):
         """Get the formatted batch arguments for a preview

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim.constants import STATUS_FAILED
+from smartsim.status import STATUS_FAILED
 
 should_run = True
 try:
@@ -37,9 +37,11 @@ def test_torch_model_and_script(fileutils, mlutils, wlmutils):
     db.set_path(test_dir)
     exp.start(db)
 
-    run_settings = wlmutils.get_run_settings(
+    run_settings = exp.create_run_settings(
         "python", f"run_torch.py --device={test_device}"
     )
+    if wlmutils.get_test_launcher() != "local":
+        run_settings.set_tasks(1)
     model = exp.create_model("torch_script", run_settings)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))

@@ -1,6 +1,6 @@
 import pytest
 
-from smartsim.control import Controller, Manifest
+from smartsim._core.control import Controller, Manifest
 from smartsim.database import Orchestrator, PBSOrchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.error import SmartSimError, SSConfigError, SSUnsupportedError
@@ -28,7 +28,7 @@ def test_finished_not_found():
     rs = RunSettings("python")
     model = Model("hello", {}, "./", rs)
     cont = Controller(launcher="local")
-    with pytest.raises(SmartSimError):
+    with pytest.raises(ValueError):
         cont.finished(model)
 
 
@@ -54,7 +54,7 @@ def test_unsupported_launcher():
 def test_no_launcher():
     """Test when user provideds unsupported launcher"""
     cont = Controller(launcher="local")
-    with pytest.raises(SSConfigError):
+    with pytest.raises(TypeError):
         cont.init_launcher(None)
 
 
@@ -63,16 +63,8 @@ def test_wrong_orchestrator():
     orc = PBSOrchestrator(6780, db_nodes=3, interface="lo")
     cont = Controller(launcher="local")
     manifest = Manifest(orc)
-    with pytest.raises(SSConfigError):
-        cont._sanity_check_launch(manifest)
-
-
-def test_catch_empty_ensemble():
-    e = Ensemble("empty", {}, batch_settings=SbatchSettings())
-    cont = Controller(launcher="local")
-    manifest = Manifest(e)
-    with pytest.raises(SSConfigError):
-        cont._sanity_check_launch(manifest)
+    with pytest.raises(SmartSimError):
+        cont._launch(manifest)
 
 
 def test_bad_orc_checkpoint():

@@ -1,13 +1,7 @@
-from shutil import which
-
 import pytest
 
 from smartsim.error.errors import LauncherError
-from smartsim.launcher.slurm.slurm import (
-    _get_system_partition_info,
-    get_default_partition,
-    validate,
-)
+from smartsim.slurm import _get_system_partition_info, get_default_partition, validate
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":

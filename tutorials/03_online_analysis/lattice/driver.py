@@ -15,9 +15,10 @@ fig = plt.figure(figsize=(12,6), dpi=80)
 time_steps, seed = 3000, 42
 
 # define how simulation should be executed
-settings = RunSettings("python", exe_args=["fv_sim.py",
-                                           f"--seed={seed}",
-                                           f"--steps={time_steps}"])
+settings = exp.create_run_settings("python", 
+                                   exe_args=["fv_sim.py",
+                                             f"--seed={seed}",
+                                             f"--steps={time_steps}"])
 model = exp.create_model("fv_simulation", settings)
 
 # tell exp.generate to include this file in the created run directory
@@ -38,13 +39,15 @@ client.poll_key("cylinder", 200, 100)
 cylinder = client.get_tensor("cylinder").astype(bool)
 
 for i in range(0, time_steps, 5): # plot every 5th timestep
-    client.poll_key(f"data_{str(i)}", 10, 1000)
-    dataset = client.get_dataset(f"data_{str(i)}")
+    client.poll_key(f"data_{i}", 10, 1000)
+    dataset = client.get_dataset(f"data_{i}")
     ux, uy = dataset.get_tensor("ux"), dataset.get_tensor("uy")
 
     plt.cla()
     ux[cylinder], uy[cylinder] = 0, 0
-    vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
+    vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (
+        np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1)
+    )
     vorticity[cylinder] = np.nan
     cmap = plt.cm.get_cmap("bwr").copy()
     cmap.set_bad(color='black')

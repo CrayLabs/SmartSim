@@ -1,15 +1,13 @@
 import logging
-import sys
 import time
 from os import environ
-from shutil import which
 
 import pytest
 
 from smartsim import Experiment
 from smartsim.exp.ray import RayCluster
 
-"""Test Ray cluster Slurm launch and shutdown.
+"""Test Ray cluster launch and shutdown.
 """
 
 # retrieved from pytest fixtures

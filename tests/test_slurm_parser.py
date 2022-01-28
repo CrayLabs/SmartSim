@@ -1,8 +1,4 @@
-import os
-
-import pytest
-
-from smartsim.launcher.slurm import slurmParser
+from smartsim._core.launcher.slurm import slurmParser
 
 # -- Salloc ---------------------------------------------------------
 
