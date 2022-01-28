@@ -418,7 +418,7 @@ class BuildEnv:
         if not torch_path:
             torch_path = _torch_site_path()
         if not torch_path:
-            raise SetupError("Could not located torch cmake path")
+            raise SetupError("Could not locate torch cmake path")
         return str(torch_path)
 
     @staticmethod
