@@ -434,6 +434,7 @@ Model
    :inherited-members:
 
 
+
 Ensemble
 ========
 
@@ -458,7 +459,7 @@ Ensemble
 Machine Learning
 ================
 
-.. ml_api:
+.. _ml_api:
 
 SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
 
@@ -482,15 +483,14 @@ SmartSim includes built-in utilities for supporting TensorFlow and Keras in trai
 .. currentmodule:: smartsim.ml.tf.data
 
 .. autoclass:: StaticDataGenerator
-   :members:
    :show-inheritance:
    :inherited-members:
+   :members:
 
 .. autoclass:: DataGenerator
    :members:
    :show-inheritance:
    :inherited-members:
-
 
 PyTorch
 ----------
@@ -507,6 +507,11 @@ SmartSim includes built-in utilities for supporting PyTorch in training and infe
    :inherited-members:
 
 .. autoclass:: DataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+.. autoclass:: DataLoader
    :members:
    :show-inheritance:
    :inherited-members:
