@@ -90,7 +90,7 @@ check-lint:
 docs:
 	@cd doc; make html
 
-# help: docks                           - generate project documentation with docker
+# help: docks                          - generate project documentation with docker
 .PHONY: docks
 docks:
 	@if [ -d "docs" ]; then rm -rf docs; fi
@@ -105,6 +105,14 @@ docks:
 cov:
 	@coverage html
 	@echo if data was present, coverage report is in ./htmlcov/index.html
+
+
+# help: tutorials-dev                  - Build and start a docker container to run the tutorials
+.PHONY: tutorials-dev
+tutorials-dev:
+	@docker compose build tutorials
+	@docker run -p 8888:8888 smartsim-tutorials:dev-latest
+
 
 # help:
 # help: Test

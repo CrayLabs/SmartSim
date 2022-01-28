@@ -4,11 +4,6 @@ LABEL maintainer="Cray Labs"
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ=US/Seattle
 
-#TODO
-# - add openmpi
-# - add tutorials from other sections
-# - add permissions to the craylabs user
-
 RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs
 
 RUN apt-get update \
@@ -31,7 +26,6 @@ USER craylabs
 
 RUN cd SmartSim && \
     SMARTSIM_SUFFIX=dev python -m pip install .
-
 
 # TODO set SmartRedis version when thats put in
 #RUN git clone https://github.com/CrayLabs/SmartSim.git --branch develop --depth=1 \
