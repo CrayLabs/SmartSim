@@ -1,7 +1,6 @@
 import os
 import re
 import shutil
-import site
 import stat
 import subprocess
 import sys
@@ -351,7 +350,9 @@ class RedisAIBuilder(Builder):
 
         # retrieve torch shared libraries and copy to the
         # smartsim/_core/lib/backends/redisai_torch/lib dir
-        pip_torch_path = Path(site.getsitepackages()[0]) / "torch"
+        # self.torch_dir should be /path/to/torch/share/cmake/Torch
+        # so we take the great grandparent here
+        pip_torch_path = Path(self.torch_dir).parent.parent.parent
         pip_torch_lib_path = pip_torch_path / "lib"
 
         self.copy_dir(pip_torch_lib_path, ss_rai_torch_lib_path, set_exe=True)
