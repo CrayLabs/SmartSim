@@ -37,5 +37,5 @@ jobs:
           git checkout -b doc
           git add .
           git commit -m "Update develop documentation"
-          git push -f origin doc
+          git push --force --quiet "https://spartee:${{ secrets.DOC_PA_TOKEN }}@github.com/CrayLabs/SmartSim" doc:doc
 
