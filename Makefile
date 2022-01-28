@@ -136,5 +136,3 @@ test-cov:
 .PHONY: test-full
 test-full:
 	@python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
-
-

@@ -24,8 +24,10 @@ jobs:
 
       - name: Move over release docs and stubs
         run: |
-          rm -rf doc-branch/docs/docs/
+          rm -rf doc-branch/docs/develop/
           cp -r doc-branch/docs/* ./docs/
+          touch ./docs/.nojekyll
+          touch ./docs/develop/.nojekyll
           rm -rf doc-branch
 
       - name: Commit files and push
