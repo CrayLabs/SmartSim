@@ -36,11 +36,11 @@ from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
+from .._core.utils.helpers import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError
 from ..log import get_logger
 from ..settings.base import RunSettings
-from .._core.utils.helpers import get_ip_from_host
 
 logger = get_logger(__name__)
 
