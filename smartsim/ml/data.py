@@ -177,12 +177,10 @@ class BatchDownloader:
     :type sample_prefix: str
     :param target_prefix: prefix of keys representing targets
     :type target_prefix: str
-    :param sub_indices: Sub indices of the batches. This is useful in case each producer
-                        has multiple ranks and each rank produces batches. Each
-                        rank will then need to use a different sub-index, which is an element
-                        of the `sub_indices`. If an integer is specified for `sub_indices`,
-                        then it is converted to `range(sub_indices)`.
-    :type sub_indices: int or list
+    :param uploading_ranks: Number of ranks every uploader is run on (e.g, if each rank in an MPI
+                            simulation is uploading its own batches, this will be the MPI comm world
+                            size of the simulation).
+    :type uploading_ranks: int
     :param num_classes: Number of classes of targets, if categorical
     :type num_classes: int
     :param producer_prefixes: Prefixes of processes which will be producing batches.
@@ -213,7 +211,7 @@ class BatchDownloader:
         uploader_name="training_data",
         sample_prefix="samples",
         target_prefix="targets",
-        sub_indices=None,
+        uploading_ranks=None,
         num_classes=None,
         producer_prefixes=None,
         cluster=True,
@@ -240,7 +238,10 @@ class BatchDownloader:
         if uploader_info == "manual":
             self.sample_prefix = sample_prefix
             self.target_prefix = target_prefix
-            self.sub_indices = sub_indices
+            if uploading_ranks is not None:
+                self.sub_indices = range(uploading_ranks)
+            else:
+                self.sub_indices = None
             if producer_prefixes:
                 self.producer_prefixes = list(producer_prefixes)
             else:
