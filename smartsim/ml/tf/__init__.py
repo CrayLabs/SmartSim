@@ -23,5 +23,5 @@ except AssertionError:  # pragma: no cover
     ) from None
 
 
-from .data import DataGenerator, StaticDataGenerator
+from .data import DynamicDataGenerator, StaticDataGenerator
 from .utils import freeze_model

@@ -1,104 +1,23 @@
 import numpy as np
 import torch
 
-from smartsim.ml.data import BatchDownloader, ContinuousBatchDownloader
+from smartsim.ml.data import StaticDataDownloader, DynamicDataDownloader
 
 
-class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
-    """A class to download batches from the DB.
+class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset):
+    """A class to download a dataset from the DB.
 
-    By default, the StaticDataGenerator has to be created in a process
-    launched through SmartSim, with sample producers listed as incoming
-    entities.
-
-    All details about the batches must be defined in
-    the constructor; two mechanisms are available, `manual` and
-    `auto`.
-
-     - When specifying `auto`, the user must also specify
-      `uploader_name`. BatchDownloader will get all needed information
-      from the database (this expects a Dataset like the one created
-      by TrainingDataUploader to be available and stored as `uploader_name`
-      on the DB).
-
-     - When specifying `manual`, the user must also specify details
-       of batch naming. Specifically, for each incoming entity with
-       a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index> for all indices
-       in `sub_indexes` if supplied, and, if
-       `target_prefix` is supplied, it will also query for all targets
-       named <target_prefix>.<sub_index>. If `producer_prefixes` is
-       None, then all incoming entities will be treated as producers,
-       and for each one, the corresponding batches will be downloaded.
-
-    The flag `init_samples` defines whether sources (the list of batches
-    to be fetched) and samples (the actual data) should automatically
-    be set up in the costructor.
+    Details about parameters and features of this class can be found
+    in the documentation of ``StaticDataDownloader``, of which it is just
+    a PyTorch-specialized sub-class.
 
     Note that if the ``StaticDataGenerator`` has to be used through a ``DataLoader``,
     `init_samples` must be set to `False`, as sources and samples will be initialized
     by the ``DataLoader`` workers.
-
-    If the user needs to modify the list of sources, then `init_samples=False`
-    has to be set. In that case, to set up a `StaticDataGenerator`, the user has to call
-    `init_sources()` (which initializes the list of sources and the SmartRedis client)
-    and `init_samples()`.  After `init_sources()` is called,
-    a list of data sources is populated, representing the batches which
-    will be downloaded.
-
-    Each source is represented as a tuple `(producer_name, sub_index)`.
-    Before `init_samples()` is called, the user can modify the list.
-    Once `init_samples()` is called, all data is downloaded and batches
-    can be obtained with iter().
-
-    After initialization, samples and targets will not be updated. The data can
-    be shuffled by calling `update_data()`, if `shuffle` is set to ``True`` at
-    initialization.
-
-    :param batch_size: Size of batches obtained with __iter__
-    :type batch_size: int
-    :param shuffle: whether order of samples has to be shuffled when calling `update_data`
-    :type shuffle: bool
-    :param uploader_info: Set to `auto` uploader information has to be downloaded from DB,
-                          or to `manual` if it is provided by the user
-    :type uploader_info: str
-    :param uploader_name: Name of uploader info dataset, only used if `uploader_info` is `auto`
-    :type uploader_name: str
-    :param sample_prefix: prefix of keys representing batches
-    :type sample_prefix: str
-    :param target_prefix: prefix of keys representing targets
-    :type target_prefix: str
-    :param sub_indices: Sub indices of the batches. This is useful in case each producer
-                        has multiple ranks and each rank produces batches. Each
-                        rank will then need to use a different sub-index, which is an element
-                        of the `sub_indices`. If an integer is specified for `sub_indices`,
-                        then it is converted to `range(sub_indices)`.
-    :type sub_indices: int or list
-    :param num_classes: Number of classes of targets, if categorical
-    :type num_classes: int
-    :param producer_prefixes: Prefixes of processes which will be producing batches.
-                              This can be useful in case the consumer processes also
-                              have other incoming entities.
-    :type producer_prefixes: str
-    :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
-    :type smartredis_cluster: bool
-    :param smartredis_address: Address of Redis client as <ip_address>:<port>
-    :type smartredis_address: str
-    :param replica_rank: When BatchDownloader is used distributedly, indicates
-                         the rank of this object
-    :type replica_rank: int
-    :param num_replicas: When BatchDownlaoder is used distributedly, indicates
-                         the total number of ranks
-    :type num_replicas: int
-    :param verbose: Whether log messages should be printed
-    :type verbose: bool
-    :param init_samples: whether samples should be initialized in the constructor
-    :type init_samples: bool
     """
 
     def __init__(self, **kwargs):
-        BatchDownloader.__init__(self, **kwargs)
+        StaticDataDownloader.__init__(self, **kwargs)
 
     def _add_samples(self, batch_name, target_name):
         if self.samples is None:
@@ -125,96 +44,16 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
             np.random.shuffle(self.indices)
 
 
-class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
+class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
     """A class to download batches from the DB.
 
-    By default, the DataGenerator has to be created in a process
-    launched through SmartSim, with sample producers listed as incoming
-    entities.
+    Details about parameters and features of this class can be found
+    in the documentation of ``DynamicDataDownloader``, of which it is just
+    a PyTorch-specialized sub-class.
 
-    All details about the batches must be defined in
-    the constructor; two mechanisms are available, `manual` and
-    `auto`.
-
-     - When specifying `auto`, the user must also specify
-      `uploader_name`. DataGenerator will get all needed information
-      from the database (this expects a Dataset like the one created
-      by TrainingDataUploader to be available and stored as `uploader_name`
-      on the DB).
-
-     - When specifying `manual`, the user must also specify details
-       of batch naming. Specifically, for each incoming entity with
-       a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index>_<iteration> for all indices
-       in `sub_indices` if supplied, and, if
-       `target_prefix` is supplied, it will also query for all targets
-       named <target_prefix>.<sub_index>.<iteration>. If `producer_prefixes` is
-       None, then all incoming entities will be treated as producers,
-       and for each one, the corresponding batches will be downloaded.
-
-    The flag `init_samples` defines whether sources (the list of batches
-    to be fetched) and samples (the actual data) should automatically
-    be set up in the costructor.
-
-    Note that if the ``DataGenerator`` has to be used through a ``DataLoader``,
+    Note that if the ``DynamicDataGenerator`` has to be used through a ``DataLoader``,
     `init_samples` must be set to `False`, as sources and samples will be initialized
     by the ``DataLoader`` workers.
-
-    If the user needs to modify the list of sources, then `init_samples=False`
-    has to be set. In that case, to set up a `BatchDownlaoder`, the user has to call
-    `init_sources()` (which initializes the list of sources and the SmartRedis client)
-    and `init_samples()`.  After `init_sources()` is called,
-    a list of data sources is populated, representing the batches which
-    will be downloaded. See `init_sources()`
-
-    Each source is represented as a tuple `(producer_name, sub_index, iteration)`.
-    Before `init_samples()` is called, the user can modify the list.
-    Once `init_samples()` is called, all data is downloaded and batches
-    can be obtained with iter().
-
-    After initialization, samples and targets can be updated calling `update_data()`,
-    which shuffles the available samples, if `shuffle` is set to ``True`` at initialization.
-
-    :param batch_size: Size of batches obtained with __iter__
-    :type batch_size: int
-    :param shuffle: whether order of samples has to be shuffled when calling `update_data`
-    :type shuffle: bool
-    :param uploader_info: Set to `auto` uploader information has to be downloaded from DB,
-                          or to `manual` if it is provided by the user
-    :type uploader_info: str
-    :param uploader_name: Name of uploader info dataset, only used if `uploader_info` is `auto`
-    :type uploader_name: str
-    :param sample_prefix: prefix of keys representing batches
-    :type sample_prefix: str
-    :param target_prefix: prefix of keys representing targets
-    :type target_prefix: str
-    :param sub_indices: Sub indices of the batches. This is useful in case each producer
-                        has multiple ranks and each rank produces batches. Each
-                        rank will then need to use a different sub-index, which is an element
-                        of the `sub_indices`. If an integer is specified for `sub_indices`,
-                        then it is converted to `range(sub_indices)`.
-    :type sub_indices: int or list
-    :param num_classes: Number of classes of targets, if categorical
-    :type num_classes: int
-    :param producer_prefixes: Prefixes of processes which will be producing batches.
-                              This can be useful in case the consumer processes also
-                              have other incoming entities.
-    :type producer_prefixes: str
-    :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
-    :type smartredis_cluster: bool
-    :param smartredis_address: Address of Redis client as <ip_address>:<port>
-    :type smartredis_address: str
-    :param replica_rank: When BatchDownloader is used in a distributed setting, indicates
-                         the rank of this replica
-    :type replica_rank: int
-    :param num_replicas: When ContinuousBatchDownlaoder is used in a distributed setting,
-                         indicates the total number of replicas (ranks)
-    :type num_replicas: int
-    :param verbose: Whether log messages should be printed
-    :type verbose: bool
-    :param init_samples: whether samples should be initialized in the constructor
-    :type init_samples: bool
     """
 
     def __init__(self, **kwargs):
@@ -235,6 +74,14 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
 
 
 class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
+    """DataLoader to be used as a wrapper of StaticDataGenerator or DynamicDataGenerator
+
+    This is just a sub-class of ``torch.utils.data.DataLoader`` which
+    sets up sources of a data generator correctly. DataLoader parameters
+    such as `num_workers` can be passed at initialization. `batch_size` should always
+    be set to None.
+    """
+
     def __init__(self, dataset: StaticDataGenerator, **kwargs):
         super().__init__(
             dataset,

@@ -7,8 +7,8 @@ from smartsim import status
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SmartSimError
 from smartsim.experiment import Experiment
-from smartsim.ml.tf import DataGenerator as TFDataGenerator
-from smartsim.ml.tf import DataGenerator as TorchDataGenerator
+from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
+from smartsim.ml.tf import DynamicDataGenerator as TorchDataGenerator
 
 shouldrun = True
 try:

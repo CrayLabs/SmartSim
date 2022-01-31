@@ -1,9 +1,9 @@
 import tensorflow.keras as keras
 
-from smartsim.ml.tf import DataGenerator
+from smartsim.ml.tf import DynamicDataGenerator
 
 
-training_generator = DataGenerator(cluster=False, verbose=True)
+training_generator = DynamicDataGenerator(cluster=False, verbose=True)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
 model.compile(optimizer="Adam", loss="mse", metrics=["mae"])
 

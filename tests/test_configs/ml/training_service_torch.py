@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from smartsim.ml.torch import DataGenerator, DataLoader
+from smartsim.ml.torch import DynamicDataGenerator, DataLoader
 
 
 class Net(nn.Module):
@@ -43,7 +43,7 @@ def check_dataloader(dl):
 if __name__ == "__main__":
     torch.multiprocessing.set_start_method("spawn")
 
-    training_set = DataGenerator(
+    training_set = DynamicDataGenerator(
         cluster=False,
         shuffle=True,
         batch_size=4,

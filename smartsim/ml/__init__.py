@@ -1,6 +1,6 @@
 from .data import (
-    BatchDownloader,
-    ContinuousBatchDownloader,
+    StaticDataDownloader,
+    DynamicDataDownloader,
     TrainingDataUploader,
     form_name,
 )

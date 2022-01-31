@@ -116,10 +116,10 @@ class TrainingDataUploader:
         self.batch_idx += 1
 
 
-class BatchDownloader:
-    """A class to download batches from the DB.
+class StaticDataDownloader:
+    """A class to download a dataset from the DB.
 
-    By default, the BatchDownloader has to be created in a process
+    By default, the StaticDataDownloader has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
     entities.
 
@@ -128,7 +128,7 @@ class BatchDownloader:
     `auto`.
 
      - When specifying `auto`, the user must also specify
-      `uploader_name`. BatchDownloader will get all needed information
+      `uploader_name`. StaticDataDownloader will get all needed information
       from the database (this expects a Dataset like the one created
       by TrainingDataUploader to be available and stored as `uploader_name`
       on the DB).
@@ -136,7 +136,7 @@ class BatchDownloader:
      - When specifying `manual`, the user must also specify details
        of batch naming. Specifically, for each incoming entity with
        a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
+       StaticDataDownloader will query the DB
        for all batches named <sample_prefix>_<sub_index> for all indices
        in `sub_indexes` if supplied, and, if
        `target_prefix` is supplied, it will also query for all targets
@@ -177,21 +177,21 @@ class BatchDownloader:
     :type sample_prefix: str
     :param target_prefix: prefix of keys representing targets
     :type target_prefix: str
-    :param uploading_ranks: Number of ranks every uploader is run on (e.g, if each rank in an MPI
-                            simulation is uploading its own batches, this will be the MPI comm world
-                            size of the simulation).
-    :type uploading_ranks: int
+    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each 
+                           rank in an MPI simulation is uploading its own batches,
+                           this will be the MPI comm world size of the simulation).
+    :type uploader_ranks: int
     :param num_classes: Number of classes of targets, if categorical
     :type num_classes: int
-    :param producer_prefixes: Prefixes of processes which will be producing batches.
-                              This can be useful in case the consumer processes also
-                              have other incoming entities.
+    :param producer_prefixes: Prefixes of names of which will be producing batches.
+                              These can be e.g. prefixes of SmartSim entity names in
+                              an ensemble.
     :type producer_prefixes: str
     :param cluster: Whether the Orchestrator will be run as a cluster
     :type cluster: bool
     :param address: Address of Redis client as <ip_address>:<port>
     :type address: str
-    :param replica_rank: When BatchDownloader is used distributedly, indicates
+    :param replica_rank: When StaticDataDownloader is used distributedly, indicates
                          the rank of this object
     :type replica_rank: int
     :param num_replicas: When BatchDownlaoder is used distributedly, indicates
@@ -211,7 +211,7 @@ class BatchDownloader:
         uploader_name="training_data",
         sample_prefix="samples",
         target_prefix="targets",
-        uploading_ranks=None,
+        uploader_ranks=None,
         num_classes=None,
         producer_prefixes=None,
         cluster=True,
@@ -238,8 +238,8 @@ class BatchDownloader:
         if uploader_info == "manual":
             self.sample_prefix = sample_prefix
             self.target_prefix = target_prefix
-            if uploading_ranks is not None:
-                self.sub_indices = [str(rank) for rank in range(uploading_ranks)]
+            if uploader_ranks is not None:
+                self.sub_indices = [str(rank) for rank in range(uploader_ranks)]
             else:
                 self.sub_indices = None
             if producer_prefixes:
@@ -537,10 +537,10 @@ class BatchDownloader:
         return length
 
 
-class ContinuousBatchDownloader(BatchDownloader):
-    """A class to download batches from the DB.
+class DynamicDataDownloader(StaticDataDownloader):
+    """A class to download batches from the DB as they are produced.
 
-    By default, the ContinuousBatchDownloader has to be created in a process
+    By default, the DynamicDataDownloader has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
     entities.
 
@@ -549,7 +549,7 @@ class ContinuousBatchDownloader(BatchDownloader):
     `auto`.
 
      - When specifying `auto`, the user must also specify
-      `uploader_name`. BatchDownloader will get all needed information
+      `uploader_name`. DynamicDataDownloader will get all needed information
       from the database (this expects a Dataset like the one created
       by TrainingDataUploader to be available and stored as `uploader_name`
       on the DB).
@@ -557,7 +557,7 @@ class ContinuousBatchDownloader(BatchDownloader):
      - When specifying `manual`, the user must also specify details
        of batch naming. Specifically, for each incoming entity with
        a name starting with an element of `producer_prefixes`,
-       BatchDownloader will query the DB
+       DynamicDataDownloader will query the DB
        for all batches named <sample_prefix>_<sub_index>_<iteration> for all indices
        in `sub_indices` if supplied, and, if
        `target_prefix` is supplied, it will also query for all targets
@@ -570,7 +570,7 @@ class ContinuousBatchDownloader(BatchDownloader):
     be set up in the costructor.
 
     If the user needs to modify the list of sources, then `init_samples=False`
-    has to be set. In that case, to set up a `BatchDownlaoder`, the user has to call
+    has to be set. In that case, to set up a `DynamicDataDownloader`, the user has to call
     `init_sources()` (which initializes the list of sources and the SmartRedis client)
     and `init_samples()`.  After `init_sources()` is called,
     a list of data sources is populated, representing the batches which
@@ -597,12 +597,10 @@ class ContinuousBatchDownloader(BatchDownloader):
     :type sample_prefix: str
     :param target_prefix: prefix of keys representing targets
     :type target_prefix: str
-    :param sub_indices: Sub indices of the batches. This is useful in case each producer
-                        has multiple ranks and each rank produces batches. Each
-                        rank will then need to use a different sub-index, which is an element
-                        of the `sub_indices`. If an integer is specified for `sub_indices`,
-                        then it is converted to `range(sub_indices)`.
-    :type sub_indices: int or list
+    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each 
+                           rank in an MPI simulation is uploading its own batches,
+                           this will be the MPI comm world size of the simulation).
+    :type uploader_ranks: int
     :param num_classes: Number of classes of targets, if categorical
     :type num_classes: int
     :param producer_prefixes: Prefixes of processes which will be producing batches.
@@ -613,7 +611,7 @@ class ContinuousBatchDownloader(BatchDownloader):
     :type cluster: bool
     :param address: Address of Redis DB as <ip_address>:<port>
     :type address: str
-    :param replica_rank: When BatchDownloader is used in a distributed setting, indicates
+    :param replica_rank: When StaticDataDownloader is used in a distributed setting, indicates
                          the rank of this replica
     :type replica_rank: int
     :param num_replicas: When ContinuousBatchDownlaoder is used in a distributed setting,

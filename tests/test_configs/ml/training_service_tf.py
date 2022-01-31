@@ -1,6 +1,6 @@
 import tensorflow.keras as keras
 
-from smartsim.ml.tf import DataGenerator
+from smartsim.ml.tf import DynamicDataGenerator
 
 
 def check_dataloader(dl, rank):
@@ -29,7 +29,7 @@ hvd_size = 2
 
 
 def create_data_generator(rank):
-    return DataGenerator(
+    return DynamicDataGenerator(
         cluster=False,
         uploader_name="test_data",
         verbose=True,

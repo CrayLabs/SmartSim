@@ -1,6 +1,6 @@
 import torchvision.models as models
 
-from smartsim.ml.torch import DataGenerator, DataLoader
+from smartsim.ml.torch import DynamicDataGenerator, DataLoader
 
 import torch
 import torch.nn as nn
@@ -9,7 +9,7 @@ import torch.optim as optim
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
-    training_set = DataGenerator(cluster=False,
+    training_set = DynamicDataGenerator(cluster=False,
                                  shuffle=True,
                                  batch_size=32,
                                  init_samples=False)

@@ -1,7 +1,7 @@
 import tensorflow.keras as keras
 import tensorflow as tf
 
-from smartsim.ml.tf import DataGenerator
+from smartsim.ml.tf import DynamicDataGenerator
 
 import horovod.tensorflow.keras as hvd
 
@@ -17,7 +17,7 @@ if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
 
-training_generator = DataGenerator(cluster=False, init_samples=True, replica_rank=hvd_rank, num_replicas=hvd_size)
+training_generator = DynamicDataGenerator(cluster=False, init_samples=True, replica_rank=hvd_rank, num_replicas=hvd_size)
 model = keras.applications.MobileNetV2(weights=None, classes=training_generator.num_classes)
 
 opt = keras.optimizers.Adam(0.001 * hvd.size())
