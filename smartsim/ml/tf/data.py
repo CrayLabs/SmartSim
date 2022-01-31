@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow.keras as keras
 
-from smartsim.ml import StaticDataDownloader, DynamicDataDownloader
+from smartsim.ml import DynamicDataDownloader, StaticDataDownloader
 
 
 class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
@@ -19,9 +19,7 @@ class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
             msg += "Please run init_samples() or initialize generator with init_samples=True"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         # Generate indices of the batch
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
 
@@ -67,7 +65,6 @@ class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
 
     def __init__(self, **kwargs):
         StaticDataGenerator.__init__(self, **kwargs)
-
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch

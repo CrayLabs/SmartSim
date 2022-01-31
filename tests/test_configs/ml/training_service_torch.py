@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from smartsim.ml.torch import DynamicDataGenerator, DataLoader
+from smartsim.ml.torch import DataLoader, DynamicDataGenerator
 
 
 class Net(nn.Module):

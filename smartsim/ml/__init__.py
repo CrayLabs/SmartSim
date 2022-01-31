@@ -1,6 +1,6 @@
 from .data import (
-    StaticDataDownloader,
     DynamicDataDownloader,
+    StaticDataDownloader,
     TrainingDataUploader,
     form_name,
 )

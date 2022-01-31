@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from smartsim.ml.data import StaticDataDownloader, DynamicDataDownloader
+from smartsim.ml.data import DynamicDataDownloader, StaticDataDownloader
 
 
 class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset):

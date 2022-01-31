@@ -9,6 +9,7 @@ from ..log import get_logger
 
 logger = get_logger(__name__)
 
+
 def form_name(*args):
     return "_".join(str(arg) for arg in args if arg is not None)
 
@@ -179,7 +180,7 @@ class StaticDataDownloader:
     :type sample_prefix: str
     :param target_prefix: prefix of keys representing targets
     :type target_prefix: str
-    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each 
+    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each
                            rank in an MPI simulation is uploading its own batches,
                            this will be the MPI comm world size of the simulation).
     :type uploader_ranks: int
@@ -434,12 +435,12 @@ class StaticDataDownloader:
         try:
             ds_exists = self.client.dataset_exists(dataset_name)
         # As long as required SmartRedis version is not 0.3 we
-        # need a workaround for the missing function    
+        # need a workaround for the missing function
         except AttributeError:
             try:
                 uploaders = environ["SSKEYIN"].split(",")
                 for uploader in uploaders:
-                    if self.client.key_exists(uploader+"."+dataset_name):
+                    if self.client.key_exists(uploader + "." + dataset_name):
                         ds_exists = True
             except KeyError:
                 msg = "Uploader must be launched with SmartSim and added to incoming entity, "
@@ -458,7 +459,7 @@ class StaticDataDownloader:
                 try:
                     uploaders = environ["SSKEYIN"].split(",")
                     for uploader in uploaders:
-                        if self.client.key_exists(uploader+"."+dataset_name):
+                        if self.client.key_exists(uploader + "." + dataset_name):
                             ds_exists = True
                 except KeyError:
                     msg = "Uploader must be launched with SmartSim and added to incoming entity, "
@@ -599,7 +600,7 @@ class DynamicDataDownloader(StaticDataDownloader):
     :type sample_prefix: str
     :param target_prefix: prefix of keys representing targets
     :type target_prefix: str
-    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each 
+    :param uploader_ranks: Number of processes every uploader runs on (e.g, if each
                            rank in an MPI simulation is uploading its own batches,
                            this will be the MPI comm world size of the simulation).
     :type uploader_ranks: int
