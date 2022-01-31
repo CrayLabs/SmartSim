@@ -5,7 +5,9 @@ import numpy as np
 from smartredis import Client, Dataset
 
 from ..error import SmartSimError
+from ..log import get_logger
 
+logger = get_logger(__name__)
 
 def form_name(*args):
     return "_".join(str(arg) for arg in args if arg is not None)
@@ -103,7 +105,7 @@ class TrainingDataUploader:
         batch_key = form_name(self.sample_prefix, self.batch_idx, self.rank)
         self.client.put_tensor(batch_key, samples)
         if self.verbose:
-            print(f"Put batch {batch_key}")
+            logger.info(f"Put batch {batch_key}")
 
         if (
             targets is not None
@@ -270,7 +272,7 @@ class StaticDataDownloader:
 
     def log(self, message):
         if self.verbose:
-            print(message)
+            logger.info(message)
 
     def _list_all_sources(self):
         uploaders = environ["SSKEYIN"].split(",")
