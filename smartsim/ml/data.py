@@ -239,7 +239,7 @@ class BatchDownloader:
             self.sample_prefix = sample_prefix
             self.target_prefix = target_prefix
             if uploading_ranks is not None:
-                self.sub_indices = range(uploading_ranks)
+                self.sub_indices = [str(rank) for rank in range(uploading_ranks)]
             else:
                 self.sub_indices = None
             if producer_prefixes:

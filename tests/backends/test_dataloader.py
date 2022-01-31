@@ -142,6 +142,12 @@ def test_batch_dataloader_torch(fileutils):
     exp.start(trainer_torch, block=True)
     if exp.get_status(trainer_torch)[0] != status.STATUS_COMPLETED:
         exp.stop(orc)
+        with open(osp.join(trainer_torch.path, trainer_torch.name+".out")) as f:
+            for line in f:
+                print(line)
+        with open(osp.join(trainer_torch.path, trainer_torch.name+".err")) as f:
+            for line in f:
+                print(line)
         assert False
 
     exp.stop(orc)

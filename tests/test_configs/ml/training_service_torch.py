@@ -9,8 +9,8 @@ from smartsim.ml.torch import DataGenerator, DataLoader
 class Net(nn.Module):
     def __init__(self, num_classes=10):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, 1)
-        self.fc1 = nn.Linear(28800, num_classes)
+        self.conv1 = nn.Conv2d(1, 8, 3, 1)
+        self.fc1 = nn.Linear(7200, num_classes)
 
     def forward(self, x):
         x = self.conv1(x)
