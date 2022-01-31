@@ -122,11 +122,10 @@ program using the local launcher which is designed for laptops and single nodes.
 
 ```python
 from smartsim import Experiment
-from smartsim.settings import RunSettings
 
 exp = Experiment("simple", launcher="local")
 
-settings = RunSettings("echo", exe_args="Hello World")
+settings = exp.create_run_settings("echo", exe_args="Hello World")
 model = exp.create_model("hello_world", settings)
 
 exp.start(model, block=True)
@@ -148,13 +147,14 @@ For example, ``MpirunSettings`` can be used to launch MPI programs with openMPI.
 
 ```Python
 from smartsim import Experiment
-from smartsim.settings import MpirunSettings
 
 exp = Experiment("hello_world", launcher="local")
-mpi = MpirunSettings(exe="echo", exe_args="Hello World!")
-mpi.set_tasks(4)
+mpi_settings = exp.create_run_settings(exe="echo", 
+                                       exe_args="Hello World!",
+                                       run_command="mpirun")
+mpi_settings.set_tasks(4)
 
-mpi_model = exp.create_model("hello_world", mpi)
+mpi_model = exp.create_model("hello_world", mpi_settings)
 
 exp.start(mpi_model, block=True)
 print(exp.get_status(model))
@@ -185,10 +185,9 @@ salloc -N 1 -n 32 --exclusive -t 00:10:00
 ```python
 # hello_world.py
 from smartsim import Experiment
-from smartsim.settings import SrunSettings
 
 exp = Experiment("hello_world_exp", launcher="slurm")
-srun = SrunSettings(exe="echo", exe_args="Hello World!")
+srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 srun.set_nodes(1)
 srun.set_tasks(32)
 
@@ -230,16 +229,15 @@ The following launches 4 replicas of the the same ``hello_world`` model.
 ```python
 # hello_ensemble.py
 from smartsim import Experiment
-from smartsim.settings import SrunSettings, SbatchSettings
 
 exp = Experiment("hello_world_batch", launcher="slurm")
 
 # define resources for all ensemble members
-sbatch = SbatchSettings(nodes=4, time="00:10:00", account="12345-Cray")
+sbatch = exp.create_batch_settings(nodes=4, time="00:10:00", account="12345-Cray")
 sbatch.set_partition("premium")
 
 # define how each member should run
-srun = SrunSettings(exe="echo", exe_args="Hello World!")
+srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 srun.set_nodes(1)
 srun.set_tasks(32)
 
@@ -262,16 +260,15 @@ launchers within SmartSim.
 ```python
 # hello_ensemble_pbs.py
 from smartsim import Experiment
-from smartsim.settings import AprunSettings, QsubBatchSettings
 
 exp = Experiment("hello_world_batch", launcher="pbs")
 
 # define resources for all ensemble members
-qsub = QsubBatchSettings(nodes=4, time="00:10:00",
-                        account="12345-Cray", queue="cl40")
+qsub = exp.create_batch_settings(nodes=4, time="00:10:00",
+                                 account="12345-Cray", queue="cl40")
 
 # define how each member should run
-aprun = AprunSettings(exe="echo", exe_args="Hello World!")
+aprun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 aprun.set_tasks(32)
 
 ensemble = exp.create_ensemble("hello_world", batch_settings=qsub,
@@ -374,7 +371,7 @@ qsub -l select=3:ppn=1 -l walltime=00:10:00 -q cl40 -I
 from smartsim import Experiment
 from smartsim.database import PBSOrchestrator
 
-exp = Experiment("db-on-slurm", launcher="slurm")
+exp = Experiment("db-on-pbs", launcher="pbs")
 db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=False)
 
 exp.start(db_cluster)
@@ -401,7 +398,7 @@ to be launched. Users can hit CTRL-C to cancel the launch if needed.
 from smartsim import Experiment
 from smartsim.database import PBSOrchestrator
 
-exp = Experiment("db-on-slurm", launcher="pbs")
+exp = Experiment("batch-db-on-pbs", launcher="pbs")
 db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=True,
                              time="00:10:00", account="12345-Cray", queue="cl40")
 
@@ -457,7 +454,7 @@ exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the Ray cluster
-ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
@@ -487,7 +484,7 @@ exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the ray cluster
-ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
@@ -544,7 +541,7 @@ connect to.
 ### Python
 
 Training code and Model construction are not shown here, but the example below
-shows how to take a PyTorch model, sent it to the database, and execute it
+shows how to take a PyTorch model, send it to the database, and execute it
 on data stored within the database.
 
 Notably the **GPU** argument is used to ensure that exection of the model
@@ -619,7 +616,6 @@ client.unpack_tensor(out_key, result.data(), {10},
 You can also load a model from file and put it in the database before you execute it.
 This example shows how this is done in Fortran.
 
-
 ```fortran
 program run_mnist_example
 
@@ -672,7 +668,6 @@ subroutine run_mnist( client, model_name )
 end subroutine run_mnist
 
 end program run_mnist_example
-
 ```
 
 
@@ -784,7 +779,7 @@ for i in range(0, time_steps):
 exp.stop(db)
 ```
 More details about online anaylsis with SmartSim and the full code examples can be found in the
-[SmartSim documentation](https://www.craylabs.org). #fix this
+[SmartSim documentation](https://www.craylabs.org). <!-- (TODO: fix this) -->
 
 
 ## Online Processing
@@ -847,9 +842,9 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
 
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
-| PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.2       |
-| ONNX              |       1.7.0       |
+| PyTorch           |       1.7.1       | <!-- TODO: Confirm -->
+| TensorFlow\Keras  |       2.5.2       |
+| ONNX              |       1.7.0       | <!-- TODO: Confirm -->
 
 Note, it's important to remember that SmartSim utilizes a client-server model. To run
 experiments that utilize the above frameworks, you must first start the Orchestrator
