@@ -429,12 +429,40 @@ class BatchDownloader:
         dataset_name = form_name(uploader_name, "info")
         self.log(f"Uploader dataset name: {dataset_name}")
 
+        ds_exists = False
+        try:
+            ds_exists = self.client.dataset_exists(dataset_name)
+        # As long as required SmartRedis version is not 0.3 we
+        # need a workaround for the missing function    
+        except AttributeError:
+            try:
+                uploaders = environ["SSKEYIN"].split(",")
+                for uploader in uploaders:
+                    if self.client.key_exists(uploader+"."+dataset_name):
+                        ds_exists = True
+            except KeyError:
+                msg = "Uploader must be launched with SmartSim and added to incoming entity, "
+                msg += "when setting uploader_info to 'auto'"
+                raise SmartSimError(msg)
+
         trials = 6
-        while not self.client.dataset_exists(dataset_name):
+        while not ds_exists:
             trials -= 1
             if trials == 0:
                 raise SmartSimError("Could not find uploader dataset")
             time.sleep(5)
+            try:
+                ds_exists = self.client.dataset_exists(dataset_name)
+            except AttributeError:
+                try:
+                    uploaders = environ["SSKEYIN"].split(",")
+                    for uploader in uploaders:
+                        if self.client.key_exists(uploader+"."+dataset_name):
+                            ds_exists = True
+                except KeyError:
+                    msg = "Uploader must be launched with SmartSim and added to incoming entity, "
+                    msg += "when setting uploader_info to 'auto'"
+                    raise SmartSimError(msg)
 
         uploader_info = self.client.get_dataset(dataset_name)
         self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")[0]
