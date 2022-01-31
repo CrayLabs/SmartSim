@@ -17,7 +17,8 @@
    tutorials/02_using_clients
    tutorials/03_lattice_boltz_analysis
    tutorials/04_inference
-   tutorials/05_starting_ray/05_starting_ray_builtin
+   tutorials/05_training
+   tutorials/06_starting_ray/06_starting_ray_builtin
 
 
 .. toctree::

@@ -351,15 +351,13 @@ class BatchDownloader:
 
     def __iter__(self):
 
-        if not self.sources:
-            pass
-        else:
+        if self.sources:
             self.update_data()
             # Generate data
             if len(self) < 1:
-                raise ValueError(
-                    "Not enough samples in generator for one batch. Please run init_samples() or initialize generator with init_samples=True"
-                )
+                msg = "Not enough samples in generator for one batch. "
+                msg += "Please run init_samples() or initialize generator with init_samples=True"
+                raise ValueError(msg)
 
             for index in range(len(self)):
                 indices = self.indices[

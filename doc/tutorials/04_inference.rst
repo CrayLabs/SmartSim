@@ -348,3 +348,4 @@ RandomForestRegressor. As with the other examples, the skl2onnx function
     client.set_model("rf_regressor", model, "ONNX", device="CPU")
     client.run_model("rf_regressor", inputs="input", outputs="output")
     print(client.get_tensor("output"))
+
