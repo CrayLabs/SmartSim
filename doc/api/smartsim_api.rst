@@ -415,7 +415,6 @@ in an interactive allocation.
 Model
 =====
 
-
 .. currentmodule:: smartsim.entity.model
 
 .. autosummary::
@@ -432,7 +431,6 @@ Model
    :members:
    :show-inheritance:
    :inherited-members:
-
 
 
 Ensemble
