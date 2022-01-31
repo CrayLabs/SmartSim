@@ -2,9 +2,9 @@ import time
 from os import environ
 
 import numpy as np
-
 from smartredis import Client, Dataset
-from smartredis.error import RedisReplyError
+
+from ..error import SmartSimError
 
 
 def form_name(*args):
@@ -36,16 +36,15 @@ class TrainingDataUploader:
                               This can be useful in case the consumer processes also
                               have other incoming entities.
     :type producer_prefixes: str or list[str]
-    :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
-    :type smartredis_cluster: bool
-    :param smartredis_address: Address of Redis client as <ip_address>:<port>
-    :type smartredis_address: str
-    :param sub_indices: Sub indices of the batches. This is useful in case each process
-                        consists in multiple ranks and each rank produces batches. Each
-                        rank will then need to use a different sub-index, which is an element
-                        of the `sub_indices`. If an integer is specified for `sub_indices`,
-                        then it is converted to `range(sub_indices)`.
-    :type sub_indices: int or list
+    :param cluster: Whether the SmartSim Orchestrator is being run as a cluster
+    :type cluster: bool
+    :param address: Address of Redis DB as <ip_address>:<port>
+    :type address: str
+    :param num_ranks: Number of processes (e.g. MPI ranks) of application using
+                      DataUploader.
+    :type num_ranks: int
+    :param rank: Rank of DataUploader in multi-process application (e.g. MPI rank).
+    :type rank: int
     :param verbose: If output should be logged to screen.
     :type verbose: bool
 
@@ -58,9 +57,10 @@ class TrainingDataUploader:
         target_prefix="targets",
         num_classes=None,
         producer_prefixes=None,
-        smartredis_cluster=True,
-        smartredis_address=None,
-        sub_indices=None,
+        cluster=True,
+        address=None,
+        num_ranks=None,
+        rank=None,
         verbose=False,
     ):
         if not name:
@@ -75,16 +75,13 @@ class TrainingDataUploader:
             producer_prefixes = [producer_prefixes]
         self.producer_prefixes = producer_prefixes
         self.num_classes = num_classes
-        if isinstance(sub_indices, int):
-            self.sub_indices = [str(sub_idx) for sub_idx in range(sub_indices)]
-        elif isinstance(sub_indices, list):
-            self.sub_indices = [str(sub_idx) for sub_idx in sub_indices]
-        elif sub_indices is None:
-            self.sub_indices = None
+        if num_ranks is None:
+            self.num_ranks = None
         else:
-            raise ValueError("sub_indices must be either list or int")
+            self.num_ranks = int(num_ranks)
+        self.rank = rank
 
-        self.client = Client(address=smartredis_address, cluster=smartredis_cluster)
+        self.client = Client(address=address, cluster=cluster)
         self.batch_idx = 0
         self.verbose = verbose
 
@@ -98,14 +95,12 @@ class TrainingDataUploader:
                 info_ds.add_meta_string("producer_prefixes", producer_prefix)
         if self.num_classes:
             info_ds.add_meta_scalar("num_classes", self.num_classes)
-        if self.sub_indices:
-            for sub_index in self.sub_indices:
-                info_ds.add_meta_string("sub_indices", sub_index)
+        if self.num_ranks:
+            info_ds.add_meta_scalar("num_ranks", self.num_ranks)
         self.client.put_dataset(info_ds)
 
-    def put_batch(self, samples, targets=None, sub_index=None):
-
-        batch_key = form_name(self.sample_prefix, self.batch_idx, sub_index)
+    def put_batch(self, samples, targets=None):
+        batch_key = form_name(self.sample_prefix, self.batch_idx, self.rank)
         self.client.put_tensor(batch_key, samples)
         if self.verbose:
             print(f"Put batch {batch_key}")
@@ -115,7 +110,7 @@ class TrainingDataUploader:
             and self.target_prefix
             and (self.target_prefix != self.sample_prefix)
         ):
-            labels_key = form_name(self.target_prefix, self.batch_idx, sub_index)
+            labels_key = form_name(self.target_prefix, self.batch_idx, self.rank)
             self.client.put_tensor(labels_key, targets)
 
         self.batch_idx += 1
@@ -194,10 +189,10 @@ class BatchDownloader:
                               This can be useful in case the consumer processes also
                               have other incoming entities.
     :type producer_prefixes: str
-    :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
-    :type smartredis_cluster: bool
-    :param smartredis_address: Address of Redis client as <ip_address>:<port>
-    :type smartredis_address: str
+    :param cluster: Whether the Orchestrator will be run as a cluster
+    :type cluster: bool
+    :param address: Address of Redis client as <ip_address>:<port>
+    :type address: str
     :param replica_rank: When BatchDownloader is used distributedly, indicates
                          the rank of this object
     :type replica_rank: int
@@ -221,8 +216,8 @@ class BatchDownloader:
         sub_indices=None,
         num_classes=None,
         producer_prefixes=None,
-        smartredis_cluster=True,
-        smartredis_address=None,
+        cluster=True,
+        address=None,
         replica_rank=0,
         num_replicas=1,
         verbose=False,
@@ -231,8 +226,8 @@ class BatchDownloader:
     ):
         self.replica_rank = replica_rank
         self.num_replicas = num_replicas
-        self.smartredis_address = smartredis_address
-        self.smartredis_cluster = smartredis_cluster
+        self.address = address
+        self.cluster = cluster
         self.uploader_info = uploader_info
         self.uploader_name = uploader_name
         self.verbose = verbose
@@ -261,6 +256,16 @@ class BatchDownloader:
         if init_samples:
             self.init_sources()
             self.init_samples()
+        else:
+            self.client = Client(self.address, self.cluster)
+            if self.uploader_info == "auto":
+                if not self.uploader_name:
+                    raise ValueError(
+                        "uploader_name can not be empty if uploader_info is 'auto'"
+                    )
+                self._get_uploader_info(self.uploader_name)
+            # This avoids problems with Pytorch
+            self.client = None
 
     def log(self, message):
         if self.verbose:
@@ -314,7 +319,7 @@ class BatchDownloader:
         :raises ValueError: If self.uploader_info is set to `auto` but no `uploader_name` is specified.
         :raises ValueError: If self.uploader_info is not set to `auto` or `manual`.
         """
-        self.client = Client(self.smartredis_address, self.smartredis_cluster)
+        self.client = Client(self.address, self.cluster)
         if self.uploader_info == "auto":
             if not self.uploader_name:
                 raise ValueError(
@@ -330,7 +335,6 @@ class BatchDownloader:
 
         self.sources = self._list_all_sources()
 
-
     @property
     def need_targets(self):
         """Compute if targets have to be downloaded.
@@ -340,11 +344,9 @@ class BatchDownloader:
         """
         return self.target_prefix and not self.autoencoding
 
-
     def __len__(self):
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
-
 
     def __iter__(self):
 
@@ -426,8 +428,13 @@ class BatchDownloader:
     def _get_uploader_info(self, uploader_name):
         dataset_name = form_name(uploader_name, "info")
         self.log(f"Uploader dataset name: {dataset_name}")
+
+        trials = 6
         while not self.client.dataset_exists(dataset_name):
-            time.sleep(10)
+            trials -= 1
+            if trials == 0:
+                raise SmartSimError("Could not find uploader dataset")
+            time.sleep(5)
 
         uploader_info = self.client.get_dataset(dataset_name)
         self.sample_prefix = uploader_info.get_meta_strings("sample_prefix")[0]
@@ -452,11 +459,11 @@ class BatchDownloader:
         self.log(f"Uploader num classes: {self.num_classes}")
 
         try:
-            self.sub_indices = uploader_info.get_meta_strings("sub_indices")
+            num_ranks = uploader_info.get_meta_scalars("num_ranks")[0]
+            self.sub_indices = [str(rank) for rank in range(num_ranks)]
         except:
             self.sub_indices = None
         self.log(f"Uploader sub-indices: {self.sub_indices}")
-
 
     def _update_samples_and_targets(self):
         for source in self.sources:
@@ -470,15 +477,19 @@ class BatchDownloader:
                 target_name = None
 
             self.log(f"Retrieving {batch_name} from {entity}")
+            trials = 6
             while not self._data_exists(batch_name, target_name):
-                time.sleep(10)
+                trials -= 1
+                if trials == 0:
+                    raise SmartSimError(
+                        f"Could not retrieve batch {batch_name} from entity {entity}"
+                    )
+                time.sleep(5)
 
             self._add_samples(batch_name, target_name)
 
-
     def update_data(self):
         self._update_samples_and_targets()
-
 
     def __data_generation(self, indices):
         # Initialization
@@ -493,7 +504,6 @@ class BatchDownloader:
             y = None
 
         return x, y
-
 
     def __len__(self):
         length = int(np.floor(self.num_samples / self.batch_size))
@@ -572,10 +582,10 @@ class ContinuousBatchDownloader(BatchDownloader):
                               This can be useful in case the consumer processes also
                               have other incoming entities.
     :type producer_prefixes: str
-    :param smartredis_cluster: Whether the Orchestrator will be run as a cluster
-    :type smartredis_cluster: bool
-    :param smartredis_address: Address of Redis client as <ip_address>:<port>
-    :type smartredis_address: str
+    :param cluster: Whether the Orchestrator is being run as a cluster
+    :type cluster: bool
+    :param address: Address of Redis DB as <ip_address>:<port>
+    :type address: str
     :param replica_rank: When BatchDownloader is used in a distributed setting, indicates
                          the rank of this replica
     :type replica_rank: int
@@ -655,8 +665,12 @@ class ContinuousBatchDownloader(BatchDownloader):
 
             while len(self) < 1:
                 self._update_samples_and_targets()
+                trials = 6
                 if len(self) < 1:
-                    time.sleep(10)
+                    trials -= 1
+                    if trials == 0:
+                        raise SmartSimError("Could not find samples")
+                    time.sleep(5)
             self.log("Generator initialization complete")
         else:
             self.log(

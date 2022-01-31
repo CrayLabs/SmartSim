@@ -1,6 +1,3 @@
-import time
-from os import environ
-
 import numpy as np
 import torch
 
@@ -103,7 +100,6 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
     def __init__(self, **kwargs):
         BatchDownloader.__init__(self, **kwargs)
 
-
     def _add_samples(self, batch_name, target_name):
         if self.samples is None:
             self.samples = torch.tensor(self.client.get_tensor(batch_name))
@@ -122,7 +118,6 @@ class StaticDataGenerator(BatchDownloader, torch.utils.data.IterableDataset):
         self.indices = np.arange(self.num_samples)
         self.log("Success!")
         self.log(f"New dataset size: {self.num_samples}")
-
 
     def update_data(self):
         self._update_samples_and_targets()
@@ -233,14 +228,13 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
     def _add_samples(self, batch_name, target_name):
         StaticDataGenerator._add_samples(self, batch_name, target_name)
 
-
     def __iter__(self):
         if self.sources:
             self.update_data()
         return super().__iter__()
 
 
-class DataLoader(torch.utils.data.DataLoader):
+class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     def __init__(self, dataset: StaticDataGenerator, **kwargs):
         super().__init__(
             dataset,
@@ -273,7 +267,5 @@ class DataLoader(torch.utils.data.DataLoader):
                 sources = overall_sources[worker_id]
             else:
                 sources = []
-
-        print(f"{worker_id}: {sources}")
 
         dataset.init_samples(sources)

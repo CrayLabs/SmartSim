@@ -1,4 +1,3 @@
-import numpy as np
 import torchvision.models as models
 
 from smartsim.ml.torch import DataGenerator, DataLoader
@@ -21,13 +20,14 @@ if __name__ == '__main__':
     torch.cuda.set_device(hvd.local_rank())
 
     torch.multiprocessing.set_start_method('spawn')
-    training_set = DataGenerator(smartredis_cluster=False,
+    training_set = DataGenerator(cluster=False,
                                  verbose=True,
                                  init_samples=False,
                                  num_replicas=hvd_size,
                                  replica_rank=hvd_rank)
 
-    trainloader = DataLoader(training_set, batch_size=None,
+    trainloader = DataLoader(training_set,
+                             batch_size=None,
                              num_workers=2)
 
     model = models.mobilenet_v2().double().to('cuda')

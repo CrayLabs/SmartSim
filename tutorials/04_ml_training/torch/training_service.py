@@ -1,4 +1,3 @@
-import numpy as np
 import torchvision.models as models
 
 from smartsim.ml.torch import DataGenerator, DataLoader
@@ -10,10 +9,12 @@ import torch.optim as optim
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
-    training_set = DataGenerator(smartredis_cluster=False,
-                                 shuffle=True, batch_size=32,
+    training_set = DataGenerator(cluster=False,
+                                 shuffle=True,
+                                 batch_size=32,
                                  init_samples=False)
-    trainloader = DataLoader(training_set, batch_size=None,
+    trainloader = DataLoader(training_set,
+                             batch_size=None,
                              num_workers=2)
     model = models.mobilenet_v2().double().to('cuda')
     criterion = nn.CrossEntropyLoss()

@@ -1,14 +1,11 @@
-import time
-from os import environ
-
 import numpy as np
 import tensorflow.keras as keras
 
-from smartsim.ml import form_name
-from smartsim.ml.data import BatchDownloader, ContinuousBatchDownloader
+from smartsim.ml import BatchDownloader, ContinuousBatchDownloader
+
 
 class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
-    """A class to download batches from the DB, based on Keras ssSequence``s.
+    """A class to download batches from the DB, based on Keras ``Sequence``s.
 
     By default, the StaticDataGenerator has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
@@ -102,8 +99,10 @@ class StaticDataGenerator(BatchDownloader, keras.utils.Sequence):
 
     def __getitem__(self, index):
         if len(self) < 1:
+            msg = "Not enough samples in generator for one batch. "
+            msg += "Please run init_samples() or initialize generator with init_samples=True"
             raise ValueError(
-                "Not enough samples in generator for one batch. Please run init_samples() or initialize generator with init_samples=True"
+                msg
             )
         # Generate indices of the batch
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
@@ -232,10 +231,6 @@ class DataGenerator(ContinuousBatchDownloader, StaticDataGenerator):
 
     def __init__(self, **kwargs):
         StaticDataGenerator.__init__(self, **kwargs)
-
-
-    def __data_generation(self, indices):
-        return StaticDataGenerator.__data_generation(self, indices)
 
 
     def on_epoch_end(self):
