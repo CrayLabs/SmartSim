@@ -132,9 +132,8 @@ within a SmartSim ``Experiment``, we can use the following code:
     # producer
     producer_script = "producer.py"
     settings = exp.create_run_settings("python", exe_args=producer_script)
-    uploader_model = exp.create_model("producer", settings)
+    uploader_model = exp.create_model("producer", settings, enable_key_prefixing=True)
     uploader_model.attach_generator_files(to_copy=producer_script)
-    uploader_model.enable_key_prefixing()
 
     # training_service
     training_script = "training_service.py"
@@ -142,8 +141,7 @@ within a SmartSim ``Experiment``, we can use the following code:
     trainer_model = exp.create_model("training_service", settings)
     trainer_model.register_incoming_entity(uploader_model)
 
-    exp.start(db)
-    exp.start(uploader_model, block=False, summary=False)
+    exp.start(db, uploader_model, block=False, summary=False)
     exp.start(trainer_model, block=True, summary=False)
 
 
