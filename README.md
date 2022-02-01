@@ -40,9 +40,9 @@ called Redis.
 
 Applications integrated with the SmartRedis clients, written in Fortran, C, C++ and Python,
 can stream tensors and datasets to and from the Orchestrator. The distributed Client-Server
-paradigm allows for data to be seemlessly exchanged between applications at runtime.
+paradigm allows for data to be seamlessly exchanged between applications at runtime.
 
-In addition to exchanging data between langauges, any of the SmartRedis clients can
+In addition to exchanging data between languages, any of the SmartRedis clients can
 remotely execute Machine Learning models and TorchScript code on data stored in
 the Orchestrator despite which language the data originated from.
 
@@ -192,7 +192,7 @@ For example, ``MpirunSettings`` can be used to launch MPI programs with openMPI.
 from smartsim import Experiment
 
 exp = Experiment("hello_world", launcher="local")
-mpi_settings = exp.create_run_settings(exe="echo", 
+mpi_settings = exp.create_run_settings(exe="echo",
                                        exe_args="Hello World!",
                                        run_command="mpirun")
 mpi_settings.set_tasks(4)
@@ -359,7 +359,7 @@ db = Orchestrator(port=6780)
 # by default, SmartSim never blocks execution after the database is launched.
 exp.start(db)
 
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 # stop the database
@@ -393,7 +393,7 @@ db_cluster = SlurmOrchestrator(db_nodes=3, db_port=6780, batch=False)
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -420,7 +420,7 @@ db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=False)
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -506,10 +506,13 @@ ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
 ### Ray on PBS
 
 Below is an example of how to launch a Ray cluster on a PBS system and connect to it.
-In this example, we set `batch=True`, which means that the cluster will be started
-requesting an allocation through Slurm. If this code is run within a sufficiently large
-interactive allocation, setting `batch=False` will spin the Ray cluster on the
-allocated nodes.
+As we can see, only minor tweaks are needed to port our previous example to utilize
+a different launcher.
+
+Once again, we set `batch=True`, which means that the cluster will be started
+requesting an allocation, this time through PBS. If this code is run within a
+sufficiently large interactive allocation, setting `batch=False` will spin the Ray
+cluster on the allocated nodes.
 
 ```Python
 import ray
@@ -547,10 +550,10 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 
 Tensors are the fundamental data structure for the SmartRedis clients. The Clients
 use the native array format of the language. For example, in Python, a tensor is
-a NumPy array. The C++/C client accepts nested and contingous arrays.
+a NumPy array. The C++/C client accepts nested and contiguous arrays.
 
 When stored in the database, all tensors are stored in the same format. Hence,
-any language can recieve a tensor from the database no matter what supported language
+any language can receive a tensor from the database no matter what supported language
 the array was sent from. This enables applications in different languages to communicate
 numerical data with each other at runtime (coupling).
 
@@ -571,10 +574,10 @@ For more information on the API, see the
 ## Examples
 
 Even though the clients rely on the Orchestrator database to be running, it can be helpful
-to see examples of how the API is used accross different languages even without the
+to see examples of how the API is used across different languages even without the
 infrastructure code. The following examples provide simple examples of client usage.
 
-For more imformation on the SmartRedis clients, see the
+For more information on the SmartRedis clients, see the
 [API documentation](https://www.craylabs.org/docs/api/smartredis_api.html) and
 [tutorials](https://www.craylabs.org/docs/tutorials/smartredis.html).
 
@@ -656,7 +659,7 @@ client.unpack_tensor(out_key, result.data(), {10},
 
 ### Fortran
 
-You can also load a model from file and put it in the database before you execute it.
+You can also load a model from a file and put it in the database before you execute it.
 This example shows how this is done in Fortran.
 
 ```fortran
@@ -694,7 +697,7 @@ subroutine run_mnist( client, model_name )
   character(len=255), dimension(1) :: inputs
   character(len=255), dimension(1) :: outputs
 
-  ! Construct the keys used for the specifiying inputs and outputs
+  ! Construct the keys used for the specifying inputs and outputs
   in_key = "mnist_input"
   out_key = "mnist_output"
 
@@ -718,7 +721,7 @@ end program run_mnist_example
 # SmartSim + SmartRedis
 
 SmartSim and SmartRedis were designed to work together. When launched through
-SmartSim, applcations using the SmartRedis clients are directly connected to
+SmartSim, applications using the SmartRedis clients are directly connected to
 any Orchestrator launched in the same Experiment.
 
 In this way, a SmartSim Experiment becomes a driver for coupled ML and Simulation
@@ -745,7 +748,7 @@ Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Bol
 this example demonstrates how to use the SmartRedis ``Dataset`` API to stream
 data to the Orchestrator deployed by SmartSim.
 
-The following code will show the peices of the simulation that are needed to
+The following code will show the pieces of the simulation that are needed to
 transmit the data needed to plot timesteps of the simulation.
 
 ```Python
@@ -753,7 +756,7 @@ transmit the data needed to plot timesteps of the simulation.
 from smartredis import Client
 import numpy as np
 
-# initialization code ommitted
+# initialization code omitted
 
 # save cylinder location to database
 cylinder = (X - x_res/4)**2 + (Y - y_res/2)**2 < (y_res/4)**2 # bool array
@@ -821,7 +824,7 @@ for i in range(0, time_steps):
 
 exp.stop(db)
 ```
-More details about online anaylsis with SmartSim and the full code examples can be found in the
+More details about online analysis with SmartSim and the full code examples can be found in the
 [SmartSim documentation](https://www.craylabs.org).
 
 
@@ -871,7 +874,7 @@ V = client.get_tensor("V")
 print(f"U: {U}, S: {S}, V: {V}")
 ```
 
-The processing capabilties make it simple to form computational piplines of
+The processing capabilities make it simple to form computational pipelines of
 functions, scripts, and models.
 
 See the full [TorchScript Language Reference](https://pytorch.org/docs/stable/jit.html#torchscript-language)
@@ -880,10 +883,10 @@ to create your own.
 
 ## Online Inference
 
-SmartSim supports the following frameworks for quering Machine Learning models
+SmartSim supports the following frameworks for querying Machine Learning models
 from C, C++, Fortran and Python with the SmartRedis Clients:
 
-<!-- 
+<!--
 TODO: Again confirm that this should be replaced with new table
 
 |       Library     | Supported Version |
