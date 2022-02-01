@@ -531,13 +531,13 @@ class Orchestrator(EntityList):
 
         if mpmd_nodes:
             exe_args_mpmd = []
+            
         for db_id in range(self.db_nodes):
+            db_shard_name = "_".join((self.name, str(db_id)))
             if not mpmd_nodes:
-                db_node_name = "_".join((self.name, str(db_id)))
-                db_shard_name = db_node_name
+                db_node_name = db_shard_name
             else:
                 db_node_name = self.name
-                db_shard_name = "_".join((self.name, str(db_id)))
 
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
