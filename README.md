@@ -48,11 +48,54 @@ the Orchestrator despite which language the data originated from.
 
 SmartSim supports the following ML libraries.
 
+<!--
+
+TODO: Check if new table is what is expected
+
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
 | PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.2       |
+| TensorFlow\Keras  |       2.5.2       |
 | ONNX              |       1.7.0       |
+
+-->
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center">RedisAI Version</th>
+      <th style="text-align:center">Libraries</th>
+      <th style="text-align:center">Supported Version</th>
+    </tr>
+  </thead>
+  <tbody style="text-align:center">
+    <tr>
+      <td rowspan="3">1.2.3-1.2.4</td>
+      <td>PyTorch</td>
+      <td>1.7.0</td>
+    </tr>
+    <tr>
+      <td>Tensorlow\Keras</td>
+      <td>2.5.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.7.0</td>
+    </tr>
+      <td rowspan="3">1.2.5</td>
+      <td>PyTorch</td>
+      <td>1.9.1</td>
+    </tr>
+    <tr>
+      <td>Tensorlow\Keras</td>
+      <td>2.6.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.9.0</td>
+    </tr>
+  </tbody>
+</table>
 
 A [number of other libraries](https://github.com/onnx/onnxmltools) are
 supported through ONNX, like [SciKit-Learn](https://github.com/onnx/sklearn-onnx/)
@@ -840,11 +883,52 @@ to create your own.
 SmartSim supports the following frameworks for quering Machine Learning models
 from C, C++, Fortran and Python with the SmartRedis Clients:
 
+<!-- 
+TODO: Again confirm that this should be replaced with new table
+
 |       Library     | Supported Version |
 |-------------------|:-----------------:|
-| PyTorch           |       1.7.1       | <!-- TODO: Confirm -->
+| PyTorch           |       1.7.1       |
 | TensorFlow\Keras  |       2.5.2       |
-| ONNX              |       1.7.0       | <!-- TODO: Confirm -->
+| ONNX              |       1.7.0       |
+-->
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center">RedisAI Version</th>
+      <th style="text-align:center">Libraries</th>
+      <th style="text-align:center">Supported Version</th>
+    </tr>
+  </thead>
+  <tbody style="text-align:center">
+    <tr>
+      <td rowspan="3">1.2.3-1.2.4</td>
+      <td>PyTorch</td>
+      <td>1.7.0</td>
+    </tr>
+    <tr>
+      <td>Tensorlow\Keras</td>
+      <td>2.5.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.7.0</td>
+    </tr>
+      <td rowspan="3">1.2.5</td>
+      <td>PyTorch</td>
+      <td>1.9.1</td>
+    </tr>
+    <tr>
+      <td>Tensorlow\Keras</td>
+      <td>2.6.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.9.0</td>
+    </tr>
+  </tbody>
+</table>
 
 Note, it's important to remember that SmartSim utilizes a client-server model. To run
 experiments that utilize the above frameworks, you must first start the Orchestrator
@@ -870,7 +954,7 @@ db = Orchestrator(port=6780)
 
 class Net(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 1, 3)
 
     def forward(self, x):
