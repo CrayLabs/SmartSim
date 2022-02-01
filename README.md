@@ -822,7 +822,7 @@ for i in range(0, time_steps):
 exp.stop(db)
 ```
 More details about online anaylsis with SmartSim and the full code examples can be found in the
-[SmartSim documentation](https://www.craylabs.org). <!-- (TODO: fix this) -->
+[SmartSim documentation](https://www.craylabs.org).
 
 
 ## Online Processing
