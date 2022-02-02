@@ -176,8 +176,9 @@ print(exp.get_status(model))
 
 ### Hello World MPI
 
-``RunSettings`` define how a model is launched. There are many types of ``RunSettings``
-supported by SmartSim.
+The `Experiment.create_run_settings` method returns a ``RunSettings`` object which
+defines how a model is launched. There are many types of ``RunSettings`` supported by
+SmartSim.
 
  - ``RunSettings``
  - ``MpirunSettings``
@@ -185,7 +186,7 @@ supported by SmartSim.
  - ``AprunSettings``
  - ``JsrunSettings``
 
-For example, ``MpirunSettings`` can be used to launch MPI programs with openMPI.
+By using the `Experiment.create_run_settings` SmartSim will automatically look to see which run command is requested and construct a run settings object of the appropriate type. For example, by passing the argument `run_command="mpirun"` to `Experiment.create_run_settings` a ``MpirunSettings`` object will be returned that can be used to launch MPI programs with openMPI.
 
 ```Python
 from smartsim import Experiment
@@ -201,6 +202,13 @@ mpi_model = exp.create_model("hello_world", mpi_settings)
 exp.start(mpi_model, block=True)
 print(exp.get_status(model))
 ```
+
+For truly portable code, if an argument of `run_command="auto"` is passed to
+`Experiment.create_run_settings`, SmartSim will attempt to find a run command on the
+system with which it has a corresponding `RunSettings` class. If one can be found,
+`Experiment.create_run_settings` will instance and return an object of that type.
+
+
 -----------
 ## Experiments on HPC Systems
 
