@@ -550,12 +550,12 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 
 Tensors are the fundamental data structure for the SmartRedis clients. The Clients
 use the native array format of the language. For example, in Python, a tensor is
-a NumPy array. The C++/C client accepts nested and contiguous arrays.
+a NumPy array while the C/C++ clients accept nested and contiguous arrays.
 
 When stored in the database, all tensors are stored in the same format. Hence,
 any language can receive a tensor from the database no matter what supported language
 the array was sent from. This enables applications in different languages to communicate
-numerical data with each other at runtime (coupling).
+numerical data with each other at runtime.
 
 For more information on the tensor data structure, see
 [the documentation](https://www.craylabs.org/docs/sr_data_structures.html#tensor)
@@ -564,7 +564,7 @@ For more information on the tensor data structure, see
 
 Datasets are collections of Tensors and associated metadata. The ``Dataset`` class
 is a user space object that can be created, added to, sent to, and retrieved from
-the Orchestrator database.
+the Orchestrator.
 
 For an example of how to use the ``Dataset`` class, see the [Online Analysis example](#online-analysis)
 
@@ -573,25 +573,27 @@ For more information on the API, see the
 
 ## Examples
 
-Even though the clients rely on the Orchestrator database to be running, it can be helpful
-to see examples of how the API is used across different languages even without the
-infrastructure code. The following examples provide simple examples of client usage.
+Although clients rely on the Orchestrator database to be running, it can be helpful
+to see examples of how the API is used without concerning ourselves with the 
+infrastructure code. The following examples provide samples of client usage
+across different languages.
 
 For more information on the SmartRedis clients, see the
-[API documentation](https://www.craylabs.org/docs/api/smartredis_api.html) and
+[API documentation](https://www.craylabs.org/docs/api/smartredis_api.html),
+[Online Analysis example](#online-analysis), and
 [tutorials](https://www.craylabs.org/docs/tutorials/smartredis.html).
 
-**Please note** these are client examples, they will not run if there is no database to
-connect to.
+**Please note** these are client examples. As such, they will not run as stand-alone
+scripts if there is no database for them to connect to.
 
 ### Python
 
-Training code and Model construction are not shown here, but the example below
-shows how to take a PyTorch model, send it to the database, and execute it
-on data stored within the database.
+The example below shows how to take a PyTorch model, send it to the Orchestrator, and
+execute it on data stored within the database.
 
-Notably the **GPU** argument is used to ensure that exection of the model
-takes place on a GPU if one is available to the database.
+Notice that when we set the model in the database, we set the device arguement to
+**GPU**. By doing this we ensure that exection of the model takes place on a GPU if
+one is available to the database.
 
 ```Python
 import torch
@@ -617,13 +619,13 @@ print(f"Prediction: {output}")
 ### C++
 
 One common pattern is to use SmartSim to spin up the Orchestrator database
-and then use the Python client to set the model in
-the database. Once set, an application that uses
-the C, C++, or Fortran clients will call the model that was set.
+and then use the Python client to set the model in the database. Once set, an
+application written in C, C++, or Fortran will utilize their respective client
+to call the model that was set and retrieve the results as a language native tensor.
 
-This example shows the necessary code an application would need to include
-to execute a model (with any ML backend) that had been stored prior to application
-launch by the Python client.
+This example shows how, with minimal boilerplate code, a C++ application launched from
+SmartSim is able utilize the Client API to execute a model stored in the Orchestrator
+that has been fit using any of the supported Python ML backends.
 
 ```C++
 #include "client.h"
@@ -646,7 +648,7 @@ client.put_tensor(in_key, img.data(), {1,1,28,28},
                     SmartRedis::TensorType::flt,
                     SmartRedis::MemoryLayout::contiguous);
 
-// Run model already in the database
+// Run model already placed in the database
 client.run_model(model_name, {in_key}, {out_key});
 
 // Get the result of the model
