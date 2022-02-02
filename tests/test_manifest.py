@@ -9,6 +9,11 @@ from smartsim.error import SmartSimError
 from smartsim.exp.ray import RayCluster
 from smartsim.settings import RunSettings
 
+try:
+    import tensorflow
+except ImportError:
+    pass
+
 ray_ok = True
 try:
     import ray
