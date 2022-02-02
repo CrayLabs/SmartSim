@@ -734,24 +734,28 @@ together.
 
 Using SmartSim, HPC applications can be monitored in real time by streaming data
 from the application to the database. SmartRedis clients can retrieve the
-data, process, analyze it, and store the data in the database.
+data, process, analyze it, and finally store any updated data back to the database for
+use by other clients.
 
 The following is an example of how a user could monitor and analyze a simulation.
-The example here uses the Python client, but SmartRedis clients are available in
-C++, C, and Fortran as well and implement the same API.
+The example here uses the Python client; however, SmartRedis clients are also available
+for C, C++, and Fortran. All SmartRedis clients implement the same API.
 
-The example will produce the visualization below while the simulation is running.
-
-https://user-images.githubusercontent.com/13009163/127622717-2c9e4cfd-50f4-4d94-88c4-8c05fa2fa616.mp4
+The example will produce [this visualization](https://user-images.githubusercontent.com/13009163/127622717-2c9e4cfd-50f4-4d94-88c4-8c05fa2fa616.mp4) while the simulation is running.
 
 #### Lattice Boltzmann Simulation
 
 Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Boltzmann_methods),
 this example demonstrates how to use the SmartRedis ``Dataset`` API to stream
-data to the Orchestrator deployed by SmartSim.
+data over the Orchestrator deployed by SmartSim.
 
-The following code will show the pieces of the simulation that are needed to
-transmit the data needed to plot timesteps of the simulation.
+Our simulation will be composed of two parts: `fv_sim.py` which will generate data from
+our Lattice Boltzmann Simulation and store it in the Orchestrator, and `driver.py`
+which will launch the Orchestrator, start `fv_sim.py` and check for data posted to the
+Orchestrator to plot updates in real-time.
+
+The following code highlights the sections of `fv_sim.py` that are responsible for
+transmitting the data needed to plot timesteps of the simulation to the Orchestrator.
 
 ```Python
 # fv_sim.py
@@ -791,8 +795,10 @@ for time_step in range(steps): # simulation loop
     client.put_dataset(dataset)
 ```
 
-The driver that launches the database and the simulation (non-blocking), looks
-like:
+Finally, in `driver.py`, we can see that with minimal effort we are able to launch the
+database and run the simulation in a non-blocking fashion. From there we simply poll
+the Orchestrator for new data posted by our simulation and update our plot once it is
+received.
 
 ```Python
 # driver.py
@@ -800,9 +806,10 @@ time_steps, seed = 3000, 42
 
 exp = Experiment("finite_volume_simulation", launcher="local")
 db = Orchestrator(port=6780)
-settings = RunSettings("python", exe_args=["fv_sim.py",
-                                           f"--seed={seed}",
-                                           f"--steps={time_steps}"])
+settings = exp.create_run_settings("python",
+                                   exe_args=["fv_sim.py",
+                                             f"--seed={seed}",
+                                             f"--steps={time_steps}"])
 model = exp.create_model("fv_simulation", settings)
 model.attach_generator_files(to_copy="fv_sim.py")
 exp.generate(db, model, overwrite=True)
@@ -935,7 +942,7 @@ TODO: Again confirm that this should be replaced with new table
   </tbody>
 </table>
 
-Note, it's important to remember that SmartSim utilizes a client-server model. To run
+**Note:** It's important to remember that SmartSim utilizes a client-server model. To run
 experiments that utilize the above frameworks, you must first start the Orchestrator
 database with SmartSim.
 
@@ -955,7 +962,6 @@ from smartsim.database import Orchestrator
 
 exp = Experiment("simple-online-inference", launcher="local")
 db = Orchestrator(port=6780)
-
 
 class Net(nn.Module):
     def __init__(self):
@@ -985,7 +991,7 @@ print(f"Prediction: {output}")
 exp.stop(db)
 ```
 
-To run:
+The above python code can be run like any normal python script:
 ```bash
 python simple_torch_inference.py
 ```
