@@ -35,8 +35,7 @@ like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
 and applications.
 
 SmartSim provides an API to connect HPC workloads, particularly (MPI + X) simulations,
-to an in-memory database called the Orchestrator, built on an in-memory database
-called Redis.
+to an in-memory database called the Orchestrator, built on Redis.
 
 Applications integrated with the SmartRedis clients, written in Fortran, C, C++ and Python,
 can stream tensors and datasets to and from the Orchestrator. The distributed Client-Server
