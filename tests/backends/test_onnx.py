@@ -4,9 +4,10 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.config import CONFIG
 from smartsim.status import STATUS_FAILED
 
-should_run = True
+sklearn_available = True
 try:
     from skl2onnx import to_onnx
     from sklearn.cluster import KMeans
@@ -16,13 +17,17 @@ try:
     from sklearn.model_selection import train_test_split
 
 except ImportError:
-    should_run = False
+    sklearn_available = False
+
+
+onnx_backend_available = "onnx" in CONFIG.installed_backends
+
+should_run = sklearn_available and onnx_backend_available
 
 pytestmark = pytest.mark.skipif(
     not should_run,
-    reason="requires scikit-learn, onnxmltools, skl2onnx",
+    reason="Requires scikit-learn, onnxmltools, skl2onnx and RedisAI onnx backend",
 )
-
 
 def test_sklearn_onnx(fileutils, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 some sklearn models
@@ -66,4 +71,4 @@ def test_sklearn_onnx(fileutils, mlutils, wlmutils):
     exp.stop(db)
     # if model failed, test will fail
     model_status = exp.get_status(model)
-    assert model_status != STATUS_FAILED
+    assert model_status[0] != STATUS_FAILED

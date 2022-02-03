@@ -27,6 +27,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import List
 
 import psutil
 
@@ -81,7 +82,6 @@ from ..utils.helpers import expand_exe_path
 # SMARTSIM_TEST_ACCOUNT
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
-
 
 class Config:
     def __init__(self):
@@ -169,6 +169,18 @@ class Config:
     def test_account(self) -> str:
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
+
+    @property
+    def installed_backends(self) -> List[str]:
+        installed = []
+        backends_path = self.lib_path / "backends"
+        for backend in ["tensorflow", "torch", "onnx"]:
+            backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
+            backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+            if backend_so.is_file():
+                installed.append(backend)
+
+        return installed
 
 
 @lru_cache(maxsize=128, typed=False)
