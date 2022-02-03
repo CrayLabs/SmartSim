@@ -1,6 +1,7 @@
 import pytest
 
 from smartsim import Experiment, status
+from smartsim._core.config import CONFIG
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 
@@ -21,10 +22,13 @@ try:
 except ImportError:
     shouldrun = False
 
+torch_available = "torch" in CONFIG.installed_backends
+
+shouldrun &= torch_available
 
 pytestmark = pytest.mark.skipif(
     not shouldrun,
-    reason="requires PyTorch and SmartRedis",
+    reason="requires PyTorch, SmartRedis, and RedisAI's Torch backend",
 )
 
 

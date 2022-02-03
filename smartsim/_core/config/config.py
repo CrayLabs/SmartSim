@@ -83,6 +83,7 @@ from ..utils.helpers import expand_exe_path
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
 
+
 class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
@@ -175,7 +176,9 @@ class Config:
         installed = []
         backends_path = self.lib_path / "backends"
         for backend in ["tensorflow", "torch", "onnx"]:
-            backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
+            backend_path = (
+                backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
+            )
             backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
             if backend_so.is_file():
                 installed.append(backend)

@@ -29,6 +29,7 @@ pytestmark = pytest.mark.skipif(
     reason="Requires scikit-learn, onnxmltools, skl2onnx and RedisAI onnx backend",
 )
 
+
 def test_sklearn_onnx(fileutils, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 some sklearn models
 
