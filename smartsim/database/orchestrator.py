@@ -74,7 +74,7 @@ class Orchestrator(EntityList):
         account=None,
         time=None,
         alloc=None,
-        single_cmd=True,
+        single_cmd=False,
         **kwargs,
     ):
         """Initialize an Orchestrator reference for local launch
@@ -438,17 +438,15 @@ class Orchestrator(EntityList):
                 exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
 
-            # srun has a different way of running MPMD jobs
-            if run_command == "srun":
-                run_settings.set_tasks(db_nodes)
-            else:
-                if self.launcher != "local":
-                    run_settings.set_tasks(1)
+            if self.launcher != "local":
+                run_settings.set_tasks(1)
 
             for exe_arg in exe_args[1:]:
                 mpmd_run_settings = create_run_settings(
                     exe=exe, exe_args=exe_arg, run_args=run_args.copy(), **kwargs
                 )
+                mpmd_run_settings.set_tasks(1)
+                mpmd_run_settings.set_tasks_per_node(1)
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
             run_settings = create_run_settings(

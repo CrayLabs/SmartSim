@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shlex import split as sh_split
+from warnings import warn, simplefilter
 
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -48,7 +49,7 @@ class SlurmOrchestrator(Orchestrator):
         alloc=None,
         db_per_host=1,
         interface="ipogif0",
-        single_cmd=True,
+        single_cmd=False,
         **kwargs,
     ):
 
@@ -87,6 +88,10 @@ class SlurmOrchestrator(Orchestrator):
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool
         """
+        simplefilter('always', DeprecationWarning)
+        msg = "SlurmOrchestrator(...) is deprecated and will be removed in a future release.\n" 
+        msg += "Please update your code to use Orchestrator(launcher='slurm', ...)."
+        warn(msg, DeprecationWarning)
         super().__init__(
             port,
             interface,

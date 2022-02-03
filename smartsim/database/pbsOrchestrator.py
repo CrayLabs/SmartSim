@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shlex import split as sh_split
+from warnings import warn, simplefilter
 
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -80,6 +81,10 @@ class PBSOrchestrator(Orchestrator):
         :param queue: queue to launch batch in
         :type queue: str, optional
         """
+        simplefilter('always', DeprecationWarning)
+        msg = "PBSOrchestrator(...) is deprecated and will be removed in a future release.\n" 
+        msg += "Please update your code to use Orchestrator(launcher='pbs', ...)."
+        warn(msg, DeprecationWarning)
         super().__init__(
             port,
             interface,

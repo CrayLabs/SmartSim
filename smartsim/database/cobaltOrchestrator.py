@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shlex import split as sh_split
+from warnings import warn, simplefilter
 
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
@@ -77,6 +78,10 @@ class CobaltOrchestrator(Orchestrator):
         :param time: walltime for batch 'HH:MM:SS' format
         :type time: str, optional
         """
+        simplefilter('always', DeprecationWarning)
+        msg = "CobaltOrchestrator(...) is deprecated and will be removed in a future release.\n" 
+        msg += "Please update your code to use Orchestrator(launcher='cobalt', ...)."
+        warn(msg, DeprecationWarning)
         super().__init__(
             port,
             interface,

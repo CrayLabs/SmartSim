@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from warnings import warn, simplefilter
 from ..entity import DBNode
 from ..error import SmartSimError, SSUnsupportedError
 from ..log import get_logger
@@ -94,7 +95,10 @@ class LSFOrchestrator(Orchestrator):
         :param interface: network interface to use
         :type interface: str
         """
-
+        simplefilter('always', DeprecationWarning)
+        msg = "LSFOrchestrator(...) is deprecated and will be removed in a future release.\n" 
+        msg += "Please update your code to use Orchestrator(launcher='lsf', ...)."
+        warn(msg, DeprecationWarning)
         if single_cmd != True:
             raise SSUnsupportedError(
                 "LSFOrchestrator can only be run with single_cmd=True (MPMD)."

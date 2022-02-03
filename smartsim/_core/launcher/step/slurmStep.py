@@ -26,6 +26,7 @@
 
 import os
 from itertools import product
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -167,39 +168,28 @@ class SrunStep(Step):
         :return: executable list
         :rtype: list[str]
         """
-        exe = self.run_settings.exe
-        args = self.run_settings.exe_args
         if self.run_settings.mpmd:
-            cmd = self._make_mpmd()
-            mp_cmd = ["--multi-prog", cmd]
-            return mp_cmd
+            return self._make_mpmd()
         else:
-            cmd = exe + args
+            cmd = self.run_settings.format_run_args()
+            cmd += self.run_settings.exe
+            cmd += self.run_settings.exe_args
             return cmd
 
     def _make_mpmd(self):
         """Build Slurm multi-prog (MPMD) executable
-
-        Launch multiple programs on separate CPUs on the same node using the
-        slurm --multi-prog feature.
         """
-        mpmd_file = self.get_step_file(ending=".mpmd")
+        cmd = self.run_settings.format_run_args()
+        cmd += self.run_settings.exe
+        cmd += self.run_settings.exe_args
+        for mpmd in self.run_settings.mpmd:
+            cmd += [" : "]
+            cmd += mpmd.format_run_args()
+            cmd += ["--job-name", self.name]
+            (env_var_str, _) = mpmd.format_env_vars()
+            cmd += ["--export", env_var_str]
+            cmd += mpmd.exe
+            cmd += mpmd.exe_args
 
-        def mpmd_line(run_settings, proc_start):
-            proc_end = proc_start
-            procs = str(proc_start)
-
-            cmd_line = [procs]
-            cmd_line.extend(run_settings.exe)
-            cmd_line.extend(run_settings.exe_args)
-            cmd_line.append("\n")
-            return cmd_line, proc_end + 1
-
-        proc_start = 0
-        with open(mpmd_file, "w+") as f:
-            cmd_line, proc_start = mpmd_line(self.run_settings, proc_start)
-            f.write(" ".join(cmd_line))
-            for mpmd in self.run_settings.mpmd:
-                cmd_line, proc_start = mpmd_line(mpmd, proc_start)
-                f.write(" ".join(cmd_line))
-        return mpmd_file
+        cmd = sh_split(" ".join(cmd))
+        return cmd
