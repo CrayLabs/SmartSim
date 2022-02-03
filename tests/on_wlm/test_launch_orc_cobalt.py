@@ -65,6 +65,10 @@ def test_launch_cobalt_cluster_orc(fileutils, wlmutils):
         exp.stop(orc)
         assert False
 
+    if len(orc.get_address()) < 3:
+        exp.stop(orc)
+        assert False
+
     exp.stop(orc)
     status = exp.get_status(orc)
     assert all([stat == status.STATUS_CANCELLED for stat in status])
