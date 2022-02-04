@@ -14,7 +14,7 @@ try:
 
     from smartsim.tf import freeze_model
 except (ImportError, SmartSimError):
-    tf_availavble = False
+    tf_available = False
 
 tf_backend_available = "tensorflow" in installed_redisai_backends()
 
