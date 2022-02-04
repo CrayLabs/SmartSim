@@ -68,6 +68,10 @@ def test_launch_pbs_cluster_orc(fileutils, wlmutils):
         exp.stop(orc)
         assert False
 
+    if len(orc.get_address()) < 3:
+        exp.stop(orc)
+        assert False
+
     exp.stop(orc)
     statuses = exp.get_status(orc)
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
