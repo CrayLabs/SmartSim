@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.status import STATUS_FAILED
 
 torch_available = True
@@ -14,7 +14,7 @@ try:
 except ImportError:
     torch_available = False
 
-torch_backend_available = "torch" in CONFIG.installed_backends
+torch_backend_available = "torch" in installed_redisai_backends()
 
 should_run = torch_available and torch_backend_available
 pytestmark = pytest.mark.skipif(

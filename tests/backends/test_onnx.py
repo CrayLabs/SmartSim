@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.status import STATUS_FAILED
 
 sklearn_available = True
@@ -20,7 +20,7 @@ except ImportError:
     sklearn_available = False
 
 
-onnx_backend_available = "onnx" in CONFIG.installed_backends
+onnx_backend_available = "onnxruntime" in installed_redisai_backends()
 
 should_run = sklearn_available and onnx_backend_available
 

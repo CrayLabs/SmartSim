@@ -1,7 +1,7 @@
 import pytest
 
 from smartsim import Experiment, status
-from smartsim._core.config import CONFIG
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 
@@ -17,12 +17,13 @@ REDIS_PORT = 6780
 
 shouldrun = True
 try:
-    import smartredis
     import torch
+
+    import smartredis
 except ImportError:
     shouldrun = False
 
-torch_available = "torch" in CONFIG.installed_backends
+torch_available = "torch" in installed_redisai_backends()
 
 shouldrun &= torch_available
 

@@ -171,20 +171,6 @@ class Config:
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
 
-    @property
-    def installed_backends(self) -> List[str]:
-        installed = []
-        backends_path = self.lib_path / "backends"
-        for backend in ["tensorflow", "torch", "onnx"]:
-            backend_path = (
-                backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
-            )
-            backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-            if backend_so.is_file():
-                installed.append(backend)
-
-        return installed
-
 
 @lru_cache(maxsize=128, typed=False)
 def get_config():

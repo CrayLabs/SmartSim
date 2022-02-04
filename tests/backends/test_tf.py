@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
-from smartsim._core.config import CONFIG
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.error import SmartSimError
 from smartsim.status import STATUS_FAILED
 
@@ -16,7 +16,7 @@ try:
 except (ImportError, SmartSimError):
     tf_availavble = False
 
-tf_backend_available = "tensorflow" in CONFIG.installed_backends
+tf_backend_available = "tensorflow" in installed_redisai_backends()
 
 
 @pytest.mark.skipif(
