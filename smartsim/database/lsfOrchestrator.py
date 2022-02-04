@@ -25,7 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from warnings import warn, simplefilter
+from warnings import simplefilter, warn
+
 from ..error import SSUnsupportedError
 from .orchestrator import Orchestrator
 
@@ -90,7 +91,7 @@ class LSFOrchestrator(Orchestrator):
         :param interface: network interface to use
         :type interface: str
         """
-        simplefilter('always', DeprecationWarning)
+        simplefilter("always", DeprecationWarning)
         msg = "LSFOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='lsf', ...)."
         warn(msg, DeprecationWarning)

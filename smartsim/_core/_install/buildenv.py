@@ -351,7 +351,7 @@ class BuildEnv:
             "MALLOC",
             "JOBS",
             "PYTHON_VERSION",
-            "PLATFORM"
+            "PLATFORM",
         ]
         values = [
             self.CC,
@@ -361,7 +361,7 @@ class BuildEnv:
             self.MALLOC,
             self.JOBS,
             self.python_version,
-            self.PLATFORM
+            self.PLATFORM,
         ]
         env = {"Environment": variables, "Values": values}
         return env
@@ -391,6 +391,7 @@ class BuildEnv:
             """Find through importing torch"""
             try:
                 import torch as t
+
                 torch_paths = [Path(p) for p in t.__path__]
                 for _path in torch_paths:
                     torch_path = _path / "share/cmake/Torch"

@@ -24,7 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from warnings import warn, simplefilter
+from warnings import simplefilter, warn
+
 from .orchestrator import Orchestrator
 
 
@@ -80,7 +81,7 @@ class SlurmOrchestrator(Orchestrator):
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool
         """
-        simplefilter('always', DeprecationWarning)
+        simplefilter("always", DeprecationWarning)
         msg = "SlurmOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='slurm', ...)."
         warn(msg, DeprecationWarning)

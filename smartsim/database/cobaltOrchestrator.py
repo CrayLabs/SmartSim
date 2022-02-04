@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from warnings import warn, simplefilter
+from warnings import simplefilter, warn
 
 from .orchestrator import Orchestrator
+
 
 class CobaltOrchestrator(Orchestrator):
     def __init__(
@@ -70,7 +71,7 @@ class CobaltOrchestrator(Orchestrator):
         :param time: walltime for batch 'HH:MM:SS' format
         :type time: str, optional
         """
-        simplefilter('always', DeprecationWarning)
+        simplefilter("always", DeprecationWarning)
         msg = "CobaltOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='cobalt', ...)."
         warn(msg, DeprecationWarning)

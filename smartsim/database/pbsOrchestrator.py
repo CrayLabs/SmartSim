@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from warnings import warn, simplefilter
+from warnings import simplefilter, warn
 
 from ..log import get_logger
 from .orchestrator import Orchestrator
@@ -77,7 +77,7 @@ class PBSOrchestrator(Orchestrator):
         :param queue: queue to launch batch in
         :type queue: str, optional
         """
-        simplefilter('always', DeprecationWarning)
+        simplefilter("always", DeprecationWarning)
         msg = "PBSOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='pbs', ...)."
         warn(msg, DeprecationWarning)

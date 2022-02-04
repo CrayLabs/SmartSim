@@ -33,8 +33,8 @@ from shlex import split as sh_split
 import psutil
 import redis
 
-from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
+from .._core.config import CONFIG
 from .._core.utils.helpers import is_valid_cmd
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError, SSUnsupportedError
