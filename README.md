@@ -599,7 +599,7 @@ The example below shows how to take a PyTorch model, send it to the Orchestrator
 execute it on data stored within the database.
 
 Notice that when we set the model in the database, we set the device arguement to
-**GPU**. By doing this we ensure that exection of the model takes place on a GPU if
+**GPU**. By doing this we ensure that execution of the model takes place on a GPU if
 one is available to the database.
 
 ```Python
@@ -631,8 +631,8 @@ application written in C, C++, or Fortran will utilize their respective client
 to call the model that was set and retrieve the results as a language native tensor.
 
 This example shows how, with minimal boilerplate code, a C++ application launched from
-SmartSim is able utilize the Client API to execute a model stored in the Orchestrator
-that has been fit using any of the supported Python ML backends.
+SmartSim is able to utilize the Client API to execute a model stored in the
+Orchestrator that has been fit using any of the supported Python ML backends.
 
 ```C++
 #include "client.h"
