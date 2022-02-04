@@ -485,7 +485,7 @@ SmartSim includes built-in utilities for supporting TensorFlow and Keras in trai
    :inherited-members:
    :members:
 
-.. autoclass:: DataGenerator
+.. autoclass:: DynamicDataGenerator
    :members:
    :show-inheritance:
    :inherited-members:
@@ -504,7 +504,7 @@ SmartSim includes built-in utilities for supporting PyTorch in training and infe
    :show-inheritance:
    :inherited-members:
 
-.. autoclass:: DataGenerator
+.. autoclass:: DynamicDataGenerator
    :members:
    :show-inheritance:
    :inherited-members:

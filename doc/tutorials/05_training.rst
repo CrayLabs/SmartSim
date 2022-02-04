@@ -31,12 +31,12 @@ An equivalent example using PyTorch instead of TensorFlow is available in the sa
 The first application in the workflow, the ``producer`` will upload batches of samples at regular intervals,
 mimicking the behavior of an iterative simulation. 
 
-Since the ``training_service`` will use a ``smartsim.ml.tf.DataGenerator`` two download the samples, their
+Since the ``training_service`` will use a ``smartsim.ml.tf.DynamicDataGenerator`` two download the samples, their
 keys need to follow a pre-defined format. Assuming that only one process in the simulation
 uploads the data, this format is ``<sample_prefix>_<iteration>``. And for targets
 (which can also be integer labels), the key format is ``<target_prefix>_<iteration>``. Both ``<sample_prefix>``
 and ``<target_prefix>`` are user-defined, and will need to be used to initialize the
-``smartsim.ml.tf.DataGenerator`` object.
+``smartsim.ml.tf.DynamicDataGenerator`` object.
 
 Assuming the simulation is written in Python, then the code would look like
 
@@ -70,23 +70,23 @@ and download them as they are available. The training data set size thus needs t
 each ``producer`` iteration.
 
 In Keras, a ``Sequence`` represents a data set and can be passed to ``model.fit()``.
-The class ``smartsim.ml.tf.DataGenerator`` is a Keras ``Sequence``, which updates
+The class ``smartsim.ml.tf.DynamicDataGenerator`` is a Keras ``Sequence``, which updates
 its data set at the end of each training epoch, looking for newly produced batches of samples.
 A current limitation of the TensorFlow training algorithm is that it does not take
 into account changes of size in the data sets once the training has started, i.e. it is always
 assumed that the training (and validation) data does not change during the training. To
 overcome this limitation, we need to train one epoch at the time. Thus, 
-following what we defined in the :ref:`producer section <ml_training_produced_code>`,
+following what we defined in the :ref:`producer section <ml_training_producer_code>`,
 the ``training_service`` would look like
 
 .. code-block:: python
 
-    from smartsim.ml.tf.data import DataGenerator
-    generator = DataGenerator(
-        sample_prefix="points",
-        target_prefix="value",
-        batch_size=32,
-        cluster=False)
+    from smartsim.ml.tf.data import DynamicDataGenerator
+    generator = DynamicDataGenerator(
+            sample_prefix="points",
+            target_prefix="value",
+            batch_size=32,
+            cluster=False)
 
     model = # some ML model
     # model initialization
@@ -107,12 +107,12 @@ need to be adapted as follows
 
 .. code-block:: python
 
-    generator = DataGenerator(
-        sample_prefix="points",
-        target_prefix="value",
-        batch_size=32,
-        cluster=False,
-        uploader_ranks=8)
+    generator = DynamicDataGenerator(
+                    sample_prefix="points",
+                    target_prefix="value",
+                    batch_size=32,
+                    cluster=False,
+                    uploader_ranks=8)
 
 
 5.1.3 Launching the experiment
