@@ -459,18 +459,27 @@ class Experiment:
         time=None,
         queue=None,
         single_cmd=True,
+<<<<<<< HEAD
         launcher="auto",
+=======
+>>>>>>> 18b20fc8b85bf1bd8474d9a8e705694f18b6e576
         **kwargs,
     ):
         """Create a database
 
         The returned object is an instance of a sub-class of Orchestrator,
         such as SlurmOrchestrator, PBSOrchestrator, LSFOrchestrator, or CobaltOrchestrator,
+<<<<<<< HEAD
         depending on the selected (or detected) launcher. See corresponding documentation
         for more details.
 
         :param launcher: launcher used to start the orchestrator, defaults to "auto"
         :type launcher: str, optional
+=======
+        depending on the Experiment's launcher. See corresponding documentation
+        for more details.
+
+>>>>>>> 18b20fc8b85bf1bd8474d9a8e705694f18b6e576
         :param port: TCP/IP port, defaults to 6379
         :type port: int, optional
         :param db_nodes: numver of database shards, defaults to 1
@@ -507,7 +516,11 @@ class Experiment:
             time=time,
             queue=queue,
             single_cmd=single_cmd,
+<<<<<<< HEAD
             launcher=launcher,
+=======
+            launcher=self._launcher,
+>>>>>>> 18b20fc8b85bf1bd8474d9a8e705694f18b6e576
             **kwargs,
         )
 
