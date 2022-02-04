@@ -25,7 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+<<<<<<< HEAD
 from shlex import split as sh_split
+=======
+import shutil
+>>>>>>> 816f1d7... Initial progress on colocated
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -140,6 +144,17 @@ class SrunStep(Step):
                 srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
 
         srun_cmd += self.run_settings.format_run_args()
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            srun_cmd.append("--cpu-bind=none")
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            srun_cmd += [bash, launch_script_path]
+
         srun_cmd += self._build_exe()
         return srun_cmd
 

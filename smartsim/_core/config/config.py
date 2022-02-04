@@ -86,10 +86,10 @@ from ..utils.helpers import expand_exe_path
 class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
-        core_path = Path(os.path.abspath(__file__)).parent.parent
-        self.lib_path = Path(core_path, "lib").resolve()
-        self.bin_path = Path(core_path, "bin").resolve()
-        self.conf_path = Path(core_path, "config", "redis6.conf")
+        self.core_path = Path(os.path.abspath(__file__)).parent.parent
+        self.lib_path = Path(self.core_path, "lib").resolve()
+        self.bin_path = Path(self.core_path, "bin").resolve()
+        self.conf_path = Path(self.core_path, "config", "redis6.conf")
 
     @property
     def redisai(self) -> str:

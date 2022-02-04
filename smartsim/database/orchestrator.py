@@ -23,11 +23,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import sys
 import itertools
-import os
 from os import getcwd
-from pathlib import Path
 from shlex import split as sh_split
 
 import psutil
@@ -291,12 +289,6 @@ class Orchestrator(EntityList):
         return " ".join(module)
 
     @property
-    def _redis_launch_script(self):
-        current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-        script_path = current_dir.joinpath("redis_starter.py").resolve()
-        return str(script_path)
-
-    @property
     def _redis_exe(self):
         return CONFIG.redis_exe
 
@@ -540,7 +532,9 @@ class Orchestrator(EntityList):
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
             start_script_args = [
-                self._redis_launch_script,  # redis_starter.py
+                sys.executable,
+                "-m",
+                "smartsim._core.entrypoints.redis", # entrypoint
                 f"+ifname={self._interface}",  # pass interface to start script
                 "+command",  # command flag for argparser
                 self._redis_exe,  # redis-server

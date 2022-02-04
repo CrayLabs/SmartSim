@@ -72,6 +72,7 @@ class RunSettings:
         self.env_vars = init_default({}, env_vars, (dict, list))
         self._run_command = run_command
         self.in_batch = False
+        self.colocated_db_settings = None
 
     def set_tasks(self, tasks):
         """Set the number of tasks to launch
@@ -199,7 +200,9 @@ class RunSettings:
         if self.run_command:
             string += f"Run Command: {self._run_command}\n"
         if self.run_args:
-            string += f"Run arguments: {pformat(self.run_args)}"
+            string += f"Run arguments: {pformat(self.run_args)}\n"
+        if self.colocated_db_settings:
+            string += f"Co-located DB settings: {pformat(self.colocated_db_settings)}"
         return string
 
 

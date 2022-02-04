@@ -31,11 +31,12 @@ from threading import RLock, Thread
 import psutil
 
 from ...error import LauncherError
-from ...log import _get_log_level, get_logger
+from ...log import get_logger
 from .util.shell import execute_async_cmd, execute_cmd
+from ..utils.helpers import check_dev_log_level
 
 logger = get_logger(__name__)
-verbose_tm = bool(_get_log_level() == "developer")
+verbose_tm = check_dev_log_level()
 
 
 TM_INTERVAL = 1

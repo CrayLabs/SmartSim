@@ -282,8 +282,9 @@ class Controller:
                 steps.extend(job_steps)
 
         # models themselves cannot be batch steps
-        job_steps = [(self._create_job_step(e), e) for e in manifest.models]
-        steps.extend(job_steps)
+        for model in manifest.models:
+            job_step = self._create_job_step(model)
+            steps.append((job_step, model))
 
         # launch steps
         for job_step in steps:
@@ -425,7 +426,14 @@ class Controller:
                 )
             if entity.query_key_prefixing():
                 client_env["SSKEYOUT"] = entity.name
+
+        # Set address to local if it's a colocated model
+        if hasattr(entity, "colocated"):
+            if entity.colocated:
+                port = entity.run_settings.colocated_db_settings["port"]
+                client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
+
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

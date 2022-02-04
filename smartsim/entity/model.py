@@ -56,6 +56,13 @@ class Model(SmartSimEntity):
         self._key_prefixing_enabled = False
         self.files = None
 
+    @property
+    def colocated(self):
+        """Return True if this Model will run with a colocated Orchestrator"""
+        if self.run_settings.colocated_db_settings:
+            return True
+        return False
+
     def register_incoming_entity(self, incoming_entity):
         """Register future communication between entities.
 
@@ -117,6 +124,58 @@ class Model(SmartSimEntity):
         to_symlink = init_default([], to_symlink, (list, str))
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
+
+    def colocate_db(self, port=6379, db_cpus=1, limit_app_cpus=True, ifname="lo", **kwargs):
+        """Colocate an Orchestrator instance with this Model at runtime.
+
+        This method will initialize settings which add an unsharded (not connected)
+        database to this Model instance. Only this Model will be able to communicate
+        with this colocated database by using the loopback TCP interface or Unix
+        Domain sockets (UDS coming soon).
+
+        Extra parameters for the db can be passed through kwargs. This includes
+        many performance, caching and inference settings.
+
+        ex. kwargs = {
+            maxclients: 100000,
+            threads_per_queue: 1,
+            inter_op_threads: 1,
+            intra_op_threads: 1,
+            server-threads: 2 # keydb only
+        }
+
+        Generally these don't need to be changed.
+
+        :param port: port to use for orchestrator database, defaults to 6379
+        :type port: int, optional
+        :param db_cpus: number of cpus to use for orchestrator, defaults to 1
+        :type db_cpus: int, optional
+        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
+        :type limit_app_cpus: bool, optional
+        :param ifname: interface to use for orchestrator, defaults to "lo"
+        :type ifname: str, optional
+        :param kwargs: additional keyword arguments to pass to the orchestrator database
+        :type kwargs: dict, optional
+
+        """
+        colo_db_config = {
+            "port": int(port),
+            "cpus": int(db_cpus),
+            "interface": ifname,
+            "limit_app_cpus": limit_app_cpus,
+
+            # redisai arguments for inference settings
+            "rai_args": {
+                "threads_per_queue": kwargs.get("threads_per_queue", None),
+                "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
+                "intra_op_parallelism": kwargs.get("intra_op_parallelism", None)
+            }
+        }
+        colo_db_config["extra_db_args"] = dict([
+            (k,str(v)) for k,v in kwargs.items() if k not in colo_db_config["rai_args"]
+        ])
+        self.run_settings.colocated_db_settings = colo_db_config
+
 
     def params_to_args(self):
         """Convert parameters to command line arguments and update run settings."""

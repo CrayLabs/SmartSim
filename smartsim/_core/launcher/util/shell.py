@@ -1,13 +1,14 @@
 import time
-from subprocess import PIPE, TimeoutExpired
-
 import psutil
 
+from subprocess import PIPE, TimeoutExpired
+
+from ...utils.helpers import check_dev_log_level
 from ....error import ShellError
-from ....log import _get_log_level, get_logger
+from ....log import get_logger
 
 logger = get_logger(__name__)
-verbose_shell = bool(_get_log_level() == "developer")
+verbose_shell = check_dev_log_level()
 
 
 def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None):

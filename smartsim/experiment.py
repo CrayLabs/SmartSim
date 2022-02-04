@@ -565,9 +565,51 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        return tabulate(
-            values, headers, showindex=True, tablefmt=format, missingval="None"
+        else:
+            return tabulate(
+                values, headers, showindex=True, tablefmt=format, missingval="None"
+            )
+
+    # TODO: Take this out and add a method to obtain job data in
+    # the experiment class that is easier converted into a pandas
+    # dataframe.
+    def summary_df(self):
+        """Return a summary of the ``Experiment``
+
+        The summary will show each instance that has been
+        launched and completed in this ``Experiment``
+        :return: pandas Dataframe of ``Experiment`` history
+        :rtype: pd.DataFrame
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise SmartSimError("Pandas is required for summary_df function")
+        index = 0
+        df = pd.DataFrame(
+            columns=[
+                "Name",
+                "Entity-Type",
+                "JobID",
+                "RunID",
+                "Time",
+                "Status",
+                "Returncode",
+            ]
         )
+        for job in self._control._jobs.completed.values():
+            for run in range(job.history.runs + 1):
+                df.loc[index] = [
+                    job.entity.name,
+                    job.entity.type,
+                    job.history.jids[run],
+                    run,
+                    job.history.job_times[run],
+                    job.history.statuses[run],
+                    job.history.returns[run],
+                ]
+                index += 1
+        return df
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
