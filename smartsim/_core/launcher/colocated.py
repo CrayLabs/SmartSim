@@ -47,9 +47,14 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
                                                  db_log=db_log)
 
     with open(file_name, "w") as f:
-        f.write("#!/bin/bash\n\n")
+        f.write("#!/bin/bash\n")
+        f.write("set -e\n\n")
 
-        f.write("export SMARTSIM_LOG_LEVEL=debug\n")
+        # force entrypoint to write some debug information to the
+        # STDOUT of the job
+        if colocated_settings["debug"]:
+            f.write("export SMARTSIM_LOG_LEVEL=debug\n")
+
         f.write(f"{colocated_cmd}\n")
         f.write(f"DBPID=$!\n\n")
         if colocated_settings["limit_app_cpus"]:

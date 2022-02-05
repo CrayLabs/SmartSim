@@ -140,7 +140,7 @@ class Config:
 
     @property
     def jm_interval(self) -> int:
-        return os.environ.get("SMARTSIM_JM_INTERVAL", 10)
+        return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
 
     @property
     def test_launcher(self) -> str:

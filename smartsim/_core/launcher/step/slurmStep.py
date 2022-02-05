@@ -25,11 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-<<<<<<< HEAD
-from shlex import split as sh_split
-=======
 import shutil
->>>>>>> 816f1d7... Initial progress on colocated
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -185,15 +182,13 @@ class SrunStep(Step):
         if self.run_settings.mpmd:
             return self._make_mpmd()
         else:
-            cmd = self.run_settings.format_run_args()
-            cmd += self.run_settings.exe
-            cmd += self.run_settings.exe_args
-            return cmd
+            exe = self.run_settings.exe
+            args = self.run_settings.exe_args
+            return exe + args
 
     def _make_mpmd(self):
         """Build Slurm multi-prog (MPMD) executable"""
-        cmd = self.run_settings.format_run_args()
-        cmd += self.run_settings.exe
+        cmd = self.run_settings.exe
         cmd += self.run_settings.exe_args
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]

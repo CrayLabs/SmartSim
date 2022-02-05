@@ -200,9 +200,9 @@ class RunSettings:
         if self.run_command:
             string += f"Run Command: {self._run_command}\n"
         if self.run_args:
-            string += f"Run arguments: {pformat(self.run_args)}\n"
+            string += f"Run arguments: {pformat(self.run_args)}"
         if self.colocated_db_settings:
-            string += f"Co-located DB settings: {pformat(self.colocated_db_settings)}"
+            string += f"\nCo-located DB settings: {pformat(self.colocated_db_settings)}"
         return string
 
 

@@ -125,7 +125,13 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def colocate_db(self, port=6379, db_cpus=1, limit_app_cpus=True, ifname="lo", **kwargs):
+    def colocate_db(self,
+                    port=6379,
+                    db_cpus=1,
+                    limit_app_cpus=True,
+                    ifname="lo",
+                    debug=False,
+                    **kwargs):
         """Colocate an Orchestrator instance with this Model at runtime.
 
         This method will initialize settings which add an unsharded (not connected)
@@ -141,7 +147,7 @@ class Model(SmartSimEntity):
             threads_per_queue: 1,
             inter_op_threads: 1,
             intra_op_threads: 1,
-            server-threads: 2 # keydb only
+            server_threads: 2 # keydb only
         }
 
         Generally these don't need to be changed.
@@ -154,6 +160,8 @@ class Model(SmartSimEntity):
         :type limit_app_cpus: bool, optional
         :param ifname: interface to use for orchestrator, defaults to "lo"
         :type ifname: str, optional
+        :param debug: launch Model with extra debug information about the colocated db
+        :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
 
@@ -163,6 +171,7 @@ class Model(SmartSimEntity):
             "cpus": int(db_cpus),
             "interface": ifname,
             "limit_app_cpus": limit_app_cpus,
+            "debug": debug,
 
             # redisai arguments for inference settings
             "rai_args": {
