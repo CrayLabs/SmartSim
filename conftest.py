@@ -209,7 +209,7 @@ def db(fileutils, wlmutils, request):
     exp.stop(db)
 
 @pytest.fixture
-def clustered_db(fileutils, wlmutils, request):
+def db_cluster(fileutils, wlmutils, request):
     """Yield fixture for startup and teardown of a clustered orchestrator"""
     launcher = wlmutils.get_test_launcher()
 

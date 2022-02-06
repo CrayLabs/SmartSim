@@ -171,7 +171,7 @@ class Orchestrator(EntityList):
         # if a cluster
         else:
             try:
-                check_cluster_status(trials=1)
+                check_cluster_status(self._hosts, self.ports, trials=1)
                 return True
             # we expect this to fail if the cluster is not active
             except SSInternalError:
