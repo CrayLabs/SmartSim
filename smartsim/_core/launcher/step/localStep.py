@@ -45,7 +45,7 @@ class LocalStep(Step):
             run_args = self.run_settings.format_run_args()
             cmd.extend(run_args)
 
-        if self.run_settings.colocated_run_settings:
+        if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
 

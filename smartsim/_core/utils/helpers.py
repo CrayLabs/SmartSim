@@ -34,8 +34,8 @@ from functools import lru_cache
 
 def create_lockfile_name():
     """Generate a unique lock filename using UUID"""
-    name = uuid.uuid4()
-    return f"{name}.lock"
+    lock_suffix = str(uuid.uuid4())[:7]
+    return f"smartsim-{lock_suffix}.lock"
 
 
 @lru_cache(maxsize=20, typed=False)

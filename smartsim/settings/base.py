@@ -201,9 +201,9 @@ class RunSettings:
 
     def __str__(self):
         string = f"Executable: {self.exe[0]}\n"
-        string += f"Executable Arguments: {' '.join((self.exe_args))}\n"
+        string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
-            string += f"Run Command: {self._run_command}"
+            string += f"\nRun Command: {self._run_command}"
         if self.run_args:
             string += f"\nRun Arguments:\n{fmt_dict(self.run_args)}"
         if self.colocated_db_settings:

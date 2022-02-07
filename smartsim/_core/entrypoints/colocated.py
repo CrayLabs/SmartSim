@@ -41,8 +41,10 @@ from smartsim.error import SSInternalError
 from smartsim.log import get_logger
 logger = get_logger(__name__)
 
+DBPID = None
 
 def main(network_interface: str, db_cpus: int, command: List[str]):
+    global DBPID
 
     try:
         ip_address = current_ip(network_interface)
@@ -63,6 +65,7 @@ def main(network_interface: str, db_cpus: int, command: List[str]):
     # if this process dies, the application will most likely fail
     try:
         p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        DBPID = p.pid
     except Exception as e:
         raise SSInternalError("Co-located process failed to start") from e
 
@@ -83,16 +86,27 @@ def main(network_interface: str, db_cpus: int, command: List[str]):
 
 
 def cleanup(signo, frame):
+    global DBPID
+    global LOCK
     try:
+
+        logger.info(DBPID)
+        db_proc = psutil.Process(DBPID)
+        db_proc.terminate()
+
+    except psutil.NoSuchProcess:
+        logger.warning("Couldn't find database process to kill.")
+
+    except OSError as e:
+        logger.warning(
+            f"Failed to clean up co-located database gracefully: {str(e)}"
+        )
+    finally:
         if LOCK.is_locked:
             LOCK.release()
 
         if os.path.exists(LOCK.lock_file):
             os.remove(LOCK.lock_file)
-    except OSError as e:
-        logger.warning(
-            f"Failed to clean up co-located database gracefully: {str(e)}"
-        )
 
 
 if __name__ == "__main__":

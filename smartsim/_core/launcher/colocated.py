@@ -50,6 +50,14 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
         f.write("#!/bin/bash\n")
         f.write("set -e\n\n")
 
+        f.write("Cleanup () {\n")
+        f.write("if ps -p $DBPID > /dev/null; then\n")
+        f.write("\tkill -15 $DBPID\n")
+        f.write("fi\n}\n\n")
+
+        # run cleanup after all exitcodes
+        f.write("trap Cleanup exit\n\n")
+
         # force entrypoint to write some debug information to the
         # STDOUT of the job
         if colocated_settings["debug"]:
@@ -64,11 +72,6 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
             )
         else:
             f.write(f"$@\n\n")
-
-        f.write("if ps -p $DBPID > /dev/null\n")
-        f.write("then\n")
-        f.write("\tkill -15 $DBPID\n")
-        f.write("fi\n")
 
 
 def _build_colocated_wrapper_cmd(port=6780,
