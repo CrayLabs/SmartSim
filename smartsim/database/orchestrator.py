@@ -367,7 +367,7 @@ class Orchestrator(EntityList):
                     f"Invalid CONFIG key-value pair ({key}: {value})"
                 ) from None
             except TypeError:
-                raise SmartSimError(
+                raise TypeError(
                     "Incompatible function arguments. The key and value used for setting the database configurations must be strings."
                 ) from None
         else:

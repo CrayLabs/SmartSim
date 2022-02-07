@@ -11,11 +11,30 @@ except AttributeError:
 
 
 def test_config_methods(dbutils, db):
-    """Ensure all configuration file edit methods in the Orchestrator pass"""
+    """Test all configuration file edit methods on an active db"""
+
+    # test the happy path and ensure all configuration file edit methods
+    # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
         config_set_method = dbutils.get_config_edit_method(db, setting)
         config_set_method(value)
+
+    # ensure SmartSimError is raised when Orchestrator.set_db_conf
+    # is given invalid CONFIG key-value pairs
+    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    for key, value_list in ss_error_configs.items():
+        for value in value_list:
+            with pytest.raises(SmartSimError):
+                db.set_db_conf(key, value)
+
+    # ensure TypeError is raised when Orchestrator.set_db_conf
+    # is given either a key or a value that is not a string
+    type_error_configs = dbutils.get_type_error_db_configs()
+    for key, value_list in type_error_configs.items():
+        for value in value_list:
+            with pytest.raises(TypeError):
+                db.set_db_conf(key, value)
 
 
 def test_config_methods_inactive(wlmutils, dbutils):
@@ -28,14 +47,3 @@ def test_config_methods_inactive(wlmutils, dbutils):
         config_set_method = dbutils.get_config_edit_method(db, setting)
         with pytest.raises(SmartSimError):
             config_set_method(value)
-
-
-def test_bad_db_conf(dbutils, db):
-    """Ensure SmartSimErrors are raised for all kinds
-    of invalid key value pairs
-    """
-    bad_configs = dbutils.get_bad_db_configs()
-    for key, value_list in bad_configs.items():
-        for value in value_list:
-            with pytest.raises(SmartSimError):
-                db.set_db_conf(key, value)

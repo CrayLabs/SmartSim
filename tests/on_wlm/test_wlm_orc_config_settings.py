@@ -15,31 +15,27 @@ except AttributeError:
 
 
 def test_config_methods_on_wlm_cluster(dbutils, db_cluster):
-    """test setting clustered 3-node orchestrator configurations"""
+    """Test all configuration file edit methods on an active clustered db"""
+
+    # test the happy path and ensure all configuration file edit methods
+    # successfully execute when given correct key-value pairs
     configs = dbutils.get_db_configs()
     for setting, value in configs.items():
         config_set_method = dbutils.get_config_edit_method(db_cluster, setting)
         config_set_method(value)
 
-
-def test_config_methods_inactive_on_wlm_cluster(wlmutils, dbutils):
-    """Ensure a SmartSimError is raised when trying to
-    set configurations on an inactive clustered 3-node database
-    """
-    db = wlmutils.get_orchestrator(nodes=3)
-    configs = dbutils.get_db_configs()
-    for setting, value in configs.items():
-        config_set_method = dbutils.get_config_edit_method(db, setting)
-        with pytest.raises(SmartSimError):
-            config_set_method(value)
-
-
-def test_bad_db_conf_on_wlm_cluster(dbutils, db_cluster):
-    """Ensure SmartSimErrors are raised for all kinds
-    of invalid key value pairs
-    """
-    bad_configs = dbutils.get_bad_db_configs()
-    for key, value_list in bad_configs.items():
+    # ensure SmartSimError is raised when a clustered database's
+    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
+    ss_error_configs = dbutils.get_smartsim_error_db_configs()
+    for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
+                db_cluster.set_db_conf(key, value)
+
+    # ensure TypeError is raised when a clustered database's
+    # Orchestrator.set_db_conf is given invalid CONFIG key-value pairs
+    type_error_configs = dbutils.get_type_error_db_configs()
+    for key, value_list in type_error_configs.items():
+        for value in value_list:
+            with pytest.raises(TypeError):
                 db_cluster.set_db_conf(key, value)

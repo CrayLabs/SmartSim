@@ -205,12 +205,16 @@ def db(fileutils, wlmutils, request):
     exp.start(db)
 
     yield db
-
+    # pass or fail, the teardown code below is ran after the
+    # completion of a test case that uses this fixture
     exp.stop(db)
 
 @pytest.fixture
 def db_cluster(fileutils, wlmutils, request):
-    """Yield fixture for startup and teardown of a clustered orchestrator"""
+    """
+    Yield fixture for startup and teardown of a clustered orchestrator.
+    This should only be used in on_wlm and full_wlm tests.
+    """
     launcher = wlmutils.get_test_launcher()
 
     exp_name = request.function.__name__
@@ -221,7 +225,8 @@ def db_cluster(fileutils, wlmutils, request):
     exp.start(db)
 
     yield db
-
+    # pass or fail, the teardown code below is ran after the
+    # completion of a test case that uses this fixture
     exp.stop(db)
 
 @pytest.fixture
@@ -242,30 +247,41 @@ class DBUtils:
         return config_settings
 
     @staticmethod
-    def get_bad_db_configs():
+    def get_smartsim_error_db_configs():
         bad_configs = {
             "save": [
-                -1,  # frequency must be positive
-                2.4,  # frequency must be specified in whole seconds
+                "-1", # frequency must be positive
+                "2.4", # frequency must be specified in whole seconds
             ],
             "maxmemory": [
-                "29GG",  # invalid memory form
-                str(2 ** 65) + "gb",  # memory is too much
-                99,  # memory form must be a string
-                "3.5gb",  # invalid memory form
+                "29GG", # invalid memory form
+                str(2 ** 65) + "gb", # memory is too much
+                "3.5gb", # invalid memory form
             ],
             "maxclients": [
-                -3,  # number clients must be positive
-                2.9,  # number of clients must be an integer
-                2 ** 65,  # number of clients is too large
+                "-3", # number clients must be positive
+                str(2 ** 65), # number of clients is too large
+                "2.9", # number of clients must be an integer
             ],
             "proto-max-bulk-len": [
-                100,  # max message size can't be smaller than 1mb
-                101.1,  # max message size must be an integer
+                "100",  # max message size can't be smaller than 1mb
                 "9.9gb",  # invalid memory form
+                "101.1", # max message size must be an integer
             ],
-            "maxmemory-policy": ["invalid-policy"],  # must use a valid maxmemory policy
+            "maxmemory-policy": ["invalid-policy"], # must use a valid maxmemory policy
             "invalid-parameter": ["99"],  # invalid key - no such configuration exists
+        }
+        return bad_configs
+
+    @staticmethod
+    def get_type_error_db_configs():
+        bad_configs = {
+            "save": [2, True, ["2"]],  # frequency must be specified as a string
+            "maxmemory": [99, True, ["99"]],  # memory form must be a string
+            "maxclients": [3, True, ["3"]],  # number of clients must be a string
+            "proto-max-bulk-len": [101, True, ["101"]],  # max message size must be a string
+            "maxmemory-policy": [42, True, ["42"]],  # maxmemory policies must be strings
+            10: ["3"], # invalid key - the key must be a string
         }
         return bad_configs
 
