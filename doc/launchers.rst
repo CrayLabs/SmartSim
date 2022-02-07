@@ -9,7 +9,7 @@ launching them onto a system.
 
 The `launchers` allow SmartSim users to interact with their system
 programmatically through a python interface.
-Because of this, SmartSim users don’t have to leave the Jupyter Notebook,
+Because of this, SmartSim users don't have to leave the Jupyter Notebook,
 Python REPL, or Python script to launch, query, and interact with their jobs.
 
 SmartSim currently supports 5 `launchers`:
@@ -149,7 +149,7 @@ The above code would generate a ``salloc`` command like:
 
 .. code-block:: bash
 
-    salloc -N 5 -C haswell --parition debug --time 10:00:00 --exclusive
+    salloc -N 5 -C haswell --partition debug --time 10:00:00 --exclusive
 
 
 
