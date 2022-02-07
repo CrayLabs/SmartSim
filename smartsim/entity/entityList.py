@@ -69,6 +69,3 @@ class EntityList:
 
     def __len__(self):
         return len(self.entities)
-
-    def __repr__(self):
-        return self.name

@@ -207,10 +207,7 @@ class Model(SmartSimEntity):
             return True
         return False
 
-    def __repr__(self):
-        return self.name
-
-    def __str__(self):
+    def __str__(self): # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
         entity_str += str(self.run_settings)

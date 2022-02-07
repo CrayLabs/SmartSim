@@ -20,10 +20,3 @@ def test_entity_list_getitem():
     ens_settings = RunSettings("python")
     ensemble = exp.create_ensemble("name", replicas=4, run_settings=ens_settings)
     assert ensemble.__getitem__("name_3") == ensemble["name_3"]
-
-
-def test_entity_list_repr():
-    exp = Experiment("name")
-    ens_settings = RunSettings("python")
-    ensemble = exp.create_ensemble("ens_name", replicas=1, run_settings=ens_settings)
-    assert ensemble.__repr__() == "ens_name"

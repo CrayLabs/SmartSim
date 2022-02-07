@@ -199,7 +199,7 @@ class RunSettings:
             formatted.append(str(value))
         return formatted
 
-    def __str__(self):
+    def __str__(self): # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
@@ -279,7 +279,7 @@ class BatchSettings:
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
-    def __str__(self):
+    def __str__(self): # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
             string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"

@@ -103,11 +103,6 @@ def test_bsub_batch_settings():
     result = ['-alloc_flags "nvme smt4"', "-nnodes 1"]
     assert formatted == result
 
-    assert str(sbatch) == (
-        f"Batch Command: bsub\n"
-        + "Batch arguments: {'alloc_flags': '\"nvme smt4\"', 'nnodes': 1}"
-    )
-
 
 def test_bsub_batch_manual():
     sbatch = BsubBatchSettings(batch_args={"alloc_flags": "gpumps smt4"})

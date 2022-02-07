@@ -71,7 +71,7 @@ class Step:
         # if user specified to use taskset with local launcher
         # (not allowed b/c MacOS doesn't support it)
         # TODO: support this only on linux
-        if self.__class__.__name__ == "LocalStep" and db_settings["limit_app_cpus"] is True:
+        if self.__class__.__name__ == "LocalStep" and db_settings["limit_app_cpus"] is True: # pragma: no cover
             logger.warning("Setting limit_app_cpus=False for local launcher")
             db_settings["limit_app_cpus"] = False
 
