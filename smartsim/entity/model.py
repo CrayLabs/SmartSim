@@ -166,6 +166,7 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
 
         """
+        # TODO list which db settings can be extras
         colo_db_config = {
             "port": int(port),
             "cpus": int(db_cpus),

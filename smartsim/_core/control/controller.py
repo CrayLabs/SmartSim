@@ -179,6 +179,17 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
+    def get_jobs(self):
+        """Return a dictionary of completed job data
+
+        :returns: dict[str, Job]
+        """
+        JM_LOCK.acquire()
+        try:
+            return self._jobs.completed
+        finally:
+            JM_LOCK.release()
+
     def get_entity_status(self, entity):
         """Get the status of an entity
 

@@ -26,7 +26,12 @@
 
 from pprint import pformat
 
-from .._core.utils.helpers import expand_exe_path, init_default, is_valid_cmd
+from .._core.utils.helpers import (
+    expand_exe_path,
+    init_default,
+    is_valid_cmd,
+    fmt_dict
+)
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -196,13 +201,13 @@ class RunSettings:
 
     def __str__(self):
         string = f"Executable: {self.exe[0]}\n"
-        string += f"Executable arguments: {self.exe_args}\n"
+        string += f"Executable Arguments: {' '.join((self.exe_args))}\n"
         if self.run_command:
-            string += f"Run Command: {self._run_command}\n"
+            string += f"Run Command: {self._run_command}"
         if self.run_args:
-            string += f"Run arguments: {pformat(self.run_args)}"
+            string += f"\nRun Arguments:\n{fmt_dict(self.run_args)}"
         if self.colocated_db_settings:
-            string += f"\nCo-located DB settings: {pformat(self.colocated_db_settings)}"
+            string += "\nCo-located Database: True"
         return string
 
 
@@ -275,7 +280,7 @@ class BatchSettings:
             raise TypeError("Expected str or List[str] for lines argument")
 
     def __str__(self):
-        string = f"Batch Command: {self._batch_cmd}\n"
+        string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
-            string += f"Batch arguments: {pformat(self.batch_args)}"
+            string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"
         return string

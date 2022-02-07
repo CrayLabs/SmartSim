@@ -27,13 +27,12 @@
 import os.path as osp
 import time
 from os import getcwd
-from pprint import pformat
 
 from tabulate import tabulate
 from tqdm import trange
 
 from ._core import Controller, Generator, Manifest
-from ._core.utils import colorize, init_default
+from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model
 from .error import SmartSimError
@@ -526,6 +525,7 @@ class Experiment:
             logger.error(e)
             raise
 
+
     def summary(self, format="github"):
         """Return a summary of the ``Experiment``
 
@@ -550,9 +550,7 @@ class Experiment:
             "Status",
             "Returncode",
         ]
-
-        # TODO should this include running jobs?
-        for job in self._control._jobs.completed.values():
+        for job in self._control.get_jobs().values():
             for run in range(job.history.runs + 1):
                 values.append(
                     [
@@ -572,115 +570,30 @@ class Experiment:
 
     def _launch_summary(self, manifest):
         """Experiment pre-launch summary of entities that will be launched
+
         :param manifest: Manifest of deployables.
         :type manifest: Manifest
         """
 
-        def sprint(p):
-            print(p, flush=True)
+        summary = "\n\n=== Launch Summary ===\n"
+        summary += f"Experiment: {self.name}\n"
+        summary += f"Experiment Path: {self.exp_path}\n"
+        summary += f"Launcher: {self._launcher}\n"
+        if manifest.ensembles or manifest.ray_clusters:
+            summary += f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
+        if manifest.models:
+            summary += f"Models: {len(manifest.models)}\n"
 
-        sprint("\n")
-        models = manifest.models
-        ensembles = manifest.ensembles
-        orchestrator = manifest.db
-        ray_clusters = manifest.ray_clusters
+        if self._control.orchestrator_active:
+            summary += f"Database Status: active\n"
+        elif manifest.db:
+            summary += f"Database Status: launching\n"
+        else:
+            summary += f"Database Status: inactive\n"
 
-        header = colorize("=== LAUNCH SUMMARY ===", color="cyan", bold=True)
-        exname = colorize("Experiment: " + self.name, color="green", bold=True)
-        expath = colorize("Experiment Path: " + self.exp_path, color="green")
-        launch = colorize(
-            "Launching with: " + str(self._control._launcher), color="green"
-        )
-        numens = colorize("# of Ensembles: " + str(len(ensembles)), color="green")
-        numods = colorize("# of Models: " + str(len(models)), color="green")
-        has_orc = "yes" if orchestrator else "no"
-        orches = colorize("Database: " + has_orc, color="green")
+        summary += f"\n{str(manifest)}"
 
-        sprint(f"{header}")
-        sprint(f"{exname}\n{expath}\n{launch}\n{numens}\n{numods}\n{orches}\n")
-
-        if ensembles:
-            sprint(colorize("=== ENSEMBLES ===", color="cyan", bold=True))
-            for ens in ensembles:
-                name = colorize(ens.name, color="green", bold=True)
-                num_models = colorize(
-                    "# of models in ensemble: " + str(len(ens)), color="green"
-                )
-                batch_settings = colorize(
-                    "Batch Settings: \n" + str(ens.batch_settings),
-                    color="green",
-                )
-                run_settng = colorize(
-                    "Run Settings: \n" + str(ens.run_settings),
-                    color="green",
-                )
-                batch = colorize(f"Launching as batch: {ens.batch}", color="green")
-
-                sprint(f"{name}")
-                sprint(f"{num_models}")
-                sprint(f"{batch}")
-                if ens.batch:
-                    print(f"{batch_settings}")
-                else:
-                    sprint(f"{run_settng}")
-            sprint("\n")
-        if models:
-            sprint(colorize("=== MODELS ===", color="cyan", bold=True))
-            for model in models:
-                model_name = colorize(model.name, color="green", bold=True)
-                parameters = colorize(
-                    "Model Parameters: \n" + pformat(model.params), color="green"
-                )
-                run_settng = colorize(
-                    "Model Run Settings: \n" + str(model.run_settings),
-                    color="green",
-                )
-                sprint(f"{model_name}")
-                if model.params:
-                    sprint(f"{parameters}")
-                sprint(f"{run_settng}")
-            sprint("\n")
-        if orchestrator:
-            sprint(colorize("=== DATABASE ===", color="cyan", bold=True))
-            size = colorize(
-                "# of database shards: " + str(orchestrator.num_shards), color="green"
-            )
-            batch = colorize(f"Launching as batch: {orchestrator.batch}", color="green")
-            sprint(f"{batch}")
-            sprint(f"{size}")
-        if ray_clusters:
-            sprint(colorize("=== RAY CLUSTERS ===", color="cyan", bold=True))
-            for rc in ray_clusters:
-                name = colorize(rc.name, color="green", bold=True)
-                num_models = colorize("# of nodes: " + str(len(rc)), color="green")
-                if rc.batch:
-                    batch_settings = colorize(
-                        "Ray batch Settings: \n" + str(rc.batch_settings),
-                        color="green",
-                    )
-                head_run_settings = colorize(
-                    "Ray head run Settings: \n" + str(rc.entities[0].run_settings),
-                    color="green",
-                )
-                run_settings = head_run_settings
-                if len(rc) > 1:
-                    worker_run_settings = colorize(
-                        "\nRay worker run Settings: \n"
-                        + str(rc.entities[1].run_settings),
-                        color="green",
-                    )
-                    run_settings += worker_run_settings
-                batch = colorize(f"Launching as batch: {rc.batch}", color="green")
-
-                sprint(f"{name}")
-                sprint(f"{num_models}")
-                sprint(f"{batch}")
-                if rc.batch:
-                    sprint(f"{batch_settings}")
-                sprint(f"{run_settings}")
-            sprint("\n")
-
-        sprint("\n")
+        logger.info(summary)
 
         wait, steps = 10, 100
         prog_bar = trange(
