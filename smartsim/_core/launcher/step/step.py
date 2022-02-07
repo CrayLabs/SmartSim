@@ -29,6 +29,9 @@ import os.path as osp
 
 from ..colocated import write_colocated_launch_script
 from ...utils.helpers import get_base_36_repr
+from ....log import get_logger
+
+logger = get_logger(__name__)
 
 class Step:
     def __init__(self, name, cwd):
@@ -64,9 +67,17 @@ class Step:
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
         db_log_file = self.get_step_file(ending="-db.log")
 
+        db_settings = self.run_settings.colocated_db_settings
+        # if user specified to use taskset with local launcher
+        # (not allowed b/c MacOS doesn't support it)
+        # TODO: support this only on linux
+        if self.__class__.__name__ == "LocalStep" and db_settings.limit_app_cpus:
+            logger.warning("Setting limit_app_cpus=False for local launcher")
+            db_settings.limit_app_cpus = False
+
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
         write_colocated_launch_script(script_path,
                                       db_log_file,
-                                      self.run_settings.colocated_db_settings)
+                                      db_settings)
         return script_path
