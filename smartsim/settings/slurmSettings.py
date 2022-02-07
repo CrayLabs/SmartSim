@@ -293,6 +293,16 @@ class SbatchSettings(BatchSettings):
         if queue:
             self.set_partition(queue)
 
+    def set_cpus_per_task(self, cpus_per_task):
+        """Set the number of cpus to use per task
+
+        This sets ``--cpus-per-task``
+
+        :param num_cpus: number of cpus to use per task
+        :type num_cpus: int
+        """
+        self.batch_args["cpus-per-task"] = int(cpus_per_task)
+
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
 

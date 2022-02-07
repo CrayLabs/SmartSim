@@ -89,8 +89,7 @@ def cleanup(signo, frame):
     global DBPID
     global LOCK
     try:
-
-        logger.info(DBPID)
+        # attempt to stop the database process
         db_proc = psutil.Process(DBPID)
         db_proc.terminate()
 
