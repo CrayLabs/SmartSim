@@ -138,7 +138,7 @@ def _build_colocated_wrapper_cmd(port=6780,
         "--port",
         str(port),
         "--logfile",
-        db_log
+        db_log # usually /dev/null
     ])
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs

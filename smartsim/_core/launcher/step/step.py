@@ -65,9 +65,16 @@ class Step:
     def get_colocated_launch_script(self):
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
-        db_log_file = self.get_step_file(ending="-db.log")
 
         db_settings = self.run_settings.colocated_db_settings
+
+        # db log file causes write contention and kills performance so by
+        # default we turn off logging unless user specified debug=True
+        if db_settings.get("debug", False):
+            db_log_file = self.get_step_file(ending="-db.log")
+        else:
+            db_log_file = "/dev/null"
+
         # if user specified to use taskset with local launcher
         # (not allowed b/c MacOS doesn't support it)
         # TODO: support this only on linux
