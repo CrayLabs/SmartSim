@@ -8,11 +8,11 @@ train a ML model. A typical example is one in which one simulation produces samp
 each time step and another application needs to download the samples as they are produced 
 to train a Deep Neural Network (e.g. a surrogate model).
 
-In this section, we will use components implemented in ``smartsim.ml.tf.data``, to train a
+In this section, we will use components implemented in ``smartsim.ml.tf``, to train a
 Neural Network implemented in TensorFlow and Keras. In particular, we will be using
 two classes:
 - ``smartsim.ml.data.TrainingUploader`` which streamlines the uploading of samples and corresponding targets to the DB
-- ``smartsim.ml.tf.data.DataGenerator`` which is a Keras ``Generator`` which can be used to train a DNN,
+- ``smartsim.ml.tf.DataGenerator`` which is a Keras ``Generator`` which can be used to train a DNN,
 and will download the samples from the DB updating the training set at the end of each epoch.
 
 The SmartSim ``Experiment`` will consist in one mock simulation (the ``producer``) uploading samples,
@@ -81,7 +81,7 @@ the ``training_service`` would look like
 
 .. code-block:: python
 
-    from smartsim.ml.tf.data import DynamicDataGenerator
+    from smartsim.ml.tf import DynamicDataGenerator
     generator = DynamicDataGenerator(
             sample_prefix="points",
             target_prefix="value",
@@ -101,8 +101,8 @@ the ``training_service`` would look like
 
 
 Again, this is enough for simple simulations. If the simulation uses MPI,
-then the ``DataGenerator`` needs to know about the possible sub-indices. For example,
-if the simulation runs 8 MPI ranks, the ``DataGenerator`` initialization will
+then the ``DynamicDataGenerator`` needs to know about the possible sub-indices. For example,
+if the simulation runs 8 MPI ranks, the ``DynamicDataGenerator`` initialization will
 need to be adapted as follows
 
 .. code-block:: python

@@ -478,7 +478,7 @@ SmartSim includes built-in utilities for supporting TensorFlow and Keras in trai
     :members:
 
 
-.. currentmodule:: smartsim.ml.tf.data
+.. currentmodule:: smartsim.ml.tf
 
 .. autoclass:: StaticDataGenerator
    :show-inheritance:
@@ -497,7 +497,7 @@ PyTorch
 
 SmartSim includes built-in utilities for supporting PyTorch in training and inference.
 
-.. currentmodule:: smartsim.ml.torch.data
+.. currentmodule:: smartsim.ml.torch
 
 .. autoclass:: StaticDataGenerator
    :members:
@@ -524,8 +524,8 @@ Slurm
 
 .. autosummary::
 
-    slurm.get_allocation
-    slurm.release_allocation
+    get_allocation
+    release_allocation
 
 .. automodule:: smartsim.slurm
     :members:
