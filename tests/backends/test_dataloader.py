@@ -98,7 +98,7 @@ def test_batch_dataloader_tf(fileutils):
     dataloader = create_uploader(exp, config_path, "tf")
     trainer_tf = create_trainer_tf(exp, config_path)
 
-    orc = Orchestrator()
+    orc = Orchestrator(port=6780)
     exp.generate(orc)
     exp.start(orc)
     exp.start(dataloader, block=False)
@@ -131,7 +131,7 @@ def test_batch_dataloader_torch(fileutils):
     dataloader = create_uploader(exp, config_path, "torch")
     trainer_torch = create_trainer_torch(exp, config_path)
 
-    orc = Orchestrator()
+    orc = Orchestrator(port=6780)
     exp.generate(orc)
     exp.start(orc)
     exp.start(dataloader, block=False)
@@ -157,7 +157,7 @@ def test_batch_dataloader_torch(fileutils):
 def test_wrong_dataloaders(fileutils):
     test_dir = fileutils.make_test_dir("test-wrong-dataloaders")
     exp = Experiment("test-wrong-dataloaders", exp_path=test_dir)
-    orc = Orchestrator()
+    orc = Orchestrator(port=6780)
     exp.generate(orc)
     exp.start(orc)
 
