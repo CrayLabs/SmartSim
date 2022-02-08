@@ -5,6 +5,7 @@ from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
+
 from smartredis import Client
 
 
@@ -14,7 +15,7 @@ def build_lin_reg():
 
     linreg = LinearRegression()
     linreg.fit(x, y)
-    linreg = to_onnx(linreg, x.astype(np.float32))
+    linreg = to_onnx(linreg, x.astype(np.float32), target_opset=13)
     return linreg.SerializeToString()
 
 
@@ -35,7 +36,7 @@ def build_random_forest():
     clr = RandomForestRegressor(n_jobs=1, n_estimators=100)
     clr.fit(X_train, y_train)
 
-    rf_model = to_onnx(clr, X_test.astype(np.float32))
+    rf_model = to_onnx(clr, X_test.astype(np.float32), target_opset=13)
     return rf_model.SerializeToString()
 
 

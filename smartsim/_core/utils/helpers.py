@@ -29,6 +29,7 @@ A file of helper functions for SmartSim
 """
 import os
 import socket
+from pathlib import Path
 from shutil import which
 
 import psutil
@@ -198,3 +199,33 @@ def cat_arg_and_value(arg_name, value):
         return " ".join(("-" + arg_name, str(value)))
     else:
         return "=".join(("--" + arg_name, str(value)))
+
+
+def installed_redisai_backends(backends_path=None):
+    """Check which ML backends are available for the RedisAI module.
+
+    The optional argument ``backends_path`` is needed if the backends
+    have not been built as part of the SmartSim building process (i.e.
+    they have not been built by invoking `smart build`). In that case
+    ``backends_path`` should point to the directory containing e.g.
+    the backend directories (`redisai_tensorflow`, `redisai_torch`,
+    `redisai_onnxruntime`, or `redisai_tflite`).
+
+    :param backends_path: path containing backends, defaults to None
+    :type backends_path: str, optional
+    :return: list of installed RedisAI backends
+    :rtype: list[str]
+    """
+    # import here to avoid circular import
+    from ..._core.config import CONFIG
+
+    installed = []
+    if not backends_path:
+        backends_path = CONFIG.lib_path / "backends"
+    for backend in ["tensorflow", "torch", "onnxruntime", "tflite"]:
+        backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
+        backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+        if backend_so.is_file():
+            installed.append(backend)
+
+    return installed

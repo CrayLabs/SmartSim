@@ -4,16 +4,22 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.status import STATUS_FAILED
 
-should_run = True
+torch_available = True
 try:
     import torch
     import torch.nn as nn
 except ImportError:
-    should_run = False
+    torch_available = False
 
-pytestmark = pytest.mark.skipif(not should_run, reason="requires torch==1.7.1")
+torch_backend_available = "torch" in installed_redisai_backends()
+
+should_run = torch_available and torch_backend_available
+pytestmark = pytest.mark.skipif(
+    not should_run, reason="Requires torch RedisAI torch backend"
+)
 
 
 def test_torch_model_and_script(fileutils, mlutils, wlmutils):
@@ -53,5 +59,5 @@ def test_torch_model_and_script(fileutils, mlutils, wlmutils):
 
     exp.stop(db)
     # if model failed, test will fail
-    model_status = exp.get_status(model)
+    model_status = exp.get_status(model)[0]
     assert model_status != STATUS_FAILED
