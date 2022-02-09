@@ -4,23 +4,25 @@ from pathlib import Path
 import pytest
 
 from smartsim import Experiment
+from smartsim._core.utils import installed_redisai_backends
 from smartsim.error import SmartSimError
 from smartsim.status import STATUS_FAILED
 
-should_run = True
+tf_available = True
 try:
     from tensorflow import keras
 
     from smartsim.tf import freeze_model
 except (ImportError, SmartSimError):
-    should_run = False
+    tf_available = False
 
-pytestmark = pytest.mark.skipif(
-    not should_run,
-    reason="requires tensorflow/keras",
+tf_backend_available = "tensorflow" in installed_redisai_backends()
+
+
+@pytest.mark.skipif(
+    (not tf_backend_available) or (not tf_available),
+    reason="Requires RedisAI TF backend",
 )
-
-
 def test_keras_model(fileutils, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 for a keras model script
 
@@ -57,7 +59,7 @@ def test_keras_model(fileutils, mlutils, wlmutils):
 
     exp.stop(db)
     # if model failed, test will fail
-    model_status = exp.get_status(model)
+    model_status = exp.get_status(model)[0]
     assert model_status != STATUS_FAILED
 
 
@@ -80,6 +82,7 @@ def create_tf_model():
     return model
 
 
+@pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
 def test_freeze_model(fileutils):
     test_name = "test_tf_freeze_model"
     test_dir = fileutils.make_test_dir(test_name)

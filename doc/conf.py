@@ -83,3 +83,5 @@ html_static_path = ['_static']
 
 autoclass_content = 'both'
 add_module_names = False
+
+nbsphinx_execute = 'never'

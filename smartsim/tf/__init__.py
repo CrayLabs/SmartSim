@@ -1,3 +1,13 @@
+import warnings
+
+msg = "smartsim.tf has been deprecated in favor of smartsim.ml.tf and\n"
+msg += "will be removed in a future release. Please update your import statements."
+warnings.warn(
+    msg,
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 from .._core._install.buildenv import Version_, Versioner
 from ..error import SmartSimError
 from ..log import get_logger
@@ -21,6 +31,3 @@ except AssertionError:  # pragma: no cover
     raise SmartSimError(
         f"TensorFlow >= {TF_VERSION} is required for smartsim.tf, you have {tf.__version__}"
     ) from None
-
-
-from .utils import freeze_model

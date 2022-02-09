@@ -415,7 +415,6 @@ in an interactive allocation.
 Model
 =====
 
-
 .. currentmodule:: smartsim.entity.model
 
 .. autosummary::
@@ -455,22 +454,65 @@ Ensemble
    :inherited-members:
 
 
+Machine Learning
+================
+
+.. _ml_api:
+
+SmartSim includes built-in utilities for supporting TensorFlow, Keras, and Pytorch.
+
 TensorFlow
-==========
+----------
 
 .. _smartsim_tf_api:
 
-SmartSim includes built-in utilities for supporting TensorFlow and Keras in SmartSim.
+SmartSim includes built-in utilities for supporting TensorFlow and Keras in training and inference.
 
-.. currentmodule:: smartsim.tf.utils
+.. currentmodule:: smartsim.ml.tf.utils
 
 .. autosummary::
 
     freeze_model
 
-.. automodule:: smartsim.tf.utils
+.. automodule:: smartsim.ml.tf.utils
     :members:
 
+
+.. currentmodule:: smartsim.ml.tf
+
+.. autoclass:: StaticDataGenerator
+   :show-inheritance:
+   :inherited-members:
+   :members:
+
+.. autoclass:: DynamicDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+PyTorch
+----------
+
+.. _smartsim_torch_api:
+
+SmartSim includes built-in utilities for supporting PyTorch in training and inference.
+
+.. currentmodule:: smartsim.ml.torch
+
+.. autoclass:: StaticDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+.. autoclass:: DynamicDataGenerator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+.. autoclass:: DataLoader
+   :members:
+   :show-inheritance:
+   :inherited-members:
 
 Slurm
 =====
@@ -482,8 +524,8 @@ Slurm
 
 .. autosummary::
 
-    slurm.get_allocation
-    slurm.release_allocation
+    get_allocation
+    release_allocation
 
 .. automodule:: smartsim.slurm
     :members:
