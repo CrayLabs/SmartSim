@@ -188,8 +188,9 @@ class SrunStep(Step):
 
     def _make_mpmd(self):
         """Build Slurm multi-prog (MPMD) executable"""
-        cmd = self.run_settings.exe
-        cmd += self.run_settings.exe_args
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+        cmd = exe + args
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
