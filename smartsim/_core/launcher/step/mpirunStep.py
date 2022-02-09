@@ -62,14 +62,18 @@ class MpirunStep(Step):
         mpirun_cmd = [
             mpirun,
             "-wdir",
-            self.cwd,
-            self.run_settings.format_env_vars(),
-            self.run_settings.format_run_args()
+            self.cwd
         ]
+        # add env vars to mpirun command
+        mpirun_cmd.extend(self.run_settings.format_env_vars())
+
+        # add mpirun settings to command
+        mpirun_cmd.extend(self.run_settings.format_run_args())
+
         if self.run_settings.colocated_db_settings:
             # disable cpu binding as the entrypoint will set that
             # for the application and database process now
-            mpirun_cmd.append("--bind-to none")
+            mpirun_cmd.extend(["--bind-to", "none"])
 
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")

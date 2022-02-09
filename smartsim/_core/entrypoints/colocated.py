@@ -122,7 +122,7 @@ if __name__ == "__main__":
         tmp_lockfile = Path(tempfile.gettempdir()) / args.lockfile
 
         LOCK = filelock.FileLock(tmp_lockfile)
-        LOCK.acquire(timeout=0.1)
+        LOCK.acquire(timeout=.5)
         logger.debug(f"Starting co-located database on host: {socket.gethostname()}")
 
         os.environ["PYTHONUNBUFFERED"] = "1"

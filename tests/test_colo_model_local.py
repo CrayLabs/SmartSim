@@ -23,7 +23,7 @@ def test_launch_colocated_model(fileutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=6781,
+        port=6780,
         db_cpus=1,
         limit_app_cpus=False,
         debug=True,

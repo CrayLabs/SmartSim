@@ -33,7 +33,6 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
     :rtype: tuple of (int, str, str)
     """
     global verbose_shell
-
     if verbose_shell:
         source = "shell" if shell else "Popen"
         logger.debug(f"Executing {source} cmd: {' '.join(cmd_list)}")
