@@ -90,7 +90,6 @@ class JobManager:
         or when the main thread dies
         """
         logger.debug("Starting Job Manager")
-
         self.actively_monitoring = True
         while self.actively_monitoring:
 
@@ -165,7 +164,7 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def add_job(self, job_name, job_id, entity):
+    def add_job(self, job_name, job_id, entity, is_task=True):
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -174,9 +173,12 @@ class JobManager:
         :type job_id: str
         :param entity: entity that was launched on job step
         :type entity: SmartSimEntity
+        :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :type is_task: bool
         """
+        launcher = str(self._launcher)
         # all operations here should be atomic
-        job = Job(job_name, job_id, entity)
+        job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
         else:
@@ -268,7 +270,7 @@ class JobManager:
             return True
         return False
 
-    def restart_job(self, job_name, job_id, entity_name):
+    def restart_job(self, job_name, job_id, entity_name, is_task=True):
         """Function to reset a job to record history and be
         ready to launch again.
 
@@ -278,12 +280,16 @@ class JobManager:
         :type job_id: str
         :param entity_name: name of the entity of the job
         :type entity_name: str
+        :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :type is_task: bool
+
         """
         self._lock.acquire()
         try:
             job = self.completed[entity_name]
             del self.completed[entity_name]
-            job.reset(job_name, job_id)
+            job.reset(job_name, job_id, is_task)
+
             if isinstance(job.entity, (DBNode, Orchestrator)):
                 self.db_jobs[entity_name] = job
             else:
@@ -323,6 +329,19 @@ class JobManager:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts
         finally:
             self._lock.release()
+
+    def signal_interrupt(self):
+        if self.actively_monitoring and len(self) > 0:
+            logger.warning("SmartSim process interrupted before resource cleanup")
+            logger.warning("You may need to manually stop the following:")
+
+            for job_name, job in self().items():
+                if job.is_task:
+                    # this will be the process id
+                    logger.warning(f"Task {job_name} with id: {job.jid}")
+                else:
+                    logger.warning(f"Job {job_name} with {job.launched_with} id: {job.jid}")
+
 
     def _thread_sleep(self):
         """Sleep the job manager for a specific constant

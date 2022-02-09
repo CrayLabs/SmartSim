@@ -118,4 +118,4 @@ class LocalLauncher:
         return status
 
     def __str__(self):
-        return "local"
+        return "Local"

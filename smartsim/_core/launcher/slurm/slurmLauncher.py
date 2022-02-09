@@ -245,7 +245,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError(error)
 
     def __str__(self):
-        return "slurm"
+        return "Slurm"
 
 
 def _create_step_id_str(step_ids):

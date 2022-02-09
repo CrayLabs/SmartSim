@@ -36,7 +36,7 @@ class Job:
     the controller class.
     """
 
-    def __init__(self, job_name, job_id, entity):
+    def __init__(self, job_name, job_id, entity, launcher, is_task):
         """Initialize a Job.
 
         :param job_name: Name of the job step
@@ -45,6 +45,10 @@ class Job:
         :type job_id: str
         :param entity: The SmartSim entity associated with the job
         :type entity: SmartSimEntity
+        :param launcher: Launcher job was started with
+        :type launcher: str
+        :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :type is_task: bool
         """
         self.name = job_name
         self.jid = job_id
@@ -55,6 +59,8 @@ class Job:
         self.output = None  # only populated if it's system related (e.g. a command failed immediately)
         self.error = None  # same as output
         self.hosts = []  # currently only used for DB jobs
+        self.launched_with = launcher
+        self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
 
@@ -82,13 +88,15 @@ class Job:
         job_time = time.time() - self.start_time
         self.history.record(self.jid, self.status, self.returncode, job_time)
 
-    def reset(self, new_job_name, new_job_id):
+    def reset(self, new_job_name, new_job_id, is_task):
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
         :type new_job_name: str
         :param new_job_id: new job id to launch under
         :type new_job_id: str
+        :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :type is_task: bool
         """
         self.name = new_job_name
         self.jid = new_job_id
@@ -97,6 +105,7 @@ class Job:
         self.output = None
         self.error = None
         self.hosts = []
+        self.is_task = is_task
         self.start_time = time.time()
         self.history.new_run()
 

@@ -165,5 +165,4 @@ class PBSLauncher(WLMLauncher):
         return updates
 
     def __str__(self):
-        # TODO get the version here
-        return "PBSPro"
+        return "PBS"

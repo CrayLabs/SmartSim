@@ -73,6 +73,7 @@ class TaskManager:
         monitor = Thread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
+
     def run(self):
         """Start monitoring Tasks"""
 
@@ -96,6 +97,7 @@ class TaskManager:
                 self.actively_monitoring = False
                 if verbose_tm:
                     logger.debug("Sleeping, no tasks to monitor")
+
 
     def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
         """Start a task managed by the TaskManager
@@ -183,7 +185,7 @@ class TaskManager:
         try:
             task = self[task_id]
             if task.is_alive:
-                task.kill()
+                task.terminate()
                 returncode = task.check_status()
                 out, err = task.get_io()
                 self.add_task_history(task_id, returncode, out, err)
@@ -242,6 +244,21 @@ class TaskManager:
         """
         self.task_history[task_id] = (returncode, out, err)
 
+
+    def signal_interrupt(self, kill_all_tasks=False):
+
+        if kill_all_tasks:
+            for task in self.tasks:
+                self.remove_task(task.pid)
+            self.actively_monitoring = False
+
+        if self.actively_monitoring and len(self) > 0:
+            logger.warning("SmartSim process interrupted before resources were cleaned up properly")
+            logger.warning("You may need to manually stop the following tasks:")
+            for task in self.tasks:
+                logger.warning(f"Task id: {task.pid}")
+
+
     def __getitem__(self, task_id):
         self._lock.acquire()
         try:
@@ -299,7 +316,7 @@ class Task:
         return output, error
 
     def kill(self, timeout=10):
-        """Kill the subprocess and all childen"""
+        """Kill the subprocess and all children"""
 
         def kill_callback(proc):
             logger.debug(f"Process terminated with kill {proc.pid}")
@@ -330,7 +347,8 @@ class Task:
 
         # try SIGTERM first for clean exit
         for child in children:
-            logger.debug(child)
+            if verbose_tm:
+                logger.debug(child)
             child.terminate()
 
         # wait for termination

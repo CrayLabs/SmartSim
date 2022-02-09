@@ -26,6 +26,7 @@
 
 import os
 import signal
+import sys
 import psutil
 import argparse
 import tempfile
@@ -43,16 +44,31 @@ logger = get_logger(__name__)
 
 DBPID = None
 
+# kill is not catchable
+SIGNALS = [
+    signal.SIGINT,
+    signal.SIGTERM,
+    signal.SIGQUIT,
+    signal.SIGCHLD,
+    signal.SIGTERM,
+    signal.SIGABRT,
+    signal.SIGSEGV
+    ]
+
+def handle_signal(signo, frame):
+    cleanup()
+
+
 def main(network_interface: str, db_cpus: int, command: List[str]):
     global DBPID
 
     try:
         ip_address = current_ip(network_interface)
+        lo_address = current_ip("lo")
     except ValueError as e:
         logger.warning(e)
         ip_address = None
 
-    lo_address = current_ip("lo")
 
     if lo_address == ip_address or not ip_address:
         cmd = command + [f"--bind {lo_address}"]
@@ -66,29 +82,43 @@ def main(network_interface: str, db_cpus: int, command: List[str]):
     try:
         p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
         DBPID = p.pid
+
     except Exception as e:
+        cleanup()
+        logger.error(f"Failed to start database process: {str(e)}")
         raise SSInternalError("Co-located process failed to start") from e
 
-    # Set CPU affinity to the last $db_cpus CPUs
-    affinity = p.cpu_affinity()
-    cpus_to_use = affinity[-db_cpus:]
-    p.cpu_affinity(cpus_to_use)
+    try:
+        if sys.platform != "darwin":
+            # Set CPU affinity to the last $db_cpus CPUs
+            affinity = p.cpu_affinity()
+            cpus_to_use = affinity[-db_cpus:]
+            p.cpu_affinity(cpus_to_use)
+        else:
+            # psutil doesn't support pinning on MacOS
+            cpus_to_use = "CPU pinning disabled on MacOS"
 
-    logger.debug("\n\nCo-located database information\n" +  "\n".join((
-        f"\tIP Address: {ip_address}",
-        f"\t# of Database CPUs: {db_cpus}",
-        f"\tAffinity: {cpus_to_use}",
-        f"\tCommand: {' '.join(cmd)}\n\n"
-    )))
+        logger.debug("\n\nCo-located database information\n" +  "\n".join((
+            f"\tIP Address: {ip_address}",
+            f"\t# of Database CPUs: {db_cpus}",
+            f"\tAffinity: {cpus_to_use}",
+            f"\tCommand: {' '.join(cmd)}\n\n"
+        )))
 
-    for line in iter(p.stdout.readline, b""):
-        print(line.decode("utf-8").rstrip(), flush=True)
+        for line in iter(p.stdout.readline, b""):
+            print(line.decode("utf-8").rstrip(), flush=True)
+
+    except Exception as e:
+        cleanup()
+        logger.error(f"Co-located database process failed: {str(e)}")
+        raise SSInternalError("Co-located entrypoint raised an error") from e
 
 
-def cleanup(signo, frame):
+def cleanup():
     global DBPID
     global LOCK
     try:
+        logger.debug("Cleaning up co-located database")
         # attempt to stop the database process
         db_proc = psutil.Process(DBPID)
         db_proc.terminate()
@@ -122,7 +152,7 @@ if __name__ == "__main__":
         tmp_lockfile = Path(tempfile.gettempdir()) / args.lockfile
 
         LOCK = filelock.FileLock(tmp_lockfile)
-        LOCK.acquire(timeout=.5)
+        LOCK.acquire(timeout=.1)
         logger.debug(f"Starting co-located database on host: {socket.gethostname()}")
 
         os.environ["PYTHONUNBUFFERED"] = "1"
@@ -130,7 +160,9 @@ if __name__ == "__main__":
         # make sure to register the cleanup before the start
         # the proecss so our signaller will be able to stop
         # the database process.
-        signal.signal(signal.SIGTERM, cleanup)
+        for sig in SIGNALS:
+            signal.signal(sig, handle_signal)
+
         main(args.ifname, args.db_cpus, args.command)
 
     # gracefully exit the processes in the distributed application that

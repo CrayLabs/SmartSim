@@ -69,15 +69,23 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        self._launch(manifest)
+        try:
+            self._launch(manifest)
 
-        # start the job manager thread if not already started
-        if not self._jobs.actively_monitoring:
-            self._jobs.start()
+            # start the job manager thread if not already started
+            if not self._jobs.actively_monitoring:
+                self._jobs.start()
+
+        except KeyboardInterrupt:
+            self._jobs.signal_interrupt()
+            raise
 
         # block until all non-database jobs are complete
         if block:
+            # poll handles it's own keyboard interrupt as
+            # it may be called seperately
             self.poll(5, True)
+
 
     @property
     def orchestrator_active(self):
@@ -97,19 +105,25 @@ class Controller:
         :param verbose: set verbosity
         :type verbose: bool
         """
-        to_monitor = self._jobs.jobs
-        while len(to_monitor) > 0:
-            time.sleep(interval)
+        try:
+            to_monitor = self._jobs.jobs
+            while len(to_monitor) > 0:
+                time.sleep(interval)
 
-            # acquire lock to avoid "dictionary changed during iteration" error
-            # without having to copy dictionary each time.
-            if verbose:
-                JM_LOCK.acquire()
-                try:
-                    for job in to_monitor.values():
-                        logger.info(job)
-                finally:
-                    JM_LOCK.release()
+                # acquire lock to avoid "dictionary changed during iteration" error
+                # without having to copy dictionary each time.
+                if verbose:
+                    JM_LOCK.acquire()
+                    try:
+                        for job in to_monitor.values():
+                            logger.info(job)
+                    finally:
+                        JM_LOCK.release()
+
+        except KeyboardInterrupt:
+            self._jobs.signal_interrupt()
+            raise
+
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -375,12 +389,17 @@ class Controller:
             logger.error(msg)
             raise SmartSimError(f"Job step {entity.name} failed to launch") from e
 
+        # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
+        # but is rather started, monitored, and exited through the Popen interface
+        # in the taskmanager
+        is_task = not job_step.managed
+
         if self._jobs.query_restart(entity.name):
             logger.debug(f"Restarting {entity.name}")
-            self._jobs.restart_job(job_step.name, job_id, entity.name)
+            self._jobs.restart_job(job_step.name, job_id, entity.name, is_task)
         else:
             logger.debug(f"Launching {entity.name}")
-            self._jobs.add_job(job_step.name, job_id, entity)
+            self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
     def _create_batch_job_step(self, entity_list):
         """Use launcher to create batch job step
@@ -505,11 +524,16 @@ class Controller:
                     raise SmartSimError(msg)
                 else:
                     logger.debug("Waiting for orchestrator instances to spin up...")
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
+
                 logger.info("Orchestrator launch cancelled - requesting to stop")
                 self.stop_entity_list(orchestrator)
-                raise SmartSimError("Orchestrator launch manually stopped") from e
-                # TODO stop all running jobs here?
+
+                # re-raise keyboard interrupt so the job manager will display
+                # any running and un-killed jobs as this method is only called
+                # during launch and we handle all keyboard interrupts during
+                # launch explicitly
+                raise
 
     def reload_saved_db(self, checkpoint_file):
         JM_LOCK.acquire()
