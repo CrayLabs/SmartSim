@@ -47,18 +47,6 @@ the Orchestrator despite which language the data originated from.
 
 SmartSim supports the following ML libraries.
 
-<!--
-
-TODO: Check if new table is what is expected
-
-|       Library     | Supported Version |
-|-------------------|:-----------------:|
-| PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.5.2       |
-| ONNX              |       1.7.0       |
-
--->
-
 <table>
   <thead>
     <tr>
@@ -74,7 +62,7 @@ TODO: Check if new table is what is expected
       <td>1.7.0</td>
     </tr>
     <tr>
-      <td>Tensorlow\Keras</td>
+      <td>TensorFlow\Keras</td>
       <td>2.5.2</td>
     </tr>
     <tr>
@@ -86,7 +74,7 @@ TODO: Check if new table is what is expected
       <td>1.9.1</td>
     </tr>
     <tr>
-      <td>Tensorlow\Keras</td>
+      <td>TensorFlow\Keras</td>
       <td>2.6.2</td>
     </tr>
     <tr>
@@ -455,7 +443,7 @@ db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=True,
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -598,7 +586,7 @@ scripts if there is no database for them to connect to.
 The example below shows how to take a PyTorch model, send it to the Orchestrator, and
 execute it on data stored within the database.
 
-Notice that when we set the model in the database, we set the device arguement to
+Notice that when we set the model in the database, we set the device argument to
 **GPU**. By doing this we ensure that execution of the model takes place on a GPU if
 one is available to the database.
 
@@ -902,16 +890,6 @@ to create your own.
 SmartSim supports the following frameworks for querying Machine Learning models
 from C, C++, Fortran and Python with the SmartRedis Clients:
 
-<!--
-TODO: Again confirm that this should be replaced with new table
-
-|       Library     | Supported Version |
-|-------------------|:-----------------:|
-| PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.5.2       |
-| ONNX              |       1.7.0       |
--->
-
 <table>
   <thead>
     <tr>
@@ -927,7 +905,7 @@ TODO: Again confirm that this should be replaced with new table
       <td>1.7.0</td>
     </tr>
     <tr>
-      <td>Tensorlow\Keras</td>
+      <td>TensorFlow\Keras</td>
       <td>2.5.2</td>
     </tr>
     <tr>
@@ -939,7 +917,7 @@ TODO: Again confirm that this should be replaced with new table
       <td>1.9.1</td>
     </tr>
     <tr>
-      <td>Tensorlow\Keras</td>
+      <td>TensorFlow\Keras</td>
       <td>2.6.2</td>
     </tr>
     <tr>
