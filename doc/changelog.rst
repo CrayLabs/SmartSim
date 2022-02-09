@@ -17,22 +17,50 @@ SmartSim
 Expected release on Feb 11, 2022
 
 Description:
+In this release SmartSim continues to promote ease of use.
+To this end SmartSim has introduced new portability features
+that allow users to abstract away their targeted hardware,
+while providing even more compatibility with existing
+libraries. Additional tweaks and upgrades have also been
+made to ensure an optimal experience. Here is a
+comprehensive list of changes made in SmartSim 0.4.0.
+
+
+Emphasize Driver Script Portability:
 
  - Add ability to create run settings through an experiment (SmartSim-PR110_)
  - Add ability to create batch settings through an experiment (SmartSim-PR112_)
- - Add automatic launcher detection to experiment poratability functions (SmartSim-PR120_)
+ - Add automatic launcher detection to experiment portability functions (SmartSim-PR120_)
+
+Expand Machine Learning Library Support:
+
  - Add Ray cluster setup and deployment to SmartSim (SmartSim-PR50_)
  - Add machine learning data loaders for Keras/TF and Pytorch (SmartSim-PR115_)
+ - Launch Ray internally using ``RunSettings`` (SmartSim-PR118_)
+
+Expand Launcher Setting Options:
+
+ - Add ability to use base ``RunSettings`` on a Slurm, PBS, or Cobalt launchers (SmartSim-PR90_) 
+ - Add ability to use base ``RunSettings`` on LFS launcher (SmartSim-PR108_)
+
+General Improvements and Bug Fixes:
+
  - Improve and extend parameter handling (SmartSim-PR107_) (SmartSim-PR119_)
- - Abstract non-user facing implimentation details (SmartSim-PR122_)
- - Add various dimensions to the CI build matrix (SmartSim-PR130_)
+ - Abstract away non-user facing implementation details (SmartSim-PR122_)
+ - Add various dimensions to the CI build matrix for SmartSim testing (SmartSim-PR130_)
+ - Add missing functions to LSFSettings API (SmartSim-PR113_)
  - Remove heavy and unnecessary dependencies (SmartSim-PR116_) (SmartSim-PR132_)
- - Bug fixes (SmartSim-PR95_) (SmartSim-PR104_) (SmartSim-PR138_)
- - Update SmartSim Examples (SmartSim-PR68_) (SmartSim-PR100_)
+ - Fix LSFLauncher and LSFOrchestrator (SmartSim-PR86_)
+ - Fix over greedy Workload Manager Parsers (SmartSim-PR95_)
+ - Fix Slurm handling of comma-separated env vars (SmartSim-PR104_)
+ - Fix internal method calls (SmartSim-PR138_)
+
+Documentation Updates:
+
  - Updates to documentation build process (SmartSim-PR133_)
  - Updates to documentation content (SmartSim-PR96_) (SmartSim-PR129_)
+ - Update SmartSim Examples (SmartSim-PR68_) (SmartSim-PR100_)
 
- - TODO: Not Sure (SmartSim-PR86_) (SmartSim-PR90_) (SmartSim-PR108_) (SmartSim-PR113_) (SmartSim-PR118_)
 
 .. _SmartSim-PR50: https://github.com/CrayLabs/SmartSim/pull/50
 .. _SmartSim-PR68: https://github.com/CrayLabs/SmartSim/pull/68
