@@ -9,6 +9,14 @@ from smartsim.error import SmartSimError
 from smartsim.exp.ray import RayCluster
 from smartsim.settings import RunSettings
 
+# Ensure tensorflow is imported before ray. This is a workaround
+# for a seg fault happening in the CI on Ubuntu when ray was being
+# imported before tensorflow
+try:
+    import tensorflow
+except ImportError:
+    pass
+
 ray_ok = True
 try:
     import ray

@@ -31,9 +31,12 @@ from pathlib import Path
 
 import psutil
 import redis
+from smartredis import Client
+from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import check_cluster_status
+from .._core.utils.helpers import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSInternalError
 from ..log import get_logger
@@ -265,3 +268,109 @@ class Orchestrator(EntityList):
                 "This could be because the head node doesn't have the same networks, if so, ignore this."
             )
             logger.warning(f"Found network interfaces are: {available}")
+
+    def enable_checkpoints(self, frequency):
+        """Sets the database's save configuration to save the
+        DB every 'frequency' seconds given that at least one
+        write operation against the DB occurred in that time.
+        For example, if `frequency` is 900, then the database
+        will save to disk after 900 seconds if there is at least
+        1 change to the dataset.
+
+        :param frequency: the given number of seconds before the DB saves
+        :type frequency: int
+        """
+        self.set_db_conf("save", str(frequency) + " 1")
+
+    def set_max_memory(self, mem):
+        """Sets the max memory configuration. By default there is no memory limit.
+        Setting max memory to zero also results in no memory limit. Once a limit is
+        surpassed, keys will be removed according to the eviction strategy. The
+        specified memory size is case insensitive and supports the typical forms of:
+        1k => 1000 bytes
+        1kb => 1024 bytes
+        1m => 1000000 bytes
+        1mb => 1024*1024 bytes
+        1g => 1000000000 bytes
+        1gb => 1024*1024*1024 bytes
+
+        :param mem: the desired max memory size e.g. 3gb
+        :type mem: str
+
+        :raises SmartSimError: If 'mem' is an invalid memory value
+        :raises SmartSimError: If database is not active
+        """
+        self.set_db_conf("maxmemory", mem)
+
+    def set_eviction_strategy(self, strategy):
+        """Sets how the database will select what to remove when
+        'maxmemory' is reached. The default is noeviction.
+
+        :param strategy: The max memory policy to use e.g. "volatile-lru", "allkeys-lru", etc.
+        :type strategy: str
+
+        :raises SmartSimError: If 'strategy' is an invalid maxmemory policy
+        :raises SmartSimError: If database is not active
+        """
+        self.set_db_conf("maxmemory-policy", strategy)
+
+    def set_max_clients(self, clients=50_000):
+        """Sets the max number of connected clients at the same time.
+        When the number of DB shards contained in the orchestrator is
+        more than two, then every node will use two connections, one
+        incoming and another outgoing.
+
+        :param clients: the maximum number of connected clients
+        :type clients: int, optional
+        """
+        self.set_db_conf("maxclients", str(clients))
+
+    def set_max_message_size(self, size=1_073_741_824):
+        """Sets the database's memory size limit for bulk requests,
+        which are elements representing single strings. The default
+        is 1 gigabyte. Message size must be greater than or equal to 1mb.
+        The specified memory size should be an integer that represents
+        the number of bytes. For example, to set the max message size
+        to 1gb, use 1024*1024*1024.
+
+        :param size: maximum message size in bytes
+        :type size: int, optional
+        """
+        self.set_db_conf("proto-max-bulk-len", str(size))
+
+    def set_db_conf(self, key, value):
+        """Set any valid configuration at runtime without the need
+        to restart the database. All configuration parameters
+        that are set are immediately loaded by the database and
+        will take effect starting with the next command executed.
+
+        :param key: the configuration parameter
+        :type key: str
+        :param value: the database configuration parameter's new value
+        :type value: str
+        """
+        if self.is_active():
+            addresses = []
+            for host in self.hosts:
+                for port in self.ports:
+                    address = ":".join([get_ip_from_host(host), str(port)])
+                    addresses.append(address)
+
+            is_cluster = self.num_shards > 2
+            client = Client(address=addresses[0], cluster=is_cluster)
+            try:
+                for address in addresses:
+                    client.config_set(key, value, address)
+
+            except RedisReplyError:
+                raise SmartSimError(
+                    f"Invalid CONFIG key-value pair ({key}: {value})"
+                ) from None
+            except TypeError:
+                raise TypeError(
+                    "Incompatible function arguments. The key and value used for setting the database configurations must be strings."
+                ) from None
+        else:
+            raise SmartSimError(
+                "The SmartSim Orchestrator must be active in order to set the database's configurations."
+            )
