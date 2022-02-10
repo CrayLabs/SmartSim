@@ -1,8 +1,9 @@
 name: deploy_dev_docs
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+      - develop
 
 jobs:
   build_docs:
@@ -14,28 +15,30 @@ jobs:
         with:
           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
-      - name: build documentation with docker
-        run: make docks
-
       - uses: actions/checkout@v2
         with:
           ref: doc
           path: doc-branch
 
-      - name: Move over release docs and stubs
+      - name: Copy over other doc versions from doc branch
         run: |
           rm -rf doc-branch/docs/develop/
+          mkdir -p ./docs
           cp -r doc-branch/docs/* ./docs/
-          touch ./docs/.nojekyll
-          touch ./docs/develop/.nojekyll
           rm -rf doc-branch
 
-      - name: Commit files and push
-        run: |
-          git config --local user.email "spartee@hpe.com"
-          git config --local user.name "Sam Partee"
-          git checkout -b doc
-          git add .
-          git commit -m "Update develop documentation"
-          git push --force --quiet "https://spartee:${{ secrets.DOC_PA_TOKEN }}@github.com/CrayLabs/SmartSim" doc:doc
+      - name: build documentation with docker
+        run: make docks
 
+      - name: Commit files
+        run: |
+          git add -A
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Update develop documentation"
+
+      - uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: doc
+          force: true

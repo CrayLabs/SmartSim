@@ -93,12 +93,13 @@ docs:
 # help: docks                          - generate project documentation with docker
 .PHONY: docks
 docks:
-	@if [ -d "docs" ]; then rm -rf docs; fi
+	@rm -rf docs/develop
 	@mkdir -p docs
 	@docker compose build --progress=plain docs-dev
 	@docker create -ti --name devdocs smartsim-docs:dev-latest
-	@docker cp devdocs:/usr/local/src/SmartSim/doc/_build/html/ ./docs/develop/
+	@docker cp devdocs:/usr/local/src/SmartSim/doc/_build/html/ ./docs/develop
 	@docker container rm devdocs
+	@cp -r .docs_static/. ./docs/
 
 # help: cov                            - generate html coverage report for Python client
 .PHONY: cov
