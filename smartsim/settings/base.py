@@ -71,8 +71,8 @@ class RunSettings:
         """
         self.exe = [expand_exe_path(exe)]
         self.exe_args = self._set_exe_args(exe_args)
-        self.run_args = init_default({}, run_args, (dict, list))
-        self.env_vars = init_default({}, env_vars, (dict, list))
+        self.run_args = init_default({}, run_args, dict)
+        self.env_vars = init_default({}, env_vars, dict)
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None

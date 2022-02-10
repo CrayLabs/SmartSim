@@ -43,8 +43,8 @@ def get_ip_from_host(host):
     ip_address = socket.gethostbyname(host)
     return ip_address
 
-
-def get_ip_from_interface(interface):
+# impossible to cover as it's only used in entrypoints
+def get_ip_from_interface(interface): # pragma: no cover
     """Get IPV4 address of a network interface
 
     :param interface: interface name
@@ -68,8 +68,8 @@ def get_ip_from_interface(interface):
             return info.address
     raise ValueError(f"interface {interface} doesn't have an IPv4 address")
 
-
-def get_lb_interface_name():
+# impossible to cover as it's only used in entrypoints
+def get_lb_interface_name(): # pragma: no cover
     """Use psutil to get loopback interface name"""
     net_if_addrs = list(psutil.net_if_addrs())
     for interface in net_if_addrs:
@@ -78,7 +78,7 @@ def get_lb_interface_name():
     raise OSError("Could not find loopback interface name")
 
 
-def current_ip(interface="lo"):
+def current_ip(interface="lo"): # pragma: no cover
     if interface == "lo":
         loopback = get_lb_interface_name()
         return get_ip_from_interface(loopback)
