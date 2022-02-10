@@ -168,7 +168,7 @@ class Model(SmartSimEntity):
         """
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
-                "Colocated models cannot be run as a mpmd workload"
+                "Models co-located with databases cannot be run as a mpmd workload"
             )
 
         # TODO list which db settings can be extras
