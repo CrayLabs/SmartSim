@@ -120,8 +120,9 @@ class AprunStep(Step):
     def _make_mpmd(self):
         """Build Aprun (MPMD) executable"""
 
-        cmd = self.run_settings.exe
-        cmd.extend(self.run_settings.exe_args)
+        exe = self.run_settings.exe
+        exe_args = self.run_settings.exe_args
+        cmd = exe + exe_args
 
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
