@@ -26,7 +26,7 @@
 
 
 from .._core.utils.helpers import cat_arg_and_value, init_default
-from ..error import EntityExistsError
+from ..error import EntityExistsError, SSUnsupportedError
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
@@ -166,6 +166,11 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
 
         """
+        if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
+
         # TODO list which db settings can be extras
         colo_db_config = {
             "port": int(port),

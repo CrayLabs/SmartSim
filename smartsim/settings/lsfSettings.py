@@ -27,7 +27,7 @@
 from pprint import pformat
 
 from .base import BatchSettings, RunSettings
-
+from ..error import SSUnsupportedError
 
 class JsrunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
@@ -173,6 +173,11 @@ class JsrunSettings(RunSettings):
         :param aprun_settings: ``JsrunSettings`` instance, defaults to None
         :type aprun_settings: JsrunSettings, optional
         """
+        if self.colocated_db_settings:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
+
         if len(self.mpmd) == 0:
             self.mpmd.append(self)
         if jsrun_settings:

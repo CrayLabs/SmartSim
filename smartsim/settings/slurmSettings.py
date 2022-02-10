@@ -27,7 +27,7 @@
 import os
 
 from .base import BatchSettings, RunSettings
-
+from ..error import SSUnsupportedError
 
 class SrunSettings(RunSettings):
     def __init__(
@@ -81,6 +81,10 @@ class SrunSettings(RunSettings):
         :param srun_settings: SrunSettings instance
         :type srun_settings: SrunSettings
         """
+        if self.colocated_db_settings:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
         self.mpmd.append(srun_settings)
 
     def set_hostlist(self, host_list):

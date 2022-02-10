@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .base import RunSettings
-
+from ..error import SSUnsupportedError
 
 class AprunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
@@ -62,6 +62,10 @@ class AprunSettings(RunSettings):
         :param aprun_settings: ``AprunSettings`` instance
         :type aprun_settings: AprunSettings
         """
+        if self.colocated_db_settings:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
         self.mpmd.append(aprun_settings)
 
     def set_cpus_per_task(self, cpus_per_task):

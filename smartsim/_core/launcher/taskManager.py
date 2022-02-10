@@ -244,21 +244,6 @@ class TaskManager:
         """
         self.task_history[task_id] = (returncode, out, err)
 
-
-    def signal_interrupt(self, kill_all_tasks=False):
-
-        if kill_all_tasks:
-            for task in self.tasks:
-                self.remove_task(task.pid)
-            self.actively_monitoring = False
-
-        if self.actively_monitoring and len(self) > 0:
-            logger.warning("SmartSim process interrupted before resources were cleaned up properly")
-            logger.warning("You may need to manually stop the following tasks:")
-            for task in self.tasks:
-                logger.warning(f"Task id: {task.pid}")
-
-
     def __getitem__(self, task_id):
         self._lock.acquire()
         try:
