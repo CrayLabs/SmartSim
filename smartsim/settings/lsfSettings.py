@@ -29,6 +29,9 @@ from pprint import pformat
 from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
 
+from ..log import get_logger
+logger = get_logger(__name__)
+
 class JsrunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``jsrun`` command
@@ -75,6 +78,10 @@ class JsrunSettings(RunSettings):
         :param cpus_per_rs: number of cpus to use per resource set or ALL_CPUS
         :type cpus_per_rs: int or str
         """
+        if self.colocated_db_settings == True:
+            db_cpus = self.colocated_db_settings["db_cpus"]
+            if cpus_per_rs < db_cpus:
+                raise ValueError(f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than db_cpus ({db_cpus})")
         if isinstance(cpus_per_rs, str):
             self.run_args["cpu_per_rs"] = cpus_per_rs
         else:
@@ -312,6 +319,40 @@ class JsrunSettings(RunSettings):
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
 
+    def _prep_colocated_db(self, db_cpus):
+        cpus_per_flag_set = False
+        for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
+            if cpu_per_rs_flag in self.run_args:
+                cpus_per_flag_set = True
+                cpu_per_rs =  self.run_args[cpu_per_rs_flag]
+                if cpu_per_rs < db_cpus:
+                    msg = f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, "
+                    msg += f"but colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
+                    msg += f"{cpu_per_rs_flag} flag to {db_cpus}"
+                    logger.info(msg)
+                    self.run_args[cpu_per_rs_flag] = db_cpus
+        if not cpus_per_flag_set:
+            msg = f"Colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
+            msg += f"--cpus_per_rs=={db_cpus}"
+            logger.info(msg)
+            self.set_cpus_per_rs(db_cpus)
+
+        rs_per_host_set = False
+        for rs_per_host_flag in ["rs_per_host", "r"]:
+            if rs_per_host_flag in self.run_args:
+                rs_per_host_set = True
+                rs_per_host =  self.run_args[rs_per_host_flag]
+                if rs_per_host != 1:
+                    msg = f"{rs_per_host_flag} flag was set to {rs_per_host}, "
+                    msg += f"but colocated DB requires running ONE resource set per host. "
+                    msg += f"Automatically setting {rs_per_host_flag} flag to 1"
+                    logger.info(msg)
+                    self.run_args[rs_per_host_flag] = 1
+        if not rs_per_host_set:
+            msg = f"Colocated DB requires one resource set per host. "
+            msg += f" Automatically setting --rs_per_host==1"
+            logger.info(msg)
+            self.set_rs_per_host(1)
 
 class BsubBatchSettings(BatchSettings):
     def __init__(

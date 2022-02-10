@@ -171,6 +171,9 @@ class Model(SmartSimEntity):
                 "Models co-located with databases cannot be run as a mpmd workload"
             )
 
+        if hasattr(self.run_settings, "_prep_colocated_db"):
+            self.run_settings._prep_colocated_db(db_cpus)
+
         # TODO list which db settings can be extras
         colo_db_config = {
             "port": int(port),
