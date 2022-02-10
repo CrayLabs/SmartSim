@@ -4,7 +4,7 @@ import numpy as np
 from smartredis import Client
 from tensorflow import keras
 
-from smartsim.tf import freeze_model
+from smartsim.ml.tf import freeze_model
 
 
 def create_tf_mnist_model():

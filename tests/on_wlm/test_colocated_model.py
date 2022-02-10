@@ -91,4 +91,3 @@ def test_launch_colocated_pinned_model(fileutils, wlmutils):
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
-

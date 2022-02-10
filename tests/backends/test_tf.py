@@ -12,8 +12,9 @@ tf_available = True
 try:
     from tensorflow import keras
 
-    from smartsim.tf import freeze_model
-except (ImportError, SmartSimError):
+    from smartsim.ml.tf import freeze_model
+except (ImportError, SmartSimError) as e:
+    print(e)
     tf_available = False
 
 tf_backend_available = "tensorflow" in installed_redisai_backends()
