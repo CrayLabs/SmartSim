@@ -14,7 +14,7 @@ SmartSim
 0.4.0
 -----
 
-Expected release on Feb 11, 2022
+Released on Feb 11, 2022
 
 Description:
 In this release SmartSim continues to promote ease of use.
