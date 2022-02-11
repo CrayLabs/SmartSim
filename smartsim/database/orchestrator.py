@@ -879,7 +879,7 @@ class CobaltOrchestrator(Orchestrator):
         :param time: walltime for batch 'HH:MM:SS' format
         :type time: str, optional
         """
-        simplefilter("always", DeprecationWarning)
+        simplefilter("once", DeprecationWarning)
         msg = "CobaltOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='cobalt', ...)."
         warn(msg, DeprecationWarning)
@@ -959,7 +959,7 @@ class LSFOrchestrator(Orchestrator):
         :param interface: network interface to use
         :type interface: str
         """
-        simplefilter("always", DeprecationWarning)
+        simplefilter("once", DeprecationWarning)
         msg = "LSFOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='lsf', ...)."
         warn(msg, DeprecationWarning)
@@ -1036,7 +1036,7 @@ class SlurmOrchestrator(Orchestrator):
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool
         """
-        simplefilter("always", DeprecationWarning)
+        simplefilter("once", DeprecationWarning)
         msg = "SlurmOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='slurm', ...)."
         warn(msg, DeprecationWarning)
@@ -1102,7 +1102,7 @@ class PBSOrchestrator(Orchestrator):
         :param queue: queue to launch batch in
         :type queue: str, optional
         """
-        simplefilter("always", DeprecationWarning)
+        simplefilter("once", DeprecationWarning)
         msg = "PBSOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='pbs', ...)."
         warn(msg, DeprecationWarning)

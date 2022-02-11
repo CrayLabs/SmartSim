@@ -26,13 +26,14 @@
 
 # Constants for SmartSim
 
-from .log import get_logger
+from warnings import warn, simplefilter
 
-logger = get_logger(__name__)
 
 dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"
 dep_msg += "This module will be removed in the next release."
-logger.warning(dep_msg)
+
+simplefilter("once", DeprecationWarning)
+warn(dep_msg, DeprecationWarning)
 
 
 # Statuses that are applied to jobs
