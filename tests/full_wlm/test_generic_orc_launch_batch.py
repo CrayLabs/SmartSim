@@ -22,6 +22,12 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
     orc = exp.create_database(
         6780, batch=True, interface=network_interface, single_cmd=False
     )
+    if wlmutils.get_test_launcher() == "lsf":
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_walltime("00:05")
+    if wlmutils.get_test_launcher() == "cobalt":
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_queue("debug-flat-quad")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -51,6 +57,16 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
     orc = exp.create_database(
         6780, db_nodes=3, batch=True, interface=network_interface, single_cmd=True
     )
+    if wlmutils.get_test_launcher() == "lsf":
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_walltime("00:05")
+    if wlmutils.get_test_launcher() == "cobalt":
+        # As Cobalt won't allow us to run two
+        # jobs in the same debug queue, we need
+        # to make sure the previous test's one is over
+        time.sleep(30)
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_queue("debug-flat-quad")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -80,6 +96,16 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     orc = exp.create_database(
         6780, db_nodes=3, batch=True, interface=network_interface, single_cmd=False
     )
+    if wlmutils.get_test_launcher() == "lsf":
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_walltime("00:05")
+    if wlmutils.get_test_launcher() == "cobalt":
+        # As Cobalt won't allow us to run two
+        # jobs in the same debug queue, we need
+        # to make sure the previous test's one is over
+        time.sleep(30)
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_queue("debug-flat-quad")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -106,6 +132,15 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(6780, db_nodes=3, batch=True, interface=network_interface)
     orc.set_path(test_dir)
+    if wlmutils.get_test_launcher() == "lsf":
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+    if wlmutils.get_test_launcher() == "cobalt":
+        # As Cobalt won't allow us to run two
+        # jobs in the same debug queue, we need
+        # to make sure the previous test's one is over
+        time.sleep(30)
+        orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_queue("debug-flat-quad")
 
     exp.start(orc, block=True)
 

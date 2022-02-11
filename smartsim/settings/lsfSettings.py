@@ -412,7 +412,7 @@ class BsubBatchSettings(BatchSettings):
         if walltime:
             if len(walltime.split(":")) > 2:
                 walltime = ":".join(walltime.split(":")[:2])
-            self.walltime = walltime
+        self.walltime = walltime
 
     def set_smts(self, smts):
         """Set SMTs
@@ -444,8 +444,7 @@ class BsubBatchSettings(BatchSettings):
         :param account: project name
         :type account: str
         """
-        if account:
-            self.set_project(account)
+        self.set_project(account)
 
     def set_nodes(self, num_nodes):
         """Set the number of nodes for this batch job
