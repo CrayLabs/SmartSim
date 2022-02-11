@@ -131,10 +131,10 @@ class Orchestrator(EntityList):
         if launcher == "local" and batch:
             msg = "Local launcher can not be launched with batch=True"
             raise SmartSimError(msg)
-        if launcher == "pbs" and batch and single_cmd:
-            msg = "PBS Orchestrator can not be launched with batch=True and single_cmd=True. "
+        if run_command == "aprun" and batch and single_cmd:
+            msg = "aprun can launched orchestrator with batch=True and single_cmd=True. "
             msg += "Automatically switching to single_cmd=False."
-            logger.info()
+            logger.info(msg)
             single_cmd = False
 
         self.launcher = launcher
