@@ -5,9 +5,9 @@ Orchestrator
 
 The ``Orchestrator`` is an in-memory database that is launched prior to all other
 entities within an ``Experiment``. The ``Orchestrator`` can be used to store and retrieve
-data during the course of an experiment. In order to stream data into
-or receive data from the ``Orchestrator``, one of the SmartSim clients (SmartRedis) has to be
-used within a Model.
+data during the course of an experiment and across multiple entities. In order to
+stream data into or receive data from the ``Orchestrator``, one of the SmartSim clients
+(SmartRedis) has to be used within a Model.
 
 .. |orchestrator| image:: images/Orchestrator.png
   :width: 700
