@@ -53,7 +53,7 @@ def test_slurm_mpmd(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir(exp_name)
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
-        settings = exp.create_run_settings("python", f"{script} --time=15", run_command=run_command)
+        settings = exp.create_run_settings("python", f"{script} --time=5", run_command=run_command)
         settings.set_tasks(1)
 
         settings.make_mpmd(deepcopy(settings))
