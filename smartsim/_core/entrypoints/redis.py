@@ -29,7 +29,11 @@ import argparse
 from typing import List
 from subprocess import PIPE, STDOUT, Popen
 
+from smartsim.log import get_logger
+from smartsim.error import SSInternalError
 from smartsim._core.utils.network import current_ip
+
+logger = get_logger(__name__)
 
 """
 Redis/KeyDB entrypoint script
@@ -37,22 +41,26 @@ Redis/KeyDB entrypoint script
 
 def main(network_interface: str, command: List[str]):
 
-    ip_address = current_ip(network_interface)
-    cmd = command + [f"--bind {ip_address}"]
+    try:
 
-    print("-" * 10, "  Running  Command  ", "-" * 10, "\n")
-    print(f"COMMAND: {' '.join(cmd)}\n")
-    print(f"IPADDRESS: {ip_address}\n")
-    print(f"NETWORK: {network_interface}\n")
-    print("-" * 30, "\n\n")
+        ip_address = current_ip(network_interface)
+        cmd = command + [f"--bind {ip_address}"]
 
-    print("-" * 10, "  Output  ", "-" * 10, "\n\n")
+        print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
+        print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
+        print(f"IPADDRESS: {ip_address}\n", flush=True)
+        print(f"NETWORK: {network_interface}\n", flush=True)
+        print("-" * 30, "\n\n", flush=True)
 
-    p = Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        print("-" * 10, "  Output  ", "-" * 10, "\n\n", flush=True)
 
-    for line in iter(p.stdout.readline, b""):
-        print(line.decode("utf-8").rstrip(), flush=True)
+        p = Popen(cmd, stdout=PIPE, stderr=STDOUT)
 
+        for line in iter(p.stdout.readline, b""):
+            print(line.decode("utf-8").rstrip(), flush=True)
+
+    except Exception as e:
+        raise SSInternalError("Failed to start a an orchestrator shard") from e
 
 
 

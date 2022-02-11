@@ -1,6 +1,5 @@
 import sys
 import pytest
-import shutil
 
 from smartsim import Experiment, status
 

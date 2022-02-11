@@ -64,7 +64,11 @@ class QsubBatchSettings(BatchSettings):
         :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
+        self._time = None
+        self._nodes = None
+        self._ncpus = ncpus
 
+        # time, queue, nodes, and account set in parent class init
         super().__init__(
             "qsub",
             batch_args=batch_args,
@@ -75,8 +79,6 @@ class QsubBatchSettings(BatchSettings):
             **kwargs,
         )
         self.resources = init_default({}, resources, dict)
-
-        self._ncpus = ncpus
         self._hosts = None
 
     def set_nodes(self, num_nodes):
