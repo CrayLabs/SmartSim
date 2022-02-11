@@ -35,24 +35,54 @@ like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
 and applications.
 
 SmartSim provides an API to connect HPC workloads, particularly (MPI + X) simulations,
-to an in-memory database called the Orchestrator, built on an in-memory database
-called Redis.
+to an in-memory database called the Orchestrator, built on Redis.
 
 Applications integrated with the SmartRedis clients, written in Fortran, C, C++ and Python,
 can stream tensors and datasets to and from the Orchestrator. The distributed Client-Server
-paradigm allows for data to be seemlessly exchanged between applications at runtime.
+paradigm allows for data to be seamlessly exchanged between applications at runtime.
 
-In addition to exchanging data between langauges, any of the SmartRedis clients can
+In addition to exchanging data between languages, any of the SmartRedis clients can
 remotely execute Machine Learning models and TorchScript code on data stored in
 the Orchestrator despite which language the data originated from.
 
 SmartSim supports the following ML libraries.
 
-|       Library     | Supported Version |
-|-------------------|:-----------------:|
-| PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.2       |
-| ONNX              |       1.7.0       |
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center">RedisAI Version</th>
+      <th style="text-align:center">Libraries</th>
+      <th style="text-align:center">Supported Version</th>
+    </tr>
+  </thead>
+  <tbody style="text-align:center">
+    <tr>
+      <td rowspan="3">1.2.3-1.2.4</td>
+      <td>PyTorch</td>
+      <td>1.7.0</td>
+    </tr>
+    <tr>
+      <td>TensorFlow\Keras</td>
+      <td>2.5.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.7.0</td>
+    </tr>
+      <td rowspan="3">1.2.5</td>
+      <td>PyTorch</td>
+      <td>1.9.1</td>
+    </tr>
+    <tr>
+      <td>TensorFlow\Keras</td>
+      <td>2.6.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.9.0</td>
+    </tr>
+  </tbody>
+</table>
 
 A [number of other libraries](https://github.com/onnx/onnxmltools) are
 supported through ONNX, like [SciKit-Learn](https://github.com/onnx/sklearn-onnx/)
@@ -122,11 +152,10 @@ program using the local launcher which is designed for laptops and single nodes.
 
 ```python
 from smartsim import Experiment
-from smartsim.settings import RunSettings
 
 exp = Experiment("simple", launcher="local")
 
-settings = RunSettings("echo", exe_args="Hello World")
+settings = exp.create_run_settings("echo", exe_args="Hello World")
 model = exp.create_model("hello_world", settings)
 
 exp.start(model, block=True)
@@ -135,8 +164,9 @@ print(exp.get_status(model))
 
 ### Hello World MPI
 
-``RunSettings`` define how a model is launched. There are many types of ``RunSettings``
-supported by SmartSim.
+The `Experiment.create_run_settings` method returns a ``RunSettings`` object which
+defines how a model is launched. There are many types of ``RunSettings`` supported by
+SmartSim.
 
  - ``RunSettings``
  - ``MpirunSettings``
@@ -144,21 +174,29 @@ supported by SmartSim.
  - ``AprunSettings``
  - ``JsrunSettings``
 
-For example, ``MpirunSettings`` can be used to launch MPI programs with openMPI.
+By using the `Experiment.create_run_settings` SmartSim will automatically look to see which run command is requested and construct a run settings object of the appropriate type. For example, by passing the argument `run_command="mpirun"` to `Experiment.create_run_settings` a ``MpirunSettings`` object will be returned that can be used to launch MPI programs with openMPI.
 
 ```Python
 from smartsim import Experiment
-from smartsim.settings import MpirunSettings
 
 exp = Experiment("hello_world", launcher="local")
-mpi = MpirunSettings(exe="echo", exe_args="Hello World!")
-mpi.set_tasks(4)
+mpi_settings = exp.create_run_settings(exe="echo",
+                                       exe_args="Hello World!",
+                                       run_command="mpirun")
+mpi_settings.set_tasks(4)
 
-mpi_model = exp.create_model("hello_world", mpi)
+mpi_model = exp.create_model("hello_world", mpi_settings)
 
 exp.start(mpi_model, block=True)
 print(exp.get_status(model))
 ```
+
+For truly portable code, if an argument of `run_command="auto"` is passed to
+`Experiment.create_run_settings`, SmartSim will attempt to find a run command on the
+system with which it has a corresponding `RunSettings` class. If one can be found,
+`Experiment.create_run_settings` will instance and return an object of that type.
+
+
 -----------
 ## Experiments on HPC Systems
 
@@ -185,10 +223,9 @@ salloc -N 1 -n 32 --exclusive -t 00:10:00
 ```python
 # hello_world.py
 from smartsim import Experiment
-from smartsim.settings import SrunSettings
 
 exp = Experiment("hello_world_exp", launcher="slurm")
-srun = SrunSettings(exe="echo", exe_args="Hello World!")
+srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 srun.set_nodes(1)
 srun.set_tasks(32)
 
@@ -230,16 +267,15 @@ The following launches 4 replicas of the the same ``hello_world`` model.
 ```python
 # hello_ensemble.py
 from smartsim import Experiment
-from smartsim.settings import SrunSettings, SbatchSettings
 
 exp = Experiment("hello_world_batch", launcher="slurm")
 
 # define resources for all ensemble members
-sbatch = SbatchSettings(nodes=4, time="00:10:00", account="12345-Cray")
+sbatch = exp.create_batch_settings(nodes=4, time="00:10:00", account="12345-Cray")
 sbatch.set_partition("premium")
 
 # define how each member should run
-srun = SrunSettings(exe="echo", exe_args="Hello World!")
+srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 srun.set_nodes(1)
 srun.set_tasks(32)
 
@@ -262,16 +298,15 @@ launchers within SmartSim.
 ```python
 # hello_ensemble_pbs.py
 from smartsim import Experiment
-from smartsim.settings import AprunSettings, QsubBatchSettings
 
 exp = Experiment("hello_world_batch", launcher="pbs")
 
 # define resources for all ensemble members
-qsub = QsubBatchSettings(nodes=4, time="00:10:00",
-                        account="12345-Cray", queue="cl40")
+qsub = exp.create_batch_settings(nodes=4, time="00:10:00",
+                                 account="12345-Cray", queue="cl40")
 
 # define how each member should run
-aprun = AprunSettings(exe="echo", exe_args="Hello World!")
+aprun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
 aprun.set_tasks(32)
 
 ensemble = exp.create_ensemble("hello_world", batch_settings=qsub,
@@ -319,7 +354,7 @@ db = Orchestrator(port=6780)
 # by default, SmartSim never blocks execution after the database is launched.
 exp.start(db)
 
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 # stop the database
@@ -353,7 +388,7 @@ db_cluster = SlurmOrchestrator(db_nodes=3, db_port=6780, batch=False)
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -374,13 +409,13 @@ qsub -l select=3:ppn=1 -l walltime=00:10:00 -q cl40 -I
 from smartsim import Experiment
 from smartsim.database import PBSOrchestrator
 
-exp = Experiment("db-on-slurm", launcher="slurm")
+exp = Experiment("db-on-pbs", launcher="pbs")
 db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=False)
 
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -401,14 +436,14 @@ to be launched. Users can hit CTRL-C to cancel the launch if needed.
 from smartsim import Experiment
 from smartsim.database import PBSOrchestrator
 
-exp = Experiment("db-on-slurm", launcher="pbs")
+exp = Experiment("batch-db-on-pbs", launcher="pbs")
 db_cluster = PBSOrchestrator(db_nodes=3, db_port=6780, batch=True,
                              time="00:10:00", account="12345-Cray", queue="cl40")
 
 exp.start(db_cluster)
 
 print(f"Orchestrator launched on nodes: {db_cluster.hosts}")
-# launch models, anaylsis, training, inference sessions, etc
+# launch models, analysis, training, inference sessions, etc
 # that communicate with the database using the SmartRedis clients
 
 exp.stop(db_cluster)
@@ -457,7 +492,7 @@ exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the Ray cluster
-ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
@@ -466,10 +501,13 @@ ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
 ### Ray on PBS
 
 Below is an example of how to launch a Ray cluster on a PBS system and connect to it.
-In this example, we set `batch=True`, which means that the cluster will be started
-requesting an allocation through Slurm. If this code is run within a sufficiently large
-interactive allocation, setting `batch=False` will spin the Ray cluster on the
-allocated nodes.
+As we can see, only minor tweaks are needed to port our previous example to utilize
+a different launcher.
+
+Once again, we set `batch=True`, which means that the cluster will be started
+requesting an allocation, this time through PBS. If this code is run within a
+sufficiently large interactive allocation, setting `batch=False` will spin the Ray
+cluster on the allocated nodes.
 
 ```Python
 import ray
@@ -487,7 +525,7 @@ exp.generate(cluster, overwrite=True)
 exp.start(cluster, block=False, summary=True)
 
 # Connect to the ray cluster
-ctx = ray.init("ray://"+cluster.get_head_address()+":10001")
+ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
 
 # <run Ray tune, RLlib, HPO...>
 ```
@@ -507,12 +545,12 @@ Users can seamlessly pull and push data from the Orchestrator from different lan
 
 Tensors are the fundamental data structure for the SmartRedis clients. The Clients
 use the native array format of the language. For example, in Python, a tensor is
-a NumPy array. The C++/C client accepts nested and contingous arrays.
+a NumPy array while the C/C++ clients accept nested and contiguous arrays.
 
 When stored in the database, all tensors are stored in the same format. Hence,
-any language can recieve a tensor from the database no matter what supported language
+any language can receive a tensor from the database no matter what supported language
 the array was sent from. This enables applications in different languages to communicate
-numerical data with each other at runtime (coupling).
+numerical data with each other at runtime.
 
 For more information on the tensor data structure, see
 [the documentation](https://www.craylabs.org/docs/sr_data_structures.html#tensor)
@@ -521,7 +559,7 @@ For more information on the tensor data structure, see
 
 Datasets are collections of Tensors and associated metadata. The ``Dataset`` class
 is a user space object that can be created, added to, sent to, and retrieved from
-the Orchestrator database.
+the Orchestrator.
 
 For an example of how to use the ``Dataset`` class, see the [Online Analysis example](#online-analysis)
 
@@ -530,25 +568,27 @@ For more information on the API, see the
 
 ## Examples
 
-Even though the clients rely on the Orchestrator database to be running, it can be helpful
-to see examples of how the API is used accross different languages even without the
-infrastructure code. The following examples provide simple examples of client usage.
+Although clients rely on the Orchestrator database to be running, it can be helpful
+to see examples of how the API is used without concerning ourselves with the 
+infrastructure code. The following examples provide samples of client usage
+across different languages.
 
-For more imformation on the SmartRedis clients, see the
-[API documentation](https://www.craylabs.org/docs/api/smartredis_api.html) and
+For more information on the SmartRedis clients, see the
+[API documentation](https://www.craylabs.org/docs/api/smartredis_api.html),
+[Online Analysis example](#online-analysis), and
 [tutorials](https://www.craylabs.org/docs/tutorials/smartredis.html).
 
-**Please note** these are client examples, they will not run if there is no database to
-connect to.
+**Please note** these are client examples. As such, they will not run as stand-alone
+scripts if there is no database for them to connect to.
 
 ### Python
 
-Training code and Model construction are not shown here, but the example below
-shows how to take a PyTorch model, sent it to the database, and execute it
-on data stored within the database.
+The example below shows how to take a PyTorch model, send it to the Orchestrator, and
+execute it on data stored within the database.
 
-Notably the **GPU** argument is used to ensure that exection of the model
-takes place on a GPU if one is available to the database.
+Notice that when we set the model in the database, we set the device argument to
+**GPU**. By doing this we ensure that execution of the model takes place on a GPU if
+one is available to the database.
 
 ```Python
 import torch
@@ -574,13 +614,13 @@ print(f"Prediction: {output}")
 ### C++
 
 One common pattern is to use SmartSim to spin up the Orchestrator database
-and then use the Python client to set the model in
-the database. Once set, an application that uses
-the C, C++, or Fortran clients will call the model that was set.
+and then use the Python client to set the model in the database. Once set, an
+application written in C, C++, or Fortran will utilize their respective client
+to call the model that was set and retrieve the results as a language native tensor.
 
-This example shows the necessary code an application would need to include
-to execute a model (with any ML backend) that had been stored prior to application
-launch by the Python client.
+This example shows how, with minimal boilerplate code, a C++ application launched from
+SmartSim is able to utilize the Client API to execute a model stored in the
+Orchestrator that has been fit using any of the supported Python ML backends.
 
 ```C++
 #include "client.h"
@@ -603,7 +643,7 @@ client.put_tensor(in_key, img.data(), {1,1,28,28},
                     SmartRedis::TensorType::flt,
                     SmartRedis::MemoryLayout::contiguous);
 
-// Run model already in the database
+// Run model already placed in the database
 client.run_model(model_name, {in_key}, {out_key});
 
 // Get the result of the model
@@ -616,9 +656,8 @@ client.unpack_tensor(out_key, result.data(), {10},
 
 ### Fortran
 
-You can also load a model from file and put it in the database before you execute it.
+You can also load a model from a file and put it in the database before you execute it.
 This example shows how this is done in Fortran.
-
 
 ```fortran
 program run_mnist_example
@@ -655,7 +694,7 @@ subroutine run_mnist( client, model_name )
   character(len=255), dimension(1) :: inputs
   character(len=255), dimension(1) :: outputs
 
-  ! Construct the keys used for the specifiying inputs and outputs
+  ! Construct the keys used for the specifying inputs and outputs
   in_key = "mnist_input"
   out_key = "mnist_output"
 
@@ -672,7 +711,6 @@ subroutine run_mnist( client, model_name )
 end subroutine run_mnist
 
 end program run_mnist_example
-
 ```
 
 
@@ -680,7 +718,7 @@ end program run_mnist_example
 # SmartSim + SmartRedis
 
 SmartSim and SmartRedis were designed to work together. When launched through
-SmartSim, applcations using the SmartRedis clients are directly connected to
+SmartSim, applications using the SmartRedis clients are directly connected to
 any Orchestrator launched in the same Experiment.
 
 In this way, a SmartSim Experiment becomes a driver for coupled ML and Simulation
@@ -691,31 +729,35 @@ together.
 
 Using SmartSim, HPC applications can be monitored in real time by streaming data
 from the application to the database. SmartRedis clients can retrieve the
-data, process, analyze it, and store the data in the database.
+data, process, analyze it, and finally store any updated data back to the database for
+use by other clients.
 
 The following is an example of how a user could monitor and analyze a simulation.
-The example here uses the Python client, but SmartRedis clients are available in
-C++, C, and Fortran as well and implement the same API.
+The example here uses the Python client; however, SmartRedis clients are also available
+for C, C++, and Fortran. All SmartRedis clients implement the same API.
 
-The example will produce the visualization below while the simulation is running.
-
-https://user-images.githubusercontent.com/13009163/127622717-2c9e4cfd-50f4-4d94-88c4-8c05fa2fa616.mp4
+The example will produce [this visualization](https://user-images.githubusercontent.com/13009163/127622717-2c9e4cfd-50f4-4d94-88c4-8c05fa2fa616.mp4) while the simulation is running.
 
 #### Lattice Boltzmann Simulation
 
 Using a [Lattice Boltzmann Simulation](https://en.wikipedia.org/wiki/Lattice_Boltzmann_methods),
 this example demonstrates how to use the SmartRedis ``Dataset`` API to stream
-data to the Orchestrator deployed by SmartSim.
+data over the Orchestrator deployed by SmartSim.
 
-The following code will show the peices of the simulation that are needed to
-transmit the data needed to plot timesteps of the simulation.
+Our simulation will be composed of two parts: `fv_sim.py` which will generate data from
+our Lattice Boltzmann Simulation and store it in the Orchestrator, and `driver.py`
+which will launch the Orchestrator, start `fv_sim.py` and check for data posted to the
+Orchestrator to plot updates in real-time.
+
+The following code highlights the sections of `fv_sim.py` that are responsible for
+transmitting the data needed to plot timesteps of the simulation to the Orchestrator.
 
 ```Python
 # fv_sim.py
 from smartredis import Client
 import numpy as np
 
-# initialization code ommitted
+# initialization code omitted
 
 # save cylinder location to database
 cylinder = (X - x_res/4)**2 + (Y - y_res/2)**2 < (y_res/4)**2 # bool array
@@ -748,8 +790,10 @@ for time_step in range(steps): # simulation loop
     client.put_dataset(dataset)
 ```
 
-The driver that launches the database and the simulation (non-blocking), looks
-like:
+Finally, in `driver.py`, we can see that with minimal effort we are able to launch the
+database and run the simulation in a non-blocking fashion. From there we simply poll
+the Orchestrator for new data posted by our simulation and update our plot once it is
+received.
 
 ```Python
 # driver.py
@@ -757,9 +801,10 @@ time_steps, seed = 3000, 42
 
 exp = Experiment("finite_volume_simulation", launcher="local")
 db = Orchestrator(port=6780)
-settings = RunSettings("python", exe_args=["fv_sim.py",
-                                           f"--seed={seed}",
-                                           f"--steps={time_steps}"])
+settings = exp.create_run_settings("python",
+                                   exe_args=["fv_sim.py",
+                                             f"--seed={seed}",
+                                             f"--steps={time_steps}"])
 model = exp.create_model("fv_simulation", settings)
 model.attach_generator_files(to_copy="fv_sim.py")
 exp.generate(db, model, overwrite=True)
@@ -783,8 +828,8 @@ for i in range(0, time_steps):
 
 exp.stop(db)
 ```
-More details about online anaylsis with SmartSim and the full code examples can be found in the
-[SmartSim documentation](https://www.craylabs.org). #fix this
+More details about online analysis with SmartSim and the full code examples can be found in the
+[SmartSim documentation](https://www.craylabs.org).
 
 
 ## Online Processing
@@ -833,7 +878,7 @@ V = client.get_tensor("V")
 print(f"U: {U}, S: {S}, V: {V}")
 ```
 
-The processing capabilties make it simple to form computational piplines of
+The processing capabilities make it simple to form computational pipelines of
 functions, scripts, and models.
 
 See the full [TorchScript Language Reference](https://pytorch.org/docs/stable/jit.html#torchscript-language)
@@ -842,16 +887,47 @@ to create your own.
 
 ## Online Inference
 
-SmartSim supports the following frameworks for quering Machine Learning models
+SmartSim supports the following frameworks for querying Machine Learning models
 from C, C++, Fortran and Python with the SmartRedis Clients:
 
-|       Library     | Supported Version |
-|-------------------|:-----------------:|
-| PyTorch           |       1.7.1       |
-| TensorFlow\Keras  |       2.4.2       |
-| ONNX              |       1.7.0       |
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center">RedisAI Version</th>
+      <th style="text-align:center">Libraries</th>
+      <th style="text-align:center">Supported Version</th>
+    </tr>
+  </thead>
+  <tbody style="text-align:center">
+    <tr>
+      <td rowspan="3">1.2.3-1.2.4</td>
+      <td>PyTorch</td>
+      <td>1.7.0</td>
+    </tr>
+    <tr>
+      <td>TensorFlow\Keras</td>
+      <td>2.5.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.7.0</td>
+    </tr>
+      <td rowspan="3">1.2.5</td>
+      <td>PyTorch</td>
+      <td>1.9.1</td>
+    </tr>
+    <tr>
+      <td>TensorFlow\Keras</td>
+      <td>2.6.2</td>
+    </tr>
+    <tr>
+      <td>ONNX</td>
+      <td>1.9.0</td>
+    </tr>
+  </tbody>
+</table>
 
-Note, it's important to remember that SmartSim utilizes a client-server model. To run
+**Note:** It's important to remember that SmartSim utilizes a client-server model. To run
 experiments that utilize the above frameworks, you must first start the Orchestrator
 database with SmartSim.
 
@@ -872,10 +948,9 @@ from smartsim.database import Orchestrator
 exp = Experiment("simple-online-inference", launcher="local")
 db = Orchestrator(port=6780)
 
-
 class Net(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 1, 3)
 
     def forward(self, x):
@@ -901,7 +976,7 @@ print(f"Prediction: {output}")
 exp.stop(db)
 ```
 
-To run:
+The above python code can be run like any normal python script:
 ```bash
 python simple_torch_inference.py
 ```
