@@ -26,6 +26,11 @@ made to ensure an optimal experience. Here is a
 comprehensive list of changes made in SmartSim 0.4.0.
 
 
+Orchestrator Enhancements:
+
+ - Add Orchestrator Co-location (SmartSim-PR139_)
+ - Add Orchestrator configuration file edit methods (SmartSim-PR109_)
+
 Emphasize Driver Script Portability:
 
  - Add ability to create run settings through an experiment (SmartSim-PR110_)
@@ -35,7 +40,7 @@ Emphasize Driver Script Portability:
 Expand Machine Learning Library Support:
 
  - Add Ray cluster setup and deployment to SmartSim (SmartSim-PR50_)
- - Add machine learning data loaders for Keras/TF and Pytorch (SmartSim-PR115_)
+ - Add machine learning data loaders for Keras/TF and Pytorch (SmartSim-PR115_) (SmartSim-PR140_)
  - Launch Ray internally using ``RunSettings`` (SmartSim-PR118_)
 
 Expand Launcher Setting Options:
@@ -49,6 +54,7 @@ General Improvements and Bug Fixes:
  - Abstract away non-user facing implementation details (SmartSim-PR122_)
  - Add various dimensions to the CI build matrix for SmartSim testing (SmartSim-PR130_)
  - Add missing functions to LSFSettings API (SmartSim-PR113_)
+ - Add RedisAI checker for installed backends (SmartSim-PR137_)
  - Remove heavy and unnecessary dependencies (SmartSim-PR116_) (SmartSim-PR132_)
  - Fix LSFLauncher and LSFOrchestrator (SmartSim-PR86_)
  - Fix over greedy Workload Manager Parsers (SmartSim-PR95_)
@@ -57,8 +63,8 @@ General Improvements and Bug Fixes:
 
 Documentation Updates:
 
- - Updates to documentation build process (SmartSim-PR133_)
- - Updates to documentation content (SmartSim-PR96_) (SmartSim-PR129_)
+ - Updates to documentation build process (SmartSim-PR133_) (SmartSim-PR143_)
+ - Updates to documentation content (SmartSim-PR96_) (SmartSim-PR129_) (SmartSim-PR136_) (SmartSim-PR141_)
  - Update SmartSim Examples (SmartSim-PR68_) (SmartSim-PR100_)
 
 
@@ -72,6 +78,7 @@ Documentation Updates:
 .. _SmartSim-PR104: https://github.com/CrayLabs/SmartSim/pull/104
 .. _SmartSim-PR107: https://github.com/CrayLabs/SmartSim/pull/107
 .. _SmartSim-PR108: https://github.com/CrayLabs/SmartSim/pull/108
+.. _SmartSim-PR109: https://github.com/CrayLabs/SmartSim/pull/109
 .. _SmartSim-PR110: https://github.com/CrayLabs/SmartSim/pull/110
 .. _SmartSim-PR112: https://github.com/CrayLabs/SmartSim/pull/112
 .. _SmartSim-PR113: https://github.com/CrayLabs/SmartSim/pull/113
@@ -85,7 +92,13 @@ Documentation Updates:
 .. _SmartSim-PR130: https://github.com/CrayLabs/SmartSim/pull/130
 .. _SmartSim-PR132: https://github.com/CrayLabs/SmartSim/pull/132
 .. _SmartSim-PR133: https://github.com/CrayLabs/SmartSim/pull/133
+.. _SmartSim-PR136: https://github.com/CrayLabs/SmartSim/pull/136
+.. _SmartSim-PR137: https://github.com/CrayLabs/SmartSim/pull/137
 .. _SmartSim-PR138: https://github.com/CrayLabs/SmartSim/pull/138
+.. _SmartSim-PR139: https://github.com/CrayLabs/SmartSim/pull/139
+.. _SmartSim-PR140: https://github.com/CrayLabs/SmartSim/pull/140
+.. _SmartSim-PR141: https://github.com/CrayLabs/SmartSim/pull/141
+.. _SmartSim-PR143: https://github.com/CrayLabs/SmartSim/pull/143
 
 
 0.3.2
