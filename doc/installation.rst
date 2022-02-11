@@ -296,10 +296,11 @@ Install SmartRedis from Source
 Building the Documentation
 ==========================
 
-Users can optionally build documentation of SmartSim through `make docs` or `make docks`.
-`make docs` requires the user to install the documentation build dependencies,
-whereas `make docks` only requires docker. `make docks` is the recommended
-method for building the documentation locally, due to ease of use.
+Users can optionally build documentation of SmartSim through ``make docs`` or
+``make docks``.  ``make docs`` requires the user to install the documentation
+build dependencies, whereas a`make docks`` only requires docker. ``make docks``
+is the recommended method for building the documentation locally, due to ease
+of use.
 
 With docker
 -----------
@@ -307,7 +308,7 @@ With docker
 .. note::
 
   To build the full documentation with ``make docks``, users need to install
-  `docker <https://docs.docker.com/desktop/>`_ so that `docker` is available
+  `docker <https://docs.docker.com/desktop/>`_ so that ``docker`` is available
   on the command line.
 
 .. code-block:: bash
@@ -326,7 +327,6 @@ Without docker
   To build the full documentation via ``make docs``, users need to install
   ``doxygen 1.9.1``. For Mac OS users, doxygen can be installed through ``brew
   install doxygen``
-
 
 .. code-block:: bash
 
