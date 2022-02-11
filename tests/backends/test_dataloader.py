@@ -7,8 +7,6 @@ from smartsim import status
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SmartSimError
 from smartsim.experiment import Experiment
-from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
-from smartsim.ml.tf import DynamicDataGenerator as TorchDataGenerator
 
 shouldrun = True
 try:
@@ -25,6 +23,7 @@ shouldrun_tf = shouldrun
 if shouldrun_tf:
     try:
         from tensorflow import keras
+        from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
     except:
         shouldrun_tf = False
 
@@ -32,6 +31,7 @@ shouldrun_torch = shouldrun
 if shouldrun_torch:
     try:
         import torch
+        from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
     except:
         shouldrun_torch = False
 
@@ -153,7 +153,7 @@ def test_batch_dataloader_torch(fileutils):
         if trials == 0:
             assert False
 
-
+@pytest.mark.skipif(not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch")
 def test_wrong_dataloaders(fileutils):
     test_dir = fileutils.make_test_dir("test-wrong-dataloaders")
     exp = Experiment("test-wrong-dataloaders", exp_path=test_dir)
@@ -161,11 +161,13 @@ def test_wrong_dataloaders(fileutils):
     exp.generate(orc)
     exp.start(orc)
 
-    with pytest.raises(SmartSimError):
-        _ = TFDataGenerator(address=orc.get_address()[0], cluster=False)
+    if shouldrun_tf:
+        with pytest.raises(SmartSimError):
+            _ = TFDataGenerator(address=orc.get_address()[0], cluster=False)
 
-    with pytest.raises(SmartSimError):
-        torch_data_gen = TorchDataGenerator(address=orc.get_address()[0], cluster=False)
-        torch_data_gen.init_samples()
+    if shouldrun_torch:
+        with pytest.raises(SmartSimError):
+            torch_data_gen = TorchDataGenerator(address=orc.get_address()[0], cluster=False)
+            torch_data_gen.init_samples()
 
     exp.stop(orc)

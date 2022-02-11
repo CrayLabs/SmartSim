@@ -1,5 +1,6 @@
+import pytest
 from smartsim.settings import AprunSettings
-
+from smartsim.error import SSUnsupportedError
 
 def test_aprun_settings():
     settings = AprunSettings("python")
@@ -30,6 +31,14 @@ def test_aprun_add_mpmd():
     settings.make_mpmd(settings_2)
     assert len(settings.mpmd) > 0
     assert settings.mpmd[0] == settings_2
+
+def test_catch_colo_mpmd():
+    settings = AprunSettings("python")
+    settings.colocated_db_settings = {"port": 6379,
+                                      "cpus": 1}
+    settings_2 = AprunSettings("python")
+    with pytest.raises(SSUnsupportedError):
+        settings.make_mpmd(settings_2)
 
 
 def test_format_env():

@@ -24,11 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os.path as osp
 import time
+import os.path as osp
 
+from ..colocated import write_colocated_launch_script
 from ...utils.helpers import get_base_36_repr
+from ....log import get_logger
 
+logger = get_logger(__name__)
 
 class Step:
     def __init__(self, name, cwd):
@@ -50,8 +53,38 @@ class Step:
         error = self.get_step_file(ending=".err")
         return output, error
 
-    def get_step_file(self, ending=".sh"):
+    def get_step_file(self, ending=".sh", script_name=None):
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc"""
+        if script_name:
+            script_name = script_name if "." in script_name else script_name + ending
+            return osp.join(self.cwd, script_name)
         return osp.join(self.cwd, self.entity_name + ending)
+
+    def get_colocated_launch_script(self):
+        # prep step for colocated launch if specifed in run settings
+        script_path = self.get_step_file(script_name=".colocated_launcher.sh")
+
+        db_settings = self.run_settings.colocated_db_settings
+
+        # db log file causes write contention and kills performance so by
+        # default we turn off logging unless user specified debug=True
+        if db_settings.get("debug", False):
+            db_log_file = self.get_step_file(ending="-db.log")
+        else:
+            db_log_file = "/dev/null"
+
+        # if user specified to use taskset with local launcher
+        # (not allowed b/c MacOS doesn't support it)
+        # TODO: support this only on linux
+        if self.__class__.__name__ == "LocalStep" and db_settings["limit_app_cpus"] is True: # pragma: no cover
+            logger.warning("Setting limit_app_cpus=False for local launcher")
+            db_settings["limit_app_cpus"] = False
+
+        # write the colocated wrapper shell script to the directory for this
+        # entity currently being prepped to launch
+        write_colocated_launch_script(script_path,
+                                      db_log_file,
+                                      db_settings)
+        return script_path

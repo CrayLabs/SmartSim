@@ -28,11 +28,33 @@
 A file of helper functions for SmartSim
 """
 import os
-import socket
+import uuid
 from pathlib import Path
 from shutil import which
+from functools import lru_cache
 
-import psutil
+def create_lockfile_name():
+    """Generate a unique lock filename using UUID"""
+    lock_suffix = str(uuid.uuid4())[:7]
+    return f"smartsim-{lock_suffix}.lock"
+
+
+@lru_cache(maxsize=20, typed=False)
+def check_dev_log_level():
+    try:
+        lvl = os.environ["SMARTSIM_LOG_LEVEL"]
+        if lvl == "developer":
+            return True
+        return False
+    except KeyError:
+        return False
+
+def fmt_dict(d):
+    fmt_str = ""
+    for k, v in d.items():
+        fmt_str += "\t" + str(k) + " = " + str(v)
+        fmt_str += "\n" if k != list(d.keys())[-1] else ""
+    return(fmt_str)
 
 
 def get_base_36_repr(positive_int):
@@ -51,43 +73,6 @@ def get_base_36_repr(positive_int):
         positive_int //= 36
 
     return "".join(reversed(result))
-
-
-def get_ip_from_host(host):
-    """Return the IP address for the interconnect.
-
-    :param host: hostname of the compute node e.g. nid00004
-    :type host: str
-    :returns: ip of host
-    :rtype: str
-    """
-    ip_address = socket.gethostbyname(host)
-    return ip_address
-
-
-def get_ip_from_interface(interface):
-    """Get IPV4 address of a network interface
-
-    :param interface: interface name
-    :type interface: str
-    :raises ValueError: if the interface does not exist
-    :raises ValueError: if interface does not have an IPV4 address
-    :return: ip address of interface
-    :rtype: str
-    """
-    net_if_addrs = psutil.net_if_addrs()
-    if interface not in net_if_addrs:
-
-        available = list(net_if_addrs.keys())
-        raise ValueError(
-            f"{interface} is not a valid network interface. "
-            f"Valid network interfaces are: {available}"
-        )
-
-    for info in net_if_addrs[interface]:
-        if info.family == socket.AF_INET:
-            return info.address
-    raise ValueError(f"interface {interface} doesn't have an IPv4 address")
 
 
 def init_default(default, init_value, expected_type=None):

@@ -25,7 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-from itertools import product
+import shutil
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -140,6 +141,17 @@ class SrunStep(Step):
                 srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
 
         srun_cmd += self.run_settings.format_run_args()
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            srun_cmd.append("--cpu-bind=none")
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            srun_cmd += [bash, launch_script_path]
+
         srun_cmd += self._build_exe()
         return srun_cmd
 
@@ -167,28 +179,26 @@ class SrunStep(Step):
         :return: executable list
         :rtype: list[str]
         """
+        if self.run_settings.mpmd:
+            return self._make_mpmd()
+        else:
+            exe = self.run_settings.exe
+            args = self.run_settings.exe_args
+            return exe + args
+
+    def _make_mpmd(self):
+        """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
-        if self.run_settings.mpmd:
-            cmd = self._make_mpmd(exe, args)
-            mp_cmd = ["--multi-prog", cmd]
-            return mp_cmd
-        else:
-            cmd = exe + args
-            return cmd
+        cmd = exe + args
+        for mpmd in self.run_settings.mpmd:
+            cmd += [" : "]
+            cmd += mpmd.format_run_args()
+            cmd += ["--job-name", self.name]
+            (env_var_str, _) = mpmd.format_env_vars()
+            cmd += ["--export", env_var_str]
+            cmd += mpmd.exe
+            cmd += mpmd.exe_args
 
-    def _make_mpmd(self, executable, exe_args):
-        """Build Slurm multi-prog (MPMD) executable
-
-        Launch multiple programs on separate CPUs on the same node using the
-        slurm --multi-prog feature.
-        """
-        mpmd_file = self.get_step_file(ending=".mpmd")
-        launch_args = list(product(executable, exe_args))
-        with open(mpmd_file, "w+") as f:
-            proc_num = 0
-            for exe, args in launch_args:
-                e_args = " ".join(args)
-                f.write(" ".join((str(proc_num), exe, e_args, "\n")))
-                proc_num += 1
-        return mpmd_file
+        cmd = sh_split(" ".join(cmd))
+        return cmd

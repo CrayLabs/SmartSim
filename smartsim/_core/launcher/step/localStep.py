@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shutil
 
 from .step import Step
-
 
 class LocalStep(Step):
     def __init__(self, name, cwd, run_settings):
@@ -37,13 +37,23 @@ class LocalStep(Step):
 
     def get_launch_cmd(self):
         cmd = []
+
+        # Add run command and args if user specified
+        # default is no run command for local job steps
         if self.run_settings.run_command:
             cmd.append(self.run_settings.run_command)
             run_args = self.run_settings.format_run_args()
             cmd.extend(run_args)
 
-        cmd.extend(self.run_settings.exe)
+        if self.run_settings.colocated_db_settings:
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
 
+            launch_script_path = self.get_colocated_launch_script()
+            cmd.extend([bash, launch_script_path])
+
+        # build executable
+        cmd.extend(self.run_settings.exe)
         if self.run_settings.exe_args:
             cmd.extend(self.run_settings.exe_args)
 

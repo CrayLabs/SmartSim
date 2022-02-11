@@ -27,7 +27,7 @@
 import os
 
 from .base import BatchSettings, RunSettings
-
+from ..error import SSUnsupportedError
 
 class SrunSettings(RunSettings):
     def __init__(
@@ -60,7 +60,7 @@ class SrunSettings(RunSettings):
             **kwargs,
         )
         self.alloc = alloc
-        self.mpmd = False
+        self.mpmd = []
 
     def set_nodes(self, nodes):
         """Set the number of nodes
@@ -71,6 +71,21 @@ class SrunSettings(RunSettings):
         :type nodes: int
         """
         self.run_args["nodes"] = int(nodes)
+
+    def make_mpmd(self, srun_settings):
+        """Make a mpmd workload by combining two ``srun`` commands
+
+        This connects the two settings to be executed with a single
+        Model instance
+
+        :param srun_settings: SrunSettings instance
+        :type srun_settings: SrunSettings
+        """
+        if self.colocated_db_settings:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
+        self.mpmd.append(srun_settings)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
@@ -281,6 +296,16 @@ class SbatchSettings(BatchSettings):
         """
         if queue:
             self.set_partition(queue)
+
+    def set_cpus_per_task(self, cpus_per_task):
+        """Set the number of cpus to use per task
+
+        This sets ``--cpus-per-task``
+
+        :param num_cpus: number of cpus to use per task
+        :type num_cpus: int
+        """
+        self.batch_args["cpus-per-task"] = int(cpus_per_task)
 
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job

@@ -31,3 +31,6 @@ except AssertionError:  # pragma: no cover
     raise SmartSimError(
         f"TensorFlow >= {TF_VERSION} is required for smartsim.tf, you have {tf.__version__}"
     ) from None
+
+
+from .utils import freeze_model

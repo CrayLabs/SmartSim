@@ -1,4 +1,5 @@
 import logging
+import os.path as osp
 import sys
 import time
 from os import environ
@@ -50,25 +51,35 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         batch_args={"A": wlmutils.get_test_account(), "queue": "debug-flat-quad"}
         if launcher == "cobalt"
         else None,
+        time="00:05:00",
     )
 
     exp.generate(cluster)
-    exp.start(cluster, block=False, summary=True)
-    ctx = ray.init("ray://" + cluster.get_head_address() + ":10001")
 
-    right_resources = False
-    trials = 10
-    while not right_resources and trials > 0:
-        right_resources = (len(ray.nodes()), ray.cluster_resources()["CPU"]) == (2, 8)
-        trials -= 1
-        time.sleep(1)
+    try:
+        exp.start(cluster, block=False, summary=True)
+        ctx = ray.init("ray://" + cluster.get_head_address() + ":10001")
 
-    if not right_resources:
+        right_resources = False
+        trials = 10
+        while not right_resources and trials > 0:
+            right_resources = (len(ray.nodes()), ray.cluster_resources()["CPU"]) == (
+                2,
+                8,
+            )
+            trials -= 1
+            time.sleep(1)
+
+        if not right_resources:
+            ctx.disconnect()
+            ray.shutdown()
+            exp.stop(cluster)
+            assert False
+
         ctx.disconnect()
         ray.shutdown()
         exp.stop(cluster)
+    except:
+        # Catch all errors, most of which can come from Ray
+        exp.stop(cluster)
         assert False
-
-    ctx.disconnect()
-    ray.shutdown()
-    exp.stop(cluster)

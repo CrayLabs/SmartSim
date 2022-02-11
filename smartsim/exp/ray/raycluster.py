@@ -28,6 +28,7 @@ import os
 import re
 import time as _time
 import uuid
+import sys
 
 from ..._core.utils import init_default
 from ..._core.utils.helpers import expand_exe_path
@@ -271,12 +272,6 @@ def find_ray_exe():
         raise SmartSimError("Could not find ray executable")
 
 
-def find_ray_stater_script():
-    """Find location of script used to start Ray nodes."""
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    return f"{dir_path}/raystarter.py"
-
-
 def parse_ray_head_node_address(head_log):
     """Get the ray head node host address from the log file produced
     by the head process.
@@ -361,9 +356,9 @@ class RayHead(SmartSimEntity):
     def _build_ray_exe_args(self, ray_port, ray_password, interface, ray_args):
 
         # python script that launches ray head node
-        starter_script = find_ray_stater_script()
         ray_starter_args = [
-            starter_script,
+            "-m",
+            "smartsim._core.entrypoints.ray",
             f"+port={ray_port}",
             f"+ifname={interface}",
             f"+ray-exe={find_ray_exe()}",
@@ -415,7 +410,7 @@ class RayWorker(SmartSimEntity):
 
         run_settings = settings.create_run_settings(
             launcher=launcher,
-            exe="python",
+            exe=sys.executable,
             exe_args=ray_exe_args,
             run_args=run_args,
             run_command=run_command,
@@ -444,9 +439,9 @@ class RayWorker(SmartSimEntity):
     def _build_ray_exe_args(self, ray_password, ray_args, ray_port, interface):
 
         # python script that launches ray  node
-        starter_script = find_ray_stater_script()
         ray_starter_args = [
-            starter_script,
+            "-m",
+            "smartsim._core.entrypoints.ray",
             f"+ray-exe={find_ray_exe()}",
             f"+port={ray_port}",
             f"+ifname={interface}",

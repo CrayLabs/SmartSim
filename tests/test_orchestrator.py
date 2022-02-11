@@ -8,6 +8,7 @@ from smartsim.database import (
     SlurmOrchestrator,
 )
 from smartsim.error import SmartSimError
+from smartsim.error.errors import SSUnsupportedError
 
 
 def test_orc_parameters():
@@ -69,12 +70,16 @@ def test_orc_active_functions(fileutils):
 def test_catch_local_db_errors():
 
     # local database with more than one node not allowed
-    with pytest.raises(ValueError):
+    with pytest.raises(SSUnsupportedError):
         db = Orchestrator(db_nodes=2)
 
-    # MPMD local orchestrator not allowed
-    with pytest.raises(ValueError):
-        db = Orchestrator(db_per_host=2)
+    # Run command for local orchestrator not allowed
+    with pytest.raises(SmartSimError):
+        db = Orchestrator(run_command="srun")
+
+    # Batch mode for local orchestrator is not allowed
+    with pytest.raises(SmartSimError):
+        db = Orchestrator(batch=True)
 
 
 #####  PBS  ######

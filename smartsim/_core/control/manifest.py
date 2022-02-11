@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from ..utils.helpers import fmt_dict
+
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError
@@ -154,3 +156,41 @@ class Manifest:
         for entity_list in self.all_entity_lists:
             if len(entity_list) < 1:
                 raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")
+
+    def __str__(self):
+        s = ""
+        e_header = "=== Ensembles ===\n"
+        m_header = "=== Models ===\n"
+        db_header = "=== Database ===\n"
+        if self.ensembles:
+            s += e_header
+
+            # include ray clusters as an ensemble while still in experimental API
+            all_ensembles = self.ensembles + self.ray_clusters
+            for ensemble in all_ensembles:
+                s += f"{ensemble.name}\n"
+                s += f"Members: {len(ensemble)}\n"
+                s += f"Batch Launch: {ensemble.batch}\n"
+                if ensemble.batch:
+                    s += f"{str(ensemble.batch_settings)}\n"
+            s += "\n"
+        if self.models:
+            s += m_header
+            for model in self.models:
+                s += f"{model.name}\n"
+                s += f"{str(model.run_settings)}\n"
+                if model.params:
+                    s += f"Parameters: \n{fmt_dict(model.params)}\n"
+            s += "\n"
+
+        if self.db:
+            s += db_header
+            s += f"Shards: {self.db.num_shards}\n"
+            s += f"Port: {str(self.db.ports[0])}\n"
+            s += f"Network: {self.db._interface}\n"
+            s += f"Batch Launch: {self.db.batch}\n"
+            if self.db.batch:
+                s += f"{str(self.db.batch_settings)}\n"
+
+        s += "\n"
+        return s

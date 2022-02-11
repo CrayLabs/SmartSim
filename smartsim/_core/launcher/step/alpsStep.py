@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shutil
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -58,14 +60,28 @@ class AprunStep(Step):
         """
         aprun = self.run_settings.run_command
         aprun_cmd = [aprun, "--wdir", self.cwd]
-        aprun_cmd += self.run_settings.format_env_vars()
+
+        # add env vars and run settings
+        aprun_cmd.extend(self.run_settings.format_env_vars())
+        aprun_cmd.extend(self.run_settings.format_run_args())
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            aprun_cmd.extend(["--cc", "none"])
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            aprun_cmd.extend([bash, launch_script_path])
+
         aprun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to
         # file in the cwd.
         if self.run_settings.in_batch:
             output = self.get_step_file(ending=".out")
-            aprun_cmd += [">", output]
+            aprun_cmd.extend([">", output])
         return aprun_cmd
 
     def _set_alloc(self):
@@ -97,19 +113,21 @@ class AprunStep(Step):
         if self.run_settings.mpmd:
             return self._make_mpmd()
         else:
-            cmd = self.run_settings.format_run_args()
-            cmd += self.run_settings.exe
-            cmd += self.run_settings.exe_args
-            return cmd
+            exe = self.run_settings.exe
+            args = self.run_settings.exe_args
+            return exe + args
 
     def _make_mpmd(self):
         """Build Aprun (MPMD) executable"""
-        cmd = self.run_settings.format_run_args()
-        cmd += self.run_settings.exe
-        cmd += self.run_settings.exe_args
+
+        exe = self.run_settings.exe
+        exe_args = self.run_settings.exe_args
+        cmd = exe + exe_args
+
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += mpmd.exe
             cmd += mpmd.exe_args
+        cmd = sh_split(" ".join(cmd))
         return cmd

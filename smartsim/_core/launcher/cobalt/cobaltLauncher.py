@@ -171,5 +171,4 @@ class CobaltLauncher(WLMLauncher):
         return updates
 
     def __str__(self):
-        # TODO get the version here
         return "Cobalt"

@@ -26,6 +26,7 @@
 
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
+from ..wlm import detect_launcher
 from . import *
 
 

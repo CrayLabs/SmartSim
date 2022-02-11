@@ -192,6 +192,24 @@ class WLMUtils:
             db = Orchestrator(port=port, interface="lo")
         return db
 
+
+@pytest.fixture
+def local_db(fileutils, wlmutils, request):
+    """Yield fixture for startup and teardown of an local orchestrator"""
+
+    exp_name = request.function.__name__
+    exp = Experiment(exp_name, launcher="local")
+    test_dir = fileutils.make_test_dir(exp_name)
+    db = wlmutils.get_orchestrator()
+    db.set_path(test_dir)
+    exp.start(db)
+
+    yield db
+    # pass or fail, the teardown code below is ran after the
+    # completion of a test case that uses this fixture
+    exp.stop(db)
+
+
 @pytest.fixture
 def db(fileutils, wlmutils, request):
     """Yield fixture for startup and teardown of an orchestrator"""

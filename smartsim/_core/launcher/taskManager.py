@@ -31,11 +31,12 @@ from threading import RLock, Thread
 import psutil
 
 from ...error import LauncherError
-from ...log import _get_log_level, get_logger
+from ...log import get_logger
 from .util.shell import execute_async_cmd, execute_cmd
+from ..utils.helpers import check_dev_log_level
 
 logger = get_logger(__name__)
-verbose_tm = bool(_get_log_level() == "developer")
+verbose_tm = check_dev_log_level()
 
 
 TM_INTERVAL = 1
@@ -72,6 +73,7 @@ class TaskManager:
         monitor = Thread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
+
     def run(self):
         """Start monitoring Tasks"""
 
@@ -95,6 +97,7 @@ class TaskManager:
                 self.actively_monitoring = False
                 if verbose_tm:
                     logger.debug("Sleeping, no tasks to monitor")
+
 
     def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
         """Start a task managed by the TaskManager
@@ -182,7 +185,7 @@ class TaskManager:
         try:
             task = self[task_id]
             if task.is_alive:
-                task.kill()
+                task.terminate()
                 returncode = task.check_status()
                 out, err = task.get_io()
                 self.add_task_history(task_id, returncode, out, err)
@@ -298,7 +301,7 @@ class Task:
         return output, error
 
     def kill(self, timeout=10):
-        """Kill the subprocess and all childen"""
+        """Kill the subprocess and all children"""
 
         def kill_callback(proc):
             logger.debug(f"Process terminated with kill {proc.pid}")
@@ -329,7 +332,8 @@ class Task:
 
         # try SIGTERM first for clean exit
         for child in children:
-            logger.debug(child)
+            if verbose_tm:
+                logger.debug(child)
             child.terminate()
 
         # wait for termination

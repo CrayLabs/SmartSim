@@ -3,6 +3,7 @@ from pprint import pformat
 import pytest
 
 from smartsim.settings import BsubBatchSettings, JsrunSettings
+from smartsim.error import SSUnsupportedError
 
 # ------ Jsrun ------------------------------------------------
 
@@ -88,6 +89,14 @@ def test_jsrun_mpmd():
     assert settings.mpmd_preamble_lines == ["launch_distribution : packed"]
 
 
+def test_catch_colo_mpmd():
+    settings = JsrunSettings("python")
+    settings.colocated_db_settings = {"port": 6379,
+                                      "cpus": 1}
+    settings_2 = JsrunSettings("python")
+    with pytest.raises(SSUnsupportedError):
+        settings.make_mpmd(settings_2)
+
 # ---- Bsub Batch ---------------------------------------------------
 
 
@@ -102,11 +111,6 @@ def test_bsub_batch_settings():
     formatted = sbatch.format_batch_args()
     result = ['-alloc_flags "nvme smt4"', "-nnodes 1"]
     assert formatted == result
-
-    assert str(sbatch) == (
-        f"Batch Command: bsub\n"
-        + "Batch arguments: {'alloc_flags': '\"nvme smt4\"', 'nnodes': 1}"
-    )
 
 
 def test_bsub_batch_manual():

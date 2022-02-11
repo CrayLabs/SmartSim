@@ -1,8 +1,8 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.error import EntityExistsError
-from smartsim.settings import RunSettings
+from smartsim.error import EntityExistsError, SSUnsupportedError
+from smartsim.settings import RunSettings, MpirunSettings
 
 
 def test_register_incoming_entity_preexists():
@@ -23,16 +23,16 @@ def test_disable_key_prefixing():
     m.disable_key_prefixing()
     assert m.query_key_prefixing() == False
 
+def test_catch_colo_mpmd_model():
+    exp = Experiment("experiment", launcher="local")
+    rs = MpirunSettings("python", exe_args="sleep.py")
 
-def test_repr():
-    expr = Experiment("experiment")
-    m = expr.create_model("test_model", run_settings=RunSettings("python"))
-    assert m.__repr__() == "test_model"
+    # make it an mpmd model
+    rs_2 = MpirunSettings("python", exe_args="sleep.py")
+    rs.make_mpmd(rs_2)
 
+    model = exp.create_model("bad_colo_model", rs)
 
-def test_str():
-    expr = Experiment("experiment")
-    rs = RunSettings("python", exe_args="sleep.py")
-    m = expr.create_model("test_model", run_settings=rs)
-    entity_str = "Name: " + m.name + "\nType: " + m.type + "\n" + str(rs)
-    assert m.__str__() == entity_str
+    # make it co-located which should raise and error
+    with pytest.raises(SSUnsupportedError):
+        model.colocate_db()

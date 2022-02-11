@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shutil
+from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -57,8 +59,27 @@ class MpirunStep(Step):
         :rtype: list[str]
         """
         mpirun = self.run_settings.run_command
-        mpirun_cmd = [mpirun, "-wdir", self.cwd]
-        mpirun_cmd += self.run_settings.format_env_vars()
+        mpirun_cmd = [
+            mpirun,
+            "-wdir",
+            self.cwd
+        ]
+        # add env vars to mpirun command
+        mpirun_cmd.extend(self.run_settings.format_env_vars())
+
+        # add mpirun settings to command
+        mpirun_cmd.extend(self.run_settings.format_run_args())
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            mpirun_cmd.extend(["--bind-to", "none"])
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            mpirun_cmd += [bash, launch_script_path]
+
         mpirun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to
@@ -107,15 +128,13 @@ class MpirunStep(Step):
         if self.run_settings.mpmd:
             return self._make_mpmd()
         else:
-            cmd = self.run_settings.format_run_args()
-            cmd += self.run_settings.exe
+            cmd = self.run_settings.exe
             cmd += self.run_settings.exe_args
             return cmd
 
     def _make_mpmd(self):
         """Build mpirun (MPMD) executable"""
-        cmd = self.run_settings.format_run_args()
-        cmd += self.run_settings.exe
+        cmd = self.run_settings.exe
         cmd += self.run_settings.exe_args
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
@@ -123,4 +142,6 @@ class MpirunStep(Step):
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
             cmd += mpmd.exe_args
+
+        cmd = sh_split(" ".join(cmd))
         return cmd

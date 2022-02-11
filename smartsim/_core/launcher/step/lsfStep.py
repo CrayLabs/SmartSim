@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import shutil
 
 from ....error import AllocationError
 from ....log import get_logger
@@ -168,10 +169,21 @@ class JsrunStep(Step):
 
         if self.run_settings.env_vars:
             env_var_str_list = self.run_settings.format_env_vars()
-            jsrun_cmd += env_var_str_list
+            jsrun_cmd.extend(env_var_str_list)
 
-        jsrun_cmd += self.run_settings.format_run_args()
-        jsrun_cmd += self._build_exe()
+        jsrun_cmd.extend(self.run_settings.format_run_args())
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            jsrun_cmd.extend(["--bind", "none"])
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            jsrun_cmd.extend([bash, launch_script_path])
+
+        jsrun_cmd.extend(self._build_exe())
 
         return jsrun_cmd
 

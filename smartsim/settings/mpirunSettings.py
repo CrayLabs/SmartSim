@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .base import RunSettings
-
+from ..error import SSUnsupportedError
 
 class MpirunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
@@ -67,6 +67,10 @@ class MpirunSettings(RunSettings):
         :param mpirun_settings: MpirunSettings instance
         :type mpirun_settings: MpirunSettings
         """
+        if self.colocated_db_settings:
+            raise SSUnsupportedError(
+                "Colocated models cannot be run as a mpmd workload"
+            )
         self.mpmd.append(mpirun_settings)
 
     def set_task_map(self, task_mapping):

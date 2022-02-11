@@ -50,5 +50,10 @@ class SmartSimEntity:
         """Return the name of the class"""
         return type(self).__name__
 
+    def set_path(self, path):
+        if not isinstance(path, str):
+            raise TypeError("path argument must be a string")
+        self.path = path
+
     def __repr__(self):
         return self.name

@@ -157,7 +157,13 @@ class SlurmLauncher(WLMLauncher):
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
-            scancel_rc, _, err = scancel([str(stepmap.step_id)])
+            step_id = str(stepmap.step_id)
+            # Check if step_id is part of colon-separated run
+            # if that is the case, stop parent job step because
+            # sub-steps cannot be stopped singularly.
+            if "+" in step_id:
+                step_id = step_id.split("+")[0]
+            scancel_rc, _, err = scancel([step_id])
             if scancel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
@@ -239,7 +245,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError(error)
 
     def __str__(self):
-        return "slurm"
+        return "Slurm"
 
 
 def _create_step_id_str(step_ids):
