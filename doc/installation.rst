@@ -15,7 +15,7 @@ We highly recommend starting a fresh Python environment.
 .. code-block:: bash
 
     $ pip install smartsim
-    $ smart --device cpu
+    $ smart build --device cpu
 
 This will install SmartSim with PyTorch and TensorFlow backends for the Orchestrator
 database as well as the SmartRedis Python client.
@@ -155,16 +155,16 @@ To install the database ML backends for CPU, run
 .. code-block:: bash
 
     # run one of the following
-    smart --device cpu          # install PT and TF for cpu
-    smart --device cpu --onnx   # install all backends (PT, TF, ONNX) on gpu
+    smart build --device cpu          # install PT and TF for cpu
+    smart build --device cpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
 .. note::
 
-    If a re-build is needed for any reason, ``smart --clean`` will remove
-    all of the previous installs for the ML backends and ``smart --clobber`` will
+    If a re-build is needed for any reason, ``smart clean`` will remove
+    all of the previous installs for the ML backends and ``smart clobber`` will
     remove all pre-built dependencies as well as the ML backends.
 
 
@@ -186,8 +186,8 @@ For example, for bash do
 .. code-block:: bash
 
     # run one of the following
-    smart --device gpu          # install PT and TF for gpu
-    smart --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
+    smart build --device gpu          # install PT and TF for gpu
+    smart build --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
 .. note::
@@ -282,9 +282,9 @@ runtimes.
 .. code-block:: bash
 
   # run one of the following
-  smart -v --device cpu          # verbose install cpu
-  smart -v --device gpu          # verbose install gpu
-  smart -v --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
+  smart build -v --device cpu          # verbose install cpu
+  smart build -v --device gpu          # verbose install gpu
+  smart build -v --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
 Install SmartRedis from Source
@@ -296,17 +296,42 @@ Install SmartRedis from Source
 Building the Documentation
 ==========================
 
-.. note::
-    To build the full documentation, users need to install
-    ``doxygen 1.9.1``. For Mac OS users, doxygen can be
-    installed through ``brew install doxygen``
+Users can optionally build documentation of SmartSim through `make docs` or `make docks`.
+`make docs` requires the user to install the documentation build dependencies,
+whereas `make docks` only requires docker. `make docks` is the recommended
+method for building the documentation locally, due to ease of use.
 
-Users can optionally build documentation of SmartSim
+With docker
+-----------
+
+.. note::
+
+  To build the full documentation with ``make docks``, users need to install
+  `docker <https://docs.docker.com/desktop/>`_ so that `docker` is available
+  on the command line.
 
 .. code-block:: bash
 
+  # From top level smartsim git repository directory
+  make docks
+
+Once the documentation has successfully built, users can open the
+main documents page from ``docs/develop/index.html``
+
+Without docker
+--------------
+
+.. note::
+
+  To build the full documentation via ``make docs``, users need to install
+  ``doxygen 1.9.1``. For Mac OS users, doxygen can be installed through ``brew
+  install doxygen``
+
+
+.. code-block:: bash
+
+  # From top level smartsim git repository directory
   git clone https://github.com/CrayLabs/SmartRedis.git
-  cd /smartsim      # top level smartsim dir
   make docs
 
 Once the documentation has successfully built, users can open the
@@ -461,7 +486,7 @@ from which these instructions are executed.
   # install PyTorch and TensorFlow backend for the Orchestrator database.
   export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
-  smart --device=gpu --torch_dir $Torch_DIR -v
+  smart build --device=gpu --torch_dir $Torch_DIR -v
 
 When executing SmartSim, if you want to use the PyTorch backend in the orchestrator,
 you will need to add the PyTorch library path to the environment with:
@@ -491,7 +516,7 @@ using the pip that comes with that installation.
 .. code-block:: bash
 
   $ pip install smartsim
-  $ smart --device cpu  (Since Cheyenne does not have GPUs)
+  $ smart build --device cpu  (Since Cheyenne does not have GPUs)
 
 To make the SmartRedis library (C, C++, Fortran clients), follow these steps with
 the same environment loaded.
