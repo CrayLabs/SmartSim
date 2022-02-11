@@ -33,7 +33,7 @@ from .files import EntityFiles
 
 class Model(SmartSimEntity):
     def __init__(self, name, params, path, run_settings, params_as_args=None):
-        """Initialize a model entity within Smartsim
+        """Initialize a ``Model``
 
         :param name: name of the model
         :type name: str
