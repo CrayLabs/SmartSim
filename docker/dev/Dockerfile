@@ -39,6 +39,7 @@ RUN python -m pip install ipython ipykernel \
 
 RUN echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
+    smart clobber && \
     smart build --device cpu -v --no_tf
 
 SHELL ["bash", "-c"]

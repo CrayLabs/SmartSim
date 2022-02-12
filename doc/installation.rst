@@ -232,7 +232,7 @@ To have a site wide install, do the following.
 2. Locate the `bin` and `lib` folders in `smartsim/_core/` and copy them
    into a directory where you would like them to reside. Be sure this is a
    location available to all compute nodes on the system (i.e. on the shared filesystem).
-3. Create a bash profile that will set the user SmartSim environment as follows
+3. Create a bash profile or modulefile that will set the user SmartSim environment as follows
 
 .. code-block:: bash
 

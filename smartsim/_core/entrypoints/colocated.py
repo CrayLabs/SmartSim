@@ -49,10 +49,7 @@ SIGNALS = [
     signal.SIGINT,
     signal.SIGTERM,
     signal.SIGQUIT,
-    signal.SIGCHLD,
-    signal.SIGTERM,
-    signal.SIGABRT,
-    signal.SIGSEGV
+    signal.SIGABRT
     ]
 
 def handle_signal(signo, frame):

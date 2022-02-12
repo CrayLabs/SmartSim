@@ -46,12 +46,9 @@ DBPID = None
 # kill is not catchable
 SIGNALS = [
     signal.SIGINT,
-    signal.SIGTERM,
     signal.SIGQUIT,
-    signal.SIGCHLD,
     signal.SIGTERM,
-    signal.SIGABRT,
-    signal.SIGSEGV
+    signal.SIGABRT
     ]
 
 def handle_signal(signo, frame):
@@ -74,11 +71,6 @@ def main(network_interface: str, command: List[str]):
 
         print("-" * 10, "  Output  ", "-" * 10, "\n\n", flush=True)
 
-    except Exception as e:
-        cleanup()
-        raise SSInternalError("Failed to start a an orchestrator shard") from e
-
-    try:
         p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
         DBPID = p.pid
 

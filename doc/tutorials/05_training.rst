@@ -147,8 +147,7 @@ within a SmartSim ``Experiment``, we can use the following code:
 
 
 Two lines require attention, as they are needed by the ``DataGenerator`` to work:
-- ``uploader_model.enable_key_prefixing()`` will ensure that the ``producer`` prefixes
-all tensor keys with its name
-- ``trainer_model.register_incoming_entity(uploader_model)`` enables the ``DataGenerator``
-in the ``training_service`` to know that it needs to download samples produced by the ``producer``
+  - ``uploader_model.enable_key_prefixing()`` will ensure that the ``producer`` prefixes all tensor keys with its name
+  - ``trainer_model.register_incoming_entity(uploader_model)`` enables the ``DataGenerator`` in
+    the ``training_service`` to know that it needs to download samples produced by the ``producer``
 
