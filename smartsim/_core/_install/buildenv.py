@@ -320,8 +320,9 @@ class BuildEnv:
     CHECKS = int(os.environ.get("NO_CHECKS", 0))
     PLATFORM = sys.platform
 
-    def __init__(self):
-        self.check_dependencies()
+    def __init__(self, checks=True):
+        if checks:
+            self.check_dependencies()
 
     def check_dependencies(self):
         deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
