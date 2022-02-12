@@ -21,7 +21,19 @@ In this release SmartSim continues to promote ease of use.
 To this end SmartSim has introduced new portability features
 that allow users to abstract away their targeted hardware,
 while providing even more compatibility with existing
-libraries. Additional tweaks and upgrades have also been
+libraries.
+
+A new feature, Co-located orchestrator deployments have
+been added which provide very scalable online inference
+capabilities that overcome previous performance limitations.
+For more information on advantages of co-located deployments,
+see the Orchestrator section of the SmartSim documentation.
+
+The SmartSim build was significantly improved to increase
+customization of build toolchain and the ``smart`` command
+line inferface was expanded.
+
+Additional tweaks and upgrades have also been
 made to ensure an optimal experience. Here is a
 comprehensive list of changes made in SmartSim 0.4.0.
 
@@ -39,14 +51,22 @@ Emphasize Driver Script Portability:
 
 Expand Machine Learning Library Support:
 
- - Add Ray cluster setup and deployment to SmartSim (SmartSim-PR50_)
- - Add machine learning data loaders for Keras/TF and Pytorch (SmartSim-PR115_) (SmartSim-PR140_)
+ - Data loaders for online training in Keras/TF and Pytorch (SmartSim-PR115_) (SmartSim-PR140_)
+ - ML backend versions updated with expanded support for multiple versions (SmartSim-PR122_)
  - Launch Ray internally using ``RunSettings`` (SmartSim-PR118_)
+ - Add Ray cluster setup and deployment to SmartSim (SmartSim-PR50_)
 
 Expand Launcher Setting Options:
 
- - Add ability to use base ``RunSettings`` on a Slurm, PBS, or Cobalt launchers (SmartSim-PR90_) 
+ - Add ability to use base ``RunSettings`` on a Slurm, PBS, or Cobalt launchers (SmartSim-PR90_)
  - Add ability to use base ``RunSettings`` on LFS launcher (SmartSim-PR108_)
+
+Deprecations and Breaking Changes
+
+ - Orchestrator classes combined into single implementation for portability (SmartSim-PR139_)
+ - ``smartsim.constants`` changed to ``smartsim.status`` (SmartSim-PR122_)
+ - ``smartsim.tf`` migrated to ``smartsim.ml.tf`` (SmartSim-PR115_) (SmartSim-PR140_)
+ - TOML configuration option removed in favor of environment variable approach (SmartSim-PR122_)
 
 General Improvements and Bug Fixes:
 

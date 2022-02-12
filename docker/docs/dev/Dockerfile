@@ -22,9 +22,9 @@ RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --dept
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-# address needs of nbsphinx
+# address needs of nbsphinx and ml docs
 # see https://nbsphinx.readthedocs.io/en/0.8.1/installation.html#Jupyter-Kernel
-RUN python -m pip install ipython ipykernel
+RUN python -m pip install ipython ipykernel torch==1.7.1 tensorflow==2.5.2
 
 RUN cd doc/tutorials/ && \
     ln -s ../../tutorials/* .

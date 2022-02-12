@@ -17,7 +17,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - Pip
   - Cmake 3.10.x (or later)
   - C compiler
-  - CXX compiler
+  - C++ compiler
   - GNU Make > 4.0
   - git
   - git-lfs

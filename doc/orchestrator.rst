@@ -78,7 +78,7 @@ the ``Model.colocated_db`` function.
 .. currentmodule:: smartsim.entity.model
 
 .. automethod:: Model.colocate_db
-
+    :noindex:
 
 Here is an example of creating a simple model that is co-located with an
 ``Orchestrator`` deployment
