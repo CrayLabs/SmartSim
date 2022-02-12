@@ -3,15 +3,16 @@
 Experiments
 ***********
 
-The Experiment acts as both a factory function as well as an interface to interact
-with the entities created by the experiment.
+The Experiment acts as both a factory class for constructing the
+stages of an experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc)
+as well as an interface to interact with the entities created by the experiment.
 
 Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a Jupyter notebook,
 interactive python session, or Python file and use the ``Experiment`` to
 iteratively create, configure and launch computational kernels on the
 system through the specified launcher.
 
-.. |SmartSim Architecture| image:: images/SmartSim_Architecture.png
+.. |SmartSim Architecture| image:: images/ss-arch-overview.png
   :width: 700
   :alt: Alternative text
 
@@ -21,18 +22,6 @@ system through the specified launcher.
 The interface was designed to be simple with as little complexity
 as possible, and agnostic to the backend launching mechanism (local,
 Slurm, PBSPro, etc).
-
-
-Entities
-========
-
-The instances created by an ``Experiment`` fall into two classes:
-  1. ``SmartSimEntity``
-  2. ``EntityList``
-
-``SmartSimEntity`` objects are bundles of information about an executable launched from
-SmartSim, such as its name and settings for how it should be run. ``EntityList`` objects
-are containers of several ``SmartSimEntity`` objects.
 
 Model
 =====
@@ -53,10 +42,59 @@ Each launcher supports specific types of ``RunSettings``.
    - :ref:`MpirunSettings <openmpi_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, LSF, and Slurm
    - :ref:`JsrunSettings <jsrun_api>` for LSF
 
-When on systems that support these launch binaries, ``Model`` objects can
-be created to run applications in allocations obtained by the user, or in the
-case of Slurm based systems, SmartSim can obtain allocations before launching
-``Model`` instances.
+These settings can be manually specified by the user, or auto-detected by the
+SmartSim Experiment through the ``Experiment.create_run_settings`` method.
+
+A simple example of using the Experiment API to create a model and run it locally.
+
+.. code-block:: Python
+
+  from smartsim import Experiment
+
+  exp = Experiment("simple", launcher="local")
+
+  settings = exp.create_run_settings("echo", exe_args="Hello World")
+  model = exp.create_model("hello_world", settings)
+
+  exp.start(model, block=True)
+  print(exp.get_status(model))
+
+If the launcher has been specified, or auto-detected through setting
+``launcher=auto`` in the Experiment initialization, the ``create_run_settings``
+method will automatically create the appropriate ``RunSettings`` object and
+return it.
+
+For example with Slurm
+.. code-block:: Python
+
+  from smartsim import Experiment
+
+  exp = Experiment("hello_world_exp", launcher="slurm")
+  srun = exp.create_run_settings(exe="echo", exe_args="Hello World!")
+
+  # helper methods for configuring run settings are available in
+  # each of the implementations of RunSettings
+  srun.set_nodes(1)
+  srun.set_tasks(32)
+
+  model = exp.create_model("hello_world", srun)
+  exp.start(model, block=True, summary=True)
+
+  print(exp.get_status(model))
+
+The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor it's execution,
+and inform the user when it is completed. This driver script can be executed in
+an interactive allocation, or placed into a batch script as follows
+
+.. code-block:: bash
+
+    #!/bin/bash
+    #SBATCH --exclusive
+    #SBATCH --nodes=1
+    #SBATCH --ntasks-per-node=32
+    #SBATCH --time=00:10:00
+
+    python /path/to/script.py
 
 Ensemble
 ========
@@ -76,6 +114,35 @@ Three strategies are built in:
   1. ``all_perm`` for generating all permutations of model parameters
   2. ``step`` for creating one set of parameters for each element in `n` arrays
   3. ``random`` for random selection from predefined parameter spaces.
+
+Here is an example that uses the ``random`` strategy to intialize 4 models
+with random parameters within a set range. We use the ``params_as_args``
+field to specify that the randomly selected learning rate parameter should
+be passed to the created models as a executable argument.
+
+.. code-block:: bash
+
+  import numpy as np
+  from smartsim import Experiment
+
+  exp = Experiment("Training-Run", launcher="auto")
+
+  # setup ensemble parameter space
+  learning_rate = list(np.linspace(.01, .5))
+  train_params = {"LR": learning_rate}
+
+  # define how each member should run
+  run = exp.create_run_settings(exe="python",
+                                exe_args="./train-model.py")
+
+  ensemble = exp.create_ensemble("Training-Ensemble",
+                                params=train_params,
+                                params_as_args=["LR"],
+                                run_settings=run,
+                                perm_strategy="random",
+                                n_models=4)
+  exp.start(ensemble, summary=True)
+
 
 A callable function can also be supplied for custom permutation strategies.
 The function should take two arguments: a list of parameter names and a list of lists
@@ -129,3 +196,65 @@ determine the allocation settings for the entire batch, and the ``RunSettings``
 will determine how each individual ``Model`` instance is executed within
 that batch.
 
+The same example as above but tailored towards a running as a batch job
+on a slurm system
+
+.. code-block:: bash
+
+  import numpy as np
+  from smartsim import Experiment
+
+  exp = Experiment("Training-Run", launcher="slurm")
+
+  # setup ensemble parameter space
+  learning_rate = list(np.linspace(.01, .5))
+  train_params = {"LR": learning_rate}
+
+  # define resources for all ensemble members
+  sbatch = exp.create_batch_settings(nodes=4,
+                                    time="01:00:00",
+                                    account="12345-Cray",
+                                    queue="gpu")
+
+  # define how each member should run
+  srun = exp.create_run_settings(exe="python",
+                                exe_args="./train-model.py")
+  srun.set_nodes(1)
+  srun.set_tasks(24)
+
+  ensemble = exp.create_ensemble("Training-Ensemble",
+                                params=train_params,
+                                params_as_args=["LR"],
+                                batch_settings=sbatch,
+                                run_settings=srun,
+                                perm_strategy="random",
+                                n_models=4)
+  exp.start(ensemble, summary=True)
+
+
+This will generate and execute a batch script that looks something like
+the following
+
+.. code-block:: bash
+
+  # GENERATED
+
+  #!/bin/bash
+
+  #SBATCH --output=/lus/sonexion/spartee/smartsim/Training-Ensemble.out
+  #SBATCH --error=/lus/sonexion/spartee/smartsim/Training-Ensemble.err
+  #SBATCH --job-name=Training-Ensemble-CHTN0UI2DORX
+  #SBATCH --nodes=4
+  #SBATCH --time=01:00:00
+  #SBATCH --partition=gpu
+  #SBATCH --account=12345-Cray
+
+  cd /lus/sonexion/spartee/smartsim ; /usr/bin/srun --output /lus/sonexion/spartee/smartsim/Training-Ensemble_0.out --error /lus/sonexion/spartee/smartsim/Training-Ensemble_0.err --job-name Training-Ensemble_0-CHTN0UI2E5DX --nodes=1 --ntasks=24 /lus/sonexion/spartee/miniconda/envs/smartsim-0.4.0-pre/bin/python ./train-model.py --LR=0.17 &
+
+  cd /lus/sonexion/spartee/smartsim ; /usr/bin/srun --output /lus/sonexion/spartee/smartsim/Training-Ensemble_1.out --error /lus/sonexion/spartee/smartsim/Training-Ensemble_1.err --job-name Training-Ensemble_1-CHTN0UI2JQR5 --nodes=1 --ntasks=24 /lus/sonexion/spartee/miniconda/envs/smartsim-0.4.0-pre/bin/python ./train-model.py --LR=0.32 &
+
+  cd /lus/sonexion/spartee/smartsim ; /usr/bin/srun --output /lus/sonexion/spartee/smartsim/Training-Ensemble_2.out --error /lus/sonexion/spartee/smartsim/Training-Ensemble_2.err --job-name Training-Ensemble_2-CHTN0UI2P2AR --nodes=1 --ntasks=24 /lus/sonexion/spartee/miniconda/envs/smartsim-0.4.0-pre/bin/python ./train-model.py --LR=0.060000000000000005 &
+
+  cd /lus/sonexion/spartee/smartsim ; /usr/bin/srun --output /lus/sonexion/spartee/smartsim/Training-Ensemble_3.out --error /lus/sonexion/spartee/smartsim/Training-Ensemble_3.err --job-name Training-Ensemble_3-CHTN0UI2TRE7 --nodes=1 --ntasks=24 /lus/sonexion/spartee/miniconda/envs/smartsim-0.4.0-pre/bin/python ./train-model.py --LR=0.35000000000000003 &
+
+  wait

@@ -1,16 +1,17 @@
 
-=============================
-Online training with SmartSim
-=============================
+===============
+Online Training
+===============
 
-A SmartSim ``Orchestrator`` can be used to store and retrieve samples and targets used to
-train a ML model. A typical example is one in which one simulation produces samples at
-each time step and another application needs to download the samples as they are produced 
-to train a Deep Neural Network (e.g. a surrogate model).
+Online training provides the ability to use dynamic processes as your training
+data set. In SmartSim, training data can be any process using the SmartRedis clients
+to store data inside of a deployed `Orchestrator` database.
 
-In this section, we will use components implemented in ``smartsim.ml.tf``, to train a
-Neural Network implemented in TensorFlow and Keras. In particular, we will be using
-two classes:
+SmartSim includes utilizes to help with online training workflows in PyTorch and TensorFlow
+In this example, we show how to use ``smartsim.ml.tf`` to train a Neural Network implemented
+in TensorFlow and Keras.
+
+In particular, we will be using two classes:
 - ``smartsim.ml.data.TrainingUploader`` which streamlines the uploading of samples and corresponding targets to the DB
 - ``smartsim.ml.tf.DataGenerator`` which is a Keras ``Generator`` which can be used to train a DNN,
 and will download the samples from the DB updating the training set at the end of each epoch.
@@ -19,17 +20,17 @@ The SmartSim ``Experiment`` will consist in one mock simulation (the ``producer`
 and one application (the ``training_service``) downloading the samples to train a DNN.
 
 A richer example, entirely implemented in Python, is available as a Jupyter Notebook in the
-``tutorials`` section of the SmartSim repository.
-An equivalent example using PyTorch instead of TensorFlow is available in the same directory.
+``tutorials`` section of the SmartSim repository. An equivalent example using PyTorch
+instead of TensorFlow is available in the same directory.
 
 
-5.1.1 Producing and uploading the samples
------------------------------------------
+5.1 Producing and uploading the samples
+---------------------------------------
 
 .. _ml_training_producer_code:
 
 The first application in the workflow, the ``producer`` will upload batches of samples at regular intervals,
-mimicking the behavior of an iterative simulation. 
+mimicking the behavior of an iterative simulation.
 
 Since the ``training_service`` will use a ``smartsim.ml.tf.DynamicDataGenerator`` two download the samples, their
 keys need to follow a pre-defined format. Assuming that only one process in the simulation
@@ -60,8 +61,8 @@ and ``<target_prefix>_<sub-index>_<iteration>``, where ``<sub_index>`` can be, e
 the MPI rank id.
 
 
-5.1.2 Downloading the samples and training the model
-----------------------------------------------------
+5.2 Downloading the samples and training the model
+--------------------------------------------------
 
 The second part of the workflow is the ``training_service``, an application that
 downloads the data uploaded by the ``producer`` and uses them to train a ML model.
@@ -75,7 +76,7 @@ its data set at the end of each training epoch, looking for newly produced batch
 A current limitation of the TensorFlow training algorithm is that it does not take
 into account changes of size in the data sets once the training has started, i.e. it is always
 assumed that the training (and validation) data does not change during the training. To
-overcome this limitation, we need to train one epoch at the time. Thus, 
+overcome this limitation, we need to train one epoch at the time. Thus,
 following what we defined in the :ref:`producer section <ml_training_producer_code>`,
 the ``training_service`` would look like
 
@@ -93,9 +94,9 @@ the ``training_service`` would look like
 
     for epoch in range(100):
         model.fit(generator,
-                  steps_per_epoch=None, 
+                  steps_per_epoch=None,
                   epochs=epoch+1,
-                  initial_epoch=epoch, 
+                  initial_epoch=epoch,
                   batch_size=generator.batch_size,
                   verbose=2)
 
@@ -115,14 +116,14 @@ need to be adapted as follows
                     uploader_ranks=8)
 
 
-5.1.3 Launching the experiment
-------------------------------
+5.3 Launching the experiment
+----------------------------
 
 To launch the ``producer`` and the ``training_service`` as models
 within a SmartSim ``Experiment``, we can use the following code:
 
 .. code-block:: python
-    
+
     from smartsim import Experiment
     from smartsim.database import Orchestrator
 

@@ -70,6 +70,7 @@ class Experiment:
         instances on the localhost.
 
         Example of initializing an Experiment with the local launcher
+
         .. highlight:: python
         .. code-block:: python
 
@@ -77,6 +78,7 @@ class Experiment:
 
         SmartSim supports multiple launchers which also can be specified
         based on the type of system you are running on.
+
         .. highlight:: python
         .. code-block:: python
 
@@ -86,6 +88,7 @@ class Experiment:
         multiple system with different schedulers (workload managers)
         you can also use the `auto` argument to have the Experiment guess
         which launcher to use based on system installed binaries and libraries
+
         .. highlight:: python
         .. code-block:: python
 
@@ -185,8 +188,10 @@ class Experiment:
         instance.
 
         Example
+
         .. highlight:: python
         .. code-block:: python
+
             exp.stop(model)
             # multiple
             exp.stop(model_1, model_2, db, ensemble)
@@ -425,6 +430,7 @@ class Experiment:
         to house the input and output files from the model.
 
         Example initialization of a ``Model`` instance
+
         .. highlight:: python
         .. code-block:: python
 
