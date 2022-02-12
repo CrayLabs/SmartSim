@@ -121,7 +121,7 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
     
-def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
+def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
     launcher = wlmutils.get_test_launcher()
     exp_name = "test-launch-cluster-orc-batch-reconect"
@@ -152,7 +152,7 @@ def test_launch_slurm_cluster_orc_reconnect(fileutils, wlmutils):
 
     exp.stop(orc)
 
-    exp_name = "test-orc-slurm-cluster-orc-batch-reconnect-2nd"
+    exp_name = "test-orc-cluster-orc-batch-reconnect-2nd"
     exp_2 = Experiment(exp_name, launcher=launcher)
 
     checkpoint = osp.join(test_dir, "smartsim_db.dat")

@@ -25,9 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import signal
+import psutil
 import argparse
 from typing import List
-from subprocess import PIPE, STDOUT, Popen
+from subprocess import PIPE, STDOUT
 
 from smartsim.log import get_logger
 from smartsim.error import SSInternalError
@@ -39,7 +41,25 @@ logger = get_logger(__name__)
 Redis/KeyDB entrypoint script
 """
 
+DBPID = None
+
+# kill is not catchable
+SIGNALS = [
+    signal.SIGINT,
+    signal.SIGTERM,
+    signal.SIGQUIT,
+    signal.SIGCHLD,
+    signal.SIGTERM,
+    signal.SIGABRT,
+    signal.SIGSEGV
+    ]
+
+def handle_signal(signo, frame):
+    cleanup()
+
+
 def main(network_interface: str, command: List[str]):
+    global DBPID
 
     try:
 
@@ -54,14 +74,36 @@ def main(network_interface: str, command: List[str]):
 
         print("-" * 10, "  Output  ", "-" * 10, "\n\n", flush=True)
 
-        p = Popen(cmd, stdout=PIPE, stderr=STDOUT)
+    except Exception as e:
+        cleanup()
+        raise SSInternalError("Failed to start a an orchestrator shard") from e
+
+    try:
+        p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        DBPID = p.pid
 
         for line in iter(p.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
-
     except Exception as e:
-        raise SSInternalError("Failed to start a an orchestrator shard") from e
+        cleanup()
+        raise SSInternalError("Database process starter raised an exception") from e
 
+
+def cleanup():
+    global DBPID
+    try:
+        logger.debug("Cleaning up database instance")
+        # attempt to stop the database process
+        db_proc = psutil.Process(DBPID)
+        db_proc.terminate()
+
+    except psutil.NoSuchProcess:
+        logger.warning("Couldn't find database process to kill.")
+
+    except OSError as e:
+        logger.warning(
+            f"Failed to clean up database gracefully: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
@@ -74,5 +116,11 @@ if __name__ == "__main__":
     parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
     parser.add_argument("+command", nargs="+", help="Command to run")
     args = parser.parse_args()
+
+    # make sure to register the cleanup before the start
+    # the proecss so our signaller will be able to stop
+    # the database process.
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
 
     main(args.ifname, args.command)

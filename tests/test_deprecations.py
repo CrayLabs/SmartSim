@@ -8,20 +8,24 @@ try:
 except ImportError:
     tf_available = False
 
-def test_deprecated_orchestrators():
+def test_deprecated_orchestrators(wlmutils):
     with pytest.deprecated_call():
-        _ = SlurmOrchestrator()
+        _ = SlurmOrchestrator(interface=wlmutils.get_test_interface())
 
     with pytest.deprecated_call():
-        _ = LSFOrchestrator()
+        _ = LSFOrchestrator(interface=wlmutils.get_test_interface())
 
     with pytest.deprecated_call():
-        _ = CobaltOrchestrator()
+        _ = CobaltOrchestrator(interface=wlmutils.get_test_interface())
 
     with pytest.deprecated_call():
-        _ = PBSOrchestrator()
+        _ = PBSOrchestrator(interface=wlmutils.get_test_interface())
 
 @pytest.mark.skipif(not tf_available, reason="Requires TF to run")
 def test_deprecated_tf():
     with pytest.deprecated_call():
         from smartsim.tf import freeze_model
+
+def test_deprecated_constants():
+    with pytest.deprecated_call():
+        from smartsim import constants
