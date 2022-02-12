@@ -60,7 +60,7 @@ def test_slurm_mpmd(fileutils, wlmutils):
         settings.make_mpmd(deepcopy(settings))
 
         mpmd_model = exp.create_model("mmpd", path=test_dir, run_settings=settings)
-
+        exp.generate(mpmd_model, overwrite=True)
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
         assert all([stat == status.STATUS_COMPLETED for stat in statuses])

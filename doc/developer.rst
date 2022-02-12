@@ -98,6 +98,7 @@ Setup
 =====
 
   - Fork the SmartSim (SmartRedis) repository
+  - The origin remote should be set to your fork for pull and push
   - Set upstream as the main repository and set upstream push remote to ``no_push``
   - Follow installation instructions
 
@@ -110,9 +111,9 @@ Please check the following before submitting a pull request to the SmartSim repo
   1) Your feature is on a new branch off master.
   2) You are merging the feature branch from your fork into the main repository.
   3) All unnecessary whitespace has been purged from your code.
-  4) Black and isort have been applied to format code and sort imports
+  4) For Python code changes, Black and isort have been applied to format code and sort imports
   5) Pylint errors have been minimized as much as possible
-  6) All your code as been appropriately documented.
+  6) All your code has been appropriately documented.
   7) The PR description is clear and concise.
   8) You have requested a review.
 
@@ -142,18 +143,34 @@ are a few things to specifically mention.
   - Utilize ``conftest.py`` for creating pytest fixtures
 
 
+SmartSim Python Style Guide Do's and Don'ts:
+
+  - DON'T use global variables or the global keyword unless necessary
+  - DON'T over comment code when it reads like English
+  - DO use underscores on methods that should not be used outside a class
+  - DO use comprehensions
+  - DON'T write functions for more than one purpose
+  - DON'T allow functions to return more than one type
+  - DON'T use protected member variables outside a class
+  - DON'T use single letter variable names
+  - DO use entire words in names (i.e. get_function not get_func)
+  - DON'T use wildcard imports (i.e. ``from package import *``) unless ``__all__`` is defined
+  - DO use snake_case when naming functions, methods, and variables
+  - DO use PascalCase when naming Classes
+  - DO use the logging module
+
 ---------------------------------------------------------
 
 ==================
 Editor Suggestions
 ==================
 
-The editor that we suggest developers to use is VSCode. Below are some extensions that
+The editor that we suggest developers use is VSCode. Below are some extensions that
 could make the process of developing on SmartSim a bit easier.
 
     - GitLens, for viewing changes in the git history
     - Remote SSH, for connecting to clusters and supercomputers
-    - PyLance, Langauge Server
+    - PyLance, Language Server
     - Python indent, for correcting python indents
     - reStructuredText, for writing documentation
     - Strict Whitespace, for ensuring no whitespace left in code

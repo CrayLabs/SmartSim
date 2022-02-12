@@ -26,10 +26,10 @@ Slurm, PBSPro, etc).
 Model
 =====
 
-``Model(s)`` are created through the Experiment API. Models represent
-any computational kernel. Models are flexible enough to support many
-different applications, however, to be used with our clients (SmartRedis)
-the application will have to be written in Python, C, C++, or Fortran.
+``Model(s)`` are subclasses of ``SmartSimEntity(s)`` and are created through the
+Experiment API. Models represent any computational kernel. Models are flexible enough
+to support many different applications, however, to be used with our clients
+(SmartRedis) the application will have to be written in Python, C, C++, or Fortran.
 
 Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel should
 be executed with regard to the workload manager (e.g. Slurm) and the available
@@ -145,14 +145,16 @@ be passed to the created models as a executable argument.
 
 
 A callable function can also be supplied for custom permutation strategies.
-The function should take in two lists: parameter names and parameter values.
-The function should return a list of dictionaries that will be supplied as
-model parameters. The length of the list returned will determine how many
-``Model`` instances are created.
+The function should take two arguments: a list of parameter names and a list of lists
+of potential parameter values. The function should return a list of dictionaries that
+will be supplied as model parameters. The length of the list returned will determine
+how many ``Model`` instances are created.
 
 For example, the following the the built-in strategy ``all_perm``.
 
 .. code-block:: python
+
+    from itertools import product
 
     def create_all_permutations(param_names, param_values):
         perms = list(product(*param_values))
@@ -172,7 +174,7 @@ Launching Ensembles
 
 Ensembles can be launched in previously obtained interactive allocations
 and as a batch. Similar to ``RunSettings``, ``BatchSettings`` specify how
-a application(s) in a batch job should be executed with regards to the system
+an application(s) in a batch job should be executed with regards to the system
 workload manager and available compute resources.
 
   - :ref:`SbatchSettings <sbatch_api>` for Slurm

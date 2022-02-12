@@ -185,7 +185,7 @@ class TaskManager:
         try:
             task = self[task_id]
             if task.is_alive:
-                task.terminate()
+                task.kill()
                 returncode = task.check_status()
                 out, err = task.get_io()
                 self.add_task_history(task_id, returncode, out, err)
