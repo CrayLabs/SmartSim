@@ -32,7 +32,7 @@ a workload and in-memory storage is handled by the SmartRedis clients, available
 in Fortran, C, C++, and Python.
 
 
-.. |SmartSim Architecture| image:: images/SmartSim_Architecture.png
+.. |SmartSim Architecture| image:: images/ss-arch-overview.png
   :width: 700
   :alt: Alternative text
 

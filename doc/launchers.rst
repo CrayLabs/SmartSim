@@ -18,8 +18,7 @@ SmartSim currently supports 5 `launchers`:
   3. ``pbs`` for systems using the PBSpro scheduler
   4. ``cobalt`` for systems using the Cobalt scheduler
   5. ``lsf`` for systems using the LSF scheduler
-
-Support for other system types and schedulers are in progress.
+  6. ``auto`` have SmartSim auto-detect the launcher to use.
 
 To specify a specific launcher, one argument needs to be provided
 to the ``Experiment`` initialization.
@@ -28,21 +27,18 @@ to the ``Experiment`` initialization.
 
     from smartsim import Experiment
 
-    exp = Experiment("name-of-experiment", launcher="local") # local launcher
-    exp = Experiment("name-of-experiment", launcher="slurm") # Slurm launcher
-    exp = Experiment("name-of-experiment", launcher="pbs") # PBSpro launcher
+    exp = Experiment("name-of-experiment", launcher="local")  # local launcher
+    exp = Experiment("name-of-experiment", launcher="slurm")  # Slurm launcher
+    exp = Experiment("name-of-experiment", launcher="pbs")    # PBSpro launcher
     exp = Experiment("name-of-experiment", launcher="cobalt") # Cobalt launcher
-    exp = Experiment("name-of-experiment", launcher="lsf") # LSF launcher
+    exp = Experiment("name-of-experiment", launcher="lsf")    # LSF launcher
+    exp = Experiment("name-of-experiment", launcher="auto")   # auto-detect launcher
 
 -------------------------------------------------------------------------
 
 Local
 =====
 
-.. _psutil: https://github.com/giampaolo/psutil
-
-The local launcher uses the `psutil`_ library to execute and monitor
-user-created jobs.
 
 The local launcher can be used on laptops, workstations and single
 nodes of supercomputer and cluster systems. Through
@@ -54,6 +50,12 @@ asynchronous execution meaning once entities have been launched
 the main thread of execution is not blocked. Daemon threads
 that manage currently running jobs will be created when active
 jobs are present within SmartSim.
+
+.. _psutil: https://github.com/giampaolo/psutil
+
+The local launcher uses the `psutil`_ library to execute and monitor
+user-created jobs.
+
 
 Running Locally
 ---------------

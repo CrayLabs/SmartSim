@@ -4,22 +4,33 @@ Installation
 
 The following will show how to install both SmartSim and SmartRedis
 
+For instructions on installing SmartSim once for multiple users of
+a shared system, see :ref:`this section below <site-wide>`.
 
-===========
-Quick Start
-===========
+=============
+Prerequisites
+=============
 
-If you want to get started with SmartSim quickly, you can install it through pip.
-We highly recommend starting a fresh Python environment.
+The base prerequisites to install SmartSim and SmartRedis are:
 
-.. code-block:: bash
+  - Python 3.7-3.9
+  - Pip
+  - Cmake 3.10.x (or later)
+  - C compiler
+  - CXX compiler
+  - GNU Make > 4.0
+  - git
+  - git-lfs
 
-    $ pip install smartsim
-    $ smart build --device cpu
+For most developer systems, many of these packages will already
+be installed.
 
-This will install SmartSim with PyTorch and TensorFlow backends for the Orchestrator
-database as well as the SmartRedis Python client.
+GCC 5-9 is recommended. There are known bugs with GCC >= 10.
 
+Git LFS can be installed through ``conda install git-lfs``
+
+Be sure to reference the :ref:`installation notes <install-notes>` for helpful
+information regarding various system types before installation.
 
 ==================
 Supported Versions
@@ -37,10 +48,10 @@ Supported Versions
      - Python Versions
    * - MacOS
      - x86_64
-     - not supported
+     - Not supported
      - 3.7 - 3.9
    * - Linux
-     - x64_64
+     - x86_64
      - Nvidia
      - 3.7 - 3.9
 
@@ -66,11 +77,11 @@ the use of RedisAI_. The following libraries are supported.
      - 3.7 - 3.9
      - Yes
    * - Tensorflow_ / Keras_
-     - 2.4.2
-     - 3.7 - 3.8
+     - 2.5.2
+     - 3.7 - 3.9
      - Yes
    * - ONNX_
-     - 1.6 - 1.7
+     - 1.9
      - 3.7 - 3.9
      - No
 
@@ -90,30 +101,19 @@ through the use of the ONNX_ runtime.
 
 ------------------------------------------------------------
 
-=============
-Prerequisites
-=============
-
-The prerequisites to install SmartSim and SmartRedis are:
-
-  - Python 3.7.x (or later) and pip
-  - CMake 3.10.x (or later)
-  - GCC > 5
-  - GNU Make > 4.0
-  - git-lfs
-
-For most developer systems, many of these packages will already
-be installed.
-
-Git LFS can be installed through ``conda install git-lfs && git lfs install``
-
-Be sure to reference the :ref:`installation notes <install-notes>` for helpful
-information regarding various system types before installation.
-
 
 ========
 SmartSim
 ========
+
+There are two stages for the installation of SmartSim.
+
+ 1. `pip` install SmartSim Python package
+ 2. Build SmartSim using the `smart` commmand line tool installed by
+    the pip package.
+
+Step 1: Install Python Package
+==============================
 
 Activate a new virtual environment and install SmartSim from PyPi with
 the following command
@@ -129,20 +129,21 @@ can request their installation through the ``ml`` flag as follows:
 .. code-block:: bash
 
     pip install smartsim[ml]
-
+    # add ray extra if you would like to use ray with SmartSim as well
+    pip install smartsim[ml,ray]
 
 At this point, SmartSim is installed and can be used for more basic features.
 If you want to use the machine learning features of SmartSim, you will need
 to install the ML backends in the section below.
 
 
-Install ML Backends
-===================
+Step 2: Build SmartSim
+======================
 
 Use the ``smart`` cli tool to install the machine learning backends that
-are built into the Orchestrator database.
-``smart`` is installed during the pip installation of SmartSim and may
-only be available while your virtual environment is active.
+are built into the Orchestrator database. ``smart`` is installed during
+the pip installation of SmartSim and may only be available while your
+virtual environment is active.
 
 To see all the installation options:
 
@@ -150,9 +151,24 @@ To see all the installation options:
 
     smart
 
-To install the database ML backends for CPU, run
+.. note::
+
+  If the ``smart`` tool is not found. Look for it in places like
+  ``~/.local/bin`` and other ``bin`` locations and add it to your
+  ``$PATH``
+
+CPU Install
+-----------
+
+To install the default ML backends for CPU, run
 
 .. code-block:: bash
+
+    # Optionally, setup toolchain and build settings to be used. ex for GCC
+
+    export CC=gcc
+    export CXX=g++
+    export NO_CHECKS=1 # skip build checks
 
     # run one of the following
     smart build --device cpu          # install PT and TF for cpu
@@ -167,6 +183,8 @@ for use in SmartSim.
     all of the previous installs for the ML backends and ``smart clobber`` will
     remove all pre-built dependencies as well as the ML backends.
 
+GPU Install
+-----------
 
 To install the database ML backends for GPU, set the following environment variables if
 CUDNN is not in your ``LD_LIBRARY_PATH`` or default loader locations.
@@ -195,11 +213,42 @@ For example, for bash do
   Currently, SmartSim is solely compatible with NVIDIA GPUs on Linux systems
   and ``CUDA >= 11`` is required to build.
 
-.. note::
 
-  If the ``smart`` tool is not found. Look for it in places like
-  ``~/.local/bin`` and other ``bin`` locations and add it to your
-  ``$PATH``
+Site-wide Installation
+======================
+
+.. _site-wide:
+
+Some users may wish to build SmartSim once, and have it available to
+all users of a system. When done, users will only ever have to install
+the Python package for smartsim which is fairly quick and painless.
+The following can be done by both a non-root and root user but for
+shared sites, it is highly recommended to consult with the site admins.
+
+To have a site wide install, do the following.
+
+1. Build SmartSim from source :ref:`as shown here <install-source>` for
+   the desired ML backend and device (GPU/CPU) platform your users are expected to use.
+2. Locate the `bin` and `lib` folders in `smartsim/_core/` and copy them
+   into a directory where you would like them to reside. Be sure this is a
+   location available to all compute nodes on the system (i.e. on the shared filesystem).
+3. Create a bash profile that will set the user SmartSim environment as follows
+
+.. code-block:: bash
+
+   export RAI_PATH=/path/to/lib/redisai.so
+   export REDIS_PATH=/path/to/bin/redis-server
+   export REDIS_CLI_PATH=/path/to/bin/redis-cli
+
+   # optional settings
+   export SMARTSIM_LOG_LEVEL=debug # (more verbose outputs)
+   export SMARTSIM_JM_INTERVAL=20  # (control how often SmartSim pings schedulers like Slurm)
+
+
+4. Lastly, have all users put this file into their .bashrc or .bash_profile
+   file. From then on, users will only have to run ``pip install smartsim`` and
+   everything will be installed each time.
+
 
 ----------------------------------------------------------------------
 
@@ -255,6 +304,7 @@ installing from source for other reasons, follow the steps
 below but use the distribution provided hosted on GitHub
 or PyPi.
 
+.. _from-source:
 
 Install SmartSim from Source
 ============================
@@ -340,6 +390,8 @@ main documents page from ``doc/_build/html/index.html``
 
 .. _install-notes:
 
+
+
 ============================================
 Installation Notes for Specific System Types
 ============================================
@@ -355,9 +407,9 @@ SmartSim on MacOS
 We recommend users and contributors install brew_ for managing installed packages.
 For contributors, the following brew packages can be helpful
 
- - openmpi_ for building and running parallel SmartRedis examples
- - doxygen_ for building the documention
- - cmake_ for building SmartSim and SmartRedis from source
+- openmpi_ for building and running parallel SmartRedis examples
+- doxygen_ for building the documention
+- cmake_ for building SmartSim and SmartRedis from source
 
 .. _brew: https://brew.sh/
 .. _openmpi: https://formulae.brew.sh/formula/open-mpi#default
@@ -492,7 +544,7 @@ When executing SmartSim, if you want to use the PyTorch backend in the orchestra
 you will need to add the PyTorch library path to the environment with:
 
 .. code-block:: bash
-  
+
   export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
 
 
@@ -529,81 +581,3 @@ the same environment loaded.
   $ make lib
 
 
-==============================================
-Changing Redis installation and Configurations
-==============================================
-
-If you want to use a pre-existing Redis installation, override
-the configuration, or install the dependencies for SmartSim
-manually, you can do so by specifying a SmartSim configuration
-file in a ``config.toml``
-
-This can be useful for
- - contributors who want to try bleeding edge features
- - users who want to edit Redis behavior (adding checkpoints)
- - sites who want to package SmartSim in a different manner.
- - sites who want to set intervals for scheduler communication
-
-Override Pre-packaged Settings
-==============================
-
-The following fields can be overridden in the SmartSim configuration
-file
-
- - Redis installation location
- - Redis configuration file location
- - RedisAI module installation location
- - Test launcher/device/network interface
- - Log level default
- - Job manager interval default
-
-.. note::
-
-    If you want to override the configuration, you need
-    to supply values for each of these.
-
-Install the SmartSim user configuration file.
-Usually this is in your ``$HOME`` directory under
-``~/.smartsim/config.toml``, but for users of networked filesystems
-where the ``$HOME`` directory is not mounted, do the following
-
-.. code-block:: bash
-
-    # set the configuration directory to somewhere accessible
-    # (e.g. /lustre) for HPC systems
-
-    echo "export SMARTSIM_HOME=/REPLACE/ME/.smartsim" >> ~/.bashrc
-    cd && source .bashrc
-    mkdir $SMARTSIM_HOME && cd $SMARTSIM_HOME
-    touch config.toml
-
-The configuration file specifies user and developer settings
-for SmartSim as well as the location of third-party libraries.
-If you followed the instructions above, the third-party libraries
-will be installed in ``smartsim/third-party/``.
-
-You can copy paste, the below configuration file into the
-``config.toml`` file you just created. The only part that
-should be changed is the path to where you installed
-SmartSim
-
-.. code-block:: toml
-
-  [smartsim]
-  # number of seconds per job status update
-  # for jobs on WLM system (e.g. slurm, pbs, etc)
-  jm_interval = 15    # default
-  log_level = "info" # default
-
-  [redis]
-  # path to where "redis-server" and "redis-cli" binaries are located
-  bin = "/path/to/redis/src/"
-  config = "/path/to/redis.conf" # optional!
-
-    [redis.modules]
-    ai = "/path/to/RedisAI/install-cpu/"
-
-  [test]
-  launcher = "local" # default
-  interface = "ib0" # network interface to use in tests
-  device = "CPU" # device to use for tests (CPU/GPU)

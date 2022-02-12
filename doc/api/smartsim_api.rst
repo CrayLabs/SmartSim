@@ -18,6 +18,7 @@ Experiment
    Experiment.stop
    Experiment.create_ensemble
    Experiment.create_model
+   Experiment.create_database
    Experiment.create_run_settings
    Experiment.create_batch_settings
    Experiment.generate
@@ -325,91 +326,16 @@ Orchestrator
 
 .. currentmodule:: smartsim.database
 
-The ``Orchestrator`` API is implemented for each launcher that
-SmartSim supports.
 
- - Slurm
- - Cobalt
- - PBSPro
- - LSF
+Orchestrator
+------------
 
-The base ``Orchestrator`` class can be used for launching Redis
-locally on single node workstations or laptops.
-
-Local Orchestrator
-------------------
-
-.. _local_orc_api:
-
-The ``Orchestrator`` base class can be launched through
-the local launcher and does not support cluster instances
+.. _orc_api:
 
 .. autoclass:: Orchestrator
    :members:
    :inherited-members:
    :undoc-members:
-   :exclude-members: create_cluster
-
-PBSPro Orchestrator
--------------------
-
-.. _pbs_orc_api:
-
-The PBSPro Orchestrator can be launched as a batch, and
-in an interactive allocation.
-
-.. autoclass:: PBSOrchestrator
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :undoc-members:
-   :exclude-members: create_cluster
-
-Slurm Orchestrator
-------------------
-
-.. _slurm_orc_api:
-
-The ``SlurmOrchestrator`` is used to launch Redis on to Slurm WLM
-systems and can be launched as a batch, on existing allocations,
-or in an interactive allocation.
-
-.. autoclass:: SlurmOrchestrator
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :undoc-members:
-   :exclude-members: create_cluster
-
-Cobalt Orchestrator
--------------------
-
-.. _cobalt_orc_api:
-
-The ``CobaltOrchestrator`` can be launched as a batch, and
-in an interactive allocation.
-
-.. autoclass:: CobaltOrchestrator
-    :show-inheritance:
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :exclude-members: create_cluster
-
-LSF Orchestrator
-----------------
-
-.. _lsf_orc_api:
-
-The ``LSFOrchestrator`` can be launched as a batch, and
-in an interactive allocation.
-
-.. autoclass:: LSFOrchestrator
-    :show-inheritance:
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :exclude-members: create_cluster
 
 
 Model
@@ -421,6 +347,7 @@ Model
 
    Model.__init__
    Model.attach_generator_files
+   Model.colocate_db
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing

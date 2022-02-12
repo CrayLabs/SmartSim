@@ -74,6 +74,9 @@ builder_spec = importlib.util.spec_from_file_location("builder", str(builder_pat
 builder = importlib.util.module_from_spec(builder_spec)
 builder_spec.loader.exec_module(builder)
 
+# Skip prequisites check for pip install stage
+os.environ["NO_CHECKS"] = "1"
+
 # helper classes for building dependencies that are
 # also utilized by the Smart CLI
 build_env = buildenv.BuildEnv()

@@ -142,13 +142,16 @@ class Model(SmartSimEntity):
         Extra parameters for the db can be passed through kwargs. This includes
         many performance, caching and inference settings.
 
-        ex. kwargs = {
-            maxclients: 100000,
-            threads_per_queue: 1,
-            inter_op_threads: 1,
-            intra_op_threads: 1,
-            server_threads: 2 # keydb only
-        }
+        .. highlight:: python
+        .. code-block:: python
+
+            ex. kwargs = {
+                maxclients: 100000,
+                threads_per_queue: 1,
+                inter_op_threads: 1,
+                intra_op_threads: 1,
+                server_threads: 2 # keydb only
+            }
 
         Generally these don't need to be changed.
 
@@ -160,7 +163,7 @@ class Model(SmartSimEntity):
         :type limit_app_cpus: bool, optional
         :param ifname: interface to use for orchestrator, defaults to "lo"
         :type ifname: str, optional
-        :param debug: launch Model with extra debug information about the colocated db
+        :param debug: launch Model with extra debug information about the co-located db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
