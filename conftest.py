@@ -259,7 +259,10 @@ class DBUtils:
             "enable_checkpoints": 1,
             "set_max_memory": "3gb",
             "set_eviction_strategy": "allkeys-lru",
-            "set_max_clients": 50_000,
+            # set low to avoid permissions issues during testing
+            # TODO make a note in SmartRedis about this method possibly
+            # erroring due to the max file descriptors setting being too low
+            "set_max_clients": 100,
             "set_max_message_size": 2_147_483_648,
         }
         return config_settings
