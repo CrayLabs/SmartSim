@@ -184,7 +184,7 @@ class Versioner:
     PYTHON_MIN = Version_("3.7.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.3.2"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.4.0"))
     SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.2.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 

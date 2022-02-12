@@ -23,9 +23,10 @@ that allow users to abstract away their targeted hardware,
 while providing even more compatibility with existing
 libraries.
 
-A new feature, Co-located orchestrator deployments have
-been added which provide very scalable online inference
-capabilities that overcome previous performance limitations.
+A new feature, Co-located orchestrator deployments has
+been added which provides scalable online inference
+capabilities that overcome previous performance limitations
+in seperated orchestrator/application deployments.
 For more information on advantages of co-located deployments,
 see the Orchestrator section of the SmartSim documentation.
 

@@ -147,7 +147,7 @@ deps = [
 ]
 
 # Add SmartRedis at specific version
-deps.append("smartredis=={}".format(versions.SMARTREDIS))
+deps.append("smartredis>={}".format(versions.SMARTREDIS))
 
 extras_require = {
     "dev": [
