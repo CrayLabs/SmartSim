@@ -11,7 +11,7 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_slurm_mpmd(fileutils, wlmutils):
+def test_mpmd(fileutils, wlmutils):
     """Run an MPMD model twice 
     
     and check that it always gets executed the same way.
@@ -20,7 +20,7 @@ def test_slurm_mpmd(fileutils, wlmutils):
 
     This test requires three nodes to run.
     """
-    exp_name = "test-slurm-mpmd"
+    exp_name = "test-mpmd"
     launcher = wlmutils.get_test_launcher()
     # MPMD is supported in LSF, but the test for it is different
     mpmd_supported = ["slurm", "pbs", "cobalt"]
@@ -60,7 +60,6 @@ def test_slurm_mpmd(fileutils, wlmutils):
         settings.make_mpmd(deepcopy(settings))
 
         mpmd_model = exp.create_model("mmpd", path=test_dir, run_settings=settings)
-        exp.generate(mpmd_model, overwrite=True)
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
         assert all([stat == status.STATUS_COMPLETED for stat in statuses])
