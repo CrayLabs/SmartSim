@@ -26,7 +26,7 @@ RUN git clone https://github.com/CrayLabs/SmartRedis.git --branch develop --dept
     && python -m pip install . \
     && rm -rf ~/.cache/pip
 
-
 RUN cd doc/tutorials/ && \
     ln -s ../../tutorials/* .
+
 RUN make docs
