@@ -172,12 +172,13 @@ class Build:
 
         if tf:
             if libtf_dir:
+                print("LIBTF_DIR", libtf_dir)
                 libtf_dir = Path(libtf_dir).resolve()
 
         rai_builder = builder.RedisAIBuilder(
             build_env=self.build_env(),
-            torch_dir=str(torch_dir),
-            libtf_dir=str(libtf_dir),
+            torch_dir=str(torch_dir) if torch_dir else None,
+            libtf_dir=str(libtf_dir) if libtf_dir else None,
             build_torch=torch,
             build_tf=tf,
             build_onnx=onnx,
