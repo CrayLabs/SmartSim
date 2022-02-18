@@ -180,14 +180,10 @@ class WLMUtils:
     def get_orchestrator(nodes=1, port=6780, batch=False):
         global test_launcher
         global test_nic
-        if test_launcher == "slurm":
-            db = SlurmOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
-        elif test_launcher == "pbs":
-            db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
-        elif test_launcher == "cobalt":
-            db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
+        if test_launcher in ["slurm", "pbs", "cobalt"]:
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher)
         elif test_launcher == "lsf":
-            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, gpus_per_shard=1 if test_device=="GPU" else 0, project=get_account(), interface=test_nic)
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, gpus_per_shard=1 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
         else:
             db = Orchestrator(port=port, interface="lo")
         return db
@@ -200,7 +196,7 @@ def local_db(fileutils, wlmutils, request):
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir(exp_name)
-    db = wlmutils.get_orchestrator()
+    db = Orchestrator(port=6780, interface="lo")
     db.set_path(test_dir)
     exp.start(db)
 

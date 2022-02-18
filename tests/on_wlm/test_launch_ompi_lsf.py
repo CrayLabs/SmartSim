@@ -7,6 +7,7 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
+@pytest.mark.skip("OpenMPI currently not working on LSF systems")
 def test_launch_openmpi_lsf(wlmutils, fileutils):
     launcher = wlmutils.get_test_launcher()
     if launcher != "lsf":

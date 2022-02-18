@@ -137,6 +137,7 @@ def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     orc.set_path(test_dir)
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_walltime("00:02")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
