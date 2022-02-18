@@ -8,7 +8,7 @@ from smartsim import Experiment
 from smartsim._core.launcher import slurm
 from smartsim.exp.ray import RayCluster
 
-"""Test Ray cluster Slurm launch and shutdown.
+"""Test Ray cluster launch and shutdown on WLM.
 """
 
 # retrieved from pytest fixtures
@@ -32,11 +32,9 @@ pytestmark = pytest.mark.skipif(
 
 def test_ray_launch_and_shutdown(fileutils, wlmutils, caplog):
     launcher = wlmutils.get_test_launcher()
-    if launcher != "slurm":
-        pytest.skip("Test only runs on systems with Slurm as WLM")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir("test-ray-launch-and-shutdown")
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
