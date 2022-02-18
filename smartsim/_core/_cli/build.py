@@ -172,7 +172,6 @@ class Build:
 
         if tf:
             if libtf_dir:
-                print("LIBTF_DIR", libtf_dir)
                 libtf_dir = Path(libtf_dir).resolve()
 
         rai_builder = builder.RedisAIBuilder(
