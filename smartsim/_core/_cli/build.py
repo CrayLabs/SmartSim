@@ -29,7 +29,7 @@ class Build:
         )
         parser.add_argument(
             "--device",
-            type=str,
+            type=str.lower,
             default="cpu",
             help="Device to build ML runtimes for (cpu || gpu)",
         )
