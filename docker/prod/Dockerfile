@@ -17,7 +17,7 @@ WORKDIR /home/craylabs
 COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 
 USER craylabs
-RUN python -m pip install smartsim==0.4.0 ipython ipykernel jupyter jupyterlab \
+RUN python -m pip install smartsim==0.4.0 ipython ipykernel jupyter jupyterlab matplotlib \
     && rm -rf ~/.cache/pip
 
 RUN echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \

@@ -15,7 +15,7 @@ fig = plt.figure(figsize=(12,6), dpi=80)
 time_steps, seed = 3000, 42
 
 # define how simulation should be executed
-settings = exp.create_run_settings("python", 
+settings = exp.create_run_settings("python",
                                    exe_args=["fv_sim.py",
                                              f"--seed={seed}",
                                              f"--steps={time_steps}"])
@@ -42,6 +42,7 @@ for i in range(0, time_steps, 5): # plot every 5th timestep
     client.poll_key(f"data_{i}", 10, 1000)
     dataset = client.get_dataset(f"data_{i}")
     ux, uy = dataset.get_tensor("ux"), dataset.get_tensor("uy")
+    feq = dataset.get_tensor("feq")
 
     plt.cla()
     ux[cylinder], uy[cylinder] = 0, 0

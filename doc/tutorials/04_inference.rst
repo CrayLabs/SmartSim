@@ -15,7 +15,6 @@ and any library that supports the ONNX format without compiling in ML libraries 
 simulation.
 
 .. note::
-
     While the SmartRedis examples below are written in Python, SmartRedis is implemented
     in C, C++ and Fortran as well. Fortran, C, and C++ applications can all call the
     same Machine Learning libraries/models as the examples below.

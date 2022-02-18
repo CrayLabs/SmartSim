@@ -49,16 +49,17 @@ def finite_volume_simulation(steps=4000, x_res=400, y_res=100,
 
         # send every 5 time_step to reduce memory consumption
         if time_step % 5 == 0:
-            dataset = create_dataset(time_step, ux, uy)
+            dataset = create_dataset(time_step, ux, uy, Feq)
             client.put_dataset(dataset)
 
 
-def create_dataset(time_step, ux, uy):
+def create_dataset(time_step, ux, uy, feq):
     """Create SmartRedis Dataset containing multiple NumPy arrays
     to be stored at a single key within the database"""
     dataset = Dataset(f"data_{time_step}")
     dataset.add_tensor("ux", ux)
     dataset.add_tensor("uy", uy)
+    #dataset.add_tensor("feq", feq)
     return dataset
 
 if __name__ == "__main__":

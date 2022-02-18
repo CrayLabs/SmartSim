@@ -14,8 +14,7 @@
    :caption: Tutorials
 
    tutorials/01_getting_started/01_getting_started
-   tutorials/02_using_clients
-   tutorials/03_lattice_boltz_analysis
+   tutorials/03_online_analysis/lattice/online_analysis
    tutorials/04_inference
    tutorials/05_training
    tutorials/06_starting_ray/06_starting_ray_builtin
@@ -35,6 +34,7 @@
    :caption: SmartRedis
 
    smartredis
+   client_examples
    sr_data_structures
    sr_runtime
    api/smartredis_api
@@ -43,9 +43,9 @@
    :maxdepth: 2
    :caption: Reference
 
+   changelog
    code_of_conduct
    developer
-   changelog
 
 
 Indices and tables
