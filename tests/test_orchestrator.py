@@ -108,7 +108,7 @@ def test_pbs_set_batch_arg():
 
 
 def test_slurm_set_run_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm")
+    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm", run_command="srun")
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -116,11 +116,11 @@ def test_slurm_set_run_arg():
 
 
 def test_slurm_set_batch_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm")
+    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm", run_command="srun")
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(6780, db_nodes=3, batch=True, interface="lo", launcher="slurm")
+    orc2 = Orchestrator(6780, db_nodes=3, batch=True, interface="lo", launcher="slurm", run_command="srun")
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
@@ -157,7 +157,7 @@ def test_cobalt_set_batch_arg():
 
 def test_catch_orc_errors_lsf():
     with pytest.raises(SSUnsupportedError):
-        orc = Orchestrator(6780, db_nodes=2, db_per_host=2, batch=False, launcher="lsf")
+        orc = Orchestrator(6780, db_nodes=2, db_per_host=2, batch=False, launcher="lsf", run_command="jsrun")
 
     orc = Orchestrator(
         6780,
@@ -177,7 +177,8 @@ def test_lsf_set_run_args():
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
-        launcher="lsf"
+        launcher="lsf",
+        run_command="jsrun"
     )
     orc.set_run_arg("l", "gpu-gpu")
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
@@ -190,7 +191,8 @@ def test_lsf_set_batch_args():
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
-        launcher="lsf"
+        launcher="lsf",
+        run_command="jsrun"
     )
 
     assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
