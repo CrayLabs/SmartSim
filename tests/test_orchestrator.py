@@ -164,7 +164,8 @@ def test_catch_orc_errors_lsf():
         db_nodes=3,
         batch=False,
         hosts=["batch", "host1", "host2"],
-        launcher="lsf"
+        launcher="lsf",
+        run_command="jsrun"
     )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("P", "MYPROJECT")
