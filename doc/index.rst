@@ -3,7 +3,7 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Overview of SmartSim
+   :caption: Getting Started
 
    overview
    installation
@@ -13,11 +13,11 @@
    :maxdepth: 2
    :caption: Tutorials
 
-   tutorials/01_getting_started/01_getting_started
-   tutorials/03_online_analysis/lattice/online_analysis
-   tutorials/04_inference
-   tutorials/05_training
-   tutorials/06_starting_ray/06_starting_ray_builtin
+   tutorials/getting_started/getting_started
+   tutorials/online_analysis/lattice/online_analysis
+   tutorials/ml_inference/Inference-in-SmartSim
+   tutorials/training
+   tutorials/ray/starting_ray
 
 
 .. toctree::
@@ -34,7 +34,9 @@
    :caption: SmartRedis
 
    smartredis
-   client_examples
+   sr_python_walkthrough
+   sr_cpp_walkthrough
+   sr_fortran_walkthrough
    sr_data_structures
    sr_runtime
    api/smartredis_api

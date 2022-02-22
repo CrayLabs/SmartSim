@@ -30,8 +30,8 @@
 
 # SmartSim
 
-SmartSim makes it easier to use common Machine Learning (ML) libraries
-like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
+SmartSim is a workflow library that makes it easier to use common Machine Learning (ML)
+libraries, like PyTorch and TensorFlow, in High Performance Computing (HPC) simulations
 and applications.
 
 SmartSim provides an API to connect HPC workloads, particularly (MPI + X) simulations,
@@ -59,27 +59,27 @@ SmartSim supports the following ML libraries.
     <tr>
       <td rowspan="3">1.2.3-1.2.4</td>
       <td>PyTorch</td>
-      <td>1.7.0</td>
+      <td>1.7.x</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.5.2</td>
+      <td>2.4.x-2.5.x</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.7.0</td>
+      <td>1.9.x</td>
     </tr>
       <td rowspan="3">1.2.5</td>
       <td>PyTorch</td>
-      <td>1.9.1</td>
+      <td>1.9.x</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.6.2</td>
+      <td>2.6.x</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.9.0</td>
+      <td>1.9.x</td>
     </tr>
   </tbody>
 </table>
@@ -569,7 +569,7 @@ For more information on the API, see the
 ## Examples
 
 Although clients rely on the Orchestrator database to be running, it can be helpful
-to see examples of how the API is used without concerning ourselves with the 
+to see examples of how the API is used without concerning ourselves with the
 infrastructure code. The following examples provide samples of client usage
 across different languages.
 

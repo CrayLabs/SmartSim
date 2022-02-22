@@ -4,9 +4,8 @@ LABEL maintainer="Cray Labs"
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ=US/Seattle
 
-RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs
-
-RUN apt-get update \
+RUN useradd --system --create-home --shell /bin/bash -g root -G sudo craylabs && \
+    apt-get update \
     && apt-get install --no-install-recommends -y build-essential \
     git gcc make git-lfs wget libopenmpi-dev openmpi-bin \
     python3-pip python3 python3-dev cmake \
@@ -17,12 +16,13 @@ WORKDIR /home/craylabs
 COPY --chown=craylabs:root ./tutorials/ /home/craylabs/tutorials/
 
 USER craylabs
-RUN python -m pip install smartsim==0.4.0 ipython ipykernel jupyter jupyterlab matplotlib \
-    && rm -rf ~/.cache/pip
-
-RUN echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
+RUN python -m pip install smartsim[ml]==0.4.0 jupyter jupyterlab matplotlib && \
+    echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
-    smart build --device cpu -v --no_tf
+    smart build --device cpu -v --no_tf && \
+    chown craylabs:root -R /home/craylabs/.local && \
+    rm -rf ~/.cache/pip
 
-SHELL ["bash", "-c"]
-CMD ["/home/craylabs/.local/bin/jupyter", "lab", "--port", "8888", "--no-browser", "--ip=0.0.0.0"]
+# remove non-jupyter notebook tutorials
+RUN rm -rf /home/craylabs/tutorials/ml_training /home/craylabs/tutorials/ray
+CMD ["/bin/bash", "-c", "PATH=/home/craylabs/.local/bin:$PATH /home/craylabs/.local/bin/jupyter lab --port 8888 --no-browser --ip=0.0.0.0"]

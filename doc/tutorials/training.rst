@@ -24,8 +24,8 @@ A richer example, entirely implemented in Python, is available as a Jupyter Note
 instead of TensorFlow is available in the same directory.
 
 
-5.1 Producing and uploading the samples
----------------------------------------
+Producing and uploading the samples
+-----------------------------------
 
 .. _ml_training_producer_code:
 
@@ -61,8 +61,8 @@ and ``<target_prefix>_<sub-index>_<iteration>``, where ``<sub_index>`` can be, e
 the MPI rank id.
 
 
-5.2 Downloading the samples and training the model
---------------------------------------------------
+Downloading the samples and training the model
+----------------------------------------------
 
 The second part of the workflow is the ``training_service``, an application that
 downloads the data uploaded by the ``producer`` and uses them to train a ML model.
@@ -116,8 +116,8 @@ need to be adapted as follows
                     uploader_ranks=8)
 
 
-5.3 Launching the experiment
-----------------------------
+Launching the experiment
+------------------------
 
 To launch the ``producer`` and the ``training_service`` as models
 within a SmartSim ``Experiment``, we can use the following code:
