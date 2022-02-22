@@ -8,14 +8,21 @@ API to interact with the RedisAI tensor, model, and script
 data types.  Additionally, an example of utilizing the
 SmartRedis ``DataSet`` API is also provided.
 
+
+
 .. note::
-    The C++ API examples rely on the ``SSDB`` environment
-    variable being set to the address and port of the Redis database.
+      The C++ API examples rely on the ``SSDB`` environment
+      variable being set to the address and port of the Redis database.
+
 
 .. note::
     The C++ API examples are written
-    to connect to a Redis cluster database.  Update the
-    ``Client`` constructor call to connect to a Redis non-cluster database.
+    to connect to a clustered database or clustered SmartSim Orchestrator.
+    Update the ``Client`` constructor ``cluster`` flag to `false`
+    to connect to a single shard (single compute host) database.
+
+
+
 
 Tensors
 =======
@@ -48,7 +55,7 @@ Models
 ======
 
 The following example shows how to store, and use a DL model
-in the database with the C++ Client.  The model is stored a file
+in the database with the C++ Client.  The model is stored as a file
 in the ``../../../common/mnist_data/`` path relative to the
 compiled executable.  Note that this example also sets and
 executes a preprocessing script.

@@ -12,13 +12,15 @@ data types.  Additionally, an example of utilizing the
 SmartRedis ``DataSet`` API is also provided.
 
 .. note::
-    The Fortran API examples rely on the ``SSDB`` environment
-    variable being set to the address and port of the Redis database.
+      The Fortran API examples rely on the ``SSDB`` environment
+      variable being set to the address and port of the Redis database.
 
 .. note::
-    The Fortran API examples are written
-    to connect to a Redis cluster database.  Update the
-    ``Client`` constructor call to connect to a non-cluster Redis instance.
+      The Fortran API examples are written
+      to connect to a clustered database or clustered SmartSim Orchestrator.
+      Update the ``Client`` constructor ``cluster`` flag to `.false.`
+      to connect to a single shard (single compute host) database.
+
 
 Tensors
 =======
@@ -59,7 +61,7 @@ if using a clustered database or ``.false.`` otherwise.
 
     type(client_type) :: client
 
-    call client%initialize(.false.) ! Change .true. to false if using a clustered database
+    call client%initialize(.false.) ! Change .false. to true if using a clustered database
   end program example
 
 **Putting a Fortran array into the database**
@@ -258,7 +260,7 @@ will be. In this case, it is a vector of length 10, where
 each element represents the probability that the data
 represents a number from 0-9.
 
-The next declaration declare the strings that will be
+The next declaration declares the strings that will be
 used to define objects representing inputs/outputs from the
 scripts and inference models.
 

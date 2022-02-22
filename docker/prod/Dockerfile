@@ -1,6 +1,8 @@
 FROM ubuntu:20.04
 
 LABEL maintainer="Cray Labs"
+LABEL org.opencontainers.image.source https://github.com/CrayLabs/SmartSim
+
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV TZ=US/Seattle
 

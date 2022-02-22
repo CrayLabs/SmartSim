@@ -8,9 +8,10 @@ use it within SmartSim applications and RedisAI in general.
 
 
 .. note::
-    The Python API examples are written to connect to a
-    database at ``127.0.0.1:6379``.  When running this example,
-    ensure that the address and port of your Redis instance are used.
+      The Python API examples are written to connect to a
+      database at ``127.0.0.1:6379``.  When running this example,
+      ensure that the address and port of your Redis instance are used.
+
 
 
 Tensors

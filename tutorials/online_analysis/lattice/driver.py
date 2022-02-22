@@ -42,7 +42,6 @@ for i in range(0, time_steps, 5): # plot every 5th timestep
     client.poll_key(f"data_{i}", 10, 1000)
     dataset = client.get_dataset(f"data_{i}")
     ux, uy = dataset.get_tensor("ux"), dataset.get_tensor("uy")
-    feq = dataset.get_tensor("feq")
 
     plt.cla()
     ux[cylinder], uy[cylinder] = 0, 0

@@ -59,7 +59,6 @@ def create_dataset(time_step, ux, uy, feq):
     dataset = Dataset(f"data_{time_step}")
     dataset.add_tensor("ux", ux)
     dataset.add_tensor("uy", uy)
-    #dataset.add_tensor("feq", feq)
     return dataset
 
 if __name__ == "__main__":
