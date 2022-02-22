@@ -81,7 +81,14 @@ def test_catch_local_db_errors():
 
 
 def test_pbs_set_run_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="pbs", run_command="aprun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -93,11 +100,25 @@ def test_pbs_set_run_arg():
 
 
 def test_pbs_set_batch_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="pbs", run_command="aprun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(6780, db_nodes=3, batch=True, interface="lo", launcher="pbs", run_command="aprun")
+    orc2 = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("N", "another_name")
@@ -108,7 +129,14 @@ def test_pbs_set_batch_arg():
 
 
 def test_slurm_set_run_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm", run_command="srun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -116,11 +144,25 @@ def test_slurm_set_run_arg():
 
 
 def test_slurm_set_batch_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="slurm", run_command="srun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(6780, db_nodes=3, batch=True, interface="lo", launcher="slurm", run_command="srun")
+    orc2 = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
@@ -129,7 +171,14 @@ def test_slurm_set_batch_arg():
 
 
 def test_cobalt_set_run_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="cobalt", run_command="aprun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -141,23 +190,44 @@ def test_cobalt_set_run_arg():
 
 
 def test_cobalt_set_batch_arg():
-    orc = Orchestrator(6780, db_nodes=3, batch=False, interface="lo", launcher="cobalt", run_command="aprun")
+    orc = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = Orchestrator(6780, db_nodes=3, batch=True, interface="lo", launcher="cobalt", run_command="aprun")
+    orc2 = Orchestrator(
+        6780,
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("outputprefix", "new_output/")
     assert "outputprefix" not in orc2.batch_settings.batch_args
 
 
-
 ###### LSF ######
+
 
 def test_catch_orc_errors_lsf():
     with pytest.raises(SSUnsupportedError):
-        orc = Orchestrator(6780, db_nodes=2, db_per_host=2, batch=False, launcher="lsf", run_command="jsrun")
+        orc = Orchestrator(
+            6780,
+            db_nodes=2,
+            db_per_host=2,
+            batch=False,
+            launcher="lsf",
+            run_command="jsrun",
+        )
 
     orc = Orchestrator(
         6780,
@@ -165,7 +235,7 @@ def test_catch_orc_errors_lsf():
         batch=False,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
-        run_command="jsrun"
+        run_command="jsrun",
     )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("P", "MYPROJECT")
@@ -179,7 +249,7 @@ def test_lsf_set_run_args():
         batch=True,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
-        run_command="jsrun"
+        run_command="jsrun",
     )
     orc.set_run_arg("l", "gpu-gpu")
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
@@ -193,7 +263,7 @@ def test_lsf_set_batch_args():
         batch=True,
         hosts=["batch", "host1", "host2"],
         launcher="lsf",
-        run_command="jsrun"
+        run_command="jsrun",
     )
 
     assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
