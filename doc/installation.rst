@@ -4,9 +4,6 @@ Installation
 
 The following will show how to install both SmartSim and SmartRedis
 
-For instructions on installing SmartSim once for multiple users of
-a shared system, see :ref:`this section below <site-wide>`.
-
 =============
 Prerequisites
 =============
@@ -55,10 +52,13 @@ Supported Versions
      - Nvidia
      - 3.7 - 3.9
 
+
 .. note::
 
-  Windows is not supported and there are currently no plans
-  to support Windows.
+    Windows is not supported and there are currently no plans
+    to support Windows.
+
+
 
 SmartSim supports multiple machine learning libraries through
 the use of RedisAI_. The following libraries are supported.
@@ -151,11 +151,13 @@ To see all the installation options:
 
     smart
 
-.. note::
 
+.. note::
   If the ``smart`` tool is not found. Look for it in places like
   ``~/.local/bin`` and other ``bin`` locations and add it to your
   ``$PATH``
+
+
 
 CPU Install
 -----------
@@ -177,11 +179,13 @@ To install the default ML backends for CPU, run
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
-.. note::
 
+.. note::
     If a re-build is needed for any reason, ``smart clean`` will remove
     all of the previous installs for the ML backends and ``smart clobber`` will
     remove all pre-built dependencies as well as the ML backends.
+
+
 
 GPU Install
 -----------
@@ -208,46 +212,11 @@ For example, for bash do
     smart build --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
-.. note::
 
+.. note::
   Currently, SmartSim is solely compatible with NVIDIA GPUs on Linux systems
   and ``CUDA >= 11`` is required to build.
 
-
-Site-wide Installation
-======================
-
-.. _site-wide:
-
-Some users may wish to build SmartSim once, and have it available to
-all users of a system. When done, users will only ever have to install
-the Python package for smartsim which is fairly quick and painless.
-The following can be done by both a non-root and root user but for
-shared sites, it is highly recommended to consult with the site admins.
-
-To have a site wide install, do the following.
-
-1. Build SmartSim from source :ref:`as shown here <install-source>` for
-   the desired ML backend and device (GPU/CPU) platform your users are expected to use.
-2. Locate the `bin` and `lib` folders in `smartsim/_core/` and copy them
-   into a directory where you would like them to reside. Be sure this is a
-   location available to all compute nodes on the system (i.e. on the shared filesystem).
-3. Create a bash profile or modulefile that will set the user SmartSim environment as follows
-
-.. code-block:: bash
-
-   export RAI_PATH=/path/to/lib/redisai.so
-   export REDIS_PATH=/path/to/bin/redis-server
-   export REDIS_CLI_PATH=/path/to/bin/redis-cli
-
-   # optional settings
-   export SMARTSIM_LOG_LEVEL=debug # (more verbose outputs)
-   export SMARTSIM_JM_INTERVAL=20  # (control how often SmartSim pings schedulers like Slurm)
-
-
-4. Lastly, have all users put this file into their .bashrc or .bash_profile
-   file. From then on, users will only have to run ``pip install smartsim`` and
-   everything will be installed each time.
 
 
 ----------------------------------------------------------------------
