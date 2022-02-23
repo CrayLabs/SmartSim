@@ -12,7 +12,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   - Python 3.7-3.9
   - Pip
-  - Cmake 3.10.x (or later)
+  - Cmake 3.13.x (or later)
   - C compiler
   - C++ compiler
   - GNU Make > 4.0
