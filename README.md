@@ -110,9 +110,9 @@ applications.
 
 ## Experiments
 
-The ``Experiment`` object is the main interface of SmartSim. Through the ``Experiment``
-users can create references to applications called ``Models``.
-
+The [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment) object
+is the main interface of SmartSim. Through the [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
+users can create references to user applications called ``Models``.
 ### Hello World
 
 Below is a simple example of a workflow that uses the IL to launch hello world
@@ -195,8 +195,9 @@ bsub -Is -W 00:10 -nnodes 3 -P <project> $SHELL
 ```
 
 This same script will run on a SLURM, PBS, LSF, or Cobalt system as the ``launcher``
-is set to `auto` in the Experiment initialization. The run command like ``mpirun``,
-``aprun`` or ``srun`` will be automatically detected from whats available on the
+is set to `auto` in the [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
+initialization. The run command like ``mpirun``,
+``aprun`` or ``srun`` will be automatically detected from what is available on the
 system.
 
 ```python
@@ -273,7 +274,8 @@ python hello_ensemble.py
 ```
 
 Similar to the interactive example, this same script will run on a SLURM, PBS, LSF,
-or Cobalt system as the ``launcher`` is set to `auto` in the Experiment
+or Cobalt system as the ``launcher`` is set to `auto` in the
+[Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment)
 initialization. Local launching does not support batch workloads.
 
 
@@ -289,7 +291,7 @@ The ``Orchestrator`` is an in-memory database that utilizes Redis and RedisAI to
 a distributed database and access to ML runtimes from Fortran, C, C++ and Python.
 
 SmartSim provides classes that make it simple to launch the database in many
-configurations and optional form a distributed database cluster. The examples
+configurations and optionally form a distributed database cluster. The examples
 below will show how to launch the database. Later in this document we will show
 how to use the database to perform ML inference and processing.
 
@@ -306,7 +308,8 @@ will initialize an ``Orchestrator`` instance corresponding to the specified laun
 from smartsim import Experiment
 
 exp = Experiment("local-db", launcher="local")
-db = exp.create_database(port=6780, interface="lo")
+db = exp.create_database(port=6780,       # database port
+                         interface="lo")  # network interface to use
 
 # by default, SmartSim never blocks execution after the database is launched.
 exp.start(db)
@@ -480,9 +483,9 @@ For more information on the API, see the
 
 SmartSim and SmartRedis were designed to work together. When launched through
 SmartSim, applications using the SmartRedis clients are directly connected to
-any Orchestrator launched in the same Experiment.
+any Orchestrator launched in the same [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment).
 
-In this way, a SmartSim Experiment becomes a driver for coupled ML and Simulation
+In this way, a SmartSim [Experiment](https://www.craylabs.org/docs/api/smartsim_api.html#experiment) becomes a driver for coupled ML and Simulation
 workflows. The following are simple examples of how to use SmartSim and SmartRedis
 together.
 
@@ -573,7 +576,11 @@ client to pull the DataSet and plot the vorticity while the simulation is runnin
 time_steps, seed = 3000, 42
 
 exp = Experiment("finite_volume_simulation", launcher="local")
-db = exp.create_database(port=6780, interface="lo")
+
+db = exp.create_database(port=6780,        # database port
+                         interface="lo")   # network interface db should listen on
+
+# create the lb simulation Model reference
 settings = exp.create_run_settings("python",
                                    exe_args=["fv_sim.py",
                                              f"--seed={seed}",
