@@ -95,16 +95,25 @@ def get_hostlist():
     global test_hostlist
     if not test_hostlist:
         if "COBALT_NODEFILE" in os.environ:
-            nodefile = open(os.environ["COBALT_NODEFILE"], 'r')
-            lines = nodefile.readlines()
-            test_hostlist = [line.strip() for line in lines]
+            try:
+                with open(os.environ["COBALT_NODEFILE"], 'r') as nodefile:
+                    lines = nodefile.readlines()
+                    test_hostlist = [line.strip() for line in lines]
+            except:
+                return None
         elif "COBALT_NODEFILE" in os.environ:
-            nodefile = open(os.environ["PBS_NODEFILE"], 'r')
-            lines = nodefile.readlines()
-            test_hostlist = [line.strip() for line in lines]
+            try:
+                with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
+                    lines = nodefile.readlines()
+                    test_hostlist = [line.strip() for line in lines]
+            except:
+                return None
         elif "SLURM_JOB_NODELIST" in os.environ:
-            nodelist = os.environ["SLURM_JOB_NODELIST"]
-            test_hostlist = run(["scontrol", "show" , "hostnames", nodelist], capture_output=True, text=True).stdout.split()
+            try:
+                nodelist = os.environ["SLURM_JOB_NODELIST"]
+                test_hostlist = run(["scontrol", "show" , "hostnames", nodelist], capture_output=True, text=True).stdout.split()
+            except:
+                return None
     return test_hostlist
 
 @pytest.fixture

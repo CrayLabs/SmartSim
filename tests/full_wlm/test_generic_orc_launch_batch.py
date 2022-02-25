@@ -24,11 +24,11 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:05")
+        orc.batch_settings.set_walltime("00:02")
     if wlmutils.get_test_launcher() == "cobalt":
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
-        orc.batch_settings.set_walltime("00:00:01")
+        orc.batch_settings.set_walltime("00:02:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -60,15 +60,15 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:05")
+        orc.batch_settings.set_walltime("00:02")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(60)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
-        orc.batch_settings.set_walltime("00:00:02")
+        orc.batch_settings.set_walltime("00:02:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -100,15 +100,15 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:01")
+        orc.batch_settings.set_walltime("00:03")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(60)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
-        orc.batch_settings.set_walltime("00:00:02")
+        orc.batch_settings.set_walltime("00:03:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -137,15 +137,15 @@ def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     orc.set_path(test_dir)
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:02")
+        orc.batch_settings.set_walltime("00:03")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(60)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
-        orc.batch_settings.set_walltime("00:00:02")
+        orc.batch_settings.set_walltime("00:03:00")
 
     exp.start(orc, block=True)
 
