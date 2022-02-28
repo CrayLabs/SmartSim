@@ -24,12 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.utils.helpers import (
-    expand_exe_path,
-    init_default,
-    is_valid_cmd,
-    fmt_dict
-)
+from .._core.utils.helpers import expand_exe_path, init_default, is_valid_cmd, fmt_dict
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -158,6 +153,25 @@ class RunSettings:
                 raise TypeError("Executable arguments should be a list of str")
             self.exe_args.append(arg)
 
+    def set(self, arg, value=None):
+        """allows users to set individual run arguments
+
+        :param arg: name of the argument
+        :type arg: str
+        :param value: value of the argument
+        :type value: str | None
+        """
+        if not isinstance(arg, str):
+            raise TypeError("Argument name should be of type str")
+        if value is not None and not isinstance(value, str):
+            raise TypeError("Argument value should be of type str or None")
+        arg = arg.strip().lstrip("-")
+        if arg in self.run_args and value != self.run_args[arg]:
+            get_logger(__name__).warning(
+                f"Overwritting argument '{arg}' with value '{value}'"
+            )
+        self.run_args[arg] = value
+
     def _set_exe_args(self, exe_args):
         if exe_args:
             if isinstance(exe_args, str):
@@ -197,7 +211,7 @@ class RunSettings:
             formatted.append(str(value))
         return formatted
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
@@ -277,7 +291,7 @@ class BatchSettings:
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
             string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"
