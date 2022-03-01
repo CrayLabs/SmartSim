@@ -1,6 +1,4 @@
-import glob
 import os
-import platform
 import re
 import shutil
 import stat
@@ -243,19 +241,29 @@ class RedisAIBuilder(Builder):
         :param device: cpu or gpu
         :type device: str
         """
-        rai_libtf_path = (
-            self.rai_build_path
-            / "deps"
-            / f"{platform.system().lower()}-{platform.machine()}-{device}"
-            / "libtensorflow"
-        )
+        rai_deps_path = sorted(self.rai_build_path.glob(
+            os.path.join("deps", f"*{device}*")
+        ))
+        if not rai_deps_path:
+            raise FileNotFoundError("Could not find RedisAI 'deps' directory")
+        
+        # There should only be one path for a given device,
+        # and this should hold even if in the future we use
+        # an external build of RedisAI
+        rai_libtf_path = rai_deps_path[0] / "libtensorflow"
         rai_libtf_path.resolve()
         if rai_libtf_path.is_dir():
             shutil.rmtree(rai_libtf_path)
 
         os.makedirs(rai_libtf_path)
         libtf_path = Path(self.libtf_dir).resolve()
-        os.symlink(libtf_path / "include", rai_libtf_path / "include")
+
+        # Copy include directory to deps/libtensorflow
+        include_src_path = libtf_path / "include"
+        if not include_src_path.exists():
+            raise FileNotFoundError(f"Could not find include directory in {libtf_path}")
+        os.symlink(include_src_path, rai_libtf_path / "include")
+
         # RedisAI expects to find a lib directory, which is only
         # available in some distributions.
         rai_libtf_lib_dir = rai_libtf_path / "lib"
@@ -265,12 +273,16 @@ class RedisAIBuilder(Builder):
         # copy its content, otherwise gather library files from
         # libtensorflow base dir and copy them into destination lib dir
         if src_libtf_lib_dir.is_dir():
-            library_files = glob.glob(str(src_libtf_lib_dir / "*"))
+            library_files = sorted(src_libtf_lib_dir.glob("*"))
+            if not library_files:
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")  
         else:
-            library_files = glob.glob(str(libtf_path / "lib*.so.*"))
-        # TODO: handle case in which no library file is found
+            library_files = sorted(libtf_path.glob("lib*.so*"))
+            if not library_files:
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")        
+
         for src_file in library_files:
-            dst_file = rai_libtf_lib_dir / os.path.basename(src_file)
+            dst_file = rai_libtf_lib_dir / src_file.name
             if not dst_file.is_file():
                 os.symlink(src_file, dst_file)
 
