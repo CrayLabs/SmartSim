@@ -56,6 +56,7 @@ class SrunSettings(RunSettings):
             exe_args,
             run_command="srun",
             run_args=run_args,
+            reserved_run_args={"chdir", "D"},
             env_vars=env_vars,
             **kwargs,
         )

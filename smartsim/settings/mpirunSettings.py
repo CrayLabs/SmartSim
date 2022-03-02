@@ -53,6 +53,7 @@ class MpirunSettings(RunSettings):
             exe_args,
             run_command="mpirun",
             run_args=run_args,
+            reserved_run_args={"wd", "wdir"},
             env_vars=env_vars,
             **kwargs,
         )

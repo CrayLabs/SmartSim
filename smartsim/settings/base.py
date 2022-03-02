@@ -32,7 +32,14 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+        self,
+        exe,
+        exe_args=None,
+        run_command="",
+        run_args=None,
+        env_vars=None,
+        reserved_run_args=None,
+        **kwargs,
     ):
         """Run parameters for a ``Model``
 
@@ -61,6 +68,8 @@ class RunSettings:
         :type run_command: str, optional
         :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
         :type run_args: dict[str, str], optional
+        :param reserved_run_args: set of arguments that should not be set by user, defaults to None
+        :type run_args: set[str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -68,6 +77,7 @@ class RunSettings:
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, dict)
         self.env_vars = init_default({}, env_vars, dict)
+        self._reserved_run_args = init_default(set(), reserved_run_args, set)
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
@@ -160,16 +170,20 @@ class RunSettings:
         :type arg: str
         :param value: value of the argument
         :type value: str | None
+        :rtype: None
         """
         if not isinstance(arg, str):
             raise TypeError("Argument name should be of type str")
         if value is not None and not isinstance(value, str):
             raise TypeError("Argument value should be of type str or None")
         arg = arg.strip().lstrip("-")
-        if arg in self.run_args and value != self.run_args[arg]:
-            get_logger(__name__).warning(
-                f"Overwritting argument '{arg}' with value '{value}'"
+        if arg in self._reserved_run_args:
+            logger.warning(
+                f"Can not set run argument {arg}: it is a reserved keyword in {type(self).__name__}"
             )
+            return
+        if arg in self.run_args and value != self.run_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
         self.run_args[arg] = value
 
     def _set_exe_args(self, exe_args):
