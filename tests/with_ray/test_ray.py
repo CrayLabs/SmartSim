@@ -9,7 +9,7 @@ from smartsim import Experiment, slurm
 from smartsim.error import SSUnsupportedError
 from smartsim.exp.ray import RayCluster
 
-"""Test Ray cluster Slurm launch and shutdown.
+"""Test Ray cluster launch and shutdown.
 """
 
 # retrieved from pytest fixtures

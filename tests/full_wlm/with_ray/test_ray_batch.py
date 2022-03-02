@@ -10,7 +10,7 @@ from smartsim import Experiment
 from smartsim._core.launcher import slurm
 from smartsim.exp.ray import RayCluster
 
-"""Test Ray cluster Slurm launch and shutdown.
+"""Test Ray cluster batch launch and shutdown.
 """
 
 # retrieved from pytest fixtures

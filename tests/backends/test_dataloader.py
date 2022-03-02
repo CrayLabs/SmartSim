@@ -8,18 +8,8 @@ from smartsim.database import Orchestrator
 from smartsim.error.errors import SmartSimError
 from smartsim.experiment import Experiment
 
-shouldrun = True
-try:
-    import smartredis
-except ImportError:
-    shouldrun = False
 
-pytestmark = pytest.mark.skipif(
-    not shouldrun,
-    reason="requires SmartRedis",
-)
-
-shouldrun_tf = shouldrun
+shouldrun_tf = True
 if shouldrun_tf:
     try:
         from tensorflow import keras
@@ -27,7 +17,7 @@ if shouldrun_tf:
     except:
         shouldrun_tf = False
 
-shouldrun_torch = shouldrun
+shouldrun_torch = True
 if shouldrun_torch:
     try:
         import torch

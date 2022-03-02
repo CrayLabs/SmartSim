@@ -2,7 +2,6 @@ import pytest
 
 from smartsim._core.utils.helpers import is_valid_cmd
 from copy import deepcopy
-from pprint import pprint
 from smartsim import Experiment, status
 
 
