@@ -197,6 +197,7 @@ class RedisAIBuilder(Builder):
         self,
         build_env={},
         torch_dir="",
+        libtf_dir="",
         build_torch=True,
         build_tf=True,
         build_onnx=False,
@@ -210,6 +211,7 @@ class RedisAIBuilder(Builder):
         self.torch = 1 if build_torch else 0
         self.tf = 1 if build_tf else 0
         self.onnx = 1 if build_onnx else 0
+        self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
     @property
@@ -232,6 +234,57 @@ class RedisAIBuilder(Builder):
             self.copy_file(
                 self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
             )
+
+    def symlink_libtf(self, device):
+        """Add symbolic link to available libtensorflow in RedisAI deps.
+
+        :param device: cpu or gpu
+        :type device: str
+        """
+        rai_deps_path = sorted(self.rai_build_path.glob(
+            os.path.join("deps", f"*{device}*")
+        ))
+        if not rai_deps_path:
+            raise FileNotFoundError("Could not find RedisAI 'deps' directory")
+        
+        # There should only be one path for a given device,
+        # and this should hold even if in the future we use
+        # an external build of RedisAI
+        rai_libtf_path = rai_deps_path[0] / "libtensorflow"
+        rai_libtf_path.resolve()
+        if rai_libtf_path.is_dir():
+            shutil.rmtree(rai_libtf_path)
+
+        os.makedirs(rai_libtf_path)
+        libtf_path = Path(self.libtf_dir).resolve()
+
+        # Copy include directory to deps/libtensorflow
+        include_src_path = libtf_path / "include"
+        if not include_src_path.exists():
+            raise FileNotFoundError(f"Could not find include directory in {libtf_path}")
+        os.symlink(include_src_path, rai_libtf_path / "include")
+
+        # RedisAI expects to find a lib directory, which is only
+        # available in some distributions.
+        rai_libtf_lib_dir = rai_libtf_path / "lib"
+        os.makedirs(rai_libtf_lib_dir)
+        src_libtf_lib_dir = libtf_path / "lib"
+        # If the lib directory existed in the libtensorflow distribution,
+        # copy its content, otherwise gather library files from
+        # libtensorflow base dir and copy them into destination lib dir
+        if src_libtf_lib_dir.is_dir():
+            library_files = sorted(src_libtf_lib_dir.glob("*"))
+            if not library_files:
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")  
+        else:
+            library_files = sorted(libtf_path.glob("lib*.so*"))
+            if not library_files:
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")        
+
+        for src_file in library_files:
+            dst_file = rai_libtf_lib_dir / src_file.name
+            if not dst_file.is_file():
+                os.symlink(src_file, dst_file)
 
     def build_from_git(self, git_url, branch, device):
         """Build RedisAI from git
@@ -273,7 +326,7 @@ class RedisAIBuilder(Builder):
         dep_cmd = [
             self.binary_path("env"),
             f"WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
-            f"WITH_TF={self.tf}",
+            f"WITH_TF={1 if self.tf and not self.libtf_dir else 0}",
             f"WITH_TFLITE=0",  # never build with TF lite (for now)
             f"WITH_ORT={self.onnx}",
             "VERBOSE=1",
@@ -287,6 +340,9 @@ class RedisAIBuilder(Builder):
             out=subprocess.DEVNULL,  # suppress this as it's not useful
             cwd=self.rai_build_path,
         )
+
+        if self.libtf_dir:
+            self.symlink_libtf(device)
 
         build_cmd = [
             self.binary_path("env"),
