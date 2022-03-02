@@ -491,10 +491,7 @@ from which these instructions are executed.
                                     tensorflow=2.6.2 \
                                     libtensorflow=2.6.2 \
                                     pytorch=1.9.0 \
-                                    torchvision=0.10.0 \
-                                    onnx \
-                                    onnxruntime \
-                                    skl2onnx
+                                    torchvision=0.10.0 
   conda activate $ENV_NAME
   export CC=$(which gcc)
   export CXX=$(which g++)
