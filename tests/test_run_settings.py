@@ -89,3 +89,40 @@ def test_bad_exe_args_2():
     with pytest.raises(TypeError):
         _ = RunSettings("python", exe_args=exe_args)
 
+def test_set_args():
+    rs = RunSettings("python")
+    rs.set("str", "some-string")
+    rs.set("nothing")
+    
+    assert "str" in rs.run_args
+    assert rs.run_args["str"] == "some-string"
+    
+    assert "nothing" in rs.run_args
+    assert rs.run_args["nothing"] is None
+
+@pytest.mark.parametrize("set_str,val,key", [
+    pytest.param("normal-key", "some-val", "normal-key", id="set string"),
+    pytest.param("--a-key", "a-value", "a-key", id="strip doulbe dashes"),
+    pytest.param("-b", "some-str", "b", id="strip single dashes"),
+    pytest.param("   c    ", "some-val", "c", id="strip spaces"),
+    pytest.param("   --a-mess    ", "5", "a-mess", id="strip everything"),
+])
+def test_set_format_args(set_str, val, key):
+    rs = RunSettings("python")
+    rs.set(set_str, val)
+    assert rs.run_args[key] == val
+
+def test_set_raises_type_errors():
+    rs = RunSettings("python")
+    
+    with pytest.raises(TypeError):
+        rs.set("good-key", 5)
+    
+    with pytest.raises(TypeError):
+        rs.set(9)
+
+def test_set_overwrites_prev_args():
+    rs = RunSettings("python")
+    rs.set("some-key", "some-val")
+    rs.set("some-key", "another-val")
+    assert rs.run_args["some-key"] == "another-val"

@@ -73,3 +73,9 @@ def test_mpirun_hostlist_errors_1():
     settings = MpirunSettings("python")
     with pytest.raises(TypeError):
         settings.set_hostlist([444])
+
+@pytest.mark.parametrize("reserved_arg", ["wd", "wdir"])
+def test_no_set_reserved_args(reserved_arg):
+    srun = MpirunSettings("python")
+    srun.set(reserved_arg)
+    assert reserved_arg not in srun.run_args

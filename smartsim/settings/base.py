@@ -178,9 +178,7 @@ class RunSettings:
             raise TypeError("Argument value should be of type str or None")
         arg = arg.strip().lstrip("-")
         if arg in self._reserved_run_args:
-            logger.warning(
-                f"Can not set run argument {arg}: it is a reserved keyword in {type(self).__name__}"
-            )
+            logger.warning(f"Could not set argument '{arg}': it is a reserved arguement")
             return
         if arg in self.run_args and value != self.run_args[arg]:
             logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
