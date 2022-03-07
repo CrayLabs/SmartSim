@@ -520,6 +520,31 @@ class Orchestrator(EntityList):
                 "The SmartSim Orchestrator must be active in order to set the database's configurations."
             )
 
+    def select_gpus(self, gpu_list):
+        """Configure the GPUs to use for scripts and models
+
+        :param gpu_list: a semicolon-delimited list of GPUs in the form "GPU:0; GPU:1; ..."
+        :type key: str
+        """
+        if self.is_active():
+            host = self.hosts[0]
+            port = self.ports[0]
+            dbaddress = ":".join([get_ip_from_host(host), str(port)])
+
+            is_cluster = self.num_shards > 2
+            try:
+                client = Client(address=dbaddress, cluster=is_cluster)
+                client.select_gpus(gpu_list)
+
+            except RedisReplyError as e:
+                raise SmartSimError(e) from None
+            except TypeError as e:
+                raise TypeError(e) from None
+        else:
+            raise SmartSimError(
+                "The SmartSim Orchestrator must be active to select GPUs for scripts and models."
+            )
+
     def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
         batch_settings = None
         launcher = kwargs.pop("launcher")
