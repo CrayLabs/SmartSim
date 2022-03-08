@@ -534,16 +534,13 @@ class Orchestrator(EntityList):
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        run_command = kwargs.get("run_command")
         run_args = kwargs.pop("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
         mpmd_nodes = single_cmd and db_nodes > 1
 
         if mpmd_nodes:
-            # Slurm MPMD needs total number of nodes
-            if self.launcher == "slurm":
-                run_args["nodes"] = db_nodes
+            
             run_settings = create_run_settings(
                 exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
