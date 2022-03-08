@@ -602,7 +602,7 @@ class Orchestrator(EntityList):
             assigned_smts += cpus_per_shard
             if gpus_per_shard > 1:  # pragma: no-cover
                 erf_sets["gpu"] = (
-                    "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
+                    "{" + f"{assigned_gpus}-{assigned_gpus+gpus_per_shard-1}" + "}"
                 )
             elif gpus_per_shard > 0:
                 erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
