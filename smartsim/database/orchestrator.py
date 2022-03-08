@@ -540,10 +540,10 @@ class Orchestrator(EntityList):
         single_cmd = kwargs.get("single_cmd", True)
         mpmd_nodes = single_cmd and db_nodes > 1
 
-        if self.launcher == "slurm":
-            run_args["nodes"] = 1 if not mpmd_nodes else db_nodes
-
         if mpmd_nodes:
+            # Slurm MPMD needs total number of nodes
+            if self.launcher == "slurm":
+                run_args["nodes"] = db_nodes
             run_settings = create_run_settings(
                 exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
