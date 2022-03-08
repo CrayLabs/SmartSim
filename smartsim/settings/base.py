@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.utils.helpers import expand_exe_path, init_default, is_valid_cmd, fmt_dict
+from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -38,7 +38,6 @@ class RunSettings:
         run_command="",
         run_args=None,
         env_vars=None,
-        reserved_run_args=None,
         **kwargs,
     ):
         """Run parameters for a ``Model``
@@ -77,10 +76,11 @@ class RunSettings:
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, dict)
         self.env_vars = init_default({}, env_vars, dict)
-        self._reserved_run_args = init_default(set(), reserved_run_args, set)
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
+
+    reserved_run_args = set()
 
     def set_tasks(self, tasks):
         """Set the number of tasks to launch
@@ -163,22 +163,78 @@ class RunSettings:
                 raise TypeError("Executable arguments should be a list of str")
             self.exe_args.append(arg)
 
-    def set(self, arg, value=None):
-        """allows users to set individual run arguments
+    def set(self, arg, value=None, condition=True):
+        """allows users to set individual run arguments. Does
+        basic formating such as stripping leading dashes.
+
+        This method also ensures that the argument being set
+        is a valid argument for the user to be manually adjusting.
+        If it is not the argument is not set and a warning is logged.
+        This is mainly used by subclasses to prevent users from changing
+        settings for a specific launcher that would interfere with SmartSim.
+
+        Basic Usage
+
+        .. highlight:: python
+        .. code-block:: python
+
+            rs = RunSettings("python")
+            rs.set("an-arg", "a-val")
+            rs.set("a-flag")
+            rs.run_args["an-arg"]  # returns "a-val"
+            rs.run_args["a-flag"]  # returns "a-flag"
+
+        Subclasses Restricting Arguments
+
+        .. highlight:: python
+        .. code-block:: python
+
+            ReservedArgsSettings(RunSettings)
+                reserved_args = {"no-set"}
+            
+            ras = ReservedArgsSettings("python")
+            ras.set("no-set")  # logs a warining
+            "no-set" in ras.run_args  # returns False
+
+        Agument String Formatting
+
+        .. highlight:: python
+        .. code-block:: python
+
+            rs.set("--run-arg")
+            "run-arg" in rs.run_args  # returns True
+
+        Conditional Setting
+
+        .. highlight:: python
+        .. code-block:: python
+
+            launcher = "slurm"
+            rs.set("conditional-arg", "val", launcher=="cobalt")
+            "conditional-arg" in rs.run_args  # returns False
 
         :param arg: name of the argument
         :type arg: str
         :param value: value of the argument
         :type value: str | None
-        :rtype: None
+        :param conditon: optional argument to conditionally set the argument
+        :type condition: bool
         """
         if not isinstance(arg, str):
             raise TypeError("Argument name should be of type str")
         if value is not None and not isinstance(value, str):
             raise TypeError("Argument value should be of type str or None")
         arg = arg.strip().lstrip("-")
-        if arg in self._reserved_run_args:
-            logger.warning(f"Could not set argument '{arg}': it is a reserved arguement")
+        if arg in self.reserved_run_args:
+            logger.warning(
+                (
+                    f"Could not set argument '{arg}': "
+                    f"it is a reserved arguement of '{type(self).__name__}'"
+                )
+            )
+            return
+        if not condition:
+            logger.info(f"Could not set argument '{arg}': condition not met")
             return
         if arg in self.run_args and value != self.run_args[arg]:
             logger.warning(f"Overwritting argument '{arg}' with value '{value}'")

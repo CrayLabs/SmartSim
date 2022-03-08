@@ -24,8 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .base import RunSettings
 from ..error import SSUnsupportedError
+from .base import RunSettings
+
 
 class MpirunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
@@ -53,11 +54,12 @@ class MpirunSettings(RunSettings):
             exe_args,
             run_command="mpirun",
             run_args=run_args,
-            reserved_run_args={"wd", "wdir"},
             env_vars=env_vars,
             **kwargs,
         )
         self.mpmd = []
+
+    reserved_run_args = {"wd", "wdir"}
 
     def make_mpmd(self, mpirun_settings):
         """Make a mpmd workload by combining two ``mpirun`` commands

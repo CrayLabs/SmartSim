@@ -126,3 +126,11 @@ def test_set_overwrites_prev_args():
     rs.set("some-key", "some-val")
     rs.set("some-key", "another-val")
     assert rs.run_args["some-key"] == "another-val"
+
+def test_set_conditional():
+    rs = RunSettings("python")
+    ans = 2 + 2
+    rs.set("ans-is-4-arg", condition=ans == 4)
+    rs.set("ans-is-5-arg", condition=ans == 5)
+    assert "ans-is-4-arg" in rs.run_args
+    assert "ans-is-5-arg" not in rs.run_args

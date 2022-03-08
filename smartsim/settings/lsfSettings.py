@@ -26,10 +26,9 @@
 
 from pprint import pformat
 
-from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
-
 from ..log import get_logger
+from .base import BatchSettings, RunSettings
 
 logger = get_logger(__name__)
 
@@ -54,7 +53,6 @@ class JsrunSettings(RunSettings):
             exe_args,
             run_command="jsrun",
             run_args=run_args,
-            reserved_run_args={"chdir", "h"},
             env_vars=env_vars,
         )
 
@@ -63,6 +61,8 @@ class JsrunSettings(RunSettings):
         self.mpmd_preamble_lines = []
         self.mpmd = []
         self.individual_suffix = None
+
+    reserved_run_args = {"chdir", "h"}
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
