@@ -560,7 +560,7 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
             run_settings = create_run_settings(
-                exe=exe, exe_args=exe_args, run_args=run_args, **kwargs
+                exe=exe, exe_args=exe_args, run_args=run_args.copy(), **kwargs
             )
 
             if self.launcher != "local":
