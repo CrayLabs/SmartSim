@@ -67,8 +67,6 @@ class RunSettings:
         :type run_command: str, optional
         :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
         :type run_args: dict[str, str], optional
-        :param reserved_run_args: set of arguments that should not be set by user, defaults to None
-        :type run_args: set[str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
