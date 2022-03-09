@@ -247,7 +247,7 @@ class WLMUtils:
         elif test_launcher == "slurm":
             db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher)
         elif test_launcher == "lsf":
-            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, gpus_per_shard=1 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
         else:
             db = Orchestrator(port=port, interface="lo")
         return db

@@ -534,13 +534,13 @@ class Orchestrator(EntityList):
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        run_command = kwargs.get("run_command")
-        run_args = kwargs.get("run_args", {})
+        run_args = kwargs.pop("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
         mpmd_nodes = single_cmd and db_nodes > 1
 
         if mpmd_nodes:
+            
             run_settings = create_run_settings(
                 exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
@@ -557,7 +557,7 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
             run_settings = create_run_settings(
-                exe=exe, exe_args=exe_args, run_args=run_args, **kwargs
+                exe=exe, exe_args=exe_args, run_args=run_args.copy(), **kwargs
             )
 
             if self.launcher != "local":
@@ -566,13 +566,13 @@ class Orchestrator(EntityList):
         if self.launcher != "local":
             run_settings.set_tasks_per_node(1)
 
-        if isinstance(run_settings, SrunSettings):
-            run_args["nodes"] = 1 if not mpmd_nodes else db_nodes
+        # Put it back in case it is needed again
+        kwargs["run_args"] = run_args
 
         return run_settings
 
     def _build_run_settings_lsf(self, exe, exe_args, **kwargs):
-        run_args = kwargs.get("run_args", {}).copy()
+        run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
         old_host = None
@@ -581,7 +581,7 @@ class Orchestrator(EntityList):
             host = shard_id
             run_args["launch_distribution"] = "packed"
 
-            run_settings = JsrunSettings(exe, args, run_args=run_args)
+            run_settings = JsrunSettings(exe, args, run_args=run_args.copy())
             run_settings.set_binding("none")
 
             # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
@@ -602,7 +602,7 @@ class Orchestrator(EntityList):
             assigned_smts += cpus_per_shard
             if gpus_per_shard > 1:  # pragma: no-cover
                 erf_sets["gpu"] = (
-                    "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
+                    "{" + f"{assigned_gpus}-{assigned_gpus+gpus_per_shard-1}" + "}"
                 )
             elif gpus_per_shard > 0:
                 erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
@@ -616,6 +616,7 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd()
                 erf_rs = run_settings
 
+        kwargs["run_args"] = run_args
         return erf_rs
 
     def _initialize_entities(self, **kwargs):

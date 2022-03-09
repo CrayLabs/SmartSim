@@ -4,9 +4,6 @@ Installation
 
 The following will show how to install both SmartSim and SmartRedis
 
-For instructions on installing SmartSim once for multiple users of
-a shared system, see :ref:`this section below <site-wide>`.
-
 =============
 Prerequisites
 =============
@@ -15,7 +12,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
 
   - Python 3.7-3.9
   - Pip
-  - Cmake 3.10.x (or later)
+  - Cmake 3.13.x (or later)
   - C compiler
   - C++ compiler
   - GNU Make > 4.0
@@ -55,10 +52,13 @@ Supported Versions
      - Nvidia
      - 3.7 - 3.9
 
+
 .. note::
 
-  Windows is not supported and there are currently no plans
-  to support Windows.
+    Windows is not supported and there are currently no plans
+    to support Windows.
+
+
 
 SmartSim supports multiple machine learning libraries through
 the use of RedisAI_. The following libraries are supported.
@@ -151,11 +151,13 @@ To see all the installation options:
 
     smart
 
-.. note::
 
+.. note::
   If the ``smart`` tool is not found. Look for it in places like
   ``~/.local/bin`` and other ``bin`` locations and add it to your
   ``$PATH``
+
+
 
 CPU Install
 -----------
@@ -177,11 +179,13 @@ To install the default ML backends for CPU, run
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
 
-.. note::
 
+.. note::
     If a re-build is needed for any reason, ``smart clean`` will remove
     all of the previous installs for the ML backends and ``smart clobber`` will
     remove all pre-built dependencies as well as the ML backends.
+
+
 
 GPU Install
 -----------
@@ -208,46 +212,11 @@ For example, for bash do
     smart build --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
-.. note::
 
+.. note::
   Currently, SmartSim is solely compatible with NVIDIA GPUs on Linux systems
   and ``CUDA >= 11`` is required to build.
 
-
-Site-wide Installation
-======================
-
-.. _site-wide:
-
-Some users may wish to build SmartSim once, and have it available to
-all users of a system. When done, users will only ever have to install
-the Python package for smartsim which is fairly quick and painless.
-The following can be done by both a non-root and root user but for
-shared sites, it is highly recommended to consult with the site admins.
-
-To have a site wide install, do the following.
-
-1. Build SmartSim from source :ref:`as shown here <install-source>` for
-   the desired ML backend and device (GPU/CPU) platform your users are expected to use.
-2. Locate the `bin` and `lib` folders in `smartsim/_core/` and copy them
-   into a directory where you would like them to reside. Be sure this is a
-   location available to all compute nodes on the system (i.e. on the shared filesystem).
-3. Create a bash profile or modulefile that will set the user SmartSim environment as follows
-
-.. code-block:: bash
-
-   export RAI_PATH=/path/to/lib/redisai.so
-   export REDIS_PATH=/path/to/bin/redis-server
-   export REDIS_CLI_PATH=/path/to/bin/redis-cli
-
-   # optional settings
-   export SMARTSIM_LOG_LEVEL=debug # (more verbose outputs)
-   export SMARTSIM_JM_INTERVAL=20  # (control how often SmartSim pings schedulers like Slurm)
-
-
-4. Lastly, have all users put this file into their .bashrc or .bash_profile
-   file. From then on, users will only have to run ``pip install smartsim`` and
-   everything will be installed each time.
 
 
 ----------------------------------------------------------------------
@@ -499,53 +468,69 @@ SmartSim on Summit at OLCF
 Since SmartSim does not have a built PowerPC build, the build steps for
 an IBM system are slightly different than other systems.
 
-Luckily for us, Summit has an environment with many of the ML dependencies
-that SmartSim needs already built into it. Users can follow these instructions
-to get a working SmartSim build with PyTorch and TensorFlow for GPU on Summit.
+Luckily for us, a conda channel with all relevant packages is maintained
+as part of the `OpenCE <https://opence.mit.edu/#/>`_ initiative.
+Users can follow these instructions to get a working SmartSim build 
+with PyTorch and TensorFlow for GPU on Summit.
 Note that SmartSim and SmartRedis will be downloaded to the working directory
 from which these instructions are executed.
 
 .. code-block:: bash
 
   # setup Python and build environment
-  module load open-ce
-  conda create -p /ccs/home/$USER/.conda/envs/smartsim --clone open-ce-1.2.0-py38-0
-  conda activate smartsim
-  module load gcc/9.3.0
-  module load cuda/11.4.0
-  module unload xalt
+  export ENV_NAME=smartsim-0.4.0
+  git clone https://github.com/CrayLabs/SmartRedis.git smartredis
+  git clone https://github.com/CrayLabs/SmartSim.git smartsim
+  conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.4.1/
+  conda create --name $ENV_NAME -y  python=3.9 \
+                                    git-lfs \
+                                    cmake \
+                                    make \
+                                    cudnn=8.1.1_11.2 \
+                                    cudatoolkit=11.2.2 \
+                                    tensorflow=2.6.2 \
+                                    libtensorflow=2.6.2 \
+                                    pytorch=1.9.0 \
+                                    torchvision=0.10.0 
+  conda activate $ENV_NAME
   export CC=$(which gcc)
   export CXX=$(which g++)
   export LDFLAGS="$LDFLAGS -pthread"
-  export CUDNN_LIBRARY=/sw/summit/cuda/11.4.0/lib64
-  export CUDNN_INCLUDE_DIR=/sw/summit/cuda/11.4.0/include/
-
+  export CUDNN_LIBRARY=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/
+  export CUDNN_INCLUDE_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/include/
+  module load cuda/11.4.2
+  export LD_LIBRARY_PATH=$CUDNN_LIBRARY:$LD_LIBRARY_PATH:/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/torch/lib
+  module load gcc/9.3.0
+  module unload xalt
   # clone SmartRedis and build
-  git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   pushd smartredis
   make lib && pip install .
   popd
 
   # clone SmartSim and build
-  git clone https://github.com/CrayLabs/SmartSim.git smartsim
   pushd smartsim
   pip install .
 
-  pip uninstall cmake
-  conda install cmake
-  conda install git-lfs
-  conda install make
   # install PyTorch and TensorFlow backend for the Orchestrator database.
-  export Torch_DIR=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/share/cmake/Torch/
-  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/smarter/lib/python3.8/site-packages/tensorflow/include"
-  smart build --device=gpu --torch_dir $Torch_DIR -v
+  export Torch_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/torch/share/cmake/Torch/
+  export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/include"
+  export SMARTSIM_REDISAI=1.2.5
+  export Tensorflow_BUILD_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/
+  smart build --device=gpu --torch_dir $Torch_DIR --libtensorflow_dir $Tensorflow_BUILD_DIR -v
 
-When executing SmartSim, if you want to use the PyTorch backend in the orchestrator,
-you will need to add the PyTorch library path to the environment with:
+  # Show LD_LIBRARY_PATH for future reference
+  echo "SmartSim installation is complete, LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+
+When executing SmartSim, if you want to use the PyTorch and TensorFlow backends in the orchestrator,
+you will need to set up the same environment used at build time:
 
 .. code-block:: bash
-
-  export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH
+  
+  module load cuda/11.4.2
+  export CUDNN_LIBRARY=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/
+  export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH:$CUDNN_LIBRARY
+  module load gcc/9.3.0
+  module unload xalt
 
 
 SmartSim on Cheyenne at NCAR

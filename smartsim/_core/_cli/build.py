@@ -29,7 +29,7 @@ class Build:
         )
         parser.add_argument(
             "--device",
-            type=str,
+            type=str.lower,
             default="cpu",
             help="Device to build ML runtimes for (cpu || gpu)",
         )
@@ -56,6 +56,12 @@ class Build:
             default=None,
             type=str,
             help="Path to custom <path>/torch/share/cmake/Torch/ directory (ONLY USE IF NEEDED)",
+        )
+        parser.add_argument(
+            "--libtensorflow_dir",
+            default=None,
+            type=str,
+            help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
         )
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
@@ -87,7 +93,9 @@ class Build:
             self.build_redis()
 
             # REDISAI
-            self.build_redis_ai(str(args.device), pt, tf, onnx, args.torch_dir)
+            self.build_redis_ai(
+                str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
+            )
 
         except (SetupError, BuildError) as e:
             logger.error(str(e))
@@ -112,7 +120,9 @@ class Build:
             redis_builder.cleanup()
         logger.info("Redis build complete!")
 
-    def build_redis_ai(self, device, torch=True, tf=True, onnx=False, torch_dir=None):
+    def build_redis_ai(
+        self, device, torch=True, tf=True, onnx=False, torch_dir=None, libtf_dir=None
+    ):
 
         # make sure user isn't trying to do something silly on MacOS
         if self.build_env.PLATFORM == "darwin":
@@ -160,9 +170,14 @@ class Build:
                 self.install_torch(device=device)
                 torch_dir = self.build_env.torch_cmake_path
 
+        if tf:
+            if libtf_dir:
+                libtf_dir = Path(libtf_dir).resolve()
+
         rai_builder = builder.RedisAIBuilder(
             build_env=self.build_env(),
-            torch_dir=str(torch_dir),
+            torch_dir=str(torch_dir) if torch_dir else None,
+            libtf_dir=str(libtf_dir) if libtf_dir else None,
             build_torch=torch,
             build_tf=tf,
             build_onnx=onnx,

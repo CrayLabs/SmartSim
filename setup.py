@@ -156,13 +156,6 @@ extras_require = {
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),
-    "doc": [
-        "sphinx==4.4.0",
-        "breathe==4.31.0",
-        "sphinx-book-theme==0.2.0",
-        "sphinx-fortran==1.1.1",
-        "nbsphinx>=0.8.2"
-    ],
     "ray": "ray>=1.6"
     }
 

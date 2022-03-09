@@ -15,7 +15,7 @@ fig = plt.figure(figsize=(12,6), dpi=80)
 time_steps, seed = 3000, 42
 
 # define how simulation should be executed
-settings = exp.create_run_settings("python", 
+settings = exp.create_run_settings("python",
                                    exe_args=["fv_sim.py",
                                              f"--seed={seed}",
                                              f"--steps={time_steps}"])
