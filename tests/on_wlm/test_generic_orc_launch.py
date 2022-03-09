@@ -13,7 +13,7 @@ def test_launch_orc_auto(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-orc"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -46,7 +46,7 @@ def test_launch_cluster_orc_single(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-cluster-orc-single"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -80,7 +80,7 @@ def test_launch_cluster_orc_multi(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-cluster-orc-multi"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()

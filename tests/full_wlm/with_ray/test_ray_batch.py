@@ -37,7 +37,7 @@ def test_ray_launch_and_shutdown_batch(fileutils, wlmutils, caplog):
         pytest.skip("Test cannot be run with local launcher")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-launch-and-shutdown-batch")
+    test_dir = fileutils.make_test_dir()
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(

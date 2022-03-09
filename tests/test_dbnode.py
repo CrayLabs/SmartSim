@@ -16,7 +16,7 @@ def test_parse_db_host_error():
 def test_hosts(fileutils):
     exp_name = "test_hosts"
     exp = Experiment(exp_name)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     orc = Orchestrator(port=6888, interface="lo", launcher="local")
     orc.set_path(test_dir)

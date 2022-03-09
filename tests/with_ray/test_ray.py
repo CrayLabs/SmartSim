@@ -37,7 +37,7 @@ def test_ray_launch_and_shutdown_wlm(fileutils, wlmutils, caplog):
         pytest.skip("Test can not be run on local launcher")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-launch-and-shutdown-wlm")
+    test_dir = fileutils.make_test_dir()
 
     exp = Experiment("ray-cluster", test_dir, launcher=launcher)
     cluster = RayCluster(
@@ -82,7 +82,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
         pytest.skip("Test can not be run inside an allocation")
 
     caplog.set_level(logging.CRITICAL)
-    test_dir = fileutils.make_test_dir("test-ray-slurm-launch-and-shutdown-in-alloc")
+    test_dir = fileutils.make_test_dir()
 
     alloc = slurm.get_allocation(4, time="00:05:00")
 
@@ -127,7 +127,7 @@ def test_ray_launch_and_shutdown_in_alloc(fileutils, wlmutils, caplog):
 def test_ray_errors(fileutils):
     """Try to start a local Ray cluster with incorrect settings."""
 
-    test_dir = fileutils.make_test_dir("test-ray-errors")
+    test_dir = fileutils.make_test_dir()
 
     with pytest.raises(SSUnsupportedError):
         _ = RayCluster(
@@ -156,7 +156,7 @@ def test_ray_local_launch_and_shutdown(fileutils, caplog):
     # Avoid Ray output
     caplog.set_level(logging.CRITICAL)
 
-    test_dir = fileutils.make_test_dir("test-ray-local-launch-and-shutdown")
+    test_dir = fileutils.make_test_dir()
 
     exp = Experiment("ray-cluster", launcher="local", exp_path=test_dir)
     cluster = RayCluster(

@@ -40,7 +40,7 @@ def test_inactive_orc_get_address():
 def test_orc_active_functions(fileutils):
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     db = Orchestrator(port=6780)
     db.set_path(test_dir)

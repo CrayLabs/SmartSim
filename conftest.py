@@ -260,7 +260,7 @@ def local_db(fileutils, request):
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
     print (request.fspath)
-    test_dir = fileutils.make_test_dir(exp_name, caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = Orchestrator(port=6780, interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -278,7 +278,7 @@ def db(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name, caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -298,7 +298,7 @@ def db_cluster(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name, caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -394,7 +394,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def get_test_dir(dir_name, caller_function=None, caller_fspath=None):
+    def get_test_dir(caller_function=None, caller_fspath=None):
         """Get path to test output.
 
         This function should be called without arguments from within
@@ -405,8 +405,6 @@ class FileUtils:
         The directory will not be created, but the parent (and all the needed
         tree) will. This is to allow tests to create the directory.
 
-        :param dir_name: (deprecated) Name of directory to use
-        :type dir_name: str
         :param caller_function: caller function name defaults to None
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None
@@ -426,7 +424,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_dir(dir_name, caller_function=None, caller_fspath=None):
+    def make_test_dir(caller_function=None, caller_fspath=None):
         """Create test output directory and return path to it.
 
         This function should be called without arguments from within
@@ -435,8 +433,6 @@ class FileUtils:
         When called from other functions (e.g. from functions in this file),
         the caller function and the caller file path should be provided.
 
-        :param dir_name: (deprecated) Name of directory to create
-        :type dir_name: str
         :param caller_function: caller function name defaults to None
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None

@@ -49,7 +49,7 @@ def test_mpmd(fileutils, wlmutils):
     if len(run_commands) == 0:
         pytest.skip(f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}")
 
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
         settings = exp.create_run_settings("python", f"{script} --time=5", run_command=run_command)

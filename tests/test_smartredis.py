@@ -37,7 +37,7 @@ def test_exchange(fileutils):
     Finally, the tensor is used to run a model.
     """
 
-    test_dir = fileutils.make_test_dir("smartredis_ensemble_exchange_test")
+    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "smartredis_ensemble_exchange", exp_path=test_dir, launcher="local"
     )
@@ -86,7 +86,7 @@ def test_consumer(fileutils):
     Finally, the tensor is used to run a model by each producer
     and the consumer accesses the two results.
     """
-    test_dir = fileutils.make_test_dir("smartredis_ensemble_consumer_test")
+    test_dir = fileutils.make_test_dir()
     exp = Experiment(
         "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
     )
