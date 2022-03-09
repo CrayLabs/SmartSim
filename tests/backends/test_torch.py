@@ -35,7 +35,7 @@ def test_torch_model_and_script(fileutils, mlutils, wlmutils):
     """
 
     exp_name = "test_torch_model_and_script"
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 

@@ -11,7 +11,7 @@ def test_launch_colocated_model(fileutils):
     exp = Experiment(exp_name, launcher="local")
 
     # get test setup
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
 
     # create colocated model

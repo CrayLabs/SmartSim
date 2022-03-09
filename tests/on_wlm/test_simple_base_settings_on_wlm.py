@@ -31,7 +31,7 @@ def test_simple_model_on_wlm(fileutils, wlmutils):
 
     exp_name = "test-simplebase-settings-model-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")
@@ -52,7 +52,7 @@ def test_simple_model_stop_on_wlm(fileutils, wlmutils):
 
     exp_name = "test-simplebase-settings-model-stop"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = RunSettings("python", exe_args=f"{script} --time=5")

@@ -35,7 +35,7 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     """
 
     exp_name = "test_keras_model"
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 
@@ -86,7 +86,7 @@ def create_tf_model():
 @pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
 def test_freeze_model(fileutils):
     test_name = "test_tf_freeze_model"
-    test_dir = fileutils.make_test_dir(test_name)
+    test_dir = fileutils.make_test_dir()
 
     model = create_tf_model()
     model_path, inputs, outputs = freeze_model(model, test_dir, "mnist.pb")

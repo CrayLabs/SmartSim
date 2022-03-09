@@ -14,7 +14,7 @@ def test_batch_ensemble(fileutils, wlmutils):
 
     exp_name = "test-batch-ensemble"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
@@ -40,7 +40,7 @@ def test_batch_ensemble(fileutils, wlmutils):
 def test_batch_ensemble_replicas(fileutils, wlmutils):
     exp_name = "test-batch-ensemble-replicas"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
