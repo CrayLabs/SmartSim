@@ -1,3 +1,4 @@
+import os
 from shutil import which
 from subprocess import run
 
@@ -31,4 +32,10 @@ def detect_launcher():
         and which("sinfo")
     ):
         return "slurm"
+    # Systems like ThetaGPU don't have
+    # Cobalt or PBS on compute nodes
+    if "COBALT_JOBID" in os.environ:
+        return "cobalt"
+    if "PBS_JOBID" in os.environ:
+        return "pbs"
     return "local"

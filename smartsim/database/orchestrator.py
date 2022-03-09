@@ -129,10 +129,10 @@ class Orchestrator(EntityList):
             raise SmartSimError(msg)
 
         if launcher == "local" and batch:
-            msg = "Local launcher can not be launched with batch=True"
+            msg = "Local orchestrator can not be launched with batch=True"
             raise SmartSimError(msg)
         if run_command == "aprun" and batch and single_cmd:
-            msg = "aprun can launched orchestrator with batch=True and single_cmd=True. "
+            msg = "aprun can not launch an orchestrator with batch=True and single_cmd=True. "
             msg += "Automatically switching to single_cmd=False."
             logger.info(msg)
             single_cmd = False
