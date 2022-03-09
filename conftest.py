@@ -98,14 +98,14 @@ def get_hostlist():
             try:
                 with open(os.environ["COBALT_NODEFILE"], 'r') as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = [line.strip() for line in lines]
+                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
             except:
                 return None
-        elif "COBALT_NODEFILE" in os.environ:
+        elif "PBS_NODEFILE" in os.environ:
             try:
                 with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = [line.strip() for line in lines]
+                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
             except:
                 return None
         elif "SLURM_JOB_NODELIST" in os.environ:
