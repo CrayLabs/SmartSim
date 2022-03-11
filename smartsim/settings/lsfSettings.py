@@ -26,10 +26,9 @@
 
 from pprint import pformat
 
-from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
-
 from ..log import get_logger
+from .base import BatchSettings, RunSettings
 
 logger = get_logger(__name__)
 
@@ -50,7 +49,11 @@ class JsrunSettings(RunSettings):
         :type env_vars: dict[str, str], optional
         """
         super().__init__(
-            exe, exe_args, run_command="jsrun", run_args=run_args, env_vars=env_vars
+            exe,
+            exe_args,
+            run_command="jsrun",
+            run_args=run_args,
+            env_vars=env_vars,
         )
 
         # Parameters needed for MPMD run
@@ -58,6 +61,8 @@ class JsrunSettings(RunSettings):
         self.mpmd_preamble_lines = []
         self.mpmd = []
         self.individual_suffix = None
+
+    reserved_run_args = {"chdir", "h"}
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use

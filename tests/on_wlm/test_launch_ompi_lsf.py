@@ -7,13 +7,14 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
+@pytest.mark.skip("OpenMPI currently not working on LSF systems")
 def test_launch_openmpi_lsf(wlmutils, fileutils):
     launcher = wlmutils.get_test_launcher()
     if launcher != "lsf":
         pytest.skip("Test only runs on systems with LSF as WLM")
     exp_name = "test-launch-openmpi-lsf"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", script, "mpirun")

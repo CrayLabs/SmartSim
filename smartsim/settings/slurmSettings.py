@@ -26,8 +26,9 @@
 
 import os
 
-from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
+from .base import BatchSettings, RunSettings
+
 
 
 class SrunSettings(RunSettings):
@@ -62,6 +63,8 @@ class SrunSettings(RunSettings):
         )
         self.alloc = alloc
         self.mpmd = []
+
+    reserved_run_args = {"chdir", "D"}
 
     def set_nodes(self, nodes):
         """Set the number of nodes

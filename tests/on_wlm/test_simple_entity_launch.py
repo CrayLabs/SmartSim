@@ -23,7 +23,7 @@ if pytest.test_launcher not in pytest.wlm_options:
 def test_models(fileutils, wlmutils):
     exp_name = "test-models-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -40,7 +40,7 @@ def test_models(fileutils, wlmutils):
 def test_ensemble(fileutils, wlmutils):
     exp_name = "test-ensemble-launch"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=5")
@@ -59,7 +59,7 @@ def test_summary(fileutils, wlmutils):
 
     exp_name = "test-launch-summary"
     exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     sleep = fileutils.get_test_conf_path("sleep.py")
     bad = fileutils.get_test_conf_path("bad.py")

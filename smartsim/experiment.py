@@ -690,7 +690,6 @@ class Experiment:
             logger.error(e)
             raise
 
-
     def summary(self, format="github"):
         """Return a summary of the ``Experiment``
 
@@ -745,7 +744,9 @@ class Experiment:
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
         if manifest.ensembles or manifest.ray_clusters:
-            summary += f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
+            summary += (
+                f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
+            )
         if manifest.models:
             summary += f"Models: {len(manifest.models)}\n"
 

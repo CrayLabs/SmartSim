@@ -15,7 +15,7 @@ def test_local_orchestrator(fileutils):
     global first_dir
     exp_name = "test-orc-launch-local"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     first_dir = test_dir
 
     orc = Orchestrator(port=6780)

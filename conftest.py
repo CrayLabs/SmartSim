@@ -1,21 +1,20 @@
 import os
+import inspect
 import shutil
 import pytest
 import psutil
+import shutil
 import smartsim
 from smartsim import Experiment
-from smartsim.database import (
-    CobaltOrchestrator, SlurmOrchestrator,
-    PBSOrchestrator, Orchestrator,
-    LSFOrchestrator
-)
-from smartsim.error.errors import SSUnsupportedError
+from smartsim.database import Orchestrator
 from smartsim.settings import (
     SrunSettings, AprunSettings,
-    JsrunSettings, RunSettings
+    JsrunSettings, MpirunSettings,
+    RunSettings
 )
 from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
+from subprocess import run
 
 
 # Globals, yes, but its a testing file
@@ -24,6 +23,8 @@ test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_nic = CONFIG.test_interface
+# Fill this at runtime if needed
+test_hostlist = None
 
 def get_account():
     global test_account
@@ -90,6 +91,31 @@ def kill_all_test_spawned_processes():
     except Exception:
         print("Not all processes were killed after test")
 
+def get_hostlist():
+    global test_hostlist
+    if not test_hostlist:
+        if "COBALT_NODEFILE" in os.environ:
+            try:
+                with open(os.environ["COBALT_NODEFILE"], 'r') as nodefile:
+                    lines = nodefile.readlines()
+                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
+            except:
+                return None
+        elif "PBS_NODEFILE" in os.environ:
+            try:
+                with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
+                    lines = nodefile.readlines()
+                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
+            except:
+                return None
+        elif "SLURM_JOB_NODELIST" in os.environ:
+            try:
+                nodelist = os.environ["SLURM_JOB_NODELIST"]
+                test_hostlist = run(["scontrol", "show" , "hostnames", nodelist], capture_output=True, text=True).stdout.split()
+            except:
+                return None
+    return test_hostlist
+
 @pytest.fixture
 def wlmutils():
     return WLMUtils
@@ -117,6 +143,10 @@ class WLMUtils:
         return test_nic
 
     @staticmethod
+    def get_test_hostlist():
+        return get_hostlist()
+
+    @staticmethod
     def get_base_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
             run_args = {"--nodes": nodes,
@@ -126,14 +156,28 @@ class WLMUtils:
             settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
             return settings
         if test_launcher == "pbs":
-            run_args = {"--pes": ntasks}
+            if shutil.which("aprun"):
+                run_command = "aprun"
+                run_args = {"--pes": ntasks}
+            else:
+                run_command = "mpirun"
+                host_file = os.environ["PBS_NODEFILE"]
+                run_args = {"-n": ntasks,
+                            "--hostfile": host_file}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
+            settings = RunSettings(exe, args, run_command=run_command, run_args=run_args)
             return settings
         if test_launcher == "cobalt":
-            run_args = {"--pes": ntasks}
+            if shutil.which("aprun"):
+                run_command = "aprun"
+                run_args = {"--pes": ntasks}
+            else:
+                run_command = "mpirun"
+                host_file = os.environ["COBALT_NODEFILE"]
+                run_args = {"-n": ntasks,
+                            "--hostfile": host_file}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command="aprun", run_args=run_args)
+            settings = RunSettings(exe, args, run_command=run_command, run_args=run_args)
             return settings
         if test_launcher == "lsf":
             run_args = {"--np": ntasks, "--nrs": nodes}
@@ -156,15 +200,29 @@ class WLMUtils:
             settings = SrunSettings(exe, args, run_args=run_args)
             return settings
         elif test_launcher == "pbs":
-            run_args = {"pes": ntasks}
-            run_args.update(kwargs)
-            settings = AprunSettings(exe, args, run_args=run_args)
+            if shutil.which("aprun"):
+                run_args = {"pes": ntasks}
+                run_args.update(kwargs)
+                settings = AprunSettings(exe, args, run_args=run_args)
+            else:
+                host_file = os.environ["PBS_NODEFILE"]
+                run_args = {"n": ntasks,
+                            "hostfile": host_file}
+                run_args.update(kwargs)
+                settings = MpirunSettings(exe, args, run_args=run_args)
             return settings
         # TODO allow user to pick aprun vs MPIrun
         elif test_launcher == "cobalt":
-            run_args = {"pes": ntasks}
-            run_args.update(kwargs)
-            settings = AprunSettings(exe, args, run_args=run_args)
+            if shutil.which("aprun"):
+                run_args = {"pes": ntasks}
+                run_args.update(kwargs)
+                settings = AprunSettings(exe, args, run_args=run_args)
+            else:
+                host_file = os.environ["COBALT_NODEFILE"]
+                run_args = {"n": ntasks,
+                            "hostfile": host_file}
+                run_args.update(kwargs)
+                settings = MpirunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "lsf":
             run_args = {"nrs": nodes,
@@ -180,27 +238,30 @@ class WLMUtils:
     def get_orchestrator(nodes=1, port=6780, batch=False):
         global test_launcher
         global test_nic
-        if test_launcher == "slurm":
-            db = SlurmOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
-        elif test_launcher == "pbs":
-            db = PBSOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
-        elif test_launcher == "cobalt":
-            db = CobaltOrchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic)
+        if test_launcher in ["pbs", "cobalt"]:
+            if not shutil.which("aprun"):
+                hostlist = get_hostlist()
+            else:
+                hostlist = None
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher, hosts=hostlist)
+        elif test_launcher == "slurm":
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher)
         elif test_launcher == "lsf":
-            db = LSFOrchestrator(db_nodes=nodes, port=port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic)
+            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
         else:
             db = Orchestrator(port=port, interface="lo")
         return db
 
 
 @pytest.fixture
-def local_db(fileutils, wlmutils, request):
+def local_db(fileutils, request):
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(exp_name)
-    db = wlmutils.get_orchestrator()
+    print (request.fspath)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
+    db = Orchestrator(port=6780, interface="lo")
     db.set_path(test_dir)
     exp.start(db)
 
@@ -217,7 +278,7 @@ def db(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -237,7 +298,7 @@ def db_cluster(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -326,15 +387,68 @@ def fileutils():
 class FileUtils:
 
     @staticmethod
-    def get_test_dir(dir_name):
-        dir_path = os.path.join(test_dir, dir_name)
+    def _test_dir_path(caller_function, caller_fspath):
+        caller_file_to_dir = str(caller_fspath).rsplit(".")[0]
+        rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
+        dir_path = os.path.join(test_dir, rel_path, caller_function)
         return dir_path
 
     @staticmethod
-    def make_test_dir(dir_name):
-        dir_path = os.path.join(test_dir, dir_name)
+    def get_test_dir(caller_function=None, caller_fspath=None):
+        """Get path to test output.
+
+        This function should be called without arguments from within
+        a test: the returned directory will be
+        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
+        When called from other functions (e.g. from functions in this file),
+        the caller function and the caller file path should be provided.
+        The directory will not be created, but the parent (and all the needed
+        tree) will. This is to allow tests to create the directory.
+
+        :param caller_function: caller function name defaults to None
+        :type caller_function: str, optional
+        :param caller_fspath: absolute path to file containing caller, defaults to None
+        :type caller_fspath: str or Path, optional
+        :return: String path to test ouptut directory
+        :rtype: str
+        """
+        if not caller_function or not caller_fspath:
+            caller_frame = inspect.stack()[1]
+            caller_fspath = caller_frame.filename
+            caller_function = caller_frame.function
+            
+        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
+        if not os.path.exists(os.path.dirname(dir_path)):
+            os.makedirs(os.path.dirname(dir_path))
+        # dir_path = os.path.join(test_dir, dir_name)
+        return dir_path
+
+    @staticmethod
+    def make_test_dir(caller_function=None, caller_fspath=None):
+        """Create test output directory and return path to it.
+
+        This function should be called without arguments from within
+        a test: the directory will be created as
+        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
+        When called from other functions (e.g. from functions in this file),
+        the caller function and the caller file path should be provided.
+
+        :param caller_function: caller function name defaults to None
+        :type caller_function: str, optional
+        :param caller_fspath: absolute path to file containing caller, defaults to None
+        :type caller_fspath: str or Path, optional
+        :return: String path to test ouptut directory
+        :rtype: str
+        """
+        if not caller_function or not caller_fspath:
+            caller_frame = inspect.stack()[1]
+            caller_fspath = caller_frame.filename
+            caller_function = caller_frame.function
+            
+        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
+        # dir_path = os.path.join(test_dir, dir_name)
         try:
-            os.mkdir(dir_path)
+            os.makedirs(dir_path)
         except Exception:
             return dir_path
         return dir_path

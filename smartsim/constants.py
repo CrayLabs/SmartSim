@@ -26,8 +26,7 @@
 
 # Constants for SmartSim
 
-from warnings import warn, simplefilter
-
+from warnings import simplefilter, warn
 
 dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"
 dep_msg += "This module will be removed in the next release."
