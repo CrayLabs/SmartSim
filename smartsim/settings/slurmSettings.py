@@ -30,7 +30,6 @@ from ..error import SSUnsupportedError
 from .base import BatchSettings, RunSettings
 
 
-
 class SrunSettings(RunSettings):
     def __init__(
         self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None, **kwargs
@@ -153,7 +152,7 @@ class SrunSettings(RunSettings):
 
     def set_cpu_bindings(self, bindings):
         """Bind by setting CPU masks on tasks
-        
+
         This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
 
         :param bindings: List specifing the cores to which MPI processes are bound
@@ -166,16 +165,16 @@ class SrunSettings(RunSettings):
 
     def set_memory_per_node(self, memory_per_node):
         """Specify the real memory required per node
-        
+
         This sets ``--mem`` in megabytes
 
-        :param memory_per_node: 
-        :type memory_per_node: str 
+        :param memory_per_node: Amount of memory per node in megabytes
+        :type memory_per_node: int
         """
         self.run_args["mem"] = f"{int(memory_per_node)}M"
 
     def set_verbose_launch(self, verbose):
-        """Set the verbosity for this job
+        """Set the job to run in verbose mode
 
         This sets ``--verbose``
 
@@ -187,6 +186,42 @@ class SrunSettings(RunSettings):
             return
         if verbose in self.run_args:
             del self.run_args["verbose"]
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run verbosly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+            return
+        if quiet in self.run_args:
+            del self.run_args["quiet"]
+
+    def set_broadcast(self, dest_path):
+        """Copy executable file to allocated compute nodes
+
+        This sets ``--bcast``
+
+        :param dest_path: Path to copy an executable file
+        :type dest_path: str | None
+        """
+        self.run_args["bcast"] = dest_path
+
+    def set_timeout(self, time):
+        """Set the maximum number of seconds that a job will run
+
+        This sets ``--time``
+
+        :param time: The maximum number of seconds that a job will run in secs
+        :type quiet: int
+        """
+        min = int(time) // 60
+        sec = int(time) % 60
+        self.set_walltime(f"{min}:{sec}")
 
     def set_walltime(self, walltime):
         """Set the walltime of the job

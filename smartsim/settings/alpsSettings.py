@@ -28,7 +28,6 @@ from ..error import SSUnsupportedError
 from .base import RunSettings
 
 
-
 class AprunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``aprun`` command
@@ -138,7 +137,55 @@ class AprunSettings(RunSettings):
         :param memory_per_node: Number of megabytes per node
         :type memory_per_node: int
         """
-        self.run_args["cc"] = ",".join(str(int(num)) for num in bindings)
+        self.run_args["cpu-binding"] = ",".join(str(int(num)) for num in bindings)
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the real memory required per node
+
+        This sets ``--mem`` in megabytes
+
+        :param memory_per_node: Per PE memory limit in megabytes
+        :type memory_per_node: int
+        """
+        self.run_args["memory-per-pe"] = int(memory_per_node)
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        This sets ``--debug`` arg to the highest level
+
+        :param verbose: Whether the job should be run verbosly
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["debug"] = 7
+            return
+        if verbose in self.run_args:
+            del self.run_args["debug"]
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run verbosly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+            return
+        if quiet in self.run_args:
+            del self.run_args["quiet"]
+
+    def set_timeout(self, time):
+        """Set the per PE CPU time limit in seconds
+
+        This sets ``--cpu-time-limit``
+
+        :param time: The time limit in secs
+        :type quiet: int
+        """
+        self.run_args["cpu-time-limit"] = int(time)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments

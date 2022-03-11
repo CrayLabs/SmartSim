@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from asyncio.log import logger
 from ..error import SSUnsupportedError
 from .base import RunSettings
-
 
 
 class MpirunSettings(RunSettings):
@@ -136,7 +136,7 @@ class MpirunSettings(RunSettings):
         self.run_args["host"] = ",".join(host_list)
 
     def set_verbose_launch(self, verbose):
-        """Set the verbosity for this job
+        """Set the job to run in verbose mode
 
         This sets ``--verbose``
 
@@ -148,6 +148,47 @@ class MpirunSettings(RunSettings):
             return
         if verbose in self.run_args:
             del self.run_args["verbose"]
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run verbosly
+        :type quiet: bool 
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+            return
+        if quiet in self.run_args:
+            del self.run_args["quiet"]
+
+    def set_broadcast(self, dest_path):
+        """Copy the specified executable(s) to remote machines
+
+        This sets ``--preload-binary``
+
+        :param dest_path: Destination path (Ignored)
+        :type dest_path: str | None
+        """
+        if dest_path is not None and isinstance(dest_path, str):
+            logger.warning(
+                (
+                    f"{type(self)} cannot set a destination path during broadcast."
+                    "Using session directory instead"
+                )
+            )
+        self.run_args["preload-binary"] = None
+
+    def set_timeout(self, time):
+        """Set the maximum number of seconds that a job will run
+
+        This sets ``--timeout``
+
+        :param time: The maximum number of seconds that a job will run in secs
+        :type quiet: int
+        """
+        self.run_args["timeout"] = int(time)
 
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments

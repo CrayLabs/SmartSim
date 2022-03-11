@@ -142,13 +142,43 @@ class RunSettings:
         )
 
     def set_verbose_launch(self, verbose):
-        """Set the verbosity for this job
+        """Set the job to run in verbose mode
 
         :param verbose: Whether the job should be run verbosly
-        :type verbose: bool 
+        :type verbose: bool
         """
         logger.warning(
             f"Verbose specification not implemented for this RunSettings type: {type(self)}"
+        )
+    
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        :param quiet: Whether the job should be run verbosly
+        :type quiet: bool 
+        """
+        logger.warning(
+            f"Quiet specification not implemented for this RunSettings type: {type(self)}"
+        )
+
+    def set_broadcast(self, dest_path):
+        """Copy executable file to allocated compute nodes
+
+        :param dest_path: Path to copy an executable file
+        :type dest_path: str | None
+        """
+        logger.warning(
+            f"Broadcast specification not implemented for this RunSettings type: {type(self)}"
+        )
+
+    def set_timeout(self, time):
+        """Set the maximum number of seconds that a job will run
+
+        :param time: The maximum number of seconds that a job will run in secs
+        :type quiet: int
+        """
+        logger.warning(
+            f"Timeout specification not implemented for this RunSettings type: {type(self)}"
         )
 
     @property
