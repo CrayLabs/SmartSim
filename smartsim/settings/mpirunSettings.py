@@ -27,6 +27,7 @@
 from .base import RunSettings
 from ..error import SSUnsupportedError
 
+
 class MpirunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``mpirun`` command (OpenMPI)
@@ -130,6 +131,20 @@ class MpirunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
+
+    def set_verbose_launch(self, verbose):
+        """Set the verbosity for this job
+
+        This sets ``--verbose``
+
+        :param verbose: Whether the job should be run verbosly
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["verbose"] = None
+            return
+        if verbose in self.run_args:
+            del self.run_args["verbose"]
 
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments

@@ -27,6 +27,7 @@
 from .base import RunSettings
 from ..error import SSUnsupportedError
 
+
 class AprunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``aprun`` command
@@ -127,6 +128,16 @@ class AprunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude-node-list"] = ",".join(host_list)
+
+    def set_cpu_bindings(self, bindings):
+        """Specifies the cores to which MPI processes are bound
+
+        This sets ``-cc``
+
+        :param memory_per_node: Number of megabytes per node
+        :type memory_per_node: int
+        """
+        self.run_args["cc"] = ",".join(str(int(num)) for num in bindings)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments

@@ -83,7 +83,7 @@ class RunSettings:
         :param tasks: number of tasks to launch
         :type tasks: int
         """
-        raise NotImplementedError(
+        logger.warning(
             f"Task specification not implemented for this RunSettings type: {type(self)}"
         )
 
@@ -93,7 +93,7 @@ class RunSettings:
         :param tasks_per_node: number of tasks to launch per node
         :type tasks_per_node: int
         """
-        raise NotImplementedError(
+        logger.warning(
             f"Task per node specification not implemented for this RunSettings type: {type(self)}"
         )
 
@@ -103,7 +103,7 @@ class RunSettings:
         :param cpus_per_task: number of cpus per task
         :type cpus_per_task: int
         """
-        raise NotImplementedError(
+        logger.warning(
             f"CPU per node specification not implemented for this RunSettings type: {type(self)}"
         )
 
@@ -113,8 +113,38 @@ class RunSettings:
         :param host_list: hosts to launch on
         :type host_list: str | list[str]
         """
-        raise NotImplementedError(
+        logger.warning(
             f"Host list specification not implemented for this RunSettings type: {type(self)}"
+        )
+
+    def set_cpu_bindings(self, bindings):
+        """Set the cores to which MPI processes are bound
+        
+        :param bindings: List specifing the cores to which MPI processes are bound
+        :type bindings: list[int]
+        """
+        logger.warning(
+            f"CPU binding specification not implemented for this RunSettings type: {type(self)}"
+        )
+    
+    def set_memory_per_node(self, memory_per_node):
+        """Set the amount of memory required per node in megabytes
+
+        :param memory_per_node: Number of megabytes per node
+        :type memory_per_node: int
+        """
+        logger.warning(
+            f"Memory per node specification not implemented for this RunSettings type: {type(self)}"
+        )
+
+    def set_verbose_launch(self, verbose):
+        """Set the verbosity for this job
+
+        :param verbose: Whether the job should be run verbosly
+        :type verbose: bool 
+        """
+        logger.warning(
+            f"Verbose specification not implemented for this RunSettings type: {type(self)}"
         )
 
     @property

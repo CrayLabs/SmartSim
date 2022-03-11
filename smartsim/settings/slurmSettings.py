@@ -29,6 +29,7 @@ import os
 from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
 
+
 class SrunSettings(RunSettings):
     def __init__(
         self, exe, exe_args=None, run_args=None, env_vars=None, alloc=None, **kwargs
@@ -146,6 +147,43 @@ class SrunSettings(RunSettings):
         :type tasks_per_node: int
         """
         self.run_args["ntasks-per-node"] = int(tasks_per_node)
+
+    def set_cpu_bindings(self, bindings):
+        """Bind by setting CPU masks on tasks
+        
+        This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
+
+        :param bindings: List specifing the cores to which MPI processes are bound
+        :type bindings: list[int]
+        """
+
+        self.run_args["cpu_bind"] = "map_cpu:" + ",".join(
+            str(int(num)) for num in bindings
+        )
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the real memory required per node
+        
+        This sets ``--mem`` in megabytes
+
+        :param memory_per_node: 
+        :type memory_per_node: str 
+        """
+        self.run_args["mem"] = f"{int(memory_per_node)}M"
+
+    def set_verbose_launch(self, verbose):
+        """Set the verbosity for this job
+
+        This sets ``--verbose``
+
+        :param verbose: Whether the job should be run verbosly
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["verbose"] = None
+            return
+        if verbose in self.run_args:
+            del self.run_args["verbose"]
 
     def set_walltime(self, walltime):
         """Set the walltime of the job
