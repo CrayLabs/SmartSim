@@ -1,4 +1,5 @@
 import pytest
+import logging
 
 from smartsim.settings import SbatchSettings, SrunSettings
 from smartsim.error import SSUnsupportedError
@@ -48,8 +49,7 @@ def test_update_env():
 
 def test_catch_colo_mpmd():
     srun = SrunSettings("python")
-    srun.colocated_db_settings = {"port": 6379,
-                                  "cpus": 1}
+    srun.colocated_db_settings = {"port": 6379, "cpus": 1}
     srun_2 = SrunSettings("python")
 
     # should catch the user trying to make rs mpmd that already are colocated
@@ -65,6 +65,13 @@ def test_format_env():
     assert "LOGGING" in formatted
     assert "SSKEYIN" in formatted
     assert "SSKEYIN=name_0,name_1" in comma_separated_formatted
+
+
+@pytest.mark.parametrize("reserved_arg", ["chdir", "D"])
+def test_no_set_reserved_args(reserved_arg):
+    srun = SrunSettings("python")
+    srun.set(reserved_arg)
+    assert reserved_arg not in srun.run_args
 
 
 # ---- Sbatch ---------------------------------------------------

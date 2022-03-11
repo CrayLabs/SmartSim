@@ -97,6 +97,14 @@ def test_catch_colo_mpmd():
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
 
+
+@pytest.mark.parametrize("reserved_arg", ["chdir", "h"])
+def test_no_set_reserved_args(reserved_arg):
+    srun = JsrunSettings("python")
+    srun.set(reserved_arg)
+    assert reserved_arg not in srun.run_args
+
+
 # ---- Bsub Batch ---------------------------------------------------
 
 

@@ -24,12 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.utils.helpers import (
-    expand_exe_path,
-    init_default,
-    is_valid_cmd,
-    fmt_dict
-)
+from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -37,7 +32,13 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+        self,
+        exe,
+        exe_args=None,
+        run_command="",
+        run_args=None,
+        env_vars=None,
+        **kwargs,
     ):
         """Run parameters for a ``Model``
 
@@ -76,6 +77,9 @@ class RunSettings:
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
+
+    # To be overwritten by subclasses. Set of reserved args a user cannot change
+    reserved_run_args = set()  # type: set[str]
 
     def set_tasks(self, tasks):
         """Set the number of tasks to launch
@@ -158,6 +162,77 @@ class RunSettings:
                 raise TypeError("Executable arguments should be a list of str")
             self.exe_args.append(arg)
 
+    def set(self, arg, value=None, condition=True):
+        """Allows users to set individual run arguments.
+        
+        A method that allows users to set run arguments after object
+        instantiation. Does basic formatting such as stripping leading dashes.
+        If the argument has been set previously, this method will log warning
+        but ultimately comply.
+
+        Conditional expressions may be passed to the conditional parameter. If the
+        expression evaluates to True, the argument will be set. In not an info
+        message is logged and no further operation is performed.
+
+        Basic Usage
+
+        .. highlight:: python
+        .. code-block:: python
+
+            rs = RunSettings("python")
+            rs.set("an-arg", "a-val")
+            rs.set("a-flag")
+            rs.format_run_args()  # returns ["an-arg", "a-val", "a-flag", "None"]
+
+        Slurm Example with Conditional Setting
+
+        .. highlight:: python
+        .. code-block:: python
+            
+            import socket
+
+            rs = SrunSettings("echo", "hello")
+            rs.set_tasks(1)
+            rs.set("exclusive")
+
+            # Only set this argument if condition param evals True
+            # Otherwise log and NOP
+            rs.set("partition", "debug", 
+                   condition=socket.gethostname()=="testing-system")
+
+            rs.format_run_args()
+            # returns ["exclusive", "None", "partition", "debug"] iff socket.gethostname()=="testing-system"
+            # otherwise returns ["exclusive", "None"]
+        
+        :param arg: name of the argument
+        :type arg: str
+        :param value: value of the argument
+        :type value: str | None
+        :param conditon: set the argument if condition evaluates to True
+        :type condition: bool
+        """
+        if not isinstance(arg, str):
+            raise TypeError("Argument name should be of type str")
+        if value is not None and not isinstance(value, str):
+            raise TypeError("Argument value should be of type str or None")
+        arg = arg.strip().lstrip("-")
+        
+        if not condition:
+            logger.info(f"Could not set argument '{arg}': condition not met")
+            return
+        if arg in self.reserved_run_args:
+            logger.warning(
+                (
+                    f"Could not set argument '{arg}': "
+                    f"it is a reserved arguement of '{type(self).__name__}'"
+                )
+            )
+            return
+
+        if arg in self.run_args and value != self.run_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
+        self.run_args[arg] = value
+
     def _set_exe_args(self, exe_args):
         if exe_args:
             if isinstance(exe_args, str):
@@ -197,7 +272,7 @@ class RunSettings:
             formatted.append(str(value))
         return formatted
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
@@ -277,7 +352,7 @@ class BatchSettings:
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
             string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"
