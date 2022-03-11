@@ -144,15 +144,6 @@ class JsrunSettings(RunSettings):
         """
         self.set_tasks_per_rs(tasks_per_node)
 
-    def set_hostlist(self, host_list):
-        """This function has no effect.
-
-        This function is only available to unify LSFSettings
-        to other WLM settings classes.
-
-        """
-        pass
-
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
 
