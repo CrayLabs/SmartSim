@@ -184,7 +184,7 @@ class SrunSettings(RunSettings):
         if verbose:
             self.run_args["verbose"] = None
             return
-        if verbose in self.run_args:
+        if "verbose" in self.run_args:
             del self.run_args["verbose"]
 
     def set_quiet_launch(self, quiet):
@@ -198,7 +198,7 @@ class SrunSettings(RunSettings):
         if quiet:
             self.run_args["quiet"] = None
             return
-        if quiet in self.run_args:
+        if "quiet" in self.run_args:
             del self.run_args["quiet"]
 
     def set_broadcast(self, dest_path):
@@ -219,9 +219,15 @@ class SrunSettings(RunSettings):
         :param time: The maximum number of seconds that a job will run in secs
         :type quiet: int
         """
-        min = int(time) // 60
-        sec = int(time) % 60
-        self.set_walltime(f"{min}:{sec}")
+        time = int(time)
+        
+        if time == 0:
+            self.run_args["time"] = "0"
+            return
+        
+        min = time // 60
+        sec = time % 60
+        self.set_walltime(f"{min:02}:{sec:02}")
 
     def set_walltime(self, walltime):
         """Set the walltime of the job

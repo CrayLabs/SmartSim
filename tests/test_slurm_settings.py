@@ -1,5 +1,4 @@
 import pytest
-import logging
 
 from smartsim.settings import SbatchSettings, SrunSettings
 from smartsim.error import SSUnsupportedError
@@ -72,6 +71,108 @@ def test_no_set_reserved_args(reserved_arg):
     srun = SrunSettings("python")
     srun.set(reserved_arg)
     assert reserved_arg not in srun.run_args
+
+
+def test_set_tasks():
+    rs = SrunSettings("python")
+    rs.set_tasks(6)
+    assert rs.run_args["ntasks"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_tasks("not an int")
+
+
+def test_set_tasks_per_node():
+    rs = SrunSettings("python")
+    rs.set_tasks_per_node(6)
+    assert rs.run_args["ntasks-per-node"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_tasks_per_node("not an int")
+
+
+def test_set_cpus_per_task():
+    rs = SrunSettings("python")
+    rs.set_cpus_per_task(6)
+    assert rs.run_args["cpus-per-task"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_cpus_per_task("not an int")
+
+
+def test_set_host_list():
+    rs = SrunSettings("python")
+    rs.set_hostlist(["host_A", "host_B"])
+    assert rs.run_args["nodelist"] == "host_A,host_B"
+
+    rs.set_hostlist("host_A")
+    assert rs.run_args["nodelist"] == "host_A"
+
+    with pytest.raises(TypeError):
+        rs.set_hostlist([5])
+
+
+def test_set_cpu_bindings():
+    rs = SrunSettings("python")
+    rs.set_cpu_bindings([1, 2, 3, 4])
+    assert rs.run_args["cpu_bind"] == "map_cpu:1,2,3,4"
+
+    with pytest.raises(TypeError):
+        rs.set_cpu_bindings(1234)
+    
+    with pytest.raises(ValueError):
+        rs.set_cpu_bindings(["not_an_int"])
+
+
+def test_set_memory_per_node():
+    rs = SrunSettings("python")
+    rs.set_memory_per_node(8000)
+    assert rs.run_args["mem"] == "8000M"
+
+    with pytest.raises(ValueError):
+        rs.set_memory_per_node("not_an_int")
+
+
+def test_set_verbose():
+    rs = SrunSettings("python")
+    rs.set_verbose_launch(True)
+    assert "verbose" in rs.run_args
+
+    rs.set_verbose_launch(False)
+    assert "verbose" not in rs.run_args
+
+    # Ensure not error on repeat calls
+    rs.set_verbose_launch(False)
+
+
+def test_quiet_launch():
+    rs = SrunSettings("python")
+    rs.set_quiet_launch(True)
+    assert "quiet" in rs.run_args
+
+    rs.set_quiet_launch(False)
+    assert "quiet" not in rs.run_args
+
+    # Ensure not error on repeat calls
+    rs.set_quiet_launch(False)
+
+
+def test_set_broadcast():
+    rs = SrunSettings("python")
+    rs.set_broadcast("/tmp/some/path")
+    assert rs.run_args["bcast"] == "/tmp/some/path"
+
+
+def test_set_timeout():
+    rs = SrunSettings("python")
+    rs.set_timeout(72)
+    assert rs.run_args["time"] == "01:12"
+
+    rs.set_timeout(0)
+    assert rs.run_args["time"] == "0"
+
+    with pytest.raises(ValueError):
+        rs.set_timeout("not an int")
 
 
 # ---- Sbatch ---------------------------------------------------
