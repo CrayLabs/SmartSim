@@ -1,5 +1,5 @@
-from pprint import pformat
 from shutil import which
+import logging
 
 import pytest
 
@@ -112,12 +112,51 @@ def test_set_format_args(set_str, val, key):
     rs.set(set_str, val)
     assert rs.run_args[key] == val
 
+@pytest.mark.parametrize("method,params", [
+    pytest.param("set_tasks", (2,), id="set_tasks"),
+    pytest.param("set_tasks_per_node", (3,), id="set_tasks_per_node"),
+    pytest.param("set_cpus_per_task", (4,), id="set_cpus_per_task"),
+    pytest.param("set_hostlist", ("hostlist",), id="set_hostlist"),
+    pytest.param("set_cpu_bindings", ([1,2,3],), id="set_cpu_bindings"),
+    pytest.param("set_memory_per_node", (16_000,), id="set_memory_per_node"),
+    pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
+    pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
+    pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
+    pytest.param("set_timeout", (360,), id="set_timeout"),
+])
+def test_unimplimented_setters_throw_warning(caplog, method, params):
+    from smartsim.settings.base import logger
+    prev_prop = logger.propagate
+    logger.propagate = True
+
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        rs = RunSettings("python")
+        try:
+            getattr(rs, method)(*params)
+        finally:
+            logger.propagate = prev_prop
+        
+        for rec in caplog.records:
+            if (
+                logging.WARNING <= rec.levelno < logging.ERROR 
+                and "not implemented" in rec.msg
+            ):
+                break
+        else:
+            pytest.fail(
+                (
+                    f"No message stating method `{method}` is not "
+                    "implemented at `warning` level"
+                )
+            )
+
 def test_set_raises_type_errors():
     rs = RunSettings("python")
-    
+
     with pytest.raises(TypeError):
         rs.set("good-key", 5)
-    
+
     with pytest.raises(TypeError):
         rs.set(9)
 
