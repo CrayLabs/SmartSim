@@ -24,9 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from asyncio.log import logger
 from ..error import SSUnsupportedError
+from ..log import get_logger
 from .base import RunSettings
+
+logger = get_logger(__name__)
 
 
 class MpirunSettings(RunSettings):
@@ -155,7 +157,7 @@ class MpirunSettings(RunSettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run verbosly
-        :type quiet: bool 
+        :type quiet: bool
         """
         if quiet:
             self.run_args["quiet"] = None
