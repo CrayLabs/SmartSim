@@ -100,7 +100,7 @@ def test_set_cpus_per_task():
         rs.set_cpus_per_task("not an int")
 
 
-def test_set_host_list():
+def test_set_hostlist():
     rs = SrunSettings("python")
     rs.set_hostlist(["host_A", "host_B"])
     assert rs.run_args["nodelist"] == "host_A,host_B"
@@ -117,8 +117,8 @@ def test_set_cpu_bindings():
     rs.set_cpu_bindings([1, 2, 3, 4])
     assert rs.run_args["cpu_bind"] == "map_cpu:1,2,3,4"
 
-    with pytest.raises(TypeError):
-        rs.set_cpu_bindings(1234)
+    rs.set_cpu_bindings(2)
+    assert rs.run_args["cpu_bind"] == "map_cpu:2"
     
     with pytest.raises(ValueError):
         rs.set_cpu_bindings(["not_an_int"])

@@ -156,9 +156,10 @@ class SrunSettings(RunSettings):
         This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
 
         :param bindings: List specifing the cores to which MPI processes are bound
-        :type bindings: list[int]
+        :type bindings: list[int] | int
         """
-
+        if isinstance(bindings, int):
+            bindings = [bindings]
         self.run_args["cpu_bind"] = "map_cpu:" + ",".join(
             str(int(num)) for num in bindings
         )
@@ -201,7 +202,7 @@ class SrunSettings(RunSettings):
         if "quiet" in self.run_args:
             del self.run_args["quiet"]
 
-    def set_broadcast(self, dest_path):
+    def set_broadcast(self, dest_path=None):
         """Copy executable file to allocated compute nodes
 
         This sets ``--bcast``
@@ -220,7 +221,7 @@ class SrunSettings(RunSettings):
         :type quiet: int
         """
         time = int(time)
-        
+
         if time == 0:
             self.run_args["time"] = "0"
             return

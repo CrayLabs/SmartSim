@@ -146,7 +146,7 @@ class MpirunSettings(RunSettings):
         if verbose:
             self.run_args["verbose"] = None
             return
-        if verbose in self.run_args:
+        if "verbose" in self.run_args:
             del self.run_args["verbose"]
 
     def set_quiet_launch(self, quiet):
@@ -160,10 +160,10 @@ class MpirunSettings(RunSettings):
         if quiet:
             self.run_args["quiet"] = None
             return
-        if quiet in self.run_args:
+        if "quiet" in self.run_args:
             del self.run_args["quiet"]
 
-    def set_broadcast(self, dest_path):
+    def set_broadcast(self, dest_path=None):
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -174,7 +174,7 @@ class MpirunSettings(RunSettings):
         if dest_path is not None and isinstance(dest_path, str):
             logger.warning(
                 (
-                    f"{type(self)} cannot set a destination path during broadcast."
+                    f"{type(self)} cannot set a destination path during broadcast. "
                     "Using session directory instead"
                 )
             )

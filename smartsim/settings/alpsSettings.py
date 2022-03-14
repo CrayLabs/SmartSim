@@ -132,17 +132,19 @@ class AprunSettings(RunSettings):
     def set_cpu_bindings(self, bindings):
         """Specifies the cores to which MPI processes are bound
 
-        This sets ``-cc``
+        This sets ``--cpu-binding``
 
-        :param memory_per_node: Number of megabytes per node
-        :type memory_per_node: int
+        :param bindings: List of cpu numbers
+        :type bindings: list[int] | int
         """
+        if isinstance(bindings, int):
+            bindings = [bindings]
         self.run_args["cpu-binding"] = ",".join(str(int(num)) for num in bindings)
 
     def set_memory_per_node(self, memory_per_node):
         """Specify the real memory required per node
 
-        This sets ``--mem`` in megabytes
+        This sets ``--memory-per-pe`` in megabytes
 
         :param memory_per_node: Per PE memory limit in megabytes
         :type memory_per_node: int
@@ -160,7 +162,7 @@ class AprunSettings(RunSettings):
         if verbose:
             self.run_args["debug"] = 7
             return
-        if verbose in self.run_args:
+        if "debug" in self.run_args:
             del self.run_args["debug"]
 
     def set_quiet_launch(self, quiet):
@@ -174,7 +176,7 @@ class AprunSettings(RunSettings):
         if quiet:
             self.run_args["quiet"] = None
             return
-        if quiet in self.run_args:
+        if "quiet" in self.run_args:
             del self.run_args["quiet"]
 
     def set_timeout(self, time):

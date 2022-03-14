@@ -157,7 +157,7 @@ class JsrunSettings(RunSettings):
         :param cpus_per_task: number of cpus per resource set
         :type cpus_per_task: int
         """
-        self.set_cpus_per_rs(cpus_per_task)
+        self.set_cpus_per_rs(int(cpus_per_task))
 
     def set_memory_per_rs(self, memory_per_rs):
         """Specify the number of megabytes of memory to assign to a resource set

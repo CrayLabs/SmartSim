@@ -125,7 +125,7 @@ class RunSettings:
         """Set the cores to which MPI processes are bound
         
         :param bindings: List specifing the cores to which MPI processes are bound
-        :type bindings: list[int]
+        :type bindings: list[int] | int
         """
         logger.warning(
             f"CPU binding specification not implemented for this RunSettings type: {type(self)}"
@@ -161,7 +161,7 @@ class RunSettings:
             f"Quiet specification not implemented for this RunSettings type: {type(self)}"
         )
 
-    def set_broadcast(self, dest_path):
+    def set_broadcast(self, dest_path=None):
         """Copy executable file to allocated compute nodes
 
         :param dest_path: Path to copy an executable file
