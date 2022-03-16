@@ -24,6 +24,7 @@
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/CrayLabs/SmartSim)
 ![Language](https://img.shields.io/github/languages/top/CrayLabs/SmartSim)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![codecov](https://codecov.io/gh/CrayLabs/SmartSim/branch/develop/graph/badge.svg?token=96HFI2F45E)](https://codecov.io/gh/CrayLabs/SmartSim)
 [![Downloads](https://static.pepy.tech/personalized-badge/smartsim?period=total&units=international_system&left_color=grey&right_color=orange&left_text=Downloads)](https://pepy.tech/project/smartsim)
 
 ------------
