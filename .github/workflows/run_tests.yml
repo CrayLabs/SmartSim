@@ -1,6 +1,10 @@
 name: run-tests
 
-on: pull_request
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
 
 env:
   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
