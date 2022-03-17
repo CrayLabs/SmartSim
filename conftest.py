@@ -102,6 +102,9 @@ def get_hostlist():
             except:
                 return None
         elif "PBS_NODEFILE" in os.environ:
+            # On Cray systems, PBS_NODEFILE can contain the MOM node name
+            if shutil.which("aprun"):
+                return None
             try:
                 with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
                     lines = nodefile.readlines()
