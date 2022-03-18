@@ -311,7 +311,6 @@ class Build:
         except SetupError as e:
             logger.warning(str(e))
 
-
     def check_backends_install(self):
         """Checks if backends have already been installed.
         Logs details on how to proceed forward
@@ -320,9 +319,13 @@ class Build:
         """
         if os.environ.get("RAI_PATH"):
             if installed_redisai_backends():
-                logger.error(f"Backends are already built and loaded at {CONFIG.redisai}. There is no need to build.")
+                logger.error(
+                    f"Backends are already built and loaded at {CONFIG.redisai}. There is no need to build."
+                )
             else:
-                logger.error(f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'.")
+                logger.error(
+                    f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'."
+                )
             exit(1)
         else:
             if installed_redisai_backends():
