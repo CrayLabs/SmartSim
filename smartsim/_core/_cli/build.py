@@ -320,7 +320,7 @@ class Build:
         if os.environ.get("RAI_PATH"):
             if installed_redisai_backends():
                 logger.error(
-                    f"Backends are already built and loaded at {CONFIG.redisai}. There is no need to build."
+                    f"Backends are already built and loaded at '{CONFIG.redisai}'. There is no need to build."
                 )
             else:
                 logger.error(
