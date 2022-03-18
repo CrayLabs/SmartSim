@@ -156,7 +156,7 @@ class AprunSettings(RunSettings):
 
         This sets ``--debug`` arg to the highest level
 
-        :param verbose: Whether the job should be run verbosly
+        :param verbose: Whether the job should be run verbosely
         :type verbose: bool
         """
         if verbose:
@@ -170,7 +170,7 @@ class AprunSettings(RunSettings):
 
         This sets ``--quiet``
 
-        :param quiet: Whether the job should be run verbosly
+        :param quiet: Whether the job should be run quietly
         :type quiet: bool
         """
         if quiet:

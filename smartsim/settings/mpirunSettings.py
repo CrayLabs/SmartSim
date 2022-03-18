@@ -142,7 +142,7 @@ class MpirunSettings(RunSettings):
 
         This sets ``--verbose``
 
-        :param verbose: Whether the job should be run verbosly
+        :param verbose: Whether the job should be run verbosely
         :type verbose: bool
         """
         if verbose:
@@ -156,8 +156,8 @@ class MpirunSettings(RunSettings):
 
         This sets ``--quiet``
 
-        :param quiet: Whether the job should be run verbosly
-        :type quiet: bool
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool 
         """
         if quiet:
             self.run_args["quiet"] = None

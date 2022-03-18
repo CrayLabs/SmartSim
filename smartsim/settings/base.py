@@ -144,7 +144,7 @@ class RunSettings:
     def set_verbose_launch(self, verbose):
         """Set the job to run in verbose mode
 
-        :param verbose: Whether the job should be run verbosly
+        :param verbose: Whether the job should be run verbosely
         :type verbose: bool
         """
         logger.warning(
@@ -154,7 +154,7 @@ class RunSettings:
     def set_quiet_launch(self, quiet):
         """Set the job to run in quiet mode
 
-        :param quiet: Whether the job should be run verbosly
+        :param quiet: Whether the job should be run quietly
         :type quiet: bool 
         """
         logger.warning(
