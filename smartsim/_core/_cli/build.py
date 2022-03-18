@@ -154,11 +154,7 @@ class Build:
         print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
-        if os.path.isdir(CONFIG.lib_path) and os.listdir(CONFIG.lib_path):
-            logger.error(
-                "If you wish to re-run `smart build`, you must first run `smart clean`."
-            )
-            exit(1)
+        self.check_backends_install()
 
         # Check for onnx and tf in user python environemnt and prompt user
         # to download them if they are not installed. this should not break
@@ -314,3 +310,23 @@ class Build:
                 )
         except SetupError as e:
             logger.warning(str(e))
+
+
+    def check_backends_install(self):
+        """Checks if backends have already been installed.
+        Logs details on how to proceed forward
+        if the RAI_PATH environment variable is set or if
+        backends have already been installed.
+        """
+        if os.environ.get("RAI_PATH"):
+            if installed_redisai_backends():
+                logger.error(f"Backends are already built and loaded at {CONFIG.redisai}. There is no need to build.")
+            else:
+                logger.error(f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'.")
+            exit(1)
+        else:
+            if installed_redisai_backends():
+                logger.error(
+                    "If you wish to re-run `smart build`, you must first run `smart clean`."
+                )
+                exit(1)
