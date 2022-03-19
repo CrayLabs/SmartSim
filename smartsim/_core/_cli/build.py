@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner
 from smartsim._core._install.builder import BuildError
+from smartsim._core.config import CONFIG
+from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -97,6 +100,13 @@ class Build:
                 str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
             )
 
+            backends = [
+                backend.capitalize() for backend in installed_redisai_backends()
+            ]
+            logger.info(
+                (", ".join(backends) if backends else "No") + " backend(s) built"
+            )
+
         except (SetupError, BuildError) as e:
             logger.error(str(e))
             exit(1)
@@ -143,6 +153,8 @@ class Build:
         print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
         print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
+
+        self.check_backends_install()
 
         # Check for onnx and tf in user python environemnt and prompt user
         # to download them if they are not installed. this should not break
@@ -298,3 +310,26 @@ class Build:
                 )
         except SetupError as e:
             logger.warning(str(e))
+
+    def check_backends_install(self):
+        """Checks if backends have already been installed.
+        Logs details on how to proceed forward
+        if the RAI_PATH environment variable is set or if
+        backends have already been installed.
+        """
+        if os.environ.get("RAI_PATH"):
+            if installed_redisai_backends():
+                logger.error(
+                    f"There is no need to build. Backends are already built and specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
+                )
+            else:
+                logger.error(
+                    f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'."
+                )
+            exit(1)
+        else:
+            if installed_redisai_backends():
+                logger.error(
+                    "If you wish to re-run `smart build`, you must first run `smart clean`."
+                )
+                exit(1)
