@@ -123,6 +123,15 @@ def test_set_hostlist():
         rs.set_hostlist([5])
 
 
+def test_set_hostlist_from_file():
+    rs = MpirunSettings("python")
+    rs.set_hostlist_from_file("./path/to/hostfile")
+    assert rs.run_args["hostfile"] == "./path/to/hostfile"
+
+    rs.set_hostlist_from_file("~/other/file")
+    assert rs.run_args["hostfile"] == "~/other/file"
+
+
 def test_set_verbose():
     rs = MpirunSettings("python")
     rs.set_verbose_launch(True)

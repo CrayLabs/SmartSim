@@ -154,7 +154,20 @@ class RunSettings:
         """
         logger.warning(
             (
-                "Host list specification not implemented for this "
+                "Hostlist specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to specify the hostlist for this job
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        logger.warning(
+            (
+                "Hostlist from file specification not implemented for this "
                 f"RunSettings type: {type(self)}"
             )
         )
