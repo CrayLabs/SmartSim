@@ -147,9 +147,8 @@ class MpirunSettings(RunSettings):
         """
         if verbose:
             self.run_args["verbose"] = None
-            return
-        if "verbose" in self.run_args:
-            del self.run_args["verbose"]
+        else:
+            self.run_args.pop("verbose", None)
 
     def set_quiet_launch(self, quiet):
         """Set the job to run in quiet mode
@@ -161,9 +160,8 @@ class MpirunSettings(RunSettings):
         """
         if quiet:
             self.run_args["quiet"] = None
-            return
-        if "quiet" in self.run_args:
-            del self.run_args["quiet"]
+        else:
+            self.run_args.pop("quiet", None)
 
     def set_broadcast(self, dest_path=None):
         """Copy the specified executable(s) to remote machines

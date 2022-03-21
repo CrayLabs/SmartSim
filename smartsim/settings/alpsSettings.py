@@ -161,9 +161,8 @@ class AprunSettings(RunSettings):
         """
         if verbose:
             self.run_args["debug"] = 7
-            return
-        if "debug" in self.run_args:
-            del self.run_args["debug"]
+        else:
+            self.run_args.pop("debug", None)
 
     def set_quiet_launch(self, quiet):
         """Set the job to run in quiet mode
@@ -175,9 +174,8 @@ class AprunSettings(RunSettings):
         """
         if quiet:
             self.run_args["quiet"] = None
-            return
-        if "quiet" in self.run_args:
-            del self.run_args["quiet"]
+        else:
+            self.run_args.pop("quiet", None)
 
     def set_timeout(self, time):
         """Set the per PE CPU time limit in seconds
