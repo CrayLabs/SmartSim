@@ -121,16 +121,24 @@ def test_set_format_args(set_str, val, key):
 @pytest.mark.parametrize(
     "method,params",
     [
+        pytest.param("set_nodes", (2,), id="set_nodes"),
         pytest.param("set_tasks", (2,), id="set_tasks"),
         pytest.param("set_tasks_per_node", (3,), id="set_tasks_per_node"),
+        pytest.param("set_task_map", (3,), id="set_task_map"),
         pytest.param("set_cpus_per_task", (4,), id="set_cpus_per_task"),
         pytest.param("set_hostlist", ("hostlist",), id="set_hostlist"),
+        pytest.param("set_excluded_hosts", ("hostlist",), id="set_excluded_hosts"),
         pytest.param("set_cpu_bindings", ([1, 2, 3],), id="set_cpu_bindings"),
         pytest.param("set_memory_per_node", (16_000,), id="set_memory_per_node"),
         pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
         pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
         pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
         pytest.param("set_timeout", (360,), id="set_timeout"),
+        pytest.param("set_walltime", ("00:55:00",), id="set_walltime"),
+        pytest.param("set_binding", ("packed:21",), id="set_binding"),
+        pytest.param("set_mpmd_preamble", (["list", "strs"],), id="set_mpmd_preamble"),
+        pytest.param("make_mpmd", (None,), id="make_mpmd"),
+        pytest.param("format_env_vars", (), id="format_env_vars"),
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):

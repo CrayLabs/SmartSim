@@ -81,6 +81,19 @@ class RunSettings:
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
 
+    def set_nodes(self, nodes):
+        """Set the number of nodes
+
+        :param nodes: number of nodes to run with
+        :type nodes: int
+        """
+        logger.warning(
+            (
+                "Node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
     def set_tasks(self, tasks):
         """Set the number of tasks to launch
 
@@ -88,7 +101,10 @@ class RunSettings:
         :type tasks: int
         """
         logger.warning(
-            f"Task specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Task specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_tasks_per_node(self, tasks_per_node):
@@ -98,7 +114,23 @@ class RunSettings:
         :type tasks_per_node: int
         """
         logger.warning(
-            f"Task per node specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Task per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_task_map(self, task_mapping):
+        """Set a task mapping
+
+        :param task_mapping: task mapping
+        :type task_mapping: str
+        """
+        logger.warning(
+            (
+                "Task mapping specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_cpus_per_task(self, cpus_per_task):
@@ -108,7 +140,10 @@ class RunSettings:
         :type cpus_per_task: int
         """
         logger.warning(
-            f"CPU per node specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "CPU per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_hostlist(self, host_list):
@@ -118,7 +153,23 @@ class RunSettings:
         :type host_list: str | list[str]
         """
         logger.warning(
-            f"Host list specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Host list specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_excluded_hosts(self, host_list):
+        """Specify a list of hosts to exclude for launching this job
+
+        :param host_list: hosts to exclude
+        :type host_list: str | list[str]
+        """
+        logger.warning(
+            (
+                "Excluded host list specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_cpu_bindings(self, bindings):
@@ -128,7 +179,10 @@ class RunSettings:
         :type bindings: list[int] | int
         """
         logger.warning(
-            f"CPU binding specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "CPU binding specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_memory_per_node(self, memory_per_node):
@@ -138,7 +192,10 @@ class RunSettings:
         :type memory_per_node: int
         """
         logger.warning(
-            f"Memory per node specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Memory per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_verbose_launch(self, verbose):
@@ -148,7 +205,10 @@ class RunSettings:
         :type verbose: bool
         """
         logger.warning(
-            f"Verbose specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Verbose specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_quiet_launch(self, quiet):
@@ -158,7 +218,10 @@ class RunSettings:
         :type quiet: bool
         """
         logger.warning(
-            f"Quiet specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Quiet specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_broadcast(self, dest_path=None):
@@ -168,7 +231,10 @@ class RunSettings:
         :type dest_path: str | None
         """
         logger.warning(
-            f"Broadcast specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Broadcast specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_timeout(self, time):
@@ -178,7 +244,62 @@ class RunSettings:
         :type quiet: int
         """
         logger.warning(
-            f"Timeout specification not implemented for this RunSettings type: {type(self)}"
+            (
+                "Timeout specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_walltime(self, walltime):
+        """Set the formatted walltime
+
+        :param walltime: Time in format required by launcher``
+        :type walltime: str
+        """
+        logger.warning(
+            (
+                "Walltime specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_binding(self, binding):
+        """Set binding
+        
+        :param binding: Binding
+        :type binding: str
+        """
+        logger.warning(
+            (
+                "binding specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_mpmd_preamble(self, preamble_lines):
+        """Set preamble to a file to make a job MPMD
+
+        :param preamble_lines: lines to put at the beginning of a file.
+        :type preamble_lines: list[str]
+        """
+        logger.warning(
+            (
+                "MPMD preamble specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def make_mpmd(self, settings):
+        """Make job an MPMD job
+
+        :param settings: ``RunSettings`` instance
+        :type aprun_settings: RunSettings
+        """
+        logger.warning(
+            (
+                "Make MPMD specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     @property
@@ -331,6 +452,19 @@ class RunSettings:
             formatted.append(arg)
             formatted.append(str(value))
         return formatted
+
+    def format_env_vars(self):
+        """Build environment variable string
+
+        :returns: formatted list of strings to export variables
+        :rtype: list[str]
+        """
+        logger.warning(
+            (
+                "Format environment variables specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
 
     def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
