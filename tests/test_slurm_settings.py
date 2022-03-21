@@ -112,6 +112,15 @@ def test_set_hostlist():
         rs.set_hostlist([5])
 
 
+def test_set_hostlist_from_file():
+    rs = SrunSettings("python")
+    rs.set_hostlist_from_file("./path/to/hostfile")
+    assert rs.run_args["nodefile"] == "./path/to/hostfile"
+
+    rs.set_hostlist_from_file("~/other/file")
+    assert rs.run_args["nodefile"] == "~/other/file"
+
+
 def test_set_cpu_bindings():
     rs = SrunSettings("python")
     rs.set_cpu_bindings([1, 2, 3, 4])

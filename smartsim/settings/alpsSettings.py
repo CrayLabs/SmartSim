@@ -114,12 +114,22 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["node-list"] = ",".join(host_list)
 
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the node list
+
+        This sets ``--node-list-file``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["node-list-file"] = str(file_path)
+
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]

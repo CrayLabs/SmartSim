@@ -93,6 +93,8 @@ class SrunSettings(RunSettings):
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
 
+        This sets ``--nodelist``
+
         :param host_list: hosts to launch on
         :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
@@ -104,6 +106,16 @@ class SrunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the node list
+
+        This sets ``--nodefile``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["nodefile"] = str(file_path)
 
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job

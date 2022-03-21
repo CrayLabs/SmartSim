@@ -89,6 +89,14 @@ def test_set_hostlist():
     with pytest.raises(TypeError):
         rs.set_hostlist([5])
 
+def test_set_hostlist_from_file():
+    rs = AprunSettings("python")
+    rs.set_hostlist_from_file("./path/to/hostfile")
+    assert rs.run_args["node-list-file"] == "./path/to/hostfile"
+
+    rs.set_hostlist_from_file("~/other/file")
+    assert rs.run_args["node-list-file"] == "~/other/file"
+
 
 def test_set_cpu_bindings():
     rs = AprunSettings("python")

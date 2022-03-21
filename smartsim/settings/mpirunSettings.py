@@ -125,6 +125,8 @@ class MpirunSettings(RunSettings):
     def set_hostlist(self, host_list):
         """Set the hostlist for the ``mpirun`` command
 
+        This sets ``--host``
+
         :param host_list: list of host names
         :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
@@ -136,6 +138,16 @@ class MpirunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the hostlist
+
+        This sets ``--hostfile``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["hostfile"] = str(file_path)
 
     def set_verbose_launch(self, verbose):
         """Set the job to run in verbose mode
