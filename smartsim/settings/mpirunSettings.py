@@ -156,7 +156,7 @@ class MpirunSettings(RunSettings):
         This sets ``--quiet``
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool 
+        :type quiet: bool
         """
         if quiet:
             self.run_args["quiet"] = None

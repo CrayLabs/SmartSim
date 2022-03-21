@@ -223,7 +223,7 @@ class SrunSettings(RunSettings):
         if time == 0:
             self.run_args["time"] = "0"
             return
-        
+
         min = time // 60
         sec = time % 60
         self.set_walltime(f"{min:02}:{sec:02}")

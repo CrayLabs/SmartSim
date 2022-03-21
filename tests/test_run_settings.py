@@ -89,43 +89,53 @@ def test_bad_exe_args_2():
     with pytest.raises(TypeError):
         _ = RunSettings("python", exe_args=exe_args)
 
+
 def test_set_args():
     rs = RunSettings("python")
     rs.set("str", "some-string")
     rs.set("nothing")
-    
+
     assert "str" in rs.run_args
     assert rs.run_args["str"] == "some-string"
-    
+
     assert "nothing" in rs.run_args
     assert rs.run_args["nothing"] is None
 
-@pytest.mark.parametrize("set_str,val,key", [
-    pytest.param("normal-key", "some-val", "normal-key", id="set string"),
-    pytest.param("--a-key", "a-value", "a-key", id="strip doulbe dashes"),
-    pytest.param("-b", "some-str", "b", id="strip single dashes"),
-    pytest.param("   c    ", "some-val", "c", id="strip spaces"),
-    pytest.param("   --a-mess    ", "5", "a-mess", id="strip everything"),
-])
+
+@pytest.mark.parametrize(
+    "set_str,val,key",
+    [
+        pytest.param("normal-key", "some-val", "normal-key", id="set string"),
+        pytest.param("--a-key", "a-value", "a-key", id="strip doulbe dashes"),
+        pytest.param("-b", "some-str", "b", id="strip single dashes"),
+        pytest.param("   c    ", "some-val", "c", id="strip spaces"),
+        pytest.param("   --a-mess    ", "5", "a-mess", id="strip everything"),
+    ],
+)
 def test_set_format_args(set_str, val, key):
     rs = RunSettings("python")
     rs.set(set_str, val)
     assert rs.run_args[key] == val
 
-@pytest.mark.parametrize("method,params", [
-    pytest.param("set_tasks", (2,), id="set_tasks"),
-    pytest.param("set_tasks_per_node", (3,), id="set_tasks_per_node"),
-    pytest.param("set_cpus_per_task", (4,), id="set_cpus_per_task"),
-    pytest.param("set_hostlist", ("hostlist",), id="set_hostlist"),
-    pytest.param("set_cpu_bindings", ([1,2,3],), id="set_cpu_bindings"),
-    pytest.param("set_memory_per_node", (16_000,), id="set_memory_per_node"),
-    pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
-    pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
-    pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
-    pytest.param("set_timeout", (360,), id="set_timeout"),
-])
+
+@pytest.mark.parametrize(
+    "method,params",
+    [
+        pytest.param("set_tasks", (2,), id="set_tasks"),
+        pytest.param("set_tasks_per_node", (3,), id="set_tasks_per_node"),
+        pytest.param("set_cpus_per_task", (4,), id="set_cpus_per_task"),
+        pytest.param("set_hostlist", ("hostlist",), id="set_hostlist"),
+        pytest.param("set_cpu_bindings", ([1, 2, 3],), id="set_cpu_bindings"),
+        pytest.param("set_memory_per_node", (16_000,), id="set_memory_per_node"),
+        pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
+        pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
+        pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
+        pytest.param("set_timeout", (360,), id="set_timeout"),
+    ],
+)
 def test_unimplimented_setters_throw_warning(caplog, method, params):
     from smartsim.settings.base import logger
+
     prev_prop = logger.propagate
     logger.propagate = True
 
@@ -136,10 +146,10 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
             getattr(rs, method)(*params)
         finally:
             logger.propagate = prev_prop
-        
+
         for rec in caplog.records:
             if (
-                logging.WARNING <= rec.levelno < logging.ERROR 
+                logging.WARNING <= rec.levelno < logging.ERROR
                 and "not implemented" in rec.msg
             ):
                 break
@@ -151,6 +161,7 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
                 )
             )
 
+
 def test_set_raises_type_errors():
     rs = RunSettings("python")
 
@@ -160,11 +171,13 @@ def test_set_raises_type_errors():
     with pytest.raises(TypeError):
         rs.set(9)
 
+
 def test_set_overwrites_prev_args():
     rs = RunSettings("python")
     rs.set("some-key", "some-val")
     rs.set("some-key", "another-val")
     assert rs.run_args["some-key"] == "another-val"
+
 
 def test_set_conditional():
     rs = RunSettings("python")

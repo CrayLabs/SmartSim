@@ -119,7 +119,7 @@ def test_set_cpu_bindings():
 
     rs.set_cpu_bindings(2)
     assert rs.run_args["cpu_bind"] == "map_cpu:2"
-    
+
     with pytest.raises(ValueError):
         rs.set_cpu_bindings(["not_an_int"])
 

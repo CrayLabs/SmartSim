@@ -2,6 +2,7 @@ import pytest
 from smartsim.settings import AprunSettings
 from smartsim.error import SSUnsupportedError
 
+
 def test_aprun_settings():
     settings = AprunSettings("python")
     settings.set_cpus_per_task(2)
@@ -32,10 +33,10 @@ def test_aprun_add_mpmd():
     assert len(settings.mpmd) > 0
     assert settings.mpmd[0] == settings_2
 
+
 def test_catch_colo_mpmd():
     settings = AprunSettings("python")
-    settings.colocated_db_settings = {"port": 6379,
-                                      "cpus": 1}
+    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
     settings_2 = AprunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
@@ -96,9 +97,10 @@ def test_set_cpu_bindings():
 
     rs.set_cpu_bindings(2)
     assert rs.run_args["cpu-binding"] == "2"
-    
+
     with pytest.raises(ValueError):
         rs.set_cpu_bindings(["not_an_int"])
+
 
 def test_set_memory_per_node():
     rs = AprunSettings("python")

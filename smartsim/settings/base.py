@@ -123,14 +123,14 @@ class RunSettings:
 
     def set_cpu_bindings(self, bindings):
         """Set the cores to which MPI processes are bound
-        
+
         :param bindings: List specifing the cores to which MPI processes are bound
         :type bindings: list[int] | int
         """
         logger.warning(
             f"CPU binding specification not implemented for this RunSettings type: {type(self)}"
         )
-    
+
     def set_memory_per_node(self, memory_per_node):
         """Set the amount of memory required per node in megabytes
 
@@ -150,12 +150,12 @@ class RunSettings:
         logger.warning(
             f"Verbose specification not implemented for this RunSettings type: {type(self)}"
         )
-    
+
     def set_quiet_launch(self, quiet):
         """Set the job to run in quiet mode
 
         :param quiet: Whether the job should be run quietly
-        :type quiet: bool 
+        :type quiet: bool
         """
         logger.warning(
             f"Quiet specification not implemented for this RunSettings type: {type(self)}"
@@ -224,7 +224,7 @@ class RunSettings:
 
     def set(self, arg, value=None, condition=True):
         """Allows users to set individual run arguments.
-        
+
         A method that allows users to set run arguments after object
         instantiation. Does basic formatting such as stripping leading dashes.
         If the argument has been set previously, this method will log warning
@@ -248,7 +248,7 @@ class RunSettings:
 
         .. highlight:: python
         .. code-block:: python
-            
+
             import socket
 
             rs = SrunSettings("echo", "hello")
@@ -257,13 +257,13 @@ class RunSettings:
 
             # Only set this argument if condition param evals True
             # Otherwise log and NOP
-            rs.set("partition", "debug", 
+            rs.set("partition", "debug",
                    condition=socket.gethostname()=="testing-system")
 
             rs.format_run_args()
             # returns ["exclusive", "None", "partition", "debug"] iff socket.gethostname()=="testing-system"
             # otherwise returns ["exclusive", "None"]
-        
+
         :param arg: name of the argument
         :type arg: str
         :param value: value of the argument
@@ -276,7 +276,7 @@ class RunSettings:
         if value is not None and not isinstance(value, str):
             raise TypeError("Argument value should be of type str or None")
         arg = arg.strip().lstrip("-")
-        
+
         if not condition:
             logger.info(f"Could not set argument '{arg}': condition not met")
             return

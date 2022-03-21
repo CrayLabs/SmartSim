@@ -3,6 +3,7 @@ import pytest
 from smartsim.settings import MpirunSettings
 from smartsim.error import SSUnsupportedError
 
+
 def test_mpirun_settings():
     settings = MpirunSettings("python")
     settings.set_cpus_per_task(1)
@@ -35,13 +36,14 @@ def test_mpirun_add_mpmd():
     assert len(settings.mpmd) > 0
     assert settings.mpmd[0] == settings_2
 
+
 def test_catch_colo_mpmd():
     settings = MpirunSettings("python")
-    settings.colocated_db_settings = {"port": 6379,
-                                      "cpus": 1}
+    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
     settings_2 = MpirunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
+
 
 def test_format_env():
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
@@ -73,6 +75,7 @@ def test_mpirun_hostlist_errors_1():
     settings = MpirunSettings("python")
     with pytest.raises(TypeError):
         settings.set_hostlist([444])
+
 
 @pytest.mark.parametrize("reserved_arg", ["wd", "wdir"])
 def test_no_set_reserved_args(reserved_arg):
@@ -118,6 +121,7 @@ def test_set_hostlist():
 
     with pytest.raises(TypeError):
         rs.set_hostlist([5])
+
 
 def test_set_verbose():
     rs = MpirunSettings("python")
