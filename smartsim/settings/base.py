@@ -490,7 +490,7 @@ class RunSettings:
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
-        :rtype: list[str] | str
+        :rtype: str
         """
         formatted = []
         for key, val in self.env_vars.items():
