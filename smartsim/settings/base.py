@@ -250,18 +250,38 @@ class RunSettings:
             )
         )
 
-    def set_timeout(self, time):
-        """Set the maximum number of seconds that a job will run
+    def set_time(self, hours=0, minutes=0, seconds=0):
+        """Automatically format and set wall time
 
-        :param time: The maximum number of seconds that a job will run in secs
-        :type quiet: int
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
         """
-        logger.warning(
-            (
-                "Timeout specification not implemented for this "
-                f"RunSettings type: {type(self)}"
-            )
+        return self.set_walltime(
+            self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
+
+    def _fmt_walltime(self, hours, minutes, seconds):
+        """Convert hours, minutes, and seconds into valid walltime format
+
+        By defualt the formatted wall time is the total number of seconds.
+
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
+        :returns: Formatted walltime
+        :rtype: str
+        """
+        time_ = hours * 3600
+        time_ += minutes * 60
+        time_ += seconds
+        return str(time_)
 
     def set_walltime(self, walltime):
         """Set the formatted walltime
@@ -278,7 +298,7 @@ class RunSettings:
 
     def set_binding(self, binding):
         """Set binding
-        
+
         :param binding: Binding
         :type binding: str
         """

@@ -187,16 +187,6 @@ class AprunSettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def set_timeout(self, time):
-        """Set the per PE CPU time limit in seconds
-
-        This sets ``--cpu-time-limit``
-
-        :param time: The time limit in secs
-        :type quiet: int
-        """
-        self.run_args["cpu-time-limit"] = int(time)
-
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
 
@@ -235,12 +225,9 @@ class AprunSettings(RunSettings):
     def set_walltime(self, walltime):
         """Set the walltime of the job
 
-        format = "HH:MM:SS"
+        Walltime is given in total number of seconds
 
         :param walltime: wall time
         :type walltime: str
         """
-        h_m_s = walltime.split(":")
-        self.run_args["t"] = str(
-            int(h_m_s[0]) * 3600 + int(h_m_s[1]) * 60 + int(h_m_s[2])
-        )
+        self.run_args["cpu-time-limit"] = str(walltime)

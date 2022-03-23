@@ -136,7 +136,7 @@ def test_set_format_args(set_str, val, key):
         pytest.param("set_verbose_launch", (False,), id="set_verbose_launch"),
         pytest.param("set_quiet_launch", (True,), id="set_quiet_launch"),
         pytest.param("set_broadcast", ("/tmp",), id="set_broadcast"),
-        pytest.param("set_timeout", (360,), id="set_timeout"),
+        pytest.param("set_time", (0, 0, 0), id="set_time"),
         pytest.param("set_walltime", ("00:55:00",), id="set_walltime"),
         pytest.param("set_binding", ("packed:21",), id="set_binding"),
         pytest.param("set_mpmd_preamble", (["list", "strs"],), id="set_mpmd_preamble"),

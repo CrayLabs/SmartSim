@@ -89,6 +89,7 @@ def test_set_hostlist():
     with pytest.raises(TypeError):
         rs.set_hostlist([5])
 
+
 def test_set_hostlist_from_file():
     rs = AprunSettings("python")
     rs.set_hostlist_from_file("./path/to/hostfile")
@@ -144,13 +145,13 @@ def test_quiet_launch():
     rs.set_quiet_launch(False)
 
 
-def test_set_timeout():
+def test_set_time():
     rs = AprunSettings("python")
-    rs.set_timeout(72)
-    assert rs.run_args["cpu-time-limit"] == 72
+    rs.set_time(minutes=1, seconds=12)
+    assert rs.run_args["cpu-time-limit"] == "72"
 
-    rs.set_timeout(0)
-    assert rs.run_args["cpu-time-limit"] == 0
+    rs.set_time(seconds=0)
+    assert rs.run_args["cpu-time-limit"] == "0"
 
     with pytest.raises(ValueError):
-        rs.set_timeout("not an int")
+        rs.set_time("not an int")

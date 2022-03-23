@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import datetime
 
 from ..error import SSUnsupportedError
 from .base import BatchSettings, RunSettings
@@ -222,23 +223,25 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
-    def set_timeout(self, time):
-        """Set the maximum number of seconds that a job will run
+    def _fmt_walltime(self, hours, minutes, seconds):
+        """Convert hours, minutes, and seconds into valid walltime format
 
-        This sets ``--time``
+        Converts time to format HH:MM:SS
 
-        :param time: The maximum number of seconds that a job will run in secs
-        :type quiet: int
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
+        :returns: Formatted walltime
+        :rtype
         """
-        time = int(time)
-
-        if time == 0:
-            self.run_args["time"] = "0"
-            return
-
-        min = time // 60
-        sec = time % 60
-        self.set_walltime(f"{min:02}:{sec:02}")
+        delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        fmt_str = str(delta)
+        if delta.seconds // 3600 < 10:
+            fmt_str = "0" + fmt_str
+        return fmt_str
 
     def set_walltime(self, walltime):
         """Set the walltime of the job
@@ -248,8 +251,7 @@ class SrunSettings(RunSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        # TODO check for errors here
-        self.run_args["time"] = walltime
+        self.run_args["time"] = str(walltime)
 
     def format_run_args(self):
         """return a list of slurm formatted run arguments

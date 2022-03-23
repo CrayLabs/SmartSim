@@ -192,7 +192,7 @@ class MpirunSettings(RunSettings):
             )
         self.run_args["preload-binary"] = None
 
-    def set_timeout(self, time):
+    def set_walltime(self, walltime):
         """Set the maximum number of seconds that a job will run
 
         This sets ``--timeout``
@@ -200,7 +200,7 @@ class MpirunSettings(RunSettings):
         :param time: The maximum number of seconds that a job will run in secs
         :type quiet: int
         """
-        self.run_args["timeout"] = int(time)
+        self.run_args["timeout"] = str(walltime)
 
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments

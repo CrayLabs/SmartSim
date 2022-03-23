@@ -172,16 +172,22 @@ def test_set_broadcast():
     assert rs.run_args["bcast"] == "/tmp/some/path"
 
 
-def test_set_timeout():
+def test_set_time():
     rs = SrunSettings("python")
-    rs.set_timeout(72)
-    assert rs.run_args["time"] == "01:12"
+    rs.set_time(seconds=72)
+    assert rs.run_args["time"] == "00:01:12"
 
-    rs.set_timeout(0)
-    assert rs.run_args["time"] == "0"
+    rs.set_time(hours=1, minutes=31, seconds=1845)
+    assert rs.run_args["time"] == "02:01:45"
+
+    rs.set_time(hours=11)
+    assert rs.run_args["time"] == "11:00:00"
+
+    rs.set_time(seconds=0)
+    assert rs.run_args["time"] == "00:00:00"
 
     with pytest.raises(ValueError):
-        rs.set_timeout("not an int")
+        rs.set_time("not an int")
 
 
 # ---- Sbatch ---------------------------------------------------

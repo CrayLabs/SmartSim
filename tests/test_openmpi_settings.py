@@ -165,10 +165,13 @@ def test_set_broadcast():
     assert rs.run_args["preload-binary"] == None
 
 
-def test_set_timeout():
+def test_set_time():
     rs = MpirunSettings("python")
-    rs.set_timeout(72)
-    assert rs.run_args["timeout"] == 72
+    rs.set_time(minutes=1, seconds=12)
+    assert rs.run_args["timeout"] == "72"
+
+    rs.set_time(seconds=0)
+    assert rs.run_args["timeout"] == "0"
 
     with pytest.raises(ValueError):
-        rs.set_timeout("not an int")
+        rs.set_time("not an int")
