@@ -490,14 +490,16 @@ class RunSettings:
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
-        :rtype: list[str]
+        :rtype: list[str] | str
         """
-        logger.warning(
-            (
-                "Format environment variables specification not implemented for this "
-                f"RunSettings type: {type(self)}"
-            )
-        )
+        formatted = []
+        for key, val in self.env_vars.items():
+            if val is None:
+                formatted.append(f"{key}=")
+            else:
+                formatted.append(f"{key}={val}")
+        return ' '.join(formatted)
+                
 
     def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"

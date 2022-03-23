@@ -141,7 +141,6 @@ def test_set_format_args(set_str, val, key):
         pytest.param("set_binding", ("packed:21",), id="set_binding"),
         pytest.param("set_mpmd_preamble", (["list", "strs"],), id="set_mpmd_preamble"),
         pytest.param("make_mpmd", (None,), id="make_mpmd"),
-        pytest.param("format_env_vars", (), id="format_env_vars"),
     ],
 )
 def test_unimplimented_setters_throw_warning(caplog, method, params):
@@ -171,6 +170,19 @@ def test_unimplimented_setters_throw_warning(caplog, method, params):
                     "implemented at `warning` level"
                 )
             )
+
+
+def test_base_format_env_vars():
+    rs = RunSettings(
+        "python",
+        env_vars={
+            "A": "a",
+            "B": None,
+            "C": "",
+            "D": 12,
+        },
+    )
+    assert rs.format_env_vars() == "A=a B= C= D=12"
 
 
 def test_set_raises_type_errors():
