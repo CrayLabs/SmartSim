@@ -66,8 +66,15 @@ class Build:
             type=str,
             help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
         )
+        parser.add_argument(
+            "--keydb",
+            action="store_true",
+            default=False,
+            help="Build KeyDB instead of Redis",
+        )
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
+        self.keydb = args.keydb
 
         # torch and tf build by default
         pt = not args.no_pt
@@ -92,8 +99,8 @@ class Build:
                 vers = self.versions.as_dict()
                 print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
-            # REDIS
-            self.build_redis()
+            # REDIS/KeyDB
+            self.build_database()
 
             # REDISAI
             self.build_redis_ai(
@@ -113,22 +120,21 @@ class Build:
 
         logger.info("SmartSim build complete!")
 
-    def build_redis(self):
-        # check redis installation
-        redis_builder = builder.RedisBuilder(
-            self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose
-        )
+    def build_database(self):
+        # check database installation
+        database_name = "KeyDB" if self.keydb else "Redis"
+        database_builder = builder.DatabaseBuilder(self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose)
 
-        if not redis_builder.is_built:
+        if not database_builder.is_built:
             logger.info(
-                f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
+                f"Building {database_name} version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
 
-            redis_builder.build_from_git(
+            database_builder.build_from_git(
                 self.versions.REDIS_URL, self.versions.REDIS_BRANCH
             )
-            redis_builder.cleanup()
-        logger.info("Redis build complete!")
+            database_builder.cleanup()
+        logger.info(f"{database_name} build complete!")
 
     def build_redis_ai(
         self, device, torch=True, tf=True, onnx=False, torch_dir=None, libtf_dir=None

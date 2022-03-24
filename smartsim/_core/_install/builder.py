@@ -116,11 +116,11 @@ class Builder:
             raise BuildError(e)
 
 
-class RedisBuilder(Builder):
-    """Class to build Redis from Source
+class DatabaseBuilder(Builder):
+    """Class to build Redis or KeyDB from Source
     Supported build methods:
      - from git
-    See buildenv.py for buildtime configuration of Redis
+    See buildenv.py for buildtime configuration of Redis/KeyDB
     version and url.
     """
 
@@ -131,8 +131,8 @@ class RedisBuilder(Builder):
     @property
     def is_built(self):
         """Check if Redis is built"""
-        server = self.bin_path.joinpath("redis-server").is_file()
-        cli = self.bin_path.joinpath("redis-cli").is_file()
+        server = next(self.bin_path.glob("*-server"), None) is not None
+        cli = next(self.bin_path.glob("*-cli"), None) is not None
         return server and cli
 
     def build_from_git(self, git_url, branch):
@@ -142,16 +142,21 @@ class RedisBuilder(Builder):
         :param branch: branch to checkout
         :type branch: str
         """
-        redis_build_path = Path(self.build_dir, "redis")
+        database_name = "redis" if "redis" in git_url else "KeyDB"
+        database_build_path = Path(self.build_dir, database_name.lower())
 
         # remove git directory if it exists as it should
         # really never exist as we delete after build
+        redis_build_path = Path(self.build_dir, "redis")
+        keydb_build_path = Path(self.build_dir, "keydb")
         if redis_build_path.is_dir():
             shutil.rmtree(str(redis_build_path))
+        if keydb_build_path.is_dir():
+            shutil.rmtree(str(keydb_build_path))
 
-        # Check Redis URL
+        # Check database URL
         if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed Redis URL: {git_url}")
+            raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
         # clone Redis
         clone_cmd = [
@@ -162,7 +167,7 @@ class RedisBuilder(Builder):
             branch,
             "--depth",
             "1",
-            "redis",
+            database_name,
         ]
         self.run_command(clone_cmd, cwd=self.build_dir)
 
@@ -173,17 +178,20 @@ class RedisBuilder(Builder):
             str(self.jobs),
             f"MALLOC={self.malloc}",
         ]
-        self.run_command(build_cmd, cwd=str(redis_build_path))
+        self.run_command(build_cmd, cwd=str(database_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
-        redis_src_dir = redis_build_path / "src"
-        self.copy_file(
-            redis_src_dir / "redis-server", self.bin_path / "redis-server", set_exe=True
-        )
-        self.copy_file(
-            redis_src_dir / "redis-cli", self.bin_path / "redis-cli", set_exe=True
-        )
-
+        database_src_dir = database_build_path / "src"
+        server_source = database_src_dir / (database_name.lower() + "-server")
+        server_destination = self.bin_path / (database_name.lower() + "-server")
+        cli_source = database_src_dir / (database_name.lower() + "-cli")
+        cli_destination = self.bin_path / (database_name.lower() + "-cli")
+        # server_source = glob.glob(database_src_dir / "*-server")[0]
+        # server_destination = glob.glob(self.bin_path / "*-server")[0]
+        # cli_source = glob.glob(database_src_dir / "*-cli")[0]
+        # cli_destination = glob.glob(self.bin_path / "*-cli")[0]
+        self.copy_file(server_source, server_destination, set_exe=True)
+        self.copy_file(cli_source, cli_destination, set_exe=True)
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
@@ -246,7 +254,7 @@ class RedisAIBuilder(Builder):
         ))
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
-        
+
         # There should only be one path for a given device,
         # and this should hold even if in the future we use
         # an external build of RedisAI
@@ -275,11 +283,11 @@ class RedisAIBuilder(Builder):
         if src_libtf_lib_dir.is_dir():
             library_files = sorted(src_libtf_lib_dir.glob("*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")  
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")
         else:
             library_files = sorted(libtf_path.glob("lib*.so*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")        
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")
 
         for src_file in library_files:
             dst_file = rai_libtf_lib_dir / src_file.name

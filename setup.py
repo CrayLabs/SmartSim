@@ -108,14 +108,14 @@ class InstallPlatlib(install):
 class SmartSimBuild(build_py):
 
     def run(self):
-        redis_builder = builder.RedisBuilder(build_env(),
+        database_builder = builder.DatabaseBuilder(build_env(),
                                              build_env.MALLOC,
                                              build_env.JOBS)
-        if not redis_builder.is_built:
-            redis_builder.build_from_git(versions.REDIS_URL,
+        if not database_builder.is_built:
+            database_builder.build_from_git(versions.REDIS_URL,
                                          versions.REDIS)
 
-            redis_builder.cleanup()
+            database_builder.cleanup()
 
         # run original build_py command
         build_py.run(self)

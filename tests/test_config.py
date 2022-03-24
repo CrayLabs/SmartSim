@@ -10,9 +10,9 @@ from smartsim.error import SSConfigError
 def test_all_config_defaults():
     config = Config()
     assert Path(config.redisai).is_file()
-    assert Path(config.redis_exe).is_file()
-    assert Path(config.redis_cli).is_file()
-    assert Path(config.redis_conf).is_file()
+    assert Path(config.database_exe).is_file()
+    assert Path(config.database_cli).is_file()
+    assert Path(config.database_conf).is_file()
 
     # these will be changed so we will just run them
     assert config.log_level
@@ -38,25 +38,25 @@ def test_redisai():
 
 def test_redis_conf():
     config = Config()
-    assert Path(config.redis_conf).is_file()
-    assert isinstance(config.redis_conf, str)
+    assert Path(config.database_conf).is_file()
+    assert isinstance(config.database_conf, str)
 
     os.environ["REDIS_CONF"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
-        config.redis_conf
+        config.database_conf
     os.environ.pop("REDIS_CONF")
 
 
 def test_redis_exe():
     config = Config()
-    assert Path(config.redis_exe).is_file()
-    assert isinstance(config.redis_exe, str)
+    assert Path(config.database_exe).is_file()
+    assert isinstance(config.database_exe, str)
 
     os.environ["REDIS_PATH"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
-        config.redis_exe
+        config.database_exe
     os.environ.pop("REDIS_PATH")
 
 
@@ -68,5 +68,5 @@ def test_redis_cli():
     os.environ["REDIS_CLI_PATH"] = "not/a/path"
     config = Config()
     with pytest.raises(SSConfigError):
-        config.redis_cli
+        config.database_cli
     os.environ.pop("REDIS_CLI_PATH")

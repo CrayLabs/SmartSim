@@ -121,8 +121,8 @@ def _build_colocated_wrapper_cmd(port=6780,
 
     # collect DB binaries and libraries from the config
     db_cmd = [
-        CONFIG.redis_exe,
-        CONFIG.redis_conf,
+        CONFIG.database_exe,
+        CONFIG.database_conf,
         "--loadmodule",
         CONFIG.redisai
     ]

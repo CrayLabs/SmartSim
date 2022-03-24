@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import glob
 import sys
 
 from smartsim._core._cli.build import Build
@@ -59,12 +60,12 @@ class SmartCli:
 
     def dbcli(self):
         install_path = get_install_path()
-        script_path = install_path.joinpath("_core/bin/redis-cli").resolve()
+        script_path = install_path.joinpath(glob.glob("_core/bin/*-cli")).resolve()
         if script_path.is_file():
             print(script_path)
             exit(0)
         else:
-            print("Redis dependencies not found")
+            print("Database (Redis or KeyDB) dependencies not found")
             exit(1)
 
 
