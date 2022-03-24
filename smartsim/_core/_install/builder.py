@@ -186,12 +186,9 @@ class DatabaseBuilder(Builder):
         server_destination = self.bin_path / (database_name.lower() + "-server")
         cli_source = database_src_dir / (database_name.lower() + "-cli")
         cli_destination = self.bin_path / (database_name.lower() + "-cli")
-        # server_source = glob.glob(database_src_dir / "*-server")[0]
-        # server_destination = glob.glob(self.bin_path / "*-server")[0]
-        # cli_source = glob.glob(database_src_dir / "*-cli")[0]
-        # cli_destination = glob.glob(self.bin_path / "*-cli")[0]
         self.copy_file(server_source, server_destination, set_exe=True)
         self.copy_file(cli_source, cli_destination, set_exe=True)
+
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
@@ -249,9 +246,9 @@ class RedisAIBuilder(Builder):
         :param device: cpu or gpu
         :type device: str
         """
-        rai_deps_path = sorted(self.rai_build_path.glob(
-            os.path.join("deps", f"*{device}*")
-        ))
+        rai_deps_path = sorted(
+            self.rai_build_path.glob(os.path.join("deps", f"*{device}*"))
+        )
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
 
@@ -283,11 +280,15 @@ class RedisAIBuilder(Builder):
         if src_libtf_lib_dir.is_dir():
             library_files = sorted(src_libtf_lib_dir.glob("*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {src_libtf_lib_dir}"
+                )
         else:
             library_files = sorted(libtf_path.glob("lib*.so*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {libtf_path}"
+                )
 
         for src_file in library_files:
             dst_file = rai_libtf_lib_dir / src_file.name

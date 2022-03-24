@@ -123,16 +123,22 @@ class Build:
     def build_database(self):
         # check database installation
         database_name = "KeyDB" if self.keydb else "Redis"
-        database_builder = builder.DatabaseBuilder(self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose)
+        database_builder = builder.DatabaseBuilder(
+            self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose
+        )
 
         if not database_builder.is_built:
+            version = Version_("6.2.0") if self.keydb else self.versions.REDIS
             logger.info(
-                f"Building {database_name} version {self.versions.REDIS} from {self.versions.REDIS_URL}"
+                f"Building {database_name} version {version} from {self.versions.REDIS_URL}"
             )
-
-            database_builder.build_from_git(
-                self.versions.REDIS_URL, self.versions.REDIS_BRANCH
+            database_url = (
+                "https://github.com/EQ-Alpha/KeyDB"
+                if self.keydb
+                else self.versions.REDIS_URL
             )
+            database_branch = "v6.2.0" if self.keydb else self.versions.REDIS_BRANCH
+            database_builder.build_from_git(database_url, database_branch)
             database_builder.cleanup()
         logger.info(f"{database_name} build complete!")
 
