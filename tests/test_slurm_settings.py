@@ -56,10 +56,25 @@ def test_catch_colo_mpmd():
         srun.make_mpmd(srun_2)
 
 
-def test_format_env():
+def test_format_env_vars():
+    rs = SrunSettings(
+        "python",
+        env_vars={
+            "OMP_NUM_THREADS": 20,
+            "LOGGING": "verbose",
+            "SSKEYIN": "name_0,name_1",
+        },
+    )
+    formatted = rs.format_env_vars()
+    assert "OMP_NUM_THREADS=20" in formatted
+    assert "LOGGING=verbose" in formatted
+    assert all("SSKEYIN" not in x for x in formatted)
+
+
+def test_format_comma_sep_env_vars():
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose", "SSKEYIN": "name_0,name_1"}
     settings = SrunSettings("python", env_vars=env_vars)
-    formatted, comma_separated_formatted = settings.format_env_vars()
+    formatted, comma_separated_formatted = settings.format_comma_sep_env_vars()
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
     assert "SSKEYIN" in formatted

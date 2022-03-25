@@ -490,7 +490,7 @@ class RunSettings:
         """Build environment variable string
 
         :returns: formatted list of strings to export variables
-        :rtype: str
+        :rtype: list[str]
         """
         formatted = []
         for key, val in self.env_vars.items():
@@ -498,7 +498,7 @@ class RunSettings:
                 formatted.append(f"{key}=")
             else:
                 formatted.append(f"{key}={val}")
-        return ' '.join(formatted)
+        return formatted
                 
 
     def __str__(self):  # pragma: no-cover

@@ -134,7 +134,10 @@ class SrunStep(Step):
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            env_var_str, comma_separated_env_vars = self.run_settings.format_env_vars()
+            (
+                env_var_str,
+                comma_separated_env_vars,
+            ) = self.run_settings.format_comma_sep_env_vars()
             srun_cmd += ["--export", env_var_str]
 
             if comma_separated_env_vars:

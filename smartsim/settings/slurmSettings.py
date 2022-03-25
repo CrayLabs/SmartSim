@@ -274,6 +274,14 @@ class SrunSettings(RunSettings):
         return opts
 
     def format_env_vars(self):
+        """Build bash compatible environment variable string for Slurm
+
+        :returns: the formatted string of environment variables
+        :rtype: list[str]
+        """
+        return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
+
+    def format_comma_sep_env_vars(self):
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
@@ -281,7 +289,7 @@ class SrunSettings(RunSettings):
         for more information on this, see the slurm documentation for srun
 
         :returns: the formatted string of environment variables
-        :rtype: str
+        :rtype: tuple[str, list[str]]
         """
         # TODO make these overridable by user
         presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]

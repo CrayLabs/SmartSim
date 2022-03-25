@@ -182,7 +182,7 @@ def test_base_format_env_vars():
             "D": 12,
         },
     )
-    assert rs.format_env_vars() == "A=a B= C= D=12"
+    assert rs.format_env_vars() == ["A=a", "B=", "C=", "D=12"]
 
 
 def test_set_raises_type_errors():
