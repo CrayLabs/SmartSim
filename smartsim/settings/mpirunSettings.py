@@ -197,8 +197,8 @@ class MpirunSettings(RunSettings):
 
         This sets ``--timeout``
 
-        :param time: The maximum number of seconds that a job will run in secs
-        :type quiet: int
+        :param walltime: number like string of seconds that a job will run in secs
+        :type walltime: str
         """
         self.run_args["timeout"] = str(walltime)
 
