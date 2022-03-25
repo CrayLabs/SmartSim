@@ -7,3 +7,4 @@ docutils==0.17
 torch==1.7.1
 tensorflow==2.5.2
 ipython
+jinja2==3.0.3
