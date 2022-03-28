@@ -259,7 +259,6 @@ def local_db(fileutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    print (request.fspath)
     test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
     db = Orchestrator(port=6780, interface="lo")
     db.set_path(test_dir)
@@ -388,7 +387,7 @@ class FileUtils:
 
     @staticmethod
     def _test_dir_path(caller_function, caller_fspath):
-        caller_file_to_dir = str(caller_fspath).rsplit(".")[0]
+        caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
         rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
         dir_path = os.path.join(test_dir, rel_path, caller_function)
         return dir_path
