@@ -149,15 +149,6 @@ class JsrunSettings(RunSettings):
         """
         self.set_tasks_per_rs(tasks_per_node)
 
-    def set_hostlist(self, host_list):
-        """This function has no effect.
-
-        This function is only available to unify LSFSettings
-        to other WLM settings classes.
-
-        """
-        pass
-
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
 
@@ -166,7 +157,27 @@ class JsrunSettings(RunSettings):
         :param cpus_per_task: number of cpus per resource set
         :type cpus_per_task: int
         """
-        self.set_cpus_per_rs(cpus_per_task)
+        self.set_cpus_per_rs(int(cpus_per_task))
+
+    def set_memory_per_rs(self, memory_per_rs):
+        """Specify the number of megabytes of memory to assign to a resource set
+
+        This sets ``--memory_per_rs``
+
+        :param memory_per_rs: Number of megabytes per rs
+        :type memory_per_rs: int
+        """
+        self.run_args["memory_per_rs"] = int(memory_per_rs)
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the number of megabytes of memory to assign to a resource set
+
+        Alias for `set_memory_per_rs`.
+
+        :param memory_per_node: Number of megabytes per rs
+        :type memory_per_node: int
+        """
+        self.set_memory_per_rs(memory_per_node)
 
     def set_binding(self, binding):
         """Set binding

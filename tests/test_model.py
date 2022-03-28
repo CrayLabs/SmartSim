@@ -23,6 +23,7 @@ def test_disable_key_prefixing():
     m.disable_key_prefixing()
     assert m.query_key_prefixing() == False
 
+
 def test_catch_colo_mpmd_model():
     exp = Experiment("experiment", launcher="local")
     rs = MpirunSettings("python", exe_args="sleep.py")

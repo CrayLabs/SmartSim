@@ -114,12 +114,22 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["node-list"] = ",".join(host_list)
 
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the node list
+
+        This sets ``--node-list-file``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["node-list-file"] = str(file_path)
+
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
-        :type host_list: list[str]
-        :raises TypeError:
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
         """
         if isinstance(host_list, str):
             host_list = [host_list.strip()]
@@ -128,6 +138,54 @@ class AprunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude-node-list"] = ",".join(host_list)
+
+    def set_cpu_bindings(self, bindings):
+        """Specifies the cores to which MPI processes are bound
+
+        This sets ``--cpu-binding``
+
+        :param bindings: List of cpu numbers
+        :type bindings: list[int] | int
+        """
+        if isinstance(bindings, int):
+            bindings = [bindings]
+        self.run_args["cpu-binding"] = ",".join(str(int(num)) for num in bindings)
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the real memory required per node
+
+        This sets ``--memory-per-pe`` in megabytes
+
+        :param memory_per_node: Per PE memory limit in megabytes
+        :type memory_per_node: int
+        """
+        self.run_args["memory-per-pe"] = int(memory_per_node)
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        This sets ``--debug`` arg to the highest level
+
+        :param verbose: Whether the job should be run verbosely
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["debug"] = 7
+        else:
+            self.run_args.pop("debug", None)
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+        else:
+            self.run_args.pop("quiet", None)
 
     def format_run_args(self):
         """Return a list of ALPS formatted run arguments
@@ -167,12 +225,9 @@ class AprunSettings(RunSettings):
     def set_walltime(self, walltime):
         """Set the walltime of the job
 
-        format = "HH:MM:SS"
+        Walltime is given in total number of seconds
 
         :param walltime: wall time
         :type walltime: str
         """
-        h_m_s = walltime.split(":")
-        self.run_args["t"] = str(
-            int(h_m_s[0]) * 3600 + int(h_m_s[1]) * 60 + int(h_m_s[2])
-        )
+        self.run_args["cpu-time-limit"] = str(walltime)

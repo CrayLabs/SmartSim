@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import datetime
 
 from ..error import SSUnsupportedError
 from .base import BatchSettings, RunSettings
@@ -93,6 +94,8 @@ class SrunSettings(RunSettings):
     def set_hostlist(self, host_list):
         """Specify the hostlist for this job
 
+        This sets ``--nodelist``
+
         :param host_list: hosts to launch on
         :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
@@ -104,6 +107,16 @@ class SrunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the node list
+
+        This sets ``--nodefile``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["nodefile"] = str(file_path)
 
     def set_excluded_hosts(self, host_list):
         """Specify a list of hosts to exclude for launching this job
@@ -150,6 +163,86 @@ class SrunSettings(RunSettings):
         """
         self.run_args["ntasks-per-node"] = int(tasks_per_node)
 
+    def set_cpu_bindings(self, bindings):
+        """Bind by setting CPU masks on tasks
+
+        This sets ``--cpu-bind`` using the ``map_cpu:<list>`` option
+
+        :param bindings: List specifing the cores to which MPI processes are bound
+        :type bindings: list[int] | int
+        """
+        if isinstance(bindings, int):
+            bindings = [bindings]
+        self.run_args["cpu_bind"] = "map_cpu:" + ",".join(
+            str(int(num)) for num in bindings
+        )
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the real memory required per node
+
+        This sets ``--mem`` in megabytes
+
+        :param memory_per_node: Amount of memory per node in megabytes
+        :type memory_per_node: int
+        """
+        self.run_args["mem"] = f"{int(memory_per_node)}M"
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        This sets ``--verbose``
+
+        :param verbose: Whether the job should be run verbosely
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["verbose"] = None
+        else:
+            self.run_args.pop("verbose", None)
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+        else:
+            self.run_args.pop("quiet", None)
+
+    def set_broadcast(self, dest_path=None):
+        """Copy executable file to allocated compute nodes
+
+        This sets ``--bcast``
+
+        :param dest_path: Path to copy an executable file
+        :type dest_path: str | None
+        """
+        self.run_args["bcast"] = dest_path
+
+    def _fmt_walltime(self, hours, minutes, seconds):
+        """Convert hours, minutes, and seconds into valid walltime format
+
+        Converts time to format HH:MM:SS
+
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
+        :returns: Formatted walltime
+        :rtype
+        """
+        delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        fmt_str = str(delta)
+        if delta.seconds // 3600 < 10:
+            fmt_str = "0" + fmt_str
+        return fmt_str
+
     def set_walltime(self, walltime):
         """Set the walltime of the job
 
@@ -158,8 +251,7 @@ class SrunSettings(RunSettings):
         :param walltime: wall time
         :type walltime: str
         """
-        # TODO check for errors here
-        self.run_args["time"] = walltime
+        self.run_args["time"] = str(walltime)
 
     def format_run_args(self):
         """return a list of slurm formatted run arguments
@@ -182,6 +274,14 @@ class SrunSettings(RunSettings):
         return opts
 
     def format_env_vars(self):
+        """Build bash compatible environment variable string for Slurm
+
+        :returns: the formatted string of environment variables
+        :rtype: list[str]
+        """
+        return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
+
+    def format_comma_sep_env_vars(self):
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
@@ -189,7 +289,7 @@ class SrunSettings(RunSettings):
         for more information on this, see the slurm documentation for srun
 
         :returns: the formatted string of environment variables
-        :rtype: str
+        :rtype: tuple[str, list[str]]
         """
         # TODO make these overridable by user
         presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]

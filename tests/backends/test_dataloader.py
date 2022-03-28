@@ -143,7 +143,10 @@ def test_batch_dataloader_torch(fileutils):
         if trials == 0:
             assert False
 
-@pytest.mark.skipif(not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch")
+
+@pytest.mark.skipif(
+    not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
+)
 def test_wrong_dataloaders(fileutils):
     test_dir = fileutils.make_test_dir()
     exp = Experiment("test-wrong-dataloaders", exp_path=test_dir)
@@ -157,7 +160,9 @@ def test_wrong_dataloaders(fileutils):
 
     if shouldrun_torch:
         with pytest.raises(SmartSimError):
-            torch_data_gen = TorchDataGenerator(address=orc.get_address()[0], cluster=False)
+            torch_data_gen = TorchDataGenerator(
+                address=orc.get_address()[0], cluster=False
+            )
             torch_data_gen.init_samples()
 
     exp.stop(orc)
