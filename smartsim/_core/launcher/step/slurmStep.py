@@ -198,7 +198,7 @@ class SrunStep(Step):
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += ["--job-name", self.name]
-            (env_var_str, _) = mpmd.format_env_vars()
+            (env_var_str, _) = mpmd.format_comma_sep_env_vars()
             cmd += ["--export", env_var_str]
             cmd += mpmd.exe
             cmd += mpmd.exe_args
