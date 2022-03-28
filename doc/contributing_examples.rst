@@ -9,7 +9,7 @@ a `SmartSim Example Zoo <https://github.com/CrayLabs/SmartSim-Zoo>`_ that contai
 for various simulation and machine learning applications.
 
 The Two Categories of the SmartSim Zoo
-**************************************************************
+**************************************
  1. SmartSim Deployments (running SmartSim on various HPC Systems)
 
   * The source code for the repository serves the purpose of showing diverse examples of how to get SmartSim running on
@@ -53,35 +53,56 @@ The subsequent tables summarize the examples provided in the SmartSim Zoo. You c
 description of each example in the `SmartSim Zoo <https://github.com/CrayLabs/SmartSim-Zoo>`_.
 
 .. list-table:: SmartSim Deployment Examples
-   :widths: 50 50
+   :widths: 50 100
    :header-rows: 1
    :align: center
 
    * - HPC System
-     - Contributing User(s)
+     - Organization / Machine Owner
    * - Casper
-     - @jedwards4b
+     - National Center for Atmospheric Research (NCAR)
    * - Cheyenne
-     - CrayLabs
+     - National Center for Atmospheric Research (NCAR)
    * - Summit
-     - CrayLabs
+     - Oak Ridge National Lab
    * - Theta
-     - CrayLabs
+     - Argonne National Lab
    * - ThetaGPU
-     - CrayLabs
+     - Argonne National Lab
 
-.. list-table:: SmartSim Application Examples
-   :widths: 50 50
+.. list-table:: Current CrayLabs Collaborations
+   :widths: 100 150 100
    :header-rows: 1
    :align: center
 
-   * - Name
-     - Contributing User(s)
-   * - `DeepDriveMD <https://github.com/CrayLabs/smartsim-openmm>`_
-     - CrayLabs
-   * - `TensorFlowFoam <https://arxiv.org/abs/2012.00900>`_
-     - CrayLabs
-   * - `ML-EKE <https://github.com/CrayLabs/NCAR_ML_EKE>`_
-     - CrayLabs
-   * - `LAMMPS + SmartSim <https://github.com/CrayLabs/smartsim-lammps>`_
-     - CrayLabs
+   * - Paper/Simulation Name
+     - Collaborators
+     - Links
+   * - DeepDriveMD
+     - CrayLabs, Argonne National Lab, Oak Ridge National Lab
+     - `Implementation <https://github.com/CrayLabs/smartsim-openmm>`_ `Original Paper <https://arxiv.org/abs/1909.07817>`_
+   * - TensorFlowFoam
+     - CrayLabs, Argonne National Lab
+     - `Implementation <https://github.com/CrayLabs/smartsim-openFOAM>`_ `Original Paper <https://arxiv.org/abs/2012.00900>`_
+   * - ML-EKE
+     - CrayLabs, NCAR, University of Victoria
+     - `Implementation <https://github.com/CrayLabs/NCAR_ML_EKE>`_ `Paper <https://arxiv.org/abs/2104.09355>`_
+   * - LAMMPS + SmartSim
+     - CrayLabs, Sandia National Laboratories
+     - `Implementation <https://github.com/CrayLabs/smartsim-lammps>`_ `Forked Model <https://github.com/CrayLabs/LAMMPS>`_
+
+Summary of SmartSim Application Examples
+########################################
+
+ * **DeepDriveMD:** Based on the original DeepDriveMD work, extended to orchestrate complex workflows
+   with coupled applications without using the filesystem for exchanging information
+
+ * **TensorFlowFoam:** Uses TensorFlow inside of OpenFOAM simulations using SmartSim. Displays SmartSim's
+   capability to evaluate a machine learning model from within a simulation with minimal external library
+   code and minimal API calls.
+
+ * **ML-EKE:** Runs an ensemble of simulations all using the SmartSim architecture to replace a
+   parameterization (MEKE) within each global ocean simulation (MOM6).
+
+ * **LAMMPS + SmartSim:** Implementation of a ``SMARTSIM`` dump style which uses the SmartRedis clients to stream
+   data to an Orchestrator database created by SmartSim.
