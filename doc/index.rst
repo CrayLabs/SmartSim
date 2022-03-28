@@ -8,6 +8,7 @@
    overview
    installation
    community
+   contributing_examples
 
 .. toctree::
    :maxdepth: 2
