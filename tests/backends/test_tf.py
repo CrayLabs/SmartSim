@@ -12,7 +12,7 @@ tf_available = True
 try:
     from tensorflow import keras
 
-    from smartsim.ml.tf import freeze_model
+    from smartsim.ml.tf import freeze_model, serialize_model
 except (ImportError, SmartSimError) as e:
     print(e)
     tf_available = False
@@ -85,7 +85,6 @@ def create_tf_model():
 
 @pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
 def test_freeze_model(fileutils):
-    test_name = "test_tf_freeze_model"
     test_dir = fileutils.make_test_dir()
 
     model = create_tf_model()
@@ -93,3 +92,12 @@ def test_freeze_model(fileutils):
     assert len(inputs) == 1
     assert len(outputs) == 1
     assert Path(model_path).is_file()
+
+
+@pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
+def test_serialize_model():
+    model = create_tf_model()
+    model_serialized, inputs, outputs = serialize_model(model)
+    assert len(inputs) == 1
+    assert len(outputs) == 1
+    assert len(model_serialized) > 0
