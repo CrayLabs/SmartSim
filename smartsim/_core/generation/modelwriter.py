@@ -26,6 +26,8 @@
 
 import re
 
+from smartsim.error.errors import SmartSimError
+
 from ...error import ParameterWriterError
 from ...log import get_logger
 
@@ -55,7 +57,8 @@ class ModelWriter:
             self.tag = tag
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
-    def configure_tagged_model_files(self, tagged_files, params):
+    def configure_tagged_model_files(
+            self, tagged_files, params, make_missing_tags_fatal=False):
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -63,10 +66,12 @@ class ModelWriter:
         :type model: list[str]
         :param params: model parameters
         :type params: dict[str, str]
+        :param make_missing_tags_fatal: blow up if a tag is missing
+        :type make_missing_tags_fatal: bool
         """
         for tagged_file in tagged_files:
             self._set_lines(tagged_file)
-            self._replace_tags(params)
+            self._replace_tags(params, make_missing_tags_fatal)
             self._write_changes(tagged_file)
 
     def _set_lines(self, file_path):
@@ -96,12 +101,14 @@ class ModelWriter:
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
-    def _replace_tags(self, params):
+    def _replace_tags(self, params, make_fatal=False):
         """Replace the tagged within the tagged file attached to this
            model. The tag defaults to ";"
 
         :param model: The model instance
         :type model: Model
+        :param make_fatal: (Optional) Set to True to force a fatal error if a tag is not matched
+        :type make_fatal: bool
         """
         edited = []
         unused_tags = {}
@@ -128,10 +135,15 @@ class ModelWriter:
                             unused_tags[tag] = []
                         unused_tags[tag].append(i + 1)
                         edited.append(re.sub(self.regex, previous_value, line))
+                        search = False # Move on to the next tag
             else:
                 edited.append(line)
         for tag in unused_tags:
-            logger.warning(f"Unused tag {tag} on line(s): {str(unused_tags[tag])}")
+            missing_tag_message = f"Unused tag {tag} on line(s): {str(unused_tags[tag])}"
+            if make_fatal:
+                raise SmartSimError(missing_tag_message)
+            else:
+                logger.warning(missing_tag_message)
         self.lines = edited
 
     def _is_ensemble_spec(self, tagged_line, model_params):
