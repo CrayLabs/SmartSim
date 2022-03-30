@@ -7,7 +7,7 @@ Online training provides the ability to use dynamic processes as your training
 data set. In SmartSim, training data can be any process using the SmartRedis clients
 to store data inside of a deployed `Orchestrator` database.
 
-SmartSim includes utilizes to help with online training workflows in PyTorch and TensorFlow
+SmartSim includes utilities to help with online training workflows in PyTorch and TensorFlow
 In this example, we show how to use ``smartsim.ml.tf`` to train a Neural Network implemented
 in TensorFlow and Keras.
 
@@ -21,7 +21,7 @@ and one application (the ``training_service``) downloading the samples to train 
 
 A richer example, entirely implemented in Python, is available as a Jupyter Notebook in the
 ``tutorials`` section of the SmartSim repository. An equivalent example using PyTorch
-instead of TensorFlow is available in the same directory.
+instead of TensorFlow will soon be available in the same directory.
 
 
 Producing and uploading the samples

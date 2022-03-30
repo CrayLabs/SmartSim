@@ -24,4 +24,4 @@ except AssertionError:  # pragma: no cover
 
 
 from .data import DynamicDataGenerator, StaticDataGenerator
-from .utils import freeze_model
+from .utils import freeze_model, serialize_model
