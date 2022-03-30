@@ -53,7 +53,7 @@ class Clean:
 
         bin_path = self._core_path / "bin"
         if bin_path.is_dir() and _all:
-            files_to_remove = ["redis-server", "redis-cli"]
+            files_to_remove = ["redis-server", "redis-cli", "keydb-server", "keydb-cli"]
             removed = False
             for _file in files_to_remove:
                 file_path = bin_path.joinpath(_file)
@@ -62,4 +62,4 @@ class Clean:
                     removed = True
                     file_path.unlink()
             if removed:
-                logger.info("Successfully removed SmartSim Redis installation")
+                logger.info("Successfully removed SmartSim database installation")

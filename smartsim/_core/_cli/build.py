@@ -121,6 +121,8 @@ class Build:
         logger.info("SmartSim build complete!")
 
     def build_database(self):
+        if self.keydb:
+            CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
         # check database installation
         database_name = "KeyDB" if self.keydb else "Redis"
         database_builder = builder.DatabaseBuilder(
