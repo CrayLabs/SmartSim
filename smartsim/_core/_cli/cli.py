@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import glob
 import sys
 
 from smartsim._core._cli.build import Build
@@ -60,7 +59,7 @@ class SmartCli:
 
     def dbcli(self):
         install_path = get_install_path()
-        script_path = install_path.joinpath(glob.glob("_core/bin/*-cli")).resolve()
+        script_path = next((install_path / "_core" / "bin").glob("*-cli")).resolve()
         if script_path.is_file():
             print(script_path)
             exit(0)
