@@ -368,7 +368,7 @@ class RunSettings:
         val_types = typing.get_args(val_types_union)
         # Coerce env_vars values to str as a convenience to user
         for (env, val) in env_vars.items():
-            if not isinstance(val, value_types):
+            if not isinstance(val, val_types):
                 raise TypeError(f"env_vars[{env}] was of type {type(val)}, not {val_types_union}")
             else:
                 self.env_vars[env] = str(val)
