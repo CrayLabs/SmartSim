@@ -224,16 +224,10 @@ class MpirunSettings(RunSettings):
     def format_env_vars(self):
         """Format the environment variables for mpirun
 
-        Automatically exports ``PYTHONPATH``, ``LD_LIBRARY_PATH``
-        and ``PATH``
-
         :return: list of env vars
         :rtype: list[str]
         """
         formatted = []
-        presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
-        for preset in presets:
-            formatted.extend(["-x", preset])
 
         if self.env_vars:
             for name, value in self.env_vars.items():

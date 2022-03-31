@@ -138,7 +138,9 @@ class SrunStep(Step):
                 env_var_str,
                 comma_separated_env_vars,
             ) = self.run_settings.format_comma_sep_env_vars()
-            srun_cmd += ["--export", env_var_str]
+
+            if len(env_var_str) > 0:
+                srun_cmd += ["--export", env_var_str]
 
             if comma_separated_env_vars:
                 srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
@@ -199,7 +201,8 @@ class SrunStep(Step):
             cmd += mpmd.format_run_args()
             cmd += ["--job-name", self.name]
             (env_var_str, _) = mpmd.format_comma_sep_env_vars()
-            cmd += ["--export", env_var_str]
+            if len(env_var_str) > 0:
+                cmd += ["--export", env_var_str]
             cmd += mpmd.exe
             cmd += mpmd.exe_args
 

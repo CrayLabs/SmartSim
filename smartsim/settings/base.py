@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing
+
 from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
@@ -358,9 +360,18 @@ class RunSettings:
         """Update the job environment variables
 
         :param env_vars: environment variables to update or add
-        :type env_vars: dict[str, str]
+        :type env_vars: dict[str, Union[str, int, float, bool]]
+        :raises TypeError: if env_vars values cannot be coerced to strings
         """
-        self.env_vars.update(env_vars)
+        val_types_union = typing.Union[str, int, float, bool]
+        # Expand union type so it can be used in isinstance()
+        val_types = typing.get_args(val_types_union)
+        # Coerce env_vars values to str as a convenience to user
+        for (env, val) in env_vars.items():
+            if not isinstance(val, value_types):
+                raise TypeError(f"env_vars[{env}] was of type {type(val)}, not {val_types_union}")
+            else:
+                self.env_vars[env] = str(val)
 
     def add_exe_args(self, args):
         """Add executable arguments to executable
