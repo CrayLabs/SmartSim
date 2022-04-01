@@ -359,10 +359,12 @@ class RunSettings:
     def update_env(self, env_vars):
         """Update the job environment variables
 
-        To fully inherit the current user environment, add the
-        workload-manager-specific flag to the launch command through the
-        :meth:`add_exe_args` method. For example, ``--export=ALL`` for slurm,
-        or ``-V`` for PBS/aprun.
+        .. note:
+
+            To fully inherit the current user environment, add the
+            workload-manager-specific flag to the launch command through the
+            :meth:`add_exe_args` method. For example, ``--export=ALL`` for
+            slurm, or ``-V`` for PBS/aprun.
 
 
         :param env_vars: environment variables to update or add
