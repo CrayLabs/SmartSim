@@ -377,7 +377,7 @@ class RunSettings:
             if not isinstance(val, val_types):
                 raise TypeError(f"env_vars[{env}] was of type {type(val)}, not {val_types_union}")
             else:
-                self.env_vars[env] = str(val)
+                self.env_vars[env] = val
 
     def add_exe_args(self, args):
         """Add executable arguments to executable
