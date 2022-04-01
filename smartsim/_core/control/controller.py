@@ -30,8 +30,9 @@ import signal
 import threading
 import time
 
+from ..._core._cli.utils import get_install_path
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -39,6 +40,9 @@ from ..config import CONFIG
 from ..launcher import *
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
+
+from smartredis import Client
+
 
 logger = get_logger(__name__)
 
@@ -297,7 +301,7 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as seperate job steps, aka not in a batch
+                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 

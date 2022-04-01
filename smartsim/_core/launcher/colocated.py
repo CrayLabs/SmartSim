@@ -65,6 +65,10 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
 
         f.write(f"{colocated_cmd}\n")
         f.write(f"DBPID=$!\n\n")
+
+        if colocated_settings["db_models"]:
+            pass
+
         if colocated_settings["limit_app_cpus"]:
             cpus = colocated_settings["cpus"]
             f.write(
@@ -129,7 +133,7 @@ def _build_colocated_wrapper_cmd(port=6780,
     # add extra redisAI configurations
     for arg, value in rai_args.items():
         if value:
-            # RAI wants arguments for inference in all capps
+            # RAI wants arguments for inference in all caps
             # ex. THREADS_PER_QUEUE=1
             db_cmd.append(f"{arg.upper()} {str(value)}")
 
@@ -142,7 +146,7 @@ def _build_colocated_wrapper_cmd(port=6780,
     ])
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs
-        # for the extra configurations and Python doesn't allow a hypon
+        # for the extra configurations and Python doesn't allow a hyphen
         # in a variable name. All redis and KeyDB configuration options
         # use hyphens in their names.
         db_arg = db_arg.replace("_", "-")
