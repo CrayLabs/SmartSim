@@ -32,7 +32,7 @@ import time
 
 from ..._core.utils.redis import set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -75,10 +75,15 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        self._jobs.kill_on_interrupt = kill_on_interrupt
-        # register custom signal handler for ^C (SIGINT)
-        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
-        self._launch(manifest)
+        try:
+            self._launch(manifest)
+
+            # start the job manager thread if not already started
+            if not self._jobs.actively_monitoring:
+                self._jobs.start()
+            
+            if self.orchestrator_active():
+                self.set_dbobjects(manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:

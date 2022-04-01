@@ -68,6 +68,9 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
         f.write(f"{colocated_cmd}\n")
         f.write(f"DBPID=$!\n\n")
 
+        if colocated_settings["db_models"]:
+            pass
+
         if colocated_settings["limit_app_cpus"]:
             cpus = colocated_settings["cpus"]
             f.write(
