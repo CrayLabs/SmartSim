@@ -29,6 +29,7 @@ from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
 from .entity import SmartSimEntity
 from .files import EntityFiles
+from .dbobject import DBScript, DBModel
 
 
 class Model(SmartSimEntity):
@@ -54,6 +55,8 @@ class Model(SmartSimEntity):
         self.params_as_args = params_as_args
         self.incoming_entities = []
         self._key_prefixing_enabled = False
+        self._db_models = []
+        self._db_scripts = []
         self.files = None
 
     @property
@@ -197,7 +200,6 @@ class Model(SmartSimEntity):
         ])
         self.run_settings.colocated_db_settings = colo_db_config
 
-
     def params_to_args(self):
         """Convert parameters to command line arguments and update run settings."""
         for param in self.params_as_args:
@@ -213,6 +215,99 @@ class Model(SmartSimEntity):
                 )
             self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
+    def add_ml_model(self,
+                     name,
+                     backend,
+                     model=None,
+                     model_path=None,
+                     device="CPU",
+                     devices_per_node=1,
+                     batch_size=0,
+                     min_batch_size=0,
+                     tag="",
+                     inputs=None,
+                     outputs=None):
+        """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
+
+        Each ML Model added will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of this Model instance
+
+        One of either model (in memory representation) or model_path (file)
+        must be provided
+
+        :param name: key to store model under
+        :type name: str
+        :param model: model in memory
+        :type model: str, optional # TODO figure out what to type hint this as
+        :param model_path: serialized model
+        :type model_path: file path to model
+        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
+        :type backend: str
+        :param device: name of device for execution, defaults to "CPU"
+        :type device: str, optional
+        :param batch_size: batch size for execution, defaults to 0
+        :type batch_size: int, optional
+        :param min_batch_size: minimum batch size for model execution, defaults to 0
+        :type min_batch_size: int, optional
+        :param tag: additional tag for model information, defaults to ""
+        :type tag: str, optional
+        :param inputs: model inputs (TF only), defaults to None
+        :type inputs: list[str], optional
+        :param outputs: model outupts (TF only), defaults to None
+        :type outputs: list[str], optional
+        """
+        db_model = DBModel(
+            name,
+            backend,
+            model,
+            model_path,
+            device,
+            devices_per_node,
+            batch_size,
+            min_batch_size,
+            tag,
+            inputs,
+            outputs
+        )
+        self._db_models.append(db_model)
+
+    def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
+        """TorchScript to launch with this Model instance
+
+        Each script added to the model will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of this Model instance
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        One of either script (in memory representation) or script_path (file)
+        must be provided
+
+        :param name: key to store script under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name,
+            script,
+            script_path,
+            device,
+            devices_per_node
+        )
+        self._db_scripts.append(db_script)
+
     def __eq__(self, other):
         if self.name == other.name:
             return True
@@ -223,3 +318,5 @@ class Model(SmartSimEntity):
         entity_str += "Type: " + self.type + "\n"
         entity_str += str(self.run_settings)
         return entity_str
+
+

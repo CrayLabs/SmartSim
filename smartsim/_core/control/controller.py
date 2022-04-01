@@ -29,8 +29,9 @@ import pickle
 import threading
 import time
 
+from ..._core._cli.utils import get_install_path
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -38,6 +39,9 @@ from ..config import CONFIG
 from ..launcher import *
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
+
+from smartredis import Client
+
 
 logger = get_logger(__name__)
 
@@ -75,6 +79,9 @@ class Controller:
             # start the job manager thread if not already started
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
+            
+            if self.orchestrator_active():
+                self.set_dbobjects(manifest)
 
         except KeyboardInterrupt:
             self._jobs.signal_interrupt()
@@ -82,7 +89,7 @@ class Controller:
 
         # block until all non-database jobs are complete
         if block:
-            # poll handles it's own keyboard interrupt as
+            # poll handles its own keyboard interrupt as
             # it may be called seperately
             self.poll(5, True)
 
@@ -302,7 +309,7 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as seperate job steps, aka not in a batch
+                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
@@ -591,3 +598,101 @@ class Controller:
             return orc
         finally:
             JM_LOCK.release()
+
+
+    def _enumerate_devices(self, dbobject: DBObject):
+        """Enumerate devices for a DBObject
+
+        :param dbobject: DBObject to enumerate
+        :type dbobject: DBObject
+        :return: list of device names
+        :rtype: list[str]
+        """
+        devices = []
+        if dbobject.device in ["CPU", "GPU"] and dbobject.devices_per_node > 1:
+            for device_num in dbobject.devices_per_node:
+                devices.append(f"{dbobject.device}:{str(device_num)}")
+        else:
+            devices = [dbobject.device]
+
+
+    def set_ml_model(self, db_model: DBModel, address, cluster=False):
+        devices = self._enumerate_devices(db_model)
+
+        redis_cli = (get_install_path / "_core/bin/redis-cli").resolve()
+        if not redis_cli.is_file():
+            raise FileNotFoundError("Could not find redis-cli")
+
+        client = Client(address=address, cluster=cluster)
+
+        for device in devices:
+            if db_model.is_file:
+                client.set_model_from_file(
+                    key=db_model.name,
+                    model=db_model.model,
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs
+                )
+            else:
+                client.set_model(
+                    key=db_model.name,
+                    model=db_model.model,
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs
+                )
+        # TODO some more error handlings here
+
+
+    def set_script(self, db_script:DBScript, address, cluster=False):
+        devices = self._enumerate_devices(db_script)
+        # TODO some error handling here
+        client = Client(address=address, cluster=cluster)
+
+        for device in devices:
+            if db_script.is_file:
+                client.set_script_from_file(
+                    key=db_script.name,
+                    script_file=db_script.file,
+                    device=device
+                )
+            else:
+                client.set_script(
+                    key=db_script.name,
+                    script=db_script.script,
+                    device=device
+                )
+        # TODO some more error handlings here
+
+
+    def set_dbobjects(self, manifest):
+        db_addresses = self._jobs.get_db_host_addresses()
+        cluster = len(db_addresses) > 1
+        address = db_addresses[0]
+        for model in manifest.models:
+            for db_model in model._db_models:
+                self.set_ml_model(db_model, address, cluster)
+            for db_script in model._db_scripts:
+                self.set_script(db_script, address, cluster)
+
+        # This allows users to specify per-ensemble and
+        # per-entity models
+        for ensemble in manifest.ensembles + manifest.ray_clusters:
+            for db_model in ensemble._db_models:
+                self.set_ml_model(db_model, address, cluster)
+            for db_script in ensemble._db_scripts:
+                self.set_script(db_script, address, cluster)
+            for entity in ensemble:
+                for db_model in entity._db_models:
+                    self.set_ml_model(db_model, address, cluster)
+                for db_script in entity._db_scripts:
+                    self.set_script(db_script, address, cluster)
