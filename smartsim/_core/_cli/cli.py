@@ -20,7 +20,6 @@ def _usage():
         "\nDeveloper:",
         "\tsite        Print the installation site of SmartSim",
         "\tdbcli       Print the path to the redis-cli binary" "\n\n",
-        "\tversions    Display versions of SmartSim and related packages"
     ]
     return "\n".join(usage)
 
@@ -69,9 +68,6 @@ class SmartCli:
         else:
             print("Redis dependencies not found")
             exit(1)
-
-    def versions(self):
-        Versioner().pretty_print()
 
     def sitebuild(self):
         SiteBuild()

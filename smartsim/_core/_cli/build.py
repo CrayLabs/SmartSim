@@ -53,8 +53,6 @@ class SiteBuild:
             logger.error("SMARTSIM_DEP_PATH not set. Please contact your site administrator")
 
         self.versions=Versioner()
-        logger.info("Version Information:")
-        self.versions.pretty_print()
 
         self.install_torch(smartsim_dependency_path)
 
