@@ -20,6 +20,52 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
 
+def _install_torch_from_pip(versions, device="cpu", verbose=False):
+    packages = []
+    end_point = None
+    # if we are on linux cpu, use the torch without CUDA
+    if sys.platform == "linux" and device == "cpu":
+        packages.append(f"torch=={versions.TORCH}+cpu")
+        packages.append(f"torchvision=={versions.TORCHVISION}+cpu")
+        end_point = "https://download.pytorch.org/whl/torch_stable.html"
+
+    # otherwise just use the version downloaded by pip
+    else:
+        packages.append(f"torch=={versions.TORCH}")
+        packages.append(f"torchvision=={versions.TORCHVISION}")
+
+    pip_install(packages, end_point=end_point, verbose=verbose)
+
+class SiteBuild:
+    def __init__(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "-v",
+            action="store_true",
+            default=False,
+            help="Enable verbose build process",
+        )
+        args = parser.parse_args(sys.argv[2:])
+        self.verbose = args.v
+
+        smartsim_dependency_path = os.getenv("SMARTSIM_DEP_PATH")
+        if not smartsim_dependency_path:
+            logger.error("SMARTSIM_DEP_PATH not set. Please contact your site administrator")
+
+        self.versions=Versioner()
+        logger.info("Version Information:")
+        self.versions.pretty_print()
+
+        self.install_torch(smartsim_dependency_path)
+
+    def install_torch(self, smartsim_dependency_path):
+        backend_torch_path = f"{smartsim_dependency_path}/lib/backends/redisai_torch"
+        if Path(backend_torch_path).is_dir():
+            device = "cpu"
+            if (Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file()):
+                device = "gpu"
+            logger.info(f"Installing {device.upper()} backend for Torch")
+            _install_torch_from_pip(self.versions, device, self.verbose)
 
 class Build:
     def __init__(self):
@@ -237,22 +283,9 @@ class Build:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
-        packages = []
-        end_point = None
+
         if not self.build_env.check_installed("torch", self.versions.TORCH):
-            # if we are on linux cpu, use the torch without CUDA
-            if sys.platform == "linux" and device == "cpu":
-                packages.append(f"torch=={self.versions.TORCH}+cpu")
-                packages.append(f"torchvision=={self.versions.TORCHVISION}+cpu")
-                end_point = "https://download.pytorch.org/whl/torch_stable.html"
-
-            # otherwise just use the version downloaded by pip
-            else:
-                packages.append(f"torch=={self.versions.TORCH}")
-                packages.append(f"torchvision=={self.versions.TORCHVISION}")
-
-            pip_install(packages, end_point=end_point, verbose=self.verbose)
-
+            _install_torch_from_pip(self.versions, device, self.verbose)
         # if torch already installed, check the versions to make sure correct
         # torch version is downloaded for that particular device
         else:

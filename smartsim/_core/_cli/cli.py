@@ -3,21 +3,24 @@
 import argparse
 import sys
 
-from smartsim._core._cli.build import Build
+from smartsim._core._cli.build import Build, SiteBuild
 from smartsim._core._cli.clean import Clean
 from smartsim._core._cli.utils import get_install_path
+from smartsim._core._install.buildenv import Versioner
 
 
 def _usage():
     usage = [
         "smart <command> [<args>]\n",
         "Commands:",
-        "\tbuild     Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-        "\tclean     Remove previous ML runtime installation",
-        "\tclobber   Remove all previous dependency installations",
+        "\tbuild       Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
+        "\tsitebuild   Build SmartSim against a site-installation",
+        "\tclean       Remove previous ML runtime installation",
+        "\tclobber     Remove all previous dependency installations",
         "\nDeveloper:",
-        "\tsite      Print the installation site of SmartSim",
-        "\tdbcli     Print the path to the redis-cli binary" "\n\n",
+        "\tsite        Print the installation site of SmartSim",
+        "\tdbcli       Print the path to the redis-cli binary" "\n\n",
+        "\tversions    Display versions of SmartSim and related packages"
     ]
     return "\n".join(usage)
 
@@ -67,6 +70,11 @@ class SmartCli:
             print("Redis dependencies not found")
             exit(1)
 
+    def versions(self):
+        Versioner().pretty_print()
+
+    def sitebuild(self):
+        SiteBuild()
 
 def main():
     SmartCli()

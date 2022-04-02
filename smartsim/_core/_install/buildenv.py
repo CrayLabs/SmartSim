@@ -4,6 +4,7 @@ import site
 import subprocess
 import sys
 from pathlib import Path
+from tabulate import tabulate
 from typing import Iterable
 
 import pkg_resources
@@ -209,6 +210,10 @@ class Versioner:
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
     ONNX = Version_(REDISAI.onnx)
+
+    def pretty_print(self):
+        vers = self.as_dict()
+        print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
     def as_dict(self):
         packages = [
