@@ -25,7 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ..error import SSUnsupportedError
+from ..log import get_logger
 from .base import RunSettings
+
+logger = get_logger(__name__)
 
 
 class MpirunSettings(RunSettings):
@@ -122,6 +125,8 @@ class MpirunSettings(RunSettings):
     def set_hostlist(self, host_list):
         """Set the hostlist for the ``mpirun`` command
 
+        This sets ``--host``
+
         :param host_list: list of host names
         :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
@@ -133,6 +138,69 @@ class MpirunSettings(RunSettings):
         if not all([isinstance(host, str) for host in host_list]):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the hostlist
+
+        This sets ``--hostfile``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["hostfile"] = str(file_path)
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        This sets ``--verbose``
+
+        :param verbose: Whether the job should be run verbosely
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["verbose"] = None
+        else:
+            self.run_args.pop("verbose", None)
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+        else:
+            self.run_args.pop("quiet", None)
+
+    def set_broadcast(self, dest_path=None):
+        """Copy the specified executable(s) to remote machines
+
+        This sets ``--preload-binary``
+
+        :param dest_path: Destination path (Ignored)
+        :type dest_path: str | None
+        """
+        if dest_path is not None and isinstance(dest_path, str):
+            logger.warning(
+                (
+                    f"{type(self)} cannot set a destination path during broadcast. "
+                    "Using session directory instead"
+                )
+            )
+        self.run_args["preload-binary"] = None
+
+    def set_walltime(self, walltime):
+        """Set the maximum number of seconds that a job will run
+
+        This sets ``--timeout``
+
+        :param walltime: number like string of seconds that a job will run in secs
+        :type walltime: str
+        """
+        self.run_args["timeout"] = str(walltime)
 
     def format_run_args(self):
         """return a list of OpenMPI formatted run arguments
