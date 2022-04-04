@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import subprocess as sp
+
 from ..error import SSUnsupportedError
 from ..log import get_logger
 from .base import RunSettings
@@ -31,8 +33,10 @@ from .base import RunSettings
 logger = get_logger(__name__)
 
 
-class MpirunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+class _OpenMPISettings(RunSettings):
+    def __init__(
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+    ):
         """Settings to run job with ``mpirun`` command (OpenMPI)
 
         Note that environment variables can be passed with a None
@@ -55,7 +59,7 @@ class MpirunSettings(RunSettings):
         super().__init__(
             exe,
             exe_args,
-            run_command="mpirun",
+            run_command=run_command,
             run_args=run_args,
             env_vars=env_vars,
             **kwargs,
@@ -242,3 +246,30 @@ class MpirunSettings(RunSettings):
                 else:
                     formatted += ["-x", name]
         return formatted
+
+
+class MpirunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
+        if not sp.check_output([self.run_command, "-V"]).startswith(
+            b"mpirun (Open MPI)"
+        ):
+            raise Exception("Non-OpenMPI implimentatin of `mpirun` detected")
+
+
+class Mpiexec(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
+        if not sp.check_output([self.run_command, "-V"]).startswith(
+            b"mpiexec (OpenRTE)"
+        ):
+            raise Exception("Non-OpenMPI implimentatin of `mpiexec` detected")
+
+
+class OrterunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        super().__init__(exe, exe_args, "oretrun", run_args, env_vars, **kwargs)
+        if not sp.check_output([self.run_command, "-V"]).startswith(
+            b"orterun (OpenRTE)"
+        ):
+            raise Exception("Non-OpenMPI implimentatin of `oretrun` detected")
