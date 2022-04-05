@@ -36,35 +36,6 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
 
     pip_install(packages, end_point=end_point, verbose=verbose)
 
-class SiteBuild:
-    def __init__(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "-v",
-            action="store_true",
-            default=False,
-            help="Enable verbose build process",
-        )
-        args = parser.parse_args(sys.argv[2:])
-        self.verbose = args.v
-
-        smartsim_dependency_path = os.getenv("SMARTSIM_DEP_PATH")
-        if not smartsim_dependency_path:
-            logger.error("SMARTSIM_DEP_PATH not set. Please contact your site administrator")
-
-        self.versions=Versioner()
-
-        self.install_torch(smartsim_dependency_path)
-
-    def install_torch(self, smartsim_dependency_path):
-        backend_torch_path = f"{smartsim_dependency_path}/lib/backends/redisai_torch"
-        if Path(backend_torch_path).is_dir():
-            device = "cpu"
-            if (Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file()):
-                device = "gpu"
-            logger.info(f"Installing {device.upper()} backend for Torch")
-            _install_torch_from_pip(self.versions, device, self.verbose)
-
 class Build:
     def __init__(self):
         parser = argparse.ArgumentParser()
@@ -110,6 +81,12 @@ class Build:
             type=str,
             help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
         )
+        parser.add_argument(
+            "--only_python_packages",
+            action="store_true",
+            default=False,
+            help="If true, only install the python packages (i.e. skip backend builds)",
+        )
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
 
@@ -120,36 +97,42 @@ class Build:
 
         logger.info("Running SmartSim build process...")
         try:
-            logger.info("Checking for build tools...")
-            self.build_env = BuildEnv()
-
-            if self.verbose:
-                logger.info("Build Environment:")
-                env = self.build_env.as_dict()
-                print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
-
             logger.info("Checking requested versions...")
             self.versions = Versioner()
 
-            if self.verbose:
-                logger.info("Version Information:")
-                vers = self.versions.as_dict()
-                print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
+            if args.only_python_packages:
+                logger.info("Only installing Python packages...skipping build")
+                self.build_env = BuildEnv(checks=False)
+                if not args.no_pt:
+                    self.install_torch(device=args.device)
+            else:
+                logger.info("Checking for build tools...")
+                self.build_env = BuildEnv()
 
-            # REDIS
-            self.build_redis()
+                if self.verbose:
+                    logger.info("Build Environment:")
+                    env = self.build_env.as_dict()
+                    print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
 
-            # REDISAI
-            self.build_redis_ai(
-                str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
-            )
+                if self.verbose:
+                    logger.info("Version Information:")
+                    vers = self.versions.as_dict()
+                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
-            backends = [
-                backend.capitalize() for backend in installed_redisai_backends()
-            ]
-            logger.info(
-                (", ".join(backends) if backends else "No") + " backend(s) built"
-            )
+                # REDIS
+                self.build_redis()
+
+                # REDISAI
+                self.build_redis_ai(
+                    str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
+                )
+
+                backends = [
+                    backend.capitalize() for backend in installed_redisai_backends()
+                ]
+                logger.info(
+                    (", ".join(backends) if backends else "No") + " backend(s) built"
+                )
 
         except (SetupError, BuildError) as e:
             logger.error(str(e))
@@ -277,12 +260,22 @@ class Build:
             )
             logger.info("ML Backends and RedisAI build complete!")
 
+    def infer_torch_device(self):
+        backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
+        device = "cpu"
+        if (Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file()):
+            device = "gpu"
+        return device
+
     def install_torch(self, device="cpu"):
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
 
         if not self.build_env.check_installed("torch", self.versions.TORCH):
+            inferred_device = self.infer_torch_device()
+            if (inferred_device == "gpu") and (device == "cpu"):
+                logger.warning("CPU requested, but GPU backend is available")
             _install_torch_from_pip(self.versions, device, self.verbose)
         # if torch already installed, check the versions to make sure correct
         # torch version is downloaded for that particular device
