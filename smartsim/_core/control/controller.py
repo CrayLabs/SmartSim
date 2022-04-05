@@ -82,8 +82,8 @@ class Controller:
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
             
-            if self.orchestrator_active():
-                self.set_dbobjects(manifest)
+            if self.orchestrator_active:
+                self._set_dbobjects(manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
