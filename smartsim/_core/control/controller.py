@@ -42,6 +42,7 @@ from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 
 from smartredis import Client
+from smartredis.error import RedisConnectionError, RedisReplyError
 
 
 logger = get_logger(__name__)

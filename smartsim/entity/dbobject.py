@@ -8,9 +8,13 @@ class DBObject:
         self.func = func
         if file_path:
             self.file = self._check_filepath(file_path)
+        else:
+            # Need to have this explicitly to check on it
+            self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
 
+    @property
     def is_file(self):
         if self.func:
             return False
@@ -87,6 +91,17 @@ class DBScript(DBObject):
     def script(self):
         return self.func
 
+    def __str__(self):
+        desc_str = "Name: " + self.name + "\n"
+        if self.func:
+            desc_str += "Func: " + self.func + "\n"
+        if self.file:
+            desc_str += "File path: " + str(self.file) + "\n"
+        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
+        return desc_str
+
+
 class DBModel(DBObject):
     def __init__(self,
                  name,
@@ -120,6 +135,8 @@ class DBModel(DBObject):
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
         :type min_batch_size: int, optional
+        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
+        :type min_batch_timeout: int, optional
         :param tag: additional tag for model information, defaults to ""
         :type tag: str, optional
         :param inputs: model inputs (TF only), defaults to None
@@ -141,3 +158,25 @@ class DBModel(DBObject):
     def model(self):
         return self.func
 
+    def __str__(self):
+        desc_str = "Name: " + self.name + "\n"
+        if self.model:
+            desc_str += "Model stored in memory"
+        if self.file:
+            desc_str += "File path: " + str(self.file) + "\n"
+        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
+        desc_str += "Backend: " + str(self.backend) + "\n"
+        if self.batch_size:
+            desc_str += "Batch size: " + str(self.batch_size) + "\n"
+        if self.min_batch_size:
+            desc_str += "Min batch size: " + str(self.min_batch_size) + "\n"
+        if self.min_batch_timeout:
+            desc_str += "Min batch time out: " + str(self.min_batch_timeout) + "\n"
+        if self.tag:
+            desc_str += "Tag: " + self.tag + "\n"
+        if self.inputs:
+            desc_str += "Inputs: " + str(self.inputs) + "\n"
+        if self.outputs:
+            desc_str += "Outputs: " + str(self.outputs) + "\n"
+        return desc_str
