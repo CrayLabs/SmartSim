@@ -64,6 +64,8 @@ def serialize_model(model):
 
     :param model: TensorFlow or Keras model
     :type model: tf.Module
+    :return: serialized model, model input layer names, model output layer names
+    :rtype: str, list[str], list[str]
     """
 
     full_model = tf.function(lambda x: model(x))

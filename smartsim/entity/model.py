@@ -198,6 +198,10 @@ class Model(SmartSimEntity):
         colo_db_config["extra_db_args"] = dict([
             (k,str(v)) for k,v in kwargs.items() if k not in colo_db_config["rai_args"]
         ])
+
+        colo_db_config["db_models"] = self._db_models
+        colo_db_config["db_scripts"] = self._db_scripts
+
         self.run_settings.colocated_db_settings = colo_db_config
 
     def params_to_args(self):
@@ -258,17 +262,17 @@ class Model(SmartSimEntity):
         :type outputs: list[str], optional
         """
         db_model = DBModel(
-            name,
-            backend,
-            model,
-            model_path,
-            device,
-            devices_per_node,
-            batch_size,
-            min_batch_size,
-            tag,
-            inputs,
-            outputs
+            name=name,
+            backend=backend,
+            model=model,
+            model_file=model_path,
+            device=device,
+            devices_per_node=devices_per_node,
+            batch_size=batch_size,
+            min_batch_size=min_batch_size,
+            tag=tag,
+            inputs=inputs,
+            outputs=outputs
         )
         self._db_models.append(db_model)
 
@@ -285,7 +289,7 @@ class Model(SmartSimEntity):
         Setting ``devices_per_node=N``, with N greater than one will result
         in the model being stored in the first N devices of type ``device``.
 
-        One of either script (in memory representation) or script_path (file)
+        One of either script (in memory string representation) or script_path (file)
         must be provided
 
         :param name: key to store script under
@@ -300,11 +304,46 @@ class Model(SmartSimEntity):
         :type devices_per_node: int
         """
         db_script = DBScript(
-            name,
-            script,
-            script_path,
-            device,
-            devices_per_node
+            name=name,
+            script=script,
+            script_path=script_path,
+            device=device,
+            devices_per_node=devices_per_node
+        )
+        self._db_scripts.append(db_script)
+
+    
+    def add_function(self, name, function=None, device="CPU", devices_per_node=1):
+        """TorchScript function to launch with this Model instance
+
+        Each script function to the model will be loaded into a
+        non-converged orchestrator prior to the execution
+        of this Model instance.
+        
+        For converged orchestrators, the :meth:`add_script` method should be used.
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        :param name: key to store function under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name=name,
+            script=function,
+            device=device,
+            devices_per_node=devices_per_node
         )
         self._db_scripts.append(db_script)
 
@@ -316,7 +355,11 @@ class Model(SmartSimEntity):
     def __str__(self): # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
-        entity_str += str(self.run_settings)
+        entity_str += str(self.run_settings) + "\n"
+        if self._db_models:
+            entity_str += "DB Models: \n" + str(len(self._db_models)) + "\n"
+        if self._db_scripts:
+            entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
 
 

@@ -41,6 +41,7 @@ from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 
 from smartredis import Client
+from smartredis.error import RedisConnectionError, RedisReplyError
 
 
 logger = get_logger(__name__)
@@ -80,8 +81,8 @@ class Controller:
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
             
-            if self.orchestrator_active():
-                self.set_dbobjects(manifest)
+            if self.orchestrator_active:
+                self._set_dbobjects(manifest)
 
         except KeyboardInterrupt:
             self._jobs.signal_interrupt()
@@ -610,89 +611,101 @@ class Controller:
         """
         devices = []
         if dbobject.device in ["CPU", "GPU"] and dbobject.devices_per_node > 1:
-            for device_num in dbobject.devices_per_node:
+            for device_num in range(dbobject.devices_per_node):
                 devices.append(f"{dbobject.device}:{str(device_num)}")
         else:
             devices = [dbobject.device]
 
+        return devices
 
-    def set_ml_model(self, db_model: DBModel, address, cluster=False):
+
+    def _set_ml_model(self, db_model, address, cluster=False):
         devices = self._enumerate_devices(db_model)
-
-        redis_cli = (get_install_path / "_core/bin/redis-cli").resolve()
-        if not redis_cli.is_file():
-            raise FileNotFoundError("Could not find redis-cli")
-
-        client = Client(address=address, cluster=cluster)
+        try:
+            client = Client(address=address, cluster=cluster)
+        except RedisConnectionError as error:
+            logger.error("Could not connect to orchestrator")
+            raise error
 
         for device in devices:
-            if db_model.is_file:
-                client.set_model_from_file(
-                    key=db_model.name,
-                    model=db_model.model,
-                    backend=db_model.backend,
-                    device=device,
-                    batch_size=db_model.batch_size,
-                    min_batch_size=db_model.min_batch_size,
-                    tag=db_model.tag,
-                    inputs=db_model.inputs,
-                    outputs=db_model.outputs
-                )
-            else:
-                client.set_model(
-                    key=db_model.name,
-                    model=db_model.model,
-                    backend=db_model.backend,
-                    device=device,
-                    batch_size=db_model.batch_size,
-                    min_batch_size=db_model.min_batch_size,
-                    tag=db_model.tag,
-                    inputs=db_model.inputs,
-                    outputs=db_model.outputs
-                )
-        # TODO some more error handlings here
+            try:
+                if db_model.is_file:
+                    client.set_model_from_file(
+                        name=db_model.name,
+                        model_file=str(db_model.file),
+                        backend=db_model.backend,
+                        device=device,
+                        batch_size=db_model.batch_size,
+                        min_batch_size=db_model.min_batch_size,
+                        tag=db_model.tag,
+                        inputs=db_model.inputs,
+                        outputs=db_model.outputs
+                    )
+                else:
+                    client.set_model(
+                        name=db_model.name,
+                        model=db_model.model,
+                        backend=db_model.backend,
+                        device=device,
+                        batch_size=db_model.batch_size,
+                        min_batch_size=db_model.min_batch_size,
+                        tag=db_model.tag,
+                        inputs=db_model.inputs,
+                        outputs=db_model.outputs
+                    )
+            except  RedisReplyError as error:
+                logger.error("Error while setting model on orchestrator.")
+                raise error
 
 
-    def set_script(self, db_script:DBScript, address, cluster=False):
+    def _set_script(self, db_script, address, cluster=False):   
         devices = self._enumerate_devices(db_script)
-        # TODO some error handling here
-        client = Client(address=address, cluster=cluster)
+        try:
+            client = Client(address=address, cluster=cluster)
+        except RedisConnectionError as error:
+            logger.error("Could not connect to orchestrator")
+            raise error
 
         for device in devices:
-            if db_script.is_file:
-                client.set_script_from_file(
-                    key=db_script.name,
-                    script_file=db_script.file,
-                    device=device
-                )
-            else:
-                client.set_script(
-                    key=db_script.name,
-                    script=db_script.script,
-                    device=device
-                )
-        # TODO some more error handlings here
+            try:
+                if db_script.is_file:
+                    client.set_script_from_file(
+                        name=db_script.name,
+                        file=str(db_script.file),
+                        device=device
+                    )
+                else:
+                    if isinstance(db_script.script, str):
+                        client.set_script(
+                            name=db_script.name,
+                            script=db_script.script,
+                            device=device
+                        )
+                    else:
+                        client.set_function(
+                            name=db_script.name,
+                            function=db_script.script,
+                            device=device
+                        )
+        
+            except  RedisReplyError as error:
+                logger.error("Error while setting model on orchestrator.")
+                raise error
 
 
-    def set_dbobjects(self, manifest):
+    def _set_dbobjects(self, manifest):
         db_addresses = self._jobs.get_db_host_addresses()
         cluster = len(db_addresses) > 1
         address = db_addresses[0]
         for model in manifest.models:
             for db_model in model._db_models:
-                self.set_ml_model(db_model, address, cluster)
+                self._set_ml_model(db_model, address, cluster)
             for db_script in model._db_scripts:
-                self.set_script(db_script, address, cluster)
+                self._set_script(db_script, address, cluster)
 
-        # This allows users to specify per-ensemble and
-        # per-entity models
-        for ensemble in manifest.ensembles + manifest.ray_clusters:
-            for db_model in ensemble._db_models:
-                self.set_ml_model(db_model, address, cluster)
-            for db_script in ensemble._db_scripts:
-                self.set_script(db_script, address, cluster)
+        for ensemble in manifest.ensembles:
             for entity in ensemble:
                 for db_model in entity._db_models:
-                    self.set_ml_model(db_model, address, cluster)
+                    self._set_ml_model(db_model, address, cluster)
                 for db_script in entity._db_scripts:
-                    self.set_script(db_script, address, cluster)
+                    self._set_script(db_script, address, cluster)
