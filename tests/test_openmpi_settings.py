@@ -52,12 +52,6 @@ def test_format_env():
     formatted = settings.format_env_vars()
     result = [
         "-x",
-        "PATH",
-        "-x",
-        "LD_LIBRARY_PATH",
-        "-x",
-        "PYTHONPATH",
-        "-x",
         "OMP_NUM_THREADS=10",
         "-x",
         "LOGGING=verbose",

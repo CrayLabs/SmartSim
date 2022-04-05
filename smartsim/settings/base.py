@@ -357,10 +357,23 @@ class RunSettings:
     def update_env(self, env_vars):
         """Update the job environment variables
 
+        To fully inherit the current user environment, add the
+        workload-manager-specific flag to the launch command through the
+        :meth:`add_exe_args` method. For example, ``--export=ALL`` for
+        slurm, or ``-V`` for PBS/aprun.
+
+
         :param env_vars: environment variables to update or add
-        :type env_vars: dict[str, str]
+        :type env_vars: dict[str, Union[str, int, float, bool]]
+        :raises TypeError: if env_vars values cannot be coerced to strings
         """
-        self.env_vars.update(env_vars)
+        val_types = (str, int, float, bool)
+        # Coerce env_vars values to str as a convenience to user
+        for (env, val) in env_vars.items():
+            if type(val) not in val_types:
+                raise TypeError(f"env_vars[{env}] was of type {type(val)}, not {val_types_union}")
+            else:
+                self.env_vars[env] = val
 
     def add_exe_args(self, args):
         """Add executable arguments to executable
