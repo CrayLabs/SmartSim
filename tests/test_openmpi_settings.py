@@ -1,6 +1,7 @@
 import pytest
 
 import os
+import stat
 import sys
 
 from smartsim.settings.mpirunSettings import (
@@ -20,6 +21,28 @@ def test_not_instanced_if_not_found(OpenMPISettings):
     try:
         os.environ["PATH"] = ""
         with pytest.raises(FileNotFoundError):
+            OpenMPISettings(sys.executable)
+    finally:
+        os.environ["PATH"] = old_path
+
+@pytest.mark.parametrize(
+    "OpenMPISettings,stub_exe", [
+        pytest.param(MpirunSettings, "mpirun"),
+        pytest.param(MpiexecSettings, "mpiexec"),
+        pytest.param(OrterunSettings, "orterun")
+    ]
+)
+def test_not_instanced_if_not_openmpi(OpenMPISettings, stub_exe, fileutils):
+    old_path = os.environ.get("PATH")
+    try:
+        stubs_path = fileutils.get_test_dir_path("mpi_impl_stubs")
+        stub_exe = f"{stubs_path}/{stub_exe}"
+        st = os.stat(stub_exe)
+        if not st.st_mode & stat.S_IEXEC:
+            os.chmod(stub_exe, st.st_mode | stat.S_IEXEC)
+
+        os.environ["PATH"] = stubs_path
+        with pytest.raises(SSUnsupportedError):
             OpenMPISettings(sys.executable)
     finally:
         os.environ["PATH"] = old_path
