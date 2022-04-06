@@ -257,7 +257,7 @@ class MpirunSettings(_OpenMPISettings):
             raise Exception("Non-OpenMPI implimentatin of `mpirun` detected")
 
 
-class Mpiexec(_OpenMPISettings):
+class MpiexecSettings(_OpenMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
         if not sp.check_output([self.run_command, "-V"]).startswith(
@@ -268,8 +268,8 @@ class Mpiexec(_OpenMPISettings):
 
 class OrterunSettings(_OpenMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        super().__init__(exe, exe_args, "oretrun", run_args, env_vars, **kwargs)
+        super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
         if not sp.check_output([self.run_command, "-V"]).startswith(
             b"orterun (OpenRTE)"
         ):
-            raise Exception("Non-OpenMPI implimentatin of `oretrun` detected")
+            raise Exception("Non-OpenMPI implimentatin of `orterun` detected")
