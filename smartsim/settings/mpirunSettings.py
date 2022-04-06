@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import subprocess as sp
+import re
 
 from ..error import SSUnsupportedError
 from ..log import get_logger
@@ -251,25 +252,25 @@ class _OpenMPISettings(RunSettings):
 class MpirunSettings(_OpenMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
-        if not sp.check_output([self.run_command, "-V"]).startswith(
-            b"mpirun (Open MPI)"
-        ):
-            raise Exception("Non-OpenMPI implimentatin of `mpirun` detected")
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_stmt):
+            raise SSUnsupportedError("Non-OpenMPI implimentatin of `mpirun` detected")
 
 
 class MpiexecSettings(_OpenMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
-        if not sp.check_output([self.run_command, "-V"]).startswith(
-            b"mpiexec (OpenRTE)"
-        ):
-            raise Exception("Non-OpenMPI implimentatin of `mpiexec` detected")
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+            raise SSUnsupportedError("Non-OpenMPI implimentatin of `mpiexec` detected")
 
 
 class OrterunSettings(_OpenMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
-        if not sp.check_output([self.run_command, "-V"]).startswith(
-            b"orterun (OpenRTE)"
-        ):
-            raise Exception("Non-OpenMPI implimentatin of `orterun` detected")
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+            raise SSUnsupportedError("Non-OpenMPI implimentatin of `orterun` detected")
