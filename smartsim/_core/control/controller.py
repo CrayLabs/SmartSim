@@ -60,7 +60,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, manifest, block=True):
+    def start(self, manifest, block=True, kill_on_interrupt=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -77,15 +77,14 @@ class Controller:
                 self._jobs.start()
 
         except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
+            self._jobs.signal_interrupt(kill_on_interrupt=kill_on_interrupt)
             raise
 
         # block until all non-database jobs are complete
         if block:
             # poll handles it's own keyboard interrupt as
             # it may be called seperately
-            self.poll(5, True)
-
+            self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
     def orchestrator_active(self):
@@ -97,7 +96,7 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self, interval, verbose):
+    def poll(self, interval, verbose, kill_on_interrupt=True):
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
@@ -121,9 +120,8 @@ class Controller:
                         JM_LOCK.release()
 
         except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
+            self._jobs.signal_interrupt(kill_on_interrupt=kill_on_interrupt)
             raise
-
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -463,7 +461,6 @@ class Controller:
                 port = entity.run_settings.colocated_db_settings["port"]
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
-
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

@@ -125,7 +125,7 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
 
-    def start(self, *args, block=True, summary=False):
+    def start(self, *args, block=True, summary=False, kill_on_interrupt=True):
         """Start passed instances using Experiment launcher
 
         Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
@@ -171,7 +171,11 @@ class Experiment:
         try:
             if summary:
                 self._launch_summary(start_manifest)
-            self._control.start(manifest=start_manifest, block=block)
+            self._control.start(
+                manifest=start_manifest,
+                block=block,
+                kill_on_interrupt=kill_on_interrupt,
+            )
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -238,7 +242,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def poll(self, interval=10, verbose=True):
+    def poll(self, interval=10, verbose=True, kill_on_interrupt=True):
         """Monitor jobs through logging to stdout.
 
         This method should only be used if jobs were launched
@@ -266,7 +270,7 @@ class Experiment:
         :raises SmartSimError:
         """
         try:
-            self._control.poll(interval, verbose)
+            self._control.poll(interval, verbose, kill_on_interrupt=kill_on_interrupt)
         except SmartSimError as e:
             logger.error(e)
             raise
