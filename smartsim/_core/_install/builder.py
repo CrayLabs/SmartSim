@@ -39,9 +39,15 @@ class Builder:
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
+
+        dependency_path = _core_dir
+        if os.getenv('SMARTSIM_DEP_PATH'):
+            dependency_path = Path(os.environ['SMARTSIM_DEP_PATH'])
+
         self.build_dir = _core_dir / ".third-party"
-        self.bin_path = _core_dir / "bin"
-        self.lib_path = _core_dir / "lib"
+
+        self.bin_path = dependency_path / "bin"
+        self.lib_path = dependency_path / "lib"
 
         # Set wether build process will output to std output
         self.out = subprocess.DEVNULL
@@ -52,10 +58,11 @@ class Builder:
         # make build directory "SmartSim/smartsim/_core/.third-party"
         if not self.build_dir.is_dir():
             self.build_dir.mkdir()
-        if not self.bin_path.is_dir():
-            self.bin_path.mkdir()
-        if not self.lib_path.is_dir():
-            self.lib_path.mkdir()
+        if dependency_path == _core_dir:
+            if not self.bin_path.is_dir():
+                self.bin_path.mkdir()
+            if not self.lib_path.is_dir():
+                self.lib_path.mkdir()
 
         self.jobs = jobs
 
@@ -246,7 +253,7 @@ class RedisAIBuilder(Builder):
         ))
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
-        
+
         # There should only be one path for a given device,
         # and this should hold even if in the future we use
         # an external build of RedisAI
@@ -275,11 +282,11 @@ class RedisAIBuilder(Builder):
         if src_libtf_lib_dir.is_dir():
             library_files = sorted(src_libtf_lib_dir.glob("*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")  
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")
         else:
             library_files = sorted(libtf_path.glob("lib*.so*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")        
+                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")
 
         for src_file in library_files:
             dst_file = rai_libtf_lib_dir / src_file.name
