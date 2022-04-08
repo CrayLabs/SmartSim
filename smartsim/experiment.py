@@ -166,6 +166,8 @@ class Experiment:
         :param summary: print a launch summary prior to launch,
                         defaults to False
         :type summary: bool, optional
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         """
         start_manifest = Manifest(*args)
         try:
@@ -267,6 +269,8 @@ class Experiment:
         :type interval: int, optional
         :param verbose: set verbosity, defaults to True
         :type verbose: bool, optional
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         :raises SmartSimError:
         """
         try:

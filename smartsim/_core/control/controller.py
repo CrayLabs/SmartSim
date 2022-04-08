@@ -101,6 +101,8 @@ class Controller:
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
         to_monitor = self._jobs.jobs
