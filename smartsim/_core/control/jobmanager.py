@@ -71,6 +71,8 @@ class JobManager:
         self._launcher = launcher  # reference to launcher
         self._lock = lock  # thread lock
 
+        self.kill_on_interrupt = True # flag for killing jobs on SIGINT
+
     def start(self):
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
@@ -330,9 +332,10 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def signal_interrupt(self, kill_on_interrupt=True):
+    def signal_interrupt(self, sig, frame):
+        """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
-            if kill_on_interrupt:
+            if self.kill_on_interrupt:
                 for _, job in self().items():
                     if job.status not in TERMINAL_STATUSES:
                         self._launcher.stop(job.name)
@@ -362,3 +365,4 @@ class JobManager:
     def __len__(self):
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
+
