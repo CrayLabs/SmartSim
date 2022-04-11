@@ -26,6 +26,7 @@
 
 import os.path as osp
 import pickle
+import signal
 import threading
 import time
 
@@ -60,7 +61,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, manifest, block=True):
+    def start(self, manifest, block=True, kill_on_interrupt=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -69,23 +70,20 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        try:
-            self._launch(manifest)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        # register custom signal handler for ^C (SIGINT)
+        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        self._launch(manifest)
 
-            # start the job manager thread if not already started
-            if not self._jobs.actively_monitoring:
-                self._jobs.start()
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
+        # start the job manager thread if not already started
+        if not self._jobs.actively_monitoring:
+            self._jobs.start()
 
         # block until all non-database jobs are complete
         if block:
-            # poll handles it's own keyboard interrupt as
+            # poll handles its own keyboard interrupt as
             # it may be called seperately
-            self.poll(5, True)
-
+            self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
     def orchestrator_active(self):
@@ -97,33 +95,30 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self, interval, verbose):
+    def poll(self, interval, verbose, kill_on_interrupt=True):
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         """
-        try:
-            to_monitor = self._jobs.jobs
-            while len(to_monitor) > 0:
-                time.sleep(interval)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        to_monitor = self._jobs.jobs
+        while len(to_monitor) > 0:
+            time.sleep(interval)
 
-                # acquire lock to avoid "dictionary changed during iteration" error
-                # without having to copy dictionary each time.
-                if verbose:
-                    JM_LOCK.acquire()
-                    try:
-                        for job in to_monitor.values():
-                            logger.info(job)
-                    finally:
-                        JM_LOCK.release()
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
-
+            # acquire lock to avoid "dictionary changed during iteration" error
+            # without having to copy dictionary each time.
+            if verbose:
+                JM_LOCK.acquire()
+                try:
+                    for job in to_monitor.values():
+                        logger.info(job)
+                finally:
+                    JM_LOCK.release()
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -464,7 +459,6 @@ class Controller:
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
 
-
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle
 
@@ -591,3 +585,4 @@ class Controller:
             return orc
         finally:
             JM_LOCK.release()
+
