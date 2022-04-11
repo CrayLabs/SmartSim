@@ -21,7 +21,7 @@ USER craylabs
 RUN python -m pip install smartsim[ml]==0.4.0 jupyter jupyterlab matplotlib && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
-    smart build --device cpu -v --no_tf && \
+    smart build --device cpu -v && \
     chown craylabs:root -R /home/craylabs/.local && \
     rm -rf ~/.cache/pip
 
