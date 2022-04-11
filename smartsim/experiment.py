@@ -159,6 +159,11 @@ class Experiment:
         ``Experiment.stop``. This allows for multiple stages of a workflow
         to produce to and consume from the same Orchestrator database.
 
+        If `kill_on_interrupt=True`, then all jobs launched by this
+        experiment are guaranteed to be killed when ^C (SIGINT) signal is
+        received. If `kill_on_interrupt=False`, then it is not guaranteed
+        that all jobs launched by this experiment will be killed, and the
+        zombie processes will need to be manually killed.
 
         :param block: block execution until all non-database
                       jobs are finished, defaults to True
@@ -166,7 +171,9 @@ class Experiment:
         :param summary: print a launch summary prior to launch,
                         defaults to False
         :type summary: bool, optional
-        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
+                                  signal is received.
+
         :type kill_on_interrupt: bool, optional
         """
         start_manifest = Manifest(*args)
@@ -263,6 +270,12 @@ class Experiment:
 
         For more verbose logging output, the ``SMARTSIM_LOG_LEVEL``
         environment variable can be set to `debug`
+
+        If `kill_on_interrupt=True`, then all jobs launched by this
+        experiment are guaranteed to be killed when ^C (SIGINT) signal is
+        received. If `kill_on_interrupt=False`, then it is not guaranteed
+        that all jobs launched by this experiment will be killed, and the
+        zombie processes will need to be manually killed.
 
         :param interval: frequency (in seconds) of logging to stdout,
                          defaults to 10 seconds

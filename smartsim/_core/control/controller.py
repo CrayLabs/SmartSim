@@ -71,6 +71,7 @@ class Controller:
         execution of all jobs.
         """
         self._jobs.kill_on_interrupt = kill_on_interrupt
+        # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
         self._launch(manifest)
 
@@ -80,7 +81,7 @@ class Controller:
 
         # block until all non-database jobs are complete
         if block:
-            # poll handles it's own keyboard interrupt as
+            # poll handles its own keyboard interrupt as
             # it may be called seperately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
