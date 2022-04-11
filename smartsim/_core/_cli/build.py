@@ -88,9 +88,8 @@ class Build:
             self.build_env = BuildEnv()
 
             if self.verbose:
-                db_name = "KEYDB" if self.keydb else "REDIS"
                 logger.info("Build Environment:")
-                env = self.build_env.as_dict(db_name=db_name)
+                env = self.build_env.as_dict()
                 print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
 
             logger.info("Checking requested versions...")
@@ -107,8 +106,9 @@ class Build:
                     )
 
             if self.verbose:
+                db_name = "KEYDB" if self.keydb else "REDIS"
                 logger.info("Version Information:")
-                vers = self.versions.as_dict()
+                vers = self.versions.as_dict(db_name=db_name)
                 print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
             # REDIS/KeyDB
