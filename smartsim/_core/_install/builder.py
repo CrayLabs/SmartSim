@@ -130,10 +130,11 @@ class DatabaseBuilder(Builder):
 
     @property
     def is_built(self):
-        """Check if Redis is built"""
-        server = next(self.bin_path.glob("*-server"), None) is not None
-        cli = next(self.bin_path.glob("*-cli"), None) is not None
-        return server and cli
+        """Check if Redis or KeyDB is built"""
+        bin_files = {file.name for file in self.bin_path.iterdir()}
+        redis_files = {"redis-server", "redis-cli"}
+        keydb_files = {"keydb-server", "keydb-cli"}
+        return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
     def build_from_git(self, git_url, branch):
         """Build Redis from git
@@ -142,7 +143,7 @@ class DatabaseBuilder(Builder):
         :param branch: branch to checkout
         :type branch: str
         """
-        database_name = "redis" if "redis" in git_url else "KeyDB"
+        database_name = "KeyDB" if "KeyDB" in git_url else "redis"
         database_build_path = Path(self.build_dir, database_name.lower())
 
         # remove git directory if it exists as it should

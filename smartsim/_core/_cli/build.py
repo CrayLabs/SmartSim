@@ -12,6 +12,7 @@ from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Ver
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -87,8 +88,9 @@ class Build:
             self.build_env = BuildEnv()
 
             if self.verbose:
+                db_name = "KEYDB" if self.keydb else "REDIS"
                 logger.info("Build Environment:")
-                env = self.build_env.as_dict()
+                env = self.build_env.as_dict(db_name=db_name)
                 print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
 
             logger.info("Checking requested versions...")
@@ -99,6 +101,10 @@ class Build:
                 self.versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
                 self.versions.REDIS_BRANCH = "v6.2.0"
                 CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
+                if not CONFIG.conf_path.resolve().is_file():
+                    raise SSConfigError(
+                        "Database configuration file at REDIS_CONF could not be found"
+                    )
 
             if self.verbose:
                 logger.info("Version Information:")
@@ -136,7 +142,9 @@ class Build:
             logger.info(
                 f"Building {database_name} version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
-            database_builder.build_from_git(self.versions.REDIS_URL, self.versions.REDIS_BRANCH)
+            database_builder.build_from_git(
+                self.versions.REDIS_URL, self.versions.REDIS_BRANCH
+            )
             database_builder.cleanup()
         logger.info(f"{database_name} build complete!")
 

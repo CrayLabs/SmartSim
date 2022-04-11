@@ -210,12 +210,11 @@ class Versioner:
     TENSORFLOW = Version_(REDISAI.tensorflow)
     ONNX = Version_(REDISAI.onnx)
 
-    def as_dict(self):
-        database_name = "REDIS" if "redis" in self.REDIS_URL else "KEYDB"
+    def as_dict(self, db_name="REDIS"):
         packages = [
             "SMARTSIM",
             "SMARTREDIS",
-            database_name,
+            db_name,
             "REDISAI",
             "TORCH",
             "TENSORFLOW",
