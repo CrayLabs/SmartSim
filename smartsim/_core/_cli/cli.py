@@ -58,14 +58,13 @@ class SmartCli:
         exit(0)
 
     def dbcli(self):
-        install_path = get_install_path()
-        script_path = install_path.joinpath("_core/bin/redis-cli").resolve()
-        if script_path.is_file():
-            print(script_path)
-            exit(0)
-        else:
-            print("Redis dependencies not found")
-            exit(1)
+        bin_path = get_install_path() / "_core" / "bin"
+        for option in bin_path.iterdir():
+            if option.name in ("redis-cli", "keydb-cli"):
+                print(option)
+                exit(0)
+        print("Database (Redis or KeyDB) dependencies not found")
+        exit(1)
 
 
 def main():

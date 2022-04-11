@@ -12,6 +12,7 @@ from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Ver
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -66,8 +67,15 @@ class Build:
             type=str,
             help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
         )
+        parser.add_argument(
+            "--keydb",
+            action="store_true",
+            default=False,
+            help="Build KeyDB instead of Redis",
+        )
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
+        self.keydb = args.keydb
 
         # torch and tf build by default
         pt = not args.no_pt
@@ -87,13 +95,24 @@ class Build:
             logger.info("Checking requested versions...")
             self.versions = Versioner()
 
+            if self.keydb:
+                self.versions.REDIS = Version_("6.2.0")
+                self.versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
+                self.versions.REDIS_BRANCH = "v6.2.0"
+                CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
+                if not CONFIG.conf_path.resolve().is_file():
+                    raise SSConfigError(
+                        "Database configuration file at REDIS_CONF could not be found"
+                    )
+
             if self.verbose:
+                db_name = "KEYDB" if self.keydb else "REDIS"
                 logger.info("Version Information:")
-                vers = self.versions.as_dict()
+                vers = self.versions.as_dict(db_name=db_name)
                 print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
-            # REDIS
-            self.build_redis()
+            # REDIS/KeyDB
+            self.build_database()
 
             # REDISAI
             self.build_redis_ai(
@@ -113,22 +132,21 @@ class Build:
 
         logger.info("SmartSim build complete!")
 
-    def build_redis(self):
-        # check redis installation
-        redis_builder = builder.RedisBuilder(
+    def build_database(self):
+        # check database installation
+        database_name = "KeyDB" if self.keydb else "Redis"
+        database_builder = builder.DatabaseBuilder(
             self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose
         )
-
-        if not redis_builder.is_built:
+        if not database_builder.is_built:
             logger.info(
-                f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
+                f"Building {database_name} version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
-
-            redis_builder.build_from_git(
+            database_builder.build_from_git(
                 self.versions.REDIS_URL, self.versions.REDIS_BRANCH
             )
-            redis_builder.cleanup()
-        logger.info("Redis build complete!")
+            database_builder.cleanup()
+        logger.info(f"{database_name} build complete!")
 
     def build_redis_ai(
         self, device, torch=True, tf=True, onnx=False, torch_dir=None, libtf_dir=None

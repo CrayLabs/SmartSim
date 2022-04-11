@@ -62,7 +62,7 @@ def create_cluster(hosts, ports):  # cov-wlm
             ip_list.append(address)
 
     # call cluster command
-    redis_cli = CONFIG.redis_cli
+    redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "--cluster", "create"]
     cmd += ip_list
     cmd += ["--cluster-replicas", "0"]
