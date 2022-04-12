@@ -1,6 +1,10 @@
+from asyncio.log import logger
+from unicodedata import name
 import pytest
 
+import logging
 import os
+import os.path as osp
 import stat
 import sys
 
@@ -27,52 +31,116 @@ def test_not_instanced_if_not_found(OpenMPISettings):
 
 
 @pytest.mark.parametrize(
-    "OpenMPISettings,stub_exe",
+    "OpenMPISettings,stubs_path,stub_exe",
     [
-        pytest.param(MpirunSettings, "mpirun"),
-        pytest.param(MpiexecSettings, "mpiexec"),
-        pytest.param(OrterunSettings, "orterun"),
+        pytest.param(
+            MpirunSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "mpirun",
+            id="OpenMPI4-mpirun",
+        ),
+        pytest.param(
+            MpiexecSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "mpiexec",
+            id="OpenMPI4-mpiexec",
+        ),
+        pytest.param(
+            OrterunSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "orterun",
+            id="OpenMPI4-orterun",
+        ),
     ],
 )
-def test_expected_openmpi_version_stmt(OpenMPISettings, stub_exe, fileutils):
+def test_expected_openmpi_instance_without_warning(
+    OpenMPISettings, stubs_path, stub_exe, fileutils, caplog
+):
+    from smartsim.settings.mpirunSettings import logger
+
     old_path = os.environ.get("PATH")
+    old_prop = logger.propagate
+    logger.propagate = True
+
     try:
-        sep = os.path.sep
-        stubs_path = fileutils.get_test_dir_path(f"mpi_impl_stubs{sep}expected")
-        stub_exe = f"{stubs_path}{sep}{stub_exe}"
+        stubs_path = fileutils.get_test_dir_path(stubs_path)
+        stub_exe = osp.join(stubs_path, stub_exe)
         st = os.stat(stub_exe)
         if not st.st_mode & stat.S_IEXEC:
             os.chmod(stub_exe, st.st_mode | stat.S_IEXEC)
 
         os.environ["PATH"] = stubs_path
-        OpenMPISettings(sys.executable)
+        with caplog.at_level(logging.WARNING):
+            caplog.clear()
+            OpenMPISettings(sys.executable)
+            for rec in caplog.records:
+                if logging.WARNING <= rec.levelno:
+                    pytest.fail(
+                        (
+                            "Unexepected log message when instancing valid "
+                            "OpenMPI settings"
+                        )
+                    )
     finally:
         os.environ["PATH"] = old_path
+        logger.propagate = old_prop
 
 
 @pytest.mark.parametrize(
-    "OpenMPISettings,stub_exe",
+    "OpenMPISettings,stubs_path,stub_exe",
     [
-        pytest.param(MpirunSettings, "mpirun"),
-        pytest.param(MpiexecSettings, "mpiexec"),
-        pytest.param(OrterunSettings, "orterun"),
+        pytest.param(
+            MpirunSettings,
+            osp.join("mpi_impl_stubs", "unexpected"),
+            "mpirun",
+            id="OpenMPI4-mpirun",
+        ),
+        pytest.param(
+            MpiexecSettings,
+            osp.join("mpi_impl_stubs", "unexpected"),
+            "mpiexec",
+            id="OpenMPI4-mpiexec",
+        ),
+        pytest.param(
+            OrterunSettings,
+            osp.join("mpi_impl_stubs", "unexpected"),
+            "orterun",
+            id="OpenMPI4-orterun",
+        ),
     ],
 )
-def test_not_instanced_if_not_openmpi(OpenMPISettings, stub_exe, fileutils):
+def test_warning_if_not_expected_openmpi(
+    OpenMPISettings, stubs_path, stub_exe, fileutils, caplog
+):
+    from smartsim.settings.mpirunSettings import logger
+
     old_path = os.environ.get("PATH")
+    old_prop = logger.propagate
+    logger.propagate = True
+
     try:
-        sep = os.path.sep
-        stubs_path = fileutils.get_test_dir_path(f"mpi_impl_stubs{sep}unexpected")
-        stub_exe = f"{stubs_path}{sep}{stub_exe}"
+        stubs_path = fileutils.get_test_dir_path(stubs_path)
+        stub_exe = osp.join(stubs_path, stub_exe)
         st = os.stat(stub_exe)
         if not st.st_mode & stat.S_IEXEC:
             os.chmod(stub_exe, st.st_mode | stat.S_IEXEC)
 
         os.environ["PATH"] = stubs_path
-        with pytest.raises(SSUnsupportedError):
+        with caplog.at_level(logging.WARNING):
+            caplog.clear()
             OpenMPISettings(sys.executable)
+
+            for rec in caplog.records:
+                if (
+                    logging.WARNING <= rec.levelno < logging.ERROR
+                    and "Non-OpenMPI implementation" in rec.msg
+                ):
+                    break
+            else:
+                pytest.fail("No Non-OpenMPI warning given to user")
     finally:
         os.environ["PATH"] = old_path
+        logger.propagate = old_prop
 
 
 def test_openmpi_base_settings():

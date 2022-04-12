@@ -255,7 +255,7 @@ class MpirunSettings(_OpenMPISettings):
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
         if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_stmt):
-            raise SSUnsupportedError("Non-OpenMPI implimentatin of `mpirun` detected")
+            logger.warning("Non-OpenMPI implementation of `mpirun` detected")
 
 
 class MpiexecSettings(_OpenMPISettings):
@@ -264,7 +264,7 @@ class MpiexecSettings(_OpenMPISettings):
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
         if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
-            raise SSUnsupportedError("Non-OpenMPI implimentatin of `mpiexec` detected")
+            logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
 
 
 class OrterunSettings(_OpenMPISettings):
@@ -273,4 +273,4 @@ class OrterunSettings(_OpenMPISettings):
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
         if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
-            raise SSUnsupportedError("Non-OpenMPI implimentatin of `orterun` detected")
+            logger.warning("Non-OpenMPI implementation of `orterun` detected")
