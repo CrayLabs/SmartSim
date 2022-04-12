@@ -91,19 +91,19 @@ def test_expected_openmpi_instance_without_warning(
     [
         pytest.param(
             MpirunSettings,
-            osp.join("mpi_impl_stubs", "unexpected"),
+            osp.join("mpi_impl_stubs", "intel2019"),
             "mpirun",
             id="OpenMPI4-mpirun",
         ),
         pytest.param(
             MpiexecSettings,
-            osp.join("mpi_impl_stubs", "unexpected"),
+            osp.join("mpi_impl_stubs", "intel2019"),
             "mpiexec",
             id="OpenMPI4-mpiexec",
         ),
         pytest.param(
             OrterunSettings,
-            osp.join("mpi_impl_stubs", "unexpected"),
+            osp.join("mpi_impl_stubs", "intel2019"),
             "orterun",
             id="OpenMPI4-orterun",
         ),
