@@ -39,9 +39,15 @@ class Builder:
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
+
+        dependency_path = _core_dir
+        if os.getenv('SMARTSIM_DEP_PATH'):
+            dependency_path = Path(os.environ['SMARTSIM_DEP_PATH'])
+
         self.build_dir = _core_dir / ".third-party"
-        self.bin_path = _core_dir / "bin"
-        self.lib_path = _core_dir / "lib"
+
+        self.bin_path = dependency_path / "bin"
+        self.lib_path = dependency_path / "lib"
 
         # Set wether build process will output to std output
         self.out = subprocess.DEVNULL
@@ -52,10 +58,11 @@ class Builder:
         # make build directory "SmartSim/smartsim/_core/.third-party"
         if not self.build_dir.is_dir():
             self.build_dir.mkdir()
-        if not self.bin_path.is_dir():
-            self.bin_path.mkdir()
-        if not self.lib_path.is_dir():
-            self.lib_path.mkdir()
+        if dependency_path == _core_dir:
+            if not self.bin_path.is_dir():
+                self.bin_path.mkdir()
+            if not self.lib_path.is_dir():
+                self.lib_path.mkdir()
 
         self.jobs = jobs
 
