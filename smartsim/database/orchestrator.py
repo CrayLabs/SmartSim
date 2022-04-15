@@ -179,7 +179,7 @@ class Orchestrator(EntityList):
             # will raise SSConfigError if not found
             self._redis_exe
             self._redis_conf
-            CONFIG.redis_cli
+            CONFIG.database_cli
         except SSConfigError as e:
             msg = "SmartSim not installed with pre-built extensions (Redis)\n"
             msg += "Use the `smart` cli tool to install needed extensions\n"
@@ -299,11 +299,11 @@ class Orchestrator(EntityList):
 
     @property
     def _redis_exe(self):
-        return CONFIG.redis_exe
+        return CONFIG.database_exe
 
     @property
     def _redis_conf(self):
-        return CONFIG.redis_conf
+        return CONFIG.database_conf
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard

@@ -291,24 +291,9 @@ class SrunSettings(RunSettings):
         :returns: the formatted string of environment variables
         :rtype: tuple[str, list[str]]
         """
-        # TODO make these overridable by user
-        presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
 
         comma_separated_format_str = []
-
-        def add_env_var(var, format_str):
-            try:
-                value = os.environ[var]
-                format_str += "=".join((var, value)) + ","
-                return format_str
-            except KeyError:
-                return format_str
-
         format_str = ""
-
-        # add env var presets due to slurm weirdness
-        for preset in presets:
-            format_str = add_env_var(preset, format_str)
 
         # add user supplied variables
         for k, v in self.env_vars.items():
