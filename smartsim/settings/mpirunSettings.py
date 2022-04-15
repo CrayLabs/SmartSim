@@ -274,7 +274,6 @@ class MpirunSettings(_OpenMPISettings):
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
-
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
@@ -305,7 +304,6 @@ class MpiexecSettings(_OpenMPISettings):
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
-
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
@@ -336,7 +334,6 @@ class OrterunSettings(_OpenMPISettings):
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
-
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
