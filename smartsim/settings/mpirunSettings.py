@@ -35,17 +35,19 @@ logger = get_logger(__name__)
 
 
 class _OpenMPISettings(RunSettings):
+    """Base class for all common arguments of OpenMPI run commands"""
+
     def __init__(
         self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
     ):
-        """Settings to run job with ``mpirun`` command (OpenMPI)
+        """Settings to format run job with an OpenMPI binary
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
         environment
 
         Any arguments passed in the ``run_args`` dict will be converted
-        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        command line arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
         :param exe: executable
@@ -250,7 +252,29 @@ class _OpenMPISettings(RunSettings):
 
 
 class MpirunSettings(_OpenMPISettings):
+    """``RunSettings`` subclass class built for launching with ``mpirun`` (OpenMPI)"""
+
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpirun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
@@ -259,7 +283,29 @@ class MpirunSettings(_OpenMPISettings):
 
 
 class MpiexecSettings(_OpenMPISettings):
+    """``RunSettings`` subclass class built for launching with ``mpiexec`` (OpenMPI)"""
+
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpiexec`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpiexec`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
@@ -268,7 +314,29 @@ class MpiexecSettings(_OpenMPISettings):
 
 
 class OrterunSettings(_OpenMPISettings):
+    """``RunSettings`` subclass class built for launching with ``orterun`` (OpenMPI)"""
+
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``orterun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``orterun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
 
         version_stmt = sp.check_output([self.run_command, "-V"]).decode()
