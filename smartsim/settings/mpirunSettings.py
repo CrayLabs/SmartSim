@@ -252,8 +252,6 @@ class _OpenMPISettings(RunSettings):
 
 
 class MpirunSettings(_OpenMPISettings):
-    """``RunSettings`` subclass class built for launching with ``mpirun`` (OpenMPI)"""
-
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``mpirun`` command (OpenMPI)
 
@@ -282,8 +280,6 @@ class MpirunSettings(_OpenMPISettings):
 
 
 class MpiexecSettings(_OpenMPISettings):
-    """``RunSettings`` subclass class built for launching with ``mpiexec`` (OpenMPI)"""
-
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``mpiexec`` command (OpenMPI)
 
@@ -312,8 +308,6 @@ class MpiexecSettings(_OpenMPISettings):
 
 
 class OrterunSettings(_OpenMPISettings):
-    """``RunSettings`` subclass class built for launching with ``orterun`` (OpenMPI)"""
-
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``orterun`` command (OpenMPI)
 
