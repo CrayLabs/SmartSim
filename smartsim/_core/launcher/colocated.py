@@ -179,6 +179,9 @@ def _build_db_model_cmd(db_models):
         if db_model.file:
             cmd.append(f"--file={db_model.file}")
         else:
+            # This is caught when the DBModel is added through add_ml_model,
+            # but we keep this check for the sake of safety in case
+            # DBModels are just copied over from another entity
             err_msg = "ML model can not be set from memory for colocated databases.\n"
             err_msg += "Please store the ML model in binary format "
             err_msg += "and add it to the SmartSim Model as file."
@@ -202,14 +205,15 @@ def _build_db_model_cmd(db_models):
     return cmd
 
 
-
-
 def _build_db_script_cmd(db_scripts):
     cmd = []
     for db_script in db_scripts:
         cmd.append("+db_script")
         cmd.append(f"--name={db_script.name}")
         if db_script.func:
+            # This is caught when the DBScript is added through add_script,
+            # but we keep this check for the sake of safety in case
+            # DBScripts are just copied over from another entity
             if not isinstance(db_script.func, str):
                 err_msg = "Functions can not be set from memory for colocated databases.\n"
                 err_msg += "Please convert the function to a string or store it as a text file "

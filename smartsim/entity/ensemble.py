@@ -36,6 +36,7 @@ from ..error import (
 )
 from ..log import get_logger
 from ..settings.base import BatchSettings, RunSettings
+from .dbobject import DBModel, DBScript
 from .entityList import EntityList
 from .model import Model
 from .strategies import create_all_permutations, random_permutations, step_values
@@ -90,6 +91,8 @@ class Ensemble(EntityList):
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
+        self._db_models = []
+        self._db_scripts = []
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
@@ -298,3 +301,168 @@ class Ensemble(EntityList):
                     + "Must be list, int, or string."
                 )
         return param_names, parameters
+
+
+    def add_ml_model(self,
+                     name,
+                     backend,
+                     model=None,
+                     model_path=None,
+                     device="CPU",
+                     devices_per_node=1,
+                     batch_size=0,
+                     min_batch_size=0,
+                     tag="",
+                     inputs=None,
+                     outputs=None):
+        """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
+
+        Each ML Model added will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of every entity belonging to this ensemble
+
+        One of either model (in memory representation) or model_path (file)
+        must be provided
+
+        :param name: key to store model under
+        :type name: str
+        :param model: model in memory
+        :type model: str, optional # TODO figure out what to type hint this as
+        :param model_path: serialized model
+        :type model_path: file path to model
+        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
+        :type backend: str
+        :param device: name of device for execution, defaults to "CPU"
+        :type device: str, optional
+        :param batch_size: batch size for execution, defaults to 0
+        :type batch_size: int, optional
+        :param min_batch_size: minimum batch size for model execution, defaults to 0
+        :type min_batch_size: int, optional
+        :param tag: additional tag for model information, defaults to ""
+        :type tag: str, optional
+        :param inputs: model inputs (TF only), defaults to None
+        :type inputs: list[str], optional
+        :param outputs: model outupts (TF only), defaults to None
+        :type outputs: list[str], optional
+        """
+        db_model = DBModel(
+            name=name,
+            backend=backend,
+            model=model,
+            model_file=model_path,
+            device=device,
+            devices_per_node=devices_per_node,
+            batch_size=batch_size,
+            min_batch_size=min_batch_size,
+            tag=tag,
+            inputs=inputs,
+            outputs=outputs
+        )
+        self._db_models.append(db_model)
+
+    def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
+        """TorchScript to launch with every entity belonging to this ensemble
+
+        Each script added to the model will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of every entity belonging to this ensemble
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        One of either script (in memory string representation) or script_path (file)
+        must be provided
+
+        :param name: key to store script under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name=name,
+            script=script,
+            script_path=script_path,
+            device=device,
+            devices_per_node=devices_per_node
+        )
+        self._db_scripts.append(db_script)
+
+    
+    def add_function(self, name, function=None, device="CPU", devices_per_node=1):
+        """TorchScript function to launch with every entity belonging to this ensemble
+
+        Each script function to the model will be loaded into a
+        non-converged orchestrator prior to the execution
+        of every entity belonging to this ensemble.
+        
+        For converged orchestrators, the :meth:`add_script` method should be used.
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        :param name: key to store function under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name=name,
+            script=function,
+            device=device,
+            devices_per_node=devices_per_node
+        )
+        self._db_scripts.append(db_script)
+
+    def _add_dbobjects_to_entities(self):
+        """Add ensemble DBObjects to each colocated entity
+        """
+
+        if self._db_models:
+            for entity in self.entities:
+                # Colocated entities are responsible for their
+                # DBModels, as they launch them in the entry point
+                if entity.colocated:
+                    entity_db_models = [db_model.name for db_model in entity._db_models]
+                    for db_model in self._db_models:
+                        if db_model.is_file:
+                            err_msg = "ML model can not be set from memory for colocated databases.\n"
+                            err_msg += "Please store the ML model in binary format "
+                            err_msg += "and add it to the SmartSim Model as file."
+                            raise SSUnsupportedError(err_msg)
+
+                        if not db_model.name in entity_db_models:
+                            entity._db_models.append(db_model)
+                        
+        if self._db_scripts:
+            for entity in self.entities:
+                # Colocated entities are responsible for their
+                # DBScripts, as they launch them in the entry point
+                if entity.colocated:
+                    entity_db_scripts = [db_script.name for db_script in entity._db_scripts]
+                    for db_script in self._db_scripts:
+                        if db_script.func:
+                            if not isinstance(db_script.func, str):
+                                err_msg = "Functions can not be set from memory for colocated databases.\n"
+                                err_msg += "Please convert the function to a string or store it as a text file "
+                                err_msg += "and add it to the SmartSim Model with add_script."
+                                raise SSUnsupportedError(err_msg)
+                        if not db_script.name in entity_db_scripts:
+                            entity._db_scripts.append(db_script)

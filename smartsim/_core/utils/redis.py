@@ -30,9 +30,12 @@ import time
 import redis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
+from smartredis import Client
+from smartredis.error import RedisReplyError
 
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
+from ...entity import DBModel, DBScript
 from ...error import SSInternalError
 from ...log import get_logger
 from ..config import CONFIG
@@ -110,3 +113,67 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
             trials -= 1
     if trials == 0:
         raise SSInternalError("Cluster setup could not be verified")
+
+
+def set_ml_model(db_model: DBModel, client: Client):
+    devices = db_model._enumerate_devices()
+
+    for device in devices:
+        try:
+            if db_model.is_file:
+                client.set_model_from_file(
+                    name=db_model.name,
+                    model_file=str(db_model.file),
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs
+                )
+            else:
+                client.set_model(
+                    name=db_model.name,
+                    model=db_model.model,
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs
+                )
+        except  RedisReplyError as error:
+            logger.error("Error while setting model on orchestrator.")
+            raise error
+
+
+def set_script(db_script: DBScript, client: Client):   
+    devices = db_script._enumerate_devices()
+
+    for device in devices:
+        try:
+            if db_script.is_file:
+                client.set_script_from_file(
+                    name=db_script.name,
+                    file=str(db_script.file),
+                    device=device
+                )
+            else:
+                if isinstance(db_script.script, str):
+                    client.set_script(
+                        name=db_script.name,
+                        script=db_script.script,
+                        device=device
+                    )
+                else:
+                    client.set_function(
+                        name=db_script.name,
+                        function=db_script.script,
+                        device=device
+                    )
+    
+        except  RedisReplyError as error:
+            logger.error("Error while setting model on orchestrator.")
+            raise error

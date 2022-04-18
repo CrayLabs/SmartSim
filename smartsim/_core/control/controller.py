@@ -30,9 +30,9 @@ import signal
 import threading
 import time
 
-from ..._core._cli.utils import get_install_path
+from ..._core.utils.redis import set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
+from ...entity import DBNode, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -42,7 +42,7 @@ from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 
 from smartredis import Client
-from smartredis.error import RedisConnectionError, RedisReplyError
+from smartredis.error import RedisConnectionError
 
 
 logger = get_logger(__name__)
@@ -298,6 +298,8 @@ class Controller:
         steps = []
         all_entity_lists = manifest.ensembles + manifest.ray_clusters
         for elist in all_entity_lists:
+            elist.add_dbobjects_to_entities()
+            
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))

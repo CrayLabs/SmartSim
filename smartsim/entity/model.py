@@ -274,6 +274,12 @@ class Model(SmartSimEntity):
             inputs=inputs,
             outputs=outputs
         )
+        if not db_model.is_file and self.colocated:
+            err_msg = "ML model can not be set from memory for colocated databases.\n"
+            err_msg += "Please store the ML model in binary format "
+            err_msg += "and add it to the SmartSim Model as file."
+            raise SSUnsupportedError(err_msg)
+
         self._db_models.append(db_model)
 
     def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
@@ -310,6 +316,12 @@ class Model(SmartSimEntity):
             device=device,
             devices_per_node=devices_per_node
         )
+        if db_script.func and self.colocated:
+            if not isinstance(db_script.func, str):
+                err_msg = "Functions can not be set from memory for colocated databases.\n"
+                err_msg += "Please convert the function to a string or store it as a text file "
+                err_msg += "and add it to the SmartSim Model with add_script."
+                raise SSUnsupportedError(err_msg)
         self._db_scripts.append(db_script)
 
     
