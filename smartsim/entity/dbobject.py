@@ -183,7 +183,7 @@ class DBModel(DBObject):
     def __str__(self):
         desc_str = "Name: " + self.name + "\n"
         if self.model:
-            desc_str += "Model stored in memory"
+            desc_str += "Model stored in memory\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
         devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")

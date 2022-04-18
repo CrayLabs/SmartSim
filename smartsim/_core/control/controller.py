@@ -294,6 +294,9 @@ class Controller:
         for rc in manifest.ray_clusters:
             rc._update_workers()
 
+        if self.orchestrator_active:
+            self._set_dbobjects(manifest)
+
         # create all steps prior to launch
         steps = []
         all_entity_lists = manifest.ensembles + manifest.ray_clusters
@@ -593,3 +596,34 @@ class Controller:
         finally:
             JM_LOCK.release()
 
+
+    def _set_dbobjects(self, manifest):
+        db_addresses = self._jobs.get_db_host_addresses()
+        cluster = len(db_addresses) > 1
+        address = db_addresses[0]
+
+        try:
+            client = Client(address=address, cluster=cluster)
+        except RedisConnectionError as error:
+            logger.error("Could not connect to orchestrator")
+            raise error
+
+        for model in manifest.models:
+            if not model.colocated:
+                for db_model in model._db_models:
+                    set_ml_model(db_model, client)
+                for db_script in model._db_scripts:
+                    set_script(db_script, client)
+
+        for ensemble in manifest.ensembles:
+            for db_model in ensemble._db_models:
+                for entity in ensemble:
+                    set_ml_model(db_model, client)
+            for db_script in ensemble._db_scripts:
+                for entity in ensemble:
+                    set_script(db_script, client)
+            for entity in ensemble:
+                for db_model in entity._db_models:
+                    set_ml_model(db_model, client)
+                for db_script in entity._db_scripts:
+                    set_script(db_script, client)

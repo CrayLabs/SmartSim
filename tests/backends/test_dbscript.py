@@ -84,6 +84,7 @@ def test_db_script(fileutils):
     smartsim_model.set_path(test_dir)
 
     db = exp.create_database(port=6780, interface="lo")
+    exp.generate(db)
 
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 
@@ -126,11 +127,7 @@ def test_db_script_error(fileutils):
         ifname="lo"
         )
     
-    colo_model.add_function("test_func", function=timestwo, device="CPU")
-
-    # Assert we have added both models
-    assert(len(colo_model._db_scripts) == 1)
-
     with pytest.raises(SSUnsupportedError):
-        exp.start(colo_model, block=True)
+        colo_model.add_function("test_func", function=timestwo, device="CPU")
+
   

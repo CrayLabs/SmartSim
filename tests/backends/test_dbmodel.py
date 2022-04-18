@@ -116,6 +116,7 @@ def test_db_model(fileutils):
     smartsim_model.set_path(test_dir)
 
     db = exp.create_database(port=6780, interface="lo")
+    exp.generate(db)
 
     model, inputs, outputs = create_tf_cnn()
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
@@ -164,9 +165,7 @@ def test_colocated_db_model_error(fileutils):
 
     model, inputs, outputs = create_tf_cnn()
 
-    colo_model.add_ml_model("cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs)
-
     with pytest.raises(SSUnsupportedError):
-        exp.start(colo_model, block=True)
+        colo_model.add_ml_model("cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs)
 
 
