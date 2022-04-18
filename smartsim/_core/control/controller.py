@@ -298,7 +298,7 @@ class Controller:
         steps = []
         all_entity_lists = manifest.ensembles + manifest.ray_clusters
         for elist in all_entity_lists:
-            elist.add_dbobjects_to_entities()
+            elist._add_dbobjects_to_entities()
             
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
