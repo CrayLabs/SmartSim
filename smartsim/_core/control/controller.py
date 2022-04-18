@@ -75,15 +75,10 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        try:
-            self._launch(manifest)
-
-            # start the job manager thread if not already started
-            if not self._jobs.actively_monitoring:
-                self._jobs.start()
-            
-            if self.orchestrator_active:
-                self._set_dbobjects(manifest)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        # register custom signal handler for ^C (SIGINT)
+        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        self._launch(manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
