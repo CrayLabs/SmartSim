@@ -301,8 +301,6 @@ class Controller:
         steps = []
         all_entity_lists = manifest.ensembles + manifest.ray_clusters
         for elist in all_entity_lists:
-            elist._add_dbobjects_to_entities()
-            
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
@@ -617,13 +615,17 @@ class Controller:
 
         for ensemble in manifest.ensembles:
             for db_model in ensemble._db_models:
-                for entity in ensemble:
-                    set_ml_model(db_model, client)
+                set_ml_model(db_model, client)
             for db_script in ensemble._db_scripts:
-                for entity in ensemble:
-                    set_script(db_script, client)
+                set_script(db_script, client)
             for entity in ensemble:
-                for db_model in entity._db_models:
-                    set_ml_model(db_model, client)
-                for db_script in entity._db_scripts:
-                    set_script(db_script, client)
+                if not entity.colocated:
+                    # Set models which could belong only
+                    # to the entities and not to the ensemble
+                    # but avoid duplicates
+                    for db_model in entity._db_models:
+                        if db_model not in ensemble._db_models:
+                            set_ml_model(db_model, client)
+                    for db_script in entity._db_scripts:
+                        if db_script not in ensemble._db_scripts:
+                            set_script(db_script, client)

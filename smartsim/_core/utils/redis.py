@@ -116,6 +116,7 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
 
 
 def set_ml_model(db_model: DBModel, client: Client):
+    logger.debug(f"Adding DBModel named {db_model.name}")
     devices = db_model._enumerate_devices()
 
     for device in devices:
@@ -150,6 +151,8 @@ def set_ml_model(db_model: DBModel, client: Client):
 
 
 def set_script(db_script: DBScript, client: Client):   
+    logger.debug(f"Adding DBScript named {db_script.name}")
+
     devices = db_script._enumerate_devices()
 
     for device in devices:
