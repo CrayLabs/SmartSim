@@ -664,10 +664,10 @@ class Orchestrator(EntityList):
             exe_args = " ".join(start_script_args)
 
             if not mpmd_nodes:
-                # if only launching 1 db_per_host, we don't need a list of exe args lists
+                # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
 
-                node = DBNode(db_node_name, self.path, run_settings, [port])
+                node = DBNode(db_node_name, self.path, run_settings, [port], db_node_name + ".out")
                 self.entities.append(node)
             else:
                 exe_args_mpmd.append(sh_split(exe_args))
@@ -677,13 +677,15 @@ class Orchestrator(EntityList):
                 run_settings = self._build_run_settings_lsf(
                     sys.executable, exe_args_mpmd, **kwargs
                 )
+                output_files = ["_".join((self.name, str(db_id))) + ".out" for db_id in range(self.db_nodes)]
             else:
                 run_settings = self._build_run_settings(
                     sys.executable, exe_args_mpmd, **kwargs
                 )
-            node = DBNode(db_node_name, self.path, run_settings, [port])
+                output_files = [self.name + ".out"]
+            node = DBNode(db_node_name, self.path, run_settings, [port], output_files)
             node._mpmd = True
-            node._shard_ids = range(self.db_nodes)
+            node._num_shards = self.db_nodes
             self.entities.append(node)
 
         self.ports = [port]
