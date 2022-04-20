@@ -87,9 +87,6 @@ html_theme_options = {
     "use_repository_button": True,
     "use_issues_button": True,
 }
-# html_sidebars = {
-#     "**": [""] # apply to all pages of the docs
-# }
 
 autoclass_content = 'both'
 add_module_names = False
