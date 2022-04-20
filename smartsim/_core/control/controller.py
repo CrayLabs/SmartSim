@@ -291,7 +291,7 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:
+        for rc in manifest.ray_clusters:  # cov-wlm
             rc._update_workers()
 
         if self.orchestrator_active:
@@ -602,7 +602,7 @@ class Controller:
 
         try:
             client = Client(address=address, cluster=cluster)
-        except RedisConnectionError as error:
+        except RedisConnectionError as error:  # pragma: no cover
             logger.error("Could not connect to orchestrator")
             raise error
 

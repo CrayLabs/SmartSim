@@ -145,7 +145,7 @@ def set_ml_model(db_model: DBModel, client: Client):
                     inputs=db_model.inputs,
                     outputs=db_model.outputs
                 )
-        except  RedisReplyError as error:
+        except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error
 
@@ -177,6 +177,6 @@ def set_script(db_script: DBScript, client: Client):
                         device=device
                     )
     
-        except  RedisReplyError as error:
+        except  RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error

@@ -80,8 +80,8 @@ def test_db_model(fileutils):
     model, inputs, outputs = create_tf_cnn()
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
-    smartsim_model.add_ml_model("cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs)
-    smartsim_model.add_ml_model("cnn2", "TF", model_path=model_file2, device="CPU", inputs=inputs2, outputs=outputs2)
+    smartsim_model.add_ml_model("cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs, tag="test")
+    smartsim_model.add_ml_model("cnn2", "TF", model_path=model_file2, device="CPU", inputs=inputs2, outputs=outputs2, tag="test")
 
     for db_model in smartsim_model._db_models:
         print(db_model)
@@ -233,7 +233,7 @@ def test_colocated_db_model_ensemble(fileutils):
         entity.add_ml_model("cnn2", "TF", model_path=model_file2, device="CPU", inputs=inputs2, outputs=outputs2)
 
     # Test adding a model from ensemble
-    colo_ensemble.add_ml_model("cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs)
+    colo_ensemble.add_ml_model("cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs, tag="test")
 
     # Ensemble should add all available DBModels to new model
     colo_ensemble.add_model(colo_model)
