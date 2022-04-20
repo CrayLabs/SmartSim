@@ -87,9 +87,12 @@ class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
-        self.lib_path = Path(self.core_path, "lib").resolve()
-        self.bin_path = Path(self.core_path, "bin").resolve()
-        self.conf_path = Path(self.core_path, "config", "redis6.conf")
+
+        dependency_path = os.environ.get('SMARTSIM_DEP_INSTALL_PATH', self.core_path)
+
+        self.lib_path = Path(dependency_path, "lib").resolve()
+        self.bin_path = Path(dependency_path, "bin").resolve()
+        self.conf_path = Path(dependency_path, "config", "redis6.conf")
 
     @property
     def redisai(self) -> str:
