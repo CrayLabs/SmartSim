@@ -95,9 +95,10 @@ To use the Slurm launcher, specify at ``Experiment`` initialization:
 Running on Slurm
 ----------------
 
-The Slurm launcher supports two types of ``RunSettings``:
+The Slurm launcher supports three types of ``RunSettings``:
   1. :ref:`SrunSettings <srun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``sbatch`` through:
   1. :ref:`SbatchSettings <sbatch_api>`
@@ -204,9 +205,10 @@ To use the PBSpro launcher, specify at ``Experiment`` initialization:
 Running on PBSpro
 -----------------
 
-The PBSpro launcher supports two types of ``RunSettings``:
+The PBSpro launcher supports three types of ``RunSettings``:
   1. :ref:`AprunSettings <aprun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``qsub`` through:
   1. :ref:`QsubBatchSettings <qsub_api>`
@@ -235,9 +237,10 @@ To use the Cobalt launcher, specify at ``Experiment`` initialization:
 Running on Cobalt
 -----------------
 
-The Cobalt launcher supports two types of ``RunSettings``:
+The Cobalt launcher supports three types of ``RunSettings``:
   1. :ref:`AprunSettings <aprun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``qsub`` through:
   1. :ref:`CobaltBatchSettings <cqsub_api>`
@@ -266,9 +269,10 @@ To use the LSF launcher, specify at ``Experiment`` initialization:
 Running on LSF
 --------------
 
-The LSF launcher supports two types of ``RunSettings``:
+The LSF launcher supports three types of ``RunSettings``:
   1. :ref:`JsrunSettings <jsrun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``bsub`` through:
   1. :ref:`BsubBatchSettings <bsub_api>`
