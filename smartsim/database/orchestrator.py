@@ -667,7 +667,7 @@ class Orchestrator(EntityList):
                 # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
 
-                node = DBNode(db_node_name, self.path, run_settings, [port], db_node_name + ".out")
+                node = DBNode(db_node_name, self.path, run_settings, [port], [db_node_name + ".out"])
                 self.entities.append(node)
             else:
                 exe_args_mpmd.append(sh_split(exe_args))

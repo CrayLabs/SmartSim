@@ -98,7 +98,7 @@ class DBNode(SmartSimEntity):
                 os.remove(file_name)
         if self._mpmd:
             for file_ending in [".err", ".out"]:
-                for shard_id in self._shard_ids:
+                for shard_id in range(self._num_shards):
                     file_name = osp.join(
                         self.path, self.name + "_" + str(shard_id) + file_ending
                     )
@@ -127,7 +127,7 @@ class DBNode(SmartSimEntity):
         """
         return [
             "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
-            for shard_id in self._shard_ids
+            for shard_id in range(self._num_shards)
         ]
 
     def _parse_ips(self, filepath, num_ips=None):
