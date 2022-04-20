@@ -146,6 +146,11 @@ class DBNode(SmartSimEntity):
     def _parse_db_host(self, filepath=None):
         """Parse the database host/IP from the output file
 
+        If no file is passed as argument, then the first
+        file in self._output_files is used.
+
+        :param filepath: Path to file to parse
+        :type filepath: str
         :raises SmartSimError: if host/ip could not be found
         :return: ip address | hostname
         :rtype: str
@@ -170,7 +175,7 @@ class DBNode(SmartSimEntity):
                 trials -= 1
 
         if not ip:
-            logger.error(f"Redis IP address lookup strategy failed for file {filepath}.")
+            logger.error(f"IP address lookup strategy failed for file {filepath}.")
             raise SmartSimError("Failed to obtain database hostname")
 
         return ip
@@ -209,15 +214,17 @@ class DBNode(SmartSimEntity):
                 except FileNotFoundError:
                     pass
 
-                logger.debug("Waiting for RedisIP files to populate...")
                 if len(ips) < self._num_shards:
+                    logger.debug("Waiting for RedisIP files to populate...")
                     # Larger sleep time, as this seems to be needed for
                     # multihost setups
                     time.sleep(2)
                     trials -= 1
 
             if len(ips) < self._num_shards:
-                logger.error("RedisIP address lookup strategy failed.")
+                msg = f"IP address lookup strategy failed for file {filepath}. "
+                msg += f"Found {len(ips)} out of {self._num_shards} IPs."
+                logger.error(msg)
                 raise SmartSimError("Failed to obtain database hostname")
 
         ips = list(dict.fromkeys(ips))
