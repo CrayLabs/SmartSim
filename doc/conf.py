@@ -76,16 +76,20 @@ fortran_src = [
 # a list of builtin themes.
 html_theme = "sphinx_book_theme"
 
-html_theme_options = {
-    "repository_url": "https://github.com/CrayLabs/SmartSim",
-    "use_repository_button": True,
-    "use_issues_button": True,
-}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_theme_options = {
+    "repository_url": "https://github.com/CrayLabs/SmartSim",
+    "use_repository_button": True,
+    "use_issues_button": True,
+}
+# html_sidebars = {
+#     "**": [""] # apply to all pages of the docs
+# }
 
 autoclass_content = 'both'
 add_module_names = False

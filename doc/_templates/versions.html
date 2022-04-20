@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h3>SmartSim Documentation Versions</h3>
+        <p>The following versions of the SmartSim docs are currently available:</p>
+        <ul id="versions-list">
+            <!--
+                Get each version name and their urls.
+                version_names.txt should be updated for each release
+            -->
+            <script src="_static/version_names.txt"></script>
+            <script>
+                var versions = version_names.split(",")
+                var urls = version_urls.split(",")
+                var ul = document.getElementById("versions-list")
+                for (var i = 0; i < versions.length; i++) {
+                    var li = document.createElement("li");
+                    var a = document.createElement("a");
+                    a.setAttribute("href", urls[i]);
+                    a.appendChild(document.createTextNode(versions[i]));
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                }
+            </script>
+        </ul>
+    </body>
+</html>
