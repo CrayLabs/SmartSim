@@ -275,14 +275,9 @@ class Model(SmartSimEntity):
             inputs=inputs,
             outputs=outputs
         )
+        self._append_db_model(db_model)
+        
 
-        if not db_model.is_file and self.colocated:
-            err_msg = "ML model can not be set from memory for colocated databases.\n"
-            err_msg += f"Please store the ML model named {db_model.name} in binary format "
-            err_msg += "and add it to the SmartSim Model as file."
-            raise SSUnsupportedError(err_msg)
-
-        self._db_models.append(db_model)
 
     def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
         """TorchScript to launch with this Model instance
@@ -318,13 +313,8 @@ class Model(SmartSimEntity):
             device=device,
             devices_per_node=devices_per_node
         )
-        if db_script.func and self.colocated:
-            if not isinstance(db_script.func, str):
-                err_msg = "Functions can not be set from memory for colocated databases.\n"
-                err_msg += f"Please convert the function named {db_script.name} to a string or store "
-                err_msg += "it as a text file and add it to the SmartSim Model with add_script."
-                raise SSUnsupportedError(err_msg)
-        self._db_scripts.append(db_script)
+        self._append_db_script(db_script)
+
 
     
     def add_function(self, name, function=None, device="CPU", devices_per_node=1):
@@ -359,13 +349,7 @@ class Model(SmartSimEntity):
             device=device,
             devices_per_node=devices_per_node
         )
-        if db_script.func and self.colocated:
-            if not isinstance(db_script.func, str):
-                err_msg = "Functions can not be set from memory for colocated databases.\n"
-                err_msg += f"Please convert the function named {db_script.name} to a string or store "
-                err_msg += "it as a text file and add it to the SmartSim Model with add_script."
-                raise SSUnsupportedError(err_msg)
-        self._db_scripts.append(db_script)
+        self._append_db_script(db_script)
 
     def __eq__(self, other):
         if self.name == other.name:
@@ -381,6 +365,25 @@ class Model(SmartSimEntity):
         if self._db_scripts:
             entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
+
+
+    def _append_db_model(self, db_model):
+        if not db_model.is_file and self.colocated:
+            err_msg = "ML model can not be set from memory for colocated databases.\n"
+            err_msg += f"Please store the ML model named {db_model.name} in binary format "
+            err_msg += "and add it to the SmartSim Model as file."
+            raise SSUnsupportedError(err_msg)
+
+        self._db_models.append(db_model)
+        
+    def _append_db_script(self, db_script):
+        if db_script.func and self.colocated:
+            if not isinstance(db_script.func, str):
+                err_msg = "Functions can not be set from memory for colocated databases.\n"
+                err_msg += f"Please convert the function named {db_script.name} to a string or store "
+                err_msg += "it as a text file and add it to the SmartSim Model with add_script."
+                raise SSUnsupportedError(err_msg)
+        self._db_scripts.append(db_script)
 
     def _check_db_objects_colo(self):
 

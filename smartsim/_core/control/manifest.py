@@ -194,3 +194,35 @@ class Manifest:
 
         s += "\n"
         return s
+
+    @property
+    def has_db_objects(self):
+        """Check if any entity has DBObjects to set
+        """
+        def has_db_models(entity):
+            if hasattr(entity, "_db_models"):
+                return len(entity._db_models) > 0
+        def has_db_scripts(entity):
+            if hasattr(entity, "_db_scripts"):
+                return len(entity._db_scripts) > 0
+
+        has_db_objects = False
+        for model in self.models:
+            has_db_objects |= hasattr(model, "_db_models")
+        has_db_objects |= any([has_db_models(model) | has_db_scripts(model) for model in self.models])
+        if has_db_objects:
+            return True
+
+        ensembles = self.ensembles
+        if not ensembles:
+            return False
+
+        has_db_objects |= any([has_db_models(ensemble) | has_db_scripts(ensemble) for ensemble in ensembles])
+        if has_db_objects:
+            return True
+        for ensemble in ensembles:
+            has_db_objects |= any([has_db_models(model) | has_db_scripts(model) for model in ensemble])
+            if has_db_objects:
+                return True
+
+        return has_db_objects

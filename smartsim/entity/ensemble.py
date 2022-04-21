@@ -445,27 +445,13 @@ class Ensemble(EntityList):
             self._extend_entity_db_scripts(entity, [db_script])
 
     def _extend_entity_db_models(self, model, db_models):
-        
         entity_db_models = [db_model.name for db_model in model._db_models]
         for db_model in db_models:
             if not db_model.name in entity_db_models:
-                if model.colocated and not db_model.is_file:
-                    err_msg = "ML model can not be set from memory for colocated databases.\n"
-                    err_msg += f"Please store the ML model named {model.name} in binary format "
-                    err_msg += "and add it to the SmartSim Model as file."
-                    raise SSUnsupportedError(err_msg)
-
-                model._db_models.append(db_model)
+                model._append_db_model(db_model)
 
     def _extend_entity_db_scripts(self, model, db_scripts):
-
         entity_db_scripts = [db_script.name for db_script in model._db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
-                if db_script.func and model.colocated and not isinstance(db_script.func, str):
-                    err_msg = "Functions can not be set from memory for colocated databases.\n"
-                    err_msg += f"Please convert the function named {db_script.name} to a string "
-                    err_msg += "or store it as a text file and add it to the SmartSim Model with add_script."
-                    raise SSUnsupportedError(err_msg)
-
-                model._db_scripts.append(db_script)
+                model._append_db_script(db_script)

@@ -115,6 +115,42 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
         raise SSInternalError("Cluster setup could not be verified")
 
 
+def db_is_active(hosts, ports, num_shards):
+    """Check if a DB is running
+
+    if the DB is clustered, check cluster status, otherwise
+    just ping DB.
+
+    :param hosts: list of hosts
+    :type hosts: list[str]
+    :param ports: list of ports
+    :type ports: list[int]
+    :param num_shards: Number of DB shards
+    :type num_shards: int
+    :return: Whether DB is running
+    :rtype: bool
+    """
+    # if single shard
+    if num_shards < 2:
+        host = hosts[0]
+        port = ports[0]
+        try:
+            client = redis.Redis(host=host, port=port, db=0)
+            if client.ping():
+                return True
+            return False
+        except redis.RedisError:
+            return False
+    # if a cluster
+    else:
+        try:
+            check_cluster_status(hosts, ports, trials=1)
+            return True
+        # we expect this to fail if the cluster is not active
+        except SSInternalError:
+            return False
+
+
 def set_ml_model(db_model: DBModel, client: Client):
     logger.debug(f"Adding DBModel named {db_model.name}")
     devices = db_model._enumerate_devices()
