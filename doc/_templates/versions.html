@@ -6,21 +6,18 @@
         <ul id="versions-list">
             <!--
                 Get each version name and their urls.
-                version_names.txt should be updated for each release
+                version_names.json should be updated for each release
             -->
-            <script src="_static/version_names.txt"></script>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
             <script>
-                var versions = version_names.split(",")
-                var urls = version_urls.split(",")
-                var ul = document.getElementById("versions-list")
-                for (var i = 0; i < versions.length; i++) {
-                    var li = document.createElement("li");
-                    var a = document.createElement("a");
-                    a.setAttribute("href", urls[i]);
-                    a.appendChild(document.createTextNode(versions[i]));
-                    li.appendChild(a);
-                    ul.appendChild(li);
-                }
+                $.getJSON("_static/version_names.json", function(data) {
+                    var versions = data.version_names;
+                    var urls = data.version_urls;
+                    for (var i = 0; i < versions.length; i++) {
+                        var li = '<li><a href=' + urls[i] + '>' + versions[i] + '</a></li>';
+                        $("#versions-list").append(li);
+                    }
+                });
             </script>
         </ul>
     </body>
