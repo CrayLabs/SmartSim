@@ -38,7 +38,7 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT
 
 from smartredis import Client
-from smartredis.error import RedisConnectionError
+from smartredis.error import RedisConnectionError, RedisReplyError
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
@@ -216,7 +216,7 @@ def main(network_interface: str, db_cpus: int, command: List[str], db_models: Li
                     logger.debug(f"Added script {script_name} ({i+1}/{len(db_scripts)})")
                 # Make sure we don't keep this around
                 del client
-            except RedisConnectionError:
+            except (RedisConnectionError, RedisReplyError):
                 raise SSInternalError("Failed to set model or script, could not connect to database")
 
             

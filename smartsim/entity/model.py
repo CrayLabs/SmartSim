@@ -244,7 +244,7 @@ class Model(SmartSimEntity):
         :param name: key to store model under
         :type name: str
         :param model: model in memory
-        :type model: str, optional # TODO figure out what to type hint this as
+        :type model: byte string, optional
         :param model_path: serialized model
         :type model_path: file path to model
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
@@ -335,7 +335,7 @@ class Model(SmartSimEntity):
         :param name: key to store function under
         :type name: str
         :param script: TorchScript code
-        :type script: str, optional
+        :type script: str or byte string, optional
         :param script_path: path to TorchScript code
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
