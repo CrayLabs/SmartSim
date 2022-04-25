@@ -123,16 +123,18 @@ def create_run_settings(
         "aprun": AprunSettings,
         "srun": SrunSettings,
         "mpirun": MpirunSettings,
+        "mpiexec": MpiexecSettings,
+        "orterun": OrterunSettings,
         "jsrun": JsrunSettings,
     }
 
     # run commands supported by each launcher
     # in order of suspected user preference
     by_launcher = {
-        "slurm": ["srun", "mpirun"],
-        "pbs": ["aprun", "mpirun"],
-        "cobalt": ["aprun", "mpirun"],
-        "lsf": ["jsrun", "mpirun"],
+        "slurm": ["srun", "mpirun", "mpiexec"],
+        "pbs": ["aprun", "mpirun", "mpiexec"],
+        "cobalt": ["aprun", "mpirun", "mpiexec"],
+        "lsf": ["jsrun", "mpirun", "mpiexec"],
     }
 
     if launcher == "auto":

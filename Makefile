@@ -34,7 +34,7 @@ clean:
 
 # help: clobber                        - clean, remove deps, builds, (be careful)
 .PHONY: clobber
-clobber: clean clean-deps
+clobber: clean
 
 
 # help:

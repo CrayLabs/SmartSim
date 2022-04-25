@@ -3,7 +3,12 @@ import logging
 
 import pytest
 
-from smartsim.settings import MpirunSettings, RunSettings
+from smartsim.settings import (
+    MpirunSettings,
+    MpiexecSettings,
+    OrterunSettings,
+    RunSettings,
+)
 from smartsim.settings.settings import create_run_settings
 
 
@@ -28,12 +33,21 @@ def test_create_run_settings_local():
     assert specific.run_command == "specific"
     assert type(specific) == RunSettings
 
-    # make it return MpirunSettings
-    _mpirun = which("mpirun")
-    if _mpirun:
-        mpirun = create_run_settings("local", "echo", "hello", run_command="mpirun")
-        assert mpirun.run_command == _mpirun
-        assert type(mpirun) == MpirunSettings
+
+@pytest.mark.parametrize(
+    "run_cmd,Settings",
+    [
+        pytest.param("mpiun", MpirunSettings, id="mpirun"),
+        pytest.param("mpiexec", MpiexecSettings, id="mpiexec"),
+        pytest.param("orterun", OrterunSettings, id="orterun"),
+    ],
+)
+def test_create_run_settings_returns_settings_subclasses(run_cmd, Settings):
+    _run_cmd = which(run_cmd)
+    if _run_cmd:
+        settings = create_run_settings("local", "echo", "hello", run_command=run_cmd)
+        assert settings.run_command == _run_cmd
+        assert type(settings) == Settings
 
 
 ####### Base Run Settings tests #######
