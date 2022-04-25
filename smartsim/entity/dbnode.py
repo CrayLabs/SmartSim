@@ -150,7 +150,7 @@ class DBNode(SmartSimEntity):
         file in self._output_files is used.
 
         :param filepath: Path to file to parse
-        :type filepath: str
+        :type filepath: str, optional
         :raises SmartSimError: if host/ip could not be found
         :return: ip address | hostname
         :rtype: str
