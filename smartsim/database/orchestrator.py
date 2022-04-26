@@ -540,7 +540,6 @@ class Orchestrator(EntityList):
         mpmd_nodes = single_cmd and db_nodes > 1
 
         if mpmd_nodes:
-            
             run_settings = create_run_settings(
                 exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
@@ -575,8 +574,10 @@ class Orchestrator(EntityList):
         run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
-        old_host = None
         erf_rs = None
+
+        # We always run the DB on cpus 0:cpus_per_shard-1
+        # and gpus 0:gpus_per_shard-1
         for shard_id, args in enumerate(exe_args):
             host = shard_id
             run_args["launch_distribution"] = "packed"
@@ -586,27 +587,19 @@ class Orchestrator(EntityList):
 
             # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
             run_settings.set_individual_output("_%t")
-            # tell step to create a mpmd executable even if we only have one task
-            # because we need to specify the host
-            if host != old_host:
-                assigned_smts = 0
-                assigned_gpus = 0
-            old_host = host
 
             erf_sets = {
                 "rank": str(shard_id),
                 "host": str(1 + host),
-                "cpu": "{" + f"{assigned_smts}:{cpus_per_shard}" + "}",
+                "cpu": "{" + f"0:{cpus_per_shard}" + "}",
             }
 
-            assigned_smts += cpus_per_shard
             if gpus_per_shard > 1:  # pragma: no-cover
                 erf_sets["gpu"] = (
-                    "{" + f"{assigned_gpus}-{assigned_gpus+gpus_per_shard-1}" + "}"
+                    "{" + f"0-{gpus_per_shard-1}" + "}"
                 )
             elif gpus_per_shard > 0:
-                erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
-            assigned_gpus += gpus_per_shard
+                erf_sets["gpu"] = "{" + str(0) + "}"
 
             run_settings.set_erf_sets(erf_sets)
 
@@ -620,13 +613,9 @@ class Orchestrator(EntityList):
         return erf_rs
 
     def _initialize_entities(self, **kwargs):
-        port = kwargs.get("port", 6379)
         self.db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
 
-        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
-
-        cluster = not bool(self.db_nodes < 3)
         if int(self.db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
@@ -635,19 +624,72 @@ class Orchestrator(EntityList):
                 "Local Orchestrator does not support multiple database shards"
             )
 
+        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
+
         if mpmd_nodes:
-            exe_args_mpmd = []
+            self._initialize_entities_mpmd(**kwargs)
+        else:
+            port = kwargs.get("port", 6379)
+            cluster = not bool(self.db_nodes < 3)
+
+            for db_id in range(self.db_nodes):
+                db_node_name = "_".join((self.name, str(db_id)))
+
+                # create the exe_args list for launching multiple databases
+                # per node. also collect port range for dbnode
+                start_script_args = self._get_start_script_args(db_node_name, port, cluster)
+
+                exe_args = " ".join(start_script_args)
+
+                # if only launching 1 db per command, we don't need a list of exe args lists
+                run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
+
+                node = DBNode(db_node_name, self.path, run_settings, [port], [db_node_name + ".out"])
+                self.entities.append(node)
+
+            self.ports = [port]
+
+    def _initialize_entities_mpmd(self, **kwargs):
+        port = kwargs.get("port", 6379)
+        cluster = not bool(self.db_nodes < 3)
+
+        exe_args_mpmd = []
 
         for db_id in range(self.db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
-            if not mpmd_nodes:
-                db_node_name = db_shard_name
-            else:
-                db_node_name = self.name
 
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            start_script_args = [
+            start_script_args = self._get_start_script_args(db_shard_name, port, cluster)
+            exe_args = " ".join(start_script_args)
+            exe_args_mpmd.append(sh_split(exe_args))
+
+        if self.launcher == "lsf":
+            run_settings = self._build_run_settings_lsf(
+                sys.executable, exe_args_mpmd, **kwargs
+            )
+            output_files = ["_".join((self.name, str(db_id))) + ".out" for db_id in range(self.db_nodes)]
+        else:
+            run_settings = self._build_run_settings(
+                sys.executable, exe_args_mpmd, **kwargs
+            )
+            output_files = [self.name + ".out"]
+        node = DBNode(self.name, self.path, run_settings, [port], output_files)
+        node._mpmd = True
+        node._num_shards = self.db_nodes
+        self.entities.append(node)
+
+        self.ports = [port]
+
+    @staticmethod
+    def _get_cluster_args(name, port):
+        """Create the arguments necessary for cluster creation"""
+        cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
+        db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
+        return db_args
+
+    def _get_start_script_args(self, name, port, cluster):
+        start_script_args = [
                 "-m",
                 "smartsim._core.entrypoints.redis", # entrypoint
                 f"+ifname={self._interface}",  # pass interface to start script
@@ -658,46 +700,10 @@ class Orchestrator(EntityList):
                 "--port",  # redis port
                 str(port),  # port number
             ]
-            if cluster:
-                start_script_args += self._get_cluster_args(db_shard_name, port)
+        if cluster:
+            start_script_args += self._get_cluster_args(name, port)
 
-            exe_args = " ".join(start_script_args)
-
-            if not mpmd_nodes:
-                # if only launching 1 db per command, we don't need a list of exe args lists
-                run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
-
-                node = DBNode(db_node_name, self.path, run_settings, [port], [db_node_name + ".out"])
-                self.entities.append(node)
-            else:
-                exe_args_mpmd.append(sh_split(exe_args))
-
-        if mpmd_nodes:
-            if self.launcher == "lsf":
-                run_settings = self._build_run_settings_lsf(
-                    sys.executable, exe_args_mpmd, **kwargs
-                )
-                output_files = ["_".join((self.name, str(db_id))) + ".out" for db_id in range(self.db_nodes)]
-            else:
-                run_settings = self._build_run_settings(
-                    sys.executable, exe_args_mpmd, **kwargs
-                )
-                output_files = [self.name + ".out"]
-            node = DBNode(db_node_name, self.path, run_settings, [port], output_files)
-            node._mpmd = True
-            node._num_shards = self.db_nodes
-            self.entities.append(node)
-
-        self.ports = [port]
-
-
-
-    @staticmethod
-    def _get_cluster_args(name, port):
-        """Create the arguments necessary for cluster creation"""
-        cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
-        db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
-        return db_args
+        return start_script_args
 
     def _get_db_hosts(self):
         hosts = []
