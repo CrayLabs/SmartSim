@@ -268,7 +268,9 @@ class MpirunSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
-        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        c_proc = sp.run([self.run_command, "-V"], capture_output=True)  # type: sp.CompletedProcess
+        version_stmt = c_proc.stdout.decode()
+
         if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_stmt):
             logger.warning("Non-OpenMPI implementation of `mpirun` detected")
 
@@ -295,8 +297,10 @@ class MpiexecSettings(_OpenMPISettings):
         :type env_vars: dict[str, str], optional
         """
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
-
-        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        
+        c_proc = sp.run([self.run_command, "-V"], capture_output=True)  # type: sp.CompletedProcess
+        version_stmt = c_proc.stdout.decode()
+        
         if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
             logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
 
@@ -324,6 +328,8 @@ class OrterunSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
 
-        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        c_proc = sp.run([self.run_command, "-V"], capture_output=True)  # type: sp.CompletedProcess
+        version_stmt = c_proc.stdout.decode()
+        
         if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
             logger.warning("Non-OpenMPI implementation of `orterun` detected")
