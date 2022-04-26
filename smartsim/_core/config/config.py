@@ -87,9 +87,12 @@ class Config:
     def __init__(self):
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
-        self.lib_path = Path(self.core_path, "lib").resolve()
-        self.bin_path = Path(self.core_path, "bin").resolve()
-        self.conf_path = Path(self.core_path, "config", "redis6.conf")
+
+        dependency_path = os.environ.get('SMARTSIM_DEP_INSTALL_PATH', self.core_path)
+
+        self.lib_path = Path(dependency_path, "lib").resolve()
+        self.bin_path = Path(dependency_path, "bin").resolve()
+        self.conf_path = Path(dependency_path, "config", "redis6.conf")
 
     @property
     def redisai(self) -> str:
@@ -102,30 +105,30 @@ class Config:
         return str(redisai)
 
     @property
-    def redis_conf(self) -> str:
+    def database_conf(self) -> str:
         conf = Path(os.environ.get("REDIS_CONF", self.conf_path)).resolve()
         if not conf.is_file():
             raise SSConfigError(
-                "Redis configuration file at REDIS_CONF could not be found"
+                "Database configuration file at REDIS_CONF could not be found"
             )
         return str(conf)
 
     @property
-    def redis_exe(self) -> str:
+    def database_exe(self) -> str:
         try:
-            redis_exe = self.bin_path / "redis-server"
-            redis = Path(os.environ.get("REDIS_PATH", redis_exe)).resolve()
-            exe = expand_exe_path(str(redis))
+            database_exe = next(self.bin_path.glob("*-server"))
+            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            exe = expand_exe_path(str(database))
             return exe
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError(
-                "Specified Redis binary at REDIS_PATH could not be used"
+                "Specified database binary at REDIS_PATH could not be used"
             ) from e
 
     @property
-    def redis_cli(self) -> str:
+    def database_cli(self) -> str:
         try:
-            redis_cli_exe = self.bin_path / "redis-cli"
+            redis_cli_exe = next(self.bin_path.glob("*-cli"))
             redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
             exe = expand_exe_path(str(redis_cli))
             return exe

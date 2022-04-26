@@ -2,7 +2,8 @@ import pytest
 
 from smartsim import Experiment
 from smartsim.error import EntityExistsError, SSUnsupportedError
-from smartsim.settings import RunSettings, MpirunSettings
+from smartsim.settings import RunSettings
+from smartsim.settings.mpirunSettings import _OpenMPISettings
 
 
 def test_register_incoming_entity_preexists():
@@ -26,10 +27,10 @@ def test_disable_key_prefixing():
 
 def test_catch_colo_mpmd_model():
     exp = Experiment("experiment", launcher="local")
-    rs = MpirunSettings("python", exe_args="sleep.py")
+    rs = _OpenMPISettings("python", exe_args="sleep.py")
 
     # make it an mpmd model
-    rs_2 = MpirunSettings("python", exe_args="sleep.py")
+    rs_2 = _OpenMPISettings("python", exe_args="sleep.py")
     rs.make_mpmd(rs_2)
 
     model = exp.create_model("bad_colo_model", rs)

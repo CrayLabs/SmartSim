@@ -39,7 +39,7 @@ Each launcher supports specific types of ``RunSettings``.
 
    - :ref:`SrunSettings <srun_api>` for Slurm
    - :ref:`AprunSettings <aprun_api>` for PBSPro and Cobalt
-   - :ref:`MpirunSettings <openmpi_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, LSF, and Slurm
+   - :ref:`MpirunSettings <openmpi_run_api>` for OpenMPI with `mpirun` on PBSPro, Cobalt, LSF, and Slurm
    - :ref:`JsrunSettings <jsrun_api>` for LSF
 
 These settings can be manually specified by the user, or auto-detected by the

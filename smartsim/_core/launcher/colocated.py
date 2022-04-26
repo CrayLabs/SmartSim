@@ -124,8 +124,8 @@ def _build_colocated_wrapper_cmd(port=6780,
 
     # collect DB binaries and libraries from the config
     db_cmd = [
-        CONFIG.redis_exe,
-        CONFIG.redis_conf,
+        CONFIG.database_exe,
+        CONFIG.database_conf,
         "--loadmodule",
         CONFIG.redisai
     ]
@@ -176,13 +176,11 @@ def _build_db_model_cmd(db_models):
     for db_model in db_models:
         cmd.append("+db_model")
         cmd.append(f"--name={db_model.name}")
-        if db_model.file:
-            cmd.append(f"--file={db_model.file}")
-        else:
-            err_msg = "ML model can not be set from memory for colocated databases.\n"
-            err_msg += "Please store the ML model in binary format "
-            err_msg += "and add it to the SmartSim Model as file."
-            raise SSUnsupportedError(err_msg)
+
+        # Here db_model.file is guaranteed to exist
+        # because we don't allow the user to pass a serialized DBModel
+        cmd.append(f"--file={db_model.file}")
+        
         cmd.append(f"--backend={db_model.backend}")
         cmd.append(f"--device={db_model.device}")
         cmd.append(f"--devices_per_node={db_model.devices_per_node}")
@@ -202,20 +200,14 @@ def _build_db_model_cmd(db_models):
     return cmd
 
 
-
-
 def _build_db_script_cmd(db_scripts):
     cmd = []
     for db_script in db_scripts:
         cmd.append("+db_script")
         cmd.append(f"--name={db_script.name}")
         if db_script.func:
-            if not isinstance(db_script.func, str):
-                err_msg = "Functions can not be set from memory for colocated databases.\n"
-                err_msg += "Please convert the function to a string or store it as a text file "
-                err_msg += "and add it to the SmartSim Model with add_script."
-                raise SSUnsupportedError(err_msg)
-
+            # Notice that here db_script.func is guaranteed to be a str
+            # because we don't allow the user to pass a serialized function
             sanitized_func = db_script.func.replace("\n", "\\n")
             if not (sanitized_func.startswith("'") and sanitized_func.endswith("'")
                or (sanitized_func.startswith('"') and sanitized_func.endswith('"'))):

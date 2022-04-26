@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import subprocess as sp
+import re
+
 from ..error import SSUnsupportedError
 from ..log import get_logger
 from .base import RunSettings
@@ -31,16 +34,20 @@ from .base import RunSettings
 logger = get_logger(__name__)
 
 
-class MpirunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        """Settings to run job with ``mpirun`` command (OpenMPI)
+class _OpenMPISettings(RunSettings):
+    """Base class for all common arguments of OpenMPI run commands"""
+
+    def __init__(
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+    ):
+        """Settings to format run job with an OpenMPI binary
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
         environment
 
         Any arguments passed in the ``run_args`` dict will be converted
-        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        command line arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
         :param exe: executable
@@ -55,7 +62,7 @@ class MpirunSettings(RunSettings):
         super().__init__(
             exe,
             exe_args,
-            run_command="mpirun",
+            run_command=run_command,
             run_args=run_args,
             env_vars=env_vars,
             **kwargs,
@@ -224,16 +231,10 @@ class MpirunSettings(RunSettings):
     def format_env_vars(self):
         """Format the environment variables for mpirun
 
-        Automatically exports ``PYTHONPATH``, ``LD_LIBRARY_PATH``
-        and ``PATH``
-
         :return: list of env vars
         :rtype: list[str]
         """
         formatted = []
-        presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
-        for preset in presets:
-            formatted.extend(["-x", preset])
 
         if self.env_vars:
             for name, value in self.env_vars.items():
@@ -242,3 +243,87 @@ class MpirunSettings(RunSettings):
                 else:
                     formatted += ["-x", name]
         return formatted
+
+
+class MpirunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpirun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_stmt):
+            logger.warning("Non-OpenMPI implementation of `mpirun` detected")
+
+
+class MpiexecSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpiexec`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpiexec`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+            logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
+
+
+class OrterunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``orterun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``orterun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
+
+        version_stmt = sp.check_output([self.run_command, "-V"]).decode()
+        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+            logger.warning("Non-OpenMPI implementation of `orterun` detected")

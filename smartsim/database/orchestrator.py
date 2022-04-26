@@ -34,7 +34,7 @@ import redis
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from .._core.utils import check_cluster_status
+from .._core.utils import db_is_active
 from .._core.config import CONFIG
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
@@ -179,7 +179,7 @@ class Orchestrator(EntityList):
             # will raise SSConfigError if not found
             self._redis_exe
             self._redis_conf
-            CONFIG.redis_cli
+            CONFIG.database_cli
         except SSConfigError as e:
             msg = "SmartSim not installed with pre-built extensions (Redis)\n"
             msg += "Use the `smart` cli tool to install needed extensions\n"
@@ -261,25 +261,8 @@ class Orchestrator(EntityList):
         if not self._hosts:
             return False
 
-        # if single shard
-        if self.num_shards < 2:
-            host = self._hosts[0]
-            port = self.ports[0]
-            try:
-                client = redis.Redis(host=host, port=port, db=0)
-                if client.ping():
-                    return True
-                return False
-            except redis.RedisError:
-                return False
-        # if a cluster
-        else:
-            try:
-                check_cluster_status(self._hosts, self.ports, trials=1)
-                return True
-            # we expect this to fail if the cluster is not active
-            except SSInternalError:
-                return False
+        return db_is_active(self._hosts, self.ports, self.num_shards)
+
 
     @property
     def _rai_module(self):
@@ -299,11 +282,11 @@ class Orchestrator(EntityList):
 
     @property
     def _redis_exe(self):
-        return CONFIG.redis_exe
+        return CONFIG.database_exe
 
     @property
     def _redis_conf(self):
-        return CONFIG.redis_conf
+        return CONFIG.database_conf
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard

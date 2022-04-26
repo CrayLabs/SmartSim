@@ -1,6 +1,7 @@
 from pathlib import Path
 from .._core.utils.helpers import init_default
 
+__all__ = ["DBObject", "DBModel", "DBScript"]
 
 class DBObject:
     def __init__(self, name, func, file_path, device, devices_per_node):
@@ -53,6 +54,27 @@ class DBObject:
         if not device.startswith("CPU") and not device.startswith("GPU"):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
+
+    def _enumerate_devices(self):
+        """Enumerate devices for a DBObject
+
+        :param dbobject: DBObject to enumerate
+        :type dbobject: DBObject
+        :return: list of device names
+        :rtype: list[str]
+        """
+        devices = []
+        if ":" in self.device and self.devices_per_node > 1:
+            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
+            msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
+            raise ValueError(msg)
+        if self.device in ["CPU", "GPU"] and self.devices_per_node > 1:
+            for device_num in range(self.devices_per_node):
+                devices.append(f"{self.device}:{str(device_num)}")
+        else:
+            devices = [self.device]
+
+        return devices
 
 class DBScript(DBObject):
 
@@ -161,7 +183,7 @@ class DBModel(DBObject):
     def __str__(self):
         desc_str = "Name: " + self.name + "\n"
         if self.model:
-            desc_str += "Model stored in memory"
+            desc_str += "Model stored in memory\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
         devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")

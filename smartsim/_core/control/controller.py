@@ -26,10 +26,11 @@
 
 import os.path as osp
 import pickle
+import signal
 import threading
 import time
 
-from ..._core._cli.utils import get_install_path
+from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
 from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
@@ -65,7 +66,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, manifest, block=True):
+    def start(self, manifest, block=True, kill_on_interrupt=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -74,26 +75,20 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        try:
-            self._launch(manifest)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        # register custom signal handler for ^C (SIGINT)
+        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        self._launch(manifest)
 
-            # start the job manager thread if not already started
-            if not self._jobs.actively_monitoring:
-                self._jobs.start()
-            
-            if self.orchestrator_active:
-                self._set_dbobjects(manifest)
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
+        # start the job manager thread if not already started
+        if not self._jobs.actively_monitoring:
+            self._jobs.start()
 
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
             # it may be called seperately
-            self.poll(5, True)
-
+            self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
     def orchestrator_active(self):
@@ -105,33 +100,30 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self, interval, verbose):
+    def poll(self, interval, verbose, kill_on_interrupt=True):
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         """
-        try:
-            to_monitor = self._jobs.jobs
-            while len(to_monitor) > 0:
-                time.sleep(interval)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        to_monitor = self._jobs.jobs
+        while len(to_monitor) > 0:
+            time.sleep(interval)
 
-                # acquire lock to avoid "dictionary changed during iteration" error
-                # without having to copy dictionary each time.
-                if verbose:
-                    JM_LOCK.acquire()
-                    try:
-                        for job in to_monitor.values():
-                            logger.info(job)
-                    finally:
-                        JM_LOCK.release()
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
-
+            # acquire lock to avoid "dictionary changed during iteration" error
+            # without having to copy dictionary each time.
+            if verbose:
+                JM_LOCK.acquire()
+                try:
+                    for job in to_monitor.values():
+                        logger.info(job)
+                finally:
+                    JM_LOCK.release()
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -299,8 +291,11 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:
+        for rc in manifest.ray_clusters:  # cov-wlm
             rc._update_workers()
+
+        if self.orchestrator_active:
+            self._set_dbobjects(manifest)
 
         # create all steps prior to launch
         steps = []
@@ -472,7 +467,6 @@ class Controller:
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
 
-
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle
 
@@ -601,111 +595,42 @@ class Controller:
             JM_LOCK.release()
 
 
-    def _enumerate_devices(self, dbobject: DBObject):
-        """Enumerate devices for a DBObject
-
-        :param dbobject: DBObject to enumerate
-        :type dbobject: DBObject
-        :return: list of device names
-        :rtype: list[str]
-        """
-        devices = []
-        if dbobject.device in ["CPU", "GPU"] and dbobject.devices_per_node > 1:
-            for device_num in range(dbobject.devices_per_node):
-                devices.append(f"{dbobject.device}:{str(device_num)}")
-        else:
-            devices = [dbobject.device]
-
-        return devices
-
-
-    def _set_ml_model(self, db_model, address, cluster=False):
-        devices = self._enumerate_devices(db_model)
-        try:
-            client = Client(address=address, cluster=cluster)
-        except RedisConnectionError as error:
-            logger.error("Could not connect to orchestrator")
-            raise error
-
-        for device in devices:
-            try:
-                if db_model.is_file:
-                    client.set_model_from_file(
-                        name=db_model.name,
-                        model_file=str(db_model.file),
-                        backend=db_model.backend,
-                        device=device,
-                        batch_size=db_model.batch_size,
-                        min_batch_size=db_model.min_batch_size,
-                        tag=db_model.tag,
-                        inputs=db_model.inputs,
-                        outputs=db_model.outputs
-                    )
-                else:
-                    client.set_model(
-                        name=db_model.name,
-                        model=db_model.model,
-                        backend=db_model.backend,
-                        device=device,
-                        batch_size=db_model.batch_size,
-                        min_batch_size=db_model.min_batch_size,
-                        tag=db_model.tag,
-                        inputs=db_model.inputs,
-                        outputs=db_model.outputs
-                    )
-            except  RedisReplyError as error:
-                logger.error("Error while setting model on orchestrator.")
-                raise error
-
-
-    def _set_script(self, db_script, address, cluster=False):   
-        devices = self._enumerate_devices(db_script)
-        try:
-            client = Client(address=address, cluster=cluster)
-        except RedisConnectionError as error:
-            logger.error("Could not connect to orchestrator")
-            raise error
-
-        for device in devices:
-            try:
-                if db_script.is_file:
-                    client.set_script_from_file(
-                        name=db_script.name,
-                        file=str(db_script.file),
-                        device=device
-                    )
-                else:
-                    if isinstance(db_script.script, str):
-                        client.set_script(
-                            name=db_script.name,
-                            script=db_script.script,
-                            device=device
-                        )
-                    else:
-                        client.set_function(
-                            name=db_script.name,
-                            function=db_script.script,
-                            device=device
-                        )
-        
-            except  RedisReplyError as error:
-                logger.error("Error while setting model on orchestrator.")
-                raise error
-
-
     def _set_dbobjects(self, manifest):
+        if not manifest.has_db_objects:
+            return
+
         db_addresses = self._jobs.get_db_host_addresses()
-        cluster = len(db_addresses) > 1
-        address = db_addresses[0]
+
+        hosts = list(set([address.split(":")[0] for address in db_addresses]))
+        ports = list(set([address.split(":")[-1] for address in db_addresses]))
+
+        if not db_is_active(hosts=hosts,
+                            ports=ports,
+                            num_shards=len(db_addresses)):
+            raise SSInternalError("Cannot set DB Objects, DB is not running")
+
+        client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+       
         for model in manifest.models:
-            for db_model in model._db_models:
-                self._set_ml_model(db_model, address, cluster)
-            for db_script in model._db_scripts:
-                self._set_script(db_script, address, cluster)
+            if not model.colocated:
+                for db_model in model._db_models:
+                    set_ml_model(db_model, client)
+                for db_script in model._db_scripts:
+                    set_script(db_script, client)
 
         for ensemble in manifest.ensembles:
+            for db_model in ensemble._db_models:
+                set_ml_model(db_model, client)
+            for db_script in ensemble._db_scripts:
+                set_script(db_script, client)
             for entity in ensemble:
-                for db_model in entity._db_models:
-                    self._set_ml_model(db_model, address, cluster)
-                for db_script in entity._db_scripts:
-                    self._set_script(db_script, address, cluster)
+                if not entity.colocated:
+                    # Set models which could belong only
+                    # to the entities and not to the ensemble
+                    # but avoid duplicates
+                    for db_model in entity._db_models:
+                        if db_model not in ensemble._db_models:
+                            set_ml_model(db_model, client)
+                    for db_script in entity._db_scripts:
+                        if db_script not in ensemble._db_scripts:
+                            set_script(db_script, client)

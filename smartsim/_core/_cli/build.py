@@ -12,6 +12,7 @@ from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Ver
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -20,6 +21,21 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
 
+def _install_torch_from_pip(versions, device="cpu", verbose=False):
+    packages = []
+    end_point = None
+    # if we are on linux cpu, use the torch without CUDA
+    if sys.platform == "linux" and device == "cpu":
+        packages.append(f"torch=={versions.TORCH}+cpu")
+        packages.append(f"torchvision=={versions.TORCHVISION}+cpu")
+        end_point = "https://download.pytorch.org/whl/torch_stable.html"
+
+    # otherwise just use the version downloaded by pip
+    else:
+        packages.append(f"torch=={versions.TORCH}")
+        packages.append(f"torchvision=={versions.TORCHVISION}")
+
+    pip_install(packages, end_point=end_point, verbose=verbose)
 
 class Build:
     def __init__(self):
@@ -66,8 +82,21 @@ class Build:
             type=str,
             help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
         )
+        parser.add_argument(
+            "--only_python_packages",
+            action="store_true",
+            default=False,
+            help="If true, only install the python packages (i.e. skip backend builds)"
+        )
+        parser.add_argument(
+            "--keydb",
+            action="store_true",
+            default=False,
+            help="Build KeyDB instead of Redis",
+        )
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
+        self.keydb = args.keydb
 
         # torch and tf build by default
         pt = not args.no_pt
@@ -76,36 +105,57 @@ class Build:
 
         logger.info("Running SmartSim build process...")
         try:
-            logger.info("Checking for build tools...")
-            self.build_env = BuildEnv()
-
-            if self.verbose:
-                logger.info("Build Environment:")
-                env = self.build_env.as_dict()
-                print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
-
             logger.info("Checking requested versions...")
             self.versions = Versioner()
 
-            if self.verbose:
-                logger.info("Version Information:")
-                vers = self.versions.as_dict()
-                print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
+            if args.only_python_packages:
+                logger.info("Only installing Python packages...skipping build")
+                self.build_env = BuildEnv(checks=False)
+                if not args.no_pt:
+                    self.install_torch(device=args.device)
+            else:
+                logger.info("Checking for build tools...")
+                self.build_env = BuildEnv()
 
-            # REDIS
-            self.build_redis()
+                if self.verbose:
+                    logger.info("Build Environment:")
+                    env = self.build_env.as_dict()
+                    print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
+                if self.keydb:
+                    self.versions.REDIS = Version_("6.2.0")
+                    self.versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
+                    self.versions.REDIS_BRANCH = "v6.2.0"
+                    CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
+                    if not CONFIG.conf_path.resolve().is_file():
+                        raise SSConfigError(
+                            "Database configuration file at REDIS_CONF could not be found"
+                        )
 
-            # REDISAI
-            self.build_redis_ai(
-                str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
-            )
+                if self.verbose:
+                    db_name = "KEYDB" if self.keydb else "REDIS"
+                    logger.info("Version Information:")
+                    vers = self.versions.as_dict(db_name=db_name)
+                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
 
-            backends = [
-                backend.capitalize() for backend in installed_redisai_backends()
-            ]
-            logger.info(
-                (", ".join(backends) if backends else "No") + " backend(s) built"
-            )
+                # REDIS/KeyDB
+                self.build_database()
+
+                if self.verbose:
+                    logger.info("Version Information:")
+                    vers = self.versions.as_dict()
+                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
+
+                # REDISAI
+                self.build_redis_ai(
+                    str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
+                )
+
+                backends = [
+                    backend.capitalize() for backend in installed_redisai_backends()
+                ]
+                logger.info(
+                    (", ".join(backends) if backends else "No") + " backend(s) built"
+                )
 
         except (SetupError, BuildError) as e:
             logger.error(str(e))
@@ -113,22 +163,21 @@ class Build:
 
         logger.info("SmartSim build complete!")
 
-    def build_redis(self):
-        # check redis installation
-        redis_builder = builder.RedisBuilder(
+    def build_database(self):
+        # check database installation
+        database_name = "KeyDB" if self.keydb else "Redis"
+        database_builder = builder.DatabaseBuilder(
             self.build_env(), self.build_env.MALLOC, self.build_env.JOBS, self.verbose
         )
-
-        if not redis_builder.is_built:
+        if not database_builder.is_built:
             logger.info(
-                f"Building Redis version {self.versions.REDIS} from {self.versions.REDIS_URL}"
+                f"Building {database_name} version {self.versions.REDIS} from {self.versions.REDIS_URL}"
             )
-
-            redis_builder.build_from_git(
+            database_builder.build_from_git(
                 self.versions.REDIS_URL, self.versions.REDIS_BRANCH
             )
-            redis_builder.cleanup()
-        logger.info("Redis build complete!")
+            database_builder.cleanup()
+        logger.info(f"{database_name} build complete!")
 
     def build_redis_ai(
         self, device, torch=True, tf=True, onnx=False, torch_dir=None, libtf_dir=None
@@ -233,26 +282,23 @@ class Build:
             )
             logger.info("ML Backends and RedisAI build complete!")
 
+    def infer_torch_device(self):
+        backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
+        device = "cpu"
+        if (Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file()):
+            device = "gpu"
+        return device
+
     def install_torch(self, device="cpu"):
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
-        packages = []
-        end_point = None
+
         if not self.build_env.check_installed("torch", self.versions.TORCH):
-            # if we are on linux cpu, use the torch without CUDA
-            if sys.platform == "linux" and device == "cpu":
-                packages.append(f"torch=={self.versions.TORCH}+cpu")
-                packages.append(f"torchvision=={self.versions.TORCHVISION}+cpu")
-                end_point = "https://download.pytorch.org/whl/torch_stable.html"
-
-            # otherwise just use the version downloaded by pip
-            else:
-                packages.append(f"torch=={self.versions.TORCH}")
-                packages.append(f"torchvision=={self.versions.TORCHVISION}")
-
-            pip_install(packages, end_point=end_point, verbose=self.verbose)
-
+            inferred_device = self.infer_torch_device()
+            if (inferred_device == "gpu") and (device == "cpu"):
+                logger.warning("CPU requested, but GPU backend is available")
+            _install_torch_from_pip(self.versions, device, self.verbose)
         # if torch already installed, check the versions to make sure correct
         # torch version is downloaded for that particular device
         else:
