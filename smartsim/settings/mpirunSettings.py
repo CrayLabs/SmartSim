@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import subprocess as sp
+import subprocess
 import re
 
 from ..error import SSUnsupportedError
@@ -268,12 +268,12 @@ class MpirunSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
-        c_proc = sp.run(
+        completed_process = subprocess.run(
             [self.run_command, "-V"], capture_output=True
-        )  # type: sp.CompletedProcess
-        version_stmt = c_proc.stdout.decode()
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
 
-        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_stmt):
+        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_statement):
             logger.warning("Non-OpenMPI implementation of `mpirun` detected")
 
 
@@ -300,12 +300,12 @@ class MpiexecSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
-        c_proc = sp.run(
+        completed_process = subprocess.run(
             [self.run_command, "-V"], capture_output=True
-        )  # type: sp.CompletedProcess
-        version_stmt = c_proc.stdout.decode()
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
 
-        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
             logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
 
 
@@ -332,10 +332,10 @@ class OrterunSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
 
-        c_proc = sp.run(
+        completed_process = subprocess.run(
             [self.run_command, "-V"], capture_output=True
-        )  # type: sp.CompletedProcess
-        version_stmt = c_proc.stdout.decode()
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
 
-        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_stmt):
+        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
             logger.warning("Non-OpenMPI implementation of `orterun` detected")
