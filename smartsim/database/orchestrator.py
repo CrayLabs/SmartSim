@@ -657,7 +657,6 @@ class Orchestrator(EntityList):
 
         for db_id in range(self.db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
-
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
             start_script_args = self._get_start_script_args(db_shard_name, port, cluster)
