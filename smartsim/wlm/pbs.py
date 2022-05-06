@@ -21,12 +21,12 @@ def get_queue():
 
 
 def get_tasks():
-    if "" in os.environ:
-        return os.environ.get("")
+    if "PBS_NP" in os.environ:
+        return os.environ.get("PBS_NP")
     raise Exception  # TODO: This
 
 
 def get_tasks_per_node():
-    if "" in os.environ:
-        return os.environ.get("")
+    if "PBS_NUM_PPN" in os.environ:
+        return os.environ.get("PBS_NUM_PPN")
     raise Exception  # TODO: this
