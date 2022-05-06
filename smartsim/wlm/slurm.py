@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from shutil import which
+import os
 
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
@@ -247,3 +248,27 @@ def _get_alloc_cmd(nodes, time, account, options=None):
                     salloc_args += ["=".join((prefix + opt, str(val)))]
 
     return salloc_args
+
+
+def get_hosts():
+    if "SLURM_JOB_NODELIST" in os.environ:
+        nodelist = os.environ.get("SLURM_JOB_NODELIST")
+    raise Exception  # TODO: this
+
+
+def get_queue():
+    if "SLURM_JOB_PARTITION" in os.environ:
+        return os.environ.get("SLURM_JOB_PARTITION")
+    raise Exception  # TODO: this
+
+
+def get_tasks():
+    if "SLURM_NTASKS" in os.environ:
+        return os.environ.get("SLURM_NTASKS")
+    raise Exception  # TODO: this
+
+
+def get_tasks_per_node():
+    if "SLURM_TASKS_PER_NODE" in os.environ:
+        return os.environ.get("SLURM_TASKS_PER_NODE")
+    raise Exception  # TODO: This
