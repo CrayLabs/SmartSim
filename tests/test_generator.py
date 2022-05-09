@@ -81,7 +81,7 @@ def test_ensemble_overwrite_error(fileutils):
         gen.generate_experiment(ensemble)
 
 
-def test_full_exp(fileutils):
+def test_full_exp(fileutils, wlmutils):
 
     test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-test", test_dir, launcher="local")
@@ -90,7 +90,7 @@ def test_full_exp(fileutils):
     script = fileutils.get_test_conf_path("sleep.py")
     model.attach_generator_files(to_copy=script)
 
-    orc = Orchestrator(6780)
+    orc = Orchestrator(wlmutils.get_test_port())
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
 

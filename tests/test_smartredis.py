@@ -31,7 +31,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_exchange(fileutils):
+def test_exchange(fileutils, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
@@ -43,7 +43,7 @@ def test_exchange(fileutils):
     )
 
     # create and start a database
-    orc = Orchestrator(port=REDIS_PORT)
+    orc = Orchestrator(port=wlmutils.get_test_port())
     exp.generate(orc)
     exp.start(orc, block=False)
 

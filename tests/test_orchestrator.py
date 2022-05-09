@@ -37,12 +37,12 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
-def test_orc_active_functions(fileutils):
+def test_orc_active_functions(fileutils, wlmutils):
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
 
-    db = Orchestrator(port=6780)
+    db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
 
     exp.start(db)
@@ -80,9 +80,9 @@ def test_catch_local_db_errors():
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg():
+def test_pbs_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -99,9 +99,9 @@ def test_pbs_set_run_arg():
     )
 
 
-def test_pbs_set_batch_arg():
+def test_pbs_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -112,7 +112,7 @@ def test_pbs_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -128,9 +128,9 @@ def test_pbs_set_batch_arg():
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg():
+def test_slurm_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -143,9 +143,9 @@ def test_slurm_set_run_arg():
     )
 
 
-def test_slurm_set_batch_arg():
+def test_slurm_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -156,7 +156,7 @@ def test_slurm_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -170,9 +170,9 @@ def test_slurm_set_batch_arg():
 ###### Cobalt ######
 
 
-def test_cobalt_set_run_arg():
+def test_cobalt_set_run_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -189,9 +189,9 @@ def test_cobalt_set_run_arg():
     )
 
 
-def test_cobalt_set_batch_arg():
+def test_cobalt_set_batch_arg(wlmutils):
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface="lo",
@@ -202,7 +202,7 @@ def test_cobalt_set_batch_arg():
         orc.set_batch_arg("account", "ACCOUNT")
 
     orc2 = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         interface="lo",
@@ -218,10 +218,10 @@ def test_cobalt_set_batch_arg():
 ###### LSF ######
 
 
-def test_catch_orc_errors_lsf():
+def test_catch_orc_errors_lsf(wlmutils):
     with pytest.raises(SSUnsupportedError):
         orc = Orchestrator(
-            6780,
+            wlmutils.get_test_port(),
             db_nodes=2,
             db_per_host=2,
             batch=False,
@@ -230,7 +230,7 @@ def test_catch_orc_errors_lsf():
         )
 
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         hosts=["batch", "host1", "host2"],
@@ -241,10 +241,10 @@ def test_catch_orc_errors_lsf():
         orc.set_batch_arg("P", "MYPROJECT")
 
 
-def test_lsf_set_run_args():
+def test_lsf_set_run_args(wlmutils):
 
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],
@@ -255,10 +255,10 @@ def test_lsf_set_run_args():
     assert all(["l" not in db.run_settings.run_args for db in orc.entities])
 
 
-def test_lsf_set_batch_args():
+def test_lsf_set_batch_args(wlmutils):
 
     orc = Orchestrator(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=True,
         hosts=["batch", "host1", "host2"],

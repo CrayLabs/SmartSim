@@ -23,6 +23,8 @@ test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_nic = CONFIG.test_interface
+test_port = CONFIG.test_port
+
 # Fill this at runtime if needed
 test_hostlist = None
 
@@ -131,6 +133,11 @@ class WLMUtils:
     def get_test_launcher():
         global test_launcher
         return test_launcher
+    
+    @staticmethod
+    def get_test_port():
+        global test_port
+        return test_port
 
     @staticmethod
     def get_test_account():
@@ -235,32 +242,33 @@ class WLMUtils:
             return RunSettings(exe, args)
 
     @staticmethod
-    def get_orchestrator(nodes=1, port=6780, batch=False):
+    def get_orchestrator(nodes=1, batch=False):
         global test_launcher
         global test_nic
+        global test_port
         if test_launcher in ["pbs", "cobalt"]:
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
             else:
                 hostlist = None
-            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher, hosts=hostlist)
+            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, interface=test_nic, launcher=test_launcher, hosts=hostlist)
         elif test_launcher == "slurm":
-            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, interface=test_nic, launcher=test_launcher)
+            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, interface=test_nic, launcher=test_launcher)
         elif test_launcher == "lsf":
-            db = Orchestrator(db_nodes=nodes, port=port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
+            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
         else:
-            db = Orchestrator(port=port, interface="lo")
+            db = Orchestrator(port=test_port, interface="lo")
         return db
 
 
 @pytest.fixture
-def local_db(fileutils, request):
+def local_db(fileutils, request, wlmutils):
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
-    db = Orchestrator(port=6780, interface="lo")
+    db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
 

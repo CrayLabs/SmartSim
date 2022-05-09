@@ -152,6 +152,10 @@ class Config:
     @property
     def test_device(self) -> str:
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
+    
+    @property
+    def test_port(self) -> int:
+        return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
     def test_interface(self) -> str:
