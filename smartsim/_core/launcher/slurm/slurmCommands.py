@@ -81,6 +81,19 @@ def sinfo(args):
     return out, error
 
 
+def scontrol(args):
+    """Calls slurm sinfo with args
+
+    :param args: List of command arguments
+    :type args: List of str
+    :returns: Output and error of sinfo
+    """
+    _sinfo = _find_slurm_command("scontrol")
+    cmd = [_sinfo] + args
+    _, out, error = execute_cmd(cmd)
+    return out, error
+
+
 def scancel(args):
     """Calls slurm scancel with args.
 

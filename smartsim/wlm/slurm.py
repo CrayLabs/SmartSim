@@ -27,7 +27,7 @@
 from shutil import which
 import os
 
-from .._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo
+from .._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo, scontrol
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
@@ -252,23 +252,32 @@ def _get_alloc_cmd(nodes, time, account, options=None):
 
 def get_hosts():
     if "SLURM_JOB_NODELIST" in os.environ:
-        nodelist = os.environ.get("SLURM_JOB_NODELIST")
-    raise Exception  # TODO: this
+        if not which("scontrol"):
+            raise LauncherError(
+                (
+                    "Attempted slurm function without access to "
+                    "slurm(scontrol) at the call site"
+                )
+            )
+        nodelist, _ = scontrol(["show", "hostnames"])
+        return nodelist.split()
+    raise Exception("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
 
 def get_queue():
     if "SLURM_JOB_PARTITION" in os.environ:
         return os.environ.get("SLURM_JOB_PARTITION")
-    raise Exception  # TODO: this
+    raise Exception("Could not parse queue from SLURM_JOB_PARTITION")
 
 
 def get_tasks():
     if "SLURM_NTASKS" in os.environ:
         return os.environ.get("SLURM_NTASKS")
-    raise Exception  # TODO: this
+    raise Exception("Could not parse number of requested tasks from SLURM_NTASKS")
 
 
 def get_tasks_per_node():
     if "SLURM_TASKS_PER_NODE" in os.environ:
-        return os.environ.get("SLURM_TASKS_PER_NODE")
-    raise Exception  # TODO: This
+        taskslist = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
+        # 2(x3),1
+    raise Exception("Could not parse tasks per node from SLURM_TASKS_PER_NODE")
