@@ -17,16 +17,16 @@ def get_hosts():
 def get_queue():
     if "PBS_QUEUE" in os.environ:
         return os.environ.get("PBS_QUEUE")
-    raise Exception  # TODO: This
+    raise Exception("Could not parse queue from SLURM_JOB_PARTITION")
 
 
 def get_tasks():
     if "PBS_NP" in os.environ:
         return os.environ.get("PBS_NP")
-    raise Exception  # TODO: This
+    raise Exception("Could not parse number of requested tasks from PBS_NP")
 
 
 def get_tasks_per_node():
     if "PBS_NUM_PPN" in os.environ:
         return os.environ.get("PBS_NUM_PPN")
-    raise Exception  # TODO: this
+    raise Exception("Could not parse tasks per node from PBS_NUM_PPN")

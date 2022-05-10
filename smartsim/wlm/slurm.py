@@ -278,6 +278,14 @@ def get_tasks():
 
 def get_tasks_per_node():
     if "SLURM_TASKS_PER_NODE" in os.environ:
-        taskslist = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
-        # 2(x3),1
+        tasks_per_node_str = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
+        tasks_per_node_list = []
+        for num_tasks in tasks_per_node_str:
+            if "(" in num_tasks:
+                tasks, quantity = num_tasks.split("(")
+                quantity = quantity.lstrip(")").rstrip("x")
+                tasks_per_node_list.extend([int(tasks)] * quantity)
+            else:
+                tasks_per_node_list.append(int(num_tasks))
+        return tasks_per_node_list
     raise Exception("Could not parse tasks per node from SLURM_TASKS_PER_NODE")
