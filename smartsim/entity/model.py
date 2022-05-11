@@ -29,6 +29,7 @@ from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
 from .entity import SmartSimEntity
 from .files import EntityFiles
+from .dbobject import DBScript, DBModel
 
 
 class Model(SmartSimEntity):
@@ -54,6 +55,8 @@ class Model(SmartSimEntity):
         self.params_as_args = params_as_args
         self.incoming_entities = []
         self._key_prefixing_enabled = False
+        self._db_models = []
+        self._db_scripts = []
         self.files = None
 
     @property
@@ -195,8 +198,12 @@ class Model(SmartSimEntity):
         colo_db_config["extra_db_args"] = dict([
             (k,str(v)) for k,v in kwargs.items() if k not in colo_db_config["rai_args"]
         ])
-        self.run_settings.colocated_db_settings = colo_db_config
 
+        self._check_db_objects_colo()
+        colo_db_config["db_models"] = self._db_models
+        colo_db_config["db_scripts"] = self._db_scripts
+
+        self.run_settings.colocated_db_settings = colo_db_config
 
     def params_to_args(self):
         """Convert parameters to command line arguments and update run settings."""
@@ -213,6 +220,137 @@ class Model(SmartSimEntity):
                 )
             self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
+    def add_ml_model(self,
+                     name,
+                     backend,
+                     model=None,
+                     model_path=None,
+                     device="CPU",
+                     devices_per_node=1,
+                     batch_size=0,
+                     min_batch_size=0,
+                     tag="",
+                     inputs=None,
+                     outputs=None):
+        """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
+
+        Each ML Model added will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of this Model instance
+
+        One of either model (in memory representation) or model_path (file)
+        must be provided
+
+        :param name: key to store model under
+        :type name: str
+        :param model: model in memory
+        :type model: byte string, optional
+        :param model_path: serialized model
+        :type model_path: file path to model
+        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
+        :type backend: str
+        :param device: name of device for execution, defaults to "CPU"
+        :type device: str, optional
+        :param batch_size: batch size for execution, defaults to 0
+        :type batch_size: int, optional
+        :param min_batch_size: minimum batch size for model execution, defaults to 0
+        :type min_batch_size: int, optional
+        :param tag: additional tag for model information, defaults to ""
+        :type tag: str, optional
+        :param inputs: model inputs (TF only), defaults to None
+        :type inputs: list[str], optional
+        :param outputs: model outupts (TF only), defaults to None
+        :type outputs: list[str], optional
+        """
+        db_model = DBModel(
+            name=name,
+            backend=backend,
+            model=model,
+            model_file=model_path,
+            device=device,
+            devices_per_node=devices_per_node,
+            batch_size=batch_size,
+            min_batch_size=min_batch_size,
+            tag=tag,
+            inputs=inputs,
+            outputs=outputs
+        )
+        self._append_db_model(db_model)
+        
+
+
+    def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
+        """TorchScript to launch with this Model instance
+
+        Each script added to the model will be loaded into an
+        orchestrator (converged or not) prior to the execution
+        of this Model instance
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        One of either script (in memory string representation) or script_path (file)
+        must be provided
+
+        :param name: key to store script under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name=name,
+            script=script,
+            script_path=script_path,
+            device=device,
+            devices_per_node=devices_per_node
+        )
+        self._append_db_script(db_script)
+
+
+    
+    def add_function(self, name, function=None, device="CPU", devices_per_node=1):
+        """TorchScript function to launch with this Model instance
+
+        Each script function to the model will be loaded into a
+        non-converged orchestrator prior to the execution
+        of this Model instance.
+        
+        For converged orchestrators, the :meth:`add_script` method should be used.
+
+        Device selection is either "GPU" or "CPU". If many devices are
+        present, a number can be passed for specification e.g. "GPU:1".
+
+        Setting ``devices_per_node=N``, with N greater than one will result
+        in the model being stored in the first N devices of type ``device``.
+
+        :param name: key to store function under
+        :type name: str
+        :param script: TorchScript code
+        :type script: str or byte string, optional
+        :param script_path: path to TorchScript code
+        :type script_path: str, optional
+        :param device: device for script execution, defaults to "CPU"
+        :type device: str, optional
+        :param devices_per_node: number of devices on each host
+        :type devices_per_node: int
+        """
+        db_script = DBScript(
+            name=name,
+            script=function,
+            device=device,
+            devices_per_node=devices_per_node
+        )
+        self._append_db_script(db_script)
+
     def __eq__(self, other):
         if self.name == other.name:
             return True
@@ -221,5 +359,45 @@ class Model(SmartSimEntity):
     def __str__(self): # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
-        entity_str += str(self.run_settings)
+        entity_str += str(self.run_settings) + "\n"
+        if self._db_models:
+            entity_str += "DB Models: \n" + str(len(self._db_models)) + "\n"
+        if self._db_scripts:
+            entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
+
+
+    def _append_db_model(self, db_model):
+        if not db_model.is_file and self.colocated:
+            err_msg = "ML model can not be set from memory for colocated databases.\n"
+            err_msg += f"Please store the ML model named {db_model.name} in binary format "
+            err_msg += "and add it to the SmartSim Model as file."
+            raise SSUnsupportedError(err_msg)
+
+        self._db_models.append(db_model)
+        
+    def _append_db_script(self, db_script):
+        if db_script.func and self.colocated:
+            if not isinstance(db_script.func, str):
+                err_msg = "Functions can not be set from memory for colocated databases.\n"
+                err_msg += f"Please convert the function named {db_script.name} to a string or store "
+                err_msg += "it as a text file and add it to the SmartSim Model with add_script."
+                raise SSUnsupportedError(err_msg)
+        self._db_scripts.append(db_script)
+
+    def _check_db_objects_colo(self):
+
+        for db_model in self._db_models:
+            if not db_model.is_file:
+                err_msg = "ML model can not be set from memory for colocated databases.\n"
+                err_msg += f"Please store the ML model named {db_model.name} in binary format "
+                err_msg += "and add it to the SmartSim Model as file."
+                raise SSUnsupportedError(err_msg)
+
+        for db_script in self._db_scripts:
+            if db_script.func:
+                if not isinstance(db_script.func, str):
+                    err_msg = "Functions can not be set from memory for colocated databases.\n"
+                    err_msg += f"Please convert the function named {db_script.name} to a string or store it "
+                    err_msg += "as a text file and add it to the SmartSim Model with add_script."
+                    raise SSUnsupportedError(err_msg)
