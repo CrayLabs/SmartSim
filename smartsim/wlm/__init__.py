@@ -2,6 +2,11 @@ import os
 from shutil import which
 from subprocess import run
 
+from ..error import SSUnsupportedError
+
+from . import slurm
+from . import pbs
+
 
 def detect_launcher():
     """Detect available launcher."""
@@ -39,3 +44,41 @@ def detect_launcher():
     if "PBS_JOBID" in os.environ:
         return "pbs"
     return "local"
+
+
+def get_host():
+    launcher = detect_launcher()
+    if launcher == "pbs":
+        return pbs.get_hosts()
+    if launcher == "slurm":
+        return slurm.get_hosts()
+    raise SSUnsupportedError(f"SmartSim cannot get hosts for launcher `{launcher}`")
+
+
+def get_queue():
+    launcher = detect_launcher()
+    if launcher == "pbs":
+        return pbs.get_queue()
+    if launcher == "slurm":
+        return slurm.get_queue()
+    raise SSUnsupportedError(f"SmartSim cannot get queue for launcher `{launcher}`")
+
+
+def get_tasks():
+    launcher = detect_launcher()
+    if launcher == "pbs":
+        return pbs.get_tasks()
+    if launcher == "slurm":
+        return slurm.get_tasks()
+    raise SSUnsupportedError(f"SmartSim cannot get tasks for launcher `{launcher}`")
+
+
+def get_tasks_per_node():
+    launcher = detect_launcher()
+    if launcher == "pbs":
+        return pbs.get_tasks_per_node()
+    if launcher == "slurm":
+        return slurm.get_tasks_per_node()
+    raise SSUnsupportedError(
+        f"SmartSim cannot get tasks per node for launcher `{launcher}`"
+    )
