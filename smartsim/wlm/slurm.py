@@ -269,7 +269,7 @@ def get_hosts():
                     "slurm(scontrol) at the call site"
                 )
             )
-        nodelist, _ = scontrol(["show", "hostnames", "$SLURM_JOB_NODELIST"])
+        nodelist, _ = scontrol(["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST")])
         return nodelist.split()
     raise SmartSimError("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
@@ -313,7 +313,7 @@ def get_tasks_per_node():
         for tasks_per_node_str in tasks_per_node_strs:
             if "(" in tasks_per_node_str:
                 tasks, quantity = tasks_per_node_str.split("(")
-                quantity = quantity.lstrip(")").rstrip("x")
+                quantity = quantity.rstrip(")").lstrip("x")
                 tasks_per_node_list.extend([int(tasks)] * int(quantity))
             else:
                 tasks_per_node_list.append(int(tasks_per_node_str))

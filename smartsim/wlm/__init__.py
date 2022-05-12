@@ -46,7 +46,7 @@ def detect_launcher():
     return "local"
 
 
-def get_host():
+def get_hosts():
     launcher = detect_launcher()
     if launcher == "pbs":
         return pbs.get_hosts()
