@@ -150,7 +150,7 @@ class DatabaseBuilder(Builder):
         :param branch: branch to checkout
         :type branch: str
         """
-        database_name = "KeyDB" if "KeyDB" in git_url else "redis"
+        database_name = "keydb" if "KeyDB" in git_url else "redis"
         database_build_path = Path(self.build_dir, database_name.lower())
 
         # remove git directory if it exists as it should
