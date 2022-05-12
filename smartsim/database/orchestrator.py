@@ -23,8 +23,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
 import itertools
+import sys
 from os import getcwd
 from shlex import split as sh_split
 from warnings import simplefilter, warn
@@ -34,8 +34,8 @@ import redis
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from .._core.utils import check_cluster_status
 from .._core.config import CONFIG
+from .._core.utils import check_cluster_status
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
@@ -595,9 +595,7 @@ class Orchestrator(EntityList):
             }
 
             if gpus_per_shard > 1:  # pragma: no-cover
-                erf_sets["gpu"] = (
-                    "{" + f"0-{gpus_per_shard-1}" + "}"
-                )
+                erf_sets["gpu"] = "{" + f"0-{gpus_per_shard-1}" + "}"
             elif gpus_per_shard > 0:
                 erf_sets["gpu"] = "{" + str(0) + "}"
 
@@ -637,14 +635,24 @@ class Orchestrator(EntityList):
 
                 # create the exe_args list for launching multiple databases
                 # per node. also collect port range for dbnode
-                start_script_args = self._get_start_script_args(db_node_name, port, cluster)
+                start_script_args = self._get_start_script_args(
+                    db_node_name, port, cluster
+                )
 
                 exe_args = " ".join(start_script_args)
 
                 # if only launching 1 db per command, we don't need a list of exe args lists
-                run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
+                run_settings = self._build_run_settings(
+                    sys.executable, exe_args, **kwargs
+                )
 
-                node = DBNode(db_node_name, self.path, run_settings, [port], [db_node_name + ".out"])
+                node = DBNode(
+                    db_node_name,
+                    self.path,
+                    run_settings,
+                    [port],
+                    [db_node_name + ".out"],
+                )
                 self.entities.append(node)
 
             self.ports = [port]
@@ -659,7 +667,9 @@ class Orchestrator(EntityList):
             db_shard_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            start_script_args = self._get_start_script_args(db_shard_name, port, cluster)
+            start_script_args = self._get_start_script_args(
+                db_shard_name, port, cluster
+            )
             exe_args = " ".join(start_script_args)
             exe_args_mpmd.append(sh_split(exe_args))
 
@@ -667,7 +677,10 @@ class Orchestrator(EntityList):
             run_settings = self._build_run_settings_lsf(
                 sys.executable, exe_args_mpmd, **kwargs
             )
-            output_files = ["_".join((self.name, str(db_id))) + ".out" for db_id in range(self.db_nodes)]
+            output_files = [
+                "_".join((self.name, str(db_id))) + ".out"
+                for db_id in range(self.db_nodes)
+            ]
         else:
             run_settings = self._build_run_settings(
                 sys.executable, exe_args_mpmd, **kwargs
@@ -689,16 +702,16 @@ class Orchestrator(EntityList):
 
     def _get_start_script_args(self, name, port, cluster):
         start_script_args = [
-                "-m",
-                "smartsim._core.entrypoints.redis", # entrypoint
-                f"+ifname={self._interface}",  # pass interface to start script
-                "+command",  # command flag for argparser
-                self._redis_exe,  # redis-server
-                self._redis_conf,  # redis6.conf file
-                self._rai_module,  # redisai.so
-                "--port",  # redis port
-                str(port),  # port number
-            ]
+            "-m",
+            "smartsim._core.entrypoints.redis",  # entrypoint
+            f"+ifname={self._interface}",  # pass interface to start script
+            "+command",  # command flag for argparser
+            self._redis_exe,  # redis-server
+            self._redis_conf,  # redis6.conf file
+            self._rai_module,  # redisai.so
+            "--port",  # redis port
+            str(port),  # port number
+        ]
         if cluster:
             start_script_args += self._get_cluster_args(name, port)
 

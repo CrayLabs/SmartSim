@@ -52,6 +52,12 @@ class DBNode(SmartSimEntity):
         self._mpmd = False
         self._num_shards = None
         self._hosts = None
+        if not output_files:
+            raise ValueError("output_files cannot be empty")
+        if not isinstance(output_files, list) or not all(
+            [isinstance(item, str) for item in output_files]
+        ):
+            raise ValueError("output_files must be of type list[str]")
         self._output_files = output_files
 
     @property
@@ -138,7 +144,7 @@ class DBNode(SmartSimEntity):
                 content = line.split()
                 if "IPADDRESS:" in content:
                     ips.append(content[-1])
-                    if num_ips and len(ips)==num_ips:
+                    if num_ips and len(ips) == num_ips:
                         break
 
         return ips
@@ -179,7 +185,6 @@ class DBNode(SmartSimEntity):
             raise SmartSimError("Failed to obtain database hostname")
 
         return ip
-
 
     def _parse_db_hosts(self):
         """Parse the database hosts/IPs from the output files
