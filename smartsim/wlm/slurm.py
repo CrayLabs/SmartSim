@@ -31,7 +31,7 @@ from .._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo, scontro
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
-from ..error import AllocationError, LauncherError
+from ..error import AllocationError, LauncherError, SmartSimError
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -251,6 +251,16 @@ def _get_alloc_cmd(nodes, time, account, options=None):
 
 
 def get_hosts():
+    """Get the name of the nodes used in a slurm allocation.
+
+    .. note::
+
+        This method requires access to ``scontrol`` from the node
+        on which it is run
+
+    :returns: Names of the host nodes
+    :rtype: list[str]
+    """
     if "SLURM_JOB_NODELIST" in os.environ:
         if not which("scontrol"):
             raise LauncherError(
@@ -259,33 +269,53 @@ def get_hosts():
                     "slurm(scontrol) at the call site"
                 )
             )
-        nodelist, _ = scontrol(["show", "hostnames"])
+        nodelist, _ = scontrol(["show", "hostnames", "$SLURM_JOB_NODELIST"])
         return nodelist.split()
-    raise Exception("Could not parse allocation nodes from SLURM_JOB_NODELIST")
+    raise SmartSimError("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
 
 def get_queue():
+    """Get the name of queue in a slurm allocation.
+    
+    :returns: The name of the queue
+    :rtype: str
+    """
     if "SLURM_JOB_PARTITION" in os.environ:
         return os.environ.get("SLURM_JOB_PARTITION")
-    raise Exception("Could not parse queue from SLURM_JOB_PARTITION")
+    raise SmartSimError("Could not parse queue from SLURM_JOB_PARTITION")
 
 
 def get_tasks():
+    """Get the number of tasks in a slurm allocation.
+    
+    :returns: Then number of tasks in the allocation
+    :rtype: int
+    """
     if "SLURM_NTASKS" in os.environ:
-        return os.environ.get("SLURM_NTASKS")
-    raise Exception("Could not parse number of requested tasks from SLURM_NTASKS")
+        return int(os.environ.get("SLURM_NTASKS"))
+    raise SmartSimError("Could not parse number of requested tasks from SLURM_NTASKS")
 
 
 def get_tasks_per_node():
+    """Get the number of tasks per each node in a slurm allocation.
+
+    .. note::
+    
+        This method requires access to ``scontrol`` from the node
+        on which it is run
+
+    :returns: Map of nodes to number of tasks on that node
+    :rtype: dict[str, int]
+    """
     if "SLURM_TASKS_PER_NODE" in os.environ:
-        tasks_per_node_str = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
+        tasks_per_node_strs = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
         tasks_per_node_list = []
-        for num_tasks in tasks_per_node_str:
-            if "(" in num_tasks:
-                tasks, quantity = num_tasks.split("(")
+        for tasks_per_node_str in tasks_per_node_strs:
+            if "(" in tasks_per_node_str:
+                tasks, quantity = tasks_per_node_str.split("(")
                 quantity = quantity.lstrip(")").rstrip("x")
-                tasks_per_node_list.extend([int(tasks)] * quantity)
+                tasks_per_node_list.extend([int(tasks)] * int(quantity))
             else:
-                tasks_per_node_list.append(int(num_tasks))
-        return tasks_per_node_list
-    raise Exception("Could not parse tasks per node from SLURM_TASKS_PER_NODE")
+                tasks_per_node_list.append(int(tasks_per_node_str))
+        return dict(zip(get_hosts(), tasks_per_node_list))
+    raise SmartSimError("Could not parse tasks per node from SLURM_TASKS_PER_NODE")
