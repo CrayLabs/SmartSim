@@ -82,14 +82,14 @@ def sinfo(args):
 
 
 def scontrol(args):
-    """Calls slurm sinfo with args
+    """Calls slurm scontrol with args
 
     :param args: List of command arguments
     :type args: List of str
     :returns: Output and error of sinfo
     """
-    _sinfo = _find_slurm_command("scontrol")
-    cmd = [_sinfo] + args
+    _scontrol = _find_slurm_command("scontrol")
+    cmd = [_scontrol] + args
     _, out, error = execute_cmd(cmd)
     return out, error
 
