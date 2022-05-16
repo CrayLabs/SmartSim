@@ -88,7 +88,7 @@ def get_tasks_per_node():
 
         chunk_cpu_map = {}
         for cunck_and_ncpu in chunks_and_ncpus.split("+"):
-            chunk, ncpu = cunck_and_ncpu.strip("(").strip(")").split(":")
+            chunk, ncpu = cunck_and_ncpu.strip("()").split(":")
             ncpu = ncpu.lstrip("ncpus=")
             chunk_cpu_map[chunk] = int(ncpu)
 

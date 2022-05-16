@@ -1,0 +1,14 @@
+{
+  "host_list": [
+    "a1",
+    "b2",
+    "c3"
+  ],
+  "queue": "workq",
+  "num_tasks": 20,
+  "tasks_per_node": {
+    "a1": 7,
+    "b2": 7,
+    "c3": 6
+  }
+}
