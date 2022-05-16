@@ -21,7 +21,7 @@ def get_hosts():
                 host = line.split(".")[0]
                 hosts.append(host)
         # account for repeats in PBS_NODEFILE
-        return list(set(hosts))
+        return sorted(list(set(hosts)))
     raise SmartSimError("Could not parse interactive allocation nodes from PBS_NODEFILE")
 
 

@@ -270,7 +270,7 @@ def get_hosts():
                 )
             )
         nodelist, _ = scontrol(["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST")])
-        return nodelist.split()
+        return sorted(nodelist.split())
     raise SmartSimError("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
 

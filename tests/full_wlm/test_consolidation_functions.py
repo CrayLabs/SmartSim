@@ -1,8 +1,7 @@
 from shutil import which
 import pytest
 import os
-import json
-from pathlib import Path
+
 from smartsim.error.errors import LauncherError, SSUnsupportedError, SmartSimError
 
 import smartsim.wlm as wlm
@@ -11,6 +10,7 @@ import smartsim.wlm as wlm
 def test_get_hosts(alloc_specs):
     def verify_output(output):
         assert isinstance(output, list)
+        assert all(isinstance(host, str) for host in output)
         if "host_list" in alloc_specs:
             assert output == alloc_specs["host_list"]
 
@@ -88,7 +88,11 @@ def test_get_tasks(alloc_specs):
 
 def test_get_tasks_per_node(alloc_specs):
     def verify_output(output):
-        assert isinstance(output, str)
+        assert isinstance(output, dict)
+        assert all(
+            isinstance(node, str) and isinstance(ntasks, int)
+            for node, ntasks in output.items()
+        )
         if "num_tasks" in alloc_specs:
             assert output == alloc_specs["num_tasks"]
 
