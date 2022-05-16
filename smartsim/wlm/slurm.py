@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from shutil import which
 import os
+from shutil import which
 
-from .._core.launcher.slurm.slurmCommands import salloc, scancel, sinfo, scontrol
+from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
@@ -269,14 +269,16 @@ def get_hosts():
                     "slurm(scontrol) at the call site"
                 )
             )
-        nodelist, _ = scontrol(["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST")])
+        nodelist, _ = scontrol(
+            ["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST")]
+        )
         return sorted(nodelist.split())
     raise SmartSimError("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
 
 def get_queue():
     """Get the name of queue in a slurm allocation.
-    
+
     :returns: The name of the queue
     :rtype: str
     """
@@ -287,7 +289,7 @@ def get_queue():
 
 def get_tasks():
     """Get the number of tasks in a slurm allocation.
-    
+
     :returns: Then number of tasks in the allocation
     :rtype: int
     """
@@ -300,7 +302,7 @@ def get_tasks_per_node():
     """Get the number of tasks per each node in a slurm allocation.
 
     .. note::
-    
+
         This method requires access to ``scontrol`` from the node
         on which it is run
 

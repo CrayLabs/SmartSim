@@ -3,9 +3,7 @@ from shutil import which
 from subprocess import run
 
 from ..error import SSUnsupportedError
-
-from . import slurm
-from . import pbs
+from . import pbs, slurm
 
 
 def detect_launcher():

@@ -1,5 +1,5 @@
-import os
 import json
+import os
 from shutil import which
 
 from smartsim.error.errors import LauncherError, SmartSimError
@@ -22,7 +22,9 @@ def get_hosts():
                 hosts.append(host)
         # account for repeats in PBS_NODEFILE
         return sorted(list(set(hosts)))
-    raise SmartSimError("Could not parse interactive allocation nodes from PBS_NODEFILE")
+    raise SmartSimError(
+        "Could not parse interactive allocation nodes from PBS_NODEFILE"
+    )
 
 
 def get_queue():
@@ -59,7 +61,9 @@ def get_tasks():
         job_info_str, _ = qstat(["-f", "-F", "json", job_id])
         job_info = json.loads(job_info_str)
         return int(job_info["Jobs"][job_id]["resources_used"]["ncpus"])
-    raise SmartSimError("Could not parse number of requested tasks without an allocation")
+    raise SmartSimError(
+        "Could not parse number of requested tasks without an allocation"
+    )
 
 
 def get_tasks_per_node():

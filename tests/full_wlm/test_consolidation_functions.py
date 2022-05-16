@@ -1,10 +1,10 @@
-from shutil import which
-import pytest
 import os
+from shutil import which
 
-from smartsim.error.errors import LauncherError, SSUnsupportedError, SmartSimError
+import pytest
 
 import smartsim.wlm as wlm
+from smartsim.error.errors import LauncherError, SmartSimError, SSUnsupportedError
 
 
 def test_get_hosts(alloc_specs):
