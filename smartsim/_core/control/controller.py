@@ -30,8 +30,9 @@ import signal
 import threading
 import time
 
+from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -39,6 +40,10 @@ from ..config import CONFIG
 from ..launcher import *
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
+
+from smartredis import Client
+from smartredis.error import RedisConnectionError, RedisReplyError
+
 
 logger = get_logger(__name__)
 
@@ -286,8 +291,11 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:
+        for rc in manifest.ray_clusters:  # cov-wlm
             rc._update_workers()
+
+        if self.orchestrator_active:
+            self._set_dbobjects(manifest)
 
         # create all steps prior to launch
         steps = []
@@ -297,7 +305,7 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as seperate job steps, aka not in a batch
+                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
@@ -586,3 +594,43 @@ class Controller:
         finally:
             JM_LOCK.release()
 
+
+    def _set_dbobjects(self, manifest):
+        if not manifest.has_db_objects:
+            return
+
+        db_addresses = self._jobs.get_db_host_addresses()
+
+        hosts = list(set([address.split(":")[0] for address in db_addresses]))
+        ports = list(set([address.split(":")[-1] for address in db_addresses]))
+
+        if not db_is_active(hosts=hosts,
+                            ports=ports,
+                            num_shards=len(db_addresses)):
+            raise SSInternalError("Cannot set DB Objects, DB is not running")
+
+        client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+       
+        for model in manifest.models:
+            if not model.colocated:
+                for db_model in model._db_models:
+                    set_ml_model(db_model, client)
+                for db_script in model._db_scripts:
+                    set_script(db_script, client)
+
+        for ensemble in manifest.ensembles:
+            for db_model in ensemble._db_models:
+                set_ml_model(db_model, client)
+            for db_script in ensemble._db_scripts:
+                set_script(db_script, client)
+            for entity in ensemble:
+                if not entity.colocated:
+                    # Set models which could belong only
+                    # to the entities and not to the ensemble
+                    # but avoid duplicates
+                    for db_model in entity._db_models:
+                        if db_model not in ensemble._db_models:
+                            set_ml_model(db_model, client)
+                    for db_script in entity._db_scripts:
+                        if db_script not in ensemble._db_scripts:
+                            set_script(db_script, client)
