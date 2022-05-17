@@ -136,7 +136,7 @@ def get_hostlist():
 @pytest.fixture(scope="session")
 def alloc_specs():
     specs = {}
-    spec_sheet_path = os.getenv("SS_TEST_ALLOC_SPEC_SHEET_PATH", None)
+    spec_sheet_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
     if spec_sheet_path:
         try:
             with open(spec_sheet_path) as f:

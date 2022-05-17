@@ -44,8 +44,9 @@ def detect_launcher():
     return "local"
 
 
-def get_hosts():
-    launcher = detect_launcher()
+def get_hosts(launcher=None):
+    if launcher is None:
+        launcher = detect_launcher()
     if launcher == "pbs":
         return pbs.get_hosts()
     if launcher == "slurm":
@@ -53,8 +54,9 @@ def get_hosts():
     raise SSUnsupportedError(f"SmartSim cannot get hosts for launcher `{launcher}`")
 
 
-def get_queue():
-    launcher = detect_launcher()
+def get_queue(launcher=None):
+    if launcher is None:
+        launcher = detect_launcher()
     if launcher == "pbs":
         return pbs.get_queue()
     if launcher == "slurm":
@@ -62,8 +64,9 @@ def get_queue():
     raise SSUnsupportedError(f"SmartSim cannot get queue for launcher `{launcher}`")
 
 
-def get_tasks():
-    launcher = detect_launcher()
+def get_tasks(launcher=None):
+    if launcher is None:
+        launcher = detect_launcher()
     if launcher == "pbs":
         return pbs.get_tasks()
     if launcher == "slurm":
@@ -71,8 +74,9 @@ def get_tasks():
     raise SSUnsupportedError(f"SmartSim cannot get tasks for launcher `{launcher}`")
 
 
-def get_tasks_per_node():
-    launcher = detect_launcher()
+def get_tasks_per_node(launcher=None):
+    if launcher is None:
+        launcher = detect_launcher()
     if launcher == "pbs":
         return pbs.get_tasks_per_node()
     if launcher == "slurm":

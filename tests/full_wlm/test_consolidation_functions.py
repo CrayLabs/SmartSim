@@ -30,7 +30,7 @@ def test_get_hosts(alloc_specs):
 
     else:
         with pytest.raises(SSUnsupportedError):
-            wlm.get_hosts()
+            wlm.get_hosts(launcher=pytest.test_launcher)
 
 
 def test_get_queue(alloc_specs):
@@ -55,7 +55,7 @@ def test_get_queue(alloc_specs):
 
     else:
         with pytest.raises(SSUnsupportedError):
-            wlm.get_queue()
+            wlm.get_queue(launcher=pytest.test_launcher)
 
 
 def test_get_tasks(alloc_specs):
@@ -69,7 +69,7 @@ def test_get_tasks(alloc_specs):
             verify_output(wlm.get_tasks())
         else:
             with pytest.raises(SmartSimError):
-                wlm.get_tasks()
+                wlm.get_tasks(launcher=pytest.test_launcher)
 
     elif pytest.test_launcher == "pbs":
         if "PBS_JOBID" in os.environ and which("qstat"):
@@ -83,7 +83,7 @@ def test_get_tasks(alloc_specs):
 
     else:
         with pytest.raises(SSUnsupportedError):
-            wlm.get_tasks()
+            wlm.get_tasks(launcher=pytest.test_launcher)
 
 
 def test_get_tasks_per_node(alloc_specs):
@@ -93,8 +93,8 @@ def test_get_tasks_per_node(alloc_specs):
             isinstance(node, str) and isinstance(ntasks, int)
             for node, ntasks in output.items()
         )
-        if "num_tasks" in alloc_specs:
-            assert output == alloc_specs["num_tasks"]
+        if "tasks_per_node" in alloc_specs:
+            assert output == alloc_specs["tasks_per_node"]
 
     if pytest.test_launcher == "slurm":
         if "SLURM_JOBID" in os.environ:
@@ -115,4 +115,4 @@ def test_get_tasks_per_node(alloc_specs):
 
     else:
         with pytest.raises(SSUnsupportedError):
-            wlm.get_tasks_per_node()
+            wlm.get_tasks_per_node(launcher=pytest.test_launcher)
