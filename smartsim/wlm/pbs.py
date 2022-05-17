@@ -18,7 +18,7 @@ def get_hosts():
         node_file = os.environ["PBS_NODEFILE"]
         with open(node_file, "r") as f:
             for line in f.readlines():
-                host = line.split(".")[0]
+                host = line.split(".")[0].strip()
                 hosts.append(host)
         # account for repeats in PBS_NODEFILE
         return sorted(list(set(hosts)))
