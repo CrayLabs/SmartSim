@@ -371,7 +371,9 @@ class RunSettings:
         # Coerce env_vars values to str as a convenience to user
         for (env, val) in env_vars.items():
             if type(val) not in val_types:
-                raise TypeError(f"env_vars[{env}] was of type {type(val)}, not {val_types_union}")
+                raise TypeError(
+                    f"env_vars[{env}] was of type {type(val)}, not {val_types_union}"
+                )
             else:
                 self.env_vars[env] = val
 
@@ -512,7 +514,6 @@ class RunSettings:
             else:
                 formatted.append(f"{key}={val}")
         return formatted
-                
 
     def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"

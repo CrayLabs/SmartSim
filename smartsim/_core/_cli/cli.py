@@ -67,5 +67,6 @@ class SmartCli:
         print("Database (Redis or KeyDB) dependencies not found")
         exit(1)
 
+
 def main():
     SmartCli()

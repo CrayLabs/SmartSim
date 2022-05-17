@@ -8,11 +8,11 @@ from smartsim.database import Orchestrator
 from smartsim.error.errors import SmartSimError
 from smartsim.experiment import Experiment
 
-
 shouldrun_tf = True
 if shouldrun_tf:
     try:
         from tensorflow import keras
+
         from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
     except:
         shouldrun_tf = False
@@ -21,6 +21,7 @@ shouldrun_torch = True
 if shouldrun_torch:
     try:
         import torch
+
         from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
     except:
         shouldrun_torch = False

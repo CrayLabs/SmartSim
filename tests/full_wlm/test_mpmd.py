@@ -1,9 +1,9 @@
+from copy import deepcopy
+
 import pytest
 
-from smartsim._core.utils.helpers import is_valid_cmd
-from copy import deepcopy
 from smartsim import Experiment, status
-
+from smartsim._core.utils.helpers import is_valid_cmd
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:

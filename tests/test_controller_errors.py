@@ -61,7 +61,11 @@ def test_no_launcher():
 def test_wrong_orchestrator(wlmutils):
     # lo interface to avoid warning from SmartSim
     orc = Orchestrator(
-        wlmutils.get_test_port(), db_nodes=3, interface="lo", run_command="aprun", launcher="pbs"
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        interface="lo",
+        run_command="aprun",
+        launcher="pbs",
     )
     cont = Controller(launcher="local")
     manifest = Manifest(orc)

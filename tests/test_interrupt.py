@@ -92,4 +92,3 @@ def test_interrupt_multi_experiment_unblocked_jobs(fileutils):
             completed_jobs = experiment._control._jobs.completed
             assert len(active_jobs) + len(active_db_jobs) == 0
             assert len(completed_jobs) == jobs_per_experiment[i]
-

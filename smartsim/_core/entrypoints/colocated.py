@@ -24,38 +24,36 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import os
 import signal
-import sys
-import psutil
-import argparse
-import tempfile
-import filelock
 import socket
-
-from typing import List
+import sys
+import tempfile
 from pathlib import Path
 from subprocess import PIPE, STDOUT
+from typing import List
 
+import filelock
+import psutil
 from smartredis import Client
 from smartredis.error import RedisConnectionError, RedisReplyError
+
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
+
 logger = get_logger(__name__)
 
 DBPID = None
 
 # kill is not catchable
-SIGNALS = [
-    signal.SIGINT,
-    signal.SIGTERM,
-    signal.SIGQUIT,
-    signal.SIGABRT
-    ]
+SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
+
 
 def handle_signal(signo, frame):
     cleanup()
+
 
 def launch_db_model(client: Client, db_model: List[str]):
     """Parse options to launch model on local cluster
@@ -89,28 +87,33 @@ def launch_db_model(client: Client, db_model: List[str]):
         outputs = list(args.outputs)
 
     if args.devices_per_node == 1:
-        client.set_model_from_file(args.name, 
-                                args.file, 
-                                args.backend, 
-                                args.device, 
-                                args.batch_size, 
-                                args.min_batch_size, 
-                                args.tag, 
-                                inputs, 
-                                outputs)
+        client.set_model_from_file(
+            args.name,
+            args.file,
+            args.backend,
+            args.device,
+            args.batch_size,
+            args.min_batch_size,
+            args.tag,
+            inputs,
+            outputs,
+        )
     else:
         for device_num in range(args.devices_per_node):
-            client.set_model_from_file(args.name, 
-                                    args.file, 
-                                    args.backend, 
-                                    args.device+f":{device_num}", 
-                                    args.batch_size, 
-                                    args.min_batch_size, 
-                                    args.tag, 
-                                    inputs, 
-                                    outputs)
+            client.set_model_from_file(
+                args.name,
+                args.file,
+                args.backend,
+                args.device + f":{device_num}",
+                args.batch_size,
+                args.min_batch_size,
+                args.tag,
+                inputs,
+                outputs,
+            )
 
     return args.name
+
 
 def launch_db_script(client: Client, db_script: List[str]):
     """Parse options to launch script on local cluster
@@ -132,32 +135,31 @@ def launch_db_script(client: Client, db_script: List[str]):
     args = parser.parse_args(db_script)
     if args.func:
         func = args.func.replace("\\n", "\n")
-       
+
         if args.devices_per_node == 1:
-            client.set_script(args.name,
-                              func,
-                              args.device)
+            client.set_script(args.name, func, args.device)
         else:
             for device_num in range(args.devices_per_node):
-                client.set_script(args.name, 
-                                  func, 
-                                  args.device+f":{device_num}")
+                client.set_script(args.name, func, args.device + f":{device_num}")
     elif args.file:
         if args.devices_per_node == 1:
-            client.set_script_from_file(args.name, 
-                                        args.file, 
-                                        args.device)
+            client.set_script_from_file(args.name, args.file, args.device)
         else:
             for device_num in range(args.devices_per_node):
-                client.set_script_from_file(args.name, 
-                                            args.file, 
-                                            args.device+f":{device_num}")
-
+                client.set_script_from_file(
+                    args.name, args.file, args.device + f":{device_num}"
+                )
 
     return args.name
 
 
-def main(network_interface: str, db_cpus: int, command: List[str], db_models: List[List[str]], db_scripts: List[List[str]]):
+def main(
+    network_interface: str,
+    db_cpus: int,
+    command: List[str],
+    db_models: List[List[str]],
+    db_scripts: List[List[str]],
+):
     global DBPID
 
     try:
@@ -166,7 +168,6 @@ def main(network_interface: str, db_cpus: int, command: List[str], db_models: Li
     except ValueError as e:
         logger.warning(e)
         ip_address = None
-
 
     if lo_address == ip_address or not ip_address:
         cmd = command + [f"--bind {lo_address}"]
@@ -196,12 +197,17 @@ def main(network_interface: str, db_cpus: int, command: List[str], db_models: Li
             # psutil doesn't support pinning on MacOS
             cpus_to_use = "CPU pinning disabled on MacOS"
 
-        logger.debug("\n\nCo-located database information\n" +  "\n".join((
-            f"\tIP Address: {ip_address}",
-            f"\t# of Database CPUs: {db_cpus}",
-            f"\tAffinity: {cpus_to_use}",
-            f"\tCommand: {' '.join(cmd)}\n\n"
-        )))
+        logger.debug(
+            "\n\nCo-located database information\n"
+            + "\n".join(
+                (
+                    f"\tIP Address: {ip_address}",
+                    f"\t# of Database CPUs: {db_cpus}",
+                    f"\tAffinity: {cpus_to_use}",
+                    f"\tCommand: {' '.join(cmd)}\n\n",
+                )
+            )
+        )
 
         if db_models or db_scripts:
             try:
@@ -213,13 +219,16 @@ def main(network_interface: str, db_cpus: int, command: List[str], db_models: Li
                 for i, db_script in enumerate(db_scripts):
                     logger.debug("Uploading script")
                     script_name = launch_db_script(client, db_script)
-                    logger.debug(f"Added script {script_name} ({i+1}/{len(db_scripts)})")
+                    logger.debug(
+                        f"Added script {script_name} ({i+1}/{len(db_scripts)})"
+                    )
                 # Make sure we don't keep this around
                 del client
             except (RedisConnectionError, RedisReplyError):
-                raise SSInternalError("Failed to set model or script, could not connect to database")
+                raise SSInternalError(
+                    "Failed to set model or script, could not connect to database"
+                )
 
-            
         for line in iter(p.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
 
@@ -242,9 +251,7 @@ def cleanup():
         logger.warning("Couldn't find database process to kill.")
 
     except OSError as e:
-        logger.warning(
-            f"Failed to clean up co-located database gracefully: {str(e)}"
-        )
+        logger.warning(f"Failed to clean up co-located database gracefully: {str(e)}")
     finally:
         if LOCK.is_locked:
             LOCK.release()
@@ -258,18 +265,36 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(
             prefix_chars="+", description="SmartSim Process Launcher"
         )
-        parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
-        parser.add_argument("+lockfile", type=str, help="Filename to create for single proc per host")
-        parser.add_argument("+db_cpus", type=int, default=2, help="Number of CPUs to use for DB")
+        parser.add_argument(
+            "+ifname", type=str, help="Network Interface name", default="lo"
+        )
+        parser.add_argument(
+            "+lockfile", type=str, help="Filename to create for single proc per host"
+        )
+        parser.add_argument(
+            "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
+        )
         parser.add_argument("+command", nargs="+", help="Command to run")
-        parser.add_argument("+db_model", nargs="+", action="append", default=[], help="Model to set on DB")
-        parser.add_argument("+db_script", nargs="+", action="append", default=[], help="Script to set on DB")
+        parser.add_argument(
+            "+db_model",
+            nargs="+",
+            action="append",
+            default=[],
+            help="Model to set on DB",
+        )
+        parser.add_argument(
+            "+db_script",
+            nargs="+",
+            action="append",
+            default=[],
+            help="Script to set on DB",
+        )
         args = parser.parse_args()
 
         tmp_lockfile = Path(tempfile.gettempdir()) / args.lockfile
 
         LOCK = filelock.FileLock(tmp_lockfile)
-        LOCK.acquire(timeout=.1)
+        LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting co-located database on host: {socket.gethostname()}")
 
         os.environ["PYTHONUNBUFFERED"] = "1"

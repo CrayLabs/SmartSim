@@ -39,7 +39,7 @@ def test_orchestrator_relaunch(fileutils, wlmutils):
 
     orc = Orchestrator(port=wlmutils.get_test_port())
     orc.set_path(test_dir)
-    orc_1 = Orchestrator(port=wlmutils.get_test_port())
+    orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1)
     orc_1.set_path(test_dir)
 
     exp.start(orc)

@@ -51,7 +51,10 @@ def test_orc_active_functions(fileutils, wlmutils):
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    assert db.get_address() == ["127.0.0.1:6780"]
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
 
     exp.stop(db)
 

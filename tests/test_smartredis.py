@@ -12,9 +12,6 @@ from smartsim.entity import Ensemble, Model
    set through environment variables by SmartSim.
 """
 
-
-REDIS_PORT = 6780
-
 shouldrun = True
 try:
     import torch
@@ -79,7 +76,7 @@ def test_exchange(fileutils, wlmutils):
     print(exp.summary())
 
 
-def test_consumer(fileutils):
+def test_consumer(fileutils, wlmutils):
     """Run three processes, each one of the first two processes
     puts a tensor on the DB; the third process accesses the
     tensors put by the two producers.
@@ -92,7 +89,7 @@ def test_consumer(fileutils):
     )
 
     # create and start a database
-    orc = Orchestrator(port=REDIS_PORT)
+    orc = Orchestrator(port=wlmutils.get_test_port())
     exp.generate(orc)
     exp.start(orc, block=False)
 

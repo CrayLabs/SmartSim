@@ -41,8 +41,8 @@ class Builder:
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
 
         dependency_path = _core_dir
-        if os.getenv('SMARTSIM_DEP_PATH'):
-            dependency_path = Path(os.environ['SMARTSIM_DEP_PATH'])
+        if os.getenv("SMARTSIM_DEP_PATH"):
+            dependency_path = Path(os.environ["SMARTSIM_DEP_PATH"])
 
         self.build_dir = _core_dir / ".third-party"
 

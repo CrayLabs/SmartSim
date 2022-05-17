@@ -39,6 +39,7 @@ def print_test_configuration():
     global test_launcher
     global test_account
     global test_nic
+    global test_port
     print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER:", test_launcher)
@@ -48,6 +49,8 @@ def print_test_configuration():
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
+    print("TEST_PORT", test_port)
+    print("TEST_PORT + 1", test_port + 1)
 
 
 def pytest_configure():

@@ -21,6 +21,7 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
 
+
 def _install_torch_from_pip(versions, device="cpu", verbose=False):
     packages = []
     end_point = None
@@ -36,6 +37,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
         packages.append(f"torchvision=={versions.TORCHVISION}")
 
     pip_install(packages, end_point=end_point, verbose=verbose)
+
 
 class Build:
     def __init__(self):
@@ -86,7 +88,7 @@ class Build:
             "--only_python_packages",
             action="store_true",
             default=False,
-            help="If true, only install the python packages (i.e. skip backend builds)"
+            help="If true, only install the python packages (i.e. skip backend builds)",
         )
         parser.add_argument(
             "--keydb",
@@ -147,7 +149,12 @@ class Build:
 
                 # REDISAI
                 self.build_redis_ai(
-                    str(args.device), pt, tf, onnx, args.torch_dir, args.libtensorflow_dir
+                    str(args.device),
+                    pt,
+                    tf,
+                    onnx,
+                    args.torch_dir,
+                    args.libtensorflow_dir,
                 )
 
                 backends = [
@@ -285,7 +292,7 @@ class Build:
     def infer_torch_device(self):
         backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
         device = "cpu"
-        if (Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file()):
+        if Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file():
             device = "gpu"
         return device
 
