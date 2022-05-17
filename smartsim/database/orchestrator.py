@@ -30,17 +30,15 @@ from shlex import split as sh_split
 from warnings import simplefilter, warn
 
 import psutil
-import redis
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
 from .._core.utils import db_is_active
 from .._core.config import CONFIG
-from .._core.utils import check_cluster_status
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSConfigError, SSInternalError, SSUnsupportedError
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
 from ..settings import (
     AprunSettings,
