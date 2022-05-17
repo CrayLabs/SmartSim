@@ -3,7 +3,8 @@ from shutil import which
 from subprocess import run
 
 from ..error import SSUnsupportedError
-from . import pbs, slurm
+from . import pbs as _pbs
+from . import slurm as _slurm
 
 
 def detect_launcher():
@@ -45,42 +46,78 @@ def detect_launcher():
 
 
 def get_hosts(launcher=None):
+    """Get the name of the hosts used in an allocation.
+
+    :param launcher: Name of the WLM to use to collect allocation info. If no launcher
+                     is provided ``detect_launcher`` is used to select a launcher.
+    :type launcher: str | None
+    :returns: Names of the hosts
+    :rtype: list[str]
+    :raises SSUnsupportedError: User attempted to use an unsupported WLM
+    """
     if launcher is None:
         launcher = detect_launcher()
     if launcher == "pbs":
-        return pbs.get_hosts()
+        return _pbs.get_hosts()
     if launcher == "slurm":
-        return slurm.get_hosts()
+        return _slurm.get_hosts()
     raise SSUnsupportedError(f"SmartSim cannot get hosts for launcher `{launcher}`")
 
 
 def get_queue(launcher=None):
+    """Get the name of the queue used in an allocation.
+
+    :param launcher: Name of the WLM to use to collect allocation info. If no launcher
+                     is provided ``detect_launcher`` is used to select a launcher.
+    :type launcher: str | None
+    :returns: Name of the queue
+    :rtype: str
+    :raises SSUnsupportedError: User attempted to use an unsupported WLM
+    """
     if launcher is None:
         launcher = detect_launcher()
     if launcher == "pbs":
-        return pbs.get_queue()
+        return _pbs.get_queue()
     if launcher == "slurm":
-        return slurm.get_queue()
+        return _slurm.get_queue()
     raise SSUnsupportedError(f"SmartSim cannot get queue for launcher `{launcher}`")
 
 
 def get_tasks(launcher=None):
+    """Get the number of tasks in an allocation.
+
+    :param launcher: Name of the WLM to use to collect allocation info. If no launcher
+                     is provided ``detect_launcher`` is used to select a launcher.
+    :type launcher: str | None
+    :returns: Number of tasks
+    :rtype: int
+    :raises SSUnsupportedError: User attempted to use an unsupported WLM
+    """
     if launcher is None:
         launcher = detect_launcher()
     if launcher == "pbs":
-        return pbs.get_tasks()
+        return _pbs.get_tasks()
     if launcher == "slurm":
-        return slurm.get_tasks()
+        return _slurm.get_tasks()
     raise SSUnsupportedError(f"SmartSim cannot get tasks for launcher `{launcher}`")
 
 
 def get_tasks_per_node(launcher=None):
+    """Get a map of nodes in an allocation to the number of tasks on each node.
+
+    :param launcher: Name of the WLM to use to collect allocation info. If no launcher
+                     is provided ``detect_launcher`` is used to select a launcher.
+    :type launcher: str | None
+    :returns: Map of nodes to number of processes on that node
+    :rtype: dict[str, int]
+    :raises SSUnsupportedError: User attempted to use an unsupported WLM
+    """
     if launcher is None:
         launcher = detect_launcher()
     if launcher == "pbs":
-        return pbs.get_tasks_per_node()
+        return _pbs.get_tasks_per_node()
     if launcher == "slurm":
-        return slurm.get_tasks_per_node()
+        return _slurm.get_tasks_per_node()
     raise SSUnsupportedError(
         f"SmartSim cannot get tasks per node for launcher `{launcher}`"
     )

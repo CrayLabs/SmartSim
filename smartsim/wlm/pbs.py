@@ -12,6 +12,7 @@ def get_hosts():
 
     :returns: Names of the host nodes
     :rtype: list[str]
+    :raises SmartSimError: ``PBS_NODEFILE`` is not set
     """
     hosts = []
     if "PBS_NODEFILE" in os.environ:
@@ -32,6 +33,7 @@ def get_queue():
 
     :returns: The name of the queue
     :rtype: str
+    :raises SmartSimError: ``PBS_QUEUE`` is not set
     """
     if "PBS_QUEUE" in os.environ:
         return os.environ.get("PBS_QUEUE")
@@ -46,8 +48,10 @@ def get_tasks():
         This method requires ``qstat`` be installed on the
         node from which it is run.
 
-    :returns: Map of chunks to number of processes on that chunck
-    :rtype: dict[str, int]
+    :returns: Then number of tasks in the allocation
+    :rtype: int
+    :raises LauncherError: Could not access ``qstat``
+    :raises SmartSimError: ``PBS_JOBID`` is not set
     """
     if "PBS_JOBID" in os.environ:
         if not which("qstat"):
@@ -76,6 +80,8 @@ def get_tasks_per_node():
 
     :returns: Map of chunks to number of processes on that chunck
     :rtype: dict[str, int]
+    :raises LauncherError: Could not access ``qstat``
+    :raises SmartSimError: ``PBS_JOBID`` is not set
     """
     if "PBS_JOBID" in os.environ:
         if not which("qstat"):

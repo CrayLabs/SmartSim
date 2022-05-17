@@ -260,6 +260,8 @@ def get_hosts():
 
     :returns: Names of the host nodes
     :rtype: list[str]
+    :raises LauncherError: Could not access ``scontrol``
+    :raises SmartSimError: ``SLURM_JOB_NODELIST`` is not set
     """
     if "SLURM_JOB_NODELIST" in os.environ:
         if not which("scontrol"):
@@ -281,6 +283,7 @@ def get_queue():
 
     :returns: The name of the queue
     :rtype: str
+    :raises SmartSimError: ``SLURM_JOB_PARTITION`` is not set
     """
     if "SLURM_JOB_PARTITION" in os.environ:
         return os.environ.get("SLURM_JOB_PARTITION")
@@ -292,6 +295,7 @@ def get_tasks():
 
     :returns: Then number of tasks in the allocation
     :rtype: int
+    :raises SmartSimError: ``SLURM_NTASKS`` is not set
     """
     if "SLURM_NTASKS" in os.environ:
         return int(os.environ.get("SLURM_NTASKS"))
@@ -308,6 +312,7 @@ def get_tasks_per_node():
 
     :returns: Map of nodes to number of tasks on that node
     :rtype: dict[str, int]
+    :raises SmartSimError: ``SLURM_TASKS_PER_NODE`` is not set
     """
     if "SLURM_TASKS_PER_NODE" in os.environ:
         tasks_per_node_strs = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
