@@ -1,4 +1,3 @@
-from inspect import isclass
 from pathlib import Path
 from .._core.utils.helpers import init_default
 
