@@ -5,6 +5,7 @@ __pycache__
 .coverage*
 htmlcov
 smartsim.egg-info
+tests/test_output
 
 # Dependencies
 smartsim/_core/.third-party
