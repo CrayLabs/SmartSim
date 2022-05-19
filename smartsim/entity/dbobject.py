@@ -1,9 +1,13 @@
+from inspect import isclass
 from pathlib import Path
 from .._core.utils.helpers import init_default
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
 class DBObject:
+    """Base class for ML objects residing on DB. Should not
+    be instantiated.
+    """
     def __init__(self, name, func, file_path, device, devices_per_node):
         self.name = name
         self.func = func
@@ -14,6 +18,7 @@ class DBObject:
             self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+
 
     @property
     def is_file(self):
