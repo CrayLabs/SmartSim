@@ -106,7 +106,7 @@ def get_hostlist():
                     test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
             except:
                 return None
-        elif "PBS_NODEFILE" in os.environ:
+        elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
             try:
                 with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
                     lines = nodefile.readlines()

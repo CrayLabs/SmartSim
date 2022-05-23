@@ -334,7 +334,7 @@ class Ensemble(EntityList):
         :param name: key to store model under
         :type name: str
         :param model: model in memory
-        :type model: str, optional # TODO figure out what to type hint this as
+        :type model: str | bytes | None
         :param model_path: serialized model
         :type model_path: file path to model
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)

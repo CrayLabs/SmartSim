@@ -6,6 +6,9 @@ __all__ = ["DBObject", "DBModel", "DBScript"]
 
 
 class DBObject:
+    """Base class for ML objects residing on DB. Should not
+    be instantiated.
+    """
     def __init__(self, name, func, file_path, device, devices_per_node):
         self.name = name
         self.func = func
@@ -16,6 +19,7 @@ class DBObject:
             self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+
 
     @property
     def is_file(self):
@@ -90,7 +94,7 @@ class DBScript(DBObject):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the model being stored on the first N devices of type ``device``.
 
         One of either script (in memory representation) or script_path (file)
         must be provided
@@ -103,6 +107,8 @@ class DBScript(DBObject):
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: number of devices to store the script on
+        :type devices_per_node: int
         """
         super().__init__(name, script, script_path, device, devices_per_node)
         if not script and not script_path:
@@ -156,6 +162,8 @@ class DBModel(DBObject):
         :type backend: str
         :param device: name of device for execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: number of devices to store the model on
+        :type devices_per_node: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0

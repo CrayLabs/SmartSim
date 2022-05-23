@@ -367,10 +367,10 @@ class RunSettings:
         :type env_vars: dict[str, Union[str, int, float, bool]]
         :raises TypeError: if env_vars values cannot be coerced to strings
         """
-        val_types = (str, int, float, bool)
+        val_types_union = (str, int, float, bool)
         # Coerce env_vars values to str as a convenience to user
         for (env, val) in env_vars.items():
-            if type(val) not in val_types:
+            if type(val) not in val_types_union:
                 raise TypeError(
                     f"env_vars[{env}] was of type {type(val)}, not {val_types_union}"
                 )
