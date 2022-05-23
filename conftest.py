@@ -26,9 +26,9 @@ test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_nic = CONFIG.test_interface
+test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 # Fill this at runtime if needed
 test_hostlist = None
-
 
 def get_account():
     global test_account
@@ -42,6 +42,7 @@ def print_test_configuration():
     global test_launcher
     global test_account
     global test_nic
+    global test_alloc_specs_path
     print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER:", test_launcher)
@@ -49,6 +50,8 @@ def print_test_configuration():
         print("TEST_ACCOUNT:", test_account)
     print("TEST_DEVICE:", test_device)
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
+    if test_alloc_specs_path:
+        print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
 
@@ -135,16 +138,16 @@ def get_hostlist():
 
 @pytest.fixture(scope="session")
 def alloc_specs():
+    global test_alloc_specs_path
     specs = {}
-    spec_sheet_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
-    if spec_sheet_path:
+    if test_alloc_specs_path:
         try:
-            with open(spec_sheet_path) as f:
+            with open(test_alloc_specs_path) as f:
                 specs = json.load(f)
         except Exception:
             raise Exception(
                 (
-                    f"Failed to load allocation spec sheet {spec_sheet_path}. "
+                    f"Failed to load allocation spec sheet {test_alloc_specs_path}. "
                     "This is likely not an issue with SmartSim."
                 )
             ) from None
