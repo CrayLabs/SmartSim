@@ -33,8 +33,8 @@ import psutil
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from .._core.utils import db_is_active
 from .._core.config import CONFIG
+from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
@@ -261,7 +261,6 @@ class Orchestrator(EntityList):
             return False
 
         return db_is_active(self._hosts, self.ports, self.num_shards)
-
 
     @property
     def _rai_module(self):

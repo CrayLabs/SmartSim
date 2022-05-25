@@ -32,8 +32,8 @@ import psutil
 
 from ...error import LauncherError
 from ...log import get_logger
-from .util.shell import execute_async_cmd, execute_cmd
 from ..utils.helpers import check_dev_log_level
+from .util.shell import execute_async_cmd, execute_cmd
 
 logger = get_logger(__name__)
 verbose_tm = check_dev_log_level()
@@ -73,7 +73,6 @@ class TaskManager:
         monitor = Thread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
-
     def run(self):
         """Start monitoring Tasks"""
 
@@ -97,7 +96,6 @@ class TaskManager:
                 self.actively_monitoring = False
                 if verbose_tm:
                     logger.debug("Sleeping, no tasks to monitor")
-
 
     def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
         """Start a task managed by the TaskManager

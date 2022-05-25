@@ -191,10 +191,10 @@ class Ensemble(EntityList):
             )
 
         if self._db_models:
-            self._extend_entity_db_models(model, self._db_models)    
-        if self._db_scripts:         
+            self._extend_entity_db_models(model, self._db_models)
+        if self._db_scripts:
             self._extend_entity_db_scripts(model, self._db_scripts)
-        
+
         self.entities.append(model)
 
     def register_incoming_entity(self, incoming_entity):
@@ -308,19 +308,20 @@ class Ensemble(EntityList):
                 )
         return param_names, parameters
 
-
-    def add_ml_model(self,
-                     name,
-                     backend,
-                     model=None,
-                     model_path=None,
-                     device="CPU",
-                     devices_per_node=1,
-                     batch_size=0,
-                     min_batch_size=0,
-                     tag="",
-                     inputs=None,
-                     outputs=None):
+    def add_ml_model(
+        self,
+        name,
+        backend,
+        model=None,
+        model_path=None,
+        device="CPU",
+        devices_per_node=1,
+        batch_size=0,
+        min_batch_size=0,
+        tag="",
+        inputs=None,
+        outputs=None,
+    ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         Each ML Model added will be loaded into an
@@ -362,14 +363,15 @@ class Ensemble(EntityList):
             min_batch_size=min_batch_size,
             tag=tag,
             inputs=inputs,
-            outputs=outputs
+            outputs=outputs,
         )
         self._db_models.append(db_model)
         for entity in self:
             self._extend_entity_db_models(entity, [db_model])
-            
 
-    def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
+    def add_script(
+        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+    ):
         """TorchScript to launch with every entity belonging to this ensemble
 
         Each script added to the model will be loaded into an
@@ -401,20 +403,19 @@ class Ensemble(EntityList):
             script=script,
             script_path=script_path,
             device=device,
-            devices_per_node=devices_per_node
+            devices_per_node=devices_per_node,
         )
         self._db_scripts.append(db_script)
         for entity in self:
             self._extend_entity_db_scripts(entity, [db_script])
 
-    
     def add_function(self, name, function=None, device="CPU", devices_per_node=1):
         """TorchScript function to launch with every entity belonging to this ensemble
 
         Each script function to the model will be loaded into a
         non-converged orchestrator prior to the execution
         of every entity belonging to this ensemble.
-        
+
         For converged orchestrators, the :meth:`add_script` method should be used.
 
         Device selection is either "GPU" or "CPU". If many devices are
@@ -435,10 +436,7 @@ class Ensemble(EntityList):
         :type devices_per_node: int
         """
         db_script = DBScript(
-            name=name,
-            script=function,
-            device=device,
-            devices_per_node=devices_per_node
+            name=name, script=function, device=device, devices_per_node=devices_per_node
         )
         self._db_scripts.append(db_script)
         for entity in self:

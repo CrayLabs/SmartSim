@@ -37,7 +37,7 @@ def run(device):
     mnist_image = np.random.rand(1, 28, 28).astype(np.float32)
     client.put_tensor("mnist_input", mnist_image)
 
-    model_key =  "tf_mnist"
+    model_key = "tf_mnist"
     client.set_model_from_file(
         model_key, model_path, "TF", device=device, inputs=inputs, outputs=outputs
     )

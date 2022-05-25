@@ -24,16 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import os
 import signal
-import psutil
-import argparse
-from typing import List
 from subprocess import PIPE, STDOUT
+from typing import List
 
-from smartsim.log import get_logger
-from smartsim.error import SSInternalError
+import psutil
+
 from smartsim._core.utils.network import current_ip
+from smartsim.error import SSInternalError
+from smartsim.log import get_logger
 
 logger = get_logger(__name__)
 
@@ -44,12 +45,8 @@ Redis/KeyDB entrypoint script
 DBPID = None
 
 # kill is not catchable
-SIGNALS = [
-    signal.SIGINT,
-    signal.SIGQUIT,
-    signal.SIGTERM,
-    signal.SIGABRT
-    ]
+SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+
 
 def handle_signal(signo, frame):
     cleanup()
@@ -93,9 +90,7 @@ def cleanup():
         logger.warning("Couldn't find database process to kill.")
 
     except OSError as e:
-        logger.warning(
-            f"Failed to clean up database gracefully: {str(e)}"
-        )
+        logger.warning(f"Failed to clean up database gracefully: {str(e)}")
 
 
 if __name__ == "__main__":
@@ -105,7 +100,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Process Launcher"
     )
-    parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
+    parser.add_argument(
+        "+ifname", type=str, help="Network Interface name", default="lo"
+    )
     parser.add_argument("+command", nargs="+", help="Command to run")
     args = parser.parse_args()
 

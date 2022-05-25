@@ -24,12 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..utils.helpers import fmt_dict
-
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError
 from ...exp.ray import RayCluster
+from ..utils.helpers import fmt_dict
 
 # List of types derived from EntityList which require specific behavior
 # A corresponding property needs to exist (like db for Orchestrator),
@@ -197,16 +196,15 @@ class Manifest:
 
     @property
     def has_db_objects(self):
-        """Check if any entity has DBObjects to set
-        """
+        """Check if any entity has DBObjects to set"""
 
         def has_db_models(entity):
             if hasattr(entity, "_db_models"):
                 return len(entity._db_models) > 0
+
         def has_db_scripts(entity):
             if hasattr(entity, "_db_scripts"):
                 return len(entity._db_scripts) > 0
-
 
         has_db_objects = False
         for model in self.models:
@@ -215,7 +213,9 @@ class Manifest:
         # Check if any model has either a DBModel or a DBScript
         # we update has_db_objects so that as soon as one check
         # returns True, we can exit
-        has_db_objects |= any([has_db_models(model) | has_db_scripts(model) for model in self.models])
+        has_db_objects |= any(
+            [has_db_models(model) | has_db_scripts(model) for model in self.models]
+        )
         if has_db_objects:
             return True
 
@@ -227,12 +227,19 @@ class Manifest:
             return has_db_objects
 
         # First check if there is any ensemble DBObject, if so, return True
-        has_db_objects |= any([has_db_models(ensemble) | has_db_scripts(ensemble) for ensemble in ensembles])
+        has_db_objects |= any(
+            [
+                has_db_models(ensemble) | has_db_scripts(ensemble)
+                for ensemble in ensembles
+            ]
+        )
         if has_db_objects:
             return True
         for ensemble in ensembles:
             # Last case, check if any model within an ensemble has DBObjects attached
-            has_db_objects |= any([has_db_models(model) | has_db_scripts(model) for model in ensemble])
+            has_db_objects |= any(
+                [has_db_models(model) | has_db_scripts(model) for model in ensemble]
+            )
             if has_db_objects:
                 return True
 

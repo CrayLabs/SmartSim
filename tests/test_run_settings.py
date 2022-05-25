@@ -1,11 +1,11 @@
-from shutil import which
 import logging
+from shutil import which
 
 import pytest
 
 from smartsim.settings import (
-    MpirunSettings,
     MpiexecSettings,
+    MpirunSettings,
     OrterunSettings,
     RunSettings,
 )
