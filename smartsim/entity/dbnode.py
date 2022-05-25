@@ -44,14 +44,21 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports):
+    def __init__(self, name, path, run_settings, ports, output_files):
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host = None
         super().__init__(name, path, run_settings)
         self._mpmd = False
-        self._shard_ids = None
+        self._num_shards = None
         self._hosts = None
+        if not output_files:
+            raise ValueError("output_files cannot be empty")
+        if not isinstance(output_files, list) or not all(
+            [isinstance(item, str) for item in output_files]
+        ):
+            raise ValueError("output_files must be of type list[str]")
+        self._output_files = output_files
 
     @property
     def host(self):
@@ -97,7 +104,7 @@ class DBNode(SmartSimEntity):
                 os.remove(file_name)
         if self._mpmd:
             for file_ending in [".err", ".out"]:
-                for shard_id in self._shard_ids:
+                for shard_id in range(self._num_shards):
                     file_name = osp.join(
                         self.path, self.name + "_" + str(shard_id) + file_ending
                     )
@@ -126,17 +133,36 @@ class DBNode(SmartSimEntity):
         """
         return [
             "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
-            for shard_id in self._shard_ids
+            for shard_id in range(self._num_shards)
         ]
 
-    def _parse_db_host(self):
+    def _parse_ips(self, filepath, num_ips=None):
+        ips = []
+        with open(filepath, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                content = line.split()
+                if "IPADDRESS:" in content:
+                    ips.append(content[-1])
+                    if num_ips and len(ips) == num_ips:
+                        break
+
+        return ips
+
+    def _parse_db_host(self, filepath=None):
         """Parse the database host/IP from the output file
 
+        If no file is passed as argument, then the first
+        file in self._output_files is used.
+
+        :param filepath: Path to file to parse
+        :type filepath: str, optional
         :raises SmartSimError: if host/ip could not be found
         :return: ip address | hostname
         :rtype: str
         """
-        filepath = osp.join(self.path, self.name + ".out")
+        if not filepath:
+            filepath = osp.join(self.path, self._output_files[0])
         trials = 5
         ip = None
 
@@ -144,12 +170,7 @@ class DBNode(SmartSimEntity):
         # populate on busy systems.
         while not ip and trials > 0:
             try:
-                with open(filepath, "r") as f:
-                    lines = f.readlines()
-                    for line in lines:
-                        content = line.split()
-                        if "IPADDRESS:" in content:
-                            ip = content[-1]
+                ip = self._parse_ips(filepath, 1)[0]
             # suppress error
             except FileNotFoundError:
                 pass
@@ -160,7 +181,7 @@ class DBNode(SmartSimEntity):
                 trials -= 1
 
         if not ip:
-            logger.error("Redis IP address lookup strategy failed.")
+            logger.error(f"IP address lookup strategy failed for file {filepath}.")
             raise SmartSimError("Failed to obtain database hostname")
 
         return ip
@@ -179,119 +200,36 @@ class DBNode(SmartSimEntity):
         """
         ips = []
 
-        # Find out if all shards' output streams are piped to different file
-        multiple_files = None
-        for _ in range(5):
-            filepath = osp.join(self.path, self.name + f"_{self._shard_ids[0]}.out")
-            if osp.isfile(filepath):
-                multiple_files = True
-                break
-
-            # If we did not find separate files for each shard, it could
-            # be that all outputs are piped to same file OR that the separate
-            # files have not been created yet. To find out whether the
-            # streams are piped to the same file, we search the output file
-            # for "IPADDRESS": if we find it, we can set multiple_files to False
-            # and wait until the file contains enough IPs. Otherwise we
-            # go to next iteration, to check if there are multiple files.
-            filepath = osp.join(self.path, self.name + ".out")
-            ips = []
-            try:
-                with open(filepath, "r") as f:
-                    lines = f.readlines()
-                    for line in lines:
-                        content = line.split()
-                        if "IPADDRESS:" in content:
-                            ip = content[-1]
-                            ips.append(ip)
-
-            # suppress error
-            except FileNotFoundError:
-                pass
-
-            logger.debug("Waiting for RedisIP files to populate...")
-            if len(ips) < len(self._shard_ids):
-                # Larger sleep time, as this seems to be needed for
-                # multihost setups
-                if len(ips) > 0:
-                    # if we found at least one "IPADDRESS", we know
-                    # output streams all go to the same file
-                    multiple_files = False
-                    break
-                else:
-                    ips = []
-                    time.sleep(5)
-                    continue
-            else:
-                ips = list(dict.fromkeys(ips))
-                return ips
-
-        if multiple_files is None:
-            logger.error("RedisIP address lookup strategy failed.")
-            raise SmartSimError("Failed to obtain database hostname")
-
-        if multiple_files == True:
-            for shard_id in self._shard_ids:
-                trials = 5
-                ip = None
-                filepath = osp.join(self.path, self.name + f"_{shard_id}.out")
-                # try a few times to give the database files time to
-                # populate on busy systems.
-                while not ip and trials > 0:
-                    try:
-                        with open(filepath, "r") as f:
-                            lines = f.readlines()
-                            for line in lines:
-                                content = line.split()
-                                if "IPADDRESS:" in content:
-                                    ip = content[-1]
-                                    break
-
-                    # suppress error
-                    except FileNotFoundError:
-                        pass
-
-                    logger.debug("Waiting for RedisIP files to populate...")
-                    if not ip:
-                        # Larger sleep time, as this seems to be needed for
-                        # multihost setups
-                        time.sleep(5)
-                        trials -= 1
-
-                if not ip:
-                    logger.error("RedisIP address lookup strategy failed.")
-                    raise SmartSimError("Failed to obtain database hostname")
-
-                ips.append(ip)
-
+        # Find out if all shards' output streams are piped to separate files
+        if len(self._output_files) > 1:
+            for output_file in self._output_files:
+                filepath = osp.join(self.path, output_file)
+                ip = self._parse_db_host(filepath)
         else:
-            filepath = osp.join(self.path, self.name + ".out")
-            trials = 5
+            filepath = osp.join(self.path, self._output_files[0])
+            trials = 10
             ips = []
-            while len(ips) < len(self._shard_ids) and trials > 0:
+            while len(ips) < self._num_shards and trials > 0:
                 ips = []
                 try:
-                    with open(filepath, "r") as f:
-                        lines = f.readlines()
-                        for line in lines:
-                            content = line.split()
-                            if "IPADDRESS:" in content:
-                                ip = content[-1]
-                                ips.append(ip)
+                    ip = self._parse_ips(filepath, self._num_shards)
+                    ips.extend(ip)
 
                 # suppress error
                 except FileNotFoundError:
                     pass
 
-                logger.debug("Waiting for RedisIP files to populate...")
-                if len(ips) < len(self._shard_ids):
+                if len(ips) < self._num_shards:
+                    logger.debug("Waiting for RedisIP files to populate...")
                     # Larger sleep time, as this seems to be needed for
                     # multihost setups
-                    time.sleep(5)
+                    time.sleep(2)
                     trials -= 1
 
-            if len(ips) < len(self._shard_ids):
-                logger.error("RedisIP address lookup strategy failed.")
+            if len(ips) < self._num_shards:
+                msg = f"IP address lookup strategy failed for file {filepath}. "
+                msg += f"Found {len(ips)} out of {self._num_shards} IPs."
+                logger.error(msg)
                 raise SmartSimError("Failed to obtain database hostname")
 
         ips = list(dict.fromkeys(ips))

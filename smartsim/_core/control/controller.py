@@ -30,9 +30,12 @@ import signal
 import threading
 import time
 
+from smartredis import Client
+from smartredis.error import RedisConnectionError, RedisReplyError
+
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, DBModel, DBObject, DBScript, EntityList, SmartSimEntity
+from ...entity import DBModel, DBNode, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -40,10 +43,6 @@ from ..config import CONFIG
 from ..launcher import *
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
-
-from smartredis import Client
-from smartredis.error import RedisConnectionError, RedisReplyError
-
 
 logger = get_logger(__name__)
 
@@ -594,7 +593,6 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-
     def _set_dbobjects(self, manifest):
         if not manifest.has_db_objects:
             return
@@ -604,13 +602,11 @@ class Controller:
         hosts = list(set([address.split(":")[0] for address in db_addresses]))
         ports = list(set([address.split(":")[-1] for address in db_addresses]))
 
-        if not db_is_active(hosts=hosts,
-                            ports=ports,
-                            num_shards=len(db_addresses)):
+        if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
             raise SSInternalError("Cannot set DB Objects, DB is not running")
 
         client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
-       
+
         for model in manifest.models:
             if not model.colocated:
                 for db_model in model._db_models:

@@ -1,11 +1,11 @@
 import time
-import psutil
-
 from subprocess import PIPE, TimeoutExpired
 
-from ...utils.helpers import check_dev_log_level
+import psutil
+
 from ....error import ShellError
 from ....log import get_logger
+from ...utils.helpers import check_dev_log_level
 
 logger = get_logger(__name__)
 verbose_shell = check_dev_log_level()

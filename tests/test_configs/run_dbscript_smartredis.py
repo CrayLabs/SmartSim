@@ -1,6 +1,7 @@
 import numpy as np
-from smartredis import Client
 from pytest import approx
+from smartredis import Client
+
 
 def main():
     # address should be set as we are launching through
@@ -23,9 +24,10 @@ def main():
     if client.model_exists("test_func"):
         client.run_script("test_func", "timestwo", ["test_array"], ["test_output"])
         returned = client.get_tensor("test_output")
-        assert returned == approx(2*array)
+        assert returned == approx(2 * array)
 
     print(f"Test worked!")
+
 
 if __name__ == "__main__":
     main()

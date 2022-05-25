@@ -79,6 +79,8 @@ def serialize_model(model):
     input_names = [x.name.split(":")[0] for x in frozen_func.inputs]
     output_names = [x.name.split(":")[0] for x in frozen_func.outputs]
 
-    model_serialized = frozen_func.graph.as_graph_def().SerializeToString(deterministic=True)
+    model_serialized = frozen_func.graph.as_graph_def().SerializeToString(
+        deterministic=True
+    )
 
     return model_serialized, input_names, output_names

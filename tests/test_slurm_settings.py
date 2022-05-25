@@ -1,7 +1,7 @@
 import pytest
 
-from smartsim.settings import SbatchSettings, SrunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import SbatchSettings, SrunSettings
 
 # ------ Srun ------------------------------------------------
 

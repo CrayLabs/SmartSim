@@ -1,6 +1,7 @@
 import pytest
-from smartsim.settings import AprunSettings
+
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import AprunSettings
 
 
 def test_aprun_settings():

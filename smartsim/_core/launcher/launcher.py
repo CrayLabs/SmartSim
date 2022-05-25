@@ -78,7 +78,7 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
-    def create_step(self, name, cwd, step_settings): # cov-wlm
+    def create_step(self, name, cwd, step_settings):  # cov-wlm
         """Create a WLM job step
 
         :param name: name of the entity to be launched
@@ -107,16 +107,16 @@ class WLMLauncher(Launcher):  # cov-wlm
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.
 
-    def get_step_nodes(self, step_names): # pragma: no cover
+    def get_step_nodes(self, step_names):  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
 
-    def run(self, step): # pragma: no cover
+    def run(self, step):  # pragma: no cover
         raise NotImplementedError
 
-    def stop(self, step_name): # pragma: no cover
+    def stop(self, step_name):  # pragma: no cover
         raise NotImplementedError
 
-    def get_step_update(self, step_names): # cov-wlm
+    def get_step_update(self, step_names):  # cov-wlm
         """Get update for a list of job steps
 
         :param step_names: list of job steps to get updates for
@@ -144,7 +144,7 @@ class WLMLauncher(Launcher):  # cov-wlm
 
         return updates
 
-    def _get_unmanaged_step_update(self, task_ids): # cov-wlm
+    def _get_unmanaged_step_update(self, task_ids):  # cov-wlm
         """Get step updates for Popen managed jobs
 
         :param task_ids: task id to check
@@ -159,5 +159,5 @@ class WLMLauncher(Launcher):  # cov-wlm
             updates.append(update)
         return updates
 
-    def _get_managed_step_update(self, step_ids): # pragma: no cover
+    def _get_managed_step_update(self, step_ids):  # pragma: no cover
         pass

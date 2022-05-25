@@ -1,20 +1,20 @@
-from asyncio.log import logger
-from unicodedata import name
-import pytest
-
 import logging
 import os
 import os.path as osp
 import stat
 import sys
+from asyncio.log import logger
+from unicodedata import name
 
-from smartsim.settings.mpirunSettings import (
-    _OpenMPISettings,
-    MpirunSettings,
-    MpiexecSettings,
-    OrterunSettings,
-)
+import pytest
+
 from smartsim.error import SSUnsupportedError
+from smartsim.settings.mpirunSettings import (
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    _OpenMPISettings,
+)
 
 
 @pytest.mark.parametrize(

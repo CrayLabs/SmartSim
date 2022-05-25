@@ -140,7 +140,8 @@ deps = [
     "redis-py-cluster==2.1.3",
     "redis==3.5.3",
     "tqdm>=4.50.2",
-    "filelock>=3.4.2"
+    "filelock>=3.4.2",
+    "click==8.0.2"
 ]
 
 # Add SmartRedis at specific version

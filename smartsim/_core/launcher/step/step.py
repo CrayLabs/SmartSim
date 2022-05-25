@@ -24,14 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
 import os.path as osp
+import time
 
-from ..colocated import write_colocated_launch_script
-from ...utils.helpers import get_base_36_repr
 from ....log import get_logger
+from ...utils.helpers import get_base_36_repr
+from ..colocated import write_colocated_launch_script
 
 logger = get_logger(__name__)
+
 
 class Step:
     def __init__(self, name, cwd):
@@ -78,13 +79,14 @@ class Step:
         # if user specified to use taskset with local launcher
         # (not allowed b/c MacOS doesn't support it)
         # TODO: support this only on linux
-        if self.__class__.__name__ == "LocalStep" and db_settings["limit_app_cpus"] is True: # pragma: no cover
+        if (
+            self.__class__.__name__ == "LocalStep"
+            and db_settings["limit_app_cpus"] is True
+        ):  # pragma: no cover
             logger.warning("Setting limit_app_cpus=False for local launcher")
             db_settings["limit_app_cpus"] = False
 
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
-        write_colocated_launch_script(script_path,
-                                      db_log_file,
-                                      db_settings)
+        write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path

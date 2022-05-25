@@ -1,9 +1,14 @@
 from pathlib import Path
+
 from .._core.utils.helpers import init_default
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
+
 class DBObject:
+    """Base class for ML objects residing on DB. Should not
+    be instantiated.
+    """
     def __init__(self, name, func, file_path, device, devices_per_node):
         self.name = name
         self.func = func
@@ -14,6 +19,7 @@ class DBObject:
             self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+
 
     @property
     def is_file(self):
@@ -39,7 +45,8 @@ class DBObject:
             return backend
         else:
             raise ValueError(
-                f"Backend type {backend} unsupported. Options are {all_backends}")
+                f"Backend type {backend} unsupported. Options are {all_backends}"
+            )
 
     @staticmethod
     def _check_filepath(file):
@@ -76,22 +83,18 @@ class DBObject:
 
         return devices
 
-class DBScript(DBObject):
 
-    def __init__(self,
-                 name,
-                 script=None,
-                 script_path=None,
-                 device="CPU",
-                 devices_per_node=1
-                ):
+class DBScript(DBObject):
+    def __init__(
+        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+    ):
         """TorchScript code represenation
 
         Device selection is either "GPU" or "CPU". If many devices are
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the model being stored on the first N devices of type ``device``.
 
         One of either script (in memory representation) or script_path (file)
         must be provided
@@ -104,6 +107,8 @@ class DBScript(DBObject):
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: number of devices to store the script on
+        :type devices_per_node: int
         """
         super().__init__(name, script, script_path, device, devices_per_node)
         if not script and not script_path:
@@ -119,25 +124,29 @@ class DBScript(DBObject):
             desc_str += "Func: " + self.func + "\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
-        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        devices_str = self.device + (
+            "s per node\n" if self.devices_per_node > 1 else " per node\n"
+        )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
         return desc_str
 
 
 class DBModel(DBObject):
-    def __init__(self,
-                 name,
-                 backend,
-                 model=None,
-                 model_file=None,
-                 device="CPU",
-                 devices_per_node=1,
-                 batch_size=0,
-                 min_batch_size=0,
-                 min_batch_timeout=0,
-                 tag="",
-                 inputs=None,
-                 outputs=None):
+    def __init__(
+        self,
+        name,
+        backend,
+        model=None,
+        model_file=None,
+        device="CPU",
+        devices_per_node=1,
+        batch_size=0,
+        min_batch_size=0,
+        min_batch_timeout=0,
+        tag="",
+        inputs=None,
+        outputs=None,
+    ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         One of either model (in memory representation) or model_path (file)
@@ -153,6 +162,8 @@ class DBModel(DBObject):
         :type backend: str
         :param device: name of device for execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: number of devices to store the model on
+        :type devices_per_node: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -186,7 +197,9 @@ class DBModel(DBObject):
             desc_str += "Model stored in memory\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
-        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        devices_str = self.device + (
+            "s per node\n" if self.devices_per_node > 1 else " per node\n"
+        )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
         desc_str += "Backend: " + str(self.backend) + "\n"
         if self.batch_size:

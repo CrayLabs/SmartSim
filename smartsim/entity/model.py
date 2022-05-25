@@ -27,9 +27,9 @@
 
 from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
+from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
-from .dbobject import DBScript, DBModel
 
 
 class Model(SmartSimEntity):
@@ -128,13 +128,15 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def colocate_db(self,
-                    port=6379,
-                    db_cpus=1,
-                    limit_app_cpus=True,
-                    ifname="lo",
-                    debug=False,
-                    **kwargs):
+    def colocate_db(
+        self,
+        port=6379,
+        db_cpus=1,
+        limit_app_cpus=True,
+        ifname="lo",
+        debug=False,
+        **kwargs,
+    ):
         """Colocate an Orchestrator instance with this Model at runtime.
 
         This method will initialize settings which add an unsharded (not connected)
@@ -187,17 +189,20 @@ class Model(SmartSimEntity):
             "interface": ifname,
             "limit_app_cpus": limit_app_cpus,
             "debug": debug,
-
             # redisai arguments for inference settings
             "rai_args": {
                 "threads_per_queue": kwargs.get("threads_per_queue", None),
                 "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
-                "intra_op_parallelism": kwargs.get("intra_op_parallelism", None)
-            }
+                "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
+            },
         }
-        colo_db_config["extra_db_args"] = dict([
-            (k,str(v)) for k,v in kwargs.items() if k not in colo_db_config["rai_args"]
-        ])
+        colo_db_config["extra_db_args"] = dict(
+            [
+                (k, str(v))
+                for k, v in kwargs.items()
+                if k not in colo_db_config["rai_args"]
+            ]
+        )
 
         self._check_db_objects_colo()
         colo_db_config["db_models"] = self._db_models
@@ -220,18 +225,20 @@ class Model(SmartSimEntity):
                 )
             self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
-    def add_ml_model(self,
-                     name,
-                     backend,
-                     model=None,
-                     model_path=None,
-                     device="CPU",
-                     devices_per_node=1,
-                     batch_size=0,
-                     min_batch_size=0,
-                     tag="",
-                     inputs=None,
-                     outputs=None):
+    def add_ml_model(
+        self,
+        name,
+        backend,
+        model=None,
+        model_path=None,
+        device="CPU",
+        devices_per_node=1,
+        batch_size=0,
+        min_batch_size=0,
+        tag="",
+        inputs=None,
+        outputs=None,
+    ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         Each ML Model added will be loaded into an
@@ -273,13 +280,13 @@ class Model(SmartSimEntity):
             min_batch_size=min_batch_size,
             tag=tag,
             inputs=inputs,
-            outputs=outputs
+            outputs=outputs,
         )
         self._append_db_model(db_model)
-        
 
-
-    def add_script(self, name, script=None, script_path=None, device="CPU", devices_per_node=1):
+    def add_script(
+        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+    ):
         """TorchScript to launch with this Model instance
 
         Each script added to the model will be loaded into an
@@ -311,19 +318,17 @@ class Model(SmartSimEntity):
             script=script,
             script_path=script_path,
             device=device,
-            devices_per_node=devices_per_node
+            devices_per_node=devices_per_node,
         )
         self._append_db_script(db_script)
 
-
-    
     def add_function(self, name, function=None, device="CPU", devices_per_node=1):
         """TorchScript function to launch with this Model instance
 
         Each script function to the model will be loaded into a
         non-converged orchestrator prior to the execution
         of this Model instance.
-        
+
         For converged orchestrators, the :meth:`add_script` method should be used.
 
         Device selection is either "GPU" or "CPU". If many devices are
@@ -344,10 +349,7 @@ class Model(SmartSimEntity):
         :type devices_per_node: int
         """
         db_script = DBScript(
-            name=name,
-            script=function,
-            device=device,
-            devices_per_node=devices_per_node
+            name=name, script=function, device=device, devices_per_node=devices_per_node
         )
         self._append_db_script(db_script)
 
@@ -356,7 +358,7 @@ class Model(SmartSimEntity):
             return True
         return False
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):  # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
         entity_str += str(self.run_settings) + "\n"
@@ -366,20 +368,23 @@ class Model(SmartSimEntity):
             entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
 
-
     def _append_db_model(self, db_model):
         if not db_model.is_file and self.colocated:
             err_msg = "ML model can not be set from memory for colocated databases.\n"
-            err_msg += f"Please store the ML model named {db_model.name} in binary format "
+            err_msg += (
+                f"Please store the ML model named {db_model.name} in binary format "
+            )
             err_msg += "and add it to the SmartSim Model as file."
             raise SSUnsupportedError(err_msg)
 
         self._db_models.append(db_model)
-        
+
     def _append_db_script(self, db_script):
         if db_script.func and self.colocated:
             if not isinstance(db_script.func, str):
-                err_msg = "Functions can not be set from memory for colocated databases.\n"
+                err_msg = (
+                    "Functions can not be set from memory for colocated databases.\n"
+                )
                 err_msg += f"Please convert the function named {db_script.name} to a string or store "
                 err_msg += "it as a text file and add it to the SmartSim Model with add_script."
                 raise SSUnsupportedError(err_msg)
@@ -389,8 +394,12 @@ class Model(SmartSimEntity):
 
         for db_model in self._db_models:
             if not db_model.is_file:
-                err_msg = "ML model can not be set from memory for colocated databases.\n"
-                err_msg += f"Please store the ML model named {db_model.name} in binary format "
+                err_msg = (
+                    "ML model can not be set from memory for colocated databases.\n"
+                )
+                err_msg += (
+                    f"Please store the ML model named {db_model.name} in binary format "
+                )
                 err_msg += "and add it to the SmartSim Model as file."
                 raise SSUnsupportedError(err_msg)
 

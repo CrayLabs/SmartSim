@@ -29,6 +29,7 @@ import shutil
 
 from .step import Step
 
+
 class LocalStep(Step):
     def __init__(self, name, cwd, run_settings):
         super().__init__(name, cwd)

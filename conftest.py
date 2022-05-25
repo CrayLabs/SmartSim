@@ -27,8 +27,11 @@ test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
+test_port = CONFIG.test_port
+
 # Fill this at runtime if needed
 test_hostlist = None
+
 
 def get_account():
     global test_account
@@ -43,6 +46,7 @@ def print_test_configuration():
     global test_account
     global test_nic
     global test_alloc_specs_path
+    global test_port
     print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER:", test_launcher)
@@ -54,6 +58,8 @@ def print_test_configuration():
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
+    print("TEST_PORT", test_port)
+    print("TEST_PORT + 1", test_port + 1)
 
 
 def pytest_configure():
@@ -114,7 +120,7 @@ def get_hostlist():
                     )
             except:
                 return None
-        elif "PBS_NODEFILE" in os.environ:
+        elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
             try:
                 with open(os.environ["PBS_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
@@ -169,6 +175,11 @@ class WLMUtils:
     def get_test_launcher():
         global test_launcher
         return test_launcher
+
+    @staticmethod
+    def get_test_port():
+        global test_port
+        return test_port
 
     @staticmethod
     def get_test_account():
@@ -271,9 +282,10 @@ class WLMUtils:
             return RunSettings(exe, args)
 
     @staticmethod
-    def get_orchestrator(nodes=1, port=6780, batch=False):
+    def get_orchestrator(nodes=1, batch=False):
         global test_launcher
         global test_nic
+        global test_port
         if test_launcher in ["pbs", "cobalt"]:
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
@@ -281,7 +293,7 @@ class WLMUtils:
                 hostlist = None
             db = Orchestrator(
                 db_nodes=nodes,
-                port=port,
+                port=test_port,
                 batch=batch,
                 interface=test_nic,
                 launcher=test_launcher,
@@ -290,7 +302,7 @@ class WLMUtils:
         elif test_launcher == "slurm":
             db = Orchestrator(
                 db_nodes=nodes,
-                port=port,
+                port=test_port,
                 batch=batch,
                 interface=test_nic,
                 launcher=test_launcher,
@@ -298,7 +310,7 @@ class WLMUtils:
         elif test_launcher == "lsf":
             db = Orchestrator(
                 db_nodes=nodes,
-                port=port,
+                port=test_port,
                 batch=batch,
                 cpus_per_shard=4,
                 gpus_per_shard=2 if test_device == "GPU" else 0,
@@ -307,12 +319,12 @@ class WLMUtils:
                 launcher=test_launcher,
             )
         else:
-            db = Orchestrator(port=port, interface="lo")
+            db = Orchestrator(port=test_port, interface="lo")
         return db
 
 
 @pytest.fixture
-def local_db(fileutils, request):
+def local_db(fileutils, request, wlmutils):
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
@@ -320,7 +332,7 @@ def local_db(fileutils, request):
     test_dir = fileutils.make_test_dir(
         caller_function=exp_name, caller_fspath=request.fspath
     )
-    db = Orchestrator(port=6780, interface="lo")
+    db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
 

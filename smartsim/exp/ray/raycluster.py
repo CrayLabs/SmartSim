@@ -26,9 +26,9 @@
 
 import os
 import re
+import sys
 import time as _time
 import uuid
-import sys
 
 from ..._core.utils import init_default
 from ..._core.utils.helpers import expand_exe_path

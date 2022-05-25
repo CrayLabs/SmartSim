@@ -29,9 +29,10 @@ A file of helper functions for SmartSim
 """
 import os
 import uuid
+from functools import lru_cache
 from pathlib import Path
 from shutil import which
-from functools import lru_cache
+
 
 def create_lockfile_name():
     """Generate a unique lock filename using UUID"""
@@ -49,12 +50,13 @@ def check_dev_log_level():
     except KeyError:
         return False
 
+
 def fmt_dict(d):
     fmt_str = ""
     for k, v in d.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
         fmt_str += "\n" if k != list(d.keys())[-1] else ""
-    return(fmt_str)
+    return fmt_str
 
 
 def get_base_36_repr(positive_int):

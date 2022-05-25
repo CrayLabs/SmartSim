@@ -167,7 +167,7 @@ def set_ml_model(db_model: DBModel, client: Client):
                     min_batch_size=db_model.min_batch_size,
                     tag=db_model.tag,
                     inputs=db_model.inputs,
-                    outputs=db_model.outputs
+                    outputs=db_model.outputs,
                 )
             else:
                 client.set_model(
@@ -179,14 +179,14 @@ def set_ml_model(db_model: DBModel, client: Client):
                     min_batch_size=db_model.min_batch_size,
                     tag=db_model.tag,
                     inputs=db_model.inputs,
-                    outputs=db_model.outputs
+                    outputs=db_model.outputs,
                 )
         except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error
 
 
-def set_script(db_script: DBScript, client: Client):   
+def set_script(db_script: DBScript, client: Client):
     logger.debug(f"Adding DBScript named {db_script.name}")
 
     devices = db_script._enumerate_devices()
@@ -195,24 +195,18 @@ def set_script(db_script: DBScript, client: Client):
         try:
             if db_script.is_file:
                 client.set_script_from_file(
-                    name=db_script.name,
-                    file=str(db_script.file),
-                    device=device
+                    name=db_script.name, file=str(db_script.file), device=device
                 )
             else:
                 if isinstance(db_script.script, str):
                     client.set_script(
-                        name=db_script.name,
-                        script=db_script.script,
-                        device=device
+                        name=db_script.name, script=db_script.script, device=device
                     )
                 else:
                     client.set_function(
-                        name=db_script.name,
-                        function=db_script.script,
-                        device=device
+                        name=db_script.name, function=db_script.script, device=device
                     )
-    
-        except  RedisReplyError as error:  # pragma: no cover
+
+        except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error

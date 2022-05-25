@@ -1,7 +1,8 @@
-import pytest
+import os.path as osp
 import time
 
-import os.path as osp
+import pytest
+
 from smartsim import Experiment, status
 
 # retrieved from pytest fixtures

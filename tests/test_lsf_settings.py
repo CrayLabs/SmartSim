@@ -2,8 +2,8 @@ from pprint import pformat
 
 import pytest
 
-from smartsim.settings import BsubBatchSettings, JsrunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import BsubBatchSettings, JsrunSettings
 
 # ------ Jsrun ------------------------------------------------
 
