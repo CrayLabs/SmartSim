@@ -119,7 +119,7 @@ used to obtain allocations to launch on and release them after
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     alloc = slurm.get_allocation(nodes=1)
 
 The id of the allocation is returned as a string to the user so that
@@ -138,7 +138,7 @@ For arguments without a value, pass None as the value:
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     salloc_options = {
         "C": "haswell",
         "partition": "debug",
@@ -166,7 +166,7 @@ The example below releases the allocation in the example above.
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     salloc_options = {
         "C": "haswell",
         "partition": "debug",

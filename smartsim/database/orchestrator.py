@@ -889,7 +889,7 @@ class CobaltOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "CobaltOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='cobalt', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,
@@ -969,7 +969,7 @@ class LSFOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "LSFOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='lsf', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         if single_cmd != True:
             raise SSUnsupportedError(
                 "LSFOrchestrator can only be run with single_cmd=True (MPMD)."
@@ -1046,7 +1046,7 @@ class SlurmOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "SlurmOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='slurm', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,
@@ -1112,7 +1112,7 @@ class PBSOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "PBSOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='pbs', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,

@@ -1,3 +1,4 @@
+import json
 import os
 import inspect
 import shutil
@@ -8,9 +9,11 @@ import smartsim
 from smartsim import Experiment
 from smartsim.database import Orchestrator
 from smartsim.settings import (
-    SrunSettings, AprunSettings,
-    JsrunSettings, MpirunSettings,
-    RunSettings
+    SrunSettings,
+    AprunSettings,
+    JsrunSettings,
+    MpirunSettings,
+    RunSettings,
 )
 from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
@@ -23,15 +26,18 @@ test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
 test_nic = CONFIG.test_interface
+test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 
 # Fill this at runtime if needed
 test_hostlist = None
 
+
 def get_account():
     global test_account
     test_account = CONFIG.test_account
     return test_account
+
 
 def print_test_configuration():
     global test_path
@@ -39,6 +45,7 @@ def print_test_configuration():
     global test_launcher
     global test_account
     global test_nic
+    global test_alloc_specs_path
     global test_port
     print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
@@ -47,6 +54,8 @@ def print_test_configuration():
         print("TEST_ACCOUNT:", test_account)
     print("TEST_DEVICE:", test_device)
     print("TEST_NETWORK_INTERFACE (WLM only):", test_nic)
+    if test_alloc_specs_path:
+        print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
     print("TEST_PORT", test_port)
@@ -60,6 +69,7 @@ def pytest_configure():
     account = get_account()
     pytest.test_account = account
 
+
 def pytest_sessionstart(session):
     """
     Called after the Session object has been created and
@@ -69,6 +79,7 @@ def pytest_sessionstart(session):
         shutil.rmtree(test_dir)
     os.mkdir(test_dir)
     print_test_configuration()
+
 
 def pytest_sessionfinish(session, exitstatus):
     """
@@ -96,37 +107,65 @@ def kill_all_test_spawned_processes():
     except Exception:
         print("Not all processes were killed after test")
 
+
 def get_hostlist():
     global test_hostlist
     if not test_hostlist:
         if "COBALT_NODEFILE" in os.environ:
             try:
-                with open(os.environ["COBALT_NODEFILE"], 'r') as nodefile:
+                with open(os.environ["COBALT_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
+                    test_hostlist = list(
+                        dict.fromkeys([line.strip() for line in lines])
+                    )
             except:
                 return None
         elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
             try:
-                with open(os.environ["PBS_NODEFILE"], 'r') as nodefile:
+                with open(os.environ["PBS_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = list(dict.fromkeys([line.strip() for line in lines]))
+                    test_hostlist = list(
+                        dict.fromkeys([line.strip() for line in lines])
+                    )
             except:
                 return None
         elif "SLURM_JOB_NODELIST" in os.environ:
             try:
                 nodelist = os.environ["SLURM_JOB_NODELIST"]
-                test_hostlist = run(["scontrol", "show" , "hostnames", nodelist], capture_output=True, text=True).stdout.split()
+                test_hostlist = run(
+                    ["scontrol", "show", "hostnames", nodelist],
+                    capture_output=True,
+                    text=True,
+                ).stdout.split()
             except:
                 return None
     return test_hostlist
+
+
+@pytest.fixture(scope="session")
+def alloc_specs():
+    global test_alloc_specs_path
+    specs = {}
+    if test_alloc_specs_path:
+        try:
+            with open(test_alloc_specs_path) as f:
+                specs = json.load(f)
+        except Exception:
+            raise Exception(
+                (
+                    f"Failed to load allocation spec sheet {test_alloc_specs_path}. "
+                    "This is likely not an issue with SmartSim."
+                )
+            ) from None
+    return specs
+
 
 @pytest.fixture
 def wlmutils():
     return WLMUtils
 
-class WLMUtils:
 
+class WLMUtils:
     @staticmethod
     def set_test_launcher(new_test_launcher):
         global test_launcher
@@ -136,7 +175,7 @@ class WLMUtils:
     def get_test_launcher():
         global test_launcher
         return test_launcher
-    
+
     @staticmethod
     def get_test_port():
         global test_port
@@ -159,9 +198,7 @@ class WLMUtils:
     @staticmethod
     def get_base_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
-            run_args = {"--nodes": nodes,
-                        "--ntasks": ntasks,
-                        "--time": "00:10:00"}
+            run_args = {"--nodes": nodes, "--ntasks": ntasks, "--time": "00:10:00"}
             run_args.update(kwargs)
             settings = RunSettings(exe, args, run_command="srun", run_args=run_args)
             return settings
@@ -172,10 +209,11 @@ class WLMUtils:
             else:
                 run_command = "mpirun"
                 host_file = os.environ["PBS_NODEFILE"]
-                run_args = {"-n": ntasks,
-                            "--hostfile": host_file}
+                run_args = {"-n": ntasks, "--hostfile": host_file}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command=run_command, run_args=run_args)
+            settings = RunSettings(
+                exe, args, run_command=run_command, run_args=run_args
+            )
             return settings
         if test_launcher == "cobalt":
             if shutil.which("aprun"):
@@ -184,10 +222,11 @@ class WLMUtils:
             else:
                 run_command = "mpirun"
                 host_file = os.environ["COBALT_NODEFILE"]
-                run_args = {"-n": ntasks,
-                            "--hostfile": host_file}
+                run_args = {"-n": ntasks, "--hostfile": host_file}
             run_args.update(kwargs)
-            settings = RunSettings(exe, args, run_command=run_command, run_args=run_args)
+            settings = RunSettings(
+                exe, args, run_command=run_command, run_args=run_args
+            )
             return settings
         if test_launcher == "lsf":
             run_args = {"--np": ntasks, "--nrs": nodes}
@@ -195,17 +234,16 @@ class WLMUtils:
             settings = RunSettings(exe, args, run_command="jsrun", run_args=run_args)
             return settings
         elif test_launcher != "local":
-            raise SSConfigError(f"Base run settings are available for Slurm, PBS, Cobalt, and LSF, but launcher was {test_launcher}")
+            raise SSConfigError(
+                f"Base run settings are available for Slurm, PBS, Cobalt, and LSF, but launcher was {test_launcher}"
+            )
         # TODO allow user to pick aprun vs MPIrun
         return RunSettings(exe, args)
-
 
     @staticmethod
     def get_run_settings(exe, args, nodes=1, ntasks=1, **kwargs):
         if test_launcher == "slurm":
-            run_args = {"nodes": nodes,
-                       "ntasks": ntasks,
-                       "time": "00:10:00"}
+            run_args = {"nodes": nodes, "ntasks": ntasks, "time": "00:10:00"}
             run_args.update(kwargs)
             settings = SrunSettings(exe, args, run_args=run_args)
             return settings
@@ -216,8 +254,7 @@ class WLMUtils:
                 settings = AprunSettings(exe, args, run_args=run_args)
             else:
                 host_file = os.environ["PBS_NODEFILE"]
-                run_args = {"n": ntasks,
-                            "hostfile": host_file}
+                run_args = {"n": ntasks, "hostfile": host_file}
                 run_args.update(kwargs)
                 settings = MpirunSettings(exe, args, run_args=run_args)
             return settings
@@ -229,15 +266,15 @@ class WLMUtils:
                 settings = AprunSettings(exe, args, run_args=run_args)
             else:
                 host_file = os.environ["COBALT_NODEFILE"]
-                run_args = {"n": ntasks,
-                            "hostfile": host_file}
+                run_args = {"n": ntasks, "hostfile": host_file}
                 run_args.update(kwargs)
                 settings = MpirunSettings(exe, args, run_args=run_args)
             return settings
         if test_launcher == "lsf":
-            run_args = {"nrs": nodes,
-                       "tasks_per_rs": max(ntasks//nodes,1),
-                       }
+            run_args = {
+                "nrs": nodes,
+                "tasks_per_rs": max(ntasks // nodes, 1),
+            }
             run_args.update(kwargs)
             settings = JsrunSettings(exe, args, run_args=run_args)
             return settings
@@ -254,11 +291,33 @@ class WLMUtils:
                 hostlist = get_hostlist()
             else:
                 hostlist = None
-            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, interface=test_nic, launcher=test_launcher, hosts=hostlist)
+            db = Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+                hosts=hostlist,
+            )
         elif test_launcher == "slurm":
-            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, interface=test_nic, launcher=test_launcher)
+            db = Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+            )
         elif test_launcher == "lsf":
-            db = Orchestrator(db_nodes=nodes, port=test_port, batch=batch, cpus_per_shard=4, gpus_per_shard=2 if test_device=="GPU" else 0, project=get_account(), interface=test_nic, launcher=test_launcher)
+            db = Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                cpus_per_shard=4,
+                gpus_per_shard=2 if test_device == "GPU" else 0,
+                project=get_account(),
+                interface=test_nic,
+                launcher=test_launcher,
+            )
         else:
             db = Orchestrator(port=test_port, interface="lo")
         return db
@@ -270,7 +329,9 @@ def local_db(fileutils, request, wlmutils):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(
+        caller_function=exp_name, caller_fspath=request.fspath
+    )
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -288,7 +349,9 @@ def db(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(
+        caller_function=exp_name, caller_fspath=request.fspath
+    )
     db = wlmutils.get_orchestrator()
     db.set_path(test_dir)
     exp.start(db)
@@ -297,6 +360,7 @@ def db(fileutils, wlmutils, request):
     # pass or fail, the teardown code below is ran after the
     # completion of a test case that uses this fixture
     exp.stop(db)
+
 
 @pytest.fixture
 def db_cluster(fileutils, wlmutils, request):
@@ -308,7 +372,9 @@ def db_cluster(fileutils, wlmutils, request):
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(caller_function=exp_name, caller_fspath=request.fspath)
+    test_dir = fileutils.make_test_dir(
+        caller_function=exp_name, caller_fspath=request.fspath
+    )
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -318,12 +384,13 @@ def db_cluster(fileutils, wlmutils, request):
     # completion of a test case that uses this fixture
     exp.stop(db)
 
+
 @pytest.fixture
 def dbutils():
     return DBUtils
 
-class DBUtils:
 
+class DBUtils:
     @staticmethod
     def get_db_configs():
         config_settings = {
@@ -342,25 +409,25 @@ class DBUtils:
     def get_smartsim_error_db_configs():
         bad_configs = {
             "save": [
-                "-1", # frequency must be positive
-                "2.4", # frequency must be specified in whole seconds
+                "-1",  # frequency must be positive
+                "2.4",  # frequency must be specified in whole seconds
             ],
             "maxmemory": [
-                "29GG", # invalid memory form
-                str(2 ** 65) + "gb", # memory is too much
-                "3.5gb", # invalid memory form
+                "29GG",  # invalid memory form
+                str(2 ** 65) + "gb",  # memory is too much
+                "3.5gb",  # invalid memory form
             ],
             "maxclients": [
-                "-3", # number clients must be positive
-                str(2 ** 65), # number of clients is too large
-                "2.9", # number of clients must be an integer
+                "-3",  # number clients must be positive
+                str(2 ** 65),  # number of clients is too large
+                "2.9",  # number of clients must be an integer
             ],
             "proto-max-bulk-len": [
                 "100",  # max message size can't be smaller than 1mb
                 "9.9gb",  # invalid memory form
-                "101.1", # max message size must be an integer
+                "101.1",  # max message size must be an integer
             ],
-            "maxmemory-policy": ["invalid-policy"], # must use a valid maxmemory policy
+            "maxmemory-policy": ["invalid-policy"],  # must use a valid maxmemory policy
             "invalid-parameter": ["99"],  # invalid key - no such configuration exists
         }
         return bad_configs
@@ -371,9 +438,17 @@ class DBUtils:
             "save": [2, True, ["2"]],  # frequency must be specified as a string
             "maxmemory": [99, True, ["99"]],  # memory form must be a string
             "maxclients": [3, True, ["3"]],  # number of clients must be a string
-            "proto-max-bulk-len": [101, True, ["101"]],  # max message size must be a string
-            "maxmemory-policy": [42, True, ["42"]],  # maxmemory policies must be strings
-            10: ["3"], # invalid key - the key must be a string
+            "proto-max-bulk-len": [
+                101,
+                True,
+                ["101"],
+            ],  # max message size must be a string
+            "maxmemory-policy": [
+                42,
+                True,
+                ["42"],
+            ],  # maxmemory policies must be strings
+            10: ["3"],  # invalid key - the key must be a string
         }
         return bad_configs
 
@@ -394,8 +469,8 @@ class DBUtils:
 def fileutils():
     return FileUtils
 
-class FileUtils:
 
+class FileUtils:
     @staticmethod
     def _test_dir_path(caller_function, caller_fspath):
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
@@ -426,7 +501,7 @@ class FileUtils:
             caller_frame = inspect.stack()[1]
             caller_fspath = caller_frame.filename
             caller_function = caller_frame.function
-            
+
         dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
         if not os.path.exists(os.path.dirname(dir_path)):
             os.makedirs(os.path.dirname(dir_path))
@@ -454,7 +529,7 @@ class FileUtils:
             caller_frame = inspect.stack()[1]
             caller_fspath = caller_frame.filename
             caller_function = caller_frame.function
-            
+
         dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
         # dir_path = os.path.join(test_dir, dir_name)
         try:
@@ -478,8 +553,8 @@ class FileUtils:
 def mlutils():
     return MLUtils
 
-class MLUtils:
 
+class MLUtils:
     @staticmethod
     def get_test_device():
         global test_device

@@ -5,7 +5,8 @@ from os import environ
 import psutil
 import pytest
 
-from smartsim import Experiment, slurm
+from smartsim import Experiment
+from smartsim.wlm import slurm
 from smartsim.error import SSUnsupportedError
 from smartsim.exp.ray import RayCluster
 

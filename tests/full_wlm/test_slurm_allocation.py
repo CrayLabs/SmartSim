@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from smartsim import slurm
+from smartsim.wlm import slurm
 from smartsim.error import AllocationError
 
 # retrieved from pytest fixtures
