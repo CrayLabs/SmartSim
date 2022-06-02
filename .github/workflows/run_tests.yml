@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - develop
+      - singularity
 
 env:
   HOMEBREW_NO_ANALYTICS: "ON" # Make Homebrew installation a little quicker
