@@ -18,7 +18,7 @@ class Container():
             raise TypeError('image must be a str')
         elif not isinstance(args, (str, list)):
             raise TypeError('args must be a str | list')
-        elif not isinstance(bind_paths, (str, list, dict)):
+        elif not isinstance(bind_paths, (None, str, list, dict)):
             raise TypeError('bind_paths must be a str | list | dict')
 
         self.image = image
