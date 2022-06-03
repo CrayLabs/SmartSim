@@ -84,7 +84,7 @@ class Singularity(Container):
 
         # Construct containerized launch command
         new_command = f'{run_command} singularity {self.image} {serialized_args}'
-        if serialized_bind_path:
+        if serialized_bind_paths:
             new_command += f'  --bind {serialized_bind_paths}'
         return new_command
 
