@@ -12,13 +12,13 @@ class Container():
     :type bind_paths: str | list[str] | dict[str, str], optional
     '''
 
-    def __init__(self, image, args='', bind_paths=None):
+    def __init__(self, image, args='', bind_paths=''):
         # Validate types
         if not isinstance(image, str):
             raise TypeError('image must be a str')
         elif not isinstance(args, (str, list)):
             raise TypeError('args must be a str | list')
-        elif not isinstance(bind_paths, (None, str, list, dict)):
+        elif not isinstance(bind_paths, (str, list, dict)):
             raise TypeError('bind_paths must be a str | list | dict')
 
         self.image = image
@@ -55,29 +55,31 @@ class Singularity(Container):
         :type run_command: str
         :raises TypeError: if object members are invalid types
         '''
-        # Serialize args into a str
-        if isinstance(self.args, str):
-            serialized_args = self.args
-        elif isinstance(self.args, list):
-            serialized_args = ' '.join(self.args)
-        else:
-            raise TypeError('self.args must be a str | list')
+        if self.args:
+            # Serialize args into a str
+            if isinstance(self.args, str):
+                serialized_args = self.args
+            elif isinstance(self.args, list):
+                serialized_args = ' '.join(self.args)
+            else:
+                raise TypeError('self.args must be a str | list')
 
         # Serialize bind_paths into a str
-        if isinstance(self.bind_paths, str):
-            serialized_bind_paths = self.bind_paths
-        elif isinstance(self.bind_paths, list):
-            serialized_bind_paths = ','.join(self.bind_paths)
-        elif isinstance(self.bind_paths, dict):
-            paths = []
-            for host_path,img_path in self.bind_paths.items():
-                if img_path:
-                    paths.append(f'{host_path}={img_path}')
-                else:
-                    paths.append(host_path)
-            serialized_bind_paths = ','.join(paths)
-        else:
-            raise TypeError('self.bind_paths must be str | list | dict')
+        if self.bind_paths:
+            if isinstance(self.bind_paths, str):
+                serialized_bind_paths = self.bind_paths
+            elif isinstance(self.bind_paths, list):
+                serialized_bind_paths = ','.join(self.bind_paths)
+            elif isinstance(self.bind_paths, dict):
+                paths = []
+                for host_path,img_path in self.bind_paths.items():
+                    if img_path:
+                        paths.append(f'{host_path}={img_path}')
+                    else:
+                        paths.append(host_path)
+                serialized_bind_paths = ','.join(paths)
+            else:
+                raise TypeError('self.bind_paths must be str | list | dict')
 
         # Construct containerized launch command
         new_command = f'{run_command} singularity {self.image} {serialized_args} --bind {serialized_bind_paths}'
