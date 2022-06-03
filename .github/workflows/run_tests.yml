@@ -13,6 +13,9 @@ env:
   HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK: "ON"
   HOMEBREW_NO_GITHUB_API: "ON"
   HOMEBREW_NO_INSTALL_CLEANUP: "ON"
+  DEBIAN_FRONTEND: "noninteractive" # Disable interactive apt install sessions
+
+
 
 
 jobs:
@@ -69,7 +72,7 @@ jobs:
 
       - name: singularity pull
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
-        run: singularity pull oras://ghcr.io/craylabs/container-testing:latest
+        run: singularity pull docker://benalbrecht10/smartsim-testing
 
       - name: Install SmartSim (with ML backends)
         run: python -m pip install .[dev,ml,ray]
