@@ -55,6 +55,7 @@ class Singularity(Container):
         :type run_command: str
         :raises TypeError: if object members are invalid types
         '''
+        serialized_args = ''
         if self.args:
             # Serialize args into a str
             if isinstance(self.args, str):
@@ -64,7 +65,7 @@ class Singularity(Container):
             else:
                 raise TypeError('self.args must be a str | list')
 
-        # Serialize bind_paths into a str
+        serialized_bind_paths = ''
         if self.bind_paths:
             if isinstance(self.bind_paths, str):
                 serialized_bind_paths = self.bind_paths
