@@ -6,6 +6,9 @@ import pytest
 import smartsim.wlm as wlm
 from smartsim.error.errors import LauncherError, SmartSimError, SSUnsupportedError
 
+# alloc_specs can be specified by the user when testing, but it will
+# require all WLM env variables to be populated. If alloc_specs is not
+# defined, the tests in this file are skipped.
 
 def test_get_hosts(alloc_specs):
     if not alloc_specs:
