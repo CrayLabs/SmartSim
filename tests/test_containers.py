@@ -29,7 +29,8 @@ def test_singularity_redis(fileutils):
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    container = Singularity('benalbrecht10/smartsim-testing')
+    # TODO: Use CrayLabs image hosted on dockerhub
+    container = Singularity('docker://benalbrecht10/smartsim-testing')
     rs = exp.create_run_settings("python", "send_data.py", container=container)
     model = exp.create_model('send_data', rs)
     model.attach_generator_files(to_copy='test_configs/send_data.py')

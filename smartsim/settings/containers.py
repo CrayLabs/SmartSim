@@ -83,7 +83,9 @@ class Singularity(Container):
                 raise TypeError('self.bind_paths must be str | list | dict')
 
         # Construct containerized launch command
-        new_command = f'{run_command} singularity {self.image} {serialized_args} --bind {serialized_bind_paths}'
+        new_command = f'{run_command} singularity {self.image} {serialized_args}'
+        if serialized_bind_path:
+            new_command += f'  --bind {serialized_bind_paths}'
         return new_command
 
 
