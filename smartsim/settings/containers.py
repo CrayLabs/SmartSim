@@ -51,7 +51,7 @@ class Singularity(Container):
         super().__init__(*args, **kwargs)
 
     def _container_cmds(self):
-        '''Return container commands to be inserted before exe.
+        '''Return list of container commands to be inserted before exe.
             Container members are validated during this call.
 
         :raises TypeError: if object members are invalid types
@@ -91,7 +91,9 @@ class Singularity(Container):
             logger.warning('Unable to find singularity. Continuing in case singularity is available on compute node')
 
         # Construct containerized launch command
-        cmd = f'{singularity} exec {self.image} {serialized_args}'
+        cmd_list = [singularity, 'exec', self.image]
+        if serialized_args:
+            cmd_list.append(serialized_args)
         if serialized_bind_paths:
-            cmd += f' --bind {serialized_bind_paths}'
-        return cmd
+            cmd_list.extend([' --bind',  serialized_bind_paths])
+        return cmd_list
