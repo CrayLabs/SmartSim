@@ -1,3 +1,5 @@
+import shutil
+
 class Container():
     '''Base class for container types in SmartSim.
 
@@ -48,11 +50,10 @@ class Singularity(Container):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _containerized_run_command(self, run_command: str):
-        '''Return modified run_command with container commands appended.
+    def _container_cmds(self):
+        '''Return container commands to be inserted before exe.
+            Container members are validated during this call.
 
-        :param run_command: run command from a Settings class
-        :type run_command: str
         :raises TypeError: if object members are invalid types
         '''
         serialized_args = ''
@@ -82,44 +83,15 @@ class Singularity(Container):
             else:
                 raise TypeError('self.bind_paths must be str | list | dict')
 
+        # Find full path to singularity
+        singularity = shutil.which('singularity')
+        # Some systems have singularity available on compute nodes only, 
+        #   so warn instead of error
+        if not singularity:
+            logger.warning('Unable to find singularity. Continuing in case singularity is available on compute node')
+
         # Construct containerized launch command
-        new_command = f'{run_command} singularity {self.image} {serialized_args}'
+        cmd = f'{singularity} exec {self.image} {serialized_args}'
         if serialized_bind_paths:
-            new_command += f'  --bind {serialized_bind_paths}'
-        return new_command
-
-
-if __name__ == '__main__':
-
-    #
-    # args types
-    #
-
-    # args=str
-    s = Singularity('image.sif', args='--nv', bind_paths='/foo/bar')
-    print(s._containerized_run_command('srun -n 16'))
-    # singularity image.sif --nv --bind /foo/bar srun -n 16 myapp.py --verbose
-    # args=list(str)
-    s = Singularity('image.sif', args=['--nv', '-v'], bind_paths='/foo/bar')
-    print(s._containerized_run_command('srun -n 16'))
-    # singularity image.sif --nv -v --bind /foo/bar srun -n 16 myapp.py --verbose
-
-    #
-    # bind_paths types
-    #
-
-    # bind_paths:str
-    s = Singularity('image.sif', args='--nv', bind_paths='/foo/bar')
-    print(s._containerized_run_command('srun -n 16'))
-    # singularity image.sif --nv --bind /foo/bar srun -n 16 myapp.py --verbose
-
-    # bind_paths:list(str)
-    s = Singularity('image.sif', bind_paths=['/foo/bar', '/baz/'])
-    print(s._containerized_run_command('srun -n 16'))
-    # singularity image.sif  --bind /foo/bar,/baz/ srun -n 16 myapp.py --verbose
-
-    # bind_paths:dict(str,str)
-    s = Singularity('image.sif', bind_paths={'/foo/bar':'/foo/baz', '/a/b/c':'/usr/opt/c', '/baz/': None})
-    print(s._containerized_run_command('srun -n 16'))
-    # singularity image.sif  --bind /foo/bar=/foo/baz,/a/b/c=/usr/opt/c,/baz/ srun -n 16 myapp.py --verbose
-
+            cmd += f' --bind {serialized_bind_paths}'
+        return cmd

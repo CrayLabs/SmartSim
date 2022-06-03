@@ -67,6 +67,10 @@ class AprunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )
+        if self.container:
+            raise SSUnsupportedError(
+                "Contanerized MPMD workloads are not yet supported."
+            )
         self.mpmd.append(aprun_settings)
 
     def set_cpus_per_task(self, cpus_per_task):

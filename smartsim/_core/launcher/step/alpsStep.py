@@ -75,6 +75,9 @@ class AprunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             aprun_cmd.extend([bash, launch_script_path])
 
+        if self.run_settings.container:
+            srun_cmd += [self.run_settings.container._container_cmds()]
+
         aprun_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to

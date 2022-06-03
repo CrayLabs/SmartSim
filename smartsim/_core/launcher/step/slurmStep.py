@@ -157,6 +157,9 @@ class SrunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
 
+        if self.run_settings.container:
+            srun_cmd += [self.run_settings.container._container_cmds()]
+
         srun_cmd += self._build_exe()
         return srun_cmd
 
@@ -193,6 +196,8 @@ class SrunStep(Step):
 
     def _make_mpmd(self):
         """Build Slurm multi-prog (MPMD) executable"""
+        if self.run_settings.container:
+            raise
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
         cmd = exe + args

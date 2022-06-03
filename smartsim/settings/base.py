@@ -73,7 +73,12 @@ class RunSettings:
         :param container: container type for workload (e.g. "singularity"), defaults to None
         :type container: Container, optional
         """
-        self.exe = [expand_exe_path(exe)]
+        # Do not expand executable if running within a container
+        if container:
+            self.exe = exe
+        else:
+            self.exe = [expand_exe_path(exe)]
+
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, dict)
         self.env_vars = init_default({}, env_vars, dict)
@@ -81,6 +86,9 @@ class RunSettings:
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
+
+
+
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
@@ -351,9 +359,6 @@ class RunSettings:
         cmd = self._run_command
 
         if cmd:
-            if self.container:
-                # Append container commands to workload command
-                cmd = self.container._containerized_run_command(cmd)
             if is_valid_cmd(cmd):
                 # command is valid and will be expanded
                 return expand_exe_path(cmd)
