@@ -75,7 +75,7 @@ class RunSettings:
         """
         # Do not expand executable if running within a container
         if container:
-            self.exe = exe
+            self.exe = [exe]
         else:
             self.exe = [expand_exe_path(exe)]
 
