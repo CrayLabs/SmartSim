@@ -559,6 +559,7 @@ class Experiment:
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
+                container=container,
                 **kwargs,
             )
         except SmartSimError as e:
