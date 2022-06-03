@@ -512,6 +512,7 @@ class Experiment:
         run_command="auto",
         run_args=None,
         env_vars=None,
+        container=None,
         **kwargs,
     ):
         """Create a ``RunSettings`` instance.
