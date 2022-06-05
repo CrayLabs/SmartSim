@@ -69,7 +69,7 @@ class AprunSettings(RunSettings):
             )
         if self.container:
             raise SSUnsupportedError(
-                "Contanerized MPMD workloads are not yet supported."
+                "Containerized MPMD workloads are not yet supported."
             )
         self.mpmd.append(aprun_settings)
 

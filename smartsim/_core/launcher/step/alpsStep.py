@@ -76,7 +76,7 @@ class AprunStep(Step):
             aprun_cmd.extend([bash, launch_script_path])
 
         if self.run_settings.container:
-            srun_cmd += [self.run_settings.container._container_cmds()]
+            aprun_cmd += self.run_settings.container._container_cmds()
 
         aprun_cmd += self._build_exe()
 
