@@ -6,8 +6,13 @@ import pytest
 import smartsim.wlm as wlm
 from smartsim.error.errors import LauncherError, SmartSimError, SSUnsupportedError
 
+# alloc_specs can be specified by the user when testing, but it will
+# require all WLM env variables to be populated. If alloc_specs is not
+# defined, the tests in this file are skipped.
 
 def test_get_hosts(alloc_specs):
+    if not alloc_specs:
+        pytest.skip("alloc_specs not defined")
     def verify_output(output):
         assert isinstance(output, list)
         assert all(isinstance(host, str) for host in output)
@@ -34,6 +39,8 @@ def test_get_hosts(alloc_specs):
 
 
 def test_get_queue(alloc_specs):
+    if not alloc_specs:
+        pytest.skip("alloc_specs not defined")
     def verify_output(output):
         assert isinstance(output, str)
         if "queue" in alloc_specs:
@@ -59,6 +66,8 @@ def test_get_queue(alloc_specs):
 
 
 def test_get_tasks(alloc_specs):
+    if not alloc_specs:
+        pytest.skip("alloc_specs not defined")
     def verify_output(output):
         assert isinstance(output, int)
         if "num_tasks" in alloc_specs:
@@ -87,6 +96,8 @@ def test_get_tasks(alloc_specs):
 
 
 def test_get_tasks_per_node(alloc_specs):
+    if not alloc_specs:
+        pytest.skip("alloc_specs not defined")
     def verify_output(output):
         assert isinstance(output, dict)
         assert all(
