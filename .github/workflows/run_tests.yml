@@ -59,7 +59,7 @@ jobs:
       - name: Build Singularity from source
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
         run: |
-          sudo apt-get install -y build-essential    libseccomp-dev    pkg-config    squashfs-tools    cryptsetup    curl wget git
+          sudo apt-get install -y libseccomp-dev pkg-config squashfs-tools cryptsetup curl git # wget build-essential
           echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc
           source ~/.bashrc
           export VERSION=1.0.0 # Apptainer (singularity) version
