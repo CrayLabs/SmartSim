@@ -9,9 +9,25 @@ from smartsim.settings.containers import Singularity
 
 # Check if singularity is available as command line tool
 singularity_exists = which('singularity') is not None
+containerURI = 'docker://alrigazzi/smartsim-testing:latest'
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_basic(fileutils):
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment("TODO", exp_path=test_dir, launcher="local")
+
+    container = Singularity(containerURI)
+
+    rs = exp.create_run_settings("python3", "producer.py --exchange", container=container)
+    params = {"mult": [1, -10]}
+    ensemble = Ensemble(
+        name="producer",
+        params=params,
+        run_settings=rs,
+        perm_strat="step",
+    )
+
+    container = Singularity(containerURI)
     # TODO: migrate from other test
     pass
 
@@ -65,7 +81,7 @@ def test_singularity_smartredis(fileutils, wlmutils):
     exp.generate(orc)
     exp.start(orc, block=False)
 
-    container = Singularity('docker://benalbrecht10/smartsim-testing:latest')
+    container = Singularity(containerURI)
 
     rs = exp.create_run_settings("python3", "producer.py --exchange", container=container)
     params = {"mult": [1, -10]}

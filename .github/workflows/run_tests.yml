@@ -66,9 +66,9 @@ jobs:
           make -C builddir
           sudo make -C builddir install
 
-      - name: singularity pull
+      - name: singularity pull test container # This lets us time how long the pull takes
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
-        run: singularity pull docker://benalbrecht10/smartsim-testing
+        run: singularity pull docker://alrigazzi/smartsim-testing
 
       - name: Install SmartSim (with ML backends)
         run: python -m pip install .[dev,ml,ray]

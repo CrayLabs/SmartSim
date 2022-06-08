@@ -9,6 +9,7 @@ from smartsim.settings.containers import Singularity
 
 # Check if singularity is available as command line tool
 singularity_exists = which('singularity') is not None
+containerURI = 'docker://alrigazzi/smartsim-testing:latest'
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_wlm_smartredis(fileutils, wlmutils):
@@ -33,10 +34,10 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
 
     # create and start a database
     orc = exp.create_database()
-    exp.generate(orc)
+    exp.generate()
     exp.start(orc, block=False)
 
-    container = Singularity('docker://benalbrecht10/smartsim-testing:latest')
+    container = Singularity(containerURI)
     rs = exp.create_run_settings("python3", "producer.py --exchange", container=container)
     rs.set_tasks(1)
     params = {"mult": [1, -10]}
