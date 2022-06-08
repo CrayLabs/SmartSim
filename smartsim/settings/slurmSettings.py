@@ -91,7 +91,7 @@ class SrunSettings(RunSettings):
             )
         if self.container:
             raise SSUnsupportedError(
-                "Contanerized MPMD workloads are not yet supported."
+                "Containerized MPMD workloads are not yet supported."
             )
         self.mpmd.append(srun_settings)
 

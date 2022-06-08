@@ -1,5 +1,4 @@
-# BSD 2-Clause License
-#
+# BSD 2-Clause License #
 # Copyright (c) 2021-2022, Hewlett Packard Enterprise
 # All rights reserved.
 #
@@ -86,9 +85,6 @@ class RunSettings:
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
-
-
-
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
@@ -365,9 +361,6 @@ class RunSettings:
             # command is not valid, so return it as is
             # it may be on the compute nodes but not local machine
             return cmd
-
-        # TODO: Do we need to return containerized_run_command even if cmd is empty?
-
         # run without run command
         return None
 
