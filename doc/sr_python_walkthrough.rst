@@ -16,11 +16,10 @@ This section details the SmartRedis Python client to demonstrate its general use
 Tensors
 =======
 
-The Python client has the ability to send and receive tensors from
-the Redis database.  The tensors are stored in the Redis database
-as RedisAI data structures.  Additionally, Python client API
+The Python client can exchange tensors from
+the Redis database stored as RedisAI data structures.  Additionally, Python client API
 functions involving tensor data are compatible with Numpy arrays
-and do not require any other data types.
+and do not require other data types.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_put_get_tensor.py
   :language: python
@@ -35,7 +34,7 @@ The Python client can store and retrieve tensors and metadata in datasets.
 For further information about datasets, please refer to the :ref:`Dataset
 section of the Data Structures documentation page <data_structures_dataset>`.
 
-The code below shows how to store and retrieve tensors which belong to a ``DataSet``.
+The code below shows how to store and retrieve tensors that belong to a ``DataSet``.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_put_get_dataset.py
   :language: python
@@ -45,9 +44,9 @@ The code below shows how to store and retrieve tensors which belong to a ``DataS
 Models
 ======
 
-The SmartRedis clients allow users to set and use a PyTorch, ONNX, TensorFlow,
+The SmartRedis client allows users to set and use a PyTorch, ONNX, TensorFlow,
 or TensorFlow Lite model in the database. Models can be sent to the database directly
-from memory or from a file. The code below illustrates how a
+from memory or a file. The code below illustrates how a
 jit-traced PyTorch model can be used with the Python client library.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_model_torch.py
@@ -55,7 +54,7 @@ jit-traced PyTorch model can be used with the Python client library.
   :linenos:
   :lines: 26-71
 
-Models can also be set from a file, as in the code below.
+Users can set models from a file, as shown in the code below.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_model_file_torch.py
   :language: python
@@ -66,27 +65,25 @@ Scripts
 =======
 
 Scripts are a way to store python-executable code in the database. The Python
-client can send scripts to the dataset from a file, or directly from memory.
+client can send scripts to the dataset from a file or directly from memory.
 
-As an example, the code below illustrates how a function can be defined and sent
-to the database on the fly, without storing it in an intermediate file.
+The code below illustrates how to avoid storing a function in an intermediate file. 
+With this technique, we can define and send a function to the database on the fly.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_script.py
   :language: python
   :linenos:
   :lines: 26-66
 
-The code below shows how to set a script from a file.  Running the
-script set from file uses the same API calls as the example shown
-above.
+The code below shows how to set a script from a file. Running the script set from 
+the file uses the same API calls like the example shown above.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_script_file.py
   :language: python
   :linenos:
   :lines: 26-41
 
-The content of the script file has to be written
-in Python. For the example above, the file ``data_processing_script.txt``
+The content of the script file requires Python. For the example above, the file ``data_processing_script.txt``
 looks like this:
 
 .. literalinclude:: ../smartredis/examples/serial/python/data_processing_script.txt
