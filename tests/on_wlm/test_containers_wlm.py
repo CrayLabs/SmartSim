@@ -20,14 +20,15 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     """
 
     launcher = wlmutils.get_test_launcher()
+    print(launcher)
     if launcher not in ["pbs", "slurm"]:
         pytest.skip(
-            "Test only runs on systems with PBS or Slurm as WLM"
+            f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
         )
 
     test_dir = fileutils.make_test_dir()
     exp = Experiment(
-        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="slurm"
+        "smartredis_ensemble_exchange", exp_path=test_dir, launcher=launcher
     )
 
     # create and start a database
