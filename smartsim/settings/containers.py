@@ -8,24 +8,24 @@ class Container():
 
     :param image: local or remote path to container image
     :type image: str
-    :param args: number of cpus per node, defaults to None
+    :param args: arguments to container command
     :type args: str | list[str], optional
-    :param bind_paths: paths to bind (mount) from host machine into image.
-    :type bind_paths: str | list[str] | dict[str, str], optional
+    :param mount: paths to mount (bind) from host machine into image.
+    :type mount: str | list[str] | dict[str, str], optional
     '''
 
-    def __init__(self, image, args='', bind_paths=''):
+    def __init__(self, image, args='', mount=''):
         # Validate types
         if not isinstance(image, str):
             raise TypeError('image must be a str')
         elif not isinstance(args, (str, list)):
             raise TypeError('args must be a str | list')
-        elif not isinstance(bind_paths, (str, list, dict)):
-            raise TypeError('bind_paths must be a str | list | dict')
+        elif not isinstance(mount, (str, list, dict)):
+            raise TypeError('mount must be a str | list | dict')
 
         self.image = image
         self.args = args
-        self.bind_paths = bind_paths
+        self.mount = mount
 
     def _containerized_run_command(self, run_command: str):
         '''Return modified run_command with container commands prepended.
@@ -37,14 +37,25 @@ class Container():
 
 
 class Singularity(Container):
-    '''Singularity container type.
+    '''Singularity (apptainer) container type.
 
-    :param image: local or remote path to container image
+    .. note::
+
+        Singularity integration is currently tested with
+        `Apptainer 1.0 <https://apptainer.org/docs/user/1.0/index.html>`_
+        with slurm and PBS workload managers only.
+
+        Also, note that user-defined bind paths (``mount`` argument) may be
+        disabled by a
+        `system administrator <https://apptainer.org/docs/admin/1.0/configfiles.html#bind-mount-management>`_
+
+
+    :param image: local or remote path to container image, e.g. 'docker://sylabsio/lolcow'
     :type image: str
-    :param args: number of cpus per node, defaults to None
+    :param args: arguments to 'singularity exec' command
     :type args: str | list[str], optional
-    :param bind_paths: paths to bind (mount) from host machine into image.
-    :type bind_paths: str | list[str] | dict[str, str], optional
+    :param mount: paths to mount (bind) from host machine into image.
+    :type mount: str | list[str] | dict[str, str], optional
     '''
 
     def __init__(self, *args, **kwargs):
@@ -66,26 +77,27 @@ class Singularity(Container):
             else:
                 raise TypeError('self.args must be a str | list')
 
-        serialized_bind_paths = ''
-        if self.bind_paths:
-            if isinstance(self.bind_paths, str):
-                serialized_bind_paths = self.bind_paths
-            elif isinstance(self.bind_paths, list):
-                serialized_bind_paths = ','.join(self.bind_paths)
-            elif isinstance(self.bind_paths, dict):
+        serialized_mount = ''
+        if self.mount:
+            if isinstance(self.mount, str):
+                serialized_mount = self.mount
+            elif isinstance(self.mount, list):
+                serialized_mount = ','.join(self.mount)
+            elif isinstance(self.mount, dict):
                 paths = []
-                for host_path,img_path in self.bind_paths.items():
+                for host_path,img_path in self.mount.items():
                     if img_path:
                         paths.append(f'{host_path}={img_path}')
                     else:
                         paths.append(host_path)
-                serialized_bind_paths = ','.join(paths)
+                serialized_mount = ','.join(paths)
             else:
-                raise TypeError('self.bind_paths must be str | list | dict')
+                raise TypeError('self.mount must be str | list | dict')
 
         # Find full path to singularity
         singularity = shutil.which('singularity')
-        # Some systems have singularity available on compute nodes only, 
+
+        # Some systems have singularity available on compute nodes only,
         #   so warn instead of error
         if not singularity:
             logger.warning('Unable to find singularity. Continuing in case singularity is available on compute node')
@@ -94,6 +106,6 @@ class Singularity(Container):
         cmd_list = [singularity, 'exec', self.image]
         if serialized_args:
             cmd_list.append(serialized_args)
-        if serialized_bind_paths:
-            cmd_list.extend([' --bind',  serialized_bind_paths])
+        if serialized_mount:
+            cmd_list.extend([' --bind',  serialized_mount])
         return cmd_list

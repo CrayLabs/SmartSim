@@ -7,10 +7,44 @@ from smartsim.database import Orchestrator
 from smartsim.entity import Ensemble, Model
 from smartsim.settings.containers import Singularity
 
-REDIS_PORT = 6780
-
 # Check if singularity is available as command line tool
 singularity_exists = which('singularity') is not None
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_basic(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_args_str(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_args_list(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_mount_with_args(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_mount_str(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_mount_list(fileutils):
+    # TODO: migrate from other test
+    pass
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_mount_dict(fileutils):
+    # TODO: migrate from other test
+    pass
+
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_smartredis(fileutils, wlmutils):
