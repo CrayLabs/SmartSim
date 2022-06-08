@@ -3,21 +3,19 @@ C++
 ***
 
 
-In this section, examples are presented using the SmartRedis C++
-API to interact with the RedisAI tensor, model, and script
-data types.  Additionally, an example of utilizing the
-SmartRedis ``DataSet`` API is also provided.
+This section presents examples that use the SmartRedis C++ API to 
+interact with the RedisAI tensor, model, and script data types. 
+Additionally, this section demonstrates an example of utilizing the SmartRedis ``DataSet`` API.
 
 
 
 .. note::
       The C++ API examples rely on the ``SSDB`` environment
-      variable being set to the address and port of the Redis database.
+      variable set to the address and port of the Redis database.
 
 
 .. note::
-    The C++ API examples are written
-    to connect to a clustered database or clustered SmartSim Orchestrator.
+    The C++ API examples connect to a clustered database or clustered SmartSim Orchestrator.
     Update the ``Client`` constructor ``cluster`` flag to `false`
     to connect to a single shard (single compute host) database.
 
@@ -27,7 +25,7 @@ SmartRedis ``DataSet`` API is also provided.
 Tensors
 =======
 
-The following example shows how to send a receive a tensor using the
+The following example shows how to send and receive a tensor using the
 SmartRedis C++ client API.
 
 .. literalinclude:: ../smartredis/examples/serial/cpp/smartredis_put_get_3D.cpp
@@ -42,7 +40,7 @@ For further information about datasets, please refer to the :ref:`Dataset
 section of the Data Structures documentation page <data_structures_dataset>`.
 
 The code below shows how to store and retrieve tensors and metadata
-which belong to a ``DataSet``.
+that belong to a ``DataSet``.
 
 .. literalinclude:: ../smartredis/examples/serial/cpp/smartredis_dataset.cpp
   :linenos:
@@ -54,8 +52,8 @@ which belong to a ``DataSet``.
 Models
 ======
 
-The following example shows how to store, and use a DL model
-in the database with the C++ Client.  The model is stored as a file
+The following example shows how to store and use a DL model
+in the database with the C++ Client.  The model stores as a file
 in the ``../../../common/mnist_data/`` path relative to the
 compiled executable.  Note that this example also sets and
 executes a preprocessing script.
@@ -69,8 +67,8 @@ executes a preprocessing script.
 Scripts
 =======
 
-The example in :ref:`SR CPP Models` shows how to store, and use a PyTorch script
-in the database with the C++ Client.  The script is stored a file
+The example in :ref:`SR CPP Models` shows how to store and use a PyTorch script
+in the database with the C++ Client.  The script stores as a file
 in the ``../../../common/mnist_data/`` path relative to the
 compiled executable.  Note that this example also sets and
 executes a PyTorch model.
