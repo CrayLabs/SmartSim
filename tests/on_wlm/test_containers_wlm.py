@@ -5,22 +5,29 @@ from smartsim import Experiment, status
 from smartsim.entity import Ensemble
 from smartsim.settings.containers import Singularity
 
-"""Test SmartRedis container integration on a supercomputer with a WLM.
-   This test will also run locally if singularity is installed."""
+"""Test SmartRedis container integration on a supercomputer with a WLM."""
 
 # Check if singularity is available as command line tool
 singularity_exists = which('singularity') is not None
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
-def test_singularity_exchange(fileutils, wlmutils):
+def test_singularity_wlm_smartredis(fileutils, wlmutils):
     """Run two processes, each process puts a tensor on
     the DB, then accesses the other process's tensor.
     Finally, the tensor is used to run a model.
+
+    Note: This is a containerized port of test_smartredis.py for WLM system
     """
+
+    launcher = wlmutils.get_test_launcher()
+    if launcher not in ["pbs", "slurm"]:
+        pytest.skip(
+            "Test only runs on systems with PBS or Slurm as WLM"
+        )
 
     test_dir = fileutils.make_test_dir()
     exp = Experiment(
-        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="auto"
+        "smartredis_ensemble_exchange", exp_path=test_dir, launcher="slurm"
     )
 
     # create and start a database
