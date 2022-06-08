@@ -3,14 +3,13 @@
 Python
 ******
 
-This section will detail the SmartRedis Python client and how to
-use it within SmartSim applications and RedisAI in general.
+This section details the SmartRedis Python client to demonstrate its general use within SmartSim applications and RedisAI.
 
 
 .. note::
-      The Python API examples are written to connect to a
-      database at ``127.0.0.1:6379``.  When running this example,
-      ensure that the address and port of your Redis instance are used.
+      The following Python API examples connect to a
+      database at the address:port ``127.0.0.1:6379``.  When replicating the following example,
+      ensure that you use the address:port of your local Redis instance.
 
 
 
