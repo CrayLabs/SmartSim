@@ -1,4 +1,7 @@
 import shutil
+from ..log import get_logger
+
+logger = get_logger(__name__)
 
 class Container():
     '''Base class for container types in SmartSim.
@@ -87,7 +90,7 @@ class Singularity(Container):
                 paths = []
                 for host_path,img_path in self.mount.items():
                     if img_path:
-                        paths.append(f'{host_path}={img_path}')
+                        paths.append(f'{host_path}:{img_path}')
                     else:
                         paths.append(host_path)
                 serialized_mount = ','.join(paths)
@@ -103,9 +106,11 @@ class Singularity(Container):
             logger.warning('Unable to find singularity. Continuing in case singularity is available on compute node')
 
         # Construct containerized launch command
-        cmd_list = [singularity, 'exec', self.image]
+        cmd_list = [singularity, 'exec']
         if serialized_args:
             cmd_list.append(serialized_args)
         if serialized_mount:
-            cmd_list.extend([' --bind',  serialized_mount])
+            cmd_list.extend(['--bind',  serialized_mount])
+        cmd_list.append(self.image)
+
         return cmd_list
