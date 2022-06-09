@@ -1,5 +1,7 @@
 import pytest
 from shutil import which
+from pathlib import Path
+import os
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
@@ -49,6 +51,7 @@ def test_singularity_commands(fileutils):
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_basic(fileutils):
+    '''Basic argument-less Singularity test'''
     test_dir = fileutils.make_test_dir()
 
     container = Singularity(containerURI)
@@ -65,9 +68,34 @@ def test_singularity_basic(fileutils):
     exp.start(model, summary=False)
 
     # get and confirm status
-    statuses = exp.get_status(model)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
-        assert False  # client ensemble failed
+    stat = exp.get_status(model)[0]
+    assert stat == status.STATUS_COMPLETED
+
+    print(exp.summary())
+
+
+@pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
+def test_singularity_args(fileutils):
+    '''Test combinations of args and mount arguments for Singularity'''
+    test_dir = fileutils.make_test_dir()
+    hometest_dir = os.path.join(str(Path.home()), 'test') # $HOME/test
+    mount_paths = {test_dir + '/singularity_args': hometest_dir}
+    container = Singularity(containerURI, args='--contain', mount=mount_paths)
+
+    exp = Experiment("singularity_args", launcher="local", exp_path=test_dir)
+
+    run_settings = exp.create_run_settings('python3', 'test/check_dirs.py',
+                                           container=container)
+    model = exp.create_model("singularity_args", run_settings)
+    script = fileutils.get_test_conf_path("check_dirs.py")
+    model.attach_generator_files(to_copy=[script])
+    exp.generate(model)
+
+    exp.start(model, summary=False)
+
+    # get and confirm status
+    stat = exp.get_status(model)[0]
+    assert stat == status.STATUS_COMPLETED
 
     print(exp.summary())
 

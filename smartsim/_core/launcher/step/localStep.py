@@ -53,6 +53,9 @@ class LocalStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
 
+        if self.run_settings.container:
+            cmd += self.run_settings.container._container_cmds()
+
         # build executable
         cmd.extend(self.run_settings.exe)
         if self.run_settings.exe_args:
