@@ -26,8 +26,9 @@
 
 import os
 
-from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
+from .base import BatchSettings, RunSettings
+
 
 class SrunSettings(RunSettings):
     def __init__(

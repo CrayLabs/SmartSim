@@ -340,8 +340,9 @@ class JobManager:
                     # this will be the process id
                     logger.warning(f"Task {job_name} with id: {job.jid}")
                 else:
-                    logger.warning(f"Job {job_name} with {job.launched_with} id: {job.jid}")
-
+                    logger.warning(
+                        f"Job {job_name} with {job.launched_with} id: {job.jid}"
+                    )
 
     def _thread_sleep(self):
         """Sleep the job manager for a specific constant

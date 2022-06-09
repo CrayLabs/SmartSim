@@ -23,8 +23,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
 import itertools
+import sys
 from os import getcwd
 from shlex import split as sh_split
 from warnings import simplefilter, warn
@@ -34,8 +34,8 @@ import redis
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from .._core.utils import check_cluster_status
 from .._core.config import CONFIG
+from .._core.utils import check_cluster_status
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
@@ -132,7 +132,9 @@ class Orchestrator(EntityList):
             msg = "Local launcher can not be launched with batch=True"
             raise SmartSimError(msg)
         if run_command == "aprun" and batch and single_cmd:
-            msg = "aprun can launched orchestrator with batch=True and single_cmd=True. "
+            msg = (
+                "aprun can launched orchestrator with batch=True and single_cmd=True. "
+            )
             msg += "Automatically switching to single_cmd=False."
             logger.info(msg)
             single_cmd = False
@@ -648,7 +650,7 @@ class Orchestrator(EntityList):
             # per node. also collect port range for dbnode
             start_script_args = [
                 "-m",
-                "smartsim._core.entrypoints.redis", # entrypoint
+                "smartsim._core.entrypoints.redis",  # entrypoint
                 f"+ifname={self._interface}",  # pass interface to start script
                 "+command",  # command flag for argparser
                 self._redis_exe,  # redis-server
@@ -664,7 +666,9 @@ class Orchestrator(EntityList):
 
             if not mpmd_nodes:
                 # if only launching 1 db_per_host, we don't need a list of exe args lists
-                run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
+                run_settings = self._build_run_settings(
+                    sys.executable, exe_args, **kwargs
+                )
 
                 node = DBNode(db_node_name, self.path, run_settings, [port])
                 self.entities.append(node)
@@ -686,8 +690,6 @@ class Orchestrator(EntityList):
             self.entities.append(node)
 
         self.ports = [port]
-
-
 
     @staticmethod
     def _get_cluster_args(name, port):

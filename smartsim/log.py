@@ -120,8 +120,4 @@ def log_to_file(filename, log_level="debug"):
     :type log_level: int | str
     """
     logger = logging.getLogger("SmartSim")
-    coloredlogs.install(
-        stream=open(filename, "w+"),
-        logger=logger,
-        level=log_level
-    )
+    coloredlogs.install(stream=open(filename, "w+"), logger=logger, level=log_level)

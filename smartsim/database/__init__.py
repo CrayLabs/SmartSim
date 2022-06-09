@@ -1,9 +1,8 @@
-from .orchestrator import Orchestrator
-
 # decrecated classes
 from .orchestrator import (
-    PBSOrchestrator,
     CobaltOrchestrator,
+    LSFOrchestrator,
+    Orchestrator,
+    PBSOrchestrator,
     SlurmOrchestrator,
-    LSFOrchestrator
 )

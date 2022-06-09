@@ -1,10 +1,10 @@
-import pytest
-
-from smartsim._core.utils.helpers import is_valid_cmd
 from copy import deepcopy
 from pprint import pprint
-from smartsim import Experiment, status
 
+import pytest
+
+from smartsim import Experiment, status
+from smartsim._core.utils.helpers import is_valid_cmd
 
 # retrieved from pytest fixtures
 if pytest.test_launcher not in pytest.wlm_options:
@@ -12,8 +12,8 @@ if pytest.test_launcher not in pytest.wlm_options:
 
 
 def test_slurm_mpmd(fileutils, wlmutils):
-    """Run an MPMD model twice 
-    
+    """Run an MPMD model twice
+
     and check that it always gets executed the same way.
     All MPMD-compatible run commands which do not
     require MPI are tested.
@@ -48,12 +48,16 @@ def test_slurm_mpmd(fileutils, wlmutils):
 
     run_commands = prune_commands(launcher)
     if len(run_commands) == 0:
-        pytest.skip(f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}")
+        pytest.skip(
+            f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}"
+        )
 
     test_dir = fileutils.make_test_dir(exp_name)
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
-        settings = exp.create_run_settings("python", f"{script} --time=5", run_command=run_command)
+        settings = exp.create_run_settings(
+            "python", f"{script} --time=5", run_command=run_command
+        )
         settings.set_tasks(1)
 
         settings.make_mpmd(deepcopy(settings))
@@ -68,4 +72,3 @@ def test_slurm_mpmd(fileutils, wlmutils):
         exp.start(mpmd_model, block=True)
         statuses = exp.get_status(mpmd_model)
         assert all([stat == status.STATUS_COMPLETED for stat in statuses])
-

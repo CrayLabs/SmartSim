@@ -88,4 +88,3 @@ def test_bad_exe_args_2():
     exe_args = ["list-includes-int", 5]
     with pytest.raises(TypeError):
         _ = RunSettings("python", exe_args=exe_args)
-

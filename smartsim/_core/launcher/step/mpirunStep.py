@@ -59,11 +59,7 @@ class MpirunStep(Step):
         :rtype: list[str]
         """
         mpirun = self.run_settings.run_command
-        mpirun_cmd = [
-            mpirun,
-            "-wdir",
-            self.cwd
-        ]
+        mpirun_cmd = [mpirun, "-wdir", self.cwd]
         # add env vars to mpirun command
         mpirun_cmd.extend(self.run_settings.format_env_vars())
 

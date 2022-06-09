@@ -1,7 +1,7 @@
 import pytest
 
-from smartsim.settings import SbatchSettings, SrunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import SbatchSettings, SrunSettings
 
 # ------ Srun ------------------------------------------------
 
@@ -48,8 +48,7 @@ def test_update_env():
 
 def test_catch_colo_mpmd():
     srun = SrunSettings("python")
-    srun.colocated_db_settings = {"port": 6379,
-                                  "cpus": 1}
+    srun.colocated_db_settings = {"port": 6379, "cpus": 1}
     srun_2 = SrunSettings("python")
 
     # should catch the user trying to make rs mpmd that already are colocated

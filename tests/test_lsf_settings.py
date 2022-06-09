@@ -2,8 +2,8 @@ from pprint import pformat
 
 import pytest
 
-from smartsim.settings import BsubBatchSettings, JsrunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import BsubBatchSettings, JsrunSettings
 
 # ------ Jsrun ------------------------------------------------
 
@@ -91,11 +91,11 @@ def test_jsrun_mpmd():
 
 def test_catch_colo_mpmd():
     settings = JsrunSettings("python")
-    settings.colocated_db_settings = {"port": 6379,
-                                      "cpus": 1}
+    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
     settings_2 = JsrunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
+
 
 # ---- Bsub Batch ---------------------------------------------------
 

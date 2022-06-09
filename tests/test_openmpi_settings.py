@@ -1,7 +1,8 @@
 import pytest
 
-from smartsim.settings import MpirunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import MpirunSettings
+
 
 def test_mpirun_settings():
     settings = MpirunSettings("python")
@@ -35,13 +36,14 @@ def test_mpirun_add_mpmd():
     assert len(settings.mpmd) > 0
     assert settings.mpmd[0] == settings_2
 
+
 def test_catch_colo_mpmd():
     settings = MpirunSettings("python")
-    settings.colocated_db_settings = {"port": 6379,
-                                      "cpus": 1}
+    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
     settings_2 = MpirunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
+
 
 def test_format_env():
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}

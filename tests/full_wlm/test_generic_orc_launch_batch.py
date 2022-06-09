@@ -1,7 +1,8 @@
-import pytest
+import os.path as osp
 import time
 
-import os.path as osp
+import pytest
+
 from smartsim import Experiment, status
 
 # retrieved from pytest fixtures
@@ -120,7 +121,7 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     statuses = exp.get_status(orc)
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
-    
+
 def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
     launcher = wlmutils.get_test_launcher()

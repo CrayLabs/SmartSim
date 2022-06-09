@@ -24,33 +24,30 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import os
 import signal
-import sys
-import psutil
-import argparse
-import tempfile
-import filelock
 import socket
-
-from typing import List
+import sys
+import tempfile
 from pathlib import Path
 from subprocess import PIPE, STDOUT
+from typing import List
+
+import filelock
+import psutil
 
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
+
 logger = get_logger(__name__)
 
 DBPID = None
 
 # kill is not catchable
-SIGNALS = [
-    signal.SIGINT,
-    signal.SIGTERM,
-    signal.SIGQUIT,
-    signal.SIGABRT
-    ]
+SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
+
 
 def handle_signal(signo, frame):
     cleanup()
@@ -65,7 +62,6 @@ def main(network_interface: str, db_cpus: int, command: List[str]):
     except ValueError as e:
         logger.warning(e)
         ip_address = None
-
 
     if lo_address == ip_address or not ip_address:
         cmd = command + [f"--bind {lo_address}"]
@@ -95,12 +91,17 @@ def main(network_interface: str, db_cpus: int, command: List[str]):
             # psutil doesn't support pinning on MacOS
             cpus_to_use = "CPU pinning disabled on MacOS"
 
-        logger.debug("\n\nCo-located database information\n" +  "\n".join((
-            f"\tIP Address: {ip_address}",
-            f"\t# of Database CPUs: {db_cpus}",
-            f"\tAffinity: {cpus_to_use}",
-            f"\tCommand: {' '.join(cmd)}\n\n"
-        )))
+        logger.debug(
+            "\n\nCo-located database information\n"
+            + "\n".join(
+                (
+                    f"\tIP Address: {ip_address}",
+                    f"\t# of Database CPUs: {db_cpus}",
+                    f"\tAffinity: {cpus_to_use}",
+                    f"\tCommand: {' '.join(cmd)}\n\n",
+                )
+            )
+        )
 
         for line in iter(p.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
@@ -124,9 +125,7 @@ def cleanup():
         logger.warning("Couldn't find database process to kill.")
 
     except OSError as e:
-        logger.warning(
-            f"Failed to clean up co-located database gracefully: {str(e)}"
-        )
+        logger.warning(f"Failed to clean up co-located database gracefully: {str(e)}")
     finally:
         if LOCK.is_locked:
             LOCK.release()
@@ -140,16 +139,22 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(
             prefix_chars="+", description="SmartSim Process Launcher"
         )
-        parser.add_argument("+ifname", type=str, help="Network Interface name", default="lo")
-        parser.add_argument("+lockfile", type=str, help="Filename to create for single proc per host")
-        parser.add_argument("+db_cpus", type=int, default=2, help="Number of CPUs to use for DB")
+        parser.add_argument(
+            "+ifname", type=str, help="Network Interface name", default="lo"
+        )
+        parser.add_argument(
+            "+lockfile", type=str, help="Filename to create for single proc per host"
+        )
+        parser.add_argument(
+            "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
+        )
         parser.add_argument("+command", nargs="+", help="Command to run")
         args = parser.parse_args()
 
         tmp_lockfile = Path(tempfile.gettempdir()) / args.lockfile
 
         LOCK = filelock.FileLock(tmp_lockfile)
-        LOCK.acquire(timeout=.1)
+        LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting co-located database on host: {socket.gethostname()}")
 
         os.environ["PYTHONUNBUFFERED"] = "1"

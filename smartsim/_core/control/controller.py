@@ -86,7 +86,6 @@ class Controller:
             # it may be called seperately
             self.poll(5, True)
 
-
     @property
     def orchestrator_active(self):
         JM_LOCK.acquire()
@@ -123,7 +122,6 @@ class Controller:
         except KeyboardInterrupt:
             self._jobs.signal_interrupt()
             raise
-
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -463,7 +461,6 @@ class Controller:
                 port = entity.run_settings.colocated_db_settings["port"]
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
-
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

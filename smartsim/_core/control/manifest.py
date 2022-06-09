@@ -24,12 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ..utils.helpers import fmt_dict
-
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError
 from ...exp.ray import RayCluster
+from ..utils.helpers import fmt_dict
 
 # List of types derived from EntityList which require specific behavior
 # A corresponding property needs to exist (like db for Orchestrator),

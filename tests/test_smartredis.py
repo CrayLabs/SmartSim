@@ -17,9 +17,8 @@ REDIS_PORT = 6780
 
 shouldrun = True
 try:
-    import torch
-
     import smartredis
+    import torch
 except ImportError:
     shouldrun = False
 

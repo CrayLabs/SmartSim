@@ -24,12 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.utils.helpers import (
-    expand_exe_path,
-    init_default,
-    is_valid_cmd,
-    fmt_dict
-)
+from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -197,7 +192,7 @@ class RunSettings:
             formatted.append(str(value))
         return formatted
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
@@ -277,7 +272,7 @@ class BatchSettings:
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
             string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"

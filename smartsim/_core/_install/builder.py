@@ -241,12 +241,12 @@ class RedisAIBuilder(Builder):
         :param device: cpu or gpu
         :type device: str
         """
-        rai_deps_path = sorted(self.rai_build_path.glob(
-            os.path.join("deps", f"*{device}*")
-        ))
+        rai_deps_path = sorted(
+            self.rai_build_path.glob(os.path.join("deps", f"*{device}*"))
+        )
         if not rai_deps_path:
             raise FileNotFoundError("Could not find RedisAI 'deps' directory")
-        
+
         # There should only be one path for a given device,
         # and this should hold even if in the future we use
         # an external build of RedisAI
@@ -275,11 +275,15 @@ class RedisAIBuilder(Builder):
         if src_libtf_lib_dir.is_dir():
             library_files = sorted(src_libtf_lib_dir.glob("*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {src_libtf_lib_dir}")  
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {src_libtf_lib_dir}"
+                )
         else:
             library_files = sorted(libtf_path.glob("lib*.so*"))
             if not library_files:
-                raise FileNotFoundError(f"Could not find libtensorflow library files in {libtf_path}")        
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {libtf_path}"
+                )
 
         for src_file in library_files:
             dst_file = rai_libtf_lib_dir / src_file.name
