@@ -95,6 +95,7 @@ def create_run_settings(
     run_command="auto",
     run_args=None,
     env_vars=None,
+    container=None,
     **kwargs,
 ):
     """Create a ``RunSettings`` instance.
@@ -163,9 +164,9 @@ def create_run_settings(
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
-        return supported[run_command](exe, exe_args, run_args, env_vars, **kwargs)
+        return supported[run_command](exe, exe_args, run_args, env_vars, container=container, **kwargs)
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
-    return RunSettings(exe, exe_args, run_command, run_args, env_vars)
+    return RunSettings(exe, exe_args, run_command, run_args, env_vars, container=container)

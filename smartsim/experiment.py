@@ -512,6 +512,7 @@ class Experiment:
         run_command="auto",
         run_args=None,
         env_vars=None,
+        container=None,
         **kwargs,
     ):
         """Create a ``RunSettings`` instance.
@@ -558,6 +559,7 @@ class Experiment:
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
+                container=container,
                 **kwargs,
             )
         except SmartSimError as e:

@@ -89,6 +89,10 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )
+        if self.container:
+            raise SSUnsupportedError(
+                "Containerized MPMD workloads are not yet supported."
+            )
         self.mpmd.append(srun_settings)
 
     def set_hostlist(self, host_list):

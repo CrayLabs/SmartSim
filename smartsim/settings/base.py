@@ -1,5 +1,4 @@
-# BSD 2-Clause License
-#
+# BSD 2-Clause License #
 # Copyright (c) 2021-2022, Hewlett Packard Enterprise
 # All rights reserved.
 #
@@ -38,6 +37,7 @@ class RunSettings:
         run_command="",
         run_args=None,
         env_vars=None,
+        container=None,
         **kwargs,
     ):
         """Run parameters for a ``Model``
@@ -69,11 +69,19 @@ class RunSettings:
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
+        :param container: container type for workload (e.g. "singularity"), defaults to None
+        :type container: Container, optional
         """
-        self.exe = [expand_exe_path(exe)]
+        # Do not expand executable if running within a container
+        if container:
+            self.exe = [exe]
+        else:
+            self.exe = [expand_exe_path(exe)]
+
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, dict)
         self.env_vars = init_default({}, env_vars, dict)
+        self.container = container
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
@@ -344,13 +352,15 @@ class RunSettings:
         :returns: launch binary e.g. mpiexec
         :type: str | None
         """
-        if self._run_command:
-            if is_valid_cmd(self._run_command):
+        cmd = self._run_command
+
+        if cmd:
+            if is_valid_cmd(cmd):
                 # command is valid and will be expanded
-                return expand_exe_path(self._run_command)
+                return expand_exe_path(cmd)
             # command is not valid, so return it as is
             # it may be on the compute nodes but not local machine
-            return self._run_command
+            return cmd
         # run without run command
         return None
 
