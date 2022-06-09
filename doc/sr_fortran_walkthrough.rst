@@ -6,18 +6,19 @@ Fortran
 .. _fortran_client_examples:
 
 
-In this section, examples are presented using the SmartRedis Fortran
-API to interact with the RedisAI tensor, model, and script
-data types.  Additionally, an example of utilizing the
-SmartRedis ``DataSet`` API is also provided.
+Below are examples that use the SmartRedis Fortran API to 
+interact with the RedisAI tensor, model, and script data types. 
+Additionally, this section demonstrates how to utilize the SmartRedis ``DataSet`` API.
+
+
 
 .. note::
       The Fortran API examples rely on the ``SSDB`` environment
-      variable being set to the address and port of the Redis database.
+      variable set to the address and port of the Redis database.
 
 .. note::
-      The Fortran API examples are written
-      to connect to a clustered database or clustered SmartSim Orchestrator.
+      The Fortran API examples 
+      connect to a clustered database or clustered SmartSim Orchestrator.
       Update the ``Client`` constructor ``cluster`` flag to `.false.`
       to connect to a single shard (single compute host) database.
 
@@ -25,10 +26,9 @@ SmartRedis ``DataSet`` API is also provided.
 Tensors
 =======
 
-The SmartRedis Fortran client is used to communicate between
-a Fortran client and the Redis database. In this example,
-the client will be used to send an array to the database
-and then unpack the data into another Fortran array.
+The SmartRedis Fortran client communicates between a Fortran 
+client and the Redis database. In this example, the client sends an array 
+to the database and then unpacks the data into another Fortran array.
 
 This example will go step-by-step through the program and
 then present the entirety of the example code at the end.
@@ -68,7 +68,7 @@ if using a clustered database or ``.false.`` otherwise.
 
 After the SmartRedis client has been initialized,
 a Fortran array of any dimension and shape
-and with a type of either 8, 16, 32, 64 bit
+and with a type of either 8, 16, 32, 64-bit
 ``integer`` or 32 or 64-bit ``real`` can be
 put into the database using the type-bound
 procedure ``put_tensor``.
@@ -77,7 +77,7 @@ data, the array ``send_array_real_64`` will be
 filled with random numbers and stored in the
 database using ``put_tensor``. This subroutine
 requires the user to specify a string used as the
-'key' (here: ``send_array``) identifying the tensor
+'key' (here: ``send_array``) to identify the tensor
 in the database, the array to be stored, and the
 shape of the array.
 
