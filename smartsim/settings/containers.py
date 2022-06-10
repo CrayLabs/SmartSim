@@ -40,7 +40,8 @@ class Container():
 
 
 class Singularity(Container):
-    '''Singularity (apptainer) container type.
+    '''Singularity (apptainer) container type. To be passed into a
+    ``RunSettings`` class initializer or ``Experiment.create_run_settings``.
 
     .. note::
 
@@ -53,7 +54,7 @@ class Singularity(Container):
         `system administrator <https://apptainer.org/docs/admin/1.0/configfiles.html#bind-mount-management>`_
 
 
-    :param image: local or remote path to container image, e.g. 'docker://sylabsio/lolcow'
+    :param image: local or remote path to container image, e.g. ``docker://sylabsio/lolcow``
     :type image: str
     :param args: arguments to 'singularity exec' command
     :type args: str | list[str], optional

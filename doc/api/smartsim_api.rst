@@ -62,6 +62,16 @@ Types of Settings:
     CobaltBatchSettings
     BsubBatchSettings
 
+Settings objects can accept a container object that defines a container
+runtime, image, and arguments to use for the workload. Below is a list of
+supported container runtimes.
+
+Types of Containers:
+
+.. autosummary::
+
+    Singularity
+
 
 RunSettings
 -----------
@@ -372,6 +382,21 @@ be launched as a batch on LSF systems.
 
 
 .. autoclass:: BsubBatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+Singularity
+-----------
+
+.. _singularity_api:
+
+``Singularity`` is a type of ``Container`` that can be passed to a
+``RunSettings`` class or child class to enable running the workload in a
+container.
+
+.. autoclass:: Singularity
     :inherited-members:
     :undoc-members:
     :members:
