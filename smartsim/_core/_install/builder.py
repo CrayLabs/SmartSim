@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from subprocess import SubprocessError
+from ..utils.helpers import expand_exe_path
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -197,6 +198,24 @@ class DatabaseBuilder(Builder):
         self.copy_file(server_source, server_destination, set_exe=True)
         self.copy_file(cli_source, cli_destination, set_exe=True)
 
+        # validate install -- redis-server
+        core_path = Path(os.path.abspath(__file__)).parent.parent
+        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", core_path)
+        bin_path = Path(dependency_path, "bin").resolve()
+        try:
+            database_exe = next(bin_path.glob("*-server"))
+            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            _ = expand_exe_path(str(database))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-server failed!") from e
+
+        # validate install -- redis-cli
+        try:
+            redis_cli_exe = next(bin_path.glob("*-cli"))
+            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
+            _ = expand_exe_path(str(redis_cli))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-cli failed!") from e
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
