@@ -117,7 +117,7 @@ create a Python reference to a Redis deployment so that users can launch, monito
 and stop a Redis deployment on workstations and HPC systems.
 
 Redis was chosen for the Orchestrator because it resides in-memory, can be distributed on-node
-as well as across nodes, and provides low-latency data access to many clients in parallel. The
+as well as across nodes, and provides low latency data access to many clients in parallel. The
 Redis ecosystem was a primary driver as the Redis module system provides APIs for languages,
 libraries, and techniques used in Data Science. In particular, the ``Orchestrator``
 relies on `RedisAI`_ to provide access to Machine Learning runtimes.

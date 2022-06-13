@@ -210,7 +210,7 @@ class _OpenMPISettings(RunSettings):
         self.run_args["timeout"] = str(walltime)
 
     def format_run_args(self):
-        """return a list of OpenMPI formatted run arguments
+        """Return a list of OpenMPI formatted run arguments
 
         :return: list of OpenMPI arguments for these settings
         :rtype: list[str]
