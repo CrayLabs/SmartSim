@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from subprocess import SubprocessError
-import ../utils/helpers
+import ..utils.helpers
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
