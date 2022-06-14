@@ -197,7 +197,7 @@ determine the allocation settings for the entire batch, and the ``RunSettings``
 will determine how each individual ``Model`` instance is executed within
 that batch.
 
-This is same example as above, but tailored towards a running as a batch job
+This is the same example as above, but tailored towards a running as a batch job
 on a slurm system:
 
 .. code-block:: bash
