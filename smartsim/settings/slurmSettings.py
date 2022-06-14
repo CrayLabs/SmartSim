@@ -44,7 +44,7 @@ class SrunSettings(RunSettings):
 
         :param exe: executable to run
         :type exe: str
-        :param exe_args: executable arguments, defaults to Noe
+        :param exe_args: executable arguments, defaults to None
         :type exe_args: list[str] | str, optional
         :param run_args: srun arguments without dashes, defaults to None
         :type run_args: dict[str, str | None], optional
@@ -258,7 +258,7 @@ class SrunSettings(RunSettings):
         self.run_args["time"] = str(walltime)
 
     def format_run_args(self):
-        """return a list of slurm formatted run arguments
+        """Return a list of slurm formatted run arguments
 
         :return: list of slurm arguments for these settings
         :rtype: list[str]

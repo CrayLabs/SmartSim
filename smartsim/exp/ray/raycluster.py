@@ -46,7 +46,7 @@ class RayCluster(EntityList):
 
     :param name: The name of the entity.
     :type name: str
-    :param path: path to output, error, and configuration files
+    :param path: Path to output, error, and configuration files
     :type path: str
     :param ray_port: Port at which the head node will be running.
     :type ray_port: int
@@ -68,9 +68,9 @@ class RayCluster(EntityList):
     :type batch: bool
     :param time: The walltime the cluster will be running for
     :type time: str
-    :param run_command: specify launch binary, defaults to automatic selection.
+    :param run_command: Specify launch binary, defaults to automatic selection.
     :type run_command: str
-    :param hosts: specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI.
+    :param hosts: Specify hosts to launch on, defaults to None. Optional if not launching with OpenMPI.
     :type hosts: str, list[str]
     :param password: Password to use for Redis server, which is passed as `--redis_password` to `ray start`.
                      Can be set to

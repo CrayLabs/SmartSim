@@ -226,7 +226,7 @@ class Experiment:
         """Generate the file structure for an ``Experiment``
 
         ``Experiment.generate`` creates directories for each instance
-        passed to organize Experiments that launch many instances
+        passed to organize Experiments that launch many instances.
 
         If files or directories are attached to ``Model`` objects
         using ``Model.attach_generator_files()``, those files or
@@ -293,7 +293,7 @@ class Experiment:
             raise
 
     def finished(self, entity):
-        """Query if a job has completed
+        """Query if a job has completed.
 
         An instance of ``Model`` or ``Ensemble`` can be passed
         as an argument.
@@ -479,7 +479,7 @@ class Experiment:
 
         :param name: name of the model
         :type name: str
-        :param run_settings: defines how ``Model`` should be run,
+        :param run_settings: defines how ``Model`` should be run
         :type run_settings: RunSettings
         :param params: model parameters for writing into configuration files
         :type params: dict, optional
@@ -522,7 +522,7 @@ class Experiment:
         class in SmartSim. If found, the class corresponding
         to that run_command will be created and returned.
 
-        if the local launcher is being used, auto detection will
+        If the local launcher is being used, auto detection will
         be turned off.
 
         If a recognized run command is passed, the ``RunSettings``
@@ -655,9 +655,9 @@ class Experiment:
 
         :param port: TCP/IP port, defaults to 6379
         :type port: int, optional
-        :param db_nodes: numver of database shards, defaults to 1
+        :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
-        :param batch: Run as a batch workload, defaults to False
+        :param batch: run as a batch workload, defaults to False
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None
         :type hosts: list[str], optional
@@ -673,8 +673,8 @@ class Experiment:
         :type queue: str, optional
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
-        :raises SmartSimError: If detection of launcher or of run command fails
-        :raises SmartSimError: If user indicated an incompatible run command for the launcher
+        :raises SmartSimError: if detection of launcher or of run command fails
+        :raises SmartSimError: if user indicated an incompatible run command for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
