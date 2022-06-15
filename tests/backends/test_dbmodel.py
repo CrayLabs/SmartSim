@@ -17,6 +17,8 @@ except ImportError:
 
 should_run &= "tensorflow" in installed_redisai_backends()
 
+if not should_run:
+    pytest.skip(reason="Test needs TF to run", allow_module_level=True)
 
 class Net(keras.Model):
     def __init__(self):
