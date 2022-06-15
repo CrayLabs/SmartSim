@@ -9,16 +9,16 @@ launching them onto a system.
 
 The `launchers` allow SmartSim users to interact with their system
 programmatically through a python interface.
-Because of this, SmartSim users don't have to leave the Jupyter Notebook,
+Because of this, SmartSim users do not have to leave the Jupyter Notebook,
 Python REPL, or Python script to launch, query, and interact with their jobs.
 
 SmartSim currently supports 5 `launchers`:
-  1. ``local`` for single-node, workstation, or laptop
-  2. ``slurm`` for systems using the Slurm scheduler
-  3. ``pbs`` for systems using the PBSpro scheduler
-  4. ``cobalt`` for systems using the Cobalt scheduler
-  5. ``lsf`` for systems using the LSF scheduler
-  6. ``auto`` have SmartSim auto-detect the launcher to use.
+  1. ``local``: for single-node, workstation, or laptop
+  2. ``slurm``: for systems using the Slurm scheduler
+  3. ``pbs``: for systems using the PBSpro scheduler
+  4. ``cobalt``: for systems using the Cobalt scheduler
+  5. ``lsf``: for systems using the LSF scheduler
+  6. ``auto``: have SmartSim auto-detect the launcher to use.
 
 To specify a specific launcher, one argument needs to be provided
 to the ``Experiment`` initialization.
@@ -122,7 +122,7 @@ used to obtain allocations to launch on and release them after
     from smartsim.wlm import slurm
     alloc = slurm.get_allocation(nodes=1)
 
-The id of the allocation is returned as a string to the user so that
+The ID of the allocation is returned as a string to the user so that
 they can specify what entities should run on which allocations
 obtained by SmartSim.
 

@@ -109,13 +109,19 @@ SmartSim
 There are two stages for the installation of SmartSim.
 
  1. `pip` install SmartSim Python package
- 2. Build SmartSim using the `smart` commmand line tool installed by
+ 2. Build SmartSim using the `smart` command line tool installed by
     the pip package.
 
 Step 1: Install Python Package
 ==============================
 
-Activate a new virtual environment and install SmartSim from PyPi with
+Activate a new virtual environment:
+
+.. code-block:: bash
+
+    conda activate <env name>
+
+and install SmartSim from PyPi with
 the following command
 
 .. code-block:: bash
@@ -131,6 +137,10 @@ can request their installation through the ``ml`` flag as follows:
     pip install smartsim[ml]
     # add ray extra if you would like to use ray with SmartSim as well
     pip install smartsim[ml,ray]
+    # or if using ZSH
+    pip install smartsim\[ml\]
+    pip install smartsim\[ml,ray\]
+
 
 At this point, SmartSim is installed and can be used for more basic features.
 If you want to use the machine learning features of SmartSim, you will need
@@ -172,6 +182,8 @@ To install the default ML backends for CPU, run
     export CXX=g++
     export NO_CHECKS=1 # skip build checks
 
+.. code-block:: bash
+
     # run one of the following
     smart build --device cpu          # install PT and TF for cpu
     smart build --device cpu --onnx   # install all backends (PT, TF, ONNX) on gpu
@@ -196,7 +208,7 @@ CUDNN is not in your ``LD_LIBRARY_PATH`` or default loader locations.
   - ``CUDNN_INCLUDE_DIR``  - path to directory containing cudnn.h
   - ``CUDNN_LIBRARY``      - path to directory containing libcudnn.so
 
-For example, for bash do
+For example, for bash do:
 
 .. code-block:: bash
 
@@ -229,7 +241,7 @@ There are implementations of the SmartRedis client in
 4 languages: Python, C++, C and Fortran. The Python
 client is installed through ``pip`` and the compiled
 clients can be built as a static or shared library
-through cmake.
+through ``cmake``.
 
 SmartRedis Python supports the same architectures for
 pre-built wheels that SmartSim does.
@@ -336,7 +348,7 @@ With docker
   make docks
 
 Once the documentation has successfully built, users can open the
-main documents page from ``docs/develop/index.html``
+main documents page from ``docs/develop/index.html``.
 
 Without docker
 --------------
@@ -456,7 +468,7 @@ or otherwise, you can install them with ``conda``.
   export CUDNN_LIBRARY=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/lib
   export CUDNN_INCLUDE_DIR=/path/to/miniconda/pkgs/cudnn-x.x.x-cudax.x_x/include
 
-Be sure to get the cuDNN version that matches your CUDA installation
+Be sure to get the cuDNN version that matches your CUDA installation.
 The package_ names usually specify the versions.
 
 .. _package: https://anaconda.org/anaconda/cudnn/files
@@ -539,7 +551,7 @@ SmartSim on Cheyenne at NCAR
 Since SmartSim does not currently support the Message Passing Toolkit (MPT), Cheyenne
 users of SmartSim will need to utilize OpenMPI.
 
-The following module commands were utilized to run the examples
+The following module commands were utilized to run the examples:
 
 .. code-block:: bash
 
@@ -553,7 +565,7 @@ using the pip that comes with that installation.
 .. code-block:: bash
 
   $ pip install smartsim
-  $ smart build --device cpu  (Since Cheyenne does not have GPUs)
+  $ smart build --device cpu  #(Since Cheyenne does not have GPUs)
 
 To make the SmartRedis library (C, C++, Fortran clients), follow these steps with
 the same environment loaded.

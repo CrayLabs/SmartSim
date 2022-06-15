@@ -12,7 +12,7 @@ Need Help?
 ----------
 We encourage and welcome usage questions and bug reports from all users, even those who are new to SmartSim. There are a few things you can do to improve the likelihood of quickly getting a good answer.
 
- 1. **It's important to ask questions in the right place.** We strongly prefer the use of Stack Overflow or GitHub issues over Slack chat. GitHub and Stack Overflow are more easily searchable by future users, and therefore is more efficient for everyone’s time. Slack chat should be reserved for developer and community discussion. If you have a general question about how something should work or want best practices then use Stack Overflow. If you think you have found a bug then use GitHub
+ 1. **It is important to ask questions in the right place.** We strongly prefer the use of Stack Overflow or GitHub issues over Slack chat. GitHub and Stack Overflow are more easily searchable by future users, and therefore is more efficient for everyone’s time. Slack chat should be reserved for developer and community discussion. If you have a general question about how something should work or want best practices then use Stack Overflow. If you think you have found a bug then use GitHub.
 
  2. **Please ask only in one place.** Please restrict yourself to posting your question in only one place (likely Stack Overflow or GitHub) and don’t post in both.
 
