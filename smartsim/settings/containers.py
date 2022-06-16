@@ -15,9 +15,11 @@ class Container():
     :type args: str | list[str], optional
     :param mount: paths to mount (bind) from host machine into image.
     :type mount: str | list[str] | dict[str, str], optional
+    :param working_directory: path of the working directory within the container
+    :type working_directory: str
     '''
 
-    def __init__(self, image, args='', mount=''):
+    def __init__(self, image, args='', mount='', working_directory=''):
         # Validate types
         if not isinstance(image, str):
             raise TypeError('image must be a str')
@@ -25,10 +27,13 @@ class Container():
             raise TypeError('args must be a str | list')
         elif not isinstance(mount, (str, list, dict)):
             raise TypeError('mount must be a str | list | dict')
+        elif not isinstance(working_directory, str):
+            raise TypeError('working_directory must be a str')
 
         self.image = image
         self.args = args
         self.mount = mount
+        self.working_directory = working_directory
 
     def _containerized_run_command(self, run_command: str):
         '''Return modified run_command with container commands prepended.
@@ -65,7 +70,7 @@ class Singularity(Container):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _container_cmds(self):
+    def _container_cmds(self, default_working_directory=''):
         '''Return list of container commands to be inserted before exe.
             Container members are validated during this call.
 
@@ -98,6 +103,17 @@ class Singularity(Container):
             else:
                 raise TypeError('self.mount must be str | list | dict')
 
+        working_directory = default_working_directory
+        if self.working_directory:
+            working_directory = self.working_directory
+
+        if not (working_directory in serialized_mount):
+            serialized_mount = ','.join([working_directory, serialized_mount])
+            logger.warning(
+                f'Working directory not specified in mount: \n {working_directory}'+
+                '\nAutomatically adding it to the list of bind points'
+            )
+
         # Find full path to singularity
         singularity = shutil.which('singularity')
 
@@ -108,6 +124,9 @@ class Singularity(Container):
 
         # Construct containerized launch command
         cmd_list = [singularity, 'exec']
+        if working_directory:
+            cmd_list.extend(['--pwd', working_directory])
+
         if serialized_args:
             cmd_list.append(serialized_args)
         if serialized_mount:
