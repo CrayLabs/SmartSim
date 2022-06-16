@@ -15,7 +15,7 @@ Additionally, this section demonstrates an example of utilizing the SmartRedis `
 
 
 .. note::
-    The C++ API examples connect to a clustered database or clustered SmartSim Orchestrator.
+    The C++ API examples are written to connect to a clustered database or clustered SmartSim Orchestrator.
     Update the ``Client`` constructor ``cluster`` flag to `false`
     to connect to a single shard (single compute host) database.
 
