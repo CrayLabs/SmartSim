@@ -63,7 +63,7 @@ def test_singularity_basic(fileutils):
 
     script = fileutils.get_test_conf_path("sleep.py")
     model.attach_generator_files(to_copy=[script])
-    exp.generate(model, overwrite=True)
+    exp.generate(model)
 
     exp.start(model, summary=False)
 
@@ -89,7 +89,7 @@ def test_singularity_args(fileutils):
     model = exp.create_model("singularity_args", run_settings)
     script = fileutils.get_test_conf_path("check_dirs.py")
     model.attach_generator_files(to_copy=[script])
-    exp.generate(model, overwrite=True)
+    exp.generate(model)
 
     exp.start(model, summary=False)
 
@@ -136,7 +136,7 @@ def test_singularity_smartredis(fileutils, wlmutils):
     config = fileutils.get_test_conf_path("smartredis")
     ensemble.attach_generator_files(to_copy=[config])
 
-    exp.generate(ensemble, overwrite=True)
+    exp.generate(ensemble)
 
     # start the models
     exp.start(ensemble, summary=False)
