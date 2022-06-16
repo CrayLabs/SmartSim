@@ -44,7 +44,7 @@ The code below shows how to store and retrieve tensors that belong to a ``DataSe
 Models
 ======
 
-The SmartRedis client allows users to set and use a PyTorch, ONNX, TensorFlow,
+The SmartRedis clients allows users to set and use a PyTorch, ONNX, TensorFlow,
 or TensorFlow Lite model in the database. Models can be sent to the database directly
 from memory or a file. The code below illustrates how a
 jit-traced PyTorch model can be used with the Python client library.
