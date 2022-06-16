@@ -11,7 +11,7 @@ Additionally, this section demonstrates an example of utilizing the SmartRedis `
 
 .. note::
       The C++ API examples rely on the ``SSDB`` environment
-      variable set to the address and port of the Redis database.
+      variable being set to the address and port of the Redis database.
 
 
 .. note::
