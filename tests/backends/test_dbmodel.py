@@ -17,7 +17,6 @@ except ImportError:
 
 should_run &= "tensorflow" in installed_redisai_backends()
 
-should_run = False
 if not should_run:
     pytest.skip("Test needs TF to run", allow_module_level=True)
 
