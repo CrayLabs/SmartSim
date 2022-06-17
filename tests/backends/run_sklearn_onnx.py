@@ -39,10 +39,10 @@ def build_random_forest():
     return rf_model.SerializeToString()
 
 
-def run_model(client, device, model, model_input, in_name, out_names):
+def run_model(client: Client, device, model, model_input, in_name, out_names):
     client.put_tensor(in_name, model_input)
     client.set_model("onnx_model", model, "ONNX", device=device)
-    client.run_model("onnx_model", inputs=in_name, outputs=out_names)
+    client.run_model("onnx_model", inputs=[in_name], outputs=out_names)
     outputs = []
     for o in out_names:
         outputs.append(client.get_tensor(o))
