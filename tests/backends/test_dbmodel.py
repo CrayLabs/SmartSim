@@ -17,6 +17,8 @@ except ImportError:
 
 should_run &= "tensorflow" in installed_redisai_backends()
 
+if not should_run:
+    pytest.skip("Test needs TF to run", allow_module_level=True)
 
 class Net(keras.Model):
     def __init__(self):
@@ -55,7 +57,6 @@ def create_tf_cnn():
     return serialize_model(model)
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
 def test_db_model(fileutils, wlmutils):
     """Test DB Models on remote DB"""
 
@@ -109,7 +110,6 @@ def test_db_model(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
 def test_db_model_ensemble(fileutils, wlmutils):
     """Test DBModels on remote DB, with an ensemble"""
 
@@ -174,7 +174,6 @@ def test_db_model_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
 def test_colocated_db_model(fileutils, wlmutils):
     """Test DB Models on colocated DB"""
 
