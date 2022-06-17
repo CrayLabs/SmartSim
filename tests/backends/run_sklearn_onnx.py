@@ -59,6 +59,7 @@ def run(device):
     linreg = build_lin_reg()
     outputs = run_model(client, device, linreg, X, "X", ["Y"])
     assert len(outputs[0]) == 5
+    print("Linear regression successful")
     print(outputs)
 
     # Kmeans test
@@ -70,6 +71,7 @@ def run(device):
     assert len(outputs) == 2
     assert len(outputs[0]) == 10
     assert outputs[1].shape == (10, 2)
+    print("K-means successful")
     print(outputs)
 
     # test random Forest regressor
@@ -77,6 +79,7 @@ def run(device):
     model = build_random_forest()
     outputs = run_model(client, device, model, sample, "rf_in", ["rf_label"])
     assert len(outputs[0]) == 1
+    print("Random forest successful")
     print(outputs)
 
 
