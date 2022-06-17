@@ -16,8 +16,8 @@ This section details the SmartRedis Python client to demonstrate its general use
 Tensors
 =======
 
-The Python client can exchange tensors from
-the Redis database stored as RedisAI data structures.  Additionally, Python client API
+The Python client can send and receive tensors from the Redis database, 
+where they are stored as RedisAI data structures. Additionally, Python client API
 functions involving tensor data are compatible with Numpy arrays
 and do not require other data types.
 
@@ -44,7 +44,7 @@ The code below shows how to store and retrieve tensors that belong to a ``DataSe
 Models
 ======
 
-The SmartRedis clients allows users to set and use a PyTorch, ONNX, TensorFlow,
+The SmartRedis clients allow users to set and use a PyTorch, ONNX, TensorFlow,
 or TensorFlow Lite model in the database. Models can be sent to the database directly
 from memory or a file. The code below illustrates how a
 jit-traced PyTorch model can be used with the Python client library.
@@ -76,7 +76,7 @@ With this technique, we can define and send a function to the database on the fl
   :lines: 26-66
 
 The code below shows how to set a script from a file. Running the script set from 
-the file uses the same API calls like the example shown above.
+the file uses the same API calls as in the example shown above.
 
 .. literalinclude:: ../smartredis/examples/serial/python/example_script_file.py
   :language: python
