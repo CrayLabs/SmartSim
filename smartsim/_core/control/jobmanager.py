@@ -71,7 +71,7 @@ class JobManager:
         self._launcher = launcher  # reference to launcher
         self._lock = lock  # thread lock
 
-        self.kill_on_interrupt = True # flag for killing jobs on SIGINT
+        self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
 
     def start(self):
         """Start a thread for the job manager"""
@@ -365,4 +365,3 @@ class JobManager:
     def __len__(self):
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
-

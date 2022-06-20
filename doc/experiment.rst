@@ -4,7 +4,7 @@ Experiments
 ***********
 
 The Experiment acts as both a factory class for constructing the
-stages of an experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc)
+stages of an experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc.)
 as well as an interface to interact with the entities created by the experiment.
 
 Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a Jupyter notebook,
@@ -19,9 +19,9 @@ system through the specified launcher.
 |SmartSim Architecture|
 
 
-The interface was designed to be simple with as little complexity
+The interface was designed to be simple, with as little complexity
 as possible, and agnostic to the backend launching mechanism (local,
-Slurm, PBSPro, etc).
+Slurm, PBSPro, etc.).
 
 Model
 =====
@@ -45,7 +45,7 @@ Each launcher supports specific types of ``RunSettings``.
 These settings can be manually specified by the user, or auto-detected by the
 SmartSim Experiment through the ``Experiment.create_run_settings`` method.
 
-A simple example of using the Experiment API to create a model and run it locally.
+A simple example of using the Experiment API to create a model and run it locally:
 
 .. code-block:: Python
 
@@ -65,6 +65,7 @@ method will automatically create the appropriate ``RunSettings`` object and
 return it.
 
 For example with Slurm
+
 .. code-block:: Python
 
   from smartsim import Experiment
@@ -84,7 +85,7 @@ For example with Slurm
 
 The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor it's execution,
 and inform the user when it is completed. This driver script can be executed in
-an interactive allocation, or placed into a batch script as follows
+an interactive allocation, or placed into a batch script as follows:
 
 .. code-block:: bash
 
@@ -111,11 +112,11 @@ Ensembles can be given parameters and permutation strategies that
 define how the ``Ensemble`` will create the underlying model objects.
 
 Three strategies are built in:
-  1. ``all_perm`` for generating all permutations of model parameters
-  2. ``step`` for creating one set of parameters for each element in `n` arrays
-  3. ``random`` for random selection from predefined parameter spaces.
+  1. ``all_perm``: for generating all permutations of model parameters
+  2. ``step``: for creating one set of parameters for each element in `n` arrays
+  3. ``random``: for random selection from predefined parameter spaces
 
-Here is an example that uses the ``random`` strategy to intialize 4 models
+Here is an example that uses the ``random`` strategy to intialize four models
 with random parameters within a set range. We use the ``params_as_args``
 field to specify that the randomly selected learning rate parameter should
 be passed to the created models as a executable argument.
@@ -145,12 +146,12 @@ be passed to the created models as a executable argument.
 
 
 A callable function can also be supplied for custom permutation strategies.
-The function should take two arguments: a list of parameter names and a list of lists
+The function should take two arguments: a list of parameter names, and a list of lists
 of potential parameter values. The function should return a list of dictionaries that
 will be supplied as model parameters. The length of the list returned will determine
 how many ``Model`` instances are created.
 
-For example, the following the the built-in strategy ``all_perm``.
+For example, the following is the built-in strategy ``all_perm``:
 
 .. code-block:: python
 
@@ -182,22 +183,22 @@ workload manager and available compute resources.
   - :ref:`CobaltBatchSettings <cqsub_api>` for Cobalt
   - :ref:`BsubBatchSettings <bsub_api>` for LSF
 
-If only passed ``RunSettings``, ``Ensemble`` objects will require either
+If it only passed ``RunSettings``, ``Ensemble``, objects will require either
 a ``replicas`` argument or a ``params`` argument to expand parameters
 into ``Model`` instances. At launch, the ``Ensemble`` will look for
 interactive allocations to launch models in.
 
-If passed ``BatchSettings`` without other arguments, an empty ``Ensemble``
+If it passed ``BatchSettings`` without other arguments, an empty ``Ensemble``
 will be created that ``Model`` objects can be added to manually. All ``Model``
 objects added to the ``Ensemble`` will be launched in a single batch.
 
-If passed ``BatchSettings`` and ``RunSettings``, the ``BatchSettings`` will
+If it passed ``BatchSettings`` and ``RunSettings``, the ``BatchSettings`` will
 determine the allocation settings for the entire batch, and the ``RunSettings``
 will determine how each individual ``Model`` instance is executed within
 that batch.
 
-The same example as above but tailored towards a running as a batch job
-on a slurm system
+This is the same example as above, but tailored towards a running as a batch job
+on a slurm system:
 
 .. code-block:: bash
 
@@ -233,7 +234,7 @@ on a slurm system
 
 
 This will generate and execute a batch script that looks something like
-the following
+the following:
 
 .. code-block:: bash
 

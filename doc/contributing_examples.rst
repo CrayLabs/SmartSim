@@ -19,8 +19,8 @@ The Two Categories of the SmartSim Zoo
 
  2. SmartSim Applications (completed projects that use SmartSim)
 
-  * The README for the repository describes some of the larger applications of SmartSim. These examples fall under two categories;
-    examples by paper and examples by simulation model. The examples by paper are based on existing research papers e.g. , and the examples
+  * The README for the repository describes some of the larger applications of SmartSim. These examples fall under two categories:
+    examples by paper and examples by simulation model. The examples by paper are based on existing research papers, and the examples
     by simulation models are integrations of SmartSim with existing simulation models.
 
 How To Contribute
@@ -95,7 +95,7 @@ Summary of SmartSim Application Examples
 ########################################
 
  * **DeepDriveMD:** Based on the original DeepDriveMD work, extended to orchestrate complex workflows
-   with coupled applications without using the filesystem for exchanging information
+   with coupled applications without using the filesystem for exchanging information.
 
  * **TensorFlowFoam:** Uses TensorFlow inside of OpenFOAM simulations using SmartSim. Displays SmartSim's
    capability to evaluate a machine learning model from within a simulation with minimal external library

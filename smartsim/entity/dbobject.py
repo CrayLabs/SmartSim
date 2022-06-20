@@ -1,7 +1,9 @@
 from pathlib import Path
+
 from .._core.utils.helpers import init_default
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
+
 
 class DBObject:
     """Base class for ML objects residing on DB. Should not
@@ -43,7 +45,8 @@ class DBObject:
             return backend
         else:
             raise ValueError(
-                f"Backend type {backend} unsupported. Options are {all_backends}")
+                f"Backend type {backend} unsupported. Options are {all_backends}"
+            )
 
     @staticmethod
     def _check_filepath(file):
@@ -80,16 +83,12 @@ class DBObject:
 
         return devices
 
-class DBScript(DBObject):
 
-    def __init__(self,
-                 name,
-                 script=None,
-                 script_path=None,
-                 device="CPU",
-                 devices_per_node=1
-                ):
-        """TorchScript code representation.
+class DBScript(DBObject):
+    def __init__(
+        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+    ):
+        """TorchScript code represenation
 
         Device selection is either "GPU" or "CPU". If many devices are
         present, a number can be passed for specification e.g. "GPU:1".
@@ -125,25 +124,29 @@ class DBScript(DBObject):
             desc_str += "Func: " + self.func + "\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
-        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        devices_str = self.device + (
+            "s per node\n" if self.devices_per_node > 1 else " per node\n"
+        )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
         return desc_str
 
 
 class DBModel(DBObject):
-    def __init__(self,
-                 name,
-                 backend,
-                 model=None,
-                 model_file=None,
-                 device="CPU",
-                 devices_per_node=1,
-                 batch_size=0,
-                 min_batch_size=0,
-                 min_batch_timeout=0,
-                 tag="",
-                 inputs=None,
-                 outputs=None):
+    def __init__(
+        self,
+        name,
+        backend,
+        model=None,
+        model_file=None,
+        device="CPU",
+        devices_per_node=1,
+        batch_size=0,
+        min_batch_size=0,
+        min_batch_timeout=0,
+        tag="",
+        inputs=None,
+        outputs=None,
+    ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         One of either model (in memory representation) or model_path (file)
@@ -194,7 +197,9 @@ class DBModel(DBObject):
             desc_str += "Model stored in memory\n"
         if self.file:
             desc_str += "File path: " + str(self.file) + "\n"
-        devices_str = self.device + ("s per node\n" if self.devices_per_node > 1 else " per node\n")
+        devices_str = self.device + (
+            "s per node\n" if self.devices_per_node > 1 else " per node\n"
+        )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
         desc_str += "Backend: " + str(self.backend) + "\n"
         if self.batch_size:

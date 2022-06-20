@@ -140,7 +140,8 @@ deps = [
     "redis-py-cluster==2.1.3",
     "redis==3.5.3",
     "tqdm>=4.50.2",
-    "filelock>=3.4.2"
+    "filelock>=3.4.2",
+    "protobuf==3.20"
 ]
 
 # Add SmartRedis at specific version
@@ -153,6 +154,7 @@ extras_require = {
         "pylint>=2.6.0",
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1"
+        "click==8.0.2",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),

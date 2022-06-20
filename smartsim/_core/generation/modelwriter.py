@@ -58,7 +58,8 @@ class ModelWriter:
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
     def configure_tagged_model_files(
-            self, tagged_files, params, make_missing_tags_fatal=False):
+        self, tagged_files, params, make_missing_tags_fatal=False
+    ):
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -135,11 +136,13 @@ class ModelWriter:
                             unused_tags[tag] = []
                         unused_tags[tag].append(i + 1)
                         edited.append(re.sub(self.regex, previous_value, line))
-                        search = False # Move on to the next tag
+                        search = False  # Move on to the next tag
             else:
                 edited.append(line)
         for tag in unused_tags:
-            missing_tag_message = f"Unused tag {tag} on line(s): {str(unused_tags[tag])}"
+            missing_tag_message = (
+                f"Unused tag {tag} on line(s): {str(unused_tags[tag])}"
+            )
             if make_fatal:
                 raise SmartSimError(missing_tag_message)
             else:

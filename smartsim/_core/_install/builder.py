@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from subprocess import SubprocessError
+from shutil import which
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -14,6 +15,25 @@ from subprocess import SubprocessError
 # TODO:
 #   - check cmake version and use system if possible to avoid conflicts
 
+
+def expand_exe_path(exe):
+    """Takes an executable and returns the full path to that executable
+
+    :param exe: executable or file
+    :type exe: str
+    :raises TypeError: if file is not an executable
+    :raises FileNotFoundError: if executable cannot be found
+    """
+
+    # which returns none if not found
+    in_path = which(exe)
+    if not in_path:
+        if os.path.isfile(exe) and os.access(exe, os.X_OK):
+            return os.path.abspath(exe)
+        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
+            raise TypeError(f"File, {exe}, is not an executable")
+        raise FileNotFoundError(f"Could not locate executable {exe}")
+    return os.path.abspath(in_path)
 
 class BuildError(Exception):
     pass
@@ -41,8 +61,8 @@ class Builder:
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
 
         dependency_path = _core_dir
-        if os.getenv('SMARTSIM_DEP_PATH'):
-            dependency_path = Path(os.environ['SMARTSIM_DEP_PATH'])
+        if os.getenv("SMARTSIM_DEP_PATH"):
+            dependency_path = Path(os.environ["SMARTSIM_DEP_PATH"])
 
         self.build_dir = _core_dir / ".third-party"
 
@@ -197,6 +217,24 @@ class DatabaseBuilder(Builder):
         self.copy_file(server_source, server_destination, set_exe=True)
         self.copy_file(cli_source, cli_destination, set_exe=True)
 
+        # validate install -- redis-server
+        core_path = Path(os.path.abspath(__file__)).parent.parent
+        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", core_path)
+        bin_path = Path(dependency_path, "bin").resolve()
+        try:
+            database_exe = next(bin_path.glob("*-server"))
+            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            _ = expand_exe_path(str(database))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-server failed!") from e
+
+        # validate install -- redis-cli
+        try:
+            redis_cli_exe = next(bin_path.glob("*-cli"))
+            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
+            _ = expand_exe_path(str(redis_cli))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-cli failed!") from e
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source

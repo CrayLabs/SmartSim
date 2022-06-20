@@ -1,0 +1,10 @@
+{
+  "host_list": ["nid00005"],
+  "queue": "workq",
+  "num_tasks": 36,
+  "tasks_per_node": {
+    "crystal_16": 12,
+    "crystal_17": 12,
+    "crystal_18": 12
+  }
+}
