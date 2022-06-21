@@ -83,7 +83,7 @@ the file uses the same API calls as in the example shown above.
   :linenos:
   :lines: 26-41
 
-The content of the script file requires Python. For the example above, the file ``data_processing_script.txt``
+This file must be a valid Python script. For the example above, the file ``data_processing_script.txt``
 looks like this:
 
 .. literalinclude:: ../smartredis/examples/serial/python/data_processing_script.txt
