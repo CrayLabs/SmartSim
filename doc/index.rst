@@ -40,6 +40,7 @@
    :caption: SmartRedis
 
    smartredis
+   sr_integration
    sr_python_walkthrough
    sr_cpp_walkthrough
    sr_fortran_walkthrough
