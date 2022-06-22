@@ -56,7 +56,7 @@ C::
         return -1
     }
 
-All these methods only have one configurable parameter indicated in the
+All these methods only have one configurable parameter -- indicated in the
 above cases by the variable `use_cluster`. If this parameter is true,
 then the client expects to be able to communicate with an orchestrator with
 three or more shards.
@@ -209,7 +209,7 @@ Next, add the calls in the main loop to send the temperature to the orchestrator
         call write_current_state(temperature)
         model_input(1) = name_prefix//"temperature"
         model_output(1) = name_prefix//"temperature_out"
-        call smartredis_client%put_tensor(model_input(1),temperature)
+        call smartredis_client%put_tensor(model_input(1), temperature)
 
         ! Run the machine learning model
         return_code = smartredis_client%run_model("example_model_name", model_input, model_output)
