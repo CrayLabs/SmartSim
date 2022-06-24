@@ -53,6 +53,7 @@ General improvements and bug fixes
     - Fix generator hanging when tagged configuration variables are missing (SmartSim-PR177_)
 
 Dependency updates
+
     - CMake version from 3.10 to 3.13 (SmartSim-PR152_)
     - Update click to 8.0.2 (SmartSim-PR200_)
 
