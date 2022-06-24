@@ -24,7 +24,7 @@ platforms and we encourage users to provide feedback on its use.
 
 We have also made improvements in a variety of areas: new utilites to load
 scripts and machine learning models into the database directly from SmartSim
-driver scripts, and install-time choice to use either `KeyDB` or `Redis` for the
+driver scripts and install-time choice to use either `KeyDB` or `Redis` for the
 Orchestrator. The `RunSettings` API is now more consistent across subclasses. Another
 key focus of this release was to aid new SmartSim users by including more
 extensive tutorials and improving the documentation. The docker image containing
