@@ -11,6 +11,72 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+0.4.1
+-----
+
+Released on June 24, 2022
+
+Description:
+This release of SmartSim introduces a new experimental feature to help make
+SmartSim workflows more portable: the ability to run simulations models in a
+container via Singularity. This feature has been tested on a small number of
+platforms and we encourage users to provide feedback on its use.
+
+We have also made improvements in a variety of areas: new utilities to load
+scripts and machine learning models into the database directly from SmartSim
+driver scripts and install-time choice to use either `KeyDB` or `Redis` for the
+Orchestrator. The `RunSettings` API is now more consistent across subclasses. Another
+key focus of this release was to aid new SmartSim users by including more
+extensive tutorials and improving the documentation. The docker image containing
+the SmartSim tutorials now also includes a tutorial on online training.
+
+
+Launcher improvements
+
+    - New methods for specifying `RunSettings` parameters (SmartSim-PR166_) (SmartSim-PR170_)
+    - Better support for `mpirun`, `mpiexec`, and `orterun` as launchers (SmartSim-PR186_)
+    - Experimental: add support for running models via Singularity (SmartSim-PR204_)
+
+Documentation and tutorials
+
+    - Tutorial updates (SmartSim-PR155_) (SmartSim-PR203_) (SmartSim-PR208_)
+    - Add SmartSim Zoo info to documentation (SmartSim-PR175_)
+    - New tutorial for demonstrating online training (SmartSim-PR176_) (SmartSim-PR188_)
+
+General improvements and bug fixes
+
+    - Set models and scripts at the driver level (SmartSim-PR185_)
+    - Optionally use KeyDB for the orchestrator (SmartSim-PR180_)
+    - Ability to specify system-level libraries (SmartSim-PR154_) (SmartSim-PR182_)
+    - Fix the handling of LSF gpus_per_shard (SmartSim-PR164_)
+    - Fix error when re-running `smart build`` (SmartSim-PR165_)
+    - Fix generator hanging when tagged configuration variables are missing (SmartSim-PR177_)
+
+Dependency updates
+
+    - CMake version from 3.10 to 3.13 (SmartSim-PR152_)
+    - Update click to 8.0.2 (SmartSim-PR200_)
+
+.. _SmartSim-PR152: https://github.com/CrayLabs/SmartSim/pull/152
+.. _SmartSim-PR154: https://github.com/CrayLabs/SmartSim/pull/154
+.. _SmartSim-PR155: https://github.com/CrayLabs/SmartSim/pull/155
+.. _SmartSim-PR164: https://github.com/CrayLabs/SmartSim/pull/164
+.. _SmartSim-PR165: https://github.com/CrayLabs/SmartSim/pull/165
+.. _SmartSim-PR166: https://github.com/CrayLabs/SmartSim/pull/166
+.. _SmartSim-PR170: https://github.com/CrayLabs/SmartSim/pull/170
+.. _SmartSim-PR175: https://github.com/CrayLabs/SmartSim/pull/175
+.. _SmartSim-PR176: https://github.com/CrayLabs/SmartSim/pull/176
+.. _SmartSim-PR177: https://github.com/CrayLabs/SmartSim/pull/177
+.. _SmartSim-PR180: https://github.com/CrayLabs/SmartSim/pull/180
+.. _SmartSim-PR182: https://github.com/CrayLabs/SmartSim/pull/182
+.. _SmartSim-PR185: https://github.com/CrayLabs/SmartSim/pull/185
+.. _SmartSim-PR186: https://github.com/CrayLabs/SmartSim/pull/186
+.. _SmartSim-PR188: https://github.com/CrayLabs/SmartSim/pull/188
+.. _SmartSim-PR200: https://github.com/CrayLabs/SmartSim/pull/200
+.. _SmartSim-PR203: https://github.com/CrayLabs/SmartSim/pull/203
+.. _SmartSim-PR204: https://github.com/CrayLabs/SmartSim/pull/204
+.. _SmartSim-PR208: https://github.com/CrayLabs/SmartSim/pull/208
+
 0.4.0
 -----
 
