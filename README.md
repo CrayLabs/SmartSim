@@ -790,22 +790,24 @@ The following are public presentations or publications using SmartSim
 Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
 
 Partee et al., “Using Machine Learning at Scale in HPC Simulations with SmartSim:
-An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
-[Online]. Available: http://arxiv.org/abs/2104.09355.
+An Application to Ocean Climate Modeling”, Journal of Computational Science, Volume 62, 2022, 101707, ISSN 1877-7503
+
+Available: https://doi.org/10.1016/j.jocs.2022.101707.
 
 ## bibtex
 
-    ```latex
-    @article{PARTEE2022101707,
-        title = {Using Machine Learning at scale in numerical simulations with SmartSim: An application to ocean climate modeling},
-        journal = {Journal of Computational Science},
-        volume = {62},
-        pages = {101707},
-        year = {2022},
-        issn = {1877-7503},
-        doi = {https://doi.org/10.1016/j.jocs.2022.101707},
-        url = {https://www.sciencedirect.com/science/article/pii/S1877750322001065},
-        author = {Sam Partee and Matthew Ellis and Alessandro Rigazzi and Andrew E. Shao and Scott Bachman and Gustavo Marques and Benjamin Robbins},
-        keywords = {Deep learning, Numerical simulation, Climate modeling, High performance computing, SmartSim},
-    }
-    ```
+
+```latex
+@article{PARTEE2022101707,
+    title = {Using Machine Learning at scale in numerical simulations with SmartSim: An application to ocean climate modeling},
+    journal = {Journal of Computational Science},
+    volume = {62},
+    pages = {101707},
+    year = {2022},
+    issn = {1877-7503},
+    doi = {https://doi.org/10.1016/j.jocs.2022.101707},
+    url = {https://www.sciencedirect.com/science/article/pii/S1877750322001065},
+    author = {Sam Partee and Matthew Ellis and Alessandro Rigazzi and Andrew E. Shao and Scott Bachman and Gustavo Marques and Benjamin Robbins},
+    keywords = {Deep learning, Numerical simulation, Climate modeling, High performance computing, SmartSim},
+}
+```
