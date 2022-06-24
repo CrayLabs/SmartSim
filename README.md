@@ -796,12 +796,16 @@ An Application to Ocean Climate Modeling,” arXiv:2104.09355, Apr. 2021,
 ## bibtex
 
     ```latex
-    @misc{partee2021using,
-          title={Using Machine Learning at Scale in HPC Simulations with SmartSim: An Application to Ocean Climate Modeling},
-          author={Sam Partee and Matthew Ellis and Alessandro Rigazzi and Scott Bachman and Gustavo Marques and Andrew Shao and Benjamin Robbins},
-          year={2021},
-          eprint={2104.09355},
-          archivePrefix={arXiv},
-          primaryClass={cs.CE}
+    @article{PARTEE2022101707,
+        title = {Using Machine Learning at scale in numerical simulations with SmartSim: An application to ocean climate modeling},
+        journal = {Journal of Computational Science},
+        volume = {62},
+        pages = {101707},
+        year = {2022},
+        issn = {1877-7503},
+        doi = {https://doi.org/10.1016/j.jocs.2022.101707},
+        url = {https://www.sciencedirect.com/science/article/pii/S1877750322001065},
+        author = {Sam Partee and Matthew Ellis and Alessandro Rigazzi and Andrew E. Shao and Scott Bachman and Gustavo Marques and Benjamin Robbins},
+        keywords = {Deep learning, Numerical simulation, Climate modeling, High performance computing, SmartSim},
     }
     ```
