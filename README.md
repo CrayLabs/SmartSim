@@ -787,7 +787,7 @@ The following are public presentations or publications using SmartSim
 --------
 # Cite
 
-Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work.
+Please use the following citation when referencing SmartSim, SmartRedis, or any SmartSim related work:
 
 Partee et al., “Using Machine Learning at Scale in HPC Simulations with SmartSim:
 An Application to Ocean Climate Modeling”, Journal of Computational Science, Volume 62, 2022, 101707, ISSN 1877-7503
