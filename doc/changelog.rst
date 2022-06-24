@@ -22,7 +22,7 @@ SmartSim workflows more portable: the ability to run simulations models in a
 container via Singularity. This feature has been tested on a small number of
 platforms and we encourage users to provide feedback on its use.
 
-We have also made improvements in a variety of areas: new utilites to load
+We have also made improvements in a variety of areas: new utilities to load
 scripts and machine learning models into the database directly from SmartSim
 driver scripts and install-time choice to use either `KeyDB` or `Redis` for the
 Orchestrator. The `RunSettings` API is now more consistent across subclasses. Another
