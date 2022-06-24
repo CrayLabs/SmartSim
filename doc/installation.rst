@@ -482,7 +482,7 @@ an IBM system are slightly different than other systems.
 
 Luckily for us, a conda channel with all relevant packages is maintained
 as part of the `OpenCE <https://opence.mit.edu/#/>`_ initiative.
-Users can follow these instructions to get a working SmartSim build 
+Users can follow these instructions to get a working SmartSim build
 with PyTorch and TensorFlow for GPU on Summit.
 Note that SmartSim and SmartRedis will be downloaded to the working directory
 from which these instructions are executed.
@@ -490,7 +490,7 @@ from which these instructions are executed.
 .. code-block:: bash
 
   # setup Python and build environment
-  export ENV_NAME=smartsim-0.4.0
+  export ENV_NAME=smartsim-0.4.1
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.4.1/
@@ -503,7 +503,7 @@ from which these instructions are executed.
                                     tensorflow=2.6.2 \
                                     libtensorflow=2.6.2 \
                                     pytorch=1.9.0 \
-                                    torchvision=0.10.0 
+                                    torchvision=0.10.0
   conda activate $ENV_NAME
   export CC=$(which gcc)
   export CXX=$(which g++)
