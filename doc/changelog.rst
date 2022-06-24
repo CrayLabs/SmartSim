@@ -22,36 +22,37 @@ SmartSim workflows more portable: the ability to run simulations models in a
 container via Singularity. This feature has been tested on a small number of
 platforms and we encourage users to provide feedback on its use.
 
-We have also made incremental improvements in a variety of areas: being able to
-load scripts and machine learning models into the database directly from
-SmartSim driver scripts, the ability to use `KeyDB` instead of `redis-server`,
-and support for using OpenMPI to launch workflows. Reducing the barrier to entry
-by providing more extensive tutorials and improving the documentation was
-another key focus of this release cycle. Interested newcomers and users to
-SmartSim can now download a docker image to run many of the tutorials described
-in the documentation.
+We have also made improvements in a variety of areas: new utilites to load
+scripts and machine learning models into the database directly from SmartSim
+driver scripts, install-time choice to use either `KeyDB` or `Redis` for the
+Orchestrator, and support for using `RunSettings`` to launch workflows. Reducing
+the barrier to entry by providing more extensive tutorials and improving the
+documentation was another key focus of this release cycle. Interested newcomers
+and users to SmartSim can now download a docker image to run many of the
+tutorials described in the documentation.
 
 
 Launcher improvements
 
-    - New methods for RunSettings (_SmartSim-PR166) (_SmartSim-PR170)
+    - New methods for specifying `RunSettings` parameters (_SmartSim-PR166) (_SmartSim-PR170)
+    - Better support for `mpirun`, `mpiexec`, and `orterun` as launchers (_SmartSim-PR186)
     - Experimental: add support for running models via Singularity (_SmartSim-PR204)
 
 Documentation and tutorials
 
     - Tutorial updates (_SmartSim-PR155) (_SmartSim-PR203) (_SmartSim-PR208)
     - Add SmartSim Zoo info to documentation (_SmartSim-PR175)
-    - New tutorial for demonstrating online training(_SmartSim-PR176)
+    - New tutorial for demonstrating online training (_SmartSim-PR176)
     - Container now available for tutorials (_SmartSim-PR188)
 
-Quality of life enhancements and key bug fixes
+General improvements and bug fixes
 
     - Set models and scripts at the driver level (_SmartSim-PR185)
     - Optionally use KeyDB for the orchestrator (_SmartSim-PR180)
     - Ability to specify system-level libraries (_SmartSim-PR154) (_SmartSim-PR182)
-    - Wrong handling of LSF gpus_per_shard (_SmartSim-PR164)
-    - Fix for bug with re-running smart build (_SmartSim-PR165)
-    - Generator no longer hangs when tagged configuration variables are missing (_SmartSim-PR177)
+    - Fix the handling of LSF gpus_per_shard (_SmartSim-PR164)
+    - Fix error when re-running `smart build`` (_SmartSim-PR165)
+    - Fix generator hanging when tagged configuration variables are missing (_SmartSim-PR177)
 
 Dependency updates
     - CMake version from 3.10 to 3.13 (_SmartSim-PR152)
@@ -70,6 +71,7 @@ Dependency updates
 .. _SmartSim-PR180: https://github.com/CrayLabs/SmartSim/pull/180
 .. _SmartSim-PR182: https://github.com/CrayLabs/SmartSim/pull/182
 .. _SmartSim-PR185: https://github.com/CrayLabs/SmartSim/pull/185
+.. _SmartSim-PR186: https://github.com/CrayLabs/SmartSim/pull/186
 .. _SmartSim-PR188: https://github.com/CrayLabs/SmartSim/pull/188
 .. _SmartSim-PR200: https://github.com/CrayLabs/SmartSim/pull/200
 .. _SmartSim-PR203: https://github.com/CrayLabs/SmartSim/pull/203
