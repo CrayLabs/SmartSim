@@ -24,12 +24,11 @@ platforms and we encourage users to provide feedback on its use.
 
 We have also made improvements in a variety of areas: new utilites to load
 scripts and machine learning models into the database directly from SmartSim
-driver scripts, install-time choice to use either `KeyDB` or `Redis` for the
-Orchestrator, and support for using `RunSettings`` to launch workflows. Another
+driver scripts, and install-time choice to use either `KeyDB` or `Redis` for the
+Orchestrator. The `RunSettings` API is now more consistent across subclasses. Another
 key focus of this release was to aid new SmartSim users by including more
-extensive tutorials and improving the documentation. New and existing users of
-SmartSim can now download a docker image to run the tutorials described in the
-documentation including online analysis, inferfence, and training.
+extensive tutorials and improving the documentation. The docker image containing
+the SmartSim tutorials now also includes a tutorial on online training.
 
 
 Launcher improvements
@@ -42,8 +41,7 @@ Documentation and tutorials
 
     - Tutorial updates (_SmartSim-PR155) (_SmartSim-PR203) (_SmartSim-PR208)
     - Add SmartSim Zoo info to documentation (_SmartSim-PR175)
-    - New tutorial for demonstrating online training (_SmartSim-PR176)
-    - Container now available for tutorials (_SmartSim-PR188)
+    - New tutorial for demonstrating online training (_SmartSim-PR176) (_SmartSim-PR188)
 
 General improvements and bug fixes
 
