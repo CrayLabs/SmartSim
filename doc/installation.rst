@@ -212,8 +212,8 @@ For example, for bash do:
 
 .. code-block:: bash
 
-    export CUDNN_LIBRARY=/lus/sonexion/spartee/cuda/lib64/
-    export CUDNN_INCLUDE_DIR=/lus/sonexion/spartee/cuda/include/
+    export CUDNN_LIBRARY=/lus/cuda/lib64/
+    export CUDNN_INCLUDE_DIR=/lus/cuda/include/
     export LD_LIBRARY_PATH=$CUDNN_LIBRARY:$LD_LIBRARY_PATH
 
 

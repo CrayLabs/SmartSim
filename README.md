@@ -97,8 +97,8 @@ before using it on your system. Each tutorial is a Jupyter notebook that can be 
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.0
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.0
+docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.1
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
 # click on link to open jupyter lab
 ```
 
@@ -497,8 +497,8 @@ Each tutorial is a Jupyter notebook that can be run through the
 which will run a jupyter lab with the tutorials, SmartSim, and SmartRedis installed.
 
 ```bash
-docker pull ghcr.io/craylabs/smartsim-tutorials:v0.4.0
-docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.0
+docker pull ghcr.io/craylabs/smartsim-tutorials:v1
+docker run -p 8888:8888 ghcr.io/craylabs/smartsim-tutorials:v0.4.1
 ```
 Each of the following examples can be found in the
 [SmartSim documentation](https://www.craylabs.org/docs/tutorials/getting_started/getting_started.html).
