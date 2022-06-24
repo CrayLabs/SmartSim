@@ -33,28 +33,28 @@ the SmartSim tutorials now also includes a tutorial on online training.
 
 Launcher improvements
 
-    - New methods for specifying `RunSettings` parameters (_SmartSim-PR166) (_SmartSim-PR170)
-    - Better support for `mpirun`, `mpiexec`, and `orterun` as launchers (_SmartSim-PR186)
-    - Experimental: add support for running models via Singularity (_SmartSim-PR204)
+    - New methods for specifying `RunSettings` parameters (SmartSim-PR166_) (SmartSim-PR170_)
+    - Better support for `mpirun`, `mpiexec`, and `orterun` as launchers (SmartSim-PR186_)
+    - Experimental: add support for running models via Singularity (SmartSim-PR204_)
 
 Documentation and tutorials
 
-    - Tutorial updates (_SmartSim-PR155) (_SmartSim-PR203) (_SmartSim-PR208)
-    - Add SmartSim Zoo info to documentation (_SmartSim-PR175)
-    - New tutorial for demonstrating online training (_SmartSim-PR176) (_SmartSim-PR188)
+    - Tutorial updates (SmartSim-PR155_) (SmartSim-PR203_) (SmartSim-PR208_)
+    - Add SmartSim Zoo info to documentation (SmartSim-PR175_)
+    - New tutorial for demonstrating online training (SmartSim-PR176_) (SmartSim-PR188_)
 
 General improvements and bug fixes
 
-    - Set models and scripts at the driver level (_SmartSim-PR185)
-    - Optionally use KeyDB for the orchestrator (_SmartSim-PR180)
-    - Ability to specify system-level libraries (_SmartSim-PR154) (_SmartSim-PR182)
-    - Fix the handling of LSF gpus_per_shard (_SmartSim-PR164)
-    - Fix error when re-running `smart build`` (_SmartSim-PR165)
-    - Fix generator hanging when tagged configuration variables are missing (_SmartSim-PR177)
+    - Set models and scripts at the driver level (SmartSim-PR185_)
+    - Optionally use KeyDB for the orchestrator (SmartSim-PR180_)
+    - Ability to specify system-level libraries (SmartSim-PR154_) (SmartSim-PR182_)
+    - Fix the handling of LSF gpus_per_shard (SmartSim-PR164_)
+    - Fix error when re-running `smart build`` (SmartSim-PR165_)
+    - Fix generator hanging when tagged configuration variables are missing (SmartSim-PR177_)
 
 Dependency updates
-    - CMake version from 3.10 to 3.13 (_SmartSim-PR152)
-    - Update click to 8.0.2 (_SmartSim-PR200)
+    - CMake version from 3.10 to 3.13 (SmartSim-PR152_)
+    - Update click to 8.0.2 (SmartSim-PR200_)
 
 .. _SmartSim-PR152: https://github.com/CrayLabs/SmartSim/pull/152
 .. _SmartSim-PR154: https://github.com/CrayLabs/SmartSim/pull/154
