@@ -25,11 +25,11 @@ platforms and we encourage users to provide feedback on its use.
 We have also made improvements in a variety of areas: new utilites to load
 scripts and machine learning models into the database directly from SmartSim
 driver scripts, install-time choice to use either `KeyDB` or `Redis` for the
-Orchestrator, and support for using `RunSettings`` to launch workflows. Reducing
-the barrier to entry by providing more extensive tutorials and improving the
-documentation was another key focus of this release cycle. Interested newcomers
-and users to SmartSim can now download a docker image to run many of the
-tutorials described in the documentation.
+Orchestrator, and support for using `RunSettings`` to launch workflows. Another
+key focus of this release was to aid new SmartSim users by including more
+extensive tutorials and improving the documentation. New and existing users of
+SmartSim can now download a docker image to run the tutorials described in the
+documentation including online analysis, inferfence, and training.
 
 
 Launcher improvements
