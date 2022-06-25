@@ -54,11 +54,23 @@ Types of Settings:
     SrunSettings
     AprunSettings
     MpirunSettings
+    MpiexecSettings
+    OrterunSettings
     JsrunSettings
     SbatchSettings
     QsubBatchSettings
     CobaltBatchSettings
     BsubBatchSettings
+
+Settings objects can accept a container object that defines a container
+runtime, image, and arguments to use for the workload. Below is a list of
+supported container runtimes.
+
+Types of Containers:
+
+.. autosummary::
+
+    Singularity
 
 
 RunSettings
@@ -186,7 +198,7 @@ and within batch launches (i.e. ``BsubBatchSettings``)
 MpirunSettings
 --------------
 
-.. _openmpi_api:
+.. _openmpi_run_api:
 
 ``MpirunSettings`` are for launching with OpenMPI. ``MpirunSettings`` are
 supported on Slurm, PBSpro, and Cobalt.
@@ -205,6 +217,60 @@ supported on Slurm, PBSpro, and Cobalt.
     MpirunSettings.update_env
 
 .. autoclass:: MpirunSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+MpiexecSettings
+---------------
+
+.. _openmpi_exec_api:
+
+``MpiexecSettings`` are for launching with OpenMPI's ``mpiexec``. ``MpirunSettings`` are
+supported on Slurm, PBSpro, and Cobalt.
+
+
+.. autosummary::
+
+    MpiexecSettings.set_cpus_per_task
+    MpiexecSettings.set_hostlist
+    MpiexecSettings.set_tasks
+    MpiexecSettings.set_task_map
+    MpiexecSettings.make_mpmd
+    MpiexecSettings.add_exe_args
+    MpiexecSettings.format_run_args
+    MpiexecSettings.format_env_vars
+    MpiexecSettings.update_env
+
+.. autoclass:: MpiexecSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+OrterunSettings
+---------------
+
+.. _openmpi_orte_api:
+
+``OrterunSettings`` are for launching with OpenMPI's ``orterun``. ``OrterunSettings`` are
+supported on Slurm, PBSpro, and Cobalt.
+
+
+.. autosummary::
+
+    OrterunSettings.set_cpus_per_task
+    OrterunSettings.set_hostlist
+    OrterunSettings.set_tasks
+    OrterunSettings.set_task_map
+    OrterunSettings.make_mpmd
+    OrterunSettings.add_exe_args
+    OrterunSettings.format_run_args
+    OrterunSettings.format_env_vars
+    OrterunSettings.update_env
+
+.. autoclass:: OrterunSettings
     :inherited-members:
     :undoc-members:
     :members:
@@ -316,6 +382,21 @@ be launched as a batch on LSF systems.
 
 
 .. autoclass:: BsubBatchSettings
+    :inherited-members:
+    :undoc-members:
+    :members:
+
+
+Singularity
+-----------
+
+.. _singularity_api:
+
+``Singularity`` is a type of ``Container`` that can be passed to a
+``RunSettings`` class or child class to enable running the workload in a
+container.
+
+.. autoclass:: Singularity
     :inherited-members:
     :undoc-members:
     :members:

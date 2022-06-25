@@ -108,14 +108,14 @@ class InstallPlatlib(install):
 class SmartSimBuild(build_py):
 
     def run(self):
-        redis_builder = builder.RedisBuilder(build_env(),
+        database_builder = builder.DatabaseBuilder(build_env(),
                                              build_env.MALLOC,
                                              build_env.JOBS)
-        if not redis_builder.is_built:
-            redis_builder.build_from_git(versions.REDIS_URL,
+        if not database_builder.is_built:
+            database_builder.build_from_git(versions.REDIS_URL,
                                          versions.REDIS)
 
-            redis_builder.cleanup()
+            database_builder.cleanup()
 
         # run original build_py command
         build_py.run(self)
@@ -140,7 +140,8 @@ deps = [
     "redis-py-cluster==2.1.3",
     "redis==3.5.3",
     "tqdm>=4.50.2",
-    "filelock>=3.4.2"
+    "filelock>=3.4.2",
+    "protobuf==3.20"
 ]
 
 # Add SmartRedis at specific version
@@ -153,16 +154,10 @@ extras_require = {
         "pylint>=2.6.0",
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1"
+        "click==8.0.2",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),
-    "doc": [
-        "sphinx==4.4.0",
-        "breathe==4.31.0",
-        "sphinx-book-theme==0.2.0",
-        "sphinx-fortran==1.1.1",
-        "nbsphinx>=0.8.2"
-    ],
     "ray": "ray>=1.6"
     }
 

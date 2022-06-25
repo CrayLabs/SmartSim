@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from subprocess import SubprocessError
+from shutil import which
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -14,6 +15,25 @@ from subprocess import SubprocessError
 # TODO:
 #   - check cmake version and use system if possible to avoid conflicts
 
+
+def expand_exe_path(exe):
+    """Takes an executable and returns the full path to that executable
+
+    :param exe: executable or file
+    :type exe: str
+    :raises TypeError: if file is not an executable
+    :raises FileNotFoundError: if executable cannot be found
+    """
+
+    # which returns none if not found
+    in_path = which(exe)
+    if not in_path:
+        if os.path.isfile(exe) and os.access(exe, os.X_OK):
+            return os.path.abspath(exe)
+        if os.path.isfile(exe) and not os.access(exe, os.X_OK):
+            raise TypeError(f"File, {exe}, is not an executable")
+        raise FileNotFoundError(f"Could not locate executable {exe}")
+    return os.path.abspath(in_path)
 
 class BuildError(Exception):
     pass
@@ -39,9 +59,15 @@ class Builder:
 
         # Find _core directory and set up paths
         _core_dir = Path(os.path.abspath(__file__)).parent.parent
+
+        dependency_path = _core_dir
+        if os.getenv("SMARTSIM_DEP_PATH"):
+            dependency_path = Path(os.environ["SMARTSIM_DEP_PATH"])
+
         self.build_dir = _core_dir / ".third-party"
-        self.bin_path = _core_dir / "bin"
-        self.lib_path = _core_dir / "lib"
+
+        self.bin_path = dependency_path / "bin"
+        self.lib_path = dependency_path / "lib"
 
         # Set wether build process will output to std output
         self.out = subprocess.DEVNULL
@@ -52,10 +78,11 @@ class Builder:
         # make build directory "SmartSim/smartsim/_core/.third-party"
         if not self.build_dir.is_dir():
             self.build_dir.mkdir()
-        if not self.bin_path.is_dir():
-            self.bin_path.mkdir()
-        if not self.lib_path.is_dir():
-            self.lib_path.mkdir()
+        if dependency_path == _core_dir:
+            if not self.bin_path.is_dir():
+                self.bin_path.mkdir()
+            if not self.lib_path.is_dir():
+                self.lib_path.mkdir()
 
         self.jobs = jobs
 
@@ -116,11 +143,11 @@ class Builder:
             raise BuildError(e)
 
 
-class RedisBuilder(Builder):
-    """Class to build Redis from Source
+class DatabaseBuilder(Builder):
+    """Class to build Redis or KeyDB from Source
     Supported build methods:
      - from git
-    See buildenv.py for buildtime configuration of Redis
+    See buildenv.py for buildtime configuration of Redis/KeyDB
     version and url.
     """
 
@@ -130,10 +157,11 @@ class RedisBuilder(Builder):
 
     @property
     def is_built(self):
-        """Check if Redis is built"""
-        server = self.bin_path.joinpath("redis-server").is_file()
-        cli = self.bin_path.joinpath("redis-cli").is_file()
-        return server and cli
+        """Check if Redis or KeyDB is built"""
+        bin_files = {file.name for file in self.bin_path.iterdir()}
+        redis_files = {"redis-server", "redis-cli"}
+        keydb_files = {"keydb-server", "keydb-cli"}
+        return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
     def build_from_git(self, git_url, branch):
         """Build Redis from git
@@ -142,16 +170,21 @@ class RedisBuilder(Builder):
         :param branch: branch to checkout
         :type branch: str
         """
-        redis_build_path = Path(self.build_dir, "redis")
+        database_name = "keydb" if "KeyDB" in git_url else "redis"
+        database_build_path = Path(self.build_dir, database_name.lower())
 
         # remove git directory if it exists as it should
         # really never exist as we delete after build
+        redis_build_path = Path(self.build_dir, "redis")
+        keydb_build_path = Path(self.build_dir, "keydb")
         if redis_build_path.is_dir():
             shutil.rmtree(str(redis_build_path))
+        if keydb_build_path.is_dir():
+            shutil.rmtree(str(keydb_build_path))
 
-        # Check Redis URL
+        # Check database URL
         if not self.is_valid_url(git_url):
-            raise BuildError(f"Malformed Redis URL: {git_url}")
+            raise BuildError(f"Malformed {database_name} URL: {git_url}")
 
         # clone Redis
         clone_cmd = [
@@ -162,7 +195,7 @@ class RedisBuilder(Builder):
             branch,
             "--depth",
             "1",
-            "redis",
+            database_name,
         ]
         self.run_command(clone_cmd, cwd=self.build_dir)
 
@@ -173,17 +206,35 @@ class RedisBuilder(Builder):
             str(self.jobs),
             f"MALLOC={self.malloc}",
         ]
-        self.run_command(build_cmd, cwd=str(redis_build_path))
+        self.run_command(build_cmd, cwd=str(database_build_path))
 
         # move redis binaries to smartsim/smartsim/_core/bin
-        redis_src_dir = redis_build_path / "src"
-        self.copy_file(
-            redis_src_dir / "redis-server", self.bin_path / "redis-server", set_exe=True
-        )
-        self.copy_file(
-            redis_src_dir / "redis-cli", self.bin_path / "redis-cli", set_exe=True
-        )
+        database_src_dir = database_build_path / "src"
+        server_source = database_src_dir / (database_name.lower() + "-server")
+        server_destination = self.bin_path / (database_name.lower() + "-server")
+        cli_source = database_src_dir / (database_name.lower() + "-cli")
+        cli_destination = self.bin_path / (database_name.lower() + "-cli")
+        self.copy_file(server_source, server_destination, set_exe=True)
+        self.copy_file(cli_source, cli_destination, set_exe=True)
 
+        # validate install -- redis-server
+        core_path = Path(os.path.abspath(__file__)).parent.parent
+        dependency_path = os.environ.get("SMARTSIM_DEP_INSTALL_PATH", core_path)
+        bin_path = Path(dependency_path, "bin").resolve()
+        try:
+            database_exe = next(bin_path.glob("*-server"))
+            database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
+            _ = expand_exe_path(str(database))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-server failed!") from e
+
+        # validate install -- redis-cli
+        try:
+            redis_cli_exe = next(bin_path.glob("*-cli"))
+            redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
+            _ = expand_exe_path(str(redis_cli))
+        except (TypeError, FileNotFoundError) as e:
+            raise SSConfigError("Installation of redis-cli failed!") from e
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
@@ -197,6 +248,7 @@ class RedisAIBuilder(Builder):
         self,
         build_env={},
         torch_dir="",
+        libtf_dir="",
         build_torch=True,
         build_tf=True,
         build_onnx=False,
@@ -210,6 +262,7 @@ class RedisAIBuilder(Builder):
         self.torch = 1 if build_torch else 0
         self.tf = 1 if build_tf else 0
         self.onnx = 1 if build_onnx else 0
+        self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
     @property
@@ -232,6 +285,61 @@ class RedisAIBuilder(Builder):
             self.copy_file(
                 self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
             )
+
+    def symlink_libtf(self, device):
+        """Add symbolic link to available libtensorflow in RedisAI deps.
+
+        :param device: cpu or gpu
+        :type device: str
+        """
+        rai_deps_path = sorted(
+            self.rai_build_path.glob(os.path.join("deps", f"*{device}*"))
+        )
+        if not rai_deps_path:
+            raise FileNotFoundError("Could not find RedisAI 'deps' directory")
+
+        # There should only be one path for a given device,
+        # and this should hold even if in the future we use
+        # an external build of RedisAI
+        rai_libtf_path = rai_deps_path[0] / "libtensorflow"
+        rai_libtf_path.resolve()
+        if rai_libtf_path.is_dir():
+            shutil.rmtree(rai_libtf_path)
+
+        os.makedirs(rai_libtf_path)
+        libtf_path = Path(self.libtf_dir).resolve()
+
+        # Copy include directory to deps/libtensorflow
+        include_src_path = libtf_path / "include"
+        if not include_src_path.exists():
+            raise FileNotFoundError(f"Could not find include directory in {libtf_path}")
+        os.symlink(include_src_path, rai_libtf_path / "include")
+
+        # RedisAI expects to find a lib directory, which is only
+        # available in some distributions.
+        rai_libtf_lib_dir = rai_libtf_path / "lib"
+        os.makedirs(rai_libtf_lib_dir)
+        src_libtf_lib_dir = libtf_path / "lib"
+        # If the lib directory existed in the libtensorflow distribution,
+        # copy its content, otherwise gather library files from
+        # libtensorflow base dir and copy them into destination lib dir
+        if src_libtf_lib_dir.is_dir():
+            library_files = sorted(src_libtf_lib_dir.glob("*"))
+            if not library_files:
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {src_libtf_lib_dir}"
+                )
+        else:
+            library_files = sorted(libtf_path.glob("lib*.so*"))
+            if not library_files:
+                raise FileNotFoundError(
+                    f"Could not find libtensorflow library files in {libtf_path}"
+                )
+
+        for src_file in library_files:
+            dst_file = rai_libtf_lib_dir / src_file.name
+            if not dst_file.is_file():
+                os.symlink(src_file, dst_file)
 
     def build_from_git(self, git_url, branch, device):
         """Build RedisAI from git
@@ -273,7 +381,7 @@ class RedisAIBuilder(Builder):
         dep_cmd = [
             self.binary_path("env"),
             f"WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
-            f"WITH_TF={self.tf}",
+            f"WITH_TF={1 if self.tf and not self.libtf_dir else 0}",
             f"WITH_TFLITE=0",  # never build with TF lite (for now)
             f"WITH_ORT={self.onnx}",
             "VERBOSE=1",
@@ -287,6 +395,9 @@ class RedisAIBuilder(Builder):
             out=subprocess.DEVNULL,  # suppress this as it's not useful
             cwd=self.rai_build_path,
         )
+
+        if self.libtf_dir:
+            self.symlink_libtf(device)
 
         build_cmd = [
             self.binary_path("env"),

@@ -4,7 +4,7 @@ import numpy as np
 from smartredis import Client
 from tensorflow import keras
 
-from smartsim.ml.tf import freeze_model
+from smartsim.ml.tf import freeze_model, serialize_model
 
 
 def create_tf_mnist_model():
@@ -29,18 +29,33 @@ def create_tf_mnist_model():
 def run(device):
 
     model = create_tf_mnist_model()
-    model_path, inputs, outputs = freeze_model(model, os.getcwd(), "mnist.pb")
 
     client = Client(cluster=False)
-    client.set_model_from_file(
-        "tf_mnist", model_path, "TF", device=device, inputs=inputs, outputs=outputs
-    )
+
+    model_path, inputs, outputs = freeze_model(model, os.getcwd(), "mnist.pb")
 
     mnist_image = np.random.rand(1, 28, 28).astype(np.float32)
     client.put_tensor("mnist_input", mnist_image)
-    client.run_model("tf_mnist", "mnist_input", "mnist_output")
+
+    model_key = "tf_mnist"
+    client.set_model_from_file(
+        model_key, model_path, "TF", device=device, inputs=inputs, outputs=outputs
+    )
+    client.run_model(model_key, "mnist_input", "mnist_output")
 
     pred = client.get_tensor("mnist_output")
+    print(pred)
+    assert len(pred[0]) == 10
+
+    serialized_model, inputs, outputs = serialize_model(model)
+    model_key = "tf_mnist_serialized"
+    client.set_model(
+        model_key, serialized_model, "TF", device=device, inputs=inputs, outputs=outputs
+    )
+
+    client.run_model(model_key, "mnist_input", "mnist_output_serialized")
+
+    pred = client.get_tensor("mnist_output_serialized")
     print(pred)
     assert len(pred[0]) == 10
 

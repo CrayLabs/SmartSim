@@ -125,7 +125,7 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
 
-    def start(self, *args, block=True, summary=False):
+    def start(self, *args, block=True, summary=False, kill_on_interrupt=True):
         """Start passed instances using Experiment launcher
 
         Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
@@ -159,6 +159,11 @@ class Experiment:
         ``Experiment.stop``. This allows for multiple stages of a workflow
         to produce to and consume from the same Orchestrator database.
 
+        If `kill_on_interrupt=True`, then all jobs launched by this
+        experiment are guaranteed to be killed when ^C (SIGINT) signal is
+        received. If `kill_on_interrupt=False`, then it is not guaranteed
+        that all jobs launched by this experiment will be killed, and the
+        zombie processes will need to be manually killed.
 
         :param block: block execution until all non-database
                       jobs are finished, defaults to True
@@ -166,12 +171,20 @@ class Experiment:
         :param summary: print a launch summary prior to launch,
                         defaults to False
         :type summary: bool, optional
+        :param kill_on_interrupt: flag for killing jobs when ^C (SIGINT)
+                                  signal is received.
+
+        :type kill_on_interrupt: bool, optional
         """
         start_manifest = Manifest(*args)
         try:
             if summary:
                 self._launch_summary(start_manifest)
-            self._control.start(manifest=start_manifest, block=block)
+            self._control.start(
+                manifest=start_manifest,
+                block=block,
+                kill_on_interrupt=kill_on_interrupt,
+            )
         except SmartSimError as e:
             logger.error(e)
             raise
@@ -213,7 +226,7 @@ class Experiment:
         """Generate the file structure for an ``Experiment``
 
         ``Experiment.generate`` creates directories for each instance
-        passed to organize Experiments that launch many instances
+        passed to organize Experiments that launch many instances.
 
         If files or directories are attached to ``Model`` objects
         using ``Model.attach_generator_files()``, those files or
@@ -238,7 +251,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def poll(self, interval=10, verbose=True):
+    def poll(self, interval=10, verbose=True, kill_on_interrupt=True):
         """Monitor jobs through logging to stdout.
 
         This method should only be used if jobs were launched
@@ -258,21 +271,29 @@ class Experiment:
         For more verbose logging output, the ``SMARTSIM_LOG_LEVEL``
         environment variable can be set to `debug`
 
+        If `kill_on_interrupt=True`, then all jobs launched by this
+        experiment are guaranteed to be killed when ^C (SIGINT) signal is
+        received. If `kill_on_interrupt=False`, then it is not guaranteed
+        that all jobs launched by this experiment will be killed, and the
+        zombie processes will need to be manually killed.
+
         :param interval: frequency (in seconds) of logging to stdout,
                          defaults to 10 seconds
         :type interval: int, optional
         :param verbose: set verbosity, defaults to True
         :type verbose: bool, optional
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         :raises SmartSimError:
         """
         try:
-            self._control.poll(interval, verbose)
+            self._control.poll(interval, verbose, kill_on_interrupt=kill_on_interrupt)
         except SmartSimError as e:
             logger.error(e)
             raise
 
     def finished(self, entity):
-        """Query if a job has completed
+        """Query if a job has completed.
 
         An instance of ``Model`` or ``Ensemble`` can be passed
         as an argument.
@@ -458,7 +479,7 @@ class Experiment:
 
         :param name: name of the model
         :type name: str
-        :param run_settings: defines how ``Model`` should be run,
+        :param run_settings: defines how ``Model`` should be run
         :type run_settings: RunSettings
         :param params: model parameters for writing into configuration files
         :type params: dict, optional
@@ -491,6 +512,7 @@ class Experiment:
         run_command="auto",
         run_args=None,
         env_vars=None,
+        container=None,
         **kwargs,
     ):
         """Create a ``RunSettings`` instance.
@@ -500,7 +522,7 @@ class Experiment:
         class in SmartSim. If found, the class corresponding
         to that run_command will be created and returned.
 
-        if the local launcher is being used, auto detection will
+        If the local launcher is being used, auto detection will
         be turned off.
 
         If a recognized run command is passed, the ``RunSettings``
@@ -537,6 +559,7 @@ class Experiment:
                 run_command=run_command,
                 run_args=run_args,
                 env_vars=env_vars,
+                container=container,
                 **kwargs,
             )
         except SmartSimError as e:
@@ -632,9 +655,9 @@ class Experiment:
 
         :param port: TCP/IP port, defaults to 6379
         :type port: int, optional
-        :param db_nodes: numver of database shards, defaults to 1
+        :param db_nodes: number of database shards, defaults to 1
         :type db_nodes: int, optional
-        :param batch: Run as a batch workload, defaults to False
+        :param batch: run as a batch workload, defaults to False
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None
         :type hosts: list[str], optional
@@ -650,8 +673,8 @@ class Experiment:
         :type queue: str, optional
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
-        :raises SmartSimError: If detection of launcher or of run command fails
-        :raises SmartSimError: If user indicated an incompatible run command for the launcher
+        :raises SmartSimError: if detection of launcher or of run command fails
+        :raises SmartSimError: if user indicated an incompatible run command for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
@@ -689,7 +712,6 @@ class Experiment:
         except SmartSimError as e:
             logger.error(e)
             raise
-
 
     def summary(self, format="github"):
         """Return a summary of the ``Experiment``
@@ -745,7 +767,9 @@ class Experiment:
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
         if manifest.ensembles or manifest.ray_clusters:
-            summary += f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
+            summary += (
+                f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
+            )
         if manifest.models:
             summary += f"Models: {len(manifest.models)}\n"
 

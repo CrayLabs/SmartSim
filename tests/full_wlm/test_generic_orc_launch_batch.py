@@ -1,7 +1,8 @@
-import pytest
+import os.path as osp
 import time
 
-import os.path as osp
+import pytest
+
 from smartsim import Experiment, status
 
 # retrieved from pytest fixtures
@@ -15,7 +16,7 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-orc-batch"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -24,10 +25,11 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:05")
+        orc.batch_settings.set_walltime("00:02")
     if wlmutils.get_test_launcher() == "cobalt":
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
+        orc.batch_settings.set_walltime("00:02:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -50,7 +52,7 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-cluster-orc-batch-single"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -59,14 +61,15 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:05")
+        orc.batch_settings.set_walltime("00:02")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(30)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
+        orc.batch_settings.set_walltime("00:02:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -89,7 +92,7 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
 
     exp_name = "test-launch-auto-cluster-orc-batch-multi"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -98,14 +101,15 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     )
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
-        orc.batch_settings.set_walltime("00:05")
+        orc.batch_settings.set_walltime("00:03")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(30)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
+        orc.batch_settings.set_walltime("00:03:00")
     orc.set_path(test_dir)
 
     exp.start(orc, block=True)
@@ -120,13 +124,13 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     statuses = exp.get_status(orc)
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
 
-    
+
 def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
     launcher = wlmutils.get_test_launcher()
     exp_name = "test-launch-cluster-orc-batch-reconect"
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -134,13 +138,15 @@ def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     orc.set_path(test_dir)
     if wlmutils.get_test_launcher() == "lsf":
         orc.batch_settings.set_account(wlmutils.get_test_account())
+        orc.batch_settings.set_walltime("00:03")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
-        time.sleep(30)
+        time.sleep(120)
         orc.batch_settings.set_account(wlmutils.get_test_account())
         orc.batch_settings.set_queue("debug-flat-quad")
+        orc.batch_settings.set_walltime("00:03:00")
 
     exp.start(orc, block=True)
 

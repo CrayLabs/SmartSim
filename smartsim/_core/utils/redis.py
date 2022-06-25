@@ -30,9 +30,12 @@ import time
 import redis
 from rediscluster import RedisCluster
 from rediscluster.exceptions import ClusterDownError, RedisClusterException
+from smartredis import Client
+from smartredis.error import RedisReplyError
 
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
+from ...entity import DBModel, DBScript
 from ...error import SSInternalError
 from ...log import get_logger
 from ..config import CONFIG
@@ -62,7 +65,7 @@ def create_cluster(hosts, ports):  # cov-wlm
             ip_list.append(address)
 
     # call cluster command
-    redis_cli = CONFIG.redis_cli
+    redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "--cluster", "create"]
     cmd += ip_list
     cmd += ["--cluster-replicas", "0"]
@@ -110,3 +113,100 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
             trials -= 1
     if trials == 0:
         raise SSInternalError("Cluster setup could not be verified")
+
+
+def db_is_active(hosts, ports, num_shards):
+    """Check if a DB is running
+
+    if the DB is clustered, check cluster status, otherwise
+    just ping DB.
+
+    :param hosts: list of hosts
+    :type hosts: list[str]
+    :param ports: list of ports
+    :type ports: list[int]
+    :param num_shards: Number of DB shards
+    :type num_shards: int
+    :return: Whether DB is running
+    :rtype: bool
+    """
+    # if single shard
+    if num_shards < 2:
+        host = hosts[0]
+        port = ports[0]
+        try:
+            client = redis.Redis(host=host, port=port, db=0)
+            if client.ping():
+                return True
+            return False
+        except redis.RedisError:
+            return False
+    # if a cluster
+    else:
+        try:
+            check_cluster_status(hosts, ports, trials=1)
+            return True
+        # we expect this to fail if the cluster is not active
+        except SSInternalError:
+            return False
+
+
+def set_ml_model(db_model: DBModel, client: Client):
+    logger.debug(f"Adding DBModel named {db_model.name}")
+    devices = db_model._enumerate_devices()
+
+    for device in devices:
+        try:
+            if db_model.is_file:
+                client.set_model_from_file(
+                    name=db_model.name,
+                    model_file=str(db_model.file),
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs,
+                )
+            else:
+                client.set_model(
+                    name=db_model.name,
+                    model=db_model.model,
+                    backend=db_model.backend,
+                    device=device,
+                    batch_size=db_model.batch_size,
+                    min_batch_size=db_model.min_batch_size,
+                    tag=db_model.tag,
+                    inputs=db_model.inputs,
+                    outputs=db_model.outputs,
+                )
+        except RedisReplyError as error:  # pragma: no cover
+            logger.error("Error while setting model on orchestrator.")
+            raise error
+
+
+def set_script(db_script: DBScript, client: Client):
+    logger.debug(f"Adding DBScript named {db_script.name}")
+
+    devices = db_script._enumerate_devices()
+
+    for device in devices:
+        try:
+            if db_script.is_file:
+                client.set_script_from_file(
+                    name=db_script.name, file=str(db_script.file), device=device
+                )
+            else:
+                if isinstance(db_script.script, str):
+                    client.set_script(
+                        name=db_script.name, script=db_script.script, device=device
+                    )
+                else:
+                    client.set_function(
+                        name=db_script.name, function=db_script.script, device=device
+                    )
+
+        except RedisReplyError as error:  # pragma: no cover
+            logger.error("Error while setting model on orchestrator.")
+            raise error

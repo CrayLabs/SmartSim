@@ -2,8 +2,8 @@ from pprint import pformat
 
 import pytest
 
-from smartsim.settings import BsubBatchSettings, JsrunSettings
 from smartsim.error import SSUnsupportedError
+from smartsim.settings import BsubBatchSettings, JsrunSettings
 
 # ------ Jsrun ------------------------------------------------
 
@@ -91,11 +91,54 @@ def test_jsrun_mpmd():
 
 def test_catch_colo_mpmd():
     settings = JsrunSettings("python")
-    settings.colocated_db_settings = {"port": 6379,
-                                      "cpus": 1}
+    settings.colocated_db_settings = {"port": 6379, "cpus": 1}
     settings_2 = JsrunSettings("python")
     with pytest.raises(SSUnsupportedError):
         settings.make_mpmd(settings_2)
+
+
+@pytest.mark.parametrize("reserved_arg", ["chdir", "h"])
+def test_no_set_reserved_args(reserved_arg):
+    srun = JsrunSettings("python")
+    srun.set(reserved_arg)
+    assert reserved_arg not in srun.run_args
+
+
+def test_set_tasks():
+    rs = JsrunSettings("python")
+    rs.set_tasks(6)
+    assert rs.run_args["np"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_tasks("not an int")
+
+
+def test_set_tasks_per_node():
+    rs = JsrunSettings("python")
+    rs.set_tasks_per_node(6)
+    assert rs.run_args["tasks_per_rs"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_tasks_per_node("not an int")
+
+
+def test_set_cpus_per_task():
+    rs = JsrunSettings("python")
+    rs.set_cpus_per_task(6)
+    assert rs.run_args["cpu_per_rs"] == 6
+
+    with pytest.raises(ValueError):
+        rs.set_cpus_per_task("not an int")
+
+
+def test_set_memory_per_node():
+    rs = JsrunSettings("python")
+    rs.set_memory_per_node(8000)
+    assert rs.run_args["memory_per_rs"] == 8000
+
+    with pytest.raises(ValueError):
+        rs.set_memory_per_node("not_an_int")
+
 
 # ---- Bsub Batch ---------------------------------------------------
 

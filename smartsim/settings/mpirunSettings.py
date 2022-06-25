@@ -24,19 +24,30 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .base import RunSettings
-from ..error import SSUnsupportedError
+import subprocess
+import re
 
-class MpirunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        """Settings to run job with ``mpirun`` command (OpenMPI)
+from ..error import SSUnsupportedError
+from ..log import get_logger
+from .base import RunSettings
+
+logger = get_logger(__name__)
+
+
+class _OpenMPISettings(RunSettings):
+    """Base class for all common arguments of OpenMPI run commands"""
+
+    def __init__(
+        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+    ):
+        """Settings to format run job with an OpenMPI binary
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
         environment
 
         Any arguments passed in the ``run_args`` dict will be converted
-        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        command line arguments and prefixed with ``--``. Values of
         None can be provided for arguments that do not have values.
 
         :param exe: executable
@@ -51,12 +62,14 @@ class MpirunSettings(RunSettings):
         super().__init__(
             exe,
             exe_args,
-            run_command="mpirun",
+            run_command=run_command,
             run_args=run_args,
             env_vars=env_vars,
             **kwargs,
         )
         self.mpmd = []
+
+    reserved_run_args = {"wd", "wdir"}
 
     def make_mpmd(self, mpirun_settings):
         """Make a mpmd workload by combining two ``mpirun`` commands
@@ -119,6 +132,8 @@ class MpirunSettings(RunSettings):
     def set_hostlist(self, host_list):
         """Set the hostlist for the ``mpirun`` command
 
+        This sets ``--host``
+
         :param host_list: list of host names
         :type host_list: str | list[str]
         :raises TypeError: if not str or list of str
@@ -131,8 +146,71 @@ class MpirunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
 
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to set the hostlist
+
+        This sets ``--hostfile``
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        self.run_args["hostfile"] = str(file_path)
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        This sets ``--verbose``
+
+        :param verbose: Whether the job should be run verbosely
+        :type verbose: bool
+        """
+        if verbose:
+            self.run_args["verbose"] = None
+        else:
+            self.run_args.pop("verbose", None)
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        This sets ``--quiet``
+
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool
+        """
+        if quiet:
+            self.run_args["quiet"] = None
+        else:
+            self.run_args.pop("quiet", None)
+
+    def set_broadcast(self, dest_path=None):
+        """Copy the specified executable(s) to remote machines
+
+        This sets ``--preload-binary``
+
+        :param dest_path: Destination path (Ignored)
+        :type dest_path: str | None
+        """
+        if dest_path is not None and isinstance(dest_path, str):
+            logger.warning(
+                (
+                    f"{type(self)} cannot set a destination path during broadcast. "
+                    "Using session directory instead"
+                )
+            )
+        self.run_args["preload-binary"] = None
+
+    def set_walltime(self, walltime):
+        """Set the maximum number of seconds that a job will run
+
+        This sets ``--timeout``
+
+        :param walltime: number like string of seconds that a job will run in secs
+        :type walltime: str
+        """
+        self.run_args["timeout"] = str(walltime)
+
     def format_run_args(self):
-        """return a list of OpenMPI formatted run arguments
+        """Return a list of OpenMPI formatted run arguments
 
         :return: list of OpenMPI arguments for these settings
         :rtype: list[str]
@@ -153,16 +231,10 @@ class MpirunSettings(RunSettings):
     def format_env_vars(self):
         """Format the environment variables for mpirun
 
-        Automatically exports ``PYTHONPATH``, ``LD_LIBRARY_PATH``
-        and ``PATH``
-
         :return: list of env vars
         :rtype: list[str]
         """
         formatted = []
-        presets = ["PATH", "LD_LIBRARY_PATH", "PYTHONPATH"]
-        for preset in presets:
-            formatted.extend(["-x", preset])
 
         if self.env_vars:
             for name, value in self.env_vars.items():
@@ -171,3 +243,99 @@ class MpirunSettings(RunSettings):
                 else:
                     formatted += ["-x", name]
         return formatted
+
+
+class MpirunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpirun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpirun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
+
+        completed_process = subprocess.run(
+            [self.run_command, "-V"], capture_output=True
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
+
+        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_statement):
+            logger.warning("Non-OpenMPI implementation of `mpirun` detected")
+
+
+class MpiexecSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``mpiexec`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``mpiexec`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
+
+        completed_process = subprocess.run(
+            [self.run_command, "-V"], capture_output=True
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
+
+        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
+            logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
+
+
+class OrterunSettings(_OpenMPISettings):
+    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+        """Settings to run job with ``orterun`` command (OpenMPI)
+
+        Note that environment variables can be passed with a None
+        value to signify that they should be exported from the current
+        environment
+
+        Any arguments passed in the ``run_args`` dict will be converted
+        into ``orterun`` arguments and prefixed with ``--``. Values of
+        None can be provided for arguments that do not have values.
+
+        :param exe: executable
+        :type exe: str
+        :param exe_args: executable arguments, defaults to None
+        :type exe_args: str | list[str], optional
+        :param run_args: arguments for run command, defaults to None
+        :type run_args: dict[str, str], optional
+        :param env_vars: environment vars to launch job with, defaults to None
+        :type env_vars: dict[str, str], optional
+        """
+        super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
+
+        completed_process = subprocess.run(
+            [self.run_command, "-V"], capture_output=True
+        )  # type: subprocess.CompletedProcess
+        version_statement = completed_process.stdout.decode()
+
+        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
+            logger.warning("Non-OpenMPI implementation of `orterun` detected")

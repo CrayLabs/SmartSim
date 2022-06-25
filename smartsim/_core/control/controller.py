@@ -26,11 +26,16 @@
 
 import os.path as osp
 import pickle
+import signal
 import threading
 import time
 
+from smartredis import Client
+from smartredis.error import RedisConnectionError, RedisReplyError
+
+from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBModel, DBNode, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -60,7 +65,7 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, manifest, block=True):
+    def start(self, manifest, block=True, kill_on_interrupt=True):
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -69,23 +74,20 @@ class Controller:
         The controller will start the job-manager thread upon
         execution of all jobs.
         """
-        try:
-            self._launch(manifest)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        # register custom signal handler for ^C (SIGINT)
+        signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
+        self._launch(manifest)
 
-            # start the job manager thread if not already started
-            if not self._jobs.actively_monitoring:
-                self._jobs.start()
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
+        # start the job manager thread if not already started
+        if not self._jobs.actively_monitoring:
+            self._jobs.start()
 
         # block until all non-database jobs are complete
         if block:
-            # poll handles it's own keyboard interrupt as
+            # poll handles its own keyboard interrupt as
             # it may be called seperately
-            self.poll(5, True)
-
+            self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
     def orchestrator_active(self):
@@ -97,33 +99,30 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self, interval, verbose):
+    def poll(self, interval, verbose, kill_on_interrupt=True):
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
         :type interval: int
         :param verbose: set verbosity
         :type verbose: bool
+        :param kill_on_interrupt: flag for killing jobs when SIGINT is received
+        :type kill_on_interrupt: bool, optional
         """
-        try:
-            to_monitor = self._jobs.jobs
-            while len(to_monitor) > 0:
-                time.sleep(interval)
+        self._jobs.kill_on_interrupt = kill_on_interrupt
+        to_monitor = self._jobs.jobs
+        while len(to_monitor) > 0:
+            time.sleep(interval)
 
-                # acquire lock to avoid "dictionary changed during iteration" error
-                # without having to copy dictionary each time.
-                if verbose:
-                    JM_LOCK.acquire()
-                    try:
-                        for job in to_monitor.values():
-                            logger.info(job)
-                    finally:
-                        JM_LOCK.release()
-
-        except KeyboardInterrupt:
-            self._jobs.signal_interrupt()
-            raise
-
+            # acquire lock to avoid "dictionary changed during iteration" error
+            # without having to copy dictionary each time.
+            if verbose:
+                JM_LOCK.acquire()
+                try:
+                    for job in to_monitor.values():
+                        logger.info(job)
+                finally:
+                    JM_LOCK.release()
 
     def finished(self, entity):
         """Return a boolean indicating wether a job has finished or not
@@ -291,8 +290,11 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:
+        for rc in manifest.ray_clusters:  # cov-wlm
             rc._update_workers()
+
+        if self.orchestrator_active:
+            self._set_dbobjects(manifest)
 
         # create all steps prior to launch
         steps = []
@@ -302,7 +304,7 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as seperate job steps, aka not in a batch
+                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
@@ -464,7 +466,6 @@ class Controller:
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
         entity.run_settings.update_env(client_env)
 
-
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle
 
@@ -591,3 +592,41 @@ class Controller:
             return orc
         finally:
             JM_LOCK.release()
+
+    def _set_dbobjects(self, manifest):
+        if not manifest.has_db_objects:
+            return
+
+        db_addresses = self._jobs.get_db_host_addresses()
+
+        hosts = list(set([address.split(":")[0] for address in db_addresses]))
+        ports = list(set([address.split(":")[-1] for address in db_addresses]))
+
+        if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
+            raise SSInternalError("Cannot set DB Objects, DB is not running")
+
+        client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+
+        for model in manifest.models:
+            if not model.colocated:
+                for db_model in model._db_models:
+                    set_ml_model(db_model, client)
+                for db_script in model._db_scripts:
+                    set_script(db_script, client)
+
+        for ensemble in manifest.ensembles:
+            for db_model in ensemble._db_models:
+                set_ml_model(db_model, client)
+            for db_script in ensemble._db_scripts:
+                set_script(db_script, client)
+            for entity in ensemble:
+                if not entity.colocated:
+                    # Set models which could belong only
+                    # to the entities and not to the ensemble
+                    # but avoid duplicates
+                    for db_model in entity._db_models:
+                        if db_model not in ensemble._db_models:
+                            set_ml_model(db_model, client)
+                    for db_script in entity._db_scripts:
+                        if db_script not in ensemble._db_scripts:
+                            set_script(db_script, client)

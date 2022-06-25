@@ -134,8 +134,13 @@ class SrunStep(Step):
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            env_var_str, comma_separated_env_vars = self.run_settings.format_env_vars()
-            srun_cmd += ["--export", env_var_str]
+            (
+                env_var_str,
+                comma_separated_env_vars,
+            ) = self.run_settings.format_comma_sep_env_vars()
+
+            if len(env_var_str) > 0:
+                srun_cmd += ["--export", env_var_str]
 
             if comma_separated_env_vars:
                 srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
@@ -151,6 +156,9 @@ class SrunStep(Step):
             bash = shutil.which("bash")
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
+
+        if self.run_settings.container:
+            srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         srun_cmd += self._build_exe()
         return srun_cmd
@@ -195,8 +203,9 @@ class SrunStep(Step):
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += ["--job-name", self.name]
-            (env_var_str, _) = mpmd.format_env_vars()
-            cmd += ["--export", env_var_str]
+            (env_var_str, _) = mpmd.format_comma_sep_env_vars()
+            if len(env_var_str) > 0:
+                cmd += ["--export", env_var_str]
             cmd += mpmd.exe
             cmd += mpmd.exe_args
 

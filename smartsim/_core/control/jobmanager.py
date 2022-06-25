@@ -71,6 +71,8 @@ class JobManager:
         self._launcher = launcher  # reference to launcher
         self._lock = lock  # thread lock
 
+        self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
+
     def start(self):
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
@@ -330,18 +332,25 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def signal_interrupt(self):
+    def signal_interrupt(self, sig, frame):
+        """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
-            logger.warning("SmartSim process interrupted before resource cleanup")
-            logger.warning("You may need to manually stop the following:")
+            if self.kill_on_interrupt:
+                for _, job in self().items():
+                    if job.status not in TERMINAL_STATUSES:
+                        self._launcher.stop(job.name)
+            else:
+                logger.warning("SmartSim process interrupted before resource cleanup")
+                logger.warning("You may need to manually stop the following:")
 
-            for job_name, job in self().items():
-                if job.is_task:
-                    # this will be the process id
-                    logger.warning(f"Task {job_name} with id: {job.jid}")
-                else:
-                    logger.warning(f"Job {job_name} with {job.launched_with} id: {job.jid}")
-
+                for job_name, job in self().items():
+                    if job.is_task:
+                        # this will be the process id
+                        logger.warning(f"Task {job_name} with id: {job.jid}")
+                    else:
+                        logger.warning(
+                            f"Job {job_name} with {job.launched_with} id: {job.jid}"
+                        )
 
     def _thread_sleep(self):
         """Sleep the job manager for a specific constant

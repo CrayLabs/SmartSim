@@ -24,23 +24,14 @@ COPY . /home/craylabs/SmartSim
 RUN chown craylabs:root -R SmartSim
 USER craylabs
 
-RUN cd SmartSim && \
-    SMARTSIM_SUFFIX=dev python -m pip install .
+RUN cd SmartSim && SMARTSIM_SUFFIX=dev python -m pip install .
 
-# TODO set SmartRedis version when thats put in
-#RUN git clone https://github.com/CrayLabs/SmartSim.git --branch develop --depth=1 \
-#    && cd SmartSim \
-#    && python -m pip install .[ml,ray]
-
-# Jupyter
-RUN python -m pip install ipython ipykernel \
-    jupyter jupyterlab \
-    && rm -rf ~/.cache/pip
-
-RUN echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
+RUN python -m pip install smartsim[ml,dev]==0.4.1 jupyter jupyterlab matplotlib && \
+    echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
     smart clobber && \
-    smart build --device cpu -v --no_tf
+    smart build --device cpu -v && \
+    chown craylabs:root -R /home/craylabs/.local && \
+    rm -rf ~/.cache/pip
 
-SHELL ["bash", "-c"]
-CMD ["/home/craylabs/.local/bin/jupyter", "lab", "--port", "8888", "--no-browser", "--ip=0.0.0.0"]
+CMD ["/bin/bash", "-c", "PATH=/home/craylabs/.local/bin:$PATH /home/craylabs/.local/bin/jupyter lab --port 8888 --no-browser --ip=0.0.0.0"]

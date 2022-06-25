@@ -26,11 +26,12 @@
 
 from pprint import pformat
 
-from .base import BatchSettings, RunSettings
 from ..error import SSUnsupportedError
-
 from ..log import get_logger
+from .base import BatchSettings, RunSettings
+
 logger = get_logger(__name__)
+
 
 class JsrunSettings(RunSettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
@@ -48,7 +49,11 @@ class JsrunSettings(RunSettings):
         :type env_vars: dict[str, str], optional
         """
         super().__init__(
-            exe, exe_args, run_command="jsrun", run_args=run_args, env_vars=env_vars
+            exe,
+            exe_args,
+            run_command="jsrun",
+            run_args=run_args,
+            env_vars=env_vars,
         )
 
         # Parameters needed for MPMD run
@@ -56,6 +61,8 @@ class JsrunSettings(RunSettings):
         self.mpmd_preamble_lines = []
         self.mpmd = []
         self.individual_suffix = None
+
+    reserved_run_args = {"chdir", "h"}
 
     def set_num_rs(self, num_rs):
         """Set the number of resource sets to use
@@ -81,7 +88,9 @@ class JsrunSettings(RunSettings):
         if self.colocated_db_settings == True:
             db_cpus = self.colocated_db_settings["db_cpus"]
             if cpus_per_rs < db_cpus:
-                raise ValueError(f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than db_cpus ({db_cpus})")
+                raise ValueError(
+                    f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than db_cpus ({db_cpus})"
+                )
         if isinstance(cpus_per_rs, str):
             self.run_args["cpu_per_rs"] = cpus_per_rs
         else:
@@ -140,15 +149,6 @@ class JsrunSettings(RunSettings):
         """
         self.set_tasks_per_rs(tasks_per_node)
 
-    def set_hostlist(self, host_list):
-        """This function has no effect.
-
-        This function is only available to unify LSFSettings
-        to other WLM settings classes.
-
-        """
-        pass
-
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of cpus per tasks.
 
@@ -157,7 +157,27 @@ class JsrunSettings(RunSettings):
         :param cpus_per_task: number of cpus per resource set
         :type cpus_per_task: int
         """
-        self.set_cpus_per_rs(cpus_per_task)
+        self.set_cpus_per_rs(int(cpus_per_task))
+
+    def set_memory_per_rs(self, memory_per_rs):
+        """Specify the number of megabytes of memory to assign to a resource set
+
+        This sets ``--memory_per_rs``
+
+        :param memory_per_rs: Number of megabytes per rs
+        :type memory_per_rs: int
+        """
+        self.run_args["memory_per_rs"] = int(memory_per_rs)
+
+    def set_memory_per_node(self, memory_per_node):
+        """Specify the number of megabytes of memory to assign to a resource set
+
+        Alias for `set_memory_per_rs`.
+
+        :param memory_per_node: Number of megabytes per rs
+        :type memory_per_node: int
+        """
+        self.set_memory_per_rs(memory_per_node)
 
     def set_binding(self, binding):
         """Set binding
@@ -324,7 +344,7 @@ class JsrunSettings(RunSettings):
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
             if cpu_per_rs_flag in self.run_args:
                 cpus_per_flag_set = True
-                cpu_per_rs =  self.run_args[cpu_per_rs_flag]
+                cpu_per_rs = self.run_args[cpu_per_rs_flag]
                 if cpu_per_rs < db_cpus:
                     msg = f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, "
                     msg += f"but colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
@@ -341,10 +361,12 @@ class JsrunSettings(RunSettings):
         for rs_per_host_flag in ["rs_per_host", "r"]:
             if rs_per_host_flag in self.run_args:
                 rs_per_host_set = True
-                rs_per_host =  self.run_args[rs_per_host_flag]
+                rs_per_host = self.run_args[rs_per_host_flag]
                 if rs_per_host != 1:
                     msg = f"{rs_per_host_flag} flag was set to {rs_per_host}, "
-                    msg += f"but colocated DB requires running ONE resource set per host. "
+                    msg += (
+                        f"but colocated DB requires running ONE resource set per host. "
+                    )
                     msg += f"Automatically setting {rs_per_host_flag} flag to 1"
                     logger.info(msg)
                     self.run_args[rs_per_host_flag] = 1
@@ -353,6 +375,7 @@ class JsrunSettings(RunSettings):
             msg += f" Automatically setting --rs_per_host==1"
             logger.info(msg)
             self.set_rs_per_host(1)
+
 
 class BsubBatchSettings(BatchSettings):
     def __init__(

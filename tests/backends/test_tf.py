@@ -12,7 +12,7 @@ tf_available = True
 try:
     from tensorflow import keras
 
-    from smartsim.ml.tf import freeze_model
+    from smartsim.ml.tf import freeze_model, serialize_model
 except (ImportError, SmartSimError) as e:
     print(e)
     tf_available = False
@@ -35,11 +35,11 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     """
 
     exp_name = "test_keras_model"
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     test_device = mlutils.get_test_device()
 
-    db = wlmutils.get_orchestrator(nodes=1, port=6780)
+    db = wlmutils.get_orchestrator(nodes=1)
     db.set_path(test_dir)
     exp.start(db)
 
@@ -85,11 +85,19 @@ def create_tf_model():
 
 @pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
 def test_freeze_model(fileutils):
-    test_name = "test_tf_freeze_model"
-    test_dir = fileutils.make_test_dir(test_name)
+    test_dir = fileutils.make_test_dir()
 
     model = create_tf_model()
     model_path, inputs, outputs = freeze_model(model, test_dir, "mnist.pb")
     assert len(inputs) == 1
     assert len(outputs) == 1
     assert Path(model_path).is_file()
+
+
+@pytest.mark.skipif(not tf_available, reason="Requires Tensorflow and Keras")
+def test_serialize_model():
+    model = create_tf_model()
+    model_serialized, inputs, outputs = serialize_model(model)
+    assert len(inputs) == 1
+    assert len(outputs) == 1
+    assert len(model_serialized) > 0

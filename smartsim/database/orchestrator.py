@@ -23,23 +23,22 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
 import itertools
+import sys
 from os import getcwd
 from shlex import split as sh_split
 from warnings import simplefilter, warn
 
 import psutil
-import redis
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
-from .._core.utils import check_cluster_status
 from .._core.config import CONFIG
+from .._core.utils import db_is_active
 from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
-from ..error import SmartSimError, SSConfigError, SSInternalError, SSUnsupportedError
+from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
 from ..settings import (
     AprunSettings,
@@ -129,10 +128,10 @@ class Orchestrator(EntityList):
             raise SmartSimError(msg)
 
         if launcher == "local" and batch:
-            msg = "Local launcher can not be launched with batch=True"
+            msg = "Local orchestrator can not be launched with batch=True"
             raise SmartSimError(msg)
         if run_command == "aprun" and batch and single_cmd:
-            msg = "aprun can launched orchestrator with batch=True and single_cmd=True. "
+            msg = "aprun can not launch an orchestrator with batch=True and single_cmd=True. "
             msg += "Automatically switching to single_cmd=False."
             logger.info(msg)
             single_cmd = False
@@ -179,7 +178,7 @@ class Orchestrator(EntityList):
             # will raise SSConfigError if not found
             self._redis_exe
             self._redis_conf
-            CONFIG.redis_cli
+            CONFIG.database_cli
         except SSConfigError as e:
             msg = "SmartSim not installed with pre-built extensions (Redis)\n"
             msg += "Use the `smart` cli tool to install needed extensions\n"
@@ -261,25 +260,7 @@ class Orchestrator(EntityList):
         if not self._hosts:
             return False
 
-        # if single shard
-        if self.num_shards < 2:
-            host = self._hosts[0]
-            port = self.ports[0]
-            try:
-                client = redis.Redis(host=host, port=port, db=0)
-                if client.ping():
-                    return True
-                return False
-            except redis.RedisError:
-                return False
-        # if a cluster
-        else:
-            try:
-                check_cluster_status(self._hosts, self.ports, trials=1)
-                return True
-            # we expect this to fail if the cluster is not active
-            except SSInternalError:
-                return False
+        return db_is_active(self._hosts, self.ports, self.num_shards)
 
     @property
     def _rai_module(self):
@@ -299,11 +280,11 @@ class Orchestrator(EntityList):
 
     @property
     def _redis_exe(self):
-        return CONFIG.redis_exe
+        return CONFIG.database_exe
 
     @property
     def _redis_conf(self):
-        return CONFIG.redis_conf
+        return CONFIG.database_conf
 
     def set_cpus(self, num_cpus):
         """Set the number of CPUs available to each database shard
@@ -534,8 +515,7 @@ class Orchestrator(EntityList):
         return batch_settings
 
     def _build_run_settings(self, exe, exe_args, **kwargs):
-        run_command = kwargs.get("run_command")
-        run_args = kwargs.get("run_args", {})
+        run_args = kwargs.pop("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
         mpmd_nodes = single_cmd and db_nodes > 1
@@ -557,7 +537,7 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
             run_settings = create_run_settings(
-                exe=exe, exe_args=exe_args, run_args=run_args, **kwargs
+                exe=exe, exe_args=exe_args, run_args=run_args.copy(), **kwargs
             )
 
             if self.launcher != "local":
@@ -566,47 +546,39 @@ class Orchestrator(EntityList):
         if self.launcher != "local":
             run_settings.set_tasks_per_node(1)
 
-        if isinstance(run_settings, SrunSettings):
-            run_args["nodes"] = 1 if not mpmd_nodes else db_nodes
+        # Put it back in case it is needed again
+        kwargs["run_args"] = run_args
 
         return run_settings
 
     def _build_run_settings_lsf(self, exe, exe_args, **kwargs):
-        run_args = kwargs.get("run_args", {}).copy()
+        run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
-        old_host = None
         erf_rs = None
+
+        # We always run the DB on cpus 0:cpus_per_shard-1
+        # and gpus 0:gpus_per_shard-1
         for shard_id, args in enumerate(exe_args):
             host = shard_id
             run_args["launch_distribution"] = "packed"
 
-            run_settings = JsrunSettings(exe, args, run_args=run_args)
+            run_settings = JsrunSettings(exe, args, run_args=run_args.copy())
             run_settings.set_binding("none")
 
             # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
             run_settings.set_individual_output("_%t")
-            # tell step to create a mpmd executable even if we only have one task
-            # because we need to specify the host
-            if host != old_host:
-                assigned_smts = 0
-                assigned_gpus = 0
-            old_host = host
 
             erf_sets = {
                 "rank": str(shard_id),
                 "host": str(1 + host),
-                "cpu": "{" + f"{assigned_smts}:{cpus_per_shard}" + "}",
+                "cpu": "{" + f"0:{cpus_per_shard}" + "}",
             }
 
-            assigned_smts += cpus_per_shard
             if gpus_per_shard > 1:  # pragma: no-cover
-                erf_sets["gpu"] = (
-                    "{" + f"{assigned_gpus}-{assigned_gpus+self.gpus_per_shard-1}" + "}"
-                )
+                erf_sets["gpu"] = "{" + f"0-{gpus_per_shard-1}" + "}"
             elif gpus_per_shard > 0:
-                erf_sets["gpu"] = "{" + f"{assigned_gpus}" + "}"
-            assigned_gpus += gpus_per_shard
+                erf_sets["gpu"] = "{" + str(0) + "}"
 
             run_settings.set_erf_sets(erf_sets)
 
@@ -616,16 +588,13 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd()
                 erf_rs = run_settings
 
+        kwargs["run_args"] = run_args
         return erf_rs
 
     def _initialize_entities(self, **kwargs):
-        port = kwargs.get("port", 6379)
         self.db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
 
-        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
-
-        cluster = not bool(self.db_nodes < 3)
         if int(self.db_nodes) == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
@@ -634,60 +603,76 @@ class Orchestrator(EntityList):
                 "Local Orchestrator does not support multiple database shards"
             )
 
+        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
+
         if mpmd_nodes:
-            exe_args_mpmd = []
+            self._initialize_entities_mpmd(**kwargs)
+        else:
+            port = kwargs.get("port", 6379)
+            cluster = not bool(self.db_nodes < 3)
+
+            for db_id in range(self.db_nodes):
+                db_node_name = "_".join((self.name, str(db_id)))
+
+                # create the exe_args list for launching multiple databases
+                # per node. also collect port range for dbnode
+                start_script_args = self._get_start_script_args(
+                    db_node_name, port, cluster
+                )
+
+                exe_args = " ".join(start_script_args)
+
+                # if only launching 1 db per command, we don't need a list of exe args lists
+                run_settings = self._build_run_settings(
+                    sys.executable, exe_args, **kwargs
+                )
+
+                node = DBNode(
+                    db_node_name,
+                    self.path,
+                    run_settings,
+                    [port],
+                    [db_node_name + ".out"],
+                )
+                self.entities.append(node)
+
+            self.ports = [port]
+
+    def _initialize_entities_mpmd(self, **kwargs):
+        port = kwargs.get("port", 6379)
+        cluster = not bool(self.db_nodes < 3)
+
+        exe_args_mpmd = []
 
         for db_id in range(self.db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
-            if not mpmd_nodes:
-                db_node_name = db_shard_name
-            else:
-                db_node_name = self.name
-
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
-            start_script_args = [
-                "-m",
-                "smartsim._core.entrypoints.redis", # entrypoint
-                f"+ifname={self._interface}",  # pass interface to start script
-                "+command",  # command flag for argparser
-                self._redis_exe,  # redis-server
-                self._redis_conf,  # redis6.conf file
-                self._rai_module,  # redisai.so
-                "--port",  # redis port
-                str(port),  # port number
-            ]
-            if cluster:
-                start_script_args += self._get_cluster_args(db_shard_name, port)
-
+            start_script_args = self._get_start_script_args(
+                db_shard_name, port, cluster
+            )
             exe_args = " ".join(start_script_args)
+            exe_args_mpmd.append(sh_split(exe_args))
 
-            if not mpmd_nodes:
-                # if only launching 1 db_per_host, we don't need a list of exe args lists
-                run_settings = self._build_run_settings(sys.executable, exe_args, **kwargs)
-
-                node = DBNode(db_node_name, self.path, run_settings, [port])
-                self.entities.append(node)
-            else:
-                exe_args_mpmd.append(sh_split(exe_args))
-
-        if mpmd_nodes:
-            if self.launcher == "lsf":
-                run_settings = self._build_run_settings_lsf(
-                    sys.executable, exe_args_mpmd, **kwargs
-                )
-            else:
-                run_settings = self._build_run_settings(
-                    sys.executable, exe_args_mpmd, **kwargs
-                )
-            node = DBNode(db_node_name, self.path, run_settings, [port])
-            node._mpmd = True
-            node._shard_ids = range(self.db_nodes)
-            self.entities.append(node)
+        if self.launcher == "lsf":
+            run_settings = self._build_run_settings_lsf(
+                sys.executable, exe_args_mpmd, **kwargs
+            )
+            output_files = [
+                "_".join((self.name, str(db_id))) + ".out"
+                for db_id in range(self.db_nodes)
+            ]
+        else:
+            run_settings = self._build_run_settings(
+                sys.executable, exe_args_mpmd, **kwargs
+            )
+            output_files = [self.name + ".out"]
+        node = DBNode(self.name, self.path, run_settings, [port], output_files)
+        node._mpmd = True
+        node._num_shards = self.db_nodes
+        self.entities.append(node)
 
         self.ports = [port]
-
-
 
     @staticmethod
     def _get_cluster_args(name, port):
@@ -695,6 +680,23 @@ class Orchestrator(EntityList):
         cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args
+
+    def _get_start_script_args(self, name, port, cluster):
+        start_script_args = [
+            "-m",
+            "smartsim._core.entrypoints.redis",  # entrypoint
+            f"+ifname={self._interface}",  # pass interface to start script
+            "+command",  # command flag for argparser
+            self._redis_exe,  # redis-server
+            self._redis_conf,  # redis6.conf file
+            self._rai_module,  # redisai.so
+            "--port",  # redis port
+            str(port),  # port number
+        ]
+        if cluster:
+            start_script_args += self._get_cluster_args(name, port)
+
+        return start_script_args
 
     def _get_db_hosts(self):
         hosts = []
@@ -887,7 +889,7 @@ class CobaltOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "CobaltOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='cobalt', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,
@@ -967,7 +969,7 @@ class LSFOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "LSFOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='lsf', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         if single_cmd != True:
             raise SSUnsupportedError(
                 "LSFOrchestrator can only be run with single_cmd=True (MPMD)."
@@ -1044,7 +1046,7 @@ class SlurmOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "SlurmOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='slurm', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,
@@ -1110,7 +1112,7 @@ class PBSOrchestrator(Orchestrator):
         simplefilter("once", DeprecationWarning)
         msg = "PBSOrchestrator(...) is deprecated and will be removed in a future release.\n"
         msg += "Please update your code to use Orchestrator(launcher='pbs', ...)."
-        warn(msg, DeprecationWarning)
+        warn(msg, DeprecationWarning, stacklevel=2)
         super().__init__(
             port,
             interface,

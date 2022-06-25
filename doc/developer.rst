@@ -4,7 +4,7 @@ Developer
 *********
 
 This section details common practices and tips for contributors
-to SmartSim and SmartRedis
+to SmartSim and SmartRedis.
 
 ================
 Testing SmartSim
@@ -37,7 +37,7 @@ Local
 =====
 
 There are two levels of testing in SmartSim. The first
-runs by default and doesn't launch any jobs out onto
+runs by default and does not launch any jobs out onto
 a system through a workload manager like Cobalt.
 
 If any of the above commands are used, the test suite will
@@ -111,8 +111,8 @@ Please check the following before submitting a pull request to the SmartSim repo
   1) Your feature is on a new branch off master.
   2) You are merging the feature branch from your fork into the main repository.
   3) All unnecessary whitespace has been purged from your code.
-  4) For Python code changes, Black and isort have been applied to format code and sort imports
-  5) Pylint errors have been minimized as much as possible
+  4) For Python code changes, Black and isort have been applied to format code and sort imports.
+  5) Pylint errors have been minimized as much as possible.
   6) All your code has been appropriately documented.
   7) The PR description is clear and concise.
   8) You have requested a review.
@@ -120,7 +120,7 @@ Please check the following before submitting a pull request to the SmartSim repo
 Merging
 =======
 
-When merging there are a few guidelines to follow
+When merging, there are a few guidelines to follow
 
    - Wrap all merge messages to 70 characters per line.
 

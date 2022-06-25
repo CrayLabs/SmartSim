@@ -23,7 +23,7 @@ TODO
 
 def test_ensemble(fileutils):
     exp = Experiment("gen-test", launcher="local")
-    test_dir = fileutils.get_test_dir("gen_ensemble_test")
+    test_dir = fileutils.get_test_dir()
     gen = Generator(test_dir)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -41,7 +41,7 @@ def test_ensemble(fileutils):
 
 def test_ensemble_overwrite(fileutils):
     exp = Experiment("gen-test-overwrite", launcher="local")
-    test_dir = fileutils.get_test_dir("test_gen_overwrite")
+    test_dir = fileutils.get_test_dir()
     gen = Generator(test_dir, overwrite=True)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -64,7 +64,7 @@ def test_ensemble_overwrite(fileutils):
 
 def test_ensemble_overwrite_error(fileutils):
     exp = Experiment("gen-test-overwrite-error", launcher="local")
-    test_dir = fileutils.get_test_dir("test_gen_overwrite_error")
+    test_dir = fileutils.get_test_dir()
     gen = Generator(test_dir)
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -81,16 +81,16 @@ def test_ensemble_overwrite_error(fileutils):
         gen.generate_experiment(ensemble)
 
 
-def test_full_exp(fileutils):
+def test_full_exp(fileutils, wlmutils):
 
-    test_dir = fileutils.make_test_dir("gen_full_test")
+    test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     model = exp.create_model("model", run_settings=rs)
     script = fileutils.get_test_conf_path("sleep.py")
     model.attach_generator_files(to_copy=script)
 
-    orc = Orchestrator(6780)
+    orc = Orchestrator(wlmutils.get_test_port())
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
 
@@ -116,7 +116,7 @@ def test_dir_files(fileutils):
     are directories with subdirectories and files
     """
 
-    test_dir = fileutils.make_test_dir("gen_dir_test")
+    test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-test", test_dir, launcher="local")
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
@@ -136,7 +136,7 @@ def test_dir_files(fileutils):
 
 def test_multiple_tags(fileutils):
     """Test substitution of multiple tagged parameters on same line"""
-    test_dir = fileutils.make_test_dir("multiple_tags")
+    test_dir = fileutils.make_test_dir()
 
     exp = Experiment("test-multiple-tags", test_dir)
     model_params = {"port": 6379, "password": "unbreakable_password"}
@@ -161,7 +161,7 @@ def test_config_dir(fileutils):
     tagged files that are directories with subdirectories and files
     """
     exp = Experiment("config-dir", launcher="local")
-    test_dir = fileutils.make_test_dir("test_config_dir")
+    test_dir = fileutils.make_test_dir()
     gen = Generator(test_dir)
 
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}

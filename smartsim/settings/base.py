@@ -1,5 +1,4 @@
-# BSD 2-Clause License
-#
+# BSD 2-Clause License #
 # Copyright (c) 2021-2022, Hewlett Packard Enterprise
 # All rights reserved.
 #
@@ -24,12 +23,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .._core.utils.helpers import (
-    expand_exe_path,
-    init_default,
-    is_valid_cmd,
-    fmt_dict
-)
+from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -37,7 +31,14 @@ logger = get_logger(__name__)
 
 class RunSettings:
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+        self,
+        exe,
+        exe_args=None,
+        run_command="",
+        run_args=None,
+        env_vars=None,
+        container=None,
+        **kwargs,
     ):
         """Run parameters for a ``Model``
 
@@ -68,14 +69,38 @@ class RunSettings:
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
+        :param container: container type for workload (e.g. "singularity"), defaults to None
+        :type container: Container, optional
         """
-        self.exe = [expand_exe_path(exe)]
+        # Do not expand executable if running within a container
+        if container:
+            self.exe = [exe]
+        else:
+            self.exe = [expand_exe_path(exe)]
+
         self.exe_args = self._set_exe_args(exe_args)
         self.run_args = init_default({}, run_args, dict)
         self.env_vars = init_default({}, env_vars, dict)
+        self.container = container
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings = None
+
+    # To be overwritten by subclasses. Set of reserved args a user cannot change
+    reserved_run_args = set()  # type: set[str]
+
+    def set_nodes(self, nodes):
+        """Set the number of nodes
+
+        :param nodes: number of nodes to run with
+        :type nodes: int
+        """
+        logger.warning(
+            (
+                "Node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
 
     def set_tasks(self, tasks):
         """Set the number of tasks to launch
@@ -83,8 +108,11 @@ class RunSettings:
         :param tasks: number of tasks to launch
         :type tasks: int
         """
-        raise NotImplementedError(
-            f"Task specification not implemented for this RunSettings type: {type(self)}"
+        logger.warning(
+            (
+                "Task specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_tasks_per_node(self, tasks_per_node):
@@ -93,8 +121,24 @@ class RunSettings:
         :param tasks_per_node: number of tasks to launch per node
         :type tasks_per_node: int
         """
-        raise NotImplementedError(
-            f"Task per node specification not implemented for this RunSettings type: {type(self)}"
+        logger.warning(
+            (
+                "Task per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_task_map(self, task_mapping):
+        """Set a task mapping
+
+        :param task_mapping: task mapping
+        :type task_mapping: str
+        """
+        logger.warning(
+            (
+                "Task mapping specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_cpus_per_task(self, cpus_per_task):
@@ -103,8 +147,11 @@ class RunSettings:
         :param cpus_per_task: number of cpus per task
         :type cpus_per_task: int
         """
-        raise NotImplementedError(
-            f"CPU per node specification not implemented for this RunSettings type: {type(self)}"
+        logger.warning(
+            (
+                "CPU per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     def set_hostlist(self, host_list):
@@ -113,8 +160,187 @@ class RunSettings:
         :param host_list: hosts to launch on
         :type host_list: str | list[str]
         """
-        raise NotImplementedError(
-            f"Host list specification not implemented for this RunSettings type: {type(self)}"
+        logger.warning(
+            (
+                "Hostlist specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_hostlist_from_file(self, file_path):
+        """Use the contents of a file to specify the hostlist for this job
+
+        :param file_path: Path to the hostlist file
+        :type file_path: str
+        """
+        logger.warning(
+            (
+                "Hostlist from file specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_excluded_hosts(self, host_list):
+        """Specify a list of hosts to exclude for launching this job
+
+        :param host_list: hosts to exclude
+        :type host_list: str | list[str]
+        """
+        logger.warning(
+            (
+                "Excluded host list specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_cpu_bindings(self, bindings):
+        """Set the cores to which MPI processes are bound
+
+        :param bindings: List specifing the cores to which MPI processes are bound
+        :type bindings: list[int] | int
+        """
+        logger.warning(
+            (
+                "CPU binding specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_memory_per_node(self, memory_per_node):
+        """Set the amount of memory required per node in megabytes
+
+        :param memory_per_node: Number of megabytes per node
+        :type memory_per_node: int
+        """
+        logger.warning(
+            (
+                "Memory per node specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_verbose_launch(self, verbose):
+        """Set the job to run in verbose mode
+
+        :param verbose: Whether the job should be run verbosely
+        :type verbose: bool
+        """
+        logger.warning(
+            (
+                "Verbose specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_quiet_launch(self, quiet):
+        """Set the job to run in quiet mode
+
+        :param quiet: Whether the job should be run quietly
+        :type quiet: bool
+        """
+        logger.warning(
+            (
+                "Quiet specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_broadcast(self, dest_path=None):
+        """Copy executable file to allocated compute nodes
+
+        :param dest_path: Path to copy an executable file
+        :type dest_path: str | None
+        """
+        logger.warning(
+            (
+                "Broadcast specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_time(self, hours=0, minutes=0, seconds=0):
+        """Automatically format and set wall time
+
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
+        """
+        return self.set_walltime(
+            self._fmt_walltime(int(hours), int(minutes), int(seconds))
+        )
+
+    def _fmt_walltime(self, hours, minutes, seconds):
+        """Convert hours, minutes, and seconds into valid walltime format
+
+        By defualt the formatted wall time is the total number of seconds.
+
+        :param hours: number of hours to run job
+        :type hours: int
+        :param minutes: number of minutes to run job
+        :type minutes: int
+        :param seconds: number of seconds to run job
+        :type seconds: int
+        :returns: Formatted walltime
+        :rtype: str
+        """
+        time_ = hours * 3600
+        time_ += minutes * 60
+        time_ += seconds
+        return str(time_)
+
+    def set_walltime(self, walltime):
+        """Set the formatted walltime
+
+        :param walltime: Time in format required by launcher``
+        :type walltime: str
+        """
+        logger.warning(
+            (
+                "Walltime specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_binding(self, binding):
+        """Set binding
+
+        :param binding: Binding
+        :type binding: str
+        """
+        logger.warning(
+            (
+                "binding specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def set_mpmd_preamble(self, preamble_lines):
+        """Set preamble to a file to make a job MPMD
+
+        :param preamble_lines: lines to put at the beginning of a file.
+        :type preamble_lines: list[str]
+        """
+        logger.warning(
+            (
+                "MPMD preamble specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
+        )
+
+    def make_mpmd(self, settings):
+        """Make job an MPMD job
+
+        :param settings: ``RunSettings`` instance
+        :type aprun_settings: RunSettings
+        """
+        logger.warning(
+            (
+                "Make MPMD specification not implemented for this "
+                f"RunSettings type: {type(self)}"
+            )
         )
 
     @property
@@ -126,23 +352,40 @@ class RunSettings:
         :returns: launch binary e.g. mpiexec
         :type: str | None
         """
-        if self._run_command:
-            if is_valid_cmd(self._run_command):
+        cmd = self._run_command
+
+        if cmd:
+            if is_valid_cmd(cmd):
                 # command is valid and will be expanded
-                return expand_exe_path(self._run_command)
+                return expand_exe_path(cmd)
             # command is not valid, so return it as is
             # it may be on the compute nodes but not local machine
-            return self._run_command
+            return cmd
         # run without run command
         return None
 
     def update_env(self, env_vars):
         """Update the job environment variables
 
+        To fully inherit the current user environment, add the
+        workload-manager-specific flag to the launch command through the
+        :meth:`add_exe_args` method. For example, ``--export=ALL`` for
+        slurm, or ``-V`` for PBS/aprun.
+
+
         :param env_vars: environment variables to update or add
-        :type env_vars: dict[str, str]
+        :type env_vars: dict[str, Union[str, int, float, bool]]
+        :raises TypeError: if env_vars values cannot be coerced to strings
         """
-        self.env_vars.update(env_vars)
+        val_types = (str, int, float, bool)
+        # Coerce env_vars values to str as a convenience to user
+        for env, val in env_vars.items():
+            if not isinstance(val, val_types):
+                raise TypeError(
+                    f"env_vars[{env}] was of type {type(val)}, not {val_types}"
+                )
+            else:
+                self.env_vars[env] = val
 
     def add_exe_args(self, args):
         """Add executable arguments to executable
@@ -157,6 +400,77 @@ class RunSettings:
             if not isinstance(arg, str):
                 raise TypeError("Executable arguments should be a list of str")
             self.exe_args.append(arg)
+
+    def set(self, arg, value=None, condition=True):
+        """Allows users to set individual run arguments.
+
+        A method that allows users to set run arguments after object
+        instantiation. Does basic formatting such as stripping leading dashes.
+        If the argument has been set previously, this method will log warning
+        but ultimately comply.
+
+        Conditional expressions may be passed to the conditional parameter. If the
+        expression evaluates to True, the argument will be set. In not an info
+        message is logged and no further operation is performed.
+
+        Basic Usage
+
+        .. highlight:: python
+        .. code-block:: python
+
+            rs = RunSettings("python")
+            rs.set("an-arg", "a-val")
+            rs.set("a-flag")
+            rs.format_run_args()  # returns ["an-arg", "a-val", "a-flag", "None"]
+
+        Slurm Example with Conditional Setting
+
+        .. highlight:: python
+        .. code-block:: python
+
+            import socket
+
+            rs = SrunSettings("echo", "hello")
+            rs.set_tasks(1)
+            rs.set("exclusive")
+
+            # Only set this argument if condition param evals True
+            # Otherwise log and NOP
+            rs.set("partition", "debug",
+                   condition=socket.gethostname()=="testing-system")
+
+            rs.format_run_args()
+            # returns ["exclusive", "None", "partition", "debug"] iff socket.gethostname()=="testing-system"
+            # otherwise returns ["exclusive", "None"]
+
+        :param arg: name of the argument
+        :type arg: str
+        :param value: value of the argument
+        :type value: str | None
+        :param conditon: set the argument if condition evaluates to True
+        :type condition: bool
+        """
+        if not isinstance(arg, str):
+            raise TypeError("Argument name should be of type str")
+        if value is not None and not isinstance(value, str):
+            raise TypeError("Argument value should be of type str or None")
+        arg = arg.strip().lstrip("-")
+
+        if not condition:
+            logger.info(f"Could not set argument '{arg}': condition not met")
+            return
+        if arg in self.reserved_run_args:
+            logger.warning(
+                (
+                    f"Could not set argument '{arg}': "
+                    f"it is a reserved arguement of '{type(self).__name__}'"
+                )
+            )
+            return
+
+        if arg in self.run_args and value != self.run_args[arg]:
+            logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
+        self.run_args[arg] = value
 
     def _set_exe_args(self, exe_args):
         if exe_args:
@@ -197,7 +511,21 @@ class RunSettings:
             formatted.append(str(value))
         return formatted
 
-    def __str__(self): # pragma: no-cover
+    def format_env_vars(self):
+        """Build environment variable string
+
+        :returns: formatted list of strings to export variables
+        :rtype: list[str]
+        """
+        formatted = []
+        for key, val in self.env_vars.items():
+            if val is None:
+                formatted.append(f"{key}=")
+            else:
+                formatted.append(f"{key}={val}")
+        return formatted
+
+    def __str__(self):  # pragma: no-cover
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
@@ -277,7 +605,7 @@ class BatchSettings:
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
-    def __str__(self): # pragma: no-cover
+    def __str__(self):  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
             string += f"\nBatch arguments:\n{fmt_dict(self.batch_args)}"

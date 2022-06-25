@@ -24,23 +24,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import argparse
-from typing import List
+import os
 from subprocess import PIPE, STDOUT, Popen
+from typing import List
 
 from smartsim._core.utils.network import current_ip
 from smartsim.exp.ray import parse_ray_head_node_address
 
-def main(network_interface: str,
-         port: int,
-         is_head: bool,
-         password: str,
-         ray_exe: str,
-         ray_args: List[str],
-         dash_port: str,
-         head_log: str,
-         ):
+
+def main(
+    network_interface: str,
+    port: int,
+    is_head: bool,
+    password: str,
+    ray_exe: str,
+    ray_args: List[str],
+    dash_port: str,
+    head_log: str,
+):
 
     ip_address = current_ip(network_interface)
 
@@ -66,7 +68,6 @@ def main(network_interface: str,
 
     if is_head:
         cliargs += [f"--port={port}", f"--dashboard-port={dash_port}"]
-
 
     cmd = " ".join(cliargs)
     print(f"Ray Command: {cmd}")
@@ -103,11 +104,13 @@ if __name__ == "__main__":
             "Ray starter needs +head or +head-log to start head or worker nodes respectively"
         )
 
-    main(args.ifname,
-         args.port,
-         args.head,
-         args.redis_password,
-         args.ray_exe,
-         args.ray_args,
-         args.dashboard_port,
-         args.head_log)
+    main(
+        args.ifname,
+        args.port,
+        args.head,
+        args.redis_password,
+        args.ray_exe,
+        args.ray_args,
+        args.dashboard_port,
+        args.head_log,
+    )

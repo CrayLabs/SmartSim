@@ -1,12 +1,7 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.database import (
-    CobaltOrchestrator,
-    Orchestrator,
-    PBSOrchestrator,
-    SlurmOrchestrator,
-)
+from smartsim.database import Orchestrator
 from smartsim.error import SmartSimError
 from smartsim.error.errors import SSUnsupportedError
 
@@ -42,12 +37,12 @@ def test_inactive_orc_get_address():
         db.get_address()
 
 
-def test_orc_active_functions(fileutils):
+def test_orc_active_functions(fileutils, wlmutils):
     exp_name = "test_orc_active_functions"
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(exp_name)
+    test_dir = fileutils.make_test_dir()
 
-    db = Orchestrator(port=6780)
+    db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
 
     exp.start(db)
@@ -56,7 +51,10 @@ def test_orc_active_functions(fileutils):
     assert db.is_active()
 
     # check if the orchestrator can get the address
-    assert db.get_address() == ["127.0.0.1:6780"]
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
 
     exp.stop(db)
 
@@ -85,8 +83,15 @@ def test_catch_local_db_errors():
 #####  PBS  ######
 
 
-def test_pbs_set_run_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_pbs_set_run_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -97,12 +102,26 @@ def test_pbs_set_run_arg():
     )
 
 
-def test_pbs_set_batch_arg():
-    orc = PBSOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_pbs_set_batch_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = PBSOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
+    orc2 = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="pbs",
+        run_command="aprun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("N", "another_name")
@@ -112,20 +131,41 @@ def test_pbs_set_batch_arg():
 ##### Slurm ######
 
 
-def test_slurm_set_run_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_slurm_set_run_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
     )
 
 
-def test_slurm_set_batch_arg():
-    orc = SlurmOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_slurm_set_batch_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = SlurmOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
+    orc2 = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="slurm",
+        run_command="srun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
@@ -133,8 +173,15 @@ def test_slurm_set_batch_arg():
 ###### Cobalt ######
 
 
-def test_set_run_arg():
-    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_cobalt_set_run_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     orc.set_run_arg("account", "ACCOUNT")
     assert all(
         [db.run_settings.run_args["account"] == "ACCOUNT" for db in orc.entities]
@@ -145,13 +192,83 @@ def test_set_run_arg():
     )
 
 
-def test_set_batch_arg():
-    orc = CobaltOrchestrator(6780, db_nodes=3, batch=False, interface="lo")
+def test_cobalt_set_batch_arg(wlmutils):
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     with pytest.raises(SmartSimError):
         orc.set_batch_arg("account", "ACCOUNT")
 
-    orc2 = CobaltOrchestrator(6780, db_nodes=3, batch=True, interface="lo")
+    orc2 = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        interface="lo",
+        launcher="cobalt",
+        run_command="aprun",
+    )
     orc2.set_batch_arg("account", "ACCOUNT")
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
     orc2.set_batch_arg("outputprefix", "new_output/")
     assert "outputprefix" not in orc2.batch_settings.batch_args
+
+
+###### LSF ######
+
+
+def test_catch_orc_errors_lsf(wlmutils):
+    with pytest.raises(SSUnsupportedError):
+        orc = Orchestrator(
+            wlmutils.get_test_port(),
+            db_nodes=2,
+            db_per_host=2,
+            batch=False,
+            launcher="lsf",
+            run_command="jsrun",
+        )
+
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        hosts=["batch", "host1", "host2"],
+        launcher="lsf",
+        run_command="jsrun",
+    )
+    with pytest.raises(SmartSimError):
+        orc.set_batch_arg("P", "MYPROJECT")
+
+
+def test_lsf_set_run_args(wlmutils):
+
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        hosts=["batch", "host1", "host2"],
+        launcher="lsf",
+        run_command="jsrun",
+    )
+    orc.set_run_arg("l", "gpu-gpu")
+    assert all(["l" not in db.run_settings.run_args for db in orc.entities])
+
+
+def test_lsf_set_batch_args(wlmutils):
+
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=True,
+        hosts=["batch", "host1", "host2"],
+        launcher="lsf",
+        run_command="jsrun",
+    )
+
+    assert orc.batch_settings.batch_args["m"] == '"batch host1 host2"'
+    orc.set_batch_arg("D", "102400000")
+    assert orc.batch_settings.batch_args["D"] == "102400000"

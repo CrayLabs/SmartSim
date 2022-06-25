@@ -9,16 +9,16 @@ launching them onto a system.
 
 The `launchers` allow SmartSim users to interact with their system
 programmatically through a python interface.
-Because of this, SmartSim users don't have to leave the Jupyter Notebook,
+Because of this, SmartSim users do not have to leave the Jupyter Notebook,
 Python REPL, or Python script to launch, query, and interact with their jobs.
 
 SmartSim currently supports 5 `launchers`:
-  1. ``local`` for single-node, workstation, or laptop
-  2. ``slurm`` for systems using the Slurm scheduler
-  3. ``pbs`` for systems using the PBSpro scheduler
-  4. ``cobalt`` for systems using the Cobalt scheduler
-  5. ``lsf`` for systems using the LSF scheduler
-  6. ``auto`` have SmartSim auto-detect the launcher to use.
+  1. ``local``: for single-node, workstation, or laptop
+  2. ``slurm``: for systems using the Slurm scheduler
+  3. ``pbs``: for systems using the PBSpro scheduler
+  4. ``cobalt``: for systems using the Cobalt scheduler
+  5. ``lsf``: for systems using the LSF scheduler
+  6. ``auto``: have SmartSim auto-detect the launcher to use.
 
 To specify a specific launcher, one argument needs to be provided
 to the ``Experiment`` initialization.
@@ -95,9 +95,10 @@ To use the Slurm launcher, specify at ``Experiment`` initialization:
 Running on Slurm
 ----------------
 
-The Slurm launcher supports two types of ``RunSettings``:
+The Slurm launcher supports three types of ``RunSettings``:
   1. :ref:`SrunSettings <srun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``sbatch`` through:
   1. :ref:`SbatchSettings <sbatch_api>`
@@ -118,10 +119,10 @@ used to obtain allocations to launch on and release them after
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     alloc = slurm.get_allocation(nodes=1)
 
-The id of the allocation is returned as a string to the user so that
+The ID of the allocation is returned as a string to the user so that
 they can specify what entities should run on which allocations
 obtained by SmartSim.
 
@@ -137,7 +138,7 @@ For arguments without a value, pass None as the value:
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     salloc_options = {
         "C": "haswell",
         "partition": "debug",
@@ -165,7 +166,7 @@ The example below releases the allocation in the example above.
 
 .. code-block:: python
 
-    from smartsim import slurm
+    from smartsim.wlm import slurm
     salloc_options = {
         "C": "haswell",
         "partition": "debug",
@@ -204,9 +205,10 @@ To use the PBSpro launcher, specify at ``Experiment`` initialization:
 Running on PBSpro
 -----------------
 
-The PBSpro launcher supports two types of ``RunSettings``:
+The PBSpro launcher supports three types of ``RunSettings``:
   1. :ref:`AprunSettings <aprun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``qsub`` through:
   1. :ref:`QsubBatchSettings <qsub_api>`
@@ -235,9 +237,10 @@ To use the Cobalt launcher, specify at ``Experiment`` initialization:
 Running on Cobalt
 -----------------
 
-The Cobalt launcher supports two types of ``RunSettings``:
+The Cobalt launcher supports three types of ``RunSettings``:
   1. :ref:`AprunSettings <aprun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``qsub`` through:
   1. :ref:`CobaltBatchSettings <cqsub_api>`
@@ -266,9 +269,10 @@ To use the LSF launcher, specify at ``Experiment`` initialization:
 Running on LSF
 --------------
 
-The LSF launcher supports two types of ``RunSettings``:
+The LSF launcher supports three types of ``RunSettings``:
   1. :ref:`JsrunSettings <jsrun_api>`
-  2. :ref:`MpirunSettings <openmpi_api>`
+  2. :ref:`MpirunSettings <openmpi_run_api>`
+  3. :ref:`MpiexecSettings <openmpi_exec_api>`
 
 As well as batch settings for ``bsub`` through:
   1. :ref:`BsubBatchSettings <bsub_api>`

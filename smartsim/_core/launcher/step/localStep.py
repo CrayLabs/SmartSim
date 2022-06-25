@@ -29,6 +29,7 @@ import shutil
 
 from .step import Step
 
+
 class LocalStep(Step):
     def __init__(self, name, cwd, run_settings):
         super().__init__(name, cwd)
@@ -52,11 +53,13 @@ class LocalStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
 
+        if self.run_settings.container:
+            cmd += self.run_settings.container._container_cmds(self.cwd)
+
         # build executable
         cmd.extend(self.run_settings.exe)
         if self.run_settings.exe_args:
             cmd.extend(self.run_settings.exe_args)
-
         return cmd
 
     def _set_env(self):

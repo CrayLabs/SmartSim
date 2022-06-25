@@ -7,7 +7,7 @@ try:
 
     config_setter = Client.config_set
 except AttributeError:
-    pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.0")
+    pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
 def test_config_methods(dbutils, local_db):

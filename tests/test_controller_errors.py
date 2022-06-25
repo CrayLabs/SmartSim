@@ -1,11 +1,11 @@
 import pytest
 
 from smartsim._core.control import Controller, Manifest
-from smartsim.database import Orchestrator, PBSOrchestrator
-from smartsim.entity import Ensemble, Model
-from smartsim.error import SmartSimError, SSConfigError, SSUnsupportedError
-from smartsim.error.errors import SSConfigError, SSUnsupportedError
-from smartsim.settings import RunSettings, SbatchSettings
+from smartsim.database import Orchestrator
+from smartsim.entity import Model
+from smartsim.error import SmartSimError, SSUnsupportedError
+from smartsim.error.errors import SSUnsupportedError
+from smartsim.settings import RunSettings
 
 
 def test_finished_entity_orc_error():
@@ -58,9 +58,15 @@ def test_no_launcher():
         cont.init_launcher(None)
 
 
-def test_wrong_orchestrator():
+def test_wrong_orchestrator(wlmutils):
     # lo interface to avoid warning from SmartSim
-    orc = PBSOrchestrator(6780, db_nodes=3, interface="lo", run_command="aprun")
+    orc = Orchestrator(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        interface="lo",
+        run_command="aprun",
+        launcher="pbs",
+    )
     cont = Controller(launcher="local")
     manifest = Manifest(orc)
     with pytest.raises(SmartSimError):

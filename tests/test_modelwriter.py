@@ -14,7 +14,7 @@ mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
 def test_write_easy_configs(fileutils):
 
-    test_dir = fileutils.make_test_dir("easy_modelwriter_test")
+    test_dir = fileutils.make_test_dir()
 
     param_dict = {
         "5": 10,  # MOM_input
@@ -44,7 +44,7 @@ def test_write_easy_configs(fileutils):
 
 def test_write_med_configs(fileutils):
 
-    test_dir = fileutils.make_test_dir("med_modelwriter_test")
+    test_dir = fileutils.make_test_dir()
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
@@ -78,7 +78,7 @@ def test_write_med_configs(fileutils):
 def test_write_new_tag_configs(fileutils):
     """sets the tag to the dollar sign"""
 
-    test_dir = fileutils.make_test_dir("new_tag_modelwriter_test")
+    test_dir = fileutils.make_test_dir()
 
     param_dict = {
         "1 0 0 0": "3 0 0 0",  # in.ellipse.gayberne
