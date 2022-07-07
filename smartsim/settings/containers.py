@@ -108,7 +108,10 @@ class Singularity(Container):
             working_directory = self.working_directory
 
         if not (working_directory in serialized_mount):
-            serialized_mount = ','.join([working_directory, serialized_mount])
+            if serialized_mount:
+                serialized_mount = ','.join([working_directory, serialized_mount])
+            else:
+                serialized_mount = working_directory
             logger.warning(
                 f'Working directory not specified in mount: \n {working_directory}'+
                 '\nAutomatically adding it to the list of bind points'
