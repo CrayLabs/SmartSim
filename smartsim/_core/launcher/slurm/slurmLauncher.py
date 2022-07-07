@@ -31,6 +31,7 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import LocalStep, MpirunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo
@@ -175,7 +176,7 @@ class SlurmLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_slurm_step_id(self, step, interval=2, trials=5):
+    def _get_slurm_step_id(self, step, interval=2):
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -188,6 +189,7 @@ class SlurmLauncher(WLMLauncher):
         """
         time.sleep(interval)
         step_id = "unassigned"
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = sacct(["--noheader", "-p", "--format=jobname,jobid"])
             step_id = parse_step_id_from_sacct(output, step.name)

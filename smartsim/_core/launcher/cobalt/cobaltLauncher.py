@@ -32,6 +32,7 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
 from ..step import AprunStep, CobaltBatchStep, LocalStep, MpirunStep
@@ -126,12 +127,13 @@ class CobaltLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_cobalt_step_id(self, step, interval=4, trials=5):
+    def _get_cobalt_step_id(self, step, interval=2):
         """Get the step_id of a step from qstat (rarely used)
 
         Parses cobalt qstat output by looking for the step name
         """
         step_id = None
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["--header", "JobName:JobId", "-u", self.user])
             step_id = parse_cobalt_step_id(output, step.name)
