@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # setup input tensor
     c.put_tensor("torch_cnn_input", data)
 
-    input_exists = c.poll_tensor("torch_cnn_input", 100, 100)
+    input_exists = c.poll_tensor("torch_cnn_input", 100, 1000)
     assert input_exists
 
     other_input = c.get_tensor("torch_cnn_input")
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     # run model and get output
     c.run_model("torch_cnn", inputs=["torch_cnn_input"], outputs=["torch_cnn_output"])
-    output_exists = c.poll_tensor("torch_cnn_output", 100, 100)
+    output_exists = c.poll_tensor("torch_cnn_output", 100, 1000)
     assert output_exists
 
     out_data = c.get_tensor("torch_cnn_output")

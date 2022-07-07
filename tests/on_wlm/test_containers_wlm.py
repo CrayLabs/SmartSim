@@ -33,8 +33,8 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     )
 
     # create and start a database
-    orc = exp.create_database()
-    exp.generate()
+    orc = exp.create_database(port=wlmutils.get_test_port())
+    exp.generate(orc)
     exp.start(orc, block=False)
 
     container = Singularity(containerURI)

@@ -30,6 +30,7 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import AprunStep, LocalStep, MpirunStep, QsubBatchStep
 from ..stepInfo import PBSStepInfo
@@ -121,7 +122,7 @@ class PBSLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_pbs_step_id(self, step, interval=2, trials=5):
+    def _get_pbs_step_id(self, step, interval=2):
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name
@@ -129,6 +130,7 @@ class PBSLauncher(WLMLauncher):
         """
         time.sleep(interval)
         step_id = "unassigned"
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])
             step_id = parse_step_id_from_qstat(output, step.name)

@@ -146,6 +146,10 @@ class Config:
         return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
 
     @property
+    def wlm_trials(self) -> int:
+        return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
+
+    @property
     def test_launcher(self) -> str:
         return os.environ.get("SMARTSIM_TEST_LAUNCHER", "local")
 

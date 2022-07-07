@@ -30,6 +30,7 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
@@ -130,10 +131,11 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2, trials=5):
+    def _get_lsf_step_id(self, step, interval=2):
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id = "unassigned"
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = jslist([])
             step_id = parse_max_step_id_from_jslist(output)
