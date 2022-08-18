@@ -45,6 +45,7 @@
    sr_cpp_walkthrough
    sr_fortran_walkthrough
    sr_data_structures
+   sr_dataset_conversions
    sr_runtime
    api/smartredis_api
 
