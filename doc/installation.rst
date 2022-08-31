@@ -318,10 +318,10 @@ runtimes.
   smart build -v --device gpu --onnx   # install all backends (PT, TF, ONNX) on gpu
 
 
-Install SmartRedis from Source
-==============================
+Build the SmartRedis library
+============================
 
-.. include:: ../smartredis/doc/install/from_source.rst
+.. include:: ../smartredis/doc/install/lib.rst
 
 
 Building the Documentation
@@ -537,7 +537,7 @@ When executing SmartSim, if you want to use the PyTorch and TensorFlow backends 
 you will need to set up the same environment used at build time:
 
 .. code-block:: bash
-  
+
   module load cuda/11.4.2
   export CUDNN_LIBRARY=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/
   export LD_LIBRARY_PATH=/ccs/home/$USER/.conda/envs/smartsim/lib/python3.8/site-packages/torch/lib/:$LD_LIBRARY_PATH:$CUDNN_LIBRARY
