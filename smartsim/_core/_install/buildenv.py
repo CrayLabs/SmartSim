@@ -137,6 +137,15 @@ class RedisAIVersion(Version_):
             "torch": "1.9.1",
             "torchvision": "0.10.1",
         },
+        "1.2.7": {
+            "tensorflow": "2.8.0",
+            "onnx": "1.9.0",
+            "skl2onnx": "1.10.3",
+            "onnxmltools": "1.10.0",
+            "scikit-learn": "1.0.2",
+            "torch": "1.11.0",
+            "torchvision": "0.12.0",
+        },
     }
     # deps are the same between the following versions
     defaults["1.2.4"] = defaults["1.2.3"]
