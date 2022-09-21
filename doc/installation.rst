@@ -61,7 +61,7 @@ Supported Versions
 
 
 SmartSim supports multiple machine learning libraries through
-the use of RedisAI_. The following libraries are supported.
+the use of RedisAI_ 1.2.7. The following libraries are supported (based on .
 
 .. list-table:: Supported ML Libraries
    :widths: 50 50 50 50
@@ -73,15 +73,15 @@ the use of RedisAI_. The following libraries are supported.
      - Python Versions
      - Built By Default
    * - PyTorch_
-     - 1.7
+     - 1.11.0
      - 3.7 - 3.9
      - Yes
    * - Tensorflow_ / Keras_
-     - 2.5.2
+     - 2.8.0
      - 3.7 - 3.9
      - Yes
-   * - ONNX_
-     - 1.9
+   * - ONNX_ Runtime
+     - 1.11.1
      - 3.7 - 3.9
      - No
 
