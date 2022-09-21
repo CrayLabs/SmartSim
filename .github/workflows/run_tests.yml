@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [macos-10.15, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
-        rai: [1.2.3, 1.2.5] # Redis AI versions
+        rai: [1.2.3, 1.2.5, 1.2.7] # Redis AI versions
         py_v: [3.7, 3.8, 3.9] # Python versions
         exclude:
           - os: macos-10.15 # Do not build with Redis AI 1.2.5 on MacOS

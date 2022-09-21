@@ -116,6 +116,9 @@ class RedisAIVersion(Version_):
 
     2. Used to set the default values for PyTorch, TF, and ONNX
     given the SMARTSIM_REDISAI env var set by the user.
+
+    NOTE: Torch requires additional information depending on whether
+    CPU or GPU support is requested
     """
 
     defaults = {
@@ -126,6 +129,8 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.7.1",
+            "torch_cpu_suffix": "+cpu",
+            "torch_gpu_suffix": "+cu110",
             "torchvision": "0.8.2",
         },
         "1.2.5": {
@@ -135,6 +140,8 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.9.1",
+            "torch_cpu_suffix": "+cpu",
+            "torch_gpu_suffix": "+cu111",
             "torchvision": "0.10.1",
         },
         "1.2.7": {
@@ -144,6 +151,8 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.11.0",
+            "torch_cpu_suffix": "+cpu",
+            "torch_gpu_suffix": "+cu113",
             "torchvision": "0.12.0",
         },
     }
@@ -155,7 +164,7 @@ class RedisAIVersion(Version_):
             if vers.startswith("1.2"):
                 # resolve to latest version for 1.2.x
                 # the str representation will still be 1.2.x
-                self.version = "1.2.5"
+                self.version = "1.2.7"
             else:
                 raise SetupError(
                     f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}"
@@ -203,7 +212,7 @@ class Versioner:
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
     # RedisAI
-    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.3"))
+    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.7"))
     REDISAI_URL = get_env(
         "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
     )
@@ -213,6 +222,8 @@ class Versioner:
     # torch can be set by the user because we download that for them
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
+    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
+    TORCH_GPU_SUFFIX = Version_(get_env("TORCH_GPU_SUFFIX", REDISAI.torch_gpu_suffix))
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
