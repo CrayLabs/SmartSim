@@ -260,12 +260,18 @@ class Versioner:
         ml_extras = []
         ml_defaults = self.REDISAI.get_defaults()
 
-        # remove torch and torch vision as they will be installed
+        # remove torch-related fields as they will be installed
         # by the cli process for use in the RAI build. We don't install
         # them here as the user needs to decide between GPU/CPU. All other
         # libraries work on both devices
-        del ml_defaults["torch"]
-        del ml_defaults["torchvision"]
+        _torch_fields = [
+            "torch",
+            "torchvision",
+            "torch_cpu_suffix",
+            "torch_gpu_suffix"
+        ]
+        for field in _torch_fields:
+            ml_extras.pop(field)
 
         for lib, vers in ml_defaults.items():
             ml_extras.append(f"{lib}=={vers}")
