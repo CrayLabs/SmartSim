@@ -146,7 +146,7 @@ class RedisAIVersion(Version_):
         },
         "1.2.7": {
             "tensorflow": "2.8.0",
-            "onnx": "1.11.1",
+            "onnx": "1.11.0",
             "skl2onnx": "1.11.1",
             "onnxmltools": "1.11.1",
             "scikit-learn": "1.1.1",
@@ -271,7 +271,7 @@ class Versioner:
             "torch_gpu_suffix"
         ]
         for field in _torch_fields:
-            ml_extras.pop(field)
+            ml_defaults.pop(field)
 
         for lib, vers in ml_defaults.items():
             ml_extras.append(f"{lib}=={vers}")
