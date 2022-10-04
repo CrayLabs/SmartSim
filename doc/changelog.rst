@@ -11,6 +11,26 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+Development branch
+------------------
+
+To be released at some future date
+
+Note
+
+This section details changes made in the development branch that have not yet been applied to a released version of the SmartSim library.
+
+Description
+
+- Fix bug in colocated database entrypoint when loading PyTorch models
+
+Detailed Notes
+
+- Fix bug in colocated database entrypoint stemming from uninitialized variables.  This bug affects PyTorch models being loaded into the database. (PR237_)
+
+.. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
+
+
 0.4.1
 -----
 
