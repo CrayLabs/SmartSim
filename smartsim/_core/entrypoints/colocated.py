@@ -81,6 +81,9 @@ def launch_db_model(client: Client, db_model: List[str]):
     parser.add_argument("--min_batch_timeout", type=int, default=None)
     args = parser.parse_args(db_model)
 
+    inputs = None
+    outputs = None
+
     if args.inputs:
         inputs = list(args.inputs)
     if args.outputs:
