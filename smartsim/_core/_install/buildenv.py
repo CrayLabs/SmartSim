@@ -180,7 +180,7 @@ class RedisAIVersion(Version_):
 
 
 class Versioner:
-    """Versioner is responsible fo managing all the versions
+    """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
 
     SmartSim's version is written into version.py upon pip install
@@ -196,6 +196,10 @@ class Versioner:
     as well. These versions are used by the ``smart`` cli in the
     ``smart build`` command to determine which dependency versions
     to look for and download.
+
+    Default versions for SmartSim, SmartRedis, Redis, and RedisAI are
+    all set here. Setting a default version for RedisAI also dictates
+    default versions of the machine learning libraries.
     """
 
     # compatible Python version
