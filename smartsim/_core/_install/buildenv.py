@@ -130,7 +130,7 @@ class RedisAIVersion(Version_):
             "scikit-learn": "1.0.2",
             "torch": "1.7.1",
             "torch_cpu_suffix": "+cpu",
-            "torch_gpu_suffix": "+cu110",
+            "torch_cuda_suffix": "+cu110",
             "torchvision": "0.8.2",
         },
         "1.2.5": {
@@ -141,7 +141,7 @@ class RedisAIVersion(Version_):
             "scikit-learn": "1.0.2",
             "torch": "1.9.1",
             "torch_cpu_suffix": "+cpu",
-            "torch_gpu_suffix": "+cu111",
+            "torch_cuda_suffix": "+cu111",
             "torchvision": "0.10.1",
         },
         "1.2.7": {
@@ -152,7 +152,7 @@ class RedisAIVersion(Version_):
             "scikit-learn": "1.1.1",
             "torch": "1.11.0",
             "torch_cpu_suffix": "+cpu",
-            "torch_gpu_suffix": "+cu113",
+            "torch_cuda_suffix": "+cu113",
             "torchvision": "0.12.0",
         },
     }
@@ -223,7 +223,7 @@ class Versioner:
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
     TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
-    TORCH_GPU_SUFFIX = Version_(get_env("TORCH_GPU_SUFFIX", REDISAI.torch_gpu_suffix))
+    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix))
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
@@ -263,12 +263,13 @@ class Versioner:
         # remove torch-related fields as they will be installed
         # by the cli process for use in the RAI build. We don't install
         # them here as the user needs to decide between GPU/CPU. All other
-        # libraries work on both devices
+        # libraries work on both devices. The correct versions and suffixes
+        # were scraped from https://pytorch.org/get-started/previous-versions/
         _torch_fields = [
             "torch",
             "torchvision",
             "torch_cpu_suffix",
-            "torch_gpu_suffix"
+            "torch_cuda_suffix"
         ]
         for field in _torch_fields:
             ml_defaults.pop(field)

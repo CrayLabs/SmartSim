@@ -30,14 +30,16 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
     if sys.platform == "darwin":
         if device == "gpu":
             logger.warning("GPU support is not available on Mac OS X")
+        # The following is deliberately left blank as there is no
+        # alternative package available on Mac OS X
         device_suffix = ""
         end_point = None
 
     # if we are on linux cpu, either CUDA or CPU must be installed
     elif sys.platform == "linux":
         end_point = "https://download.pytorch.org/whl/torch_stable.html"
-        if device == "gpu":
-            device_suffix = versions.TORCH_GPU_SUFFIX
+        if device in ["gpu","cuda"] :
+            device_suffix = versions.TORCH_CUDA_SUFFIX
         elif device == "cpu":
             device_suffix = versions.TORCH_CPU_SUFFIX
 
