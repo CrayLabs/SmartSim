@@ -116,6 +116,9 @@ class RedisAIVersion(Version_):
 
     2. Used to set the default values for PyTorch, TF, and ONNX
     given the SMARTSIM_REDISAI env var set by the user.
+
+    NOTE: Torch requires additional information depending on whether
+    CPU or GPU support is requested
     """
 
     defaults = {
@@ -126,6 +129,8 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.7.1",
+            "torch_cpu_suffix": "+cpu",
+            "torch_cuda_suffix": "+cu110",
             "torchvision": "0.8.2",
         },
         "1.2.5": {
@@ -135,7 +140,20 @@ class RedisAIVersion(Version_):
             "onnxmltools": "1.10.0",
             "scikit-learn": "1.0.2",
             "torch": "1.9.1",
+            "torch_cpu_suffix": "+cpu",
+            "torch_cuda_suffix": "+cu111",
             "torchvision": "0.10.1",
+        },
+        "1.2.7": {
+            "tensorflow": "2.8.0",
+            "onnx": "1.11.0",
+            "skl2onnx": "1.11.1",
+            "onnxmltools": "1.11.1",
+            "scikit-learn": "1.1.1",
+            "torch": "1.11.0",
+            "torch_cpu_suffix": "+cpu",
+            "torch_cuda_suffix": "+cu113",
+            "torchvision": "0.12.0",
         },
     }
     # deps are the same between the following versions
@@ -146,7 +164,7 @@ class RedisAIVersion(Version_):
             if vers.startswith("1.2"):
                 # resolve to latest version for 1.2.x
                 # the str representation will still be 1.2.x
-                self.version = "1.2.5"
+                self.version = "1.2.7"
             else:
                 raise SetupError(
                     f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}"
@@ -162,7 +180,7 @@ class RedisAIVersion(Version_):
 
 
 class Versioner:
-    """Versioner is responsible fo managing all the versions
+    """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
 
     SmartSim's version is written into version.py upon pip install
@@ -178,6 +196,10 @@ class Versioner:
     as well. These versions are used by the ``smart`` cli in the
     ``smart build`` command to determine which dependency versions
     to look for and download.
+
+    Default versions for SmartSim, SmartRedis, Redis, and RedisAI are
+    all set here. Setting a default version for RedisAI also dictates
+    default versions of the machine learning libraries.
     """
 
     # compatible Python version
@@ -194,7 +216,7 @@ class Versioner:
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
     # RedisAI
-    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.3"))
+    REDISAI = RedisAIVersion(get_env("SMARTSIM_REDISAI", "1.2.7"))
     REDISAI_URL = get_env(
         "SMARTSIM_REDISAI_URL", "https://github.com/RedisAI/RedisAI.git/"
     )
@@ -204,6 +226,8 @@ class Versioner:
     # torch can be set by the user because we download that for them
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
+    TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
+    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix))
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
@@ -240,12 +264,19 @@ class Versioner:
         ml_extras = []
         ml_defaults = self.REDISAI.get_defaults()
 
-        # remove torch and torch vision as they will be installed
+        # remove torch-related fields as they will be installed
         # by the cli process for use in the RAI build. We don't install
         # them here as the user needs to decide between GPU/CPU. All other
-        # libraries work on both devices
-        del ml_defaults["torch"]
-        del ml_defaults["torchvision"]
+        # libraries work on both devices. The correct versions and suffixes
+        # were scraped from https://pytorch.org/get-started/previous-versions/
+        _torch_fields = [
+            "torch",
+            "torchvision",
+            "torch_cpu_suffix",
+            "torch_cuda_suffix"
+        ]
+        for field in _torch_fields:
+            ml_defaults.pop(field)
 
         for lib, vers in ml_defaults.items():
             ml_extras.append(f"{lib}=={vers}")

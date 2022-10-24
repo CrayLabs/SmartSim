@@ -59,36 +59,25 @@ Supported Versions
     to support Windows.
 
 
+Native support for various machine learning libraries and their
+versions is dictated by our dependency on RedisAI_ 1.2.7. Users
+can also select RedisAI 1.2.3 or 1.2.5 (though that also limits
+the version of the ML libraries).
 
-SmartSim supports multiple machine learning libraries through
-the use of RedisAI_. The following libraries are supported.
-
-.. list-table:: Supported ML Libraries
-   :widths: 50 50 50 50
-   :header-rows: 1
-   :align: center
-
-   * - Library
-     - Versions
-     - Python Versions
-     - Built By Default
-   * - PyTorch_
-     - 1.7
-     - 3.7 - 3.9
-     - Yes
-   * - Tensorflow_ / Keras_
-     - 2.5.2
-     - 3.7 - 3.9
-     - Yes
-   * - ONNX_
-     - 1.9
-     - 3.7 - 3.9
-     - No
++------------------+----------+-------------+---------------+
+| RedisAI          | PyTorch  | Tensorflow  | ONNX Runtime  |
++==================+==========+=============+===============+
+| 1.2.7 (default)  | 1.11.0   | 2.8.0       | 1.11.1        |
+| 1.2.5            | 1.9.0    | 2.6.0       | 1.9.0         |
+| 1.2.3            | 1.7.0    | 2.5.2       | 1.9.0         |
++------------------+----------+-------------+---------------+
 
 TensorFlow_ 2.0 and Keras_ are supported through graph freezing_.
 
 ScikitLearn_ and Spark_ models are supported by SmartSim as well
-through the use of the ONNX_ runtime.
+through the use of the ONNX_ runtime (which is not built by
+default due to issues with glibc on a variety of Linux
+platforms and lack of support for Mac OS X).
 
 .. _Spark: https://spark.apache.org/mllib/
 .. _Keras: https://keras.io

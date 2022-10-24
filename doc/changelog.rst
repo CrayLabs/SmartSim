@@ -23,13 +23,16 @@ This section details changes made in the development branch that have not yet be
 Description
 
 - Fix bug in colocated database entrypoint when loading PyTorch models
+- Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
 
 Detailed Notes
 
 - Fix bug in colocated database entrypoint stemming from uninitialized variables.  This bug affects PyTorch models being loaded into the database. (PR237_)
+- The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
+- Make installation of correct Torch backend more reliable according to instruction from pyTorch
 
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
-
+.. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
 
 0.4.1
 -----
