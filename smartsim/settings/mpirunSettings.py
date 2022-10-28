@@ -117,17 +117,24 @@ class _OpenMPISettings(RunSettings):
         :param tasks_per_node: number of tasks to launch per node
         :type tasks_per_node: int
         """
-        self.run_args["npernode"] = int(tasks_per_node)
+        if (self.run_command=="mpirun"):
+            self.run_args["npernode"] = int(tasks_per_node)
+        elif (self.run_command=="mpiexec"):
+            self.run_args["ppn"] = int(tasks_per_node)
 
     def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
-        This sets ``--n``
+        This sets ``--n`` for mpirun
+        and "--np" for mpiexec
 
         :param tasks: number of tasks
         :type tasks: int
         """
-        self.run_args["n"] = int(tasks)
+        if (self.run_command=="mpirun"):
+            self.run_args["n"] = int(tasks)
+        elif (self.run_command=="mpiexec"):
+            self.run_args["np"] = int(tasks)
 
     def set_hostlist(self, host_list):
         """Set the hostlist for the ``mpirun`` command
@@ -235,13 +242,17 @@ class _OpenMPISettings(RunSettings):
         :rtype: list[str]
         """
         formatted = []
+        if (self.run_command=="mpirun"):
+           env_string = "-x"
+        elif (self.run_command=="mpiexec"):
+           env_string = "--env"
 
         if self.env_vars:
             for name, value in self.env_vars.items():
                 if value:
-                    formatted += ["-x", "=".join((name, str(value)))]
+                    formatted += [env_string, "=".join((name, str(value)))]
                 else:
-                    formatted += ["-x", name]
+                    formatted += [env_string, name]
         return formatted
 
 

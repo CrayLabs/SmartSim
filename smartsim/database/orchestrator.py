@@ -102,7 +102,7 @@ class Orchestrator(EntityList):
 
         by_launcher = {
             "slurm": ["srun", "mpirun"],
-            "pbs": ["aprun", "mpirun"],
+            "pbs": ["aprun", "mpirun","mpiexec"],
             "cobalt": ["aprun", "mpirun"],
             "lsf": ["jsrun"],
             "local": [None],
