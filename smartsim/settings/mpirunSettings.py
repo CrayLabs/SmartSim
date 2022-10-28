@@ -117,9 +117,9 @@ class _OpenMPISettings(RunSettings):
         :param tasks_per_node: number of tasks to launch per node
         :type tasks_per_node: int
         """
-        if (self.run_command=="mpirun"):
+        if "mpirun" in self.run_command:
             self.run_args["npernode"] = int(tasks_per_node)
-        elif (self.run_command=="mpiexec"):
+        elif "mpiexec" in self.run_command:
             self.run_args["ppn"] = int(tasks_per_node)
 
     def set_tasks(self, tasks):
@@ -131,9 +131,9 @@ class _OpenMPISettings(RunSettings):
         :param tasks: number of tasks
         :type tasks: int
         """
-        if (self.run_command=="mpirun"):
+        if "mpirun" in self.run_command:
             self.run_args["n"] = int(tasks)
-        elif (self.run_command=="mpiexec"):
+        elif "mpiexec" in self.run_command:
             self.run_args["np"] = int(tasks)
 
     def set_hostlist(self, host_list):
@@ -242,9 +242,9 @@ class _OpenMPISettings(RunSettings):
         :rtype: list[str]
         """
         formatted = []
-        if (self.run_command=="mpirun"):
+        if "mpirun" in self.run_command:
            env_string = "-x"
-        elif (self.run_command=="mpiexec"):
+        elif "mpiexec" in self.run_command:
            env_string = "--env"
 
         if self.env_vars:
