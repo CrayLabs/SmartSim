@@ -101,7 +101,8 @@ class _OpenMPISettings(RunSettings):
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of tasks for this job
 
-        This sets ``--cpus-per-proc``
+        This sets ``--cpus-per-proc`` for mpirun
+        end ``--depth`` for mpiexec
 
         note: this option has been deprecated in openMPI 4.0+
         and will soon be replaced.
@@ -109,7 +110,24 @@ class _OpenMPISettings(RunSettings):
         :param cpus_per_task: number of tasks
         :type cpus_per_task: int
         """
-        self.run_args["cpus-per-proc"] = int(cpus_per_task)
+        if "mpirun" in self.run_command:
+            self.run_args["cpus-per-proc"] = int(cpus_per_task)
+        elif "mpiexec" in self.run_command:
+            self.run_args["depth"] = int(cpus_per_task)
+
+    def set_cpu_binding_type(self, bind_type):
+        """Specifies the cores to which MPI processes are bound
+
+        This sets ``--bind-to`` for mpirun
+        and ``--cpu-bind`` for mpiexec
+
+        :param bind_type: binding type 
+        :type bind_type: str
+        """
+        if "mpirun" in self.run_command:
+            self.run_args["bind-to"] = str(bind_type)
+        elif "mpiexec" in self.run_command:
+            self.run_args["cpu-bind"] = str(bind_type)
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per node

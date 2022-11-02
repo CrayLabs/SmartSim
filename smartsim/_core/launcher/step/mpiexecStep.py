@@ -69,7 +69,7 @@ class MpiexecStep(Step):
         if self.run_settings.colocated_db_settings:
             # disable cpu binding as the entrypoint will set that
             # for the application and database process now
-            mpiexec_cmd.extend(["--cpu-bind", "none"])
+            # mpiexec_cmd.extend(["--cpu-bind", "none"])
 
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
