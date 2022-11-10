@@ -34,13 +34,13 @@ from .base import RunSettings
 logger = get_logger(__name__)
 
 
-class _OpenMPISettings(RunSettings):
-    """Base class for all common arguments of OpenMPI run commands"""
+class _BaseMPISettings(RunSettings):
+    """Base class for all common arguments of MPI-standard run commands"""
 
     def __init__(
         self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
     ):
-        """Settings to format run job with an OpenMPI binary
+        """Settings to format run job with an MPI-standard binary
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
@@ -121,7 +121,7 @@ class _OpenMPISettings(RunSettings):
         This sets ``--bind-to`` for mpirun
         and ``--cpu-bind`` for mpiexec
 
-        :param bind_type: binding type 
+        :param bind_type: binding type
         :type bind_type: str
         """
         if "mpirun" in self.run_command:
@@ -235,9 +235,9 @@ class _OpenMPISettings(RunSettings):
         self.run_args["timeout"] = str(walltime)
 
     def format_run_args(self):
-        """Return a list of OpenMPI formatted run arguments
+        """Return a list of MPI-standard formatted run arguments
 
-        :return: list of OpenMPI arguments for these settings
+        :return: list of MPI-standard arguments for these settings
         :rtype: list[str]
         """
         # args launcher uses
@@ -274,9 +274,9 @@ class _OpenMPISettings(RunSettings):
         return formatted
 
 
-class MpirunSettings(_OpenMPISettings):
+class MpirunSettings(_BaseMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        """Settings to run job with ``mpirun`` command (OpenMPI)
+        """Settings to run job with ``mpirun`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
@@ -297,18 +297,9 @@ class MpirunSettings(_OpenMPISettings):
         """
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
-        completed_process = subprocess.run(
-            [self.run_command, "-V"], capture_output=True
-        )  # type: subprocess.CompletedProcess
-        version_statement = completed_process.stdout.decode()
-
-        if not re.match(r"mpirun\s\(Open MPI\)\s4.\d+.\d+", version_statement):
-            logger.warning("Non-OpenMPI implementation of `mpirun` detected")
-
-
-class MpiexecSettings(_OpenMPISettings):
+class MpiexecSettings(_BaseMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        """Settings to run job with ``mpiexec`` command (OpenMPI)
+        """Settings to run job with ``mpiexec`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
@@ -330,17 +321,18 @@ class MpiexecSettings(_OpenMPISettings):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
-            [self.run_command, "-V"], capture_output=True
-        )  # type: subprocess.CompletedProcess
-        version_statement = completed_process.stdout.decode()
+            [self.run_command, "-help"],
+            capture_output=True
+        )
+        help_statement = completed_process.stdout.decode()
+        if "mpiexec.slurm" in help_statement:
+            raise SSUnsupportedError(
+                "Slurm's wrapper for mpiexec is unsupported. Use slurmSettings instead"
+                )
 
-        if not re.match(r"mpiexec\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
-            logger.warning("Non-OpenMPI implementation of `mpiexec` detected")
-
-
-class OrterunSettings(_OpenMPISettings):
+class OrterunSettings(_BaseMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
-        """Settings to run job with ``orterun`` command (OpenMPI)
+        """Settings to run job with ``orterun`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
         value to signify that they should be exported from the current
@@ -360,11 +352,3 @@ class OrterunSettings(_OpenMPISettings):
         :type env_vars: dict[str, str], optional
         """
         super().__init__(exe, exe_args, "orterun", run_args, env_vars, **kwargs)
-
-        completed_process = subprocess.run(
-            [self.run_command, "-V"], capture_output=True
-        )  # type: subprocess.CompletedProcess
-        version_statement = completed_process.stdout.decode()
-
-        if not re.match(r"orterun\s\(OpenRTE\)\s4.\d+.\d+", version_statement):
-            logger.warning("Non-OpenMPI implementation of `orterun` detected")
