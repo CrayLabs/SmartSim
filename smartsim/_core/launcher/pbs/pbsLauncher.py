@@ -32,7 +32,7 @@ from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import AprunStep, LocalStep, MpirunStep, MpiexecStep, QsubBatchStep
+from ..step import AprunStep, LocalStep, MpirunStep, MpiexecStep, OrterunStep, QsubBatchStep
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
@@ -58,6 +58,7 @@ class PBSLauncher(WLMLauncher):
         AprunSettings: AprunStep,
         QsubBatchSettings: QsubBatchStep,
         MpirunSettings: MpirunStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
         MpiexecSettings: MpiexecStep
     }

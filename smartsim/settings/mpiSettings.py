@@ -26,7 +26,6 @@
 
 import shutil
 import subprocess
-import re
 
 from ..error import SSUnsupportedError, LauncherError
 from ..log import get_logger
@@ -39,7 +38,8 @@ class _BaseMPISettings(RunSettings):
     """Base class for all common arguments of MPI-standard run commands"""
 
     def __init__(
-        self, exe, exe_args=None, run_command="mpiexec", run_args=None, env_vars=None, **kwargs
+        self, exe, exe_args=None, run_command="mpiexec", run_args=None,
+        env_vars=None, fail_if_missing_exec=True, **kwargs
     ):
         """Settings to format run job with an MPI-standard binary
 
@@ -59,6 +59,9 @@ class _BaseMPISettings(RunSettings):
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
+        :param fail_if_missing_exec: Throw an exception of the MPI command
+                                     is missing. Otherwise, throw a warning
+        :type fail_if_missing_exec: bool, optional
         """
         super().__init__(
             exe,
@@ -69,13 +72,16 @@ class _BaseMPISettings(RunSettings):
             **kwargs,
         )
         self.mpmd = []
+
         if not shutil.which(self._run_command):
-            raise LauncherError(
-                (
-                    f"Cannot find {self._run_command}. Try passing the "
-                    "full path via run_command."
-                )
+            msg = (
+                f"Cannot find {self._run_command}. Try passing the "
+                "full path via run_command."
             )
+            if fail_if_missing_exec:
+                raise LauncherError(msg)
+            else:
+                logger.warning(msg)
 
     reserved_run_args = {"wd", "wdir"}
 

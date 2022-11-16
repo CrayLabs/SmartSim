@@ -33,7 +33,7 @@ from ....settings import *
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import LocalStep, MpirunStep, MpiexecStep, SbatchStep, SrunStep
+from ..step import LocalStep, MpirunStep, MpiexecStep, SbatchStep, SrunStep, OrterunStep
 from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
@@ -60,6 +60,7 @@ class SlurmLauncher(WLMLauncher):
         SbatchSettings: SbatchStep,
         MpirunSettings: MpirunStep,
         MpiexecSettings: MpiexecStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
     }
 

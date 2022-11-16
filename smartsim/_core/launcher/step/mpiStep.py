@@ -32,16 +32,9 @@ from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
 
-_supported_launchers = [
-    "PBS",
-    "COBALT",
-    "SLURM",
-    "LSB"
-]
-
 logger = get_logger(__name__)
 
-class MpiexecStep(Step):
+class _BaseMPIStep(Step):
     def __init__(self, name, cwd, run_settings):
         """Initialize an mpiexec job step
 
@@ -51,14 +44,20 @@ class MpiexecStep(Step):
         :type cwd: str
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
-        :param default_run_command: The default command to launch an MPI
-                                    application
-        :type default_run_command: str, optional
         """
 
         super().__init__(name, cwd)
 
-        self._run_command = run_settings._run_command
+        self._supported_launchers = [
+            "PBS",
+            "COBALT",
+            "SLURM",
+            "LSB"
+        ]
+
+
+        self.run_settings = run_settings
+        self._run_command = self.run_settings._run_command
 
         self.alloc = None
         if not self.run_settings.in_batch:
@@ -103,7 +102,7 @@ class MpiexecStep(Step):
         """
 
         environment_keys = os.environ.keys()
-        for launcher in _supported_launchers:
+        for launcher in self._supported_launchers:
             jobid_field = f'{launcher.upper()}_JOBID'
             if jobid_field in environment_keys:
                 self.alloc = os.environ[jobid_field]
@@ -145,9 +144,44 @@ class MpiexecStep(Step):
         cmd = sh_split(" ".join(cmd))
         return cmd
 
-class MpirunStep(MpiexecStep):
+class MpiexecStep(_BaseMPIStep):
+    def __init__(self, name, cwd, run_settings):
+        """Initialize an mpiexec job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param run_settings: run settings for entity
+        :type run_settings: RunSettings
+        :param default_run_command: The default command to launch an MPI
+                                    application
+        :type default_run_command: str, optional
+        """
+
+        super().__init__(name, cwd, run_settings)
+
+
+class MpirunStep(_BaseMPIStep):
     def __init__(self, name, cwd, run_settings):
         """Initialize an mpirun job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param run_settings: run settings for entity
+        :type run_settings: RunSettings
+        :param default_run_command: The default command to launch an MPI
+                                    application
+        :type default_run_command: str, optional
+        """
+
+        super().__init__(name, cwd, run_settings)
+
+class OrterunStep(_BaseMPIStep):
+    def __init__(self, name, cwd, run_settings):
+        """Initialize an orterun job step
 
         :param name: name of the entity to be launched
         :type name: str

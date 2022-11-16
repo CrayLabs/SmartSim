@@ -33,5 +33,6 @@ logger = get_logger(__name__)
 simplefilter("once", DeprecationWarning)
 warn(
     "mpirunSettings will be deprecated; use mpiSettings instead.",
-    DeprecationWarning
+    DeprecationWarning,
+    stacklevel=2
 )
