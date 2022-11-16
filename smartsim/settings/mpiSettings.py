@@ -24,10 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import shutil
 import subprocess
 import re
 
-from ..error import SSUnsupportedError
+from ..error import SSUnsupportedError, LauncherError
 from ..log import get_logger
 from .base import RunSettings
 
@@ -38,7 +39,7 @@ class _BaseMPISettings(RunSettings):
     """Base class for all common arguments of MPI-standard run commands"""
 
     def __init__(
-        self, exe, exe_args=None, run_command="", run_args=None, env_vars=None, **kwargs
+        self, exe, exe_args=None, run_command="mpiexec", run_args=None, env_vars=None, **kwargs
     ):
         """Settings to format run job with an MPI-standard binary
 
@@ -68,6 +69,13 @@ class _BaseMPISettings(RunSettings):
             **kwargs,
         )
         self.mpmd = []
+        if not shutil.which(self._run_command):
+            raise LauncherError(
+                (
+                    f"Cannot find {self._run_command}. Try passing the "
+                    "full path via run_command."
+                )
+            )
 
     reserved_run_args = {"wd", "wdir"}
 
@@ -101,8 +109,7 @@ class _BaseMPISettings(RunSettings):
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of tasks for this job
 
-        This sets ``--cpus-per-proc`` for mpirun
-        end ``--depth`` for mpiexec
+        This sets ``--cpus-per-proc`` for MPI compliant implementations
 
         note: this option has been deprecated in openMPI 4.0+
         and will soon be replaced.
@@ -110,24 +117,17 @@ class _BaseMPISettings(RunSettings):
         :param cpus_per_task: number of tasks
         :type cpus_per_task: int
         """
-        if "mpirun" in self.run_command:
-            self.run_args["cpus-per-proc"] = int(cpus_per_task)
-        elif "mpiexec" in self.run_command:
-            self.run_args["depth"] = int(cpus_per_task)
+        self.run_args["cpus-per-proc"] = int(cpus_per_task)
 
     def set_cpu_binding_type(self, bind_type):
         """Specifies the cores to which MPI processes are bound
 
-        This sets ``--bind-to`` for mpirun
-        and ``--cpu-bind`` for mpiexec
+        This sets ``--bind-to`` for MPI compliant implementations
 
         :param bind_type: binding type
         :type bind_type: str
         """
-        if "mpirun" in self.run_command:
-            self.run_args["bind-to"] = str(bind_type)
-        elif "mpiexec" in self.run_command:
-            self.run_args["cpu-bind"] = str(bind_type)
+        self.run_args["bind-to"] = str(bind_type)
 
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per node
@@ -135,24 +135,17 @@ class _BaseMPISettings(RunSettings):
         :param tasks_per_node: number of tasks to launch per node
         :type tasks_per_node: int
         """
-        if "mpirun" in self.run_command:
-            self.run_args["npernode"] = int(tasks_per_node)
-        elif "mpiexec" in self.run_command:
-            self.run_args["ppn"] = int(tasks_per_node)
+        self.run_args["npernode"] = int(tasks_per_node)
 
     def set_tasks(self, tasks):
         """Set the number of tasks for this job
 
-        This sets ``--n`` for mpirun
-        and "--np" for mpiexec
+        This sets ``-n`` for MPI compliant implementations
 
         :param tasks: number of tasks
         :type tasks: int
         """
-        if "mpirun" in self.run_command:
-            self.run_args["n"] = int(tasks)
-        elif "mpiexec" in self.run_command:
-            self.run_args["np"] = int(tasks)
+        self.run_args["n"] = int(tasks)
 
     def set_hostlist(self, host_list):
         """Set the hostlist for the ``mpirun`` command
@@ -260,10 +253,7 @@ class _BaseMPISettings(RunSettings):
         :rtype: list[str]
         """
         formatted = []
-        if "mpirun" in self.run_command:
-           env_string = "-x"
-        elif "mpiexec" in self.run_command:
-           env_string = "--env"
+        env_string = "-x"
 
         if self.env_vars:
             for name, value in self.env_vars.items():
@@ -321,7 +311,7 @@ class MpiexecSettings(_BaseMPISettings):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
-            [self.run_command, "-help"],
+            [self._run_command, "--help"],
             capture_output=True
         )
         help_statement = completed_process.stdout.decode()

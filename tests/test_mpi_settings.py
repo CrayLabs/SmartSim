@@ -30,6 +30,62 @@ def test_not_instanced_if_not_found(MPISettings):
         os.environ["PATH"] = old_path
 
 
+@pytest.mark.parametrize(
+    "MPISettings,stubs_path,stub_exe",
+    [
+        pytest.param(
+            MpirunSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "mpirun",
+            id="OpenMPI4-mpirun",
+        ),
+        pytest.param(
+            MpiexecSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "mpiexec",
+            id="OpenMPI4-mpiexec",
+        ),
+        pytest.param(
+            OrterunSettings,
+            osp.join("mpi_impl_stubs", "openmpi4"),
+            "orterun",
+            id="OpenMPI4-orterun",
+        ),
+    ],
+)
+def test_expected_openmpi_instance_without_warning(
+    MPISettings, stubs_path, stub_exe, fileutils, caplog
+):
+    from smartsim.settings.mpiSettings import logger
+
+    old_path = os.environ.get("PATH")
+    old_prop = logger.propagate
+    logger.propagate = True
+
+    try:
+        stubs_path = fileutils.get_test_dir_path(stubs_path)
+        stub_exe = osp.join(stubs_path, stub_exe)
+        st = os.stat(stub_exe)
+        if not st.st_mode & stat.S_IEXEC:
+            os.chmod(stub_exe, st.st_mode | stat.S_IEXEC)
+
+        os.environ["PATH"] = stubs_path
+        with caplog.at_level(logging.WARNING):
+            caplog.clear()
+            MPISettings(sys.executable)
+            for rec in caplog.records:
+                if logging.WARNING <= rec.levelno:
+                    pytest.fail(
+                        (
+                            "Unexepected log message when instancing valid "
+                            "OpenMPI settings"
+                        )
+                    )
+    finally:
+        os.environ["PATH"] = old_path
+        logger.propagate = old_prop
+
+
 def test_error_if_slurm_mpiexec(fileutils):
 
     stubs_path = osp.join("mpi_impl_stubs","slurm")
@@ -49,7 +105,7 @@ def test_error_if_slurm_mpiexec(fileutils):
         os.environ["PATH"] = old_path
 
 
-def test_mpi_base_settings():
+def test_openmpi_base_settings():
     settings = _BaseMPISettings("python")
     settings.set_cpus_per_task(1)
     settings.set_tasks(2)
@@ -59,7 +115,7 @@ def test_mpi_base_settings():
     assert formatted == result
 
 
-def test_mpi_base_args():
+def test_openmpi_base_args():
     run_args = {
         "map-by": "ppr:1:node",
         "np": 1,
@@ -74,7 +130,7 @@ def test_mpi_base_args():
     assert formatted == result
 
 
-def test_mpi_add_mpmd():
+def test_openmpi_add_mpmd():
     settings = _BaseMPISettings("python")
     settings_2 = _BaseMPISettings("python")
     settings.make_mpmd(settings_2)

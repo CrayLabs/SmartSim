@@ -101,9 +101,9 @@ class Orchestrator(EntityList):
             launcher = detect_launcher()
 
         by_launcher = {
-            "slurm": ["srun", "mpirun"],
-            "pbs": ["aprun", "mpirun","mpiexec"],
-            "cobalt": ["aprun", "mpirun"],
+            "slurm": ["srun", "mpirun", "mpiexec"],
+            "pbs": ["aprun", "mpirun", "mpiexec"],
+            "cobalt": ["aprun", "mpirun", "mpiexec"],
             "lsf": ["jsrun"],
             "local": [None],
         }
