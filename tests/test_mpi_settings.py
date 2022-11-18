@@ -3,8 +3,6 @@ import os
 import os.path as osp
 import stat
 import sys
-from asyncio.log import logger
-from unicodedata import name
 
 import pytest
 

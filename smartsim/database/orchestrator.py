@@ -46,6 +46,9 @@ from ..settings import (
     CobaltBatchSettings,
     JsrunSettings,
     MpirunSettings,
+    MpiexecSettings,
+    PALSMpiexecSettings,
+    OrterunSettings,
     QsubBatchSettings,
     SbatchSettings,
     SrunSettings,
@@ -719,16 +722,24 @@ class Orchestrator(EntityList):
 
     def _fill_reserved(self):
         """Fill the reserved batch and run arguments dictionaries"""
-        self._reserved_run_args[MpirunSettings] = [
-            "np",
-            "N",
-            "c",
-            "output-filename",
-            "n",
-            "wdir",
-            "wd",
-            "host",
+
+        mpi_like_settings = [
+            MpirunSettings,
+            MpiexecSettings,
+            OrterunSettings,
+            PALSMpiexecSettings
         ]
+        for settings in mpi_like_settings:
+            self._reserved_run_args[settings] = [
+                "np",
+                "N",
+                "c",
+                "output-filename",
+                "n",
+                "wdir",
+                "wd",
+                "host",
+            ]
         self._reserved_run_args[SrunSettings] = [
             "nodes",
             "N",

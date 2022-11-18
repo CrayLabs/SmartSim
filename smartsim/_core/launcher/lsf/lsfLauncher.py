@@ -32,7 +32,7 @@ from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep, MpiexecStep
+from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep, MpiexecStep, OrterunStep
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
 from .lsfCommands import bjobs, bkill, jskill, jslist
 from .lsfParser import (
@@ -64,6 +64,7 @@ class LSFLauncher(WLMLauncher):
         BsubBatchSettings: BsubBatchStep,
         MpirunSettings: MpirunStep,
         MpiexecSettings: MpiexecStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
     }
 
