@@ -29,12 +29,12 @@ import subprocess
 
 from ..error import SSUnsupportedError, LauncherError
 from ..log import get_logger
-from .mpiSettings import MpiexecSettings
+from .mpiSettings import _BaseMPISettings
 
 logger = get_logger(__name__)
 
 
-class PALSMpiexecSettings(MpiexecSettings):
+class PalsMpiexecSettings(_BaseMPISettings):
     """Settings to run job with ``mpiexec`` under the HPE Cray
     Parallel Application Launch Service (PALS)
 

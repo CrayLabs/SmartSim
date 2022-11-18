@@ -5,7 +5,7 @@ from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 from .pbsSettings import QsubBatchSettings
 from .slurmSettings import SbatchSettings, SrunSettings
-from .PALSSettings import PALSMpiexecSettings
+from .palsSettings import PalsMpiexecSettings
 from .containers import Container, Singularity
 
 __all__ = [
@@ -20,7 +20,7 @@ __all__ = [
     "RunSettings",
     "SbatchSettings",
     "SrunSettings",
-    "PALSMpiexecSettings",
+    "PalsMpiexecSettings",
     "Container",
     "Singularity",
 ]
