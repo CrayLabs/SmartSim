@@ -88,6 +88,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
             run_command=run_command,
             run_args=run_args,
             env_vars=env_vars,
+            fail_if_missing_exec=fail_if_missing_exec,
             **kwargs,
         )
 
@@ -114,7 +115,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param cpus_per_task: number of tasks
         :type cpus_per_task: int
         """
-        raise SSUnsupportedError("set_task_map not supported under PALS")
+        raise SSUnsupportedError("set_cpus_per_task not supported under PALS")
 
     def set_cpu_binding_type(self, bind_type):
         """Specifies the cores to which MPI processes are bound
@@ -196,12 +197,16 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :rtype: list[str]
         """
         formatted = []
-        env_string = "--env"
 
+        export_vars = []
         if self.env_vars:
             for name, value in self.env_vars.items():
                 if value:
-                    formatted += [env_string, "=".join((name, str(value)))]
+                    formatted += ['--env', "=".join((name, str(value)))]
                 else:
-                    formatted += [env_string, name]
+                    export_vars.append(name)
+
+        if export_vars:
+            formatted += ['--envlist', ','.join(export_vars)]
+
         return formatted
