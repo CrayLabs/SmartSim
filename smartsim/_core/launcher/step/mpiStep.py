@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 class _BaseMPIStep(Step):
     def __init__(self, name, cwd, run_settings):
-        """Initialize an mpiexec job step
+        """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
         :type name: str
@@ -48,16 +48,18 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd)
 
-        self._supported_launchers = [
+        _supported_launchers = [
             "PBS",
             "COBALT",
             "SLURM",
             "LSB"
         ]
 
-
         self.run_settings = run_settings
-        self._run_command = self.run_settings._run_command
+
+        @property
+        def _run_command(self):
+            return self.run_settings._run_command
 
         self.alloc = None
         if not self.run_settings.in_batch:

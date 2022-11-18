@@ -47,7 +47,7 @@ from ..settings import (
     JsrunSettings,
     MpirunSettings,
     MpiexecSettings,
-    PALSMpiexecSettings,
+    PalsMpiexecSettings,
     OrterunSettings,
     QsubBatchSettings,
     SbatchSettings,
@@ -727,7 +727,7 @@ class Orchestrator(EntityList):
             MpirunSettings,
             MpiexecSettings,
             OrterunSettings,
-            PALSMpiexecSettings
+            PalsMpiexecSettings
         ]
         for settings in mpi_like_settings:
             self._reserved_run_args[settings] = [

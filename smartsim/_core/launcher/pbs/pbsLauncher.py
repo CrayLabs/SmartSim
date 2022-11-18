@@ -68,7 +68,7 @@ class PBSLauncher(WLMLauncher):
         MpirunSettings: MpirunStep,
         OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
-        PALSMpiexecSettings: MpiexecStep
+        PalsMpiexecSettings: MpiexecStep
     }
 
     def run(self, step):
