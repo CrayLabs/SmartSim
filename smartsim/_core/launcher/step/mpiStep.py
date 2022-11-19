@@ -48,22 +48,23 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd)
 
-        _supported_launchers = [
-            "PBS",
-            "COBALT",
-            "SLURM",
-            "LSB"
-        ]
 
         self.run_settings = run_settings
-
-        @property
-        def _run_command(self):
-            return self.run_settings._run_command
 
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    _supported_launchers = [
+        "PBS",
+        "COBALT",
+        "SLURM",
+        "LSB"
+    ]
+
+    @property
+    def _run_command(self):
+        return self.run_settings._run_command
 
     def get_launch_cmd(self):
         """Get the command to launch this step
