@@ -102,7 +102,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param task_mapping: task mapping
         :type task_mapping: str
         """
-        raise SSUnsupportedError("set_task_map not supported under PALS")
+        logger.warning("set_task_map not supported under PALS")
 
     def set_cpus_per_task(self, cpus_per_task):
         """Set the number of tasks for this job
@@ -115,7 +115,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param cpus_per_task: number of tasks
         :type cpus_per_task: int
         """
-        raise SSUnsupportedError("set_cpus_per_task not supported under PALS")
+        logger.warning("set_cpus_per_task not supported under PALS")
 
     def set_cpu_binding_type(self, bind_type):
         """Specifies the cores to which MPI processes are bound
@@ -144,7 +144,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :type quiet: bool
         """
 
-        raise SSUnsupportedError("set_quiet_launch not supported under PALS")
+        logger.warning("set_quiet_launch not supported under PALS")
 
     def set_broadcast(self, dest_path=None):
         """Copy the specified executable(s) to remote machines
@@ -169,7 +169,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param walltime: number like string of seconds that a job will run in secs
         :type walltime: str
         """
-        raise SSUnsupportedError("set_walltime not supported under PALS")
+        logger.warning("set_walltime not supported under PALS")
 
     def format_run_args(self):
         """Return a list of MPI-standard formatted run arguments
