@@ -34,10 +34,9 @@ from .step import Step
 
 logger = get_logger(__name__)
 
-
-class MpirunStep(Step):
+class _BaseMPIStep(Step):
     def __init__(self, name, cwd, run_settings):
-        """Initialize a OpenMPI mpirun job step
+        """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
         :type name: str
@@ -46,11 +45,26 @@ class MpirunStep(Step):
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
         """
+
         super().__init__(name, cwd)
+
+
         self.run_settings = run_settings
+
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    _supported_launchers = [
+        "PBS",
+        "COBALT",
+        "SLURM",
+        "LSB"
+    ]
+
+    @property
+    def _run_command(self):
+        return self.run_settings._run_command
 
     def get_launch_cmd(self):
         """Get the command to launch this step
@@ -58,62 +72,52 @@ class MpirunStep(Step):
         :return: launch command
         :rtype: list[str]
         """
-        mpirun = self.run_settings.run_command
-        mpirun_cmd = [mpirun, "-wdir", self.cwd]
-        # add env vars to mpirun command
-        mpirun_cmd.extend(self.run_settings.format_env_vars())
+        mpi_cmd = [self._run_command, "--wdir", self.cwd]
+        # add env vars to mpi command
+        mpi_cmd.extend(self.run_settings.format_env_vars())
 
-        # add mpirun settings to command
-        mpirun_cmd.extend(self.run_settings.format_run_args())
+        # add mpi settings to command
+        mpi_cmd.extend(self.run_settings.format_run_args())
 
         if self.run_settings.colocated_db_settings:
             # disable cpu binding as the entrypoint will set that
             # for the application and database process now
-            mpirun_cmd.extend(["--bind-to", "none"])
+            # mpi_cmd.extend(["--cpu-bind", "none"])
 
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             launch_script_path = self.get_colocated_launch_script()
-            mpirun_cmd += [bash, launch_script_path]
+            mpi_cmd += [bash, launch_script_path]
 
-        mpirun_cmd += self._build_exe()
+        mpi_cmd += self._build_exe()
 
         # if its in a batch, redirect stdout to
         # file in the cwd.
         if self.run_settings.in_batch:
             output = self.get_step_file(ending=".out")
-            mpirun_cmd += [">", output]
-        return mpirun_cmd
+            mpi_cmd += [">", output]
+        return mpi_cmd
 
     def _set_alloc(self):
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
         """
-        if "PBS_JOBID" in os.environ:  # cov-pbs
-            self.alloc = os.environ["PBS_JOBID"]
-            logger.debug(
-                f"Running on PBS allocation {self.alloc} gleaned from user environment"
-            )
-        elif "COBALT_JOBID" in os.environ:  # cov-cobalt
-            self.alloc = os.environ["COBALT_JOBID"]
-            logger.debug(
-                f"Running on Cobalt allocation {self.alloc} gleaned from user environment"
-            )
-        elif "SLURM_JOBID" in os.environ:  # cov-slurm
-            self.alloc = os.environ["SLURM_JOBID"]
-            logger.debug(
-                f"Running on Slurm allocation {self.alloc} gleaned from user environment"
-            )
-        elif "LSB_JOBID" in os.environ:  # cov-lsf
-            self.alloc = os.environ["LSB_JOBID"]
-            logger.debug(
-                f"Running on Slurm allocation {self.alloc} gleaned from user environment"
-            )
-        else:
-            raise AllocationError(
-                "No allocation specified or found and not running in batch"
-            )
+
+        environment_keys = os.environ.keys()
+        for launcher in self._supported_launchers:
+            jobid_field = f'{launcher.upper()}_JOBID'
+            if jobid_field in environment_keys:
+                self.alloc = os.environ[jobid_field]
+                logger.debug(
+                    f"Running on allocation {self.alloc} from {jobid_field}"
+                )
+                return
+
+        # If this function did not return above, no allocations were found
+        raise AllocationError(
+            "No allocation specified or found and not running in batch"
+        )
 
     def _build_exe(self):
         """Build the executable for this step
@@ -129,7 +133,7 @@ class MpirunStep(Step):
             return exe + args
 
     def _make_mpmd(self):
-        """Build mpirun (MPMD) executable"""
+        """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
         cmd = exe + args
@@ -142,3 +146,55 @@ class MpirunStep(Step):
 
         cmd = sh_split(" ".join(cmd))
         return cmd
+
+class MpiexecStep(_BaseMPIStep):
+    def __init__(self, name, cwd, run_settings):
+        """Initialize an mpiexec job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param run_settings: run settings for entity
+        :type run_settings: RunSettings
+        :param default_run_command: The default command to launch an MPI
+                                    application
+        :type default_run_command: str, optional
+        """
+
+        super().__init__(name, cwd, run_settings)
+
+
+class MpirunStep(_BaseMPIStep):
+    def __init__(self, name, cwd, run_settings):
+        """Initialize an mpirun job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param run_settings: run settings for entity
+        :type run_settings: RunSettings
+        :param default_run_command: The default command to launch an MPI
+                                    application
+        :type default_run_command: str, optional
+        """
+
+        super().__init__(name, cwd, run_settings)
+
+class OrterunStep(_BaseMPIStep):
+    def __init__(self, name, cwd, run_settings):
+        """Initialize an orterun job step
+
+        :param name: name of the entity to be launched
+        :type name: str
+        :param cwd: path to launch dir
+        :type cwd: str
+        :param run_settings: run settings for entity
+        :type run_settings: RunSettings
+        :param default_run_command: The default command to launch an MPI
+                                    application
+        :type default_run_command: str, optional
+        """
+
+        super().__init__(name, cwd, run_settings)

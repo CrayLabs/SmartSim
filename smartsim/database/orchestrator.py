@@ -46,6 +46,9 @@ from ..settings import (
     CobaltBatchSettings,
     JsrunSettings,
     MpirunSettings,
+    MpiexecSettings,
+    PalsMpiexecSettings,
+    OrterunSettings,
     QsubBatchSettings,
     SbatchSettings,
     SrunSettings,
@@ -101,9 +104,9 @@ class Orchestrator(EntityList):
             launcher = detect_launcher()
 
         by_launcher = {
-            "slurm": ["srun", "mpirun"],
-            "pbs": ["aprun", "mpirun"],
-            "cobalt": ["aprun", "mpirun"],
+            "slurm": ["srun", "mpirun", "mpiexec"],
+            "pbs": ["aprun", "mpirun", "mpiexec"],
+            "cobalt": ["aprun", "mpirun", "mpiexec"],
             "lsf": ["jsrun"],
             "local": [None],
         }
@@ -719,16 +722,24 @@ class Orchestrator(EntityList):
 
     def _fill_reserved(self):
         """Fill the reserved batch and run arguments dictionaries"""
-        self._reserved_run_args[MpirunSettings] = [
-            "np",
-            "N",
-            "c",
-            "output-filename",
-            "n",
-            "wdir",
-            "wd",
-            "host",
+
+        mpi_like_settings = [
+            MpirunSettings,
+            MpiexecSettings,
+            OrterunSettings,
+            PalsMpiexecSettings
         ]
+        for settings in mpi_like_settings:
+            self._reserved_run_args[settings] = [
+                "np",
+                "N",
+                "c",
+                "output-filename",
+                "n",
+                "wdir",
+                "wd",
+                "host",
+            ]
         self._reserved_run_args[SrunSettings] = [
             "nodes",
             "N",
