@@ -308,14 +308,23 @@ class Controller:
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
-        # models themselves cannot be batch steps
+        # models themselves cannot be batch steps. If batch settings are
+        # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
-            job_step = self._create_job_step(model)
-            steps.append((job_step, model))
+            if model.batch_settings:
+                anon_entity_list = _AnonymousBatchJob(
+                    model.name, model.path, model.batch_settings
+                )
+                anon_entity_list.entities.append(model)
+                batch_step = self._create_batch_job_step(anon_entity_list)
+                steps.append((batch_step, model))
+            else:
+                job_step = self._create_job_step(model)
+                steps.append((job_step, model))
 
         # launch steps
-        for job_step in steps:
-            self._launch_step(*job_step)
+        for step, entity in steps:
+            self._launch_step(step, entity)
 
     def _launch_orchestrator(self, orchestrator):
         """Launch an Orchestrator instance
@@ -381,7 +390,6 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-
         try:
             job_id = self._launcher.run(job_step)
         except LauncherError as e:
@@ -630,3 +638,12 @@ class Controller:
                     for db_script in entity._db_scripts:
                         if db_script not in ensemble._db_scripts:
                             set_script(db_script, client)
+
+
+class _AnonymousBatchJob(EntityList):
+    def __init__(self, name, path, batch_settings, **kwargs):
+        super().__init__(name, path)
+        self.batch_settings = batch_settings
+
+    def _initialize_entities(self, **kwargs):
+        ...

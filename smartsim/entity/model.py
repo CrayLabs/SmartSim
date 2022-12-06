@@ -33,7 +33,9 @@ from .files import EntityFiles
 
 
 class Model(SmartSimEntity):
-    def __init__(self, name, params, path, run_settings, params_as_args=None):
+    def __init__(
+        self, name, params, path, run_settings, params_as_args=None, batch_settings=None
+    ):
         """Initialize a ``Model``
 
         :param name: name of the model
@@ -49,12 +51,16 @@ class Model(SmartSimEntity):
                                interpreted as command line arguments to
                                be added to run_settings
         :type params_as_args: list[str]
+        :param batch_settings: Launcher settings for running the individual
+                               model as a batch job, defaults to None
+        :type batch_settings: BatchSettings | None
         """
         super().__init__(name, path, run_settings)
         self.params = params
         self.params_as_args = params_as_args
         self.incoming_entities = []
         self._key_prefixing_enabled = False
+        self.batch_settings = batch_settings
         self._db_models = []
         self._db_scripts = []
         self.files = None

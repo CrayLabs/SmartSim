@@ -427,7 +427,13 @@ class Experiment:
             raise
 
     def create_model(
-        self, name, run_settings, params=None, path=None, enable_key_prefixing=False
+        self,
+        name,
+        run_settings,
+        params=None,
+        path=None,
+        enable_key_prefixing=False,
+        batch_settings=None,
     ):
         """Create a general purpose ``Model``
 
@@ -490,6 +496,9 @@ class Experiment:
                                      be prefixed with the ``Model`` name.
                                      Default is True.
         :type enable_key_prefixing: bool, optional
+        :param batch_settings: Settings to run model individually as a batch job,
+                               defaults to None
+        :type batch_settings: BatchSettings | None
         :raises SmartSimError: if initialization fails
         :return: the created ``Model``
         :rtype: Model
@@ -497,7 +506,9 @@ class Experiment:
         path = init_default(getcwd(), path, str)
         params = init_default({}, params, dict)
         try:
-            new_model = Model(name, params, path, run_settings)
+            new_model = Model(
+                name, params, path, run_settings, batch_settings=batch_settings
+            )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
             return new_model
