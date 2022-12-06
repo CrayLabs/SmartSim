@@ -32,7 +32,14 @@ from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import AprunStep, LocalStep, MpirunStep, QsubBatchStep
+from ..step import (
+    AprunStep,
+    LocalStep,
+    MpirunStep,
+    MpiexecStep,
+    OrterunStep,
+    QsubBatchStep
+)
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
@@ -57,8 +64,11 @@ class PBSLauncher(WLMLauncher):
     supported_rs = {
         AprunSettings: AprunStep,
         QsubBatchSettings: QsubBatchStep,
+        MpiexecSettings: MpiexecStep,
         MpirunSettings: MpirunStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
+        PalsMpiexecSettings: MpiexecStep
     }
 
     def run(self, step):
