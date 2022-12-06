@@ -442,8 +442,19 @@ class Experiment:
         references to pieces of a workflow that can be parameterized,
         and executed.
 
-        ``Model`` instances can be launched sequentially or as a batch
-        by adding them into an ``Ensemble``.
+        ``Model`` instances can be launched sequentially, as a batch job,
+        or as a group by adding them into an ``Ensemble``.
+
+        All models require a reference to run settings to specify which
+        executable to launch as well provide options for how to launch
+        the executable with the underlying WLM. Furthermore, batch a
+        reference to a batch settings can be added to launch the model
+        as a batch job through ``Experiment.start``. If a model with
+        a reference to a set of batch settings is added to a larger
+        entity with its own set of batch settings (for e.g. an
+        ``Ensemble``) the batch settings of the larger entity will take
+        precedence and the batch setting of the model will be
+        strategically ignored.
 
         Parameters supplied in the `params` argument can be written into
         configuration files supplied at runtime to the model through

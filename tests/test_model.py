@@ -1,11 +1,12 @@
 import pytest
 
 from smartsim import Experiment
-from smartsim.entity import Model, Ensemble
+from smartsim._core.launcher.step import SbatchStep, SrunStep
+from smartsim.entity import Ensemble, Model
 from smartsim.error import EntityExistsError, SSUnsupportedError
 from smartsim.settings import RunSettings, SbatchSettings, SrunSettings
 from smartsim.settings.mpirunSettings import _OpenMPISettings
-from smartsim._core.launcher.step import SrunStep, SbatchStep
+
 
 def test_register_incoming_entity_preexists():
     exp = Experiment("experiment", launcher="local")
@@ -64,10 +65,19 @@ def monkeypatch_exp_controller(monkeypatch):
         def launch_step_nop(self, step, entity):
             entity_steps.append((step, entity))
 
-        monkeypatch.setattr(exp._control, "start", start_wo_job_manager.__get__(exp._control, type(exp._control))) 
-        monkeypatch.setattr(exp._control, "_launch_step", launch_step_nop.__get__(exp._control, type(exp._control)))
+        monkeypatch.setattr(
+            exp._control,
+            "start",
+            start_wo_job_manager.__get__(exp._control, type(exp._control)),
+        )
+        monkeypatch.setattr(
+            exp._control,
+            "_launch_step",
+            launch_step_nop.__get__(exp._control, type(exp._control)),
+        )
 
         return entity_steps
+
     return _monkeypatch_exp_controller
 
 
@@ -85,6 +95,7 @@ def test_model_with_batch_settings_makes_batch_step(monkeypatch_exp_controller):
     assert isinstance(entity, Model)
     assert isinstance(step, SbatchStep)
 
+
 def test_model_without_batch_settings_makes_run_step(monkeypatch_exp_controller):
     exp = Experiment("experiment", launcher="slurm")
     rs = SrunSettings("python", exe_args="sleep.py")
@@ -97,6 +108,7 @@ def test_model_without_batch_settings_makes_run_step(monkeypatch_exp_controller)
     step, entity = entity_steps[0]
     assert isinstance(entity, Model)
     assert isinstance(step, SrunStep)
+
 
 def test_models_batch_settings_are_ignored_in_ensemble(monkeypatch_exp_controller):
     exp = Experiment("experiment", launcher="slurm")
@@ -120,5 +132,3 @@ def test_models_batch_settings_are_ignored_in_ensemble(monkeypatch_exp_controlle
     step_cmd = step.step_cmds[0]
     assert any("srun" in tok for tok in step_cmd)  # call the model using run settings
     assert not any("sbatch" in tok for tok in step_cmd)  # no sbatch in sbatch
-
-

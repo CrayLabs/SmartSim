@@ -24,15 +24,23 @@ Description
 
 - Fix bug in colocated database entrypoint when loading PyTorch models
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
+- Allow for models to be launched independently as batch jobs
 
 Detailed Notes
 
-- Fix bug in colocated database entrypoint stemming from uninitialized variables.  This bug affects PyTorch models being loaded into the database. (PR237_)
+- Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
 - Make installation of correct Torch backend more reliable according to instruction from pyTorch
+- Models were given a `batch_settings` attribute. When launching a model through `Experiment.start`
+  the `Experiment` will first check for a non-nullish value at that attribute. If the check is
+  satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
+  the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
+  is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR244_)
 
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
+.. _PR244: https://github.com/CrayLabs/SmartSim/pull/244
+
 
 0.4.1
 -----
