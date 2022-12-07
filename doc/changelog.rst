@@ -35,11 +35,11 @@ Detailed Notes
   the `Experiment` will first check for a non-nullish value at that attribute. If the check is
   satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
   the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
-  is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR244_)
+  is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
 
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
-.. _PR244: https://github.com/CrayLabs/SmartSim/pull/244
+.. _PR245: https://github.com/CrayLabs/SmartSim/pull/245
 
 
 0.4.1
