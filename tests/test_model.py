@@ -29,18 +29,10 @@ def test_disable_key_prefixing():
 
 def test_catch_colo_mpmd_model():
     exp = Experiment("experiment", launcher="local")
-    rs = _BaseMPISettings(
-        "python",
-        exe_args="sleep.py",
-        fail_if_missing_exec=False
-    )
+    rs = _BaseMPISettings("python", exe_args="sleep.py", fail_if_missing_exec=False)
 
     # make it an mpmd model
-    rs_2 = _BaseMPISettings(
-        "python",
-        exe_args="sleep.py",
-        fail_if_missing_exec=False
-    )
+    rs_2 = _BaseMPISettings("python", exe_args="sleep.py", fail_if_missing_exec=False)
     rs.make_mpmd(rs_2)
 
     model = exp.create_model("bad_colo_model", rs)
@@ -104,10 +96,15 @@ def test_model_with_batch_settings_makes_batch_step(monkeypatch_exp_controller):
     assert isinstance(step, SbatchStep)
 
 
-def test_model_without_batch_settings_makes_run_step(monkeypatch_exp_controller):
+def test_model_without_batch_settings_makes_run_step(
+    monkeypatch, monkeypatch_exp_controller
+):
     exp = Experiment("experiment", launcher="slurm")
     rs = SrunSettings("python", exe_args="sleep.py")
     model = exp.create_model("test_model", run_settings=rs)
+
+    # pretend we are in an allocation to not raise alloc err
+    monkeypatch.setenv("SLURM_JOB_ID", "12345")
 
     entity_steps = monkeypatch_exp_controller(exp)
     exp.start(model)
