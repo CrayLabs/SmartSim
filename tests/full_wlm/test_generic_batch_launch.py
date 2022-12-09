@@ -19,13 +19,13 @@ def test_batch_model(fileutils, wlmutils):
     script = fileutils.get_test_conf_path("sleep.py")
     batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
     if wlmutils.get_test_launcher() == "lsf":
-        batch.set_account(wlmutils.get_test_account())
+        batch_settings.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":
-        batch.set_account(wlmutils.get_test_account())
-        batch.set_queue("debug-flat-quad")
+        batch_settings.set_account(wlmutils.get_test_account())
+        batch_settings.set_queue("debug-flat-quad")
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
     model = exp.create_model(
-        "m1", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
     )
     model.set_path(test_dir)
 
