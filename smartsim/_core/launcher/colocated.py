@@ -26,7 +26,7 @@
 
 import sys
 
-from ...error import SSUnsupportedError
+from ...error import SSUnsupportedError, SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
 
@@ -75,9 +75,7 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
 
 
 def _build_colocated_wrapper_cmd(
-    port=6780,
     cpus=1,
-    interface="lo",
     rai_args=None,
     extra_db_args=None,
     db_log=None,
@@ -85,12 +83,8 @@ def _build_colocated_wrapper_cmd(
 ):
     """Build the command use to run a colocated db application
 
-    :param port: db port, defaults to 6780
-    :type port: int, optional
     :param cpus: db cpus, defaults to 1
     :type cpus: int, optional
-    :param interface: network interface, defaults to "lo"
-    :type interface: str, optional
     :param rai_args: redisai args, defaults to None
     :type rai_args: dict[str, str], optional
     :param extra_db_args: extra redis args, defaults to None
@@ -113,14 +107,16 @@ def _build_colocated_wrapper_cmd(
         sys.executable,
         "-m",
         "smartsim._core.entrypoints.colocated",
-        "+ifname",
-        interface,
         "+lockfile",
         lockfile,
         "+db_cpus",
         str(cpus),
         "+command",
     ]
+    # Add in the interface if using TCP/IP
+    interface = kwargs.get("ifname",None):
+    if interface:
+        cmd += ["+ifname", interface]
 
     # collect DB binaries and libraries from the config
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
@@ -131,8 +127,23 @@ def _build_colocated_wrapper_cmd(
             # ex. THREADS_PER_QUEUE=1
             db_cmd.append(f"{arg.upper()} {str(value)}")
 
-    # add port and log information
-    db_cmd.extend(["--port", str(port), "--logfile", db_log])  # usually /dev/null
+    # Add port and log information for TCP/IP
+    port = kwargs.get("port",None)
+    if port:
+        db_cmd.extend(["--port", str(port)])
+
+    # Add socket and permissions for UDS
+    unix_socket = kwargs.get("unix_socket", None)
+    socket_permissions = kwargs.get("socket_permissions", None)
+
+    if unix_socket and socket_permissions:
+        db_cmd.extend(["--unixsocket", str(unix_socket), "--unixsocketperm", socket_permissions])
+    elif bool(unix_socket) ^ bool(socket_permissions):
+        raise SSInternalError(
+            "`unix_socket` and `socket_permissions` must both be defined or undefined."
+            )
+
+    db_cmd.extend([, "--logfile", db_log])  # usually /dev/null
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs
         # for the extra configurations and Python doesn't allow a hyphen
