@@ -111,15 +111,15 @@ def _build_colocated_wrapper_cmd(
         lockfile,
         "+db_cpus",
         str(cpus),
-        "+command",
     ]
     # Add in the interface if using TCP/IP
-    interface = kwargs.get("ifname",None):
+    interface = kwargs.get("ifname",None)
     if interface:
-        cmd += ["+ifname", interface]
-
+        cmd.extend(["+ifname", interface])
+    cmd.append("+command")
     # collect DB binaries and libraries from the config
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
+
     # add extra redisAI configurations
     for arg, value in rai_args.items():
         if value:
@@ -137,13 +137,18 @@ def _build_colocated_wrapper_cmd(
     socket_permissions = kwargs.get("socket_permissions", None)
 
     if unix_socket and socket_permissions:
-        db_cmd.extend(["--unixsocket", str(unix_socket), "--unixsocketperm", socket_permissions])
+        db_cmd.extend(
+            [
+                "--unixsocket", str(unix_socket),
+                "--unixsocketperm", str(socket_permissions)
+            ]
+        )
     elif bool(unix_socket) ^ bool(socket_permissions):
         raise SSInternalError(
             "`unix_socket` and `socket_permissions` must both be defined or undefined."
             )
 
-    db_cmd.extend([, "--logfile", db_log])  # usually /dev/null
+    db_cmd.extend(["--logfile", db_log])  # usually /dev/null
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs
         # for the extra configurations and Python doesn't allow a hyphen
@@ -167,7 +172,6 @@ def _build_colocated_wrapper_cmd(
 
     cmd.extend(db_cmd)
     return " ".join(cmd)
-
 
 def _build_db_model_cmd(db_models):
     cmd = []

@@ -269,7 +269,8 @@ class Model(SmartSimEntity):
 
         # TODO list which db settings can be extras
         colo_db_config = {}
-        colo_db_config.update(connection_options, common_options)
+        colo_db_config.update(connection_options)
+        colo_db_config.update(common_options)
         # redisai arguments for inference settings
         colo_db_config['rai_args'] = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),

@@ -166,7 +166,9 @@ def main(
     global DBPID
 
     try:
-        ip_address = current_ip(network_interface)
+        ip_address = None
+        if network_interface:
+            ip_address = current_ip(network_interface)
         lo_address = current_ip("lo")
     except ValueError as e:
         logger.warning(e)
@@ -269,7 +271,7 @@ if __name__ == "__main__":
             prefix_chars="+", description="SmartSim Process Launcher"
         )
         parser.add_argument(
-            "+ifname", type=str, help="Network Interface name", default="lo"
+            "+ifname", type=str, help="Network Interface name", default=""
         )
         parser.add_argument(
             "+lockfile", type=str, help="Filename to create for single proc per host"
