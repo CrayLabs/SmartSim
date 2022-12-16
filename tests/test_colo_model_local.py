@@ -5,7 +5,12 @@ import warnings
 from smartsim import Experiment, status
 
 
-@pytest.mark.parametrize("db_type", ["uds","tcp","deprecated"])
+if sys.platform == "darwin":
+    supported_dbs = ["tcp","deprecated"]
+else:
+    supported_dbs = ["uds","tcp","deprecated"]
+
+@pytest.mark.parametrize("db_type", supported_dbs)
 def test_launch_colocated_model(fileutils, db_type):
     """Test the launch of a model with a colocated database and local launcher"""
 
