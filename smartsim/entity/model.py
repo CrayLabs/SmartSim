@@ -129,7 +129,7 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def colocate_db(self, **kwargs):
+    def colocate_db(self, *args, **kwargs):
         warnings.warn(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
@@ -137,7 +137,7 @@ class Model(SmartSimEntity):
             ),
             category=DeprecationWarning
         )
-        self.colocate_db_tcp(**kwargs)
+        self.colocate_db_tcp(*args, **kwargs)
 
     def colocate_db_uds(
         self,
@@ -265,7 +265,7 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
-            self.run_settings._prep_colocated_db(db_cpus)
+            self.run_settings._prep_colocated_db(common_options['db_cpus'])
 
         # TODO list which db settings can be extras
         colo_db_config = {}

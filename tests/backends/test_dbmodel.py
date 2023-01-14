@@ -447,7 +447,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port = wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
         )
         # Test that models added individually do not conflict with enemble ones
         entity.add_ml_model(
