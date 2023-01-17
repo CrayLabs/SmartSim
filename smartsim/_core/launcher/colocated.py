@@ -127,10 +127,7 @@ def _build_colocated_wrapper_cmd(
             # ex. THREADS_PER_QUEUE=1
             db_cmd.append(f"{arg.upper()} {str(value)}")
 
-    # Add port and log information for TCP/IP
-    port = kwargs.get("port",None)
-    if port:
-        db_cmd.extend(["--port", str(port)])
+    db_cmd.extend(["--port", str(kwargs["port"])])
 
     # Add socket and permissions for UDS
     unix_socket = kwargs.get("unix_socket", None)

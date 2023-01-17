@@ -187,7 +187,8 @@ class Model(SmartSimEntity):
 
         uds_options = {
             "unix_socket":unix_socket,
-            "socket_permissions":socket_permissions
+            "socket_permissions":socket_permissions,
+            "port":0 # This is hardcoded to 0 as recommended by redis for UDS
         }
         common_options = {
             "cpus":db_cpus,
