@@ -127,6 +127,14 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         self.run_args["cpu-bind"] = str(bind_type)
 
+    def set_tasks(self, tasks):
+        """Set the number of tasks
+
+        :param tasks: number of total tasks to launch
+        :type tasks: int
+        """
+        self.run_args["np"] = int(tasks)
+
     def set_tasks_per_node(self, tasks_per_node):
         """Set the number of tasks per node
 
