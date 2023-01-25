@@ -305,7 +305,15 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities if not isinstance(e.run_settings, list) ]
+
+                # support multi-step jobs with seperate run_settings
+                for e in elist.entities:
+                    if isinstance(e.run_settings, list):
+                        run = e.run_settings
+                        for m in run:
+                            e.run_settings = m
+                            steps.extend([(self._create_job_step(e), e)])
                 steps.extend(job_steps)
 
         # models themselves cannot be batch steps. If batch settings are
@@ -483,7 +491,11 @@ class Controller:
                 raise SSInternalError(
                     "Colocated database was not configured for either TCP or UDS"
                 )
-        entity.run_settings.update_env(client_env)
+        if isinstance(entity.run_settings, list):
+            for e in entity.run_settings:
+                e.update_env(client_env)
+        else:
+            entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle

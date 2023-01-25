@@ -90,7 +90,7 @@ class Ensemble(EntityList):
         self.params_as_args = init_default({}, params_as_args, (list, str))
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
-        self.run_settings = init_default({}, run_settings, RunSettings)
+        self.run_settings = init_default({}, run_settings, None)
         self._db_models = []
         self._db_scripts = []
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
