@@ -35,10 +35,10 @@ from ..launcher import WLMLauncher
 from ..step import (
     AprunStep,
     LocalStep,
-    MpirunStep,
     MpiexecStep,
+    MpirunStep,
     OrterunStep,
-    QsubBatchStep
+    QsubBatchStep,
 )
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
@@ -68,7 +68,7 @@ class PBSLauncher(WLMLauncher):
         MpirunSettings: MpirunStep,
         OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
-        PalsMpiexecSettings: MpiexecStep
+        PalsMpiexecSettings: MpiexecStep,
     }
 
     def run(self, step):

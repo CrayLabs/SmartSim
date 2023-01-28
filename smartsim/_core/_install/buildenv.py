@@ -227,7 +227,9 @@ class Versioner:
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
     TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
-    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix))
+    TORCH_CUDA_SUFFIX = Version_(
+        get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix)
+    )
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
@@ -273,7 +275,7 @@ class Versioner:
             "torch",
             "torchvision",
             "torch_cpu_suffix",
-            "torch_cuda_suffix"
+            "torch_cuda_suffix",
         ]
         for field in _torch_fields:
             ml_defaults.pop(field)

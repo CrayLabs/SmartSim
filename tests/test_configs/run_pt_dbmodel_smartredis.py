@@ -1,6 +1,7 @@
 import numpy as np
 from smartredis import Client
 
+
 def main():
     # Address should be set as we are launching through
     # SmartSim.
@@ -15,6 +16,7 @@ def main():
     assert returned.shape == (1, 10)
 
     print(f"Test worked!")
+
 
 if __name__ == "__main__":
     main()

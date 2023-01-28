@@ -29,6 +29,7 @@ except ImportError:
 
 should_run_pt &= "torch" in installed_redisai_backends()
 
+
 class Net(keras.Model):
     def __init__(self):
         super(Net, self).__init__(name="cnn")
@@ -65,8 +66,10 @@ def create_tf_cnn():
 
     return serialize_model(model)
 
+
 # Simple MNIST in PyTorch
 try:
+
     class PyTorchNet(nn.Module):
         def __init__(self):
             super(PyTorchNet, self).__init__()
@@ -91,14 +94,17 @@ try:
             x = self.fc2(x)
             output = F.log_softmax(x, dim=1)
             return output
+
 except Exception:
     should_run_pt = False
+
 
 def save_torch_cnn(path, file_name):
     n = PyTorchNet()
     example_forward_input = torch.rand(1, 1, 28, 28)
     module = torch.jit.trace(n, example_forward_input)
-    torch.jit.save(module, path+"/"+file_name)
+    torch.jit.save(module, path + "/" + file_name)
+
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_tf_db_model(fileutils, wlmutils):
@@ -278,7 +284,11 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -303,6 +313,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
+
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
 def test_colocated_db_model_pytorch(fileutils, wlmutils):
     """Test DB Models on colocated DB (PyTorch backend)"""
@@ -320,7 +331,11 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     save_torch_cnn(test_dir, "model1.pt")
@@ -359,7 +374,11 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -367,7 +386,11 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
         # Test that models added individually do not conflict with enemble ones
         entity.add_ml_model(
@@ -447,7 +470,11 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
         # Test that models added individually do not conflict with enemble ones
         entity.add_ml_model(
@@ -499,7 +526,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model, inputs, outputs = create_tf_cnn()
@@ -515,7 +546,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     colo_ensemble.set_path(test_dir)
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
     with pytest.raises(SSUnsupportedError):
@@ -540,7 +575,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
             entity.colocate_db(
-                port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+                port=wlmutils.get_test_port() + i,
+                db_cpus=1,
+                limit_app_cpus=False,
+                debug=True,
+                ifname="lo",
             )
 
     with pytest.raises(SSUnsupportedError):

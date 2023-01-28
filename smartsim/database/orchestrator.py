@@ -45,10 +45,10 @@ from ..settings import (
     BsubBatchSettings,
     CobaltBatchSettings,
     JsrunSettings,
-    MpirunSettings,
     MpiexecSettings,
-    PalsMpiexecSettings,
+    MpirunSettings,
     OrterunSettings,
+    PalsMpiexecSettings,
     QsubBatchSettings,
     SbatchSettings,
     SrunSettings,
@@ -727,7 +727,7 @@ class Orchestrator(EntityList):
             MpirunSettings,
             MpiexecSettings,
             OrterunSettings,
-            PalsMpiexecSettings
+            PalsMpiexecSettings,
         ]
         for settings in mpi_like_settings:
             self._reserved_run_args[settings] = [

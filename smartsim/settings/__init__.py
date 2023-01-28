@@ -1,12 +1,12 @@
 from .alpsSettings import AprunSettings
 from .base import RunSettings
 from .cobaltSettings import CobaltBatchSettings
+from .containers import Container, Singularity
 from .lsfSettings import BsubBatchSettings, JsrunSettings
 from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
+from .palsSettings import PalsMpiexecSettings
 from .pbsSettings import QsubBatchSettings
 from .slurmSettings import SbatchSettings, SrunSettings
-from .palsSettings import PalsMpiexecSettings
-from .containers import Container, Singularity
 
 __all__ = [
     "AprunSettings",

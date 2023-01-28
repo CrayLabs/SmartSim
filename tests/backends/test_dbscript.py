@@ -125,7 +125,11 @@ def test_colocated_db_script(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -172,7 +176,11 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
         entity.add_script("test_script1", script_path=torch_script, device="CPU")
@@ -232,7 +240,11 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
         entity.add_script("test_script1", script_path=torch_script, device="CPU")
@@ -275,7 +287,11 @@ def test_db_script_errors(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     with pytest.raises(SSUnsupportedError):
@@ -291,7 +307,11 @@ def test_db_script_errors(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
     with pytest.raises(SSUnsupportedError):
@@ -310,7 +330,11 @@ def test_db_script_errors(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         with pytest.raises(SSUnsupportedError):
             entity.colocate_db(
-                port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+                port=wlmutils.get_test_port() + i,
+                db_cpus=1,
+                limit_app_cpus=False,
+                debug=True,
+                ifname="lo",
             )
 
     with pytest.raises(SSUnsupportedError):

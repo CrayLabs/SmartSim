@@ -26,7 +26,7 @@
 
 import sys
 
-from ...error import SSUnsupportedError, SSInternalError
+from ...error import SSInternalError, SSUnsupportedError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
 
@@ -137,16 +137,20 @@ def _build_colocated_wrapper_cmd(
     if unix_socket and socket_permissions:
         db_cmd.extend(
             [
-                "--unixsocket", str(unix_socket),
-                "--unixsocketperm", str(socket_permissions)
+                "--unixsocket",
+                str(unix_socket),
+                "--unixsocketperm",
+                str(socket_permissions),
             ]
         )
     elif bool(unix_socket) ^ bool(socket_permissions):
         raise SSInternalError(
             "`unix_socket` and `socket_permissions` must both be defined or undefined."
-            )
+        )
 
-    db_cmd.extend(["--logfile", db_log])  # usually /dev/null, unless debug was specified
+    db_cmd.extend(
+        ["--logfile", db_log]
+    )  # usually /dev/null, unless debug was specified
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs
         # for the extra configurations and Python doesn't allow a hyphen
@@ -170,6 +174,7 @@ def _build_colocated_wrapper_cmd(
 
     cmd.extend(db_cmd)
     return " ".join(cmd)
+
 
 def _build_db_model_cmd(db_models):
     cmd = []

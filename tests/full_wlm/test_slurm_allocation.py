@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from smartsim.wlm import slurm
 from smartsim.error import AllocationError
+from smartsim.wlm import slurm
 
 # retrieved from pytest fixtures
 if pytest.test_launcher != "slurm":

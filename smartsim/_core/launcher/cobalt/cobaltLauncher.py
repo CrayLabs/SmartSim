@@ -35,7 +35,14 @@ from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
-from ..step import AprunStep, CobaltBatchStep, LocalStep, MpirunStep, MpiexecStep, OrterunStep
+from ..step import (
+    AprunStep,
+    CobaltBatchStep,
+    LocalStep,
+    MpiexecStep,
+    MpirunStep,
+    OrterunStep,
+)
 from ..stepInfo import CobaltStepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
 
@@ -64,7 +71,7 @@ class CobaltLauncher(WLMLauncher):
         MpirunSettings: MpirunStep,
         MpiexecSettings: MpiexecStep,
         OrterunSettings: OrterunStep,
-        RunSettings: LocalStep
+        RunSettings: LocalStep,
     }
 
     def run(self, step):

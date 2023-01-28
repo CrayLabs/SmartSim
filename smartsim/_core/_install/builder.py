@@ -5,8 +5,8 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
-from subprocess import SubprocessError
 from shutil import which
+from subprocess import SubprocessError
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -34,6 +34,7 @@ def expand_exe_path(exe):
             raise TypeError(f"File, {exe}, is not an executable")
         raise FileNotFoundError(f"Could not locate executable {exe}")
     return os.path.abspath(in_path)
+
 
 class BuildError(Exception):
     pass
@@ -235,6 +236,7 @@ class DatabaseBuilder(Builder):
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
             raise SSConfigError("Installation of redis-cli failed!") from e
+
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source

@@ -66,7 +66,13 @@ def run(device):
     X = np.arange(20, dtype=np.float32).reshape(10, 2)
     kmeans = build_kmeans()
     outputs = run_model(
-        client, "kmeans", device, kmeans, X, "kmeans_in", ["kmeans_labels", "kmeans_transform"]
+        client,
+        "kmeans",
+        device,
+        kmeans,
+        X,
+        "kmeans_in",
+        ["kmeans_labels", "kmeans_transform"],
     )
     assert len(outputs) == 2
     assert len(outputs[0]) == 10
@@ -77,7 +83,9 @@ def run(device):
     # test random Forest regressor
     sample = np.array([[6.4, 2.8, 5.6, 2.2]]).astype(np.float32)
     model = build_random_forest()
-    outputs = run_model(client, "random_forest", device, model, sample, "rf_in", ["rf_label"])
+    outputs = run_model(
+        client, "random_forest", device, model, sample, "rf_in", ["rf_label"]
+    )
     assert len(outputs[0]) == 1
     print("Random forest successful")
     print(outputs)

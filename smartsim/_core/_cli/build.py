@@ -38,7 +38,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
     # if we are on linux cpu, either CUDA or CPU must be installed
     elif sys.platform == "linux":
         end_point = "https://download.pytorch.org/whl/torch_stable.html"
-        if device in ["gpu","cuda"] :
+        if device in ["gpu", "cuda"]:
             device_suffix = versions.TORCH_CUDA_SUFFIX
         elif device == "cpu":
             device_suffix = versions.TORCH_CPU_SUFFIX
@@ -47,6 +47,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
     packages.append(f"torchvision=={versions.TORCHVISION}{device_suffix}")
 
     pip_install(packages, end_point=end_point, verbose=verbose)
+
 
 class Build:
     def __init__(self):
