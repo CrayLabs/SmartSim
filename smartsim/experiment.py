@@ -427,7 +427,13 @@ class Experiment:
             raise
 
     def create_model(
-        self, name, run_settings, params=None, path=None, enable_key_prefixing=False
+        self,
+        name,
+        run_settings,
+        params=None,
+        path=None,
+        enable_key_prefixing=False,
+        batch_settings=None,
     ):
         """Create a general purpose ``Model``
 
@@ -436,8 +442,19 @@ class Experiment:
         references to pieces of a workflow that can be parameterized,
         and executed.
 
-        ``Model`` instances can be launched sequentially or as a batch
-        by adding them into an ``Ensemble``.
+        ``Model`` instances can be launched sequentially, as a batch job,
+        or as a group by adding them into an ``Ensemble``.
+
+        All models require a reference to run settings to specify which
+        executable to launch as well provide options for how to launch
+        the executable with the underlying WLM. Furthermore, batch a
+        reference to a batch settings can be added to launch the model
+        as a batch job through ``Experiment.start``. If a model with
+        a reference to a set of batch settings is added to a larger
+        entity with its own set of batch settings (for e.g. an
+        ``Ensemble``) the batch settings of the larger entity will take
+        precedence and the batch setting of the model will be
+        strategically ignored.
 
         Parameters supplied in the `params` argument can be written into
         configuration files supplied at runtime to the model through
@@ -490,6 +507,9 @@ class Experiment:
                                      be prefixed with the ``Model`` name.
                                      Default is True.
         :type enable_key_prefixing: bool, optional
+        :param batch_settings: Settings to run model individually as a batch job,
+                               defaults to None
+        :type batch_settings: BatchSettings | None
         :raises SmartSimError: if initialization fails
         :return: the created ``Model``
         :rtype: Model
@@ -497,7 +517,9 @@ class Experiment:
         path = init_default(getcwd(), path, str)
         params = init_default({}, params, dict)
         try:
-            new_model = Model(name, params, path, run_settings)
+            new_model = Model(
+                name, params, path, run_settings, batch_settings=batch_settings
+            )
             if enable_key_prefixing:
                 new_model.enable_key_prefixing()
             return new_model

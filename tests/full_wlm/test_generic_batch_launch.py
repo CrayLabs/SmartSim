@@ -9,6 +9,32 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
+def test_batch_model(fileutils, wlmutils):
+    """Test the launch of a manually construced batch model"""
+
+    exp_name = "test-batch-model"
+    exp = Experiment(exp_name, launcher=wlmutils.get_test_launcher())
+    test_dir = fileutils.make_test_dir()
+
+    script = fileutils.get_test_conf_path("sleep.py")
+    batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
+    if wlmutils.get_test_launcher() == "lsf":
+        batch_settings.set_account(wlmutils.get_test_account())
+    if wlmutils.get_test_launcher() == "cobalt":
+        batch_settings.set_account(wlmutils.get_test_account())
+        batch_settings.set_queue("debug-flat-quad")
+    run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
+    model = exp.create_model(
+        "model", path=test_dir, run_settings=run_settings, batch_settings=batch_settings
+    )
+    model.set_path(test_dir)
+
+    exp.start(model, block=True)
+    statuses = exp.get_status(model)
+    assert len(statuses) == 1
+    assert statuses[0] == status.STATUS_COMPLETED
+
+
 def test_batch_ensemble(fileutils, wlmutils):
     """Test the launch of a manually constructed batch ensemble"""
 

@@ -173,11 +173,14 @@ class Manifest:
                 if ensemble.batch:
                     s += f"{str(ensemble.batch_settings)}\n"
             s += "\n"
+
         if self.models:
             s += m_header
             for model in self.models:
                 s += f"{model.name}\n"
-                s += f"{str(model.run_settings)}\n"
+                if model.batch_settings:
+                    s += f"{model.batch_settings}\n"
+                s += f"{model.run_settings}\n"
                 if model.params:
                     s += f"Parameters: \n{fmt_dict(model.params)}\n"
             s += "\n"
