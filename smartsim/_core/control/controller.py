@@ -460,8 +460,7 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
-        if hasattr(entity, "colocated"):
-            if entity.colocated:
+        if hasattr(entity, "colocated") and entity.colocated:
                 port = entity.run_settings.colocated_db_settings.get("port",None)
                 socket = entity.run_settings.colocated_db_settings.get("unix_socket",None)
                 if socket and port:

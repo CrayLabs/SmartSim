@@ -160,12 +160,12 @@ class Model(SmartSimEntity):
         .. highlight:: python
         .. code-block:: python
 
-            ex. kwargs = {
-                maxclients: 100000,
-                threads_per_queue: 1,
-                inter_op_threads: 1,
-                intra_op_threads: 1,
-                server_threads: 2 # keydb only
+            example_kwargs = {
+                "maxclients": 100000,
+                "threads_per_queue": 1,
+                "inter_op_threads": 1,
+                "intra_op_threads": 1,
+                "server_threads": 2 # keydb only
             }
 
         Generally these don't need to be changed.
@@ -182,7 +182,6 @@ class Model(SmartSimEntity):
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
-
         """
 
         uds_options = {

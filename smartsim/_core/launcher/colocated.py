@@ -45,7 +45,7 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
     :type colocated_settings: dict[str, Any]
     """
 
-    colocated_cmd = _build_colocated_wrapper_cmd(**colocated_settings, db_log=db_log)
+    colocated_cmd = _build_colocated_wrapper_cmd(db_log, **colocated_settings)
 
     with open(file_name, "w") as f:
         f.write("#!/bin/bash\n")
@@ -75,10 +75,12 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
 
 
 def _build_colocated_wrapper_cmd(
+    db_log,
     cpus=1,
     rai_args=None,
     extra_db_args=None,
-    db_log=None,
+    port=6780,
+    ifname=None,
     **kwargs,
 ):
     """Build the command use to run a colocated db application
@@ -113,9 +115,8 @@ def _build_colocated_wrapper_cmd(
         str(cpus),
     ]
     # Add in the interface if using TCP/IP
-    interface = kwargs.get("ifname",None)
-    if interface:
-        cmd.extend(["+ifname", interface])
+    if ifname:
+        cmd.extend(["+ifname", ifname])
     cmd.append("+command")
     # collect DB binaries and libraries from the config
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
@@ -127,7 +128,7 @@ def _build_colocated_wrapper_cmd(
             # ex. THREADS_PER_QUEUE=1
             db_cmd.append(f"{arg.upper()} {str(value)}")
 
-    db_cmd.extend(["--port", str(kwargs["port"])])
+    db_cmd.extend(["--port", str(port)])
 
     # Add socket and permissions for UDS
     unix_socket = kwargs.get("unix_socket", None)
@@ -145,7 +146,7 @@ def _build_colocated_wrapper_cmd(
             "`unix_socket` and `socket_permissions` must both be defined or undefined."
             )
 
-    db_cmd.extend(["--logfile", db_log])  # usually /dev/null
+    db_cmd.extend(["--logfile", db_log])  # usually /dev/null, unless debug was specified
     for db_arg, value in extra_db_args.items():
         # replace "_" with "-" in the db_arg because we use kwargs
         # for the extra configurations and Python doesn't allow a hyphen
