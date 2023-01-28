@@ -460,10 +460,21 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
-        if hasattr(entity, "colocated"):
-            if entity.colocated:
-                port = entity.run_settings.colocated_db_settings["port"]
-                client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+        if hasattr(entity, "colocated") and entity.colocated:
+                port = entity.run_settings.colocated_db_settings.get("port",None)
+                socket = entity.run_settings.colocated_db_settings.get("unix_socket",None)
+                if socket and port:
+                    raise SSInternalError(
+                        "Co-located was configured for both TCP/IP and UDS"
+                    )
+                if port:
+                    client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+                elif socket:
+                    client_env["SSDB"] = f"unix://{socket}"
+                else:
+                    raise SSInternalError(
+                        "Colocated database was not configured for either TCP or UDS"
+                    )
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator):

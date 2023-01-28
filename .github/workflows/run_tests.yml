@@ -72,8 +72,12 @@ jobs:
         if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
         run: singularity pull docker://alrigazzi/smartsim-testing
 
+      # Note: The develop branch of smartredis is installed first to ensure that any tests that depend
+      # on developments of the client are brought in.
       - name: Install SmartSim (with ML backends)
-        run: python -m pip install .[dev,ml,ray]
+        run: |
+          python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
+          python -m pip install .[dev,ml,ray]
 
       - name: Install ML Runtimes with Smart
         if: contains( matrix.os, 'macos' )

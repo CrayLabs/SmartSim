@@ -31,6 +31,7 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
+import warnings
 
 class Model(SmartSimEntity):
     def __init__(self, name, params, path, run_settings, params_as_args=None):
@@ -128,21 +129,87 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def colocate_db(
+    def colocate_db(self, *args, **kwargs):
+        warnings.warn(
+            (
+                "`colocate_db` has been deprecated and will be removed in a \n"
+                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
+            ),
+            category=DeprecationWarning
+        )
+        self.colocate_db_tcp(*args, **kwargs)
+
+    def colocate_db_uds(
         self,
-        port=6379,
+        unix_socket="/tmp/redis.socket",
+        socket_permissions=755,
         db_cpus=1,
         limit_app_cpus=True,
-        ifname="lo",
         debug=False,
         **kwargs,
     ):
-        """Colocate an Orchestrator instance with this Model at runtime.
+        """Colocate an Orchestrator instance with this Model over UDS.
 
-        This method will initialize settings which add an unsharded (not connected)
+        This method will initialize settings which add an unsharded
         database to this Model instance. Only this Model will be able to communicate
-        with this colocated database by using the loopback TCP interface or Unix
-        Domain sockets (UDS coming soon).
+        with this colocated database by using Unix Domain sockets.
+
+        Extra parameters for the db can be passed through kwargs. This includes
+        many performance, caching and inference settings.
+
+        .. highlight:: python
+        .. code-block:: python
+
+            example_kwargs = {
+                "maxclients": 100000,
+                "threads_per_queue": 1,
+                "inter_op_threads": 1,
+                "intra_op_threads": 1,
+                "server_threads": 2 # keydb only
+            }
+
+        Generally these don't need to be changed.
+
+        :param unix_socket: path to where the socket file will be created
+        :type unix_socket: str, optional
+        :param socket_permissions: permissions for the socketfile
+        :type socket_permissions: int, optional
+        :param db_cpus: number of cpus to use for orchestrator, defaults to 1
+        :type db_cpus: int, optional
+        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
+        :type limit_app_cpus: bool, optional
+        :param debug: launch Model with extra debug information about the co-located db
+        :type debug: bool, optional
+        :param kwargs: additional keyword arguments to pass to the orchestrator database
+        :type kwargs: dict, optional
+        """
+
+        uds_options = {
+            "unix_socket":unix_socket,
+            "socket_permissions":socket_permissions,
+            "port":0 # This is hardcoded to 0 as recommended by redis for UDS
+        }
+        common_options = {
+            "cpus":db_cpus,
+            "limit_app_cpus":limit_app_cpus,
+            "debug":debug
+        }
+        self._set_colocated_db_settings( uds_options, common_options, **kwargs)
+
+    def colocate_db_tcp(
+        self,
+        port=6379,
+        ifname="lo",
+        db_cpus=1,
+        limit_app_cpus=True,
+        debug=False,
+        **kwargs,
+    ):
+        """Colocate an Orchestrator instance with this Model over TCP/IP.
+
+        This method will initialize settings which add an unsharded
+        database to this Model instance. Only this Model will be able to communicate
+        with this colocated database by using the loopback TCP interface.
 
         Extra parameters for the db can be passed through kwargs. This includes
         many performance, caching and inference settings.
@@ -162,39 +229,53 @@ class Model(SmartSimEntity):
 
         :param port: port to use for orchestrator database, defaults to 6379
         :type port: int, optional
+        :param ifname: interface to use for orchestrator, defaults to "lo"
+        :type ifname: str, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
         :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
         :type limit_app_cpus: bool, optional
-        :param ifname: interface to use for orchestrator, defaults to "lo"
-        :type ifname: str, optional
         :param debug: launch Model with extra debug information about the co-located db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
 
         """
+
+        tcp_options = {
+            "port":port,
+            "ifname":ifname
+        }
+        common_options = {
+            "cpus":db_cpus,
+            "limit_app_cpus":limit_app_cpus,
+            "debug":debug
+        }
+        self._set_colocated_db_settings( tcp_options, common_options, **kwargs)
+
+    def _set_colocated_db_settings(self, connection_options, common_options, **kwargs):
+        """
+        Ingest the connection-specific options (UDS/TCP) and set the final settings
+        for the co-located database
+        """
+
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
                 "Models co-located with databases cannot be run as a mpmd workload"
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
-            self.run_settings._prep_colocated_db(db_cpus)
+            self.run_settings._prep_colocated_db(common_options['db_cpus'])
 
         # TODO list which db settings can be extras
-        colo_db_config = {
-            "port": int(port),
-            "cpus": int(db_cpus),
-            "interface": ifname,
-            "limit_app_cpus": limit_app_cpus,
-            "debug": debug,
-            # redisai arguments for inference settings
-            "rai_args": {
-                "threads_per_queue": kwargs.get("threads_per_queue", None),
-                "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
-                "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
-            },
+        colo_db_config = {}
+        colo_db_config.update(connection_options)
+        colo_db_config.update(common_options)
+        # redisai arguments for inference settings
+        colo_db_config['rai_args'] = {
+            "threads_per_queue": kwargs.get("threads_per_queue", None),
+            "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
+            "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
         }
         colo_db_config["extra_db_args"] = dict(
             [
