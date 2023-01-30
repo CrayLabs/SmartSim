@@ -27,7 +27,7 @@
 import shutil
 import subprocess
 
-from ..error import SSUnsupportedError, LauncherError
+from ..error import LauncherError, SSUnsupportedError
 from ..log import get_logger
 from .mpiSettings import _BaseMPISettings
 
@@ -57,8 +57,14 @@ class PalsMpiexecSettings(_BaseMPISettings):
     """
 
     def __init__(
-        self, exe, exe_args=None, run_command="mpiexec", run_args=None,
-        env_vars=None, fail_if_missing_exec=True, **kwargs
+        self,
+        exe,
+        exe_args=None,
+        run_command="mpiexec",
+        run_args=None,
+        env_vars=None,
+        fail_if_missing_exec=True,
+        **kwargs,
     ):
         """Settings to format run job with an MPI-standard binary
 
@@ -210,11 +216,11 @@ class PalsMpiexecSettings(_BaseMPISettings):
         if self.env_vars:
             for name, value in self.env_vars.items():
                 if value:
-                    formatted += ['--env', "=".join((name, str(value)))]
+                    formatted += ["--env", "=".join((name, str(value)))]
                 else:
                     export_vars.append(name)
 
         if export_vars:
-            formatted += ['--envlist', ','.join(export_vars)]
+            formatted += ["--envlist", ",".join(export_vars)]
 
         return formatted

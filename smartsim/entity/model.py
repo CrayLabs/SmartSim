@@ -25,13 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import warnings
+
 from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
 from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 
-import warnings
 
 class Model(SmartSimEntity):
     def __init__(
@@ -141,7 +142,7 @@ class Model(SmartSimEntity):
                 "`colocate_db` has been deprecated and will be removed in a \n"
                 "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
             ),
-            category=DeprecationWarning
+            category=DeprecationWarning,
         )
         self.colocate_db_tcp(*args, **kwargs)
 
@@ -191,16 +192,16 @@ class Model(SmartSimEntity):
         """
 
         uds_options = {
-            "unix_socket":unix_socket,
-            "socket_permissions":socket_permissions,
-            "port":0 # This is hardcoded to 0 as recommended by redis for UDS
+            "unix_socket": unix_socket,
+            "socket_permissions": socket_permissions,
+            "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
         }
         common_options = {
-            "cpus":db_cpus,
-            "limit_app_cpus":limit_app_cpus,
-            "debug":debug
+            "cpus": db_cpus,
+            "limit_app_cpus": limit_app_cpus,
+            "debug": debug,
         }
-        self._set_colocated_db_settings( uds_options, common_options, **kwargs)
+        self._set_colocated_db_settings(uds_options, common_options, **kwargs)
 
     def colocate_db_tcp(
         self,
@@ -248,16 +249,13 @@ class Model(SmartSimEntity):
 
         """
 
-        tcp_options = {
-            "port":port,
-            "ifname":ifname
-        }
+        tcp_options = {"port": port, "ifname": ifname}
         common_options = {
-            "cpus":db_cpus,
-            "limit_app_cpus":limit_app_cpus,
-            "debug":debug
+            "cpus": db_cpus,
+            "limit_app_cpus": limit_app_cpus,
+            "debug": debug,
         }
-        self._set_colocated_db_settings( tcp_options, common_options, **kwargs)
+        self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
     def _set_colocated_db_settings(self, connection_options, common_options, **kwargs):
         """
@@ -271,14 +269,14 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
-            self.run_settings._prep_colocated_db(common_options['db_cpus'])
+            self.run_settings._prep_colocated_db(common_options["db_cpus"])
 
         # TODO list which db settings can be extras
         colo_db_config = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
         # redisai arguments for inference settings
-        colo_db_config['rai_args'] = {
+        colo_db_config["rai_args"] = {
             "threads_per_queue": kwargs.get("threads_per_queue", None),
             "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
             "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),

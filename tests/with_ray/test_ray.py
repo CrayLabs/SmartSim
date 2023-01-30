@@ -6,9 +6,9 @@ import psutil
 import pytest
 
 from smartsim import Experiment
-from smartsim.wlm import slurm
 from smartsim.error import SSUnsupportedError
 from smartsim.exp.ray import RayCluster
+from smartsim.wlm import slurm
 
 """Test Ray cluster launch and shutdown.
 """

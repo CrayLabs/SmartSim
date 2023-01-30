@@ -1,5 +1,6 @@
-import pytest
 from shutil import which
+
+import pytest
 
 from smartsim import Experiment, status
 from smartsim.entity import Ensemble
@@ -8,8 +9,9 @@ from smartsim.settings.containers import Singularity
 """Test SmartRedis container integration on a supercomputer with a WLM."""
 
 # Check if singularity is available as command line tool
-singularity_exists = which('singularity') is not None
-containerURI = 'docker://alrigazzi/smartsim-testing:latest'
+singularity_exists = which("singularity") is not None
+containerURI = "docker://alrigazzi/smartsim-testing:latest"
+
 
 @pytest.mark.skipif(not singularity_exists, reason="Test needs singularity to run")
 def test_singularity_wlm_smartredis(fileutils, wlmutils):
@@ -38,7 +40,9 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     exp.start(orc, block=False)
 
     container = Singularity(containerURI)
-    rs = exp.create_run_settings("python3", "producer.py --exchange", container=container)
+    rs = exp.create_run_settings(
+        "python3", "producer.py --exchange", container=container
+    )
     rs.set_tasks(1)
     params = {"mult": [1, -10]}
     ensemble = Ensemble(
@@ -69,4 +73,3 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     exp.stop(orc)
 
     print(exp.summary())
-

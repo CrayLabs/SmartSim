@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 from warnings import simplefilter, warn
+
 from ..log import get_logger
+from .mpiSettings import MpiexecSettings, MpirunSettings, OrterunSettings
 
 logger = get_logger(__name__)
 
@@ -34,5 +35,5 @@ simplefilter("once", DeprecationWarning)
 warn(
     "mpirunSettings will be deprecated; use mpiSettings instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
