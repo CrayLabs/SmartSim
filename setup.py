@@ -141,7 +141,7 @@ deps = [
     "redis==3.5.3",
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
-    "protobuf==3.20"
+    "protobuf==3.20",
 ]
 
 # Add SmartRedis at specific version
@@ -153,13 +153,15 @@ extras_require = {
         "isort>=5.6.4",
         "pylint>=2.6.0",
         "pytest>=6.0.0",
-        "pytest-cov>=2.10.1"
+        "pytest-cov>=2.10.1",
         "click==8.0.2",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),
-    "ray": "ray==1.6"
-    }
+    "ray": [
+        "ray==1.6",
+    ],
+}
 
 
 # rest in setup.cfg
@@ -168,18 +170,18 @@ setup(
     install_requires=deps,
     packages=["smartsim"],
     package_data={"smartsim": [
-        "_core/bin/*"
+        "_core/bin/*",
     ]},
     cmdclass={
         "build_py": SmartSimBuild,
-        "install": InstallPlatlib
+        "install": InstallPlatlib,
     },
     zip_safe=False,
     extras_require=extras_require,
     distclass=BinaryDistribution,
     entry_points={
         "console_scripts": [
-            "smart = smartsim._core._cli.__main__:main"
+            "smart = smartsim._core._cli.__main__:main",
         ]
     }
 )

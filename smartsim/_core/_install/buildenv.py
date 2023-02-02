@@ -263,7 +263,6 @@ class Versioner:
 
         The defaults are based on the RedisAI version
         """
-        ml_extras = []
         ml_defaults = self.REDISAI.get_defaults()
 
         # remove torch-related fields as they will be installed
@@ -280,9 +279,7 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        for lib, vers in ml_defaults.items():
-            ml_extras.append(f"{lib}=={vers}")
-        return ml_extras
+        return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
 
     def get_sha(self, setup_py_dir) -> str:
         """Get the git sha of the current branch"""
