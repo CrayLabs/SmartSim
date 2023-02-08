@@ -316,4 +316,4 @@ if __name__ == "__main__":
     # we do not want to have start a colocated process. Only one process
     # per node should be running.
     except filelock.Timeout:
-        exit(0)
+        sys.exit(0)
