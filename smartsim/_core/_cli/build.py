@@ -176,7 +176,7 @@ class Build:
 
         except (SetupError, BuildError) as e:
             logger.error(str(e))
-            exit(1)
+            sys.exit(1)
 
         logger.info("SmartSim build complete!")
 
@@ -204,13 +204,13 @@ class Build:
         if self.build_env.PLATFORM == "darwin":
             if device == "gpu":
                 logger.error("SmartSim does not support GPU on MacOS")
-                exit(1)
+                sys.exit(1)
             if onnx and self.versions.REDISAI < "1.2.6":
                 logger.error("RedisAI < 1.2.6 does not support ONNX on MacOS")
-                exit(1)
+                sys.exit(1)
             if self.versions.REDISAI == "1.2.4" or self.versions.REDISAI == "1.2.5":
                 logger.error("RedisAI support for MacOS is broken in 1.2.4 and 1.2.5")
-                exit(1)
+                sys.exit(1)
 
         # decide which runtimes to build
         print("\nML Backends Requested")
@@ -241,7 +241,7 @@ class Build:
                     # pip so if we can't find it we know the user suggested a torch
                     # installation path that doesn't exist
                     logger.error("Could not find requested user Torch installation")
-                    exit(1)
+                    sys.exit(1)
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
@@ -389,10 +389,10 @@ class Build:
                 logger.error(
                     f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'."
                 )
-            exit(1)
+            sys.exit(1)
         else:
             if installed_redisai_backends():
                 logger.error(
                     "If you wish to re-run `smart build`, you must first run `smart clean`."
                 )
-                exit(1)
+                sys.exit(1)

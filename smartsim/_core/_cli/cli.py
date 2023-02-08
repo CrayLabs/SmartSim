@@ -34,38 +34,38 @@ class SmartCli:
         # smart
         if len(sys.argv) < 2:
             parser.print_help()
-            exit(0)
+            sys.exit(0)
 
         args = parser.parse_args(sys.argv[1:2])
         if not hasattr(self, args.command):
             parser.print_help()
-            exit(0)
+            sys.exit(0)
         getattr(self, args.command)()
 
     def build(self):
         Build()
-        exit(0)
+        sys.exit(0)
 
     def clean(self):
         Clean()
-        exit(0)
+        sys.exit(0)
 
     def clobber(self):
         Clean(clean_all=True)
-        exit(0)
+        sys.exit(0)
 
     def site(self):
         print(get_install_path())
-        exit(0)
+        sys.exit(0)
 
     def dbcli(self):
         bin_path = get_install_path() / "_core" / "bin"
         for option in bin_path.iterdir():
             if option.name in ("redis-cli", "keydb-cli"):
                 print(option)
-                exit(0)
+                sys.exit(0)
         print("Database (Redis or KeyDB) dependencies not found")
-        exit(1)
+        sys.exit(1)
 
 
 def main():
