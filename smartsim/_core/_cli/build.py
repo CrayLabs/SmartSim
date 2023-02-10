@@ -196,16 +196,8 @@ class Build:
     ):
 
         # make sure user isn't trying to do something silly on MacOS
-        if self.build_env.PLATFORM == "darwin":
-            if device == "gpu":
-                logger.error("SmartSim does not support GPU on MacOS")
-                sys.exit(1)
-            if onnx and self.versions.REDISAI < "1.2.6":
-                logger.error("RedisAI < 1.2.6 does not support ONNX on MacOS")
-                sys.exit(1)
-            if self.versions.REDISAI == "1.2.4" or self.versions.REDISAI == "1.2.5":
-                logger.error("RedisAI support for MacOS is broken in 1.2.4 and 1.2.5")
-                sys.exit(1)
+        if self.build_env.PLATFORM == "darwin" and device == "gpu":
+            raise BuildError("SmartSim does not support GPU on MacOS")
 
         # decide which runtimes to build
         print("\nML Backends Requested")

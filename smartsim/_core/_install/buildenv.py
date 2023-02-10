@@ -152,6 +152,9 @@ class RedisAIVersion(Version_):
         defaults["1.2.7"].pop("skl2onnx")
         defaults["1.2.7"].pop("onnxmltools")
         defaults["1.2.7"].pop("scikit-learn")
+    # Remove incompatible RAI versions for OSX
+    if sys.platform == "darwin":
+        defaults.pop("1.2.5", None)
 
     def __init__(self, vers):
         min_rai_version = min(Version_(ver) for ver in self.defaults)
