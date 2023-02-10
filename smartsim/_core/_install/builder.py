@@ -227,7 +227,7 @@ class DatabaseBuilder(Builder):
             database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
             _ = expand_exe_path(str(database))
         except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError("Installation of redis-server failed!") from e
+            raise BuildError("Installation of redis-server failed!") from e
 
         # validate install -- redis-cli
         try:
@@ -235,7 +235,7 @@ class DatabaseBuilder(Builder):
             redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError("Installation of redis-cli failed!") from e
+            raise BuildError("Installation of redis-cli failed!") from e
 
 
 class RedisAIBuilder(Builder):
