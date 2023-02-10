@@ -482,7 +482,7 @@ class BuildEnv:
     def check_build_dependency(self, command):
         # TODO expand this to parse and check versions.
         try:
-            out = subprocess.check_call(
+            subprocess.check_call(
                 [command, "--version"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
