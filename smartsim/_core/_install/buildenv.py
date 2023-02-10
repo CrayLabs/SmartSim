@@ -238,7 +238,10 @@ class Versioner:
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
-    ONNX = Version_(REDISAI.onnx)
+    try:
+        ONNX = Version_(REDISAI.onnx)
+    except AttributeError:
+        ONNX = None
 
     def as_dict(self, db_name="REDIS"):
         packages = [
@@ -248,7 +251,6 @@ class Versioner:
             "REDISAI",
             "TORCH",
             "TENSORFLOW",
-            "ONNX",
         ]
         versions = [
             self.SMARTSIM,
@@ -257,8 +259,10 @@ class Versioner:
             self.REDISAI,
             self.TORCH,
             self.TENSORFLOW,
-            self.ONNX,
         ]
+        if self.ONNX:
+            packages.append("ONNX")
+            versions.append(self.ONNX)
         vers = {"Packages": packages, "Versions": versions}
         return vers
 

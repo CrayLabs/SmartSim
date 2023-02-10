@@ -152,11 +152,6 @@ class Build:
                 # REDIS/KeyDB
                 self.build_database()
 
-                if self.verbose:
-                    logger.info("Version Information:")
-                    vers = self.versions.as_dict()
-                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
-
                 # REDISAI
                 self.build_redis_ai(
                     str(args.device),
@@ -214,10 +209,12 @@ class Build:
 
         # decide which runtimes to build
         print("\nML Backends Requested")
-        print("-----------------------")
-        print(f"    PyTorch {self.versions.TORCH}: {color_bool(torch)}")
-        print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
-        print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
+        backends_table = [
+            ["PyTorch", self.versions.TORCH, color_bool(torch)],
+            ["TensorFlow", self.versions.TENSORFLOW, color_bool(tf)],
+            ["ONNX", self.versions.ONNX or "Unavailable", color_bool(onnx)]
+        ]
+        print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
         self.check_backends_install()
@@ -340,8 +337,11 @@ class Build:
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
-        if sys.version_info >= (3,10):
-            raise SetupError("ONNX 1.11.0 wheel is not available for python>=3.10")
+        if not self.versions.ONNX:
+            raise SetupError(
+                "An onnx wheel is not availble for this version of python for the "
+                "requested onnxruntime"
+            )
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (
