@@ -145,8 +145,20 @@ class RedisAIVersion(Version_):
             "torchvision": "0.12.0",
         },
     }
+    # Remove options with unsported wheels for python>=3.10
+    if sys.version_info >= (3, 10):
+        defaults.pop("1.2.5")
+        defaults["1.2.7"].pop("onnx")
+        defaults["1.2.7"].pop("skl2onnx")
+        defaults["1.2.7"].pop("onnxmltools")
+        defaults["1.2.7"].pop("scikit-learn")
 
     def __init__(self, vers):
+        min_rai_version = min(Version_(ver) for ver in self.defaults)
+        if min_rai_version > vers:
+            raise SetupError(
+                f"RedisAI version must be greater than or equal to {min_rai_version}"
+            )
         if vers not in self.defaults:
             if vers.startswith("1.2"):
                 # resolve to latest version for 1.2.x
