@@ -258,7 +258,6 @@ class RedisAIBuilder(Builder):
         verbose=False,
     ):
         super().__init__(build_env, jobs=jobs, verbose=verbose)
-        self.rai_build_path = Path(self.build_dir, "RedisAI")
 
         # convert to int for RAI build script
         self.torch = 1 if build_torch else 0
@@ -266,6 +265,10 @@ class RedisAIBuilder(Builder):
         self.onnx = 1 if build_onnx else 0
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
+
+    @property
+    def rai_build_path(self):
+        return Path(self.build_dir, "RedisAI")
 
     @property
     def is_built(self):
@@ -352,7 +355,6 @@ class RedisAIBuilder(Builder):
         :param device: cpu or gpu
         :type device: str
         """
-
         # delete previous build dir (should never be there)
         if self.rai_build_path.is_dir():
             shutil.rmtree(self.rai_build_path)
@@ -369,12 +371,32 @@ class RedisAIBuilder(Builder):
             "clone",
             "--recursive",
             git_url,
-            "--branch",
-            branch,
-            "--depth=1",
-            "RedisAI",
         ]
+        # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
+        # TODO: Look for a better way to do this or wait for RAI patch
+        if sys.platform == "darwin" and branch == "v1.2.7" and self.onnx:
+            # Clone RAI in an insane way
+            clone_cmd += ["RedisAI"]
+            checkout_osx_fix = [
+                "git",
+                "checkout",
+                "634916c722e718cc6ea3fad46e63f7d798f9adc2",
+            ]
+        else:
+            # Clone RAI in a sane way
+            clone_cmd += [
+                "--branch",
+                branch,
+                "--depth=1",
+                "RedisAI",
+            ]
+            checkout_osx_fix = []
+
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
+        if checkout_osx_fix:
+            self.run_command(
+                checkout_osx_fix, out=subprocess.DEVNULL, cwd=self.rai_build_path
+            )
 
         # copy FindTensorFlow.cmake to RAI cmake dir
         self.copy_tf_cmake()
