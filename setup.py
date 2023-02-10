@@ -101,7 +101,7 @@ class BuildError(Exception):
 # see https://github.com/google/or-tools/issues/616
 class InstallPlatlib(install):
     def finalize_options(self):
-        install.finalize_options(self)
+        super().finalize_options()
         if self.distribution.has_ext_modules():
             self.install_lib = self.install_platlib
 
@@ -118,7 +118,7 @@ class SmartSimBuild(build_py):
             database_builder.cleanup()
 
         # run original build_py command
-        build_py.run(self)
+        super().run()
 
 
 # Tested with wheel v0.29.0
