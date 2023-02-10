@@ -231,7 +231,6 @@ class Build:
         if tf:
             self.check_tf_install()
 
-        cmd = []
         # TORCH
         if torch:
             if torch_dir:
@@ -341,6 +340,8 @@ class Build:
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
+        if sys.version_info >= (3,10):
+            raise SetupError("ONNX 1.11.0 wheel is not available for python>=3.10")
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (

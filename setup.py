@@ -141,7 +141,7 @@ deps = [
     "redis==3.5.3",
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
-    "protobuf==3.20",
+    "protobuf~=3.20",
 ]
 
 # Add SmartRedis at specific version
