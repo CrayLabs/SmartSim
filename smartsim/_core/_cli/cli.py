@@ -6,7 +6,6 @@ import sys
 from smartsim._core._cli.build import Build
 from smartsim._core._cli.clean import Clean
 from smartsim._core._cli.utils import get_install_path
-from smartsim._core._install.buildenv import Versioner
 
 
 def _usage():

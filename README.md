@@ -683,17 +683,17 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
   </thead>
   <tbody style="text-align:center">
     <tr>
-      <td rowspan="3">1.2.3-1.2.4</td>
+      <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>1.7.x</td>
+      <td>1.11.x</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.4.x-2.5.x</td>
+      <td>2.8.x</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.9.x</td>
+      <td>1.11.x</td>
     </tr>
       <td rowspan="3">1.2.5</td>
       <td>PyTorch</td>

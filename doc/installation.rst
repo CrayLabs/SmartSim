@@ -10,7 +10,7 @@ Prerequisites
 
 The base prerequisites to install SmartSim and SmartRedis are:
 
-  - Python 3.7-3.9
+  - Python 3.8-3.10
   - Pip
   - Cmake 3.13.x (or later)
   - C compiler
@@ -46,11 +46,11 @@ Supported Versions
    * - MacOS
      - x86_64
      - Not supported
-     - 3.7 - 3.9
+     - 3.8 - 3.10
    * - Linux
      - x86_64
      - Nvidia
-     - 3.7 - 3.9
+     - 3.8 - 3.10
 
 
 .. note::
@@ -69,7 +69,6 @@ the version of the ML libraries).
 +==================+==========+=============+===============+
 | 1.2.7 (default)  | 1.11.0   | 2.8.0       | 1.11.1        |
 | 1.2.5            | 1.9.0    | 2.6.0       | 1.9.0         |
-| 1.2.3            | 1.7.0    | 2.5.2       | 1.9.0         |
 +------------------+----------+-------------+---------------+
 
 TensorFlow_ 2.0 and Keras_ are supported through graph freezing_.
@@ -243,9 +242,9 @@ pre-built wheels that SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.7 - 3.9
+     - 3.8 - 3.10
    * - Linux
-     - 3.7 - 3.9
+     - 3.8 - 3.10
 
 
 The Python client for SmartRedis is installed through
