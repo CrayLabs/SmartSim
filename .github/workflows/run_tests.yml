@@ -24,14 +24,14 @@ jobs:
         os: [macos-10.15, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.5, 1.2.7] # Redis AI versions
-        py_v: [3.8, 3.9, 3.10] # Python versions
+        py_v: [3.8, 3.9, '3.10'] # Python versions
         exclude:
           # Do not build with Redis AI 1.2.5 on MacOS
           - os: macos-10.15
             rai: 1.2.5
           # Do not build Redis AI 1.2.5 with py3.10
           # as wheels for dependecies are not availble
-          - py_v: 3.10
+          - py_v: '3.10'
             rai: 1.2.5
 
     env:
@@ -83,11 +83,11 @@ jobs:
           python -m pip install .[dev,ml,ray]
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
-        if: (matrix.py_v != 3.10)
+        if: (matrix.py_v != '3.10')
         run: smart build --device cpu --onnx -v
 
       - name: Install ML Runtimes with Smart (with pt and tf support)
-        if: (matrix.py_v == 3.10)
+        if: (matrix.py_v == '3.10')
         run: smart build --device cpu -v
 
       - name: Run Pytest
