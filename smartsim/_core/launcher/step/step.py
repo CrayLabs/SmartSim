@@ -40,6 +40,7 @@ class Step:
         self.entity_name = name
         self.cwd = cwd
         self.managed = False
+        self.wait_on_task = False
 
     def get_launch_cmd(self):
         raise NotImplementedError

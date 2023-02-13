@@ -42,7 +42,7 @@ class LocalLauncher:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, name, cwd, step_settings):
+    def create_step(self, name, cwd, step_settings, wait_on_task):
         """Create a job step to launch an entity locally
 
         :return: Step object
@@ -52,6 +52,7 @@ class LocalLauncher:
                 f"Local Launcher only supports entities with RunSettings, not {type(step_settings)}"
             )
         step = LocalStep(name, cwd, step_settings)
+        step.wait_on_task = wait_on_task
         return step
 
     def get_step_update(self, step_names):
@@ -97,7 +98,7 @@ class LocalLauncher:
         error = open(err, "w+")
         cmd = step.get_launch_cmd()
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=step.env, out=output, err=error
+            cmd, step.cwd, env=step.env, out=output, err=error, wait_on_task=step.wait_on_task
         )
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
