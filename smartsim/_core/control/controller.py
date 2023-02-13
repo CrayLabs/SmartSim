@@ -405,7 +405,7 @@ class Controller:
             msg += "Check error and output files for details.\n"
             msg += f"{entity}"
             logger.error(msg)
-            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            raise SmartSimError(f"Job step {job_step.name} failed to launch") from e
 
         # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
         # but is rather started, monitored, and exited through the Popen interface

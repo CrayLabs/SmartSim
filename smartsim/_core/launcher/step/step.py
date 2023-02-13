@@ -50,8 +50,9 @@ class Step:
 
     def get_output_files(self):
         """Return two paths to error and output files based on cwd"""
-        output = self.get_step_file(ending=".out")
-        error = self.get_step_file(ending=".err")
+        s_name = self.entity_name if self.entity_name.startswith("orchestrator") else self.name
+        output = self.get_step_file(ending=".out", script_name=s_name)
+        error = self.get_step_file(ending=".err", script_name=s_name)
         return output, error
 
     def get_step_file(self, ending=".sh", script_name=None):
