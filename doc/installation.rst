@@ -22,7 +22,7 @@ The base prerequisites to install SmartSim and SmartRedis are:
 For most developer systems, many of these packages will already
 be installed.
 
-GCC 5-9 is recommended. There are known bugs with GCC >= 10.
+GCC 5-9 or GCC>=11 is recommended. There are known bugs with GCC 10.
 
 Git LFS can be installed through ``conda install git-lfs``
 
