@@ -331,8 +331,8 @@ class Build:
         """Check Python environment for ONNX installation"""
         if not self.versions.ONNX:
             raise SetupError(
-                "An onnx wheel is not availble for this version of python for the "
-                "requested onnxruntime"
+                "An onnx wheel is not available for this version of python for the "
+                "requested onnx runtime"
             )
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
