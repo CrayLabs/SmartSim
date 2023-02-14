@@ -26,7 +26,9 @@ def test_config_methods(dbutils, local_db):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
+                print(key, value)
                 local_db.set_db_conf(key, value)
+
 
     # ensure TypeError is raised when Orchestrator.set_db_conf
     # is given either a key or a value that is not a string
