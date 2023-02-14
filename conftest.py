@@ -414,7 +414,7 @@ class DBUtils:
             ],
             "maxmemory": [
                 "29GG",  # invalid memory form
-                str(2 ** 65) + "gb",  # memory is too much
+                #str(2 ** 65) + "gb",  # memory is too much
                 "3.5gb",  # invalid memory form
             ],
             "maxclients": [
