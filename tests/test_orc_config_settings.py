@@ -26,7 +26,6 @@ def test_config_methods(dbutils, local_db):
     for key, value_list in ss_error_configs.items():
         for value in value_list:
             with pytest.raises(SmartSimError):
-                print(key, value)
                 local_db.set_db_conf(key, value)
 
 
