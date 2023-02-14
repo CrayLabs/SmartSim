@@ -29,7 +29,7 @@ Description
 
 Detailed Notes
 
-- Update from Redis version 6.0.8 to 7.0.5. (PR255_)
+- Update from Redis version 6.0.8 to 7.0.5. (PR258_)
 - Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
 - Make installation of correct Torch backend more reliable according to instruction from pyTorch
@@ -39,7 +39,7 @@ Detailed Notes
   the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
   is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
 
-.. _PR255: https://github.com/CrayLabs/SmartSim/pull/255
+.. _PR255: https://github.com/CrayLabs/SmartSim/pull/258
 .. _PR245: https://github.com/CrayLabs/SmartSim/pull/245
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
