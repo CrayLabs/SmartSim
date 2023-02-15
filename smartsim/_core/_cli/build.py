@@ -204,7 +204,7 @@ class Build:
         backends_table = [
             ["PyTorch", self.versions.TORCH, color_bool(torch)],
             ["TensorFlow", self.versions.TENSORFLOW, color_bool(tf)],
-            ["ONNX", self.versions.ONNX or "Unavailable", color_bool(onnx)]
+            ["ONNX", self.versions.ONNX or "Unavailable", color_bool(onnx)],
         ]
         print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")

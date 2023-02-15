@@ -28,7 +28,6 @@ def test_config_methods(dbutils, local_db):
             with pytest.raises(SmartSimError):
                 local_db.set_db_conf(key, value)
 
-
     # ensure TypeError is raised when Orchestrator.set_db_conf
     # is given either a key or a value that is not a string
     type_error_configs = dbutils.get_type_error_db_configs()
