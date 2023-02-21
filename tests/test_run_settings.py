@@ -1,6 +1,7 @@
 import contextlib
 import logging
 from shutil import which
+import subprocess
 
 import pytest
 
@@ -12,7 +13,6 @@ from smartsim.settings import (
 )
 from smartsim.settings.settings import create_run_settings
 from smartsim.error.errors import SSUnsupportedError
-from smartsim.wlm import detect_launcher
 
 
 def test_create_run_settings_local():
@@ -54,18 +54,21 @@ def test_create_run_settings_returns_settings_subclasses(run_cmd, Settings):
 
 def test_create_run_settings_handles_mpiexec_settings_correctly():
     with contextlib.ExitStack() as ctx:
-        # naively assume that if slurm is present, then the mpiexec.slurm
-        # wrapper is being used
-        if detect_launcher() == "slurm":
-            ctx.enter_context(pytest.raises(SSUnsupportedError))
         _run_command = which("mpiexec")
         if _run_command:
-            with ctx:
-                settings = create_run_settings(
-                    "local", "echo", "hello", run_command="mpiexec"
-                )
-                assert settings.run_command == _run_command
-                assert isinstance(settings, MpiexecSettings)
+            # Check if `mpiexec.slurm` wrapper is being used
+            if (
+                "mpiexec.slurm"
+                in subprocess.run(
+                    ["mpiexec", "--help"], capture_output=True
+                ).stdout.decode()
+            ):
+                ctx.enter_context(pytest.raises(SSUnsupportedError))
+            settings = create_run_settings(
+                "local", "echo", "hello", run_command="mpiexec"
+            )
+            assert settings.run_command == _run_command
+            assert isinstance(settings, MpiexecSettings)
 
 
 ####### Base Run Settings tests #######
