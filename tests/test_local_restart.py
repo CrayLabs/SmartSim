@@ -25,12 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from smartsim import Experiment, status
+
 """
 Test restarting ensembles and models.
 """
-
-
-from smartsim import Experiment, status
 
 
 def test_restart(fileutils):
