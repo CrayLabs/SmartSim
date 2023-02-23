@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from smartsim import Experiment, status
+
 """
 Test the launch of simple entity types with local launcher
 """
-
-from smartsim import Experiment, status
 
 
 def test_models(fileutils):
