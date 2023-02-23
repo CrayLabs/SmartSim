@@ -269,7 +269,7 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
-            self.run_settings._prep_colocated_db(common_options["db_cpus"])
+            self.run_settings._prep_colocated_db(common_options["cpus"])
 
         # TODO list which db settings can be extras
         colo_db_config = {}

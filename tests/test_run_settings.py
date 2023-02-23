@@ -25,8 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import contextlib
 import logging
 from shutil import which
+import subprocess
 
 import pytest
 
@@ -37,6 +39,7 @@ from smartsim.settings import (
     RunSettings,
 )
 from smartsim.settings.settings import create_run_settings
+from smartsim.error.errors import SSUnsupportedError
 
 
 def test_create_run_settings_local():
@@ -65,7 +68,6 @@ def test_create_run_settings_local():
     "run_cmd,Settings",
     [
         pytest.param("mpiun", MpirunSettings, id="mpirun"),
-        pytest.param("mpiexec", MpiexecSettings, id="mpiexec"),
         pytest.param("orterun", OrterunSettings, id="orterun"),
     ],
 )
@@ -74,7 +76,26 @@ def test_create_run_settings_returns_settings_subclasses(run_cmd, Settings):
     if _run_cmd:
         settings = create_run_settings("local", "echo", "hello", run_command=run_cmd)
         assert settings.run_command == _run_cmd
-        assert type(settings) == Settings
+        assert isinstance(settings, Settings)
+
+
+def test_create_run_settings_handles_mpiexec_settings_correctly():
+    with contextlib.ExitStack() as ctx:
+        _run_command = which("mpiexec")
+        if _run_command:
+            # Check if `mpiexec.slurm` wrapper is being used
+            if (
+                "mpiexec.slurm"
+                in subprocess.run(
+                    ["mpiexec", "--help"], capture_output=True
+                ).stdout.decode()
+            ):
+                ctx.enter_context(pytest.raises(SSUnsupportedError))
+            settings = create_run_settings(
+                "local", "echo", "hello", run_command="mpiexec"
+            )
+            assert settings.run_command == _run_command
+            assert isinstance(settings, MpiexecSettings)
 
 
 ####### Base Run Settings tests #######
