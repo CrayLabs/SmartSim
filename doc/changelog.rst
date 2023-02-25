@@ -26,6 +26,7 @@ Description
 - Fix bug in colocated database entrypoint when loading PyTorch models
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
 - Allow for models to be launched independently as batch jobs
+- Drop support for Ray
 
 Detailed Notes
 
@@ -38,6 +39,9 @@ Detailed Notes
   satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
   the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
   is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
+- The support for Ray was dropped, as its most recent versions caused problems when deployed through SmartSim.
+  We plan to release a separate add-on library to accomplish the same results. If
+  you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us!
 
 .. _PR255: https://github.com/CrayLabs/SmartSim/pull/258
 .. _PR245: https://github.com/CrayLabs/SmartSim/pull/245

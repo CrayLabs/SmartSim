@@ -69,8 +69,6 @@ exchanged between applications at runtime without the utilization of MPI.
     - [Local Launch](#local-launch)
     - [Interactive Launch](#interactive-launch)
     - [Batch Launch](#batch-launch)
-  - [Ray](#ray)
-    - [Ray on HPC](#ray-on-hpc)
 - [SmartRedis](#smartredis)
   - [Tensors](#tensors)
   - [Datasets](#datasets)
@@ -284,7 +282,6 @@ initialization. Local launching does not support batch workloads.
 
 # Infrastructure Library Applications
  - Orchestrator - In-memory data store and Machine Learning Inference (Redis + RedisAI)
- - Ray - Distributed Reinforcement Learning (RL), Hyperparameter Optimization (HPO)
 
 ## Redis + RedisAI
 
@@ -397,53 +394,6 @@ exp.stop(db_cluster)
 ```bash
 python run_db_batch.py
 ```
-
------
-## Ray
-
-Ray is a distributed computation framework that supports a number of applications
- - RLlib - Distributed Reinforcement Learning (RL)
- - RaySGD - Distributed Training
- - Ray Tune - Hyperparameter Optimization (HPO)
- - Ray Serve - ML/DL inference
-As well as other integrations with frameworks like Modin, Mars, Dask, and Spark.
-
-Historically, Ray has not been well supported on HPC systems. A few examples exist,
-but none are well maintained. Because SmartSim already has launchers for HPC systems,
-launching Ray through SmartSim is a relatively simple task.
-
-### Ray on HPC
-
-Below is an example of how to launch a Ray cluster on an HPC system and connect to it.
-In this example, we set `batch=True`, which means that the cluster will be started
-requesting an allocation through the scheduler (Slurm, PBS, etc). If this code
-is run within a sufficiently large interactive allocation, setting `batch=False`
-will spin the Ray cluster on the allocated nodes.
-
-```Python
-import ray
-
-from smartsim import Experiment
-from smartsim.exp.ray import RayCluster
-
-exp = Experiment("ray-cluster", launcher='auto')
-# 3 workers + 1 head node = 4 node-cluster
-cluster = RayCluster(name="ray-cluster", run_args={},
-                     ray_args={"num-cpus": 24},
-                     launcher='auto', num_nodes=4, batch=True)
-
-exp.generate(cluster, overwrite=True)
-exp.start(cluster, block=False, summary=True)
-
-# Connect to the Ray cluster
-ctx = ray.init(f"ray://{cluster.get_head_address()}:10001")
-
-# <run Ray tune, RLlib, HPO...>
-```
-
-*New in 0.4.0* the auto argument enables the Ray Cluster to be launched
-across scheduler types. Both batch launch and interactive launch commands
-will be automatically detected and used by SmartSim.
 
 ------
 # SmartRedis
