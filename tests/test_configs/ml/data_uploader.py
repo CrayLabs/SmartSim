@@ -37,9 +37,9 @@ mpi_size = 2
 
 def create_data_uploader(rank):
     return TrainingDataUploader(
-        name="test_data",
-        sample_prefix="test_samples",
-        target_prefix="test_targets",
+        list_name="test_data",
+        sample_name="test_samples",
+        target_name="test_targets",
         num_classes=mpi_size,
         producer_prefixes="test_uploader",
         cluster=False,

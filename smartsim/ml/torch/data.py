@@ -27,7 +27,7 @@
 import numpy as np
 import torch
 
-from smartsim.ml.data import DynamicDataDownloader, StaticDataDownloader
+from smartsim.ml.data import StaticDataDownloader
 
 
 class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset):
@@ -70,7 +70,7 @@ class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset
             np.random.shuffle(self.indices)
 
 
-class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
+class DynamicDataGenerator(StaticDataGenerator):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found

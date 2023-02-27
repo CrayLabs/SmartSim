@@ -25,9 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-import tensorflow.keras as keras
+from tensorflow import keras
 
-from smartsim.ml import DynamicDataDownloader, StaticDataDownloader
+from smartsim.ml import StaticDataDownloader
 
 
 class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
@@ -81,7 +81,7 @@ class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
         return x, y
 
 
-class DynamicDataGenerator(DynamicDataDownloader, StaticDataGenerator):
+class DynamicDataGenerator(StaticDataGenerator):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found
