@@ -163,73 +163,47 @@ class TrainingDataUploader:
         self.batch_idx += 1
 
 
-class StaticDataDownloader:
+class DataDownloader:
     """A class to download a dataset from the DB.
 
-    By default, the StaticDataDownloader has to be created in a process
+    By default, the DataDownloader has to be created in a process
     launched through SmartSim, with sample producers listed as incoming
     entities.
 
-    All details about the batches must be defined in
-    the constructor; two mechanisms are available, `manual` and
-    `auto`.
+    Information about the uploaded datasets can be defined in two ways:
 
-     - When specifying `auto`, the user must also specify
-      `uploader_name`. StaticDataDownloader will get all needed information
-      from the database (this expects a Dataset like the one created
-      by TrainingDataUploader to be available and stored as `uploader_name`
-      on the DB).
+     - By supplying a DataInfo object as value of ``data_info``
 
-     - When specifying `manual`, the user must also specify details
-       of batch naming. Specifically, for each incoming entity with
-       a name starting with an element of `producer_prefixes`,
-       StaticDataDownloader will query the DB
-       for all batches named <sample_prefix>_<sub_index> for all indices
-       in `sub_indexes` if supplied, and, if
-       `target_prefix` is supplied, it will also query for all targets
-       named <target_prefix>.<sub_index>. If `producer_prefixes` is
-       None, then all incoming entities will be treated as producers,
-       and for each one, the corresponding batches will be downloaded.
+     - By supplying ``data_info=None`` and passing a valid ``list_name``.
+       in this case, an attempt is made to download information from the
+       DB, where a Dataset called ``<list_name>_info`` should be available
+       and have the information normally stored by DataInfo.publish()
 
     The flag `init_samples` defines whether sources (the list of batches
     to be fetched) and samples (the actual data) should automatically
     be set up in the costructor.
 
-    If the user needs to modify the list of sources, then `init_samples=False`
-    has to be set. In that case, to set up a `BatchDownlaoder`, the user has to call
-    `init_sources()` (which initializes the list of sources and the SmartRedis client)
-    and `init_samples()`.  After `init_sources()` is called,
-    a list of data sources is populated, representing the batches which
-    will be downloaded.
+    If the user needs to modify the `DataDownloader` object before starting
+    the training, then `init_samples=False` has to be set.
+    In that case, to set up a `DataDownloader`, the user has to call
+    `init_samples()`.
 
-    Each source is represented as a tuple `(producer_name, sub_index)`.
-    Before `init_samples()` is called, the user can modify the list.
-    Once `init_samples()` is called, all data is downloaded and batches
-    can be obtained with iter().
-
-    After initialization, samples and targets will not be updated. The data can
-    be shuffled by calling `update_data()`, if `shuffle` is set to ``True`` at
-    initialization.
+    Calling `update_data()`
+     - check if new batches are available and download them, if `dynamic` is set to `True`
+     - shuffle the dataset if `shuffle` is set to ``True``.
 
     :param batch_size: Size of batches obtained with __iter__
     :type batch_size: int
+    :param dynamic: Whether new batches should be donwnloaded when ``update_data`` is called.
+    :type dtnamic: bool
     :param shuffle: whether order of samples has to be shuffled when calling `update_data`
     :type shuffle: bool
-    :param uploader_info: Set to `auto` uploader information has to be downloaded from DB,
-                          or to `manual` if it is provided by the user
-    :type uploader_info: str
-    :param uploader_name: Name of uploader info dataset, only used if `uploader_info` is `auto`
-    :type uploader_name: str
-    :param sample_name: prefix of keys representing batches
-    :type sample_name: str
-    :param target_name: prefix of keys representing targets
-    :type target_name: str
-    :param num_classes: Number of classes of targets, if categorical
-    :type num_classes: int
-    :param producer_prefixes: Prefixes of names of which will be producing batches.
-                              These can be e.g. prefixes of SmartSim entity names in
-                              an ensemble.
-    :type producer_prefixes: str
+    :param data_info: DataInfo object with details about dataset to download, if set to None,
+                      the information is gathered from the DB, forming a key with the value
+                      provided in ``list_name``
+    :type data_info: DataInfo
+    :param list_name: Name of aggregation list used to upload data
+    :type list_name: str
     :param cluster: Whether the Orchestrator will be run as a cluster
     :type cluster: bool
     :param address: Address of Redis client as <ip_address>:<port>
@@ -249,6 +223,7 @@ class StaticDataDownloader:
     def __init__(
         self,
         batch_size=32,
+        dynamic=True,
         shuffle=True,
         data_info: DataInfo = None,
         list_name="training_data",
@@ -271,6 +246,7 @@ class StaticDataDownloader:
         self.num_samples = 0
         self.indices = np.arange(0)
         self.shuffle = shuffle
+        self.dynamic = dynamic
         self.batch_size = batch_size
         if not data_info:
             if not list_name:
@@ -340,11 +316,6 @@ class StaticDataDownloader:
 
         A new attempt to download samples will be made every ten seconds, for self.init_trials
         times.
-
-        :param sources: List of sources as defined in `init_sources`, defaults to None,
-                        in which case sources will be initialized, unless `self.sources`
-                        is already set
-        :type sources: list[tuple], optional
         """
         self.client = Client(self.address, self.cluster)
         if self.init_trials > 0:
@@ -424,7 +395,11 @@ class StaticDataDownloader:
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
     def update_data(self):
-        self._update_samples_and_targets()
+        if self.dynamic:
+            self._update_samples_and_targets()
+        if self.shuffle:
+            np.random.shuffle(self.indices)
+            
 
     def __data_generation(self, indices):
         # Initialization

@@ -27,19 +27,24 @@
 import numpy as np
 from tensorflow import keras
 
-from smartsim.ml import StaticDataDownloader
+from smartsim.ml import DataDownloader
 
 
-class StaticDataGenerator(StaticDataDownloader, keras.utils.Sequence):
+class StaticDataGenerator(DataDownloader, keras.utils.Sequence):
     """A class to download a dataset from the DB.
 
     Details about parameters and features of this class can be found
     in the documentation of ``StaticDataDownloader``, of which it is just
-    a TensorFlow-specialized sub-class.
+    a TensorFlow-specialized sub-class with dynamic=False.
     """
 
     def __init__(self, **kwargs):
-        StaticDataDownloader.__init__(self, **kwargs)
+        if type(self) == StaticDataGenerator:
+            dynamic = kwargs.pop("dynamic", False)
+            kwargs["dynamic"] = False
+        DataDownloader.__init__(self, **kwargs)
+        if type(self) == StaticDataGenerator and dynamic:
+            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
 
     def __getitem__(self, index):
         if len(self) < 1:
@@ -86,11 +91,15 @@ class DynamicDataGenerator(StaticDataGenerator):
 
     Details about parameters and features of this class can be found
     in the documentation of ``DynamicDataDownloader``, of which it is just
-    a TensorFlow-specialized sub-class.
+    a TensorFlow-specialized sub-class with dynamic=True.
     """
 
     def __init__(self, **kwargs):
+        dynamic = kwargs.pop("dynamic", True)
+        kwargs["dynamic"] = True
         StaticDataGenerator.__init__(self, **kwargs)
+        if not dynamic:
+            self.log("Static data generator cannot be started with dynamic=False, setting it to True")
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch
@@ -99,4 +108,3 @@ class DynamicDataGenerator(StaticDataGenerator):
         if `self.shuffle` is set to `True`, data is also shuffled.
         """
         self.update_data()
-        super().on_epoch_end()

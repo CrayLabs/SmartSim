@@ -26,7 +26,7 @@
 
 from .data import (
     DataInfo,
-    StaticDataDownloader,
+    DataDownloader,
     TrainingDataUploader,
     form_name,
 )

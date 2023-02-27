@@ -28,23 +28,33 @@ import numpy as np
 import torch
 
 from smartredis import Client, Dataset
-from smartsim.ml.data import StaticDataDownloader
+from smartsim.ml.data import DataDownloader
 
 
-class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset):
+class StaticDataGenerator(DataDownloader, torch.utils.data.IterableDataset):
     """A class to download a dataset from the DB.
 
     Details about parameters and features of this class can be found
-    in the documentation of ``StaticDataDownloader``, of which it is just
-    a PyTorch-specialized sub-class.
+    in the documentation of ``DataDownloader``, of which it is just
+    a PyTorch-specialized sub-class with dynamic=False and init_samples=False.
 
-    Note that if the ``StaticDataGenerator`` has to be used through a ``DataLoader``,
-    `init_samples` must be set to `False`, as sources and samples will be initialized
-    by the ``DataLoader`` workers.
+    When used in the DataLoader defined in this class, samples are initialized
+    automatically before training. Other data loaders using this generator
+    should implement the same behavior.
+
     """
 
     def __init__(self, **kwargs):
-        StaticDataDownloader.__init__(self, **kwargs)
+        if type(self) == StaticDataGenerator:
+            dynamic = kwargs.pop("dynamic", False)
+            kwargs["dynamic"] = False
+        init_samples = kwargs.pop("init_samples", False)
+        kwargs["init_samples"] = False
+        DataDownloader.__init__(self, **kwargs)
+        if type(self) == StaticDataGenerator and dynamic:
+            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
+        if init_samples:
+            self.log("PyTorch DataLoader has to be created with ``init_samples``=False. Setting it to False automatically.")
 
     def _add_samples(self, indices):
         if self.client is None:
@@ -80,26 +90,25 @@ class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
-    def update_data(self):
-        self._update_samples_and_targets()
-        if self.shuffle:
-            np.random.shuffle(self.indices)
-
 
 class DynamicDataGenerator(StaticDataGenerator):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found
-    in the documentation of ``DynamicDataDownloader``, of which it is just
-    a PyTorch-specialized sub-class.
+    in the documentation of ``DataDownloader``, of which it is just
+    a PyTorch-specialized sub-class with dynamic=True and init_samples=False.
 
-    Note that if the ``DynamicDataGenerator`` has to be used through a ``DataLoader``,
-    `init_samples` must be set to `False`, as sources and samples will be initialized
-    by the ``DataLoader`` workers.
+    When used in the DataLoader defined in this class, samples are initialized
+    automatically before training. Other data loaders using this generator
+    should implement the same behavior.
     """
 
     def __init__(self, **kwargs):
+        dynamic = kwargs.pop("dynamic", True)
+        kwargs["dynamic"] = True
         StaticDataGenerator.__init__(self, **kwargs)
+        if not dynamic:
+            self.log("Static data generator cannot be started with dynamic=False, setting it to True")
 
     def __iter__(self):
         self.update_data()
@@ -107,10 +116,6 @@ class DynamicDataGenerator(StaticDataGenerator):
 
     def _add_samples(self, indices):
         StaticDataGenerator._add_samples(self, indices)
-
-    def __iter__(self):
-        self.update_data()
-        return super().__iter__()
 
 
 class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
