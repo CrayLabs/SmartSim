@@ -26,6 +26,7 @@
 
 from argparse import ArgumentParser
 from os import environ
+from smartredis import Client
 
 import numpy as np
 
@@ -37,14 +38,12 @@ mpi_size = 2
 
 def create_data_uploader(rank):
     return TrainingDataUploader(
-        list_name="test_data",
+        list_name="test_data_list",
         sample_name="test_samples",
         target_name="test_targets",
         num_classes=mpi_size,
-        producer_prefixes="test_uploader",
         cluster=False,
         address=None,
-        num_ranks=mpi_size,
         rank=rank,
         verbose=True,
     )
@@ -57,8 +56,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
     format = args.format
 
+    client = Client(None, False)
+    client.use_list_ensemble_prefix(False)
+
     batch_size = 4
     data_uploaders = [create_data_uploader(rank) for rank in range(mpi_size)]
+
+    for data_uploader in data_uploaders:
+        assert data_uploader.info.list_name == "test_data_list"
+        assert data_uploader.info.sample_name == "test_samples"
+        assert data_uploader.info.target_name == "test_targets"
+        assert data_uploader.info.num_classes == mpi_size
+        assert data_uploader.info._ds_name == "test_data_list_info"
 
     print(environ["SSKEYOUT"])
     if environ["SSKEYOUT"] == "test_uploader_0":

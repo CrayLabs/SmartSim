@@ -31,7 +31,7 @@ import numpy as np
 from smartredis import Client, Dataset
 from smartredis.error import RedisReplyError
 
-from ..error import SmartSimError
+from ..error import SSInternalError
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -137,7 +137,8 @@ class TrainingDataUploader:
         self.info.publish(self.client)
 
     def put_batch(self, samples, targets=None):
-        batch_ds = Dataset(form_name("training_samples", self.rank, self.batch_idx))
+        batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
+        batch_ds = Dataset(batch_ds_name)
         batch_ds.add_tensor(self.sample_name, samples)
         if (
             targets is not None
@@ -147,16 +148,17 @@ class TrainingDataUploader:
             batch_ds.add_tensor(self.target_name, targets)
             if self.verbose:
                 logger.info(
-                    f"Putting dataset {batch_ds._name} with samples and targets"
+                    f"Putting dataset {batch_ds_name} with samples and targets"
                 )
         else:
             if self.verbose:
-                logger.info(f"Putting dataset {batch_ds._name} with samples")
+                logger.info(f"Putting dataset {batch_ds_name} with samples")
 
         self.client.put_dataset(batch_ds)
         self.client.append_to_list(self.list_name, batch_ds)
+        logger.debug(f"List length {self.client.get_list_length(self.list_name)}")
         if self.verbose:
-            logger.info(f"Added dataset to list {self.list_name}")
+            logger.debug(f"Added dataset to list {self.list_name}")
 
         self.batch_idx += 1
 
@@ -256,6 +258,7 @@ class StaticDataDownloader:
         num_replicas=1,
         verbose=False,
         init_samples=True,
+        init_trials=-1,
         **kwargs,
     ):
         self.replica_rank = replica_rank
@@ -267,29 +270,32 @@ class StaticDataDownloader:
         self.targets = None
         self.num_samples = 0
         self.indices = np.arange(0)
-        self.next_index = self.replica_rank
         self.shuffle = shuffle
         self.batch_size = batch_size
-        self.client = None
         if not data_info:
             if not list_name:
                 raise ValueError(
                     "Neither data_info nor list_name were passed to the data loader."
                 )
-            data_info = DataInfo(list_name=self.list_name)
-            self.client = Client(self.address, self.cluster)
-            data_info.download(self.client)
+            data_info = DataInfo(list_name=list_name)
+            client = Client(self.address, self.cluster)
+            data_info.download(client)
+        self.client = None
         self.sample_name = data_info.sample_name
         self.target_name = data_info.target_name
         self.autoencoding = self.sample_name == self.target_name
         self.num_classes = data_info.num_classes
         self.list_name = data_info.list_name
+        self.init_trials = init_trials
 
-        if self.client is None:
-            self.client = Client(self.address, self.cluster)
+        sskeyin = environ.get("SSKEYIN", "")
+        self.uploader_keys = sskeyin.split(',')
+
+        self.next_indices = [self.replica_rank]*len(self.uploader_keys)
 
         if init_samples:
             self.init_samples()
+
 
     def log(self, message):
         if self.verbose:
@@ -332,23 +338,35 @@ class StaticDataDownloader:
     def init_samples(self):
         """Initialize samples (and targets, if needed).
 
-        This function will not return until samples have been downloaded: it will
-        make a new attempt to download samples every ten seconds
+        A new attempt to download samples will be made every ten seconds, for self.init_trials
+        times.
 
         :param sources: List of sources as defined in `init_sources`, defaults to None,
                         in which case sources will be initialized, unless `self.sources`
                         is already set
         :type sources: list[tuple], optional
         """
+        self.client = Client(self.address, self.cluster)
+        if self.init_trials > 0:
+            trials = self.init_trials
+            decrease_trials = True
+        else:
+            decrease_trials = False
+
         while True:
             self._update_samples_and_targets()
             if len(self):
                 break
             else:
-                logger.info("DataLoader not download samples, will try again in 10 seconds")
+                self.log("DataLoader could not download samples, will try again in 10 seconds")
                 time.sleep(10)
+                if decrease_trials:
+                    trials -= 1
+                    if not trials:
+                        raise SSInternalError("Could not download samples in given number of trials") 
         if self.shuffle:
             np.random.shuffle(self.indices)
+        
 
     def _data_exists(self, batch_name, target_name):
 
@@ -360,12 +378,13 @@ class StaticDataDownloader:
             return self.client.tensor_exists(batch_name)
 
     def _add_samples(self, indices):
+
         if self.num_replicas == 1:
             datasets: list[Dataset] = self.client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index = indices[-1])
         else:
             datasets: list[Dataset] = []
             for idx in indices:
-                datasets += self.client.get_dataset_list_range(self.list_name, start_index=indices[idx], end_index=indices[idx])
+                datasets += self.client.get_dataset_list_range(self.list_name, start_index=idx, end_index=idx)
         
         if self.samples is None:        
             self.samples = datasets[0].get_tensor(self.sample_name)
@@ -389,16 +408,20 @@ class StaticDataDownloader:
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
     def _update_samples_and_targets(self):
-        list_length = self.client.get_list_length(self.list_name)
-        # As we emply a simple round-robin strategy, we need the list to be
-        # as long as the next multiple of total number of replicas plus the
-        # rank of this data loader (plus one because of 0-based indexing)
+        self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
-        # Strictly greater, because next_index is 0-based
-        if list_length > self.next_index:
-            indices = range(self.next_index, list_length, self.num_replicas)
-            self._add_samples(indices)
-            self.next_index = indices[-1] + self.replica_rank
+        for uploader_idx, uploader_key in enumerate(self.uploader_keys):
+            if uploader_key:
+                self.client.use_list_ensemble_prefix(True)
+                self.client.set_data_source(uploader_key)
+
+            list_length = self.client.get_list_length(self.list_name)
+
+            # Strictly greater, because next_index is 0-based
+            if list_length > self.next_indices[uploader_idx]:
+                indices = [idx for idx in range(self.next_indices[uploader_idx], list_length, self.num_replicas)]
+                self._add_samples(indices)
+                self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
     def update_data(self):
         self._update_samples_and_targets()

@@ -27,6 +27,7 @@
 import numpy as np
 import torch
 
+from smartredis import Client, Dataset
 from smartsim.ml.data import StaticDataDownloader
 
 
@@ -45,24 +46,39 @@ class StaticDataGenerator(StaticDataDownloader, torch.utils.data.IterableDataset
     def __init__(self, **kwargs):
         StaticDataDownloader.__init__(self, **kwargs)
 
-    def _add_samples(self, batch_name, target_name):
-        if self.samples is None:
-            self.samples = torch.tensor(self.client.get_tensor(batch_name))
-            if self.need_targets:
-                self.targets = torch.tensor(self.client.get_tensor(target_name))
+    def _add_samples(self, indices):
+        if self.client is None:
+            client = Client(self.address, self.cluster)
         else:
-            self.samples = torch.cat(
-                (self.samples, torch.tensor(self.client.get_tensor(batch_name)))
+            client = self.client
+
+        if self.num_replicas == 1:
+            datasets: list[Dataset] = client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index = indices[-1])
+        else:
+            datasets: list[Dataset] = []
+            for idx in indices:
+                datasets += client.get_dataset_list_range(self.list_name, start_index=idx, end_index=idx)
+        
+        if self.samples is None:        
+            self.samples = torch.tensor(datasets[0].get_tensor(self.sample_name))
+            if self.need_targets:
+                self.targets = torch.tensor(datasets[0].get_tensor(self.target_name))
+
+            if len(datasets) > 1:
+                datasets = datasets[1:]
+
+        for dataset in datasets:
+            self.samples =torch.cat(
+                (self.samples, torch.tensor(dataset.get_tensor(self.sample_name)))
             )
             if self.need_targets:
                 self.targets = torch.cat(
-                    (self.targets, torch.tensor(self.client.get_tensor(target_name)))
+                    (self.targets, torch.tensor(dataset.get_tensor(self.target_name)))
                 )
 
         self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
-        self.log("Success!")
-        self.log(f"New dataset size: {self.num_samples}")
+        self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
     def update_data(self):
         self._update_samples_and_targets()
@@ -86,16 +102,14 @@ class DynamicDataGenerator(StaticDataGenerator):
         StaticDataGenerator.__init__(self, **kwargs)
 
     def __iter__(self):
-        if self.sources:
-            self.update_data()
+        self.update_data()
         return super().__iter__()
 
-    def _add_samples(self, batch_name, target_name):
-        StaticDataGenerator._add_samples(self, batch_name, target_name)
+    def _add_samples(self, indices):
+        StaticDataGenerator._add_samples(self, indices)
 
     def __iter__(self):
-        if self.sources:
-            self.update_data()
+        self.update_data()
         return super().__iter__()
 
 
@@ -119,26 +133,13 @@ class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     @staticmethod
     def worker_init_fn(worker_id):
         worker_info = torch.utils.data.get_worker_info()
-        dataset = worker_info.dataset  # the dataset copy in this worker process
-        dataset.init_sources()
-        overall_sources = dataset.sources
+        dataset: StaticDataGenerator = worker_info.dataset  # the dataset copy in this worker process
 
         worker_id = worker_info.id
+        num_workers = worker_info.num_workers
 
-        # configure the dataset to only process the split workload
-        per_worker = int((len(overall_sources)) // worker_info.num_workers)
+        dataset.num_replicas *= num_workers
+        dataset.replica_rank = dataset.replica_rank*num_workers + worker_id
+        dataset.log(f"{worker_id}/{num_workers}")
 
-        if per_worker > 0:
-            if worker_id < worker_info.num_workers - 1:
-                sources = overall_sources[
-                    worker_id * per_worker : (worker_id + 1) * per_worker
-                ]
-            else:
-                sources = overall_sources[worker_id * per_worker :]
-        else:
-            if worker_id < len(overall_sources):
-                sources = overall_sources[worker_id]
-            else:
-                sources = []
-
-        dataset.init_samples(sources)
+        dataset.init_samples()

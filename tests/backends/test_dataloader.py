@@ -31,7 +31,7 @@ import pytest
 
 from smartsim import status
 from smartsim.database import Orchestrator
-from smartsim.error.errors import SmartSimError
+from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
 
 shouldrun_tf = True
@@ -68,7 +68,6 @@ def create_uploader(experiment: Experiment, filedir, format):
     )
 
     uploader.attach_generator_files(to_copy=[osp.join(filedir, "data_uploader.py")])
-    uploader.enable_key_prefixing()
     experiment.generate(uploader, overwrite=True)
     return uploader
 
@@ -182,13 +181,13 @@ def test_wrong_dataloaders(fileutils, wlmutils):
     exp.start(orc)
 
     if shouldrun_tf:
-        with pytest.raises(SmartSimError):
-            _ = TFDataGenerator(address=orc.get_address()[0], cluster=False)
+        with pytest.raises(SSInternalError):
+            _ = TFDataGenerator(address=orc.get_address()[0], cluster=False, init_trials=1)
 
     if shouldrun_torch:
-        with pytest.raises(SmartSimError):
+        with pytest.raises(SSInternalError):
             torch_data_gen = TorchDataGenerator(
-                address=orc.get_address()[0], cluster=False
+                address=orc.get_address()[0], cluster=False, init_trials=1
             )
             torch_data_gen.init_samples()
 

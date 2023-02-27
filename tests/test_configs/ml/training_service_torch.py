@@ -48,13 +48,10 @@ class Net(nn.Module):
 
 
 def check_dataloader(dl):
-    assert dl.uploader_name == "test_data"
-    assert dl.sample_prefix == "test_samples"
-    assert dl.target_prefix == "test_targets"
-    assert dl.uploader_info == "auto"
+    assert dl.list_name == "test_data_list"
+    assert dl.sample_name == "test_samples"
+    assert dl.target_name == "test_targets"
     assert dl.num_classes == 2
-    assert dl.producer_prefixes == ["test_uploader"]
-    assert dl.sub_indices == ["0", "1"]
     assert dl.verbose == True
     assert dl.replica_rank == 0
     assert dl.num_replicas == 1
@@ -62,6 +59,8 @@ def check_dataloader(dl):
     assert dl.cluster == False
     assert dl.shuffle == True
     assert dl.batch_size == 4
+    assert dl.autoencoding == False
+    assert dl.need_targets == True
 
 
 # This test should run without error, but no explicit
@@ -71,11 +70,12 @@ if __name__ == "__main__":
 
     training_set = DynamicDataGenerator(
         cluster=False,
-        shuffle=True,
-        batch_size=4,
-        init_samples=False,
+        list_name="test_data_list",
         verbose=True,
-        uploader_name="test_data",
+        batch_size=4,
+        init_trials=5,
+        num_workers=2,
+        init_samples=False,
     )
 
     trainloader = DataLoader(training_set, batch_size=None, num_workers=2)

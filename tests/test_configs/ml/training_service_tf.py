@@ -24,19 +24,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import tensorflow.keras as keras
+from tensorflow import keras
 
 from smartsim.ml.tf import DynamicDataGenerator
 
 
-def check_dataloader(dl, rank):
-    assert dl.uploader_name == "test_data"
-    assert dl.sample_prefix == "test_samples"
-    assert dl.target_prefix == "test_targets"
-    assert dl.uploader_info == "auto"
+def check_dataloader(dl: DynamicDataGenerator, rank):
+    assert dl.list_name == "test_data_list"
+    assert dl.sample_name == "test_samples"
+    assert dl.target_name == "test_targets"
     assert dl.num_classes == 2
-    assert dl.producer_prefixes == ["test_uploader"]
-    assert dl.sub_indices == ["0", "1"]
     assert dl.verbose == True
     assert dl.replica_rank == rank
     assert dl.num_replicas == 2
@@ -44,10 +41,8 @@ def check_dataloader(dl, rank):
     assert dl.cluster == False
     assert dl.shuffle == True
     assert dl.batch_size == 4
-    assert len(dl.sources) == 2
-    for i in range(2):
-        assert dl.sources[i][0:2] == [f"test_uploader_{rank}", str(i)]
-        assert type(dl.sources[i][2]) == int
+    assert dl.autoencoding == False
+    assert dl.need_targets == True
 
 
 # Pretend we are running distributed without requiring Horovod
@@ -57,11 +52,12 @@ hvd_size = 2
 def create_data_generator(rank):
     return DynamicDataGenerator(
         cluster=False,
-        uploader_name="test_data",
+        list_name="test_data_list",
         verbose=True,
         num_replicas=2,
         replica_rank=rank,
         batch_size=4,
+        init_trials=5,
     )
 
 
