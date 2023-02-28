@@ -22,6 +22,7 @@ This section details changes made in the development branch that have not yet be
 
 Description
 
+- Update ML data loaders to make use of SmartRedis's aggregation lists
 - Update to current version of Redis
 - Fix bug in colocated database entrypoint when loading PyTorch models
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
@@ -29,6 +30,7 @@ Description
 
 Detailed Notes
 
+- The PyTorch and TensorFlow data loaders were update to make use of aggregation lists. This breaks their API, but makes them easier to use. (PR264_)
 - Update from Redis version 6.0.8 to 7.0.5. (PR258_)
 - Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
@@ -39,7 +41,8 @@ Detailed Notes
   the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
   is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
 
-.. _PR255: https://github.com/CrayLabs/SmartSim/pull/258
+.. _PR264: https://github.com/CrayLabs/SmartSim/pull/264
+.. _PR258: https://github.com/CrayLabs/SmartSim/pull/258
 .. _PR245: https://github.com/CrayLabs/SmartSim/pull/245
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
