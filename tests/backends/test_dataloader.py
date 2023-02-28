@@ -124,6 +124,12 @@ def test_batch_dataloader_tf(fileutils, wlmutils):
 
     exp.start(trainer_tf, block=True)
     if exp.get_status(trainer_tf)[0] != status.STATUS_COMPLETED:
+        print("------ERROR FILE--------\n")
+        with open(osp.join(trainer_tf.path, "trainer.err"), 'r') as f:
+            print(f.read())
+        print("------OUTPUT FILE-------\n")
+        with open(osp.join(trainer_tf.path, "trainer.out"), 'r') as f:
+            print(f.read())
         exp.stop(orc)
         assert False
 
@@ -157,6 +163,13 @@ def test_batch_dataloader_torch(fileutils, wlmutils):
 
     exp.start(trainer_torch, block=True)
     if exp.get_status(trainer_torch)[0] != status.STATUS_COMPLETED:
+        print("------ERROR FILE--------\n")
+        with open(osp.join(trainer_torch.path, "trainer.err"), 'r') as f:
+            print(f.read())
+        print("------OUTPUT FILE-------\n")
+        with open(osp.join(trainer_torch.path, "trainer.out"), 'r') as f:
+            print(f.read())
+        
         exp.stop(orc)
         assert False
 
