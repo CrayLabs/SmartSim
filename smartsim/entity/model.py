@@ -70,9 +70,7 @@ class Model(SmartSimEntity):
     @property
     def colocated(self):
         """Return True if this Model will run with a colocated Orchestrator"""
-        if self.run_settings.colocated_db_settings:
-            return True
-        return False
+        return bool(self.run_settings.colocated_db_settings)
 
     def register_incoming_entity(self, incoming_entity):
         """Register future communication between entities.
