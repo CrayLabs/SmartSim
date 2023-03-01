@@ -788,10 +788,6 @@ class Experiment:
         summary += f"Experiment: {self.name}\n"
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
-        if manifest.ensembles or manifest.ray_clusters:
-            summary += (
-                f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
-            )
         if manifest.models:
             summary += f"Models: {len(manifest.models)}\n"
 
