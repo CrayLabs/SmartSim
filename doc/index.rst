@@ -55,6 +55,7 @@
    changelog
    code_of_conduct
    developer
+   testing
 
 
 Indices and tables
