@@ -40,6 +40,7 @@ from smartsim.settings import (
     JsrunSettings,
     MpirunSettings,
     RunSettings,
+    PalsMpiexecSettings,
 )
 from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
@@ -91,7 +92,7 @@ def print_test_configuration():
 def pytest_configure():
     global test_launcher
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
+    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf", "pals"]
     account = get_account()
     pytest.test_account = account
 
@@ -134,10 +135,10 @@ def kill_all_test_spawned_processes():
         print("Not all processes were killed after test")
 
 
-def get_hostlist():
+def get_hostlist(force = False):
     global test_hostlist
     if not test_hostlist:
-        if "COBALT_NODEFILE" in os.environ:
+        if force or "COBALT_NODEFILE" in os.environ:
             try:
                 with open(os.environ["COBALT_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
@@ -146,7 +147,7 @@ def get_hostlist():
                     )
             except:
                 return None
-        elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
+        elif force or ("PBS_NODEFILE" in os.environ and not shutil.which("aprun")):
             try:
                 with open(os.environ["PBS_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
@@ -155,7 +156,7 @@ def get_hostlist():
                     )
             except:
                 return None
-        elif "SLURM_JOB_NODELIST" in os.environ:
+        elif force or "SLURM_JOB_NODELIST" in os.environ:
             try:
                 nodelist = os.environ["SLURM_JOB_NODELIST"]
                 test_hostlist = run(
@@ -241,6 +242,15 @@ class WLMUtils:
                 exe, args, run_command=run_command, run_args=run_args
             )
             return settings
+        if test_launcher == "pals":
+            run_command = "mpiexec"
+            host_file = os.environ["PBS_NODEFILE"]
+            run_args = {"-np": ntasks, "--exclusive": None, "--hostfile": host_file}
+            run_args.update(kwargs)
+            settings = RunSettings(
+                exe, args, run_command=run_command, run_args=run_args
+            )
+            return settings
         if test_launcher == "cobalt":
             if shutil.which("aprun"):
                 run_command = "aprun"
@@ -283,6 +293,12 @@ class WLMUtils:
                 run_args = {"n": ntasks, "hostfile": host_file}
                 run_args.update(kwargs)
                 settings = MpirunSettings(exe, args, run_args=run_args)
+            return settings
+        elif test_launcher == "pals":
+            host_file = os.environ["PBS_NODEFILE"]
+            run_args = {"-np": ntasks, "hostfile": host_file, "--exclusive": None}
+            run_args.update(kwargs)
+            settings = PalsMpiexecSettings(exe, args, run_args=run_args)
             return settings
         # TODO allow user to pick aprun vs MPIrun
         elif test_launcher == "cobalt":
@@ -333,6 +349,18 @@ class WLMUtils:
                 interface=test_nic,
                 launcher=test_launcher,
             )
+        elif test_launcher == "pals":
+            hostlist = get_hostlist(force=True)
+            db = Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+                hosts=hostlist,
+                run_command="mpiexec"
+            )
+            db.set_run_arg("exclusive", None)
         elif test_launcher == "lsf":
             db = Orchestrator(
                 db_nodes=nodes,

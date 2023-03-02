@@ -254,6 +254,7 @@ class Controller:
             "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
+            "pals": PBSLauncher,
         }
 
         if launcher is not None:
@@ -382,7 +383,7 @@ class Controller:
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(self, job_step, entity):
-        """Use the launcher to launch a job stop
+        """Use the launcher to launch a job step
 
         :param job_step: a job step instance
         :type job_step: Step

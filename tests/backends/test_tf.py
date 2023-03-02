@@ -70,7 +70,7 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     exp.start(db)
 
     run_settings = exp.create_run_settings(
-        "python", f"run_tf.py --device={test_device}"
+        "python", f"run_tf.py --device={test_device}", run_command="mpiexec",
     )
 
     if wlmutils.get_test_launcher() != "local":

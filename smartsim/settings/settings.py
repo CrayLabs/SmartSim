@@ -124,7 +124,7 @@ def create_run_settings(
         "aprun": AprunSettings,
         "srun": SrunSettings,
         "mpirun": MpirunSettings,
-        "mpiexec": MpiexecSettings,
+        "mpiexec": PalsMpiexecSettings,
         "orterun": OrterunSettings,
         "jsrun": JsrunSettings,
     }
@@ -136,6 +136,7 @@ def create_run_settings(
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
+        "pals": ["mpiexec"],
     }
 
     if launcher == "auto":
@@ -165,7 +166,7 @@ def create_run_settings(
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
         return supported[run_command](
-            exe, exe_args, run_args, env_vars, container=container, **kwargs
+            exe=exe, exe_args=exe_args, run_args=run_args, env_vars=env_vars, container=container, **kwargs
         )
 
     # 1) user specified and not implementation in SmartSim

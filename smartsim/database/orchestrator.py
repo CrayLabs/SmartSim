@@ -107,6 +107,7 @@ class Orchestrator(EntityList):
             "slurm": ["srun", "mpirun", "mpiexec"],
             "pbs": ["aprun", "mpirun", "mpiexec"],
             "cobalt": ["aprun", "mpirun", "mpiexec"],
+            "pals": ["mpiexec"],
             "lsf": ["jsrun"],
             "local": [None],
         }
@@ -376,7 +377,7 @@ class Orchestrator(EntityList):
 
     def set_run_arg(self, arg, value):
         """Set a run argument the orchestrator should launch
-        each node with (it will be passed to `jrun`)
+        each node with (it will be passed to the run command)
 
         Some commonly used arguments are used
         by SmartSim and will not be allowed to be set.
@@ -625,6 +626,10 @@ class Orchestrator(EntityList):
 
                 exe_args = " ".join(start_script_args)
 
+                try:
+                    print(self._run_command())
+                except:
+                    print("There was none")
                 # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(
                     sys.executable, exe_args, **kwargs
