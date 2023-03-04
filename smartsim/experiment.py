@@ -767,14 +767,14 @@ class Experiment:
                         job.entity.type,
                         job.history.jids[run],
                         run,
-                        job.history.job_times[run],
+                        f"{job.history.job_times[run]:.4f}",
                         job.history.statuses[run],
                         job.history.returns[run],
                     ]
                 )
         else:
             return tabulate(
-                values, headers, showindex=True, tablefmt=format, missingval="None"
+                values, headers, showindex=True, tablefmt=format, missingval="None", disable_numparse=True
             )
 
     def _launch_summary(self, manifest):
