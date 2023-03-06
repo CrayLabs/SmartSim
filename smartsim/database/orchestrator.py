@@ -196,9 +196,9 @@ class Orchestrator(EntityList):
             )
             if hosts:
                 self.set_hosts(hosts)
-            elif not hosts and run_command == "mpirun":
+            elif not hosts and run_command in ["mpirun", "mpiexec"]:
                 raise SmartSimError(
-                    "hosts argument is required when launching Orchestrator with mpirun"
+                    f"hosts argument is required when launching Orchestrator with {run_command}"
                 )
             self._reserved_run_args = {}
             self._reserved_batch_args = {}
@@ -626,10 +626,6 @@ class Orchestrator(EntityList):
 
                 exe_args = " ".join(start_script_args)
 
-                try:
-                    print(self._run_command())
-                except:
-                    print("There was none")
                 # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(
                     sys.executable, exe_args, **kwargs
@@ -937,7 +933,6 @@ class LSFOrchestrator(Orchestrator):
         single_cmd=True,
         **kwargs,
     ):
-
         """Initialize an Orchestrator reference for LSF based systems
 
         The orchestrator launches as a batch by default. If
@@ -1023,7 +1018,6 @@ class SlurmOrchestrator(Orchestrator):
         single_cmd=False,
         **kwargs,
     ):
-
         """Initialize an Orchestrator reference for Slurm based systems
 
         The orchestrator launches as a batch by default. The Slurm orchestrator

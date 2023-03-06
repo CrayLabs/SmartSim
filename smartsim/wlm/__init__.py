@@ -40,6 +40,8 @@ def detect_launcher():
         qsub_version = run(
             ["qsub", "--version"], shell=False, capture_output=True, encoding="utf-8"
         )
+        if which("mpiexec.pals"):
+            return "pals"
         if "pbs" in (qsub_version.stdout).lower():
             return "pbs"
         if "cobalt" in (qsub_version.stdout).lower():

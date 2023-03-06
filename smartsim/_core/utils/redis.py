@@ -33,6 +33,8 @@ from rediscluster.exceptions import ClusterDownError, RedisClusterException
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
+from smartsim.error.errors import ShellError
+
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ...entity import DBModel, DBScript
@@ -68,14 +70,53 @@ def create_cluster(hosts, ports):  # cov-wlm
     redis_cli = CONFIG.database_cli
     cmd = [redis_cli, "--cluster", "create"]
     cmd += ip_list
-    cmd += ["--cluster-replicas", "0"]
-    returncode, out, err = execute_cmd(cmd, proc_input="yes", shell=False)
+    cmd += ["--cluster-replicas", "0", "--cluster-yes"]
+    try:
+        returncode, out, err = execute_cmd(
+            cmd, shell=False, timeout=180
+        )
+    except ShellError as e:
+        raise SSInternalError(
+            f"Database '--cluster create' command failed with exception {e}"
+        ) from None
 
     if returncode != 0:
         logger.error(out)
         logger.error(err)
         raise SSInternalError("Database '--cluster create' command failed")
     logger.debug(out)
+
+
+def shutdown_db(hosts, ports):  # cov-wlm
+    """Send shutdown signal to cluster instances.
+
+    Should only be used in the case where cluster deallocation
+    needs to occur manually, which is not often.
+
+    :param hosts: List of hostnames to connect to
+    :type hosts: List[str]
+    :param ports: List of ports for each hostname
+    :type ports: List[int]
+    :raises SmartSimError: if cluster creation fails
+
+    """
+    for host in hosts:
+        ip = get_ip_from_host(host)
+        for port in ports:
+            # call cluster command
+            redis_cli = CONFIG.database_cli
+            cmd = [redis_cli]
+            cmd += ["-h", ip, "-p", str(port)]
+            cmd += ["shutdown", "nosave"]
+            returncode, out, err = execute_cmd(
+                cmd, proc_input="yes", shell=False, timeout=10
+            )
+
+            if returncode != 0:
+                logger.error(out)
+                logger.error(err)
+                raise SSInternalError("Database 'shutdown nosave' command failed")
+            logger.debug(out)
 
 
 def check_cluster_status(hosts, ports, trials=10):  # cov-wlm

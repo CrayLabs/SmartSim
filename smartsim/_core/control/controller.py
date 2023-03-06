@@ -38,10 +38,10 @@ from ...database import Orchestrator
 from ...entity import DBModel, DBNode, DBObject, DBScript, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
-from ...status import STATUS_RUNNING, TERMINAL_STATUSES
+from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import *
-from ..utils import check_cluster_status, create_cluster
+from ..utils import check_cluster_status, create_cluster, shutdown_db
 from .jobmanager import JobManager
 
 logger = get_logger(__name__)
@@ -179,6 +179,23 @@ class Controller:
                 self._jobs.move_to_completed(job)
         finally:
             JM_LOCK.release()
+
+    def stop_db(self, db):
+        """Stop an orchestrator
+
+        :param db: orchestrator to be stopped
+        :type db: Orchestrator
+        """
+        if db.batch:
+            self.stop_entity(db)
+        else:
+            shutdown_db(db.hosts, db.ports)
+            with JM_LOCK:
+                for entity in db:
+                    job = self._jobs[entity.name]
+                    job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
+                    self._jobs.move_to_completed(job)
+                    
 
     def stop_entity_list(self, entity_list):
         """Stop an instance of an entity list
@@ -539,16 +556,15 @@ class Controller:
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
                 elif any([stat in TERMINAL_STATUSES for stat in statuses]):
-                    self.stop_entity_list(orchestrator)
+                    self.stop_db(orchestrator)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
                     raise SmartSimError(msg)
                 else:
                     logger.debug("Waiting for orchestrator instances to spin up...")
             except KeyboardInterrupt:
-
                 logger.info("Orchestrator launch cancelled - requesting to stop")
-                self.stop_entity_list(orchestrator)
+                self.stop_db(orchestrator)
 
                 # re-raise keyboard interrupt so the job manager will display
                 # any running and un-killed jobs as this method is only called

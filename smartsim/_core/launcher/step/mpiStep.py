@@ -158,6 +158,64 @@ class MpiexecStep(_BaseMPIStep):
 
         super().__init__(name, cwd, run_settings)
 
+    def get_launch_cmd(self):
+        """Get the command to launch this step
+
+        :return: launch command
+        :rtype: list[str]
+        """
+        mpi_cmd = [self._run_command, "--wdir", self.cwd]
+
+        if self.run_settings.mpmd:
+            hosts = [self.run_settings.run_args.pop("host")]
+            for mpmd in self.run_settings.mpmd:
+                rs_dict: dict[str, str] = mpmd.run_args
+                host = rs_dict.pop("host")
+                hosts.append(host)
+
+            self.run_settings.run_args["hosts"] = ",".join(hosts)
+
+        # add env vars to mpi command
+        mpi_cmd.extend(self.run_settings.format_env_vars())
+
+        # add mpi settings to command
+        mpi_cmd.extend(self.run_settings.format_run_args())
+
+        if self.run_settings.colocated_db_settings:
+            # disable cpu binding as the entrypoint will set that
+            # for the application and database process now
+            # mpi_cmd.extend(["--cpu-bind", "none"])
+
+            # Replace the command with the entrypoint wrapper script
+            bash = shutil.which("bash")
+            launch_script_path = self.get_colocated_launch_script()
+            mpi_cmd += [bash, launch_script_path]
+
+        mpi_cmd += self._build_exe()
+
+        # if its in a batch, redirect stdout to
+        # file in the cwd.
+        if self.run_settings.in_batch:
+            output = self.get_step_file(ending=".out")
+            mpi_cmd += [">", output]
+        return mpi_cmd
+
+    def _make_mpmd(self):
+        """Build mpiexec (MPMD) executable"""
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+
+        cmd = exe + args
+        for mpmd in self.run_settings.mpmd:
+            cmd += [" : "]
+            cmd += mpmd.format_run_args()
+            cmd += mpmd.format_env_vars()
+            cmd += mpmd.exe
+            cmd += mpmd.exe_args
+
+        cmd = sh_split(" ".join(cmd))
+        return cmd
+
 
 class MpirunStep(_BaseMPIStep):
     def __init__(self, name, cwd, run_settings):

@@ -166,7 +166,12 @@ def create_run_settings(
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
         return supported[run_command](
-            exe=exe, exe_args=exe_args, run_args=run_args, env_vars=env_vars, container=container, **kwargs
+            exe=exe,
+            exe_args=exe_args,
+            run_args=run_args,
+            env_vars=env_vars,
+            container=container,
+            **kwargs,
         )
 
     # 1) user specified and not implementation in SmartSim

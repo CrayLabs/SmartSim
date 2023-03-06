@@ -147,7 +147,7 @@ def get_hostlist(force = False):
                     )
             except:
                 return None
-        elif force or ("PBS_NODEFILE" in os.environ and not shutil.which("aprun")):
+        elif "PBS_NODEFILE" in os.environ and (not shutil.which("aprun") or test_launcher=="pals"):
             try:
                 with open(os.environ["PBS_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
@@ -245,7 +245,7 @@ class WLMUtils:
         if test_launcher == "pals":
             run_command = "mpiexec"
             host_file = os.environ["PBS_NODEFILE"]
-            run_args = {"-np": ntasks, "--exclusive": None, "--hostfile": host_file}
+            run_args = {"-np": ntasks, "--hostfile": host_file}
             run_args.update(kwargs)
             settings = RunSettings(
                 exe, args, run_command=run_command, run_args=run_args
@@ -296,7 +296,7 @@ class WLMUtils:
             return settings
         elif test_launcher == "pals":
             host_file = os.environ["PBS_NODEFILE"]
-            run_args = {"-np": ntasks, "hostfile": host_file, "--exclusive": None}
+            run_args = {"-np": ntasks, "hostfile": host_file}
             run_args.update(kwargs)
             settings = PalsMpiexecSettings(exe, args, run_args=run_args)
             return settings
