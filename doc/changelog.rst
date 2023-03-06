@@ -26,7 +26,6 @@ Description
 - Allow for models to be launched independently as batch jobs
 - Update to current version of Redis
 - Add support for Python 3.10, deprecate support for Python 3.7 and RedisAI 1.2.3
-- Allow for models to be launched independently as batch jobs
 - Fix bug in colocated database entrypoint when loading PyTorch models
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
 
