@@ -85,7 +85,7 @@ class JsrunSettings(RunSettings):
         :param cpus_per_rs: number of cpus to use per resource set or ALL_CPUS
         :type cpus_per_rs: int or str
         """
-        if self.colocated_db_settings == True:
+        if self.colocated_db_settings:
             db_cpus = self.colocated_db_settings["db_cpus"]
             if cpus_per_rs < db_cpus:
                 raise ValueError(

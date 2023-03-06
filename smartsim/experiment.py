@@ -770,14 +770,14 @@ class Experiment:
                         job.entity.type,
                         job.history.jids[run],
                         run,
-                        job.history.job_times[run],
+                        f"{job.history.job_times[run]:.4f}",
                         job.history.statuses[run],
                         job.history.returns[run],
                     ]
                 )
         else:
             return tabulate(
-                values, headers, showindex=True, tablefmt=format, missingval="None"
+                values, headers, showindex=True, tablefmt=format, missingval="None", disable_numparse=True
             )
 
     def _launch_summary(self, manifest):
@@ -791,10 +791,6 @@ class Experiment:
         summary += f"Experiment: {self.name}\n"
         summary += f"Experiment Path: {self.exp_path}\n"
         summary += f"Launcher: {self._launcher}\n"
-        if manifest.ensembles or manifest.ray_clusters:
-            summary += (
-                f"Ensembles: {len(manifest.ensembles) + len(manifest.ray_clusters)}\n"
-            )
         if manifest.models:
             summary += f"Models: {len(manifest.models)}\n"
 

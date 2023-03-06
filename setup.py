@@ -184,9 +184,6 @@ extras_require = {
     ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),
-    "ray": [
-        "ray==1.6",
-    ],
 }
 
 
