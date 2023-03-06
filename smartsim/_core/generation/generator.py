@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,6 @@ class Generator:
         self._gen_orc_dir(generator_manifest.db)
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
-        self._gen_entity_list_dir(generator_manifest.ray_clusters)
 
     def set_tag(self, tag, regex=None):
         """Set the tag used for tagging input files

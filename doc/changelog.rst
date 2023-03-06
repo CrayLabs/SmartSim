@@ -22,6 +22,8 @@ This section details changes made in the development branch that have not yet be
 
 Description
 
+- Drop support for Ray
+- Allow for models to be launched independently as batch jobs
 - Update to current version of Redis
 - Add support for Python 3.10, deprecate support for Python 3.7 and RedisAI 1.2.3
 - Allow for models to be launched independently as batch jobs
@@ -30,6 +32,9 @@ Description
 
 Detailed Notes
 
+- The support for Ray was dropped, as its most recent versions caused problems when deployed through SmartSim.
+  We plan to release a separate add-on library to accomplish the same results. If
+  you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us! (PR263_)
 - Update from Redis version 6.0.8 to 7.0.5. (PR258_)
 - Adds support for Python 3.10 without the ONNX machine learning backend. Deprecates support for
   Python 3.7 as it will stop receiving security updates. Deprecates support for RedisAI 1.2.3.
@@ -45,6 +50,7 @@ Detailed Notes
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (PR234_)
 - Make installation of correct Torch backend more reliable according to instruction from PyTorch
 
+.. _PR263: https://github.com/CrayLabs/SmartSim/pull/263
 .. _PR258: https://github.com/CrayLabs/SmartSim/pull/258
 .. _PR256: https://github.com/CrayLabs/SmartSim/pull/256
 .. _PR245: https://github.com/CrayLabs/SmartSim/pull/245

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,9 +70,7 @@ class Model(SmartSimEntity):
     @property
     def colocated(self):
         """Return True if this Model will run with a colocated Orchestrator"""
-        if self.run_settings.colocated_db_settings:
-            return True
-        return False
+        return bool(self.run_settings.colocated_db_settings)
 
     def register_incoming_entity(self, incoming_entity):
         """Register future communication between entities.
@@ -269,7 +267,7 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
-            self.run_settings._prep_colocated_db(common_options["db_cpus"])
+            self.run_settings._prep_colocated_db(common_options["cpus"])
 
         # TODO list which db settings can be extras
         colo_db_config = {}

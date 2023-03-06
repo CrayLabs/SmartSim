@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -290,15 +290,13 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:  # cov-wlm
-            rc._update_workers()
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
         steps = []
-        all_entity_lists = manifest.ensembles + manifest.ray_clusters
+        all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)

@@ -123,11 +123,8 @@ can request their installation through the ``ml`` flag as follows:
 .. code-block:: bash
 
     pip install smartsim[ml]
-    # add ray extra if you would like to use ray with SmartSim as well
-    pip install smartsim[ml,ray]
     # or if using ZSH
     pip install smartsim\[ml\]
-    pip install smartsim\[ml,ray\]
 
 
 At this point, SmartSim is installed and can be used for more basic features.
