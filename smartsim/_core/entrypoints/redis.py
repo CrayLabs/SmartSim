@@ -54,10 +54,10 @@ def handle_signal(signo, frame):
 
 def main(network_interface: str, command: List[str]):
     global DBPID
-
+        
     try:
 
-        ip_address = current_ip(network_interface)
+        ip_address = " ".join(current_ip(net_if) for net_if in network_interface.split(","))
         cmd = command + [f"--bind {ip_address}"]
 
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
