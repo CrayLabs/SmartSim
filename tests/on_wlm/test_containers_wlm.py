@@ -50,7 +50,7 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
 
     launcher = wlmutils.get_test_launcher()
     print(launcher)
-    if launcher not in ["pbs", "slurm"]:
+    if launcher not in ["pbs", "slurm", "pals"]:
         pytest.skip(
             f"Test only runs on systems with PBS or Slurm as WLM. Current launcher: {launcher}"
         )
@@ -61,7 +61,8 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     )
 
     # create and start a database
-    orc = exp.create_database(port=wlmutils.get_test_port())
+    orc = wlmutils.get_orchestrator()
+
     exp.generate(orc)
     exp.start(orc, block=False)
 

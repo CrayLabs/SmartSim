@@ -135,10 +135,10 @@ def kill_all_test_spawned_processes():
         print("Not all processes were killed after test")
 
 
-def get_hostlist(force = False):
+def get_hostlist():
     global test_hostlist
     if not test_hostlist:
-        if force or "COBALT_NODEFILE" in os.environ:
+        if "COBALT_NODEFILE" in os.environ:
             try:
                 with open(os.environ["COBALT_NODEFILE"], "r") as nodefile:
                     lines = nodefile.readlines()
@@ -156,7 +156,7 @@ def get_hostlist(force = False):
                     )
             except:
                 return None
-        elif force or "SLURM_JOB_NODELIST" in os.environ:
+        elif "SLURM_JOB_NODELIST" in os.environ:
             try:
                 nodelist = os.environ["SLURM_JOB_NODELIST"]
                 test_hostlist = run(
@@ -350,7 +350,8 @@ class WLMUtils:
                 launcher=test_launcher,
             )
         elif test_launcher == "pals":
-            hostlist = get_hostlist(force=True)
+            hostlist = get_hostlist()
+            print(hostlist)
             db = Orchestrator(
                 db_nodes=nodes,
                 port=test_port,
