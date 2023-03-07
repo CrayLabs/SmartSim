@@ -52,8 +52,8 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
         f.write("set -e\n\n")
 
         f.write("Cleanup () {\n")
-        f.write("if ps -p $DBPID > /dev/null; then\n")
-        f.write("\tkill -15 $DBPID\n")
+        f.write("if ps -p \"$DBPID\" > /dev/null; then\n")
+        f.write("\tkill -15 \"$DBPID\"\n")
         f.write("fi\n}\n\n")
 
         # run cleanup after all exitcodes
