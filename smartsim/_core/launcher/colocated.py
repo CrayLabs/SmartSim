@@ -189,6 +189,7 @@ def _build_db_model_cmd(db_models):
         cmd.append(f"--backend={db_model.backend}")
         cmd.append(f"--device={db_model.device}")
         cmd.append(f"--devices_per_node={db_model.devices_per_node}")
+        cmd.append(f"--use_multigpu={db_model.use_multigpu}")
         if db_model.batch_size:
             cmd.append(f"--batch_size={db_model.batch_size}")
         if db_model.min_batch_size:
@@ -225,5 +226,6 @@ def _build_db_script_cmd(db_scripts):
             cmd.append(f"--file={db_script.file}")
         cmd.append(f"--device={db_script.device}")
         cmd.append(f"--devices_per_node={db_script.devices_per_node}")
+        cmd.append(f"--use_multigpu={db_script.use_multigpu}")
 
     return cmd

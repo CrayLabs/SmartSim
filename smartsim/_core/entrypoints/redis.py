@@ -54,10 +54,11 @@ def handle_signal(signo, frame):
 
 def main(network_interface: str, command: List[str]):
     global DBPID
-        
-    try:
 
-        ip_address = " ".join(current_ip(net_if) for net_if in network_interface.split(","))
+    try:
+        ip_address = " ".join(
+            current_ip(net_if) for net_if in network_interface.split(",")
+        )
         cmd = command + [f"--bind {ip_address}"]
         ip_address = ip_address.split(" ")[0]
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
@@ -94,7 +95,6 @@ def cleanup():
 
 
 if __name__ == "__main__":
-
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     parser = argparse.ArgumentParser(

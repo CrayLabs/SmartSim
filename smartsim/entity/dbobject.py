@@ -37,7 +37,7 @@ class DBObject:
     be instantiated.
     """
 
-    def __init__(self, name, func, file_path, device, devices_per_node):
+    def __init__(self, name, func, file_path, device:str, devices_per_node, use_multigpu):
         self.name = name
         self.func = func
         if file_path:
@@ -47,6 +47,12 @@ class DBObject:
             self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+        self.use_multigpu = use_multigpu
+        if self.use_multigpu and device != "GPU":
+            if device.startswith("GPU"):
+                raise ValueError(f"Cannot use multigpu when specifying a device numeral. You supplied {device}, but only device=\"GPU\" is accepted.")
+            else:
+                raise ValueError(f"Cannot use multigpu with {device} as device")
 
     @property
     def is_file(self):
@@ -113,7 +119,7 @@ class DBObject:
 
 class DBScript(DBObject):
     def __init__(
-        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+        self, name, script=None, script_path=None, device="CPU", devices_per_node=1, use_multigpu=False
     ):
         """TorchScript code represenation
 
@@ -136,8 +142,10 @@ class DBScript(DBObject):
         :type device: str, optional
         :param devices_per_node: number of devices to store the script on
         :type devices_per_node: int
+        :param use_multigpu: whether SmartRedis's set_script_multigpu should be used
+        :type use_multigpu: bool
         """
-        super().__init__(name, script, script_path, device, devices_per_node)
+        super().__init__(name, script, script_path, device, devices_per_node, use_multigpu)
         if not script and not script_path:
             raise ValueError("Either script or script_path must be provided")
 
@@ -147,6 +155,7 @@ class DBScript(DBObject):
 
     def __str__(self):
         desc_str = "Name: " + self.name + "\n"
+        desc_str += "Multigpu: " + str(self.use_multigpu) + "\n"
         if self.func:
             desc_str += "Func: " + self.func + "\n"
         if self.file:
@@ -173,6 +182,7 @@ class DBModel(DBObject):
         tag="",
         inputs=None,
         outputs=None,
+        use_multigpu=False,
     ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
@@ -203,8 +213,10 @@ class DBModel(DBObject):
         :type inputs: list[str], optional
         :param outputs: model outupts (TF only), defaults to None
         :type outputs: list[str], optional
+        :param use_multigpu: whether SmartRedis's set_model_multigpu should be used
+        :type use_multigpu: bool
         """
-        super().__init__(name, model, model_file, device, devices_per_node)
+        super().__init__(name, model, model_file, device, devices_per_node, use_multigpu)
         self.backend = self._check_backend(backend)
         if not model and not model_file:
             raise ValueError("Either model or model_file must be provided")
@@ -229,6 +241,7 @@ class DBModel(DBObject):
         )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
         desc_str += "Backend: " + str(self.backend) + "\n"
+        desc_str += "Multigpu: " + str(self.use_multigpu) + "\n"
         if self.batch_size:
             desc_str += "Batch size: " + str(self.batch_size) + "\n"
         if self.min_batch_size:

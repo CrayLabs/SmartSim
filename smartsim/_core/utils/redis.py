@@ -195,15 +195,15 @@ def db_is_active(hosts, ports, num_shards):
 def set_ml_model(db_model: DBModel, client: Client):
     logger.debug(f"Adding DBModel named {db_model.name}")
     devices = db_model._enumerate_devices()
-
-    for device in devices:
-        try:
+    try:
+        if db_model.use_multigpu:
             if db_model.is_file:
-                client.set_model_from_file(
+                client.set_model_from_file_multigpu(
                     name=db_model.name,
                     model_file=str(db_model.file),
                     backend=db_model.backend,
-                    device=device,
+                    first_gpu=0,
+                    num_gpus=db_model.devices_per_node,
                     batch_size=db_model.batch_size,
                     min_batch_size=db_model.min_batch_size,
                     tag=db_model.tag,
@@ -211,20 +211,47 @@ def set_ml_model(db_model: DBModel, client: Client):
                     outputs=db_model.outputs,
                 )
             else:
-                client.set_model(
+                client.set_model_multigpu(
                     name=db_model.name,
-                    model=db_model.model,
+                    model_file=db_model.model,
                     backend=db_model.backend,
-                    device=device,
+                    first_gpu=0,
+                    num_gpus=db_model.devices_per_node,
                     batch_size=db_model.batch_size,
                     min_batch_size=db_model.min_batch_size,
                     tag=db_model.tag,
                     inputs=db_model.inputs,
                     outputs=db_model.outputs,
                 )
-        except RedisReplyError as error:  # pragma: no cover
-            logger.error("Error while setting model on orchestrator.")
-            raise error
+        else:
+            for device in devices:
+                if db_model.is_file:
+                    client.set_model_from_file(
+                        name=db_model.name,
+                        model_file=str(db_model.file),
+                        backend=db_model.backend,
+                        device=device,
+                        batch_size=db_model.batch_size,
+                        min_batch_size=db_model.min_batch_size,
+                        tag=db_model.tag,
+                        inputs=db_model.inputs,
+                        outputs=db_model.outputs,
+                    )
+                else:
+                    client.set_model(
+                        name=db_model.name,
+                        model=db_model.model,
+                        backend=db_model.backend,
+                        device=device,
+                        batch_size=db_model.batch_size,
+                        min_batch_size=db_model.min_batch_size,
+                        tag=db_model.tag,
+                        inputs=db_model.inputs,
+                        outputs=db_model.outputs,
+                    )
+    except RedisReplyError as error:  # pragma: no cover
+        logger.error("Error while setting model on orchestrator.")
+        raise error
 
 
 def set_script(db_script: DBScript, client: Client):
@@ -234,19 +261,34 @@ def set_script(db_script: DBScript, client: Client):
 
     for device in devices:
         try:
-            if db_script.is_file:
-                client.set_script_from_file(
-                    name=db_script.name, file=str(db_script.file), device=device
-                )
-            else:
-                if isinstance(db_script.script, str):
-                    client.set_script(
-                        name=db_script.name, script=db_script.script, device=device
+            if db_script.use_multigpu:
+                if db_script.is_file:
+                    client.set_script_from_file_multigpu(
+                        name=db_script.name, file=str(db_script.file), first_gpu=0, num_gpus=db_script.devices_per_node
                     )
                 else:
-                    client.set_function(
-                        name=db_script.name, function=db_script.script, device=device
+                    if isinstance(db_script.script, str):
+                        client.set_script_multigpu(
+                            name=db_script.name, script=db_script.script, first_gpu=0, num_gpus=db_script.devices_per_node
+                        )
+                    else:
+                        client.set_function_multigpu(
+                            name=db_script.name, function=db_script.script, first_gpu=0, num_gpus=db_script.devices_per_node
+                        )
+            else:
+                if db_script.is_file:
+                    client.set_script_from_file(
+                        name=db_script.name, file=str(db_script.file), device=device
                     )
+                else:
+                    if isinstance(db_script.script, str):
+                        client.set_script(
+                            name=db_script.name, script=db_script.script, device=device
+                        )
+                    else:
+                        client.set_function(
+                            name=db_script.name, function=db_script.script, device=device
+                        )
 
         except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")

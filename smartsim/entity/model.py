@@ -321,6 +321,7 @@ class Model(SmartSimEntity):
         tag="",
         inputs=None,
         outputs=None,
+        use_multigpu=False,
     ):
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
@@ -351,6 +352,8 @@ class Model(SmartSimEntity):
         :type inputs: list[str], optional
         :param outputs: model outupts (TF only), defaults to None
         :type outputs: list[str], optional
+        :param use_multigpu: whether SmartRedis's set_model_multigpu should be used
+        :type use_multigpu: bool
         """
         db_model = DBModel(
             name=name,
@@ -364,6 +367,7 @@ class Model(SmartSimEntity):
             tag=tag,
             inputs=inputs,
             outputs=outputs,
+            use_multigpu=use_multigpu,
         )
         self._append_db_model(db_model)
 

@@ -76,6 +76,7 @@ def launch_db_model(client: Client, db_model: List[str]):
     parser.add_argument("--tag", type=str, default="")
     parser.add_argument("--inputs", nargs="+", default=None)
     parser.add_argument("--outputs", nargs="+", default=None)
+    parser.add_argument("--use_multigpu", type=bool, default=False)
 
     # Unused if we use SmartRedis
     parser.add_argument("--min_batch_timeout", type=int, default=None)
@@ -89,31 +90,45 @@ def launch_db_model(client: Client, db_model: List[str]):
     if args.outputs:
         outputs = list(args.outputs)
 
-    if args.devices_per_node == 1:
-        client.set_model_from_file(
+    if args.use_multigpu:
+        client.set_model_from_file_multigpu(
             args.name,
             args.file,
             args.backend,
-            args.device,
-            args.batch_size,
-            args.min_batch_size,
-            args.tag,
-            inputs,
-            outputs,
+            first_gpu=0,
+            num_gpus=args.devices_per_node,
+            batch_size=args.batch_size,
+            min_batch_size=args.min_batch_size,
+            tag=args.tag,
+            inputs=args.inputs,
+            outputs=args.outputs,
         )
     else:
-        for device_num in range(args.devices_per_node):
+        if args.devices_per_node == 1:
             client.set_model_from_file(
                 args.name,
                 args.file,
                 args.backend,
-                args.device + f":{device_num}",
+                args.device,
                 args.batch_size,
                 args.min_batch_size,
                 args.tag,
                 inputs,
                 outputs,
             )
+        else:
+            for device_num in range(args.devices_per_node):
+                client.set_model_from_file(
+                    args.name,
+                    args.file,
+                    args.backend,
+                    args.device + f":{device_num}",
+                    args.batch_size,
+                    args.min_batch_size,
+                    args.tag,
+                    inputs,
+                    outputs,
+                )
 
     return args.name
 
@@ -135,6 +150,7 @@ def launch_db_script(client: Client, db_script: List[str]):
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
     parser.add_argument("--devices_per_node", type=int)
+    parser.add_argument("--use_multigpu", type=bool, default=False)
     args = parser.parse_args(db_script)
     if args.func:
         func = args.func.replace("\\n", "\n")
@@ -148,10 +164,15 @@ def launch_db_script(client: Client, db_script: List[str]):
         if args.devices_per_node == 1:
             client.set_script_from_file(args.name, args.file, args.device)
         else:
-            for device_num in range(args.devices_per_node):
-                client.set_script_from_file(
-                    args.name, args.file, args.device + f":{device_num}"
+            if args.use_multigpu:
+                client.set_script_from_file_multigpu(
+                    args.name, args.file, 0, args.devices_per_node
                 )
+            else:
+                for device_num in range(args.devices_per_node):
+                    client.set_script_from_file(
+                        args.name, args.file, args.device + f":{device_num}"
+                    )
 
     return args.name
 
@@ -168,12 +189,17 @@ def main(
     lo_address = current_ip("lo")
     try:
         ip_addresses = []
-        ip_addresses.extend([current_ip(interface) for interface in network_interface.split(",")])
+        ip_addresses.extend(
+            [current_ip(interface) for interface in network_interface.split(",")]
+        )
     except ValueError as e:
         logger.warning(e)
         ip_addresses = []
-    
-    if all([lo_address == ip_address for ip_address in ip_addresses]) or not ip_addresses:
+
+    if (
+        all([lo_address == ip_address for ip_address in ip_addresses])
+        or not ip_addresses
+    ):
         cmd = command + [f"--bind {lo_address}"]
     else:
         # bind to both addresses if the user specified a network
