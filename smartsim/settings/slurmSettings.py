@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Tuple
+from typing import List, Tuple
 import datetime
 
 from ..error import SSUnsupportedError
@@ -285,7 +285,7 @@ class SrunSettings(RunSettings):
         """
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
 
-    def format_comma_sep_env_vars(self) -> Tuple[str, list[str]]:
+    def format_comma_sep_env_vars(self) -> Tuple[str, List[str]]:
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
