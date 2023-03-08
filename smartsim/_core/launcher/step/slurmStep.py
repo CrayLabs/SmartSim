@@ -199,15 +199,23 @@ class SrunStep(Step):
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
         cmd = exe + args
+
+        compound_env_vars = []
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += ["--job-name", self.name]
-            (env_var_str, _) = mpmd.format_comma_sep_env_vars()
+            
+            (env_var_str, csv_env_vars) = mpmd.format_comma_sep_env_vars()
             if len(env_var_str) > 0:
                 cmd += ["--export", env_var_str]
+            if csv_env_vars:
+                compound_env_vars.extend(csv_env_vars)
             cmd += mpmd.exe
             cmd += mpmd.exe_args
+
+        if compound_env_vars:
+            cmd = ["env"] + compound_env_vars + cmd
 
         cmd = sh_split(" ".join(cmd))
         return cmd

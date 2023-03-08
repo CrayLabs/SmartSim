@@ -104,6 +104,7 @@ def test_format_comma_sep_env_vars():
     assert "OMP_NUM_THREADS" in formatted
     assert "LOGGING" in formatted
     assert "SSKEYIN" in formatted
+    assert "name_0,name_1" not in formatted
     assert "SSKEYIN=name_0,name_1" in comma_separated_formatted
 
 
