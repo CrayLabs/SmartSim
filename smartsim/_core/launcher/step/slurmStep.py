@@ -219,8 +219,5 @@ class SrunStep(Step):
             cmd += mpmd.exe
             cmd += mpmd.exe_args
 
-        # if compound_env_vars:
-        #     cmd = ["env"] + compound_env_vars + cmd
-
         cmd = sh_split(" ".join(cmd))
         return cmd

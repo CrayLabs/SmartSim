@@ -82,7 +82,7 @@ def test_catch_colo_mpmd():
         srun.make_mpmd(srun_2)
 
 
-def test_catch_colo_mpmd_compound_env():
+def test_mpmd_compound_env_exports():
     """
     Test that compound env vars are added to root env and exported
     to the correct sub-command in mpmd cmd
