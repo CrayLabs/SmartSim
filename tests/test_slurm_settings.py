@@ -82,6 +82,66 @@ def test_catch_colo_mpmd():
         srun.make_mpmd(srun_2)
 
 
+def test_catch_colo_mpmd_compound_env():
+    """
+    Test that compound env vars are added to root env and exported
+    to the correct sub-command in mpmd cmd
+    """
+    srun = SrunSettings("python")
+    srun.in_batch = True
+    srun.alloc = 12345
+    srun.env_vars = {"cmp1": "123,456", "norm1": "xyz"}
+    srun_2 = SrunSettings("python")
+    srun_2.env_vars = {"cmp2": "222,333", "norm2": "pqr"}
+    srun.make_mpmd(srun_2)
+
+    from smartsim._core.launcher.step.slurmStep import SbatchStep, SrunStep
+    from smartsim.settings.slurmSettings import SbatchSettings
+
+    step = SrunStep("teststep", "./", srun)
+
+    launch_cmd = step.get_launch_cmd()
+    env_cmds = [v for v in launch_cmd if v == "env"]
+    assert "env" in launch_cmd and len(env_cmds) == 1
+
+    # ensure mpmd command is concatenated
+    mpmd_delimiter_idx = launch_cmd.index(":")
+    assert mpmd_delimiter_idx > -1
+
+    # ensure root cmd exports env
+    root_cmd = launch_cmd[:mpmd_delimiter_idx]
+    exp_idx = root_cmd.index("--export")
+    assert exp_idx
+
+    # ensure correct exports
+    env_vars = root_cmd[exp_idx + 1]
+    assert "cmp1" in env_vars
+    assert "norm1=xyz" in env_vars
+    assert "cmp2" not in env_vars
+    assert "norm2" not in env_vars
+
+    # ensure mpmd cmd exports env
+    mpmd_cmd = launch_cmd[mpmd_delimiter_idx:]
+    exp_idx = mpmd_cmd.index("--export")
+    assert exp_idx
+
+    # ensure correct exports
+    env_vars = mpmd_cmd[exp_idx + 1]
+    assert "cmp2" in env_vars
+    assert "norm2=pqr" in env_vars
+    assert "cmp1" not in env_vars
+    assert "norm1" not in env_vars
+
+    srun_idx = launch_cmd.index("srun")
+    assert srun_idx > -1
+
+    # ensure correct vars loaded in parent shell
+    env_area = launch_cmd[:srun_idx]
+    assert "env" in env_area
+    assert "cmp1=123,456" in env_area
+    assert "cmp2=222,333" in env_area
+
+
 def test_format_env_vars():
     rs = SrunSettings(
         "python",

@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from typing import List, Tuple
 import datetime
+from typing import List, Tuple
 
 from ..error import SSUnsupportedError
 from .base import BatchSettings, RunSettings
@@ -298,7 +298,7 @@ class SrunSettings(RunSettings):
 
         exportable_env, compound_env, key_only = [], [], []
 
-        for (k, v) in self.env_vars.items():    
+        for k, v in self.env_vars.items():
             kvp = f"{k}={v}"
 
             if "," in str(v):
@@ -306,12 +306,16 @@ class SrunSettings(RunSettings):
                 compound_env.append(kvp)
             else:
                 exportable_env.append(kvp)
-        
+
         # Append keys to exportable KVPs, e.g. `--export x1=v1,KO1,KO2`
         fmt_exported_env = ",".join(v for v in exportable_env + key_only)
 
-        return fmt_exported_env, compound_env
+        for mpmd in self.mpmd:
+            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in v}
+            compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
+            compound_env.extend(compound_mpmd_fmt)
 
+        return fmt_exported_env, compound_env
 
 
 class SbatchSettings(BatchSettings):
