@@ -26,22 +26,21 @@
 
 import numpy as np
 import torch
-
 from smartredis import Client, Dataset
+
 from smartsim.ml.data import DataDownloader
 
 
-class _TorchDataGenerationCommon(
-    DataDownloader,
-    torch.utils.data.IterableDataset
-):
+class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDataset):
     def __init__(self, **kwargs):
         init_samples = kwargs.pop("init_samples", False)
         kwargs["init_samples"] = False
         super().__init__(**kwargs)
         if init_samples:
-            self.log("PyTorch DataLoader has to be created with ``init_samples``=False. Setting it to False automatically.")
-    
+            self.log(
+                "PyTorch DataLoader has to be created with ``init_samples``=False. Setting it to False automatically."
+            )
+
     def _add_samples(self, indices):
         if self.client is None:
             client = Client(self.address, self.cluster)
@@ -49,13 +48,17 @@ class _TorchDataGenerationCommon(
             client = self.client
 
         if self.num_replicas == 1:
-            datasets: list[Dataset] = client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index = indices[-1])
+            datasets: list[Dataset] = client.get_dataset_list_range(
+                self.list_name, start_index=indices[0], end_index=indices[-1]
+            )
         else:
             datasets: list[Dataset] = []
             for idx in indices:
-                datasets += client.get_dataset_list_range(self.list_name, start_index=idx, end_index=idx)
-        
-        if self.samples is None:        
+                datasets += client.get_dataset_list_range(
+                    self.list_name, start_index=idx, end_index=idx
+                )
+
+        if self.samples is None:
             self.samples = torch.tensor(datasets[0].get_tensor(self.sample_name))
             if self.need_targets:
                 self.targets = torch.tensor(datasets[0].get_tensor(self.target_name))
@@ -64,7 +67,7 @@ class _TorchDataGenerationCommon(
                 datasets = datasets[1:]
 
         for dataset in datasets:
-            self.samples =torch.cat(
+            self.samples = torch.cat(
                 (self.samples, torch.tensor(dataset.get_tensor(self.sample_name)))
             )
             if self.need_targets:
@@ -75,6 +78,7 @@ class _TorchDataGenerationCommon(
         self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
+
 
 class StaticDataGenerator(_TorchDataGenerationCommon):
     """A class to download a dataset from the DB.
@@ -95,8 +99,9 @@ class StaticDataGenerator(_TorchDataGenerationCommon):
             kwargs["dynamic"] = False
         super().__init__(**kwargs)
         if type(self) == StaticDataGenerator and dynamic:
-            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
-
+            self.log(
+                "Static data generator cannot be started with dynamic=True, setting it to False"
+            )
 
 
 class DynamicDataGenerator(_TorchDataGenerationCommon):
@@ -116,8 +121,9 @@ class DynamicDataGenerator(_TorchDataGenerationCommon):
         kwargs["dynamic"] = True
         super().__init__(**kwargs)
         if not dynamic:
-            self.log("Static data generator cannot be started with dynamic=False, setting it to True")
-
+            self.log(
+                "Static data generator cannot be started with dynamic=False, setting it to True"
+            )
 
 
 class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
@@ -140,13 +146,15 @@ class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     @staticmethod
     def worker_init_fn(worker_id):
         worker_info = torch.utils.data.get_worker_info()
-        dataset: StaticDataGenerator = worker_info.dataset  # the dataset copy in this worker process
+        dataset: StaticDataGenerator = (
+            worker_info.dataset
+        )  # the dataset copy in this worker process
 
         worker_id = worker_info.id
         num_workers = worker_info.num_workers
 
         dataset.num_replicas *= num_workers
-        dataset.replica_rank = dataset.replica_rank*num_workers + worker_id
+        dataset.replica_rank = dataset.replica_rank * num_workers + worker_id
         dataset.log(f"{worker_id}/{num_workers}")
 
         dataset.init_samples()

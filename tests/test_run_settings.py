@@ -27,11 +27,12 @@
 
 import contextlib
 import logging
-from shutil import which
 import subprocess
+from shutil import which
 
 import pytest
 
+from smartsim.error.errors import SSUnsupportedError
 from smartsim.settings import (
     MpiexecSettings,
     MpirunSettings,
@@ -39,7 +40,6 @@ from smartsim.settings import (
     RunSettings,
 )
 from smartsim.settings.settings import create_run_settings
-from smartsim.error.errors import SSUnsupportedError
 
 
 def test_create_run_settings_local():

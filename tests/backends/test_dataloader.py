@@ -126,10 +126,10 @@ def test_batch_dataloader_tf(fileutils, wlmutils):
     exp.start(trainer_tf, block=True)
     if exp.get_status(trainer_tf)[0] != status.STATUS_COMPLETED:
         print("------ERROR FILE--------\n")
-        with open(osp.join(trainer_tf.path, "trainer.err"), 'r') as f:
+        with open(osp.join(trainer_tf.path, "trainer.err"), "r") as f:
             print(f.read())
         print("------OUTPUT FILE-------\n")
-        with open(osp.join(trainer_tf.path, "trainer.out"), 'r') as f:
+        with open(osp.join(trainer_tf.path, "trainer.out"), "r") as f:
             print(f.read())
         exp.stop(orc)
         assert False
@@ -165,12 +165,12 @@ def test_batch_dataloader_torch(fileutils, wlmutils):
     exp.start(trainer_torch, block=True)
     if exp.get_status(trainer_torch)[0] != status.STATUS_COMPLETED:
         print("------ERROR FILE--------\n")
-        with open(osp.join(trainer_torch.path, "trainer.err"), 'r') as f:
+        with open(osp.join(trainer_torch.path, "trainer.err"), "r") as f:
             print(f.read())
         print("------OUTPUT FILE-------\n")
-        with open(osp.join(trainer_torch.path, "trainer.out"), 'r') as f:
+        with open(osp.join(trainer_torch.path, "trainer.out"), "r") as f:
             print(f.read())
-        
+
         exp.stop(orc)
         assert False
 
@@ -183,23 +183,34 @@ def test_batch_dataloader_torch(fileutils, wlmutils):
         if trials == 0:
             assert False
 
+
 def test_data_info_repr():
-    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name=None)
+    data_info = DataInfo(
+        list_name="a_list", sample_name="the_samples", target_name=None
+    )
     data_info_repr = "DataInfo object\n"
     data_info_repr += "Aggregation list name: a_list\n"
     data_info_repr += "Sample tensor name: the_samples"
     assert str(data_info) == data_info_repr
 
-    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name="the_targets")
-    
+    data_info = DataInfo(
+        list_name="a_list", sample_name="the_samples", target_name="the_targets"
+    )
+
     data_info_repr += "\nTarget tensor name: the_targets"
 
     assert str(data_info) == data_info_repr
 
-    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name="the_targets", num_classes=23)
+    data_info = DataInfo(
+        list_name="a_list",
+        sample_name="the_samples",
+        target_name="the_targets",
+        num_classes=23,
+    )
     data_info_repr += "\nNumber of classes: 23"
 
     assert str(data_info) == data_info_repr
+
 
 @pytest.mark.skipif(
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
@@ -213,12 +224,19 @@ def test_wrong_dataloaders(fileutils, wlmutils):
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
-            _ = TFDataGenerator(data_info_or_list_name="test_data_list", address=orc.get_address()[0], cluster=False, max_fetch_trials=1)
+            _ = TFDataGenerator(
+                data_info_or_list_name="test_data_list",
+                address=orc.get_address()[0],
+                cluster=False,
+                max_fetch_trials=1,
+            )
 
     if shouldrun_torch:
         with pytest.raises(SSInternalError):
             torch_data_gen = TorchDataGenerator(
-                data_info_or_list_name="test_data_list", address=orc.get_address()[0], cluster=False
+                data_info_or_list_name="test_data_list",
+                address=orc.get_address()[0],
+                cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
 

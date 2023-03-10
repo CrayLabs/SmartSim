@@ -774,7 +774,12 @@ class Experiment:
                 )
         else:
             return tabulate(
-                values, headers, showindex=True, tablefmt=format, missingval="None", disable_numparse=True
+                values,
+                headers,
+                showindex=True,
+                tablefmt=format,
+                missingval="None",
+                disable_numparse=True,
             )
 
     def _launch_summary(self, manifest):

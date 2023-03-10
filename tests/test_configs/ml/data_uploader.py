@@ -26,9 +26,9 @@
 
 from argparse import ArgumentParser
 from os import environ
-from smartredis import Client
 
 import numpy as np
+from smartredis import Client
 
 from smartsim.ml import TrainingDataUploader
 

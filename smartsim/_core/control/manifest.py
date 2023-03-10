@@ -50,7 +50,6 @@ class Manifest:
         self._check_names(self._deployables)
         self._check_entity_lists_nonempty()
 
-
     @property
     def db(self):
         """Return Orchestrator instances in Manifest
@@ -69,7 +68,6 @@ class Manifest:
                 _db = deployable
         return _db
 
-
     @property
     def models(self):
         """Return Model instances in Manifest
@@ -82,7 +80,6 @@ class Manifest:
             if isinstance(deployable, SmartSimEntity):
                 _models.append(deployable)
         return _models
-
 
     @property
     def ensembles(self):
@@ -103,7 +100,6 @@ class Manifest:
 
         return _ensembles
 
-
     @property
     def all_entity_lists(self):
         """All entity lists, including ensembles and
@@ -119,7 +115,6 @@ class Manifest:
 
         return _all_entity_lists
 
-
     def _check_names(self, deployables):
         used = []
         for deployable in deployables:
@@ -129,7 +124,6 @@ class Manifest:
             if name in used:
                 raise SmartSimError("User provided two entities with the same name")
             used.append(name)
-
 
     def _check_types(self, deployables):
         for deployable in deployables:
@@ -141,14 +135,12 @@ class Manifest:
                     f"Entity has type {type(deployable)}, not SmartSimEntity or EntityList"
                 )
 
-
     def _check_entity_lists_nonempty(self):
         """Check deployables for sanity before launching"""
 
         for entity_list in self.all_entity_lists:
             if len(entity_list) < 1:
                 raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")
-
 
     def __str__(self):
         s = ""

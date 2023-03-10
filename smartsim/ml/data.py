@@ -43,14 +43,14 @@ def form_name(*args):
 
 class DataInfo:
     """A class holding all relevant information to download datasets from aggregation lists
-    
+
     This class can be passed as argument to SmartSim's ML data loaders, as it wraps the
     information about the aggregation list holding the training datasets.
 
     Each training dataset will store batches of samples and (optionally) labels or targets in the
     form of tensors. The tensors must always have the same names, which can be accessed
     in ``DataInfo.sample_name`` and ``DataInfo.target_name``.
-    
+
     :param list_name: Name of the aggregation list used for sample datasets
     :type list_name: str
     :param sample_name: Name of tensor holding training samples in stored datasets.
@@ -60,6 +60,7 @@ class DataInfo:
     :num_classes: Number of classes (for categorical data).
     :type num_classes: int | None
     """
+
     def __init__(
         self, list_name, sample_name="samples", target_name="targets", num_classes=None
     ):
@@ -100,7 +101,9 @@ class DataInfo:
             info_ds = client.get_dataset(self._ds_name)
         except RedisReplyError:
             # If the info was not published, proceed with default parameters
-            logger.warning(f"Could not retrieve data for DataInfo object, the folloein values will be kept.")
+            logger.warning(
+                f"Could not retrieve data for DataInfo object, the folloein values will be kept."
+            )
             logger.warning(str(self))
             return
         self.sample_name = info_ds.get_meta_strings("sample_name")[0]
@@ -178,15 +181,15 @@ class TrainingDataUploader:
     @property
     def list_name(self):
         return self._info.list_name
-    
+
     @property
     def sample_name(self):
         return self._info.sample_name
-    
+
     @property
     def target_name(self):
         return self._info.target_name
-    
+
     @property
     def num_classes(self):
         return self._info.num_classes
@@ -205,9 +208,7 @@ class TrainingDataUploader:
         ):
             batch_ds.add_tensor(self.target_name, targets)
             if self.verbose:
-                logger.info(
-                    f"Putting dataset {batch_ds_name} with samples and targets"
-                )
+                logger.info(f"Putting dataset {batch_ds_name} with samples and targets")
         else:
             if self.verbose:
                 logger.info(f"Putting dataset {batch_ds_name} with samples")
@@ -319,13 +320,12 @@ class DataDownloader:
         self.autoencoding = self.sample_name == self.target_name
 
         sskeyin = environ.get("SSKEYIN", "")
-        self.uploader_keys = sskeyin.split(',')
+        self.uploader_keys = sskeyin.split(",")
 
-        self.next_indices = [self.replica_rank]*len(self.uploader_keys)
+        self.next_indices = [self.replica_rank] * len(self.uploader_keys)
 
         if init_samples:
             self.init_samples(max_fetch_trials)
-
 
     def log(self, message):
         if self.verbose:
@@ -334,19 +334,18 @@ class DataDownloader:
     @property
     def list_name(self):
         return self._info.list_name
-    
+
     @property
     def sample_name(self):
         return self._info.sample_name
-    
+
     @property
     def target_name(self):
         return self._info.target_name
-    
+
     @property
     def num_classes(self):
         return self._info.num_classes
-
 
     @property
     def need_targets(self):
@@ -391,17 +390,21 @@ class DataDownloader:
         :type init_trials: int
         """
         self.client = Client(self.address, self.cluster)
-        
+
         num_trials = 0
         max_trials = init_trials or -1
         while not len(self) and num_trials != max_trials:
             self._update_samples_and_targets()
-            self.log("DataLoader could not download samples, will try again in 10 seconds")
+            self.log(
+                "DataLoader could not download samples, will try again in 10 seconds"
+            )
             time.sleep(10)
             num_trials += 1
 
         if not len(self):
-            raise SSInternalError("Could not download samples in given number of trials") 
+            raise SSInternalError(
+                "Could not download samples in given number of trials"
+            )
         if self.shuffle:
             np.random.shuffle(self.indices)
 
@@ -417,13 +420,17 @@ class DataDownloader:
     def _add_samples(self, indices):
 
         if self.num_replicas == 1:
-            datasets: list[Dataset] = self.client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index=indices[-1])
+            datasets: list[Dataset] = self.client.get_dataset_list_range(
+                self.list_name, start_index=indices[0], end_index=indices[-1]
+            )
         else:
             datasets: list[Dataset] = []
             for idx in indices:
-                datasets += self.client.get_dataset_list_range(self.list_name, start_index=idx, end_index=idx)
-        
-        if self.samples is None:        
+                datasets += self.client.get_dataset_list_range(
+                    self.list_name, start_index=idx, end_index=idx
+                )
+
+        if self.samples is None:
             self.samples = datasets[0].get_tensor(self.sample_name)
             if self.need_targets:
                 self.targets = datasets[0].get_tensor(self.target_name)
@@ -444,7 +451,6 @@ class DataDownloader:
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
-
     def _update_samples_and_targets(self):
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
@@ -457,17 +463,20 @@ class DataDownloader:
 
             # Strictly greater, because next_index is 0-based
             if list_length > self.next_indices[uploader_idx]:
-                indices = [idx for idx in range(self.next_indices[uploader_idx], list_length, self.num_replicas)]
+                indices = [
+                    idx
+                    for idx in range(
+                        self.next_indices[uploader_idx], list_length, self.num_replicas
+                    )
+                ]
                 self._add_samples(indices)
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
-
 
     def update_data(self):
         if self.dynamic:
             self._update_samples_and_targets()
         if self.shuffle:
             np.random.shuffle(self.indices)
-            
 
     def __data_generation(self, indices):
         # Initialization

@@ -29,10 +29,8 @@ from tensorflow import keras
 
 from smartsim.ml import DataDownloader
 
-class _TFDataGenerationCommon(
-    DataDownloader,
-    keras.utils.Sequence
-):        
+
+class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
     def __getitem__(self, index):
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
@@ -71,7 +69,7 @@ class _TFDataGenerationCommon(
             y = None
 
         return x, y
-    
+
     def __getitem__(self, index):
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
@@ -102,6 +100,7 @@ class _TFDataGenerationCommon(
             y = None
 
         return x, y
+
 
 class StaticDataGenerator(_TFDataGenerationCommon):
     """A class to download a dataset from the DB.
@@ -116,7 +115,9 @@ class StaticDataGenerator(_TFDataGenerationCommon):
         kwargs["dynamic"] = False
         super().__init__(**kwargs)
         if dynamic:
-            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
+            self.log(
+                "Static data generator cannot be started with dynamic=True, setting it to False"
+            )
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch
@@ -125,7 +126,6 @@ class StaticDataGenerator(_TFDataGenerationCommon):
         """
         if self.shuffle:
             np.random.shuffle(self.indices)
-
 
 
 class DynamicDataGenerator(_TFDataGenerationCommon):
@@ -141,7 +141,9 @@ class DynamicDataGenerator(_TFDataGenerationCommon):
         kwargs["dynamic"] = True
         super().__init__(**kwargs)
         if not dynamic:
-            self.log("Static data generator cannot be started with dynamic=False, setting it to True")
+            self.log(
+                "Static data generator cannot be started with dynamic=False, setting it to True"
+            )
 
     def on_epoch_end(self):
         """Callback called at the end of each training epoch
