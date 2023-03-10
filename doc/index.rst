@@ -23,8 +23,6 @@
    tutorials/online_analysis/lattice/online_analysis
    tutorials/ml_inference/Inference-in-SmartSim
    tutorials/ml_training/surrogate/train_surrogate
-   tutorials/ray/starting_ray
-
 
 .. toctree::
    :maxdepth: 2
