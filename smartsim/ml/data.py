@@ -42,6 +42,24 @@ def form_name(*args):
 
 
 class DataInfo:
+    """A class holding all relevant information to download datasets from aggregation lists
+    
+    This class can be passed as argument to SmartSim's ML data loaders, as it wraps the
+    information about the aggregation list holding the training datasets.
+
+    Each training dataset will store batches of samples and (optionally) labels or targets in the
+    form of tensors. The tensors must always have the same names, which can be accessed
+    in ``DataInfo.sample_name`` and ``DataInfo.target_name``.
+    
+    :param list_name: Name of the aggregation list used for sample datasets
+    :type list_name: str
+    :param sample_name: Name of tensor holding training samples in stored datasets.
+    :type sample_name: str
+    :param target_name: Name of tensor holding targets or labels in stored datasets.
+    :type target_name: str
+    :num_classes: Number of classes (for categorical data).
+    :type num_classes: int | None
+    """
     def __init__(
         self, list_name, sample_name="samples", target_name="targets", num_classes=None
     ):
@@ -52,6 +70,14 @@ class DataInfo:
         self._ds_name = form_name(self.list_name, "info")
 
     def publish(self, client: Client):
+        """Upload DataInfo information to Orchestrator
+
+        The information is put on the DB as a DataSet, with strings
+        stored as metastrings and integers stored as metascalars.
+
+        :param client: Client to connect to Database
+        :type client: SmartRedis.Client
+        """
         info_ds = Dataset(self._ds_name)
         info_ds.add_meta_string("sample_name", self.sample_name)
         if self.target_name:
@@ -61,10 +87,21 @@ class DataInfo:
         client.put_dataset(info_ds)
 
     def download(self, client: Client):
+        """Download DataInfo information from Orchestrator
+
+        The information retrieved from the DB is used to populate
+        this object's members. If the information is not available
+        on the DB, the object members are not modified.
+
+        :param client: Client to connect to Database
+        :type client: SmartRedis.Client
+        """
         try:
             info_ds = client.get_dataset(self._ds_name)
         except RedisReplyError:
             # If the info was not published, proceed with default parameters
+            logger.warning(f"Could not retrieve data for DataInfo object, the folloein values will be kept.")
+            logger.warning(str(self))
             return
         self.sample_name = info_ds.get_meta_strings("sample_name")[0]
         field_names = info_ds.get_metadata_field_names()
@@ -72,6 +109,16 @@ class DataInfo:
             self.target_name = info_ds.get_meta_strings("target_name")[0]
         if "num_classes" in field_names:
             self.num_classes = info_ds.get_meta_scalars("num_classes")[0]
+
+    def __repr__(self):
+        strings = ["DataInfo object"]
+        strings += [f"Aggregation list name: {self.list_name}"]
+        strings += [f"Sample tensor name: {self.sample_name}"]
+        if self.target_name:
+            strings += [f"Target tensor name: {self.target_name}"]
+        if self.num_classes:
+            strings += [f"Number of classes: {self.num_classes}"]
+        return "\n".join(strings)
 
 
 class TrainingDataUploader:
@@ -122,19 +169,30 @@ class TrainingDataUploader:
         if not sample_name:
             raise ValueError("Sample name can not be empty")
 
-        self.list_name = list_name
-        self.sample_name = sample_name
-        self.target_name = target_name
-        self.num_classes = num_classes
-
         self.client = Client(address=address, cluster=cluster)
         self.verbose = verbose
         self.batch_idx = 0
         self.rank = rank
-        self.info = DataInfo(list_name, sample_name, target_name, num_classes)
+        self._info = DataInfo(list_name, sample_name, target_name, num_classes)
+
+    @property
+    def list_name(self):
+        return self._info.list_name
+    
+    @property
+    def sample_name(self):
+        return self._info.sample_name
+    
+    @property
+    def target_name(self):
+        return self._info.target_name
+    
+    @property
+    def num_classes(self):
+        return self._info.num_classes
 
     def publish_info(self):
-        self.info.publish(self.client)
+        self._info.publish(self.client)
 
     def put_batch(self, samples, targets=None):
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
@@ -156,9 +214,10 @@ class TrainingDataUploader:
 
         self.client.put_dataset(batch_ds)
         self.client.append_to_list(self.list_name, batch_ds)
-        logger.debug(f"List length {self.client.get_list_length(self.list_name)}")
         if self.verbose:
-            logger.debug(f"Added dataset to list {self.list_name}")
+            logger.info(f"List length {self.client.get_list_length(self.list_name)}")
+        if self.verbose:
+            logger.info(f"Added dataset to list {self.list_name}")
 
         self.batch_idx += 1
 
@@ -198,10 +257,10 @@ class DataDownloader:
     :type dtnamic: bool
     :param shuffle: whether order of samples has to be shuffled when calling `update_data`
     :type shuffle: bool
-    :param data_info: DataInfo object with details about dataset to download, if set to None,
-                      the information is gathered from the DB, forming a key with the value
-                      provided in ``list_name``
-    :type data_info: DataInfo
+    :param data_info_or_list_name: DataInfo object with details about dataset to download, if a string is passed,
+                      it is used to download DataInfo data from DB, assuming it was stored with
+                      ``list_name=data_info_or_list_name``
+    :type data_info_or_list_name: DataInfo | str = None
     :param list_name: Name of aggregation list used to upload data
     :type list_name: str
     :param cluster: Whether the Orchestrator will be run as a cluster
@@ -218,23 +277,23 @@ class DataDownloader:
     :type verbose: bool
     :param init_samples: whether samples should be initialized in the constructor
     :type init_samples: bool
+    :param max_fetch_trials: maximum number of attempts to initialize data
+    :type max_fetch_trials: int
     """
 
     def __init__(
         self,
+        data_info_or_list_name,
         batch_size=32,
         dynamic=True,
         shuffle=True,
-        data_info: DataInfo = None,
-        list_name="training_data",
         cluster=True,
         address=None,
         replica_rank=0,
         num_replicas=1,
         verbose=False,
         init_samples=True,
-        init_trials=-1,
-        **kwargs,
+        max_fetch_trials=-1,
     ):
         self.replica_rank = replica_rank
         self.num_replicas = num_replicas
@@ -248,21 +307,16 @@ class DataDownloader:
         self.shuffle = shuffle
         self.dynamic = dynamic
         self.batch_size = batch_size
-        if not data_info:
-            if not list_name:
-                raise ValueError(
-                    "Neither data_info nor list_name were passed to the data loader."
-                )
-            data_info = DataInfo(list_name=list_name)
+        if isinstance(data_info_or_list_name, DataInfo):
+            self._info = data_info_or_list_name
+        elif isinstance(data_info_or_list_name, str):
+            self._info = DataInfo(list_name=data_info_or_list_name)
             client = Client(self.address, self.cluster)
-            data_info.download(client)
+            self._info.download(client)
+        else:
+            raise TypeError("dat_info_or_list_name must be either DataInfo or str")
         self.client = None
-        self.sample_name = data_info.sample_name
-        self.target_name = data_info.target_name
         self.autoencoding = self.sample_name == self.target_name
-        self.num_classes = data_info.num_classes
-        self.list_name = data_info.list_name
-        self.init_trials = init_trials
 
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(',')
@@ -270,12 +324,29 @@ class DataDownloader:
         self.next_indices = [self.replica_rank]*len(self.uploader_keys)
 
         if init_samples:
-            self.init_samples()
+            self.init_samples(max_fetch_trials)
 
 
     def log(self, message):
         if self.verbose:
             logger.info(message)
+
+    @property
+    def list_name(self):
+        return self._info.list_name
+    
+    @property
+    def sample_name(self):
+        return self._info.sample_name
+    
+    @property
+    def target_name(self):
+        return self._info.target_name
+    
+    @property
+    def num_classes(self):
+        return self._info.num_classes
+
 
     @property
     def need_targets(self):
@@ -311,33 +382,28 @@ class DataDownloader:
             else:
                 yield x
 
-    def init_samples(self):
+    def init_samples(self, init_trials=-1):
         """Initialize samples (and targets, if needed).
 
-        A new attempt to download samples will be made every ten seconds, for self.init_trials
+        A new attempt to download samples will be made every ten seconds, for ``init_trials``
         times.
+        :param init_trials: maximum number of attempts to fetch data
+        :type init_trials: int
         """
         self.client = Client(self.address, self.cluster)
-        if self.init_trials > 0:
-            trials = self.init_trials
-            decrease_trials = True
-        else:
-            decrease_trials = False
-
-        while True:
+        
+        num_trials = 0
+        max_trials = init_trials or -1
+        while not len(self) and num_trials != max_trials:
             self._update_samples_and_targets()
-            if len(self):
-                break
-            else:
-                self.log("DataLoader could not download samples, will try again in 10 seconds")
-                time.sleep(10)
-                if decrease_trials:
-                    trials -= 1
-                    if not trials:
-                        raise SSInternalError("Could not download samples in given number of trials") 
+            self.log("DataLoader could not download samples, will try again in 10 seconds")
+            time.sleep(10)
+            num_trials += 1
+
+        if not len(self):
+            raise SSInternalError("Could not download samples in given number of trials") 
         if self.shuffle:
             np.random.shuffle(self.indices)
-        
 
     def _data_exists(self, batch_name, target_name):
 
@@ -351,7 +417,7 @@ class DataDownloader:
     def _add_samples(self, indices):
 
         if self.num_replicas == 1:
-            datasets: list[Dataset] = self.client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index = indices[-1])
+            datasets: list[Dataset] = self.client.get_dataset_list_range(self.list_name, start_index=indices[0], end_index=indices[-1])
         else:
             datasets: list[Dataset] = []
             for idx in indices:
@@ -378,6 +444,7 @@ class DataDownloader:
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
+
     def _update_samples_and_targets(self):
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
@@ -393,6 +460,7 @@ class DataDownloader:
                 indices = [idx for idx in range(self.next_indices[uploader_idx], list_length, self.num_replicas)]
                 self._add_samples(indices)
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
+
 
     def update_data(self):
         if self.dynamic:
@@ -414,7 +482,3 @@ class DataDownloader:
             y = None
 
         return x, y
-
-    def __len__(self):
-        length = int(np.floor(self.num_samples / self.batch_size))
-        return length

@@ -195,13 +195,13 @@ def test_wrong_dataloaders(fileutils, wlmutils):
 
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
-            _ = TFDataGenerator(address=orc.get_address()[0], cluster=False, init_trials=1)
+            _ = TFDataGenerator(data_info_or_list_name="test_data_list", address=orc.get_address()[0], cluster=False, max_fetch_trials=1)
 
     if shouldrun_torch:
         with pytest.raises(SSInternalError):
             torch_data_gen = TorchDataGenerator(
-                address=orc.get_address()[0], cluster=False, init_trials=1
+                data_info_or_list_name="test_data_list", address=orc.get_address()[0], cluster=False
             )
-            torch_data_gen.init_samples()
+            torch_data_gen.init_samples(init_trials=1)
 
     exp.stop(orc)

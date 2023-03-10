@@ -69,12 +69,11 @@ if __name__ == "__main__":
     torch.multiprocessing.set_start_method("spawn")
 
     training_set = DynamicDataGenerator(
+        data_info_or_list_name="test_data_list",
         cluster=False,
-        list_name="test_data_list",
         verbose=True,
         batch_size=4,
-        init_trials=5,
-        num_workers=2,
+        max_fetch_trials=5,
         init_samples=False,
     )
 

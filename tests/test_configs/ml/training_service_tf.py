@@ -43,6 +43,7 @@ def check_dataloader(dl: DynamicDataGenerator, rank):
     assert dl.batch_size == 4
     assert dl.autoencoding == False
     assert dl.need_targets == True
+    assert dl.dynamic == True
 
 
 # Pretend we are running distributed without requiring Horovod
@@ -51,13 +52,13 @@ hvd_size = 2
 
 def create_data_generator(rank):
     return DynamicDataGenerator(
+        data_info_or_list_name="test_data_list",
         cluster=False,
-        list_name="test_data_list",
         verbose=True,
         num_replicas=2,
         replica_rank=rank,
         batch_size=4,
-        init_trials=5,
+        max_fetch_trials=5,
     )
 
 

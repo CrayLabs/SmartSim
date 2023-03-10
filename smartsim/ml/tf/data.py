@@ -29,23 +29,10 @@ from tensorflow import keras
 
 from smartsim.ml import DataDownloader
 
-
-class StaticDataGenerator(DataDownloader, keras.utils.Sequence):
-    """A class to download a dataset from the DB.
-
-    Details about parameters and features of this class can be found
-    in the documentation of ``StaticDataDownloader``, of which it is just
-    a TensorFlow-specialized sub-class with dynamic=False.
-    """
-
-    def __init__(self, **kwargs):
-        if type(self) == StaticDataGenerator:
-            dynamic = kwargs.pop("dynamic", False)
-            kwargs["dynamic"] = False
-        DataDownloader.__init__(self, **kwargs)
-        if type(self) == StaticDataGenerator and dynamic:
-            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
-
+class _TFDataGenerationCommon(
+    DataDownloader,
+    keras.utils.Sequence
+):        
     def __getitem__(self, index):
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
@@ -84,20 +71,75 @@ class StaticDataGenerator(DataDownloader, keras.utils.Sequence):
             y = None
 
         return x, y
+    
+    def __getitem__(self, index):
+        if len(self) < 1:
+            msg = "Not enough samples in generator for one batch. "
+            msg += "Please run init_samples() or initialize generator with init_samples=True"
+            raise ValueError(msg)
+        # Generate indices of the batch
+        indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
+
+        # Generate data
+        x, y = self.__data_generation(indices)
+
+        if y is not None:
+            return x, y
+        else:
+            return x
+
+    def __data_generation(self, indices):
+        # Initialization
+        x = self.samples[indices]
+
+        if self.need_targets:
+            y = self.targets[indices]
+            if self.num_classes is not None:
+                y = keras.utils.to_categorical(y, num_classes=self.num_classes)
+        elif self.autoencoding:
+            y = x
+        else:
+            y = None
+
+        return x, y
+
+class StaticDataGenerator(_TFDataGenerationCommon):
+    """A class to download a dataset from the DB.
+
+    Details about parameters and features of this class can be found
+    in the documentation of ``DataDownloader``, of which it is just
+    a TensorFlow-specialized sub-class with dynamic=False.
+    """
+
+    def __init__(self, **kwargs):
+        dynamic = kwargs.pop("dynamic", False)
+        kwargs["dynamic"] = False
+        super().__init__(**kwargs)
+        if dynamic:
+            self.log("Static data generator cannot be started with dynamic=True, setting it to False")
+
+    def on_epoch_end(self):
+        """Callback called at the end of each training epoch
+
+        If `self.shuffle` is set to `True`, data is shuffled.
+        """
+        if self.shuffle:
+            np.random.shuffle(self.indices)
 
 
-class DynamicDataGenerator(StaticDataGenerator):
+
+class DynamicDataGenerator(_TFDataGenerationCommon):
     """A class to download batches from the DB.
 
     Details about parameters and features of this class can be found
-    in the documentation of ``DynamicDataDownloader``, of which it is just
+    in the documentation of ``DataDownloader``, of which it is just
     a TensorFlow-specialized sub-class with dynamic=True.
     """
 
     def __init__(self, **kwargs):
         dynamic = kwargs.pop("dynamic", True)
         kwargs["dynamic"] = True
-        StaticDataGenerator.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         if not dynamic:
             self.log("Static data generator cannot be started with dynamic=False, setting it to True")
 

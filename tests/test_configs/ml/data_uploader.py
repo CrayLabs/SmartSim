@@ -63,11 +63,11 @@ if __name__ == "__main__":
     data_uploaders = [create_data_uploader(rank) for rank in range(mpi_size)]
 
     for data_uploader in data_uploaders:
-        assert data_uploader.info.list_name == "test_data_list"
-        assert data_uploader.info.sample_name == "test_samples"
-        assert data_uploader.info.target_name == "test_targets"
-        assert data_uploader.info.num_classes == mpi_size
-        assert data_uploader.info._ds_name == "test_data_list_info"
+        assert data_uploader._info.list_name == "test_data_list"
+        assert data_uploader._info.sample_name == "test_samples"
+        assert data_uploader._info.target_name == "test_targets"
+        assert data_uploader._info.num_classes == mpi_size
+        assert data_uploader._info._ds_name == "test_data_list_info"
 
     print(environ["SSKEYOUT"])
     if environ["SSKEYOUT"] == "test_uploader_0":
