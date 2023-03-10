@@ -33,6 +33,7 @@ from smartsim import status
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
+from smartsim.ml.data import DataInfo
 
 shouldrun_tf = True
 if shouldrun_tf:
@@ -182,6 +183,23 @@ def test_batch_dataloader_torch(fileutils, wlmutils):
         if trials == 0:
             assert False
 
+def test_data_info_repr():
+    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name=None)
+    data_info_repr = "DataInfo object\n"
+    data_info_repr += "Aggregation list name: a_list\n"
+    data_info_repr += "Sample tensor name: the_samples"
+    assert str(data_info) == data_info_repr
+
+    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name="the_targets")
+    
+    data_info_repr += "\nTarget tensor name: the_targets"
+
+    assert str(data_info) == data_info_repr
+
+    data_info = DataInfo(list_name="a_list", sample_name="the_samples", target_name="the_targets", num_classes=23)
+    data_info_repr += "\nNumber of classes: 23"
+
+    assert str(data_info) == data_info_repr
 
 @pytest.mark.skipif(
     not (shouldrun_torch or shouldrun_tf), reason="Requires TF or PyTorch"
