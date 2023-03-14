@@ -132,7 +132,7 @@ def test_mpmd_compound_env_exports():
     assert "cmp1" not in env_vars
     assert "norm1" not in env_vars
 
-    srun_idx = launch_cmd.index("srun")
+    srun_idx = " ".join(launch_cmd).index("srun")
     assert srun_idx > -1
 
     # ensure correct vars loaded in parent shell
@@ -191,7 +191,7 @@ def test_mpmd_non_compound_env_exports():
     assert "cmp1" not in env_vars
     assert "norm1" not in env_vars
 
-    srun_idx = launch_cmd.index("srun")
+    srun_idx = " ".join(launch_cmd).index("srun")
     assert srun_idx > -1
 
     # ensure correct vars loaded in parent shell
