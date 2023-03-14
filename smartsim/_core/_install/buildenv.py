@@ -205,7 +205,12 @@ class RedisAIVersion(Version_):
             return self.defaults[self.version][name]
         except KeyError:
             raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'"
+                f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
+                "This is likely a problem with the SmartSim build process;"
+                "if this problem persists please log a new issue at "
+                "https://github.com/CrayLabs/SmartSim/issues "
+                "or get in contact with us at "
+                "https://www.craylabs.org/docs/community.html"
             ) from None
 
     def get_defaults(self):

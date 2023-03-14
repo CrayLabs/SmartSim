@@ -356,10 +356,16 @@ class Build:
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
         if not self.versions.ONNX:
-            raise SetupError(
-                "An onnx wheel is not available for this version of python for the "
-                "requested onnx runtime"
+            py_version = sys.version_info
+            msg = (
+                "An onnx wheel is not available for "
+                f"Python {py_version.major}.{py_version.minor}. "
+                "Instead consider using Python 3.8 or 3.9 with Onnx "
             )
+            if sys.platform == "linux":
+                msg += "1.2.5 or "
+            msg += "1.2.7."
+            raise SetupError(msg)
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (
