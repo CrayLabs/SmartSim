@@ -87,11 +87,11 @@ def test_mpmd_compound_env_exports():
     Test that compound env vars are added to root env and exported
     to the correct sub-command in mpmd cmd
     """
-    srun = SrunSettings("python")
+    srun = SrunSettings("printenv")
     srun.in_batch = True
     srun.alloc = 12345
     srun.env_vars = {"cmp1": "123,456", "norm1": "xyz"}
-    srun_2 = SrunSettings("python")
+    srun_2 = SrunSettings("printenv")
     srun_2.env_vars = {"cmp2": "222,333", "norm2": "pqr"}
     srun.make_mpmd(srun_2)
 
@@ -146,11 +146,11 @@ def test_mpmd_non_compound_env_exports():
     """
     Test that without compound env vars, no `env <k=v>...` is prepended to cmd
     """
-    srun = SrunSettings("python")
+    srun = SrunSettings("printenv")
     srun.in_batch = True
     srun.alloc = 12345
     srun.env_vars = {"cmp1": "123", "norm1": "xyz"}
-    srun_2 = SrunSettings("python")
+    srun_2 = SrunSettings("printenv")
     srun_2.env_vars = {"cmp2": "222", "norm2": "pqr"}
     srun.make_mpmd(srun_2)
 
@@ -205,11 +205,11 @@ def test_mpmd_non_compound_no_exports():
     """
     Test that no --export is added if no env vars are supplied
     """
-    srun = SrunSettings("python")
+    srun = SrunSettings("printenv")
     srun.in_batch = True
     srun.alloc = 12345
     srun.env_vars = {} 
-    srun_2 = SrunSettings("python")
+    srun_2 = SrunSettings("printenv")
     srun_2.env_vars = {}
     srun.make_mpmd(srun_2)
 

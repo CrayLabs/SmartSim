@@ -141,7 +141,7 @@ class SrunStep(Step):
             ) = self.run_settings.format_comma_sep_env_vars()
 
             if len(env_var_str) > 0:
-                srun_cmd += ["--export", env_var_str]
+                srun_cmd += ["--export", f"ALL,{env_var_str}"]
 
             if comma_separated_env_vars:
                 compound_env = compound_env.union(comma_separated_env_vars)
@@ -213,7 +213,7 @@ class SrunStep(Step):
 
             (env_var_str, csv_env_vars) = mpmd.format_comma_sep_env_vars()
             if len(env_var_str) > 0:
-                cmd += ["--export", env_var_str]
+                cmd += ["--export", f"ALL,{env_var_str}"]
             if csv_env_vars:
                 compound_env_vars.extend(csv_env_vars)
             cmd += mpmd.exe
