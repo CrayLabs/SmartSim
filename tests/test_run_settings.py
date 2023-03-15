@@ -271,3 +271,99 @@ def test_set_conditional():
     rs.set("ans-is-5-arg", condition=ans == 5)
     assert "ans-is-4-arg" in rs.run_args
     assert "ans-is-5-arg" not in rs.run_args
+
+
+def test_container_check():
+    """Ensure path is expanded when run outside of a container"""
+    sample_exe = "python"
+
+    rs = RunSettings(sample_exe, container=True)
+    assert sample_exe in rs.exe
+
+    rs = RunSettings(sample_exe, container=False)
+    assert len(rs.exe[0]) > len(sample_exe)
+
+
+def test_run_command():
+    """Ensure that run_command expands cmd as needed"""
+    sample_exe = "python"
+    cmd = "echo"
+
+    rs = RunSettings(sample_exe, run_command=cmd)
+    rc_output: str = rs.run_command or ""
+    assert len(rc_output) > len(cmd)
+
+
+@pytest.mark.parametrize(
+    "env_vars", 
+    [
+        pytest.param({}, id="no env vars"),
+        pytest.param({"env1": "abc"}, id="normal var"),
+        pytest.param({"env1": "abc,def"}, id="compound var"),
+        pytest.param({"env1": "xyz", "env2": "pqr"}, id="multiple env vars"),
+    ]
+)
+def test_update_env_initialized(env_vars):
+    """Ensure update of initialized env vars does not overwrite"""
+    sample_exe = "python"
+    cmd = "echo"
+
+    orig_env = {"key": "value"}
+    rs = RunSettings(sample_exe, run_command=cmd, env_vars=orig_env)
+    rs.update_env(env_vars)
+
+    combined_keys = {k for k in env_vars.keys()}
+    combined_keys.update(k for k in orig_env.keys())
+
+    assert len(rs.env_vars) == len(combined_keys)
+    assert {k for k in rs.env_vars.keys()} == combined_keys
+
+
+@pytest.mark.parametrize(
+    "env_vars", 
+    [
+        pytest.param({}, id="no env vars"),
+        pytest.param({"env1": "abc"}, id="normal var"),
+        pytest.param({"env1": "abc,def"}, id="compound var"),
+        pytest.param({"env1": "xyz", "env2": "pqr"}, id="multiple env vars"),
+    ]
+)
+def test_update_env_empty(env_vars):
+    """Ensure non-initialized env vars update correctly"""
+    sample_exe = "python"
+    cmd = "echo"
+
+    rs = RunSettings(sample_exe, run_command=cmd)
+    rs.update_env(env_vars)
+
+    assert len(rs.env_vars) == len(env_vars.keys())
+    
+
+def test_update_env():
+    """Ensure empty env vars is handled gracefully"""
+    sample_exe = "python"
+    cmd = "echo"
+
+    rs = RunSettings(sample_exe, run_command=cmd)
+    
+    env_vars = {}
+    assert not rs.env_vars
+
+
+@pytest.mark.parametrize(
+    "env_vars", 
+    [
+        pytest.param({"env1": None}, id="null value not allowed"),
+        pytest.param({"env1": {"abc"}}, id="set value not allowed"),
+        pytest.param({"env1": {"abc":"def"}}, id="dict value not allowed"),
+    ]
+)
+def test_update_env_null_valued(env_vars):
+    """Ensure validation of env var in update """
+    sample_exe = "python"
+    cmd = "echo"
+    orig_env = {}
+
+    with pytest.raises(TypeError) as ex:
+        rs = RunSettings(sample_exe, run_command=cmd, env_vars=orig_env)
+        rs.update_env(env_vars)

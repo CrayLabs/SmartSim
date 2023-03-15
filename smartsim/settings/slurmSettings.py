@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import os
+from typing import List, Tuple
 
 from ..error import SSUnsupportedError
 from .base import BatchSettings, RunSettings
@@ -285,7 +285,7 @@ class SrunSettings(RunSettings):
         """
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
 
-    def format_comma_sep_env_vars(self):
+    def format_comma_sep_env_vars(self) -> Tuple[str, List[str]]:
         """Build environment variable string for Slurm
 
         Slurm takes exports in comma separated lists
@@ -296,17 +296,26 @@ class SrunSettings(RunSettings):
         :rtype: tuple[str, list[str]]
         """
 
-        comma_separated_format_str = []
-        format_str = ""
+        exportable_env, compound_env, key_only = [], [], []
 
-        # add user supplied variables
         for k, v in self.env_vars.items():
+            kvp = f"{k}={v}"
+
             if "," in str(v):
-                comma_separated_format_str += ["=".join((k, str(v)))]
-                format_str += k + ","
+                key_only.append(k)
+                compound_env.append(kvp)
             else:
-                format_str += "=".join((k, str(v))) + ","
-        return format_str.rstrip(","), comma_separated_format_str
+                exportable_env.append(kvp)
+
+        # Append keys to exportable KVPs, e.g. `--export x1=v1,KO1,KO2`
+        fmt_exported_env = ",".join(v for v in exportable_env + key_only)
+
+        for mpmd in self.mpmd:
+            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in v}
+            compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
+            compound_env.extend(compound_mpmd_fmt)
+
+        return fmt_exported_env, compound_env
 
 
 class SbatchSettings(BatchSettings):
