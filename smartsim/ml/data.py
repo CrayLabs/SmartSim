@@ -102,7 +102,7 @@ class DataInfo:
         except RedisReplyError:
             # If the info was not published, proceed with default parameters
             logger.warning(
-                f"Could not retrieve data for DataInfo object, the folloein values will be kept."
+                f"Could not retrieve data for DataInfo object, the following values will be kept."
             )
             logger.warning(str(self))
             return
@@ -232,15 +232,14 @@ class DataDownloader:
 
     Information about the uploaded datasets can be defined in two ways:
 
-     - By supplying a DataInfo object as value of ``data_info``
+     - By supplying a DataInfo object as value of ``data_info_or_list_name``
 
-     - By supplying ``data_info=None`` and passing a valid ``list_name``.
+     - By supplying a string as value of ``data_info_or_list_name``.
        in this case, an attempt is made to download information from the
-       DB, where a Dataset called ``<list_name>_info`` should be available
+       DB, where a Dataset called ``<data_info_or_list_name>_info`` should be available
        and have the information normally stored by DataInfo.publish()
 
-    The flag `init_samples` defines whether sources (the list of batches
-    to be fetched) and samples (the actual data) should automatically
+    The flag `init_samples` defines whether samples should automatically
     be set up in the costructor.
 
     If the user needs to modify the `DataDownloader` object before starting
@@ -261,7 +260,7 @@ class DataDownloader:
     :param data_info_or_list_name: DataInfo object with details about dataset to download, if a string is passed,
                       it is used to download DataInfo data from DB, assuming it was stored with
                       ``list_name=data_info_or_list_name``
-    :type data_info_or_list_name: DataInfo | str = None
+    :type data_info_or_list_name: DataInfo | str
     :param list_name: Name of aggregation list used to upload data
     :type list_name: str
     :param cluster: Whether the Orchestrator will be run as a cluster
@@ -317,8 +316,6 @@ class DataDownloader:
         else:
             raise TypeError("dat_info_or_list_name must be either DataInfo or str")
         self.client = None
-        self.autoencoding = self.sample_name == self.target_name
-
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -330,6 +327,10 @@ class DataDownloader:
     def log(self, message):
         if self.verbose:
             logger.info(message)
+
+    @property
+    def autoencoding(self):
+        return self.sample_name == self.target_name
 
     @property
     def list_name(self):
@@ -374,7 +375,7 @@ class DataDownloader:
                 index * self.batch_size : (index + 1) * self.batch_size
             ]
 
-            x, y = self.__data_generation(indices)
+            x, y = self._data_generation(indices)
 
             if y is not None:
                 yield x, y
@@ -478,7 +479,7 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def __data_generation(self, indices):
+    def _data_generation(self, indices):
         # Initialization
         x = self.samples[indices]
 

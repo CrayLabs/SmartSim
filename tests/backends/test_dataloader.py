@@ -191,7 +191,7 @@ def test_data_info_repr():
     data_info_repr = "DataInfo object\n"
     data_info_repr += "Aggregation list name: a_list\n"
     data_info_repr += "Sample tensor name: the_samples"
-    assert str(data_info) == data_info_repr
+    assert repr(data_info) == data_info_repr
 
     data_info = DataInfo(
         list_name="a_list", sample_name="the_samples", target_name="the_targets"
