@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import pytest
 from smartsim.settings import BsubBatchSettings, QsubBatchSettings, SbatchSettings
 from smartsim.settings.settings import create_batch_settings
 
@@ -83,3 +84,56 @@ def test_create_bsub():
     assert isinstance(bsub, BsubBatchSettings)
     args = bsub.format_batch_args()
     assert args == ["-core_isolation", "-nnodes 1", "-q default"]
+
+
+@pytest.mark.parametrize(
+    "batch_args", 
+    [
+        pytest.param({"core_isolation": None}, id="null batch arg"),
+        pytest.param({"core_isolation": "abc"}, id="valued batch arg"),
+        pytest.param({"core_isolation": None, "xyz": "pqr"}, id="multi batch arg"),
+    ]
+)
+def test_stringification(batch_args):
+    """Ensure stringification includes expected fields"""
+    bsub_cmd = "bsub"
+    num_nodes = 1
+
+    bsub = create_batch_settings(
+        "lsf",
+        nodes=num_nodes,
+        time="10:00:00",
+        account="myproject",  # test that account is set
+        queue="default",
+        batch_args=batch_args,
+    )
+
+    repl = str(bsub).replace("\t", " ").replace("\n", "")
+
+    assert repl.startswith(f"Batch Command: {bsub_cmd}")
+    assert repl.index("Batch arguments: ") > -1
+    for key, val in batch_args.items():
+        assert repl.index(f"{key} = {val}") > -1
+    assert repl.index(f"nnodes = {num_nodes}") > -1
+
+
+def test_preamble():
+    """Ensure that preable lines are appended and do not overwrite"""
+    bsub = create_batch_settings(
+        "lsf",
+        nodes=1,
+        time="10:00:00",
+        account="myproject",  # test that account is set
+        queue="default",
+        batch_args={},
+    )
+
+    bsub.add_preamble(["single line"])
+    assert len(bsub._preamble) == 1
+
+    bsub.add_preamble(["another line"])
+    assert len(bsub._preamble) == 2
+
+    bsub.add_preamble(["first line", "last line"])
+    assert len(bsub._preamble) == 4
+    
