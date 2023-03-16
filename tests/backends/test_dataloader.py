@@ -199,7 +199,7 @@ def test_data_info_repr():
 
     data_info_repr += "\nTarget tensor name: the_targets"
 
-    assert str(data_info) == data_info_repr
+    assert repr(data_info) == data_info_repr
 
     data_info = DataInfo(
         list_name="a_list",
@@ -209,7 +209,7 @@ def test_data_info_repr():
     )
     data_info_repr += "\nNumber of classes: 23"
 
-    assert str(data_info) == data_info_repr
+    assert repr(data_info) == data_info_repr
 
 
 @pytest.mark.skipif(

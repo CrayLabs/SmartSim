@@ -66,7 +66,7 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         elif self.autoencoding:
             y = x
         else:
-            y = None
+            return x
 
         return x, y
 

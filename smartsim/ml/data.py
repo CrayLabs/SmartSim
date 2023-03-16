@@ -370,17 +370,13 @@ class DataDownloader:
             msg += "Please run init_samples() or initialize generator with init_samples=True"
             raise ValueError(msg)
 
-        for index in range(len(self)):
-            indices = self.indices[
-                index * self.batch_size : (index + 1) * self.batch_size
-            ]
-
-            x, y = self._data_generation(indices)
-
-            if y is not None:
-                yield x, y
-            else:
-                yield x
+        _calc_indices = lambda index: self.indices[
+            index * self.batch_size : (index + 1) * self.batch_size
+        ]
+        yield from (
+            self._data_generation(_calc_indices(idx))
+            for idx in range(len(self))
+        )
 
     def init_samples(self, init_trials=-1):
         """Initialize samples (and targets, if needed).
@@ -485,10 +481,9 @@ class DataDownloader:
 
         if self.need_targets:
             y = self.targets[indices]
-
         elif self.autoencoding:
             y = x
         else:
-            y = None
+            return x
 
         return x, y
