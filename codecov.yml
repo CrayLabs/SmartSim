@@ -6,6 +6,16 @@ coverage:
   round: down
   range: "70...100"
 
+  status:
+    patch:
+      default:
+       # Account for some variability in codecov
+       threshold: 0.5% 
+    project:
+      default:
+       # Account for some variability in codecov
+       threshold: 0.5% 
+
 parsers:
   gcov:
     branch_detection:
