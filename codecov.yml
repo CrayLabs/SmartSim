@@ -5,7 +5,16 @@ coverage:
   precision: 2
   round: down
   range: "70...100"
-  threshold: 1% # Account for some variability in codecov
+
+  status:
+    patch:
+      default:
+       # Account for some variability in codecov
+       threshold: 0.5% 
+    project:
+      default:
+       # Account for some variability in codecov
+       threshold: 0.5% 
 
 parsers:
   gcov:
