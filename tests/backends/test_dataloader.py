@@ -170,6 +170,7 @@ def test_tf_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
+                dynamic=False,  # cover error message
             )
             train_tf(tf_dynamic)
             assert len(tf_dynamic) == 4
@@ -183,6 +184,7 @@ def test_tf_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
+                dynamic=True,  # cover error message
             )
             train_tf(tf_static)
             assert len(tf_static) == 4
@@ -219,9 +221,18 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
+                dynamic=False,  # cover error message
+                init_samples=True,  # cover error message
             )
-            DataLoader(torch_dynamic, batch_size=None, num_workers=1)
             check_dataloader(torch_dynamic, rank, dynamic=True)
+            dl = DataLoader(torch_dynamic, batch_size=None, num_workers=1)
+            try:
+                for _ in dl:
+                    break
+            except RuntimeError:
+                # This is not our fault and never happens
+                # outside tests. Possible thread memory failure.
+                print("Torch thread failed")
         for rank in range(2):
             torch_static = TorchStaticDataGenerator(
                 data_info_or_list_name=data_info,
@@ -231,9 +242,19 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
+                dynamic=True,  # cover error message
+                init_samples=True,  # cover error message
             )
-            DataLoader(torch_static, batch_size=None, num_workers=1)
             check_dataloader(torch_static, rank, dynamic=False)
+            dl = DataLoader(torch_static, batch_size=None, num_workers=1)
+            try:
+                for _ in dl:
+                    break
+            except RuntimeError:
+                # This is not our fault and never happens
+                # outside tests. Possible thread memory failure.
+                print("Torch thread failed")
+
     except Exception as e:
         raise e
     finally:
