@@ -313,7 +313,7 @@ class DataDownloader:
             client = Client(self.address, self.cluster)
             self._info.download(client)
         else:
-            raise TypeError("dat_info_or_list_name must be either DataInfo or str")
+            raise TypeError("data_info_or_list_name must be either DataInfo or str")
         self.client = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")

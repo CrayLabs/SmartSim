@@ -152,6 +152,6 @@ class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
 
         dataset.num_replicas *= num_workers
         dataset.replica_rank = dataset.replica_rank * num_workers + worker_id
-        dataset.log(f"{worker_id}/{num_workers}")
+        dataset.log(f"Worker {worker_id+1}/{num_workers}: dataset replica {dataset.replica_rank+1}/{dataset.num_replicas}")
 
         dataset.init_samples()
