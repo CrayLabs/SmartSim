@@ -216,9 +216,8 @@ class TrainingDataUploader:
         self.client.put_dataset(batch_ds)
         self.client.append_to_list(self.list_name, batch_ds)
         if self.verbose:
-            logger.info(f"List length {self.client.get_list_length(self.list_name)}")
-        if self.verbose:
             logger.info(f"Added dataset to list {self.list_name}")
+            logger.info(f"List length {self.client.get_list_length(self.list_name)}")
 
         self.batch_idx += 1
 

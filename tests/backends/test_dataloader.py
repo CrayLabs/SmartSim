@@ -24,16 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os.path as osp
-import time
+import os
 
+import numpy as np
 import pytest
 
-from smartsim import status
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
-from smartsim.ml.data import DataInfo
+from smartsim.ml.data import DataInfo, TrainingDataUploader
 
 shouldrun_tf = True
 if shouldrun_tf:
@@ -41,6 +40,7 @@ if shouldrun_tf:
         from tensorflow import keras
 
         from smartsim.ml.tf import DynamicDataGenerator as TFDataGenerator
+        from smartsim.ml.tf import StaticDataGenerator as TFStaticDataGenerator
     except:
         shouldrun_tf = False
 
@@ -50,138 +50,341 @@ if shouldrun_torch:
         import torch
 
         from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
+        from smartsim.ml.torch import StaticDataGenerator as TorchStaticDataGenerator
+        from smartsim.ml.torch import DataLoader
     except:
         shouldrun_torch = False
 
 
-def create_uploader(experiment: Experiment, filedir, format):
-    """Start an ensemble of two processes producing sample batches at
-    regular intervals.
-    """
-    run_settings = experiment.create_run_settings(
-        exe="python",
-        exe_args=["data_uploader.py", f"--format={format}"],
-        env_vars={"PYTHONUNBUFFERED": "1"},
-    )
+# def create_uploader(experiment: Experiment, filedir, format):
+#     """Start an ensemble of two processes producing sample batches at
+#     regular intervals.
+#     """
+#     run_settings = experiment.create_run_settings(
+#         exe="python",
+#         exe_args=["data_uploader.py", f"--format={format}"],
+#         env_vars={"PYTHONUNBUFFERED": "1"},
+#     )
 
-    uploader = experiment.create_ensemble(
-        "test_uploader", replicas=2, run_settings=run_settings
-    )
+#     uploader = experiment.create_ensemble(
+#         "test_uploader", replicas=2, run_settings=run_settings
+#     )
 
-    uploader.attach_generator_files(to_copy=[osp.join(filedir, "data_uploader.py")])
-    experiment.generate(uploader, overwrite=True)
-    return uploader
-
-
-def create_trainer_tf(experiment: Experiment, filedir):
-    run_settings = experiment.create_run_settings(
-        exe="python",
-        exe_args=["training_service_tf.py"],
-        env_vars={"PYTHONUNBUFFERED": "1"},
-    )
-
-    trainer = experiment.create_model("trainer", run_settings=run_settings)
-
-    trainer.attach_generator_files(
-        to_copy=[osp.join(filedir, "training_service_tf.py")]
-    )
-    experiment.generate(trainer, overwrite=True)
-    return trainer
+#     uploader.attach_generator_files(to_copy=[osp.join(filedir, "data_uploader.py")])
+#     experiment.generate(uploader, overwrite=True)
+#     return uploader
 
 
-def create_trainer_torch(experiment: Experiment, filedir):
-    run_settings = experiment.create_run_settings(
-        exe="python",
-        exe_args=["training_service_torch.py"],
-        env_vars={"PYTHONUNBUFFERED": "1"},
-    )
+# def create_trainer_tf(experiment: Experiment, filedir):
+#     run_settings = experiment.create_run_settings(
+#         exe="python",
+#         exe_args=["training_service_tf.py"],
+#         env_vars={"PYTHONUNBUFFERED": "1"},
+#     )
 
-    trainer = experiment.create_model("trainer", run_settings=run_settings)
+#     trainer = experiment.create_model("trainer", run_settings=run_settings)
 
-    trainer.attach_generator_files(
-        to_copy=[osp.join(filedir, "training_service_torch.py")]
-    )
-    experiment.generate(trainer, overwrite=True)
-    return trainer
+#     trainer.attach_generator_files(
+#         to_copy=[osp.join(filedir, "training_service_tf.py")]
+#     )
+#     experiment.generate(trainer, overwrite=True)
+#     return trainer
 
 
-def test_batch_dataloader_tf(fileutils, wlmutils):
+# def create_trainer_torch(experiment: Experiment, filedir):
+#     run_settings = experiment.create_run_settings(
+#         exe="python",
+#         exe_args=["training_service_torch.py"],
+#         env_vars={"PYTHONUNBUFFERED": "1"},
+#     )
+
+#     trainer = experiment.create_model("trainer", run_settings=run_settings)
+
+#     trainer.attach_generator_files(
+#         to_copy=[osp.join(filedir, "training_service_torch.py")]
+#     )
+#     experiment.generate(trainer, overwrite=True)
+#     return trainer
+
+
+# def test_batch_dataloader_tf(fileutils, wlmutils):
+#     if not shouldrun_tf:
+#         pytest.skip("Test needs TensorFlow to run.")
+
+#     test_dir = fileutils.make_test_dir()
+#     exp = Experiment("test-batch-dataloader-tf", exp_path=test_dir)
+#     config_path = fileutils.get_test_conf_path("ml")
+#     dataloader = create_uploader(exp, config_path, "tf")
+#     trainer_tf = create_trainer_tf(exp, config_path)
+
+#     orc = Orchestrator(port=wlmutils.get_test_port())
+#     exp.generate(orc)
+#     exp.start(orc)
+#     exp.start(dataloader, block=False)
+
+#     for entity in dataloader:
+#         trainer_tf.register_incoming_entity(entity)
+
+#     exp.start(trainer_tf, block=True)
+#     if exp.get_status(trainer_tf)[0] != status.STATUS_COMPLETED:
+#         print("------ERROR FILE--------\n")
+#         with open(osp.join(trainer_tf.path, "trainer.err"), "r") as f:
+#             print(f.read())
+#         print("------OUTPUT FILE-------\n")
+#         with open(osp.join(trainer_tf.path, "trainer.out"), "r") as f:
+#             print(f.read())
+#         exp.stop(orc)
+#         assert False
+
+#     exp.stop(orc)
+
+#     trials = 5
+#     if exp.get_status(dataloader)[0] != status.STATUS_COMPLETED:
+#         time.sleep(5)
+#         trials -= 1
+#         if trials == 0:
+#             assert False
+
+
+# def test_batch_dataloader_torch(fileutils, wlmutils):
+#     if not shouldrun_torch:
+#         pytest.skip("Test needs PyTorch to run.")
+
+#     test_dir = fileutils.make_test_dir()
+#     exp = Experiment("test-batch-dataloader-tf", exp_path=test_dir)
+#     config_path = fileutils.get_test_conf_path("ml")
+#     dataloader = create_uploader(exp, config_path, "torch")
+#     trainer_torch = create_trainer_torch(exp, config_path)
+
+#     orc = Orchestrator(wlmutils.get_test_port())
+#     exp.generate(orc)
+#     exp.start(orc)
+#     exp.start(dataloader, block=False)
+
+#     for entity in dataloader:
+#         trainer_torch.register_incoming_entity(entity)
+
+#     exp.start(trainer_torch, block=True)
+#     if exp.get_status(trainer_torch)[0] != status.STATUS_COMPLETED:
+#         print("------ERROR FILE--------\n")
+#         with open(osp.join(trainer_torch.path, "trainer.err"), "r") as f:
+#             print(f.read())
+#         print("------OUTPUT FILE-------\n")
+#         with open(osp.join(trainer_torch.path, "trainer.out"), "r") as f:
+#             print(f.read())
+
+#         exp.stop(orc)
+#         assert False
+
+#     exp.stop(orc)
+
+#     trials = 5
+#     if exp.get_status(dataloader)[0] != status.STATUS_COMPLETED:
+#         time.sleep(5)
+#         trials -= 1
+#         if trials == 0:
+#             assert False
+
+
+def check_dataloader(dl, rank, dynamic):
+    assert dl.list_name == "test_data_list"
+    assert dl.sample_name == "test_samples"
+    assert dl.target_name == "test_targets"
+    assert dl.num_classes == 2
+    assert dl.verbose == True
+    assert dl.replica_rank == rank
+    assert dl.num_replicas == 2
+    assert dl.address == None
+    assert dl.cluster == False
+    assert dl.shuffle == True
+    assert dl.batch_size == 4
+    assert dl.autoencoding == False
+    assert dl.need_targets == True
+    assert dl.dynamic == dynamic
+
+
+def run_local_uploaders(mpi_size, format="torch"):
+    batch_size = 4
+    for rank in range(mpi_size):
+        os.environ["SSKEYOUT"] = f"test_uploader_{rank}"
+
+        data_uploader = TrainingDataUploader(
+            list_name="test_data_list",
+            sample_name="test_samples",
+            target_name="test_targets",
+            num_classes=mpi_size,
+            cluster=False,
+            address=None,
+            rank=rank,
+            verbose=True,
+            )
+
+        assert data_uploader._info.list_name == "test_data_list"
+        assert data_uploader._info.sample_name == "test_samples"
+        assert data_uploader._info.target_name == "test_targets"
+        assert data_uploader._info.num_classes == mpi_size
+        assert data_uploader._info._ds_name == "test_data_list_info"
+
+        if rank == 0:
+            data_uploader.publish_info()
+
+        batches_per_loop = 1
+        shape = (
+            (batch_size * batches_per_loop, 32, 32, 1)
+            if format == "tf"
+            else (batch_size * batches_per_loop, 1, 32, 32)
+        )
+
+        for _ in range(2):
+            for mpi_rank in range(mpi_size):
+                new_batch = np.random.normal(
+                    loc=float(mpi_rank), scale=5.0, size=shape
+                ).astype(float)
+                new_labels = (
+                    np.ones(shape=(batch_size * batches_per_loop,)).astype(int) * mpi_rank
+                )
+
+                data_uploader.put_batch(new_batch, new_labels)
+
+    return data_uploader._info
+
+
+def train_tf(generator):
     if not shouldrun_tf:
-        pytest.skip("Test needs TensorFlow to run.")
+        return
+    
+    model = keras.models.Sequential(
+        [
+            keras.layers.Conv2D(
+                filters=4, kernel_size=(3, 3), activation="relu", input_shape=(32, 32, 1)
+            ),
+            keras.layers.Flatten(),
+            keras.layers.Dense(generator.num_classes, activation="softmax"),
+        ]
+    )
 
-    test_dir = fileutils.make_test_dir()
-    exp = Experiment("test-batch-dataloader-tf", exp_path=test_dir)
-    config_path = fileutils.get_test_conf_path("ml")
-    dataloader = create_uploader(exp, config_path, "tf")
-    trainer_tf = create_trainer_tf(exp, config_path)
+    model.compile(optimizer="Adam", loss="mse", metrics=["mae"])
 
-    orc = Orchestrator(port=wlmutils.get_test_port())
-    exp.generate(orc)
-    exp.start(orc)
-    exp.start(dataloader, block=False)
-
-    for entity in dataloader:
-        trainer_tf.register_incoming_entity(entity)
-
-    exp.start(trainer_tf, block=True)
-    if exp.get_status(trainer_tf)[0] != status.STATUS_COMPLETED:
-        print("------ERROR FILE--------\n")
-        with open(osp.join(trainer_tf.path, "trainer.err"), "r") as f:
-            print(f.read())
-        print("------OUTPUT FILE-------\n")
-        with open(osp.join(trainer_tf.path, "trainer.out"), "r") as f:
-            print(f.read())
-        exp.stop(orc)
-        assert False
-
-    exp.stop(orc)
-
-    trials = 5
-    if exp.get_status(dataloader)[0] != status.STATUS_COMPLETED:
-        time.sleep(5)
-        trials -= 1
-        if trials == 0:
-            assert False
+    for epoch in range(2):
+        model.fit(
+            generator,
+            steps_per_epoch=None,
+            epochs=epoch + 1,
+            initial_epoch=epoch,
+            batch_size=generator.batch_size,
+            verbose=2,
+        )
 
 
-def test_batch_dataloader_torch(fileutils, wlmutils):
+def train_torch(generator):
+    """We actually just iterate over samples, as training is multithreaded
+    and can stress CPUs. Note that a Torch user would anyhow have to
+    get samples and labels like this.
+    """
     if not shouldrun_torch:
-        pytest.skip("Test needs PyTorch to run.")
+        return
+    
+    trainloader = DataLoader(generator, batch_size=None, num_workers=2)
 
+    for _ in range(2):
+        for _, _ in trainloader:
+            continue
+
+
+@pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
+def test_tf_dataloaders(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir()
-    exp = Experiment("test-batch-dataloader-tf", exp_path=test_dir)
-    config_path = fileutils.get_test_conf_path("ml")
-    dataloader = create_uploader(exp, config_path, "torch")
-    trainer_torch = create_trainer_torch(exp, config_path)
-
-    orc = Orchestrator(wlmutils.get_test_port())
+    exp = Experiment("test_tf_dataloaders", test_dir)
+    orc: Orchestrator = wlmutils.get_orchestrator()
     exp.generate(orc)
     exp.start(orc)
-    exp.start(dataloader, block=False)
 
-    for entity in dataloader:
-        trainer_torch.register_incoming_entity(entity)
+    try:
+        os.environ["SSDB"] = orc.get_address()[0]
+        data_info = run_local_uploaders(mpi_size=2, format="tf")
 
-    exp.start(trainer_torch, block=True)
-    if exp.get_status(trainer_torch)[0] != status.STATUS_COMPLETED:
-        print("------ERROR FILE--------\n")
-        with open(osp.join(trainer_torch.path, "trainer.err"), "r") as f:
-            print(f.read())
-        print("------OUTPUT FILE-------\n")
-        with open(osp.join(trainer_torch.path, "trainer.out"), "r") as f:
-            print(f.read())
+        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
+        for rank in range(2):
+            tf_dynamic = TFDataGenerator(
+                data_info_or_list_name="test_data_list",
+                cluster=False,
+                verbose=True,
+                num_replicas=2,
+                replica_rank=rank,
+                batch_size=4,
+                max_fetch_trials=5,
+            )
+            train_tf(tf_dynamic)
+            assert len(tf_dynamic) == 4
+            check_dataloader(tf_dynamic, rank, dynamic=True)
+        for rank in range(2):
+            tf_static = TFStaticDataGenerator(
+                data_info_or_list_name=data_info,
+                cluster=False,
+                verbose=True,
+                num_replicas=2,
+                replica_rank=rank,
+                batch_size=4,
+                max_fetch_trials=5,
+            )
+            train_tf(tf_static)
+            assert len(tf_static) == 4
+            check_dataloader(tf_static, rank, dynamic=False)
 
+    except Exception as e:
+        raise e
+    finally:
         exp.stop(orc)
-        assert False
+        os.environ.pop("SSDB", "")
+        os.environ.pop("SSKEYIN", "")
+        os.environ.pop("SSKEYOUT", "")
 
-    exp.stop(orc)
 
-    trials = 5
-    if exp.get_status(dataloader)[0] != status.STATUS_COMPLETED:
-        time.sleep(5)
-        trials -= 1
-        if trials == 0:
-            assert False
+@pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
+def test_torch_dataloaders(fileutils, wlmutils):
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment("test_tf_dataloaders", test_dir)
+    orc: Orchestrator = wlmutils.get_orchestrator()
+    exp.generate(orc)
+    exp.start(orc)
+
+    try:
+        os.environ["SSDB"] = orc.get_address()[0]
+        data_info = run_local_uploaders(mpi_size=2)
+
+        os.environ["SSKEYIN"] = "test_uploader_0,test_uploader_1"
+        for rank in range(2):
+            torch_dynamic = TorchDataGenerator(
+                data_info_or_list_name="test_data_list",
+                cluster=False,
+                verbose=True,
+                num_replicas=2,
+                replica_rank=rank,
+                batch_size=4,
+                max_fetch_trials=5,
+            )
+            train_torch(torch_dynamic)
+            check_dataloader(torch_dynamic, rank, dynamic=True)
+        for rank in range(2):
+            torch_static = TorchStaticDataGenerator(
+                data_info_or_list_name=data_info,
+                cluster=False,
+                verbose=True,
+                num_replicas=2,
+                replica_rank=rank,
+                batch_size=4,
+                max_fetch_trials=5,
+            )
+            train_torch(torch_static)
+            check_dataloader(torch_static, rank, dynamic=False)
+
+    except Exception as e:
+        raise e
+    finally:
+        exp.stop(orc)
+        os.environ.pop("SSDB", "")
+        os.environ.pop("SSKEYIN", "")
+        os.environ.pop("SSKEYOUT", "")
 
 
 def test_data_info_repr():
@@ -239,5 +442,6 @@ def test_wrong_dataloaders(fileutils, wlmutils):
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
+
 
     exp.stop(orc)
