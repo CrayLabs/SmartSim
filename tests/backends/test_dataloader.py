@@ -146,19 +146,6 @@ def train_tf(generator):
         )
 
 
-def train_torch(generator):
-    """We actually just iterate over samples, as training is multithreaded
-    and can stress CPUs. Note that a Torch user would anyhow have to
-    get samples and labels like this.
-    """
-    if not shouldrun_torch:
-        return
-    
-    trainloader = DataLoader(generator, batch_size=None, num_workers=1)
-
-    for _ in range(2):
-        for _, _ in trainloader:
-            continue
 
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
@@ -233,7 +220,7 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 batch_size=4,
                 max_fetch_trials=5,
             )
-            train_torch(torch_dynamic)
+            DataLoader(torch_dynamic, batch_size=None, num_workers=1)
             check_dataloader(torch_dynamic, rank, dynamic=True)
         for rank in range(2):
             torch_static = TorchStaticDataGenerator(
@@ -245,9 +232,8 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 batch_size=4,
                 max_fetch_trials=5,
             )
-            train_torch(torch_static)
+            DataLoader(torch_static, batch_size=None, num_workers=1)
             check_dataloader(torch_static, rank, dynamic=False)
-
     except Exception as e:
         raise e
     finally:
