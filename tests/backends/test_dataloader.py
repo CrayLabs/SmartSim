@@ -154,7 +154,7 @@ def train_torch(generator):
     if not shouldrun_torch:
         return
     
-    trainloader = DataLoader(generator, batch_size=None, num_workers=2)
+    trainloader = DataLoader(generator, batch_size=None, num_workers=1)
 
     for _ in range(2):
         for _, _ in trainloader:
