@@ -411,6 +411,13 @@ def db_cluster(fileutils, wlmutils, request):
     exp.stop(db)
 
 
+@pytest.fixture(scope="function", autouse=True)
+def environment_cleanup():
+    os.environ.pop("SSDB", "")
+    os.environ.pop("SSKEYIN", "")
+    os.environ.pop("SSKEYOUT", "")
+
+
 @pytest.fixture
 def dbutils():
     return DBUtils
