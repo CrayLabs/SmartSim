@@ -17,5 +17,5 @@ if these instructions do not work).
     export CRAYPE_LINK_TYPE=dynamic
 
 Users should then proceed with their preferred way of installing SmartSim either
-:ref:`from PyPi <from-pypi>` or :ref:`from source <from-source>`.
+:ref:`from PyPI <from-pypi>` or :ref:`from source <from-source>`.
 

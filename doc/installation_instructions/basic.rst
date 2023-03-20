@@ -5,12 +5,16 @@ Basic Installation
 The following will show how to install both SmartSim and SmartRedis.
 
 .. note::
+
   For users on platforms with a 'site install' of SmartSim please follow
   :ref:`these instructions <site install>`.
 
 =============
 Prerequisites
 =============
+
+Basic
+=====
 
 The base prerequisites to install SmartSim and SmartRedis are:
 
@@ -21,13 +25,21 @@ The base prerequisites to install SmartSim and SmartRedis are:
   - C++ compiler
   - GNU Make > 4.0
   - git
-  - git-lfs
+  - `git-lfs`_
+
+.. _git-lfs: https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing
 
 .. note::
 
   GCC 5-9, 11, and 12 is recommended. There are known bugs with GCC 10.
 
-The machine-learning backends have additional requirements
+.. _GPU Support:
+
+GPU Support
+===========
+
+The machine-learning backends have additional requirements in order to
+take advantage of GPUs
 
   - CUDA Toolkit 11 (11.4 recommended) `Instructions <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
   - cuDNN 8 (tested with 8.2.1 and 8.4.0): `Instructions <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
@@ -82,7 +94,7 @@ the version of the ML libraries).
 | 1.2.3            | 1.7.0    | 2.5.2       | 1.9.0         |
 +------------------+----------+-------------+---------------+
 
-TensorFlow_ 2.0 and Keras_ are supported through graph freezing_.
+TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
 
 ScikitLearn_ and Spark_ models are supported by SmartSim as well
 through the use of the ONNX_ runtime (which is not built by
@@ -96,7 +108,7 @@ platforms and lack of support for Mac OS X).
 .. _PyTorch: https://github.com/pytorch/pytorch
 .. _ONNX: https://github.com/microsoft/onnxruntime
 .. _RedisAI: https://github.com/RedisAI/RedisAI
-.. _freezing: https://github.com/leimao/Frozen-Graph-TensorFlow
+.. _graph freezing: https://github.com/leimao/Frozen-Graph-TensorFlow
 
 ------------------------------------------------------------
 
@@ -134,14 +146,14 @@ There are two stages for the installation of SmartSim.
 Step 1: Install Python Package
 ==============================
 
-Activate a new virtual environment:
+We first recommend creating a new virtual environment:
 
 .. code-block:: bash
 
-    conda activate <env name>
+    python -m venv /path/to/new/environment
+    source /path/to/new/environment/bin/activate
 
-and install SmartSim from PyPi with
-the following command
+and install SmartSim from PyPI with the following command
 
 .. code-block:: bash
 
@@ -153,6 +165,7 @@ can request their installation through the ``ml`` flag as follows:
 
 .. code-block:: bash
 
+    # For bash
     pip install smartsim[ml]
     # add ray extra if you would like to use ray with SmartSim as well
     pip install smartsim[ml,ray]
@@ -204,8 +217,8 @@ for use in SmartSim.
 GPU Install
 -----------
 
-With the proper environment setup, the only difference to building SmartSim
-with GPU support is to specify a different ``device``
+With the proper environment setup (see :ref:`GPU support`) the only difference
+to building SmartSim with GPU support is to specify a different ``device``
 
 .. code-block:: bash
 
@@ -224,7 +237,7 @@ SmartRedis
 ==========
 
 There are implementations of the SmartRedis client in 4 languages: Python, C++,
-C and Fortran. The Python client is installed through ``pip`` and the compiled
+C, and Fortran. The Python client is installed through ``pip`` and the compiled
 clients can be built as a static or shared library through ``cmake``.
 
 SmartRedis Python supports the same architectures for pre-built wheels that
@@ -258,7 +271,7 @@ From Source
 This section will be geared towards contributors who want to install SmartSim
 and SmartRedis from source. If you are installing from source for other reasons,
 follow the steps below but use the distribution provided hosted on GitHub or
-PyPi.
+PyPI.
 
 .. _from-source:
 

@@ -85,7 +85,7 @@ For example with Slurm
 
   print(exp.get_status(model))
 
-The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor it's
+The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor its
 execution, and inform the user when it is completed. This driver script can be
 executed in an interactive allocation, or placed into a batch script as follows:
 
