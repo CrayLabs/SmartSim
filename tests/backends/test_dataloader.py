@@ -49,9 +49,9 @@ if shouldrun_torch:
     try:
         import torch
 
+        from smartsim.ml.torch import DataLoader
         from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
         from smartsim.ml.torch import StaticDataGenerator as TorchStaticDataGenerator
-        from smartsim.ml.torch import DataLoader
     except:
         shouldrun_torch = False
 
@@ -87,7 +87,7 @@ def run_local_uploaders(mpi_size, format="torch"):
             address=None,
             rank=rank,
             verbose=True,
-            )
+        )
 
         assert data_uploader._info.list_name == "test_data_list"
         assert data_uploader._info.sample_name == "test_samples"
@@ -111,7 +111,8 @@ def run_local_uploaders(mpi_size, format="torch"):
                     loc=float(mpi_rank), scale=5.0, size=shape
                 ).astype(float)
                 new_labels = (
-                    np.ones(shape=(batch_size * batches_per_loop,)).astype(int) * mpi_rank
+                    np.ones(shape=(batch_size * batches_per_loop,)).astype(int)
+                    * mpi_rank
                 )
 
                 data_uploader.put_batch(new_batch, new_labels)
@@ -122,11 +123,14 @@ def run_local_uploaders(mpi_size, format="torch"):
 def train_tf(generator):
     if not shouldrun_tf:
         return
-    
+
     model = keras.models.Sequential(
         [
             keras.layers.Conv2D(
-                filters=4, kernel_size=(3, 3), activation="relu", input_shape=(32, 32, 1)
+                filters=4,
+                kernel_size=(3, 3),
+                activation="relu",
+                input_shape=(32, 32, 1),
             ),
             keras.layers.Flatten(),
             keras.layers.Dense(generator.num_classes, activation="softmax"),
@@ -144,8 +148,6 @@ def train_tf(generator):
             batch_size=generator.batch_size,
             verbose=2,
         )
-
-
 
 
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
@@ -170,7 +172,7 @@ def test_tf_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
-                dynamic=False,  # cover error message
+                dynamic=False,  # catch wrong arg
             )
             train_tf(tf_dynamic)
             assert len(tf_dynamic) == 4
@@ -184,7 +186,7 @@ def test_tf_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
-                dynamic=True,  # cover error message
+                dynamic=True,  # catch wrong arg
             )
             train_tf(tf_static)
             assert len(tf_static) == 4
@@ -221,18 +223,15 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
-                dynamic=False,  # cover error message
-                init_samples=True,  # cover error message
+                dynamic=False,  # catch wrong arg
+                init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_dynamic, rank, dynamic=True)
-            dl = DataLoader(torch_dynamic, batch_size=None, num_workers=1)
-            try:
+            dl = DataLoader(torch_dynamic, batch_size=None, num_workers=2)
+            for _ in range(2):
                 for _ in dl:
-                    break
-            except RuntimeError:
-                # This is not our fault and never happens
-                # outside tests. Possible thread memory failure.
-                print("Torch thread failed")
+                    continue
+
         for rank in range(2):
             torch_static = TorchStaticDataGenerator(
                 data_info_or_list_name=data_info,
@@ -242,18 +241,14 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 replica_rank=rank,
                 batch_size=4,
                 max_fetch_trials=5,
-                dynamic=True,  # cover error message
-                init_samples=True,  # cover error message
+                dynamic=True,  # catch wrong arg
+                init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_static, rank, dynamic=False)
-            dl = DataLoader(torch_static, batch_size=None, num_workers=1)
-            try:
+            dl = DataLoader(torch_static, batch_size=None, num_workers=2)
+            for _ in range(2):
                 for _ in dl:
-                    break
-            except RuntimeError:
-                # This is not our fault and never happens
-                # outside tests. Possible thread memory failure.
-                print("Torch thread failed")
+                    continue
 
     except Exception as e:
         raise e
@@ -302,7 +297,6 @@ def test_wrong_dataloaders(fileutils, wlmutils):
     exp.generate(orc)
     exp.start(orc)
 
-
     if shouldrun_tf:
         with pytest.raises(SSInternalError):
             _ = TFDataGenerator(
@@ -327,6 +321,5 @@ def test_wrong_dataloaders(fileutils, wlmutils):
                 cluster=False,
             )
             torch_data_gen.init_samples(init_trials=1)
-
 
     exp.stop(orc)

@@ -294,8 +294,6 @@ class DataDownloader:
         init_samples=True,
         max_fetch_trials=-1,
     ):
-        self.replica_rank = replica_rank
-        self.num_replicas = num_replicas
         self.address = address
         self.cluster = cluster
         self.verbose = verbose
@@ -318,7 +316,7 @@ class DataDownloader:
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
-        self.next_indices = [self.replica_rank] * len(self.uploader_keys)
+        self.set_replica_parameters(replica_rank, num_replicas)
 
         if init_samples:
             self.init_samples(max_fetch_trials)
@@ -326,6 +324,11 @@ class DataDownloader:
     def log(self, message):
         if self.verbose:
             logger.info(message)
+
+    def set_replica_parameters(self, replica_rank, num_replicas):
+        self.replica_rank = replica_rank
+        self.num_replicas = num_replicas
+        self.next_indices = [self.replica_rank] * max(1, len(self.uploader_keys))
 
     @property
     def autoencoding(self):
@@ -373,8 +376,7 @@ class DataDownloader:
             index * self.batch_size : (index + 1) * self.batch_size
         ]
         yield from (
-            self._data_generation(_calc_indices(idx))
-            for idx in range(len(self))
+            self._data_generation(_calc_indices(idx)) for idx in range(len(self))
         )
 
     def init_samples(self, init_trials=-1):
