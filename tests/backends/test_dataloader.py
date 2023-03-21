@@ -233,7 +233,6 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 batch_size=None,
                 num_workers=0,
                 timeout=15,
-                prefetch_factor=1,
             )
             for _ in range(2):
                 for _ in dl:
@@ -258,7 +257,6 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 batch_size=None,
                 num_workers=0,
                 timeout=15,
-                prefetch_factor=1,
             )
             for _ in range(2):
                 for _ in dl:
