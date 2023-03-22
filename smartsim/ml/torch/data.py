@@ -125,7 +125,7 @@ class DynamicDataGenerator(_TorchDataGenerationCommon):
             )
 
 
-class DataLoader(torch.utils.data.DataLoader):
+class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     """DataLoader to be used as a wrapper of StaticDataGenerator or DynamicDataGenerator
 
     This is just a sub-class of ``torch.utils.data.DataLoader`` which
