@@ -178,11 +178,6 @@ class Build:
                 # REDIS/KeyDB
                 self.build_database()
 
-                if self.verbose:
-                    logger.info("Version Information:")
-                    vers = self.versions.as_dict()
-                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
-
                 # REDISAI
                 self.build_redis_ai(
                     str(args.device),
@@ -227,23 +222,17 @@ class Build:
     ):
 
         # make sure user isn't trying to do something silly on MacOS
-        if self.build_env.PLATFORM == "darwin":
-            if device == "gpu":
-                logger.error("SmartSim does not support GPU on MacOS")
-                sys.exit(1)
-            if onnx and self.versions.REDISAI < "1.2.6":
-                logger.error("RedisAI < 1.2.6 does not support ONNX on MacOS")
-                sys.exit(1)
-            if self.versions.REDISAI == "1.2.4" or self.versions.REDISAI == "1.2.5":
-                logger.error("RedisAI support for MacOS is broken in 1.2.4 and 1.2.5")
-                sys.exit(1)
+        if self.build_env.PLATFORM == "darwin" and device == "gpu":
+            raise BuildError("SmartSim does not support GPU on MacOS")
 
         # decide which runtimes to build
         print("\nML Backends Requested")
-        print("-----------------------")
-        print(f"    PyTorch {self.versions.TORCH}: {color_bool(torch)}")
-        print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
-        print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
+        backends_table = [
+            ["PyTorch", self.versions.TORCH, color_bool(torch)],
+            ["TensorFlow", self.versions.TENSORFLOW, color_bool(tf)],
+            ["ONNX", self.versions.ONNX or "Unavailable", color_bool(onnx)],
+        ]
+        print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
         self.check_backends_install()
@@ -257,7 +246,6 @@ class Build:
         if tf:
             self.check_tf_install()
 
-        cmd = []
         # TORCH
         if torch:
             if torch_dir:
@@ -367,6 +355,17 @@ class Build:
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
+        if not self.versions.ONNX:
+            py_version = sys.version_info
+            msg = (
+                "An onnx wheel is not available for "
+                f"Python {py_version.major}.{py_version.minor}. "
+                "Instead consider using Python 3.8 or 3.9 with Onnx "
+            )
+            if sys.platform == "linux":
+                msg += "1.2.5 or "
+            msg += "1.2.7."
+            raise SetupError(msg)
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (

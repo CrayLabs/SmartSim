@@ -25,6 +25,7 @@ Description
 - Drop support for Ray
 - Allow for models to be launched independently as batch jobs
 - Update to current version of Redis
+- Add support for Python 3.10, deprecate support for Python 3.7 and RedisAI 1.2.3
 - Fix bug in colocated database entrypoint when loading PyTorch models
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
 
@@ -34,17 +35,23 @@ Detailed Notes
   We plan to release a separate add-on library to accomplish the same results. If
   you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us! (PR263_)
 - Update from Redis version 6.0.8 to 7.0.5. (PR258_)
+- Adds support for Python 3.10 without the ONNX machine learning backend. Deprecates support for
+  Python 3.7 as it will stop receiving security updates. Deprecates support for RedisAI 1.2.3.
+  Update the build process to be able to correctly fetch supported dependencies. If a user
+  attempts to build an unsupported dependency, an error message is shown highlighting the
+  discrepancy. (PR256_)
 - Models were given a `batch_settings` attribute. When launching a model through `Experiment.start`
   the `Experiment` will first check for a non-nullish value at that attribute. If the check is
   satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
   the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
   is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
 - Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
-- The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
-- Make installation of correct Torch backend more reliable according to instruction from pyTorch
+- The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (PR234_)
+- Make installation of correct Torch backend more reliable according to instruction from PyTorch
 
 .. _PR263: https://github.com/CrayLabs/SmartSim/pull/263
 .. _PR258: https://github.com/CrayLabs/SmartSim/pull/258
+.. _PR256: https://github.com/CrayLabs/SmartSim/pull/256
 .. _PR245: https://github.com/CrayLabs/SmartSim/pull/245
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
