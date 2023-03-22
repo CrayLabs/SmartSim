@@ -16,6 +16,8 @@
 </div>
 
 
+<div align="center">
+
 [![License](https://img.shields.io/github/license/CrayLabs/SmartSim)](https://github.com/CrayLabs/SmartSim/blob/master/LICENSE.md)
 ![GitHub last commit](https://img.shields.io/github/last-commit/CrayLabs/SmartSim)
 ![GitHub deployments](https://img.shields.io/github/deployments/CrayLabs/SmartSim/github-pages?label=doc%20build)
@@ -26,6 +28,8 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![codecov](https://codecov.io/gh/CrayLabs/SmartSim/branch/develop/graph/badge.svg?token=96HFI2F45E)](https://codecov.io/gh/CrayLabs/SmartSim)
 [![Downloads](https://static.pepy.tech/personalized-badge/smartsim?period=total&units=international_system&left_color=grey&right_color=orange&left_text=Downloads)](https://pepy.tech/project/smartsim)
+
+</div>
 
 ------------
 
@@ -633,17 +637,17 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
   </thead>
   <tbody style="text-align:center">
     <tr>
-      <td rowspan="3">1.2.3-1.2.4</td>
+      <td rowspan="3">1.2.7</td>
       <td>PyTorch</td>
-      <td>1.7.x</td>
+      <td>1.11.x</td>
     </tr>
     <tr>
       <td>TensorFlow\Keras</td>
-      <td>2.4.x-2.5.x</td>
+      <td>2.8.x</td>
     </tr>
     <tr>
       <td>ONNX</td>
-      <td>1.9.x</td>
+      <td>1.11.x</td>
     </tr>
       <td rowspan="3">1.2.5</td>
       <td>PyTorch</td>

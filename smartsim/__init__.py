@@ -29,8 +29,8 @@ import sys
 # -*- coding: utf-8 -*-
 from .version import __version__ as __version__
 
-if sys.version_info < (3, 7):  # pragma: no cover
-    sys.exit("Python 3.7 or greater must be used with SmartSim.")
+if sys.version_info < (3, 8):  # pragma: no cover
+    sys.exit("Python 3.8 or greater must be used with SmartSim.")
 
 # Main API module
 from .experiment import Experiment
