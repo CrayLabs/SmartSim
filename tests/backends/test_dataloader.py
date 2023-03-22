@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from os import path as osp
 import os
 
 import numpy as np
@@ -32,6 +33,7 @@ import pytest
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
+from smartsim.status import STATUS_COMPLETED
 from smartsim.ml.data import DataInfo, TrainingDataUploader
 
 shouldrun_tf = True
@@ -201,11 +203,28 @@ def test_tf_dataloaders(fileutils, wlmutils):
         os.environ.pop("SSKEYOUT", "")
 
 
+def create_trainer_torch(experiment: Experiment, filedir):
+    run_settings = experiment.create_run_settings(
+        exe="python",
+        exe_args=["training_service_torch.py"],
+        env_vars={"PYTHONUNBUFFERED": "1"},
+    )
+
+    trainer = experiment.create_model("trainer", run_settings=run_settings)
+
+    trainer.attach_generator_files(
+        to_copy=[osp.join(filedir, "training_service_torch.py")]
+    )
+    experiment.generate(trainer, overwrite=True)
+    return trainer
+
+
 @pytest.mark.skipif(not shouldrun_torch, reason="Test needs Torch to run")
 def test_torch_dataloaders(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir()
-    exp = Experiment("test_tf_dataloaders", test_dir)
+    exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
     orc: Orchestrator = wlmutils.get_orchestrator()
+    config_dir = fileutils.get_test_dir_path("ml")
     exp.generate(orc)
     exp.start(orc)
 
@@ -227,14 +246,10 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_dynamic, rank, dynamic=True)
-            dl = DataLoader(
-                torch_dynamic,
-                batch_size=None,
-                num_workers=1,
-                timeout=30,
-            )
+
+            torch_dynamic.init_samples(5)
             for _ in range(2):
-                for _ in dl:
+                for _ in torch_dynamic:
                     continue
 
         for rank in range(2):
@@ -250,15 +265,16 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_static, rank, dynamic=False)
-            dl = DataLoader(
-                torch_static,
-                batch_size=None,
-                num_workers=1,
-                timeout=30,
-            )
+
+            torch_static.init_samples(5)
             for _ in range(2):
-                for _ in dl:
+                for _ in torch_static:
                     continue
+        
+        trainer = create_trainer_torch(exp, config_dir)
+        exp.start(trainer, block=True)
+        
+        assert exp.get_status(trainer)[0] == STATUS_COMPLETED
 
     except Exception as e:
         raise e
