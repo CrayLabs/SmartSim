@@ -227,12 +227,11 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_dynamic, rank, dynamic=True)
-            # Num workers!=0 causes problems in CI/CD
             dl = DataLoader(
                 torch_dynamic,
                 batch_size=None,
-                num_workers=0,
-                timeout=15,
+                num_workers=1,
+                timeout=30,
             )
             for _ in range(2):
                 for _ in dl:
@@ -251,12 +250,11 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 init_samples=True,  # catch wrong arg
             )
             check_dataloader(torch_static, rank, dynamic=False)
-            # Num workers!=0 causes problems in CI/CD
             dl = DataLoader(
                 torch_static,
                 batch_size=None,
-                num_workers=0,
-                timeout=15,
+                num_workers=1,
+                timeout=30,
             )
             for _ in range(2):
                 for _ in dl:

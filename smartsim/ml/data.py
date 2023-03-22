@@ -450,6 +450,9 @@ class DataDownloader:
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
     def _update_samples_and_targets(self):
+        if not self.client:
+            self.client = Client(self.address, self.cluster)
+            
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
         for uploader_idx, uploader_key in enumerate(self.uploader_keys):
