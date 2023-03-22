@@ -7,7 +7,7 @@ The following will show how to install both SmartSim and SmartRedis.
 .. note::
 
   For users on platforms with a 'site install' of SmartSim please follow
-  :ref:`these instructions <site install>`.
+  :ref:`Site Installation <site_installation>`.
 
 =============
 Prerequisites
@@ -41,8 +41,8 @@ GPU Support
 The machine-learning backends have additional requirements in order to
 take advantage of GPUs
 
-  - CUDA Toolkit 11 (11.4 recommended) `Instructions <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
-  - cuDNN 8 (tested with 8.2.1 and 8.4.0): `Instructions <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
+  - `CUDA Toolkit 11 (11.4 recommended) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
+  - `cuDNN 8 (tested with 8.2.1 and 8.4.0) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
   - OS: Linux
   - GPU: Nvidia
 
@@ -167,12 +167,8 @@ can request their installation through the ``ml`` flag as follows:
 
     # For bash
     pip install smartsim[ml]
-    # add ray extra if you would like to use ray with SmartSim as well
-    pip install smartsim[ml,ray]
     # or if using ZSH
     pip install smartsim\[ml\]
-    pip install smartsim\[ml,ray\]
-
 
 At this point, SmartSim is installed and can be used for more basic features.
 If you want to use the machine learning features of SmartSim, you will need

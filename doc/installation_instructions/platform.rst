@@ -6,6 +6,8 @@ Installation on specific platforms
 The following describes installation details for various systems and platforms
 that SmartSim may be used on.
 
+.. _site_installation:
+
 .. include:: site-install.rst
 
 .. include:: platform/generic.rst

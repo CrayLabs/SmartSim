@@ -122,6 +122,7 @@ to be set.
 A full example on an internal SLURM system
 
 .. code:: bash
+
   salloc -N 3 -A account --exclusive -t 03:00:00
   export SMARTSIM_TEST_LAUNCHER=slurm
   export SMARTSIM_TEST_INTERFACE=ipogif0
@@ -184,6 +185,7 @@ testing. To download SmartRedis related testing dependencies, run
 the following:
 
 .. code:: bash
+
   make test-deps
   # or to run tests on GPU hardware:
   make test-deps-gpu
@@ -207,6 +209,7 @@ After installing dependencies and setting up your testing environment with
 ``setup_test_env.sh``, all tests can be built with the following command:
 
 .. code:: bash
+
   ./setup_test_env.sh
   make build-tests
 
@@ -243,6 +246,7 @@ To build and run all tests, run the following command in the top
 level of the smartredis repository.
 
 .. code:: bash
+
   make test
 
 You can also run tests for individual clients as follows::
@@ -263,6 +267,7 @@ Tearing down the Test Environment
 To stop Redis, use the following commands
 
 .. code:: bash
+
   cd utils/create_cluster
   python local_cluster.py --stop # stop the Redis cluster
 
