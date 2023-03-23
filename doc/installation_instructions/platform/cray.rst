@@ -16,6 +16,8 @@ if these instructions do not work).
 
     export CRAYPE_LINK_TYPE=dynamic
 
-Users should then proceed with their preferred way of installing SmartSim either
-:ref:`from PyPI <from-pypi>` or :ref:`from source <from-source>`.
+This should provide all the dependencies needed to build the GPU backends for
+the ML bakcends. Users can thus proceed with their preferred way of installing
+SmartSim either :ref:`from PyPI <from-pypi>` or :ref:`from source
+<from-source>`.
 

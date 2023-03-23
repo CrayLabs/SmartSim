@@ -39,7 +39,7 @@ GPU Support
 ===========
 
 The machine-learning backends have additional requirements in order to
-take advantage of GPUs
+use GPUs for inference
 
   - `CUDA Toolkit 11 (11.4 recommended) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
   - `cuDNN 8 (tested with 8.2.1 and 8.4.0) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
@@ -116,7 +116,7 @@ MacOS-only
 ==========
 
 We recommend users and contributors install brew_ for managing installed
-packages.  For contributors, the following brew packages can be helpful
+packages.  For contributors, the following brew packages can be helpful:
 
 - openmpi_ for building and running parallel SmartRedis examples
 - doxygen_ for building the documention
@@ -128,9 +128,9 @@ packages.  For contributors, the following brew packages can be helpful
 .. _cmake: https://formulae.brew.sh/formula/cmake#default
 
 For Mac OS users, the version of ``make`` that comes with the Mac command line
-tools is often 3.81 which needs to be updated to install SmartSim. Users can
+tools is often 3.81 which needs to be updated to install SmartSim. Users can run
 ``brew install make`` to get ``make`` > 4.0 but brew will install it as
-``gmake``. An easy way around this is to do ``alias make=gmake``.
+``gmake``. An easy way around this is to run ``alias make=gmake``.
 
 .. _from-pypi:
 
@@ -153,7 +153,7 @@ We first recommend creating a new virtual environment:
     python -m venv /path/to/new/environment
     source /path/to/new/environment/bin/activate
 
-and install SmartSim from PyPI with the following command
+and install SmartSim from PyPI with the following command:
 
 .. code-block:: bash
 
@@ -226,7 +226,7 @@ to building SmartSim with GPU support is to specify a different ``device``
 
   GPU builds can be troublesome due to the way that RedisAI and the ML-package
   backends look for the CUDA Toolkit and cuDNN libraries. Please see the
-  :ref::platform: section for guidance.
+  :ref:`Platform Installation Section <install-notes>` section for guidance.
 
 ==========
 SmartRedis

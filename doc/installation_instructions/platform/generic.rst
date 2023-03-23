@@ -27,7 +27,7 @@ Unlike SmartRedis, we *strongly* encourage users to only use the GNU compiler
 chain to build the SmartSim dependencies. Notably, RedisAI has some coding
 conventions that prevent the use of Intel compiler chain. If a specific
 compiler should be used (e.g. the Cray Programming Environment wrappers),
-the following environment variables will control the C and C++ compilers
+the following environment variables will control the C and C++ compilers:
 
 - ``CC``: Path to the C compiler
 - ``CXX``: Path the C++ compiler

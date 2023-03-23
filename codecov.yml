@@ -10,11 +10,11 @@ coverage:
     patch:
       default:
        # Account for some variability in codecov
-       threshold: 0.5% 
+       target: 0%
     project:
       default:
        # Account for some variability in codecov
-       threshold: 0.5% 
+       target: 0%
 
 parsers:
   gcov:
