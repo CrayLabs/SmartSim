@@ -7,11 +7,12 @@
    versions
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Getting Started
 
    overview
-   installation
+   installation_instructions/basic
+   installation_instructions/platform
    community
    contributing_examples
 
@@ -54,6 +55,7 @@
    changelog
    code_of_conduct
    developer
+   testing
 
 
 Indices and tables
