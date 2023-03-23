@@ -47,40 +47,21 @@ class Net(nn.Module):
         return output
 
 
-def check_dataloader(dl):
-    assert dl.uploader_name == "test_data"
-    assert dl.sample_prefix == "test_samples"
-    assert dl.target_prefix == "test_targets"
-    assert dl.uploader_info == "auto"
-    assert dl.num_classes == 2
-    assert dl.producer_prefixes == ["test_uploader"]
-    assert dl.sub_indices == ["0", "1"]
-    assert dl.verbose == True
-    assert dl.replica_rank == 0
-    assert dl.num_replicas == 1
-    assert dl.address == None
-    assert dl.cluster == False
-    assert dl.shuffle == True
-    assert dl.batch_size == 4
-
-
 # This test should run without error, but no explicit
 # assertion is performed
 if __name__ == "__main__":
     torch.multiprocessing.set_start_method("spawn")
 
     training_set = DynamicDataGenerator(
+        data_info_or_list_name="test_data_list",
         cluster=False,
-        shuffle=True,
-        batch_size=4,
-        init_samples=False,
         verbose=True,
-        uploader_name="test_data",
+        batch_size=4,
+        max_fetch_trials=5,
     )
 
     trainloader = DataLoader(training_set, batch_size=None, num_workers=2)
 
-    check_dataloader(training_set)
     model = Net(num_classes=training_set.num_classes).double()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)

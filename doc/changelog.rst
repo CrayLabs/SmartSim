@@ -22,6 +22,7 @@ This section details changes made in the development branch that have not yet be
 
 Description
 
+- Update ML data loaders to make use of SmartRedis's aggregation lists
 - Drop support for Ray
 - Allow for models to be launched independently as batch jobs
 - Update to current version of Redis
@@ -31,6 +32,7 @@ Description
 
 Detailed Notes
 
+- The PyTorch and TensorFlow data loaders were update to make use of aggregation lists. This breaks their API, but makes them easier to use. (PR264_)
 - The support for Ray was dropped, as its most recent versions caused problems when deployed through SmartSim.
   We plan to release a separate add-on library to accomplish the same results. If
   you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us! (PR263_)
@@ -49,6 +51,7 @@ Detailed Notes
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (PR234_)
 - Make installation of correct Torch backend more reliable according to instruction from PyTorch
 
+.. _PR264: https://github.com/CrayLabs/SmartSim/pull/264
 .. _PR263: https://github.com/CrayLabs/SmartSim/pull/263
 .. _PR258: https://github.com/CrayLabs/SmartSim/pull/258
 .. _PR256: https://github.com/CrayLabs/SmartSim/pull/256

@@ -290,7 +290,6 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
 
