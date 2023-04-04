@@ -26,6 +26,7 @@
 
 
 import pytest
+
 from smartsim.settings import BsubBatchSettings, QsubBatchSettings, SbatchSettings
 from smartsim.settings.settings import create_batch_settings
 
@@ -87,12 +88,12 @@ def test_create_bsub():
 
 
 @pytest.mark.parametrize(
-    "batch_args", 
+    "batch_args",
     [
         pytest.param({"core_isolation": None}, id="null batch arg"),
         pytest.param({"core_isolation": "abc"}, id="valued batch arg"),
         pytest.param({"core_isolation": None, "xyz": "pqr"}, id="multi batch arg"),
-    ]
+    ],
 )
 def test_stringification(batch_args):
     """Ensure stringification includes expected fields"""
@@ -136,4 +137,3 @@ def test_preamble():
 
     bsub.add_preamble(["first line", "last line"])
     assert len(bsub._preamble) == 4
-    

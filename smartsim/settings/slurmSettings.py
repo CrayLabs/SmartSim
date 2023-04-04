@@ -29,9 +29,8 @@ import os
 from typing import List, Tuple
 
 from ..error import SSUnsupportedError
-from .base import BatchSettings, RunSettings
-
 from ..log import get_logger
+from .base import BatchSettings, RunSettings
 
 logger = get_logger(__name__)
 
@@ -288,12 +287,12 @@ class SrunSettings(RunSettings):
         Given Slurm's env var precedence, trying to export a variable which is already
         present in the environment will not work.
         """
-        for k,v in self.env_vars.items():
+        for k, v in self.env_vars.items():
             if "," not in str(v):
                 # If a variable is defined, it will take precedence over --export
                 # we warn the user
                 preexisting_var = os.environ.get(k, None)
-                if preexisting_var:
+                if preexisting_var is not None:
                     msg = f"Variable {k} is set to {preexisting_var} in current environment. "
                     msg += f"If the job is running in an interactive allocation, the value {v} will not be set. "
                     msg += "Please consider removing the variable from the environment and re-run the experiment."
@@ -307,7 +306,7 @@ class SrunSettings(RunSettings):
         """
         self.check_env_vars()
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
-    
+
     def format_comma_sep_env_vars(self) -> Tuple[str, List[str]]:
         """Build environment variable string for Slurm
 

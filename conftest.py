@@ -412,11 +412,10 @@ def db_cluster(fileutils, wlmutils, request):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def environment_cleanup():
-    os.environ.pop("SSDB", "")
-    os.environ.pop("SSKEYIN", "")
-    os.environ.pop("SSKEYOUT", "")
-
+def environment_cleanup(monkeypatch):
+    monkeypatch.delenv("SSDB", raising=False)
+    monkeypatch.delenv("SSKEYIN", raising=False)
+    monkeypatch.delenv("SSKEYOUT", raising=False)
 
 @pytest.fixture
 def dbutils():

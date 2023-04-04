@@ -26,6 +26,7 @@
 
 import logging
 import os
+
 import pytest
 
 from smartsim.error import SSUnsupportedError
@@ -210,7 +211,7 @@ def test_mpmd_non_compound_no_exports():
     srun = SrunSettings("printenv")
     srun.in_batch = True
     srun.alloc = 12345
-    srun.env_vars = {} 
+    srun.env_vars = {}
     srun_2 = SrunSettings("printenv")
     srun_2.env_vars = {}
     srun.make_mpmd(srun_2)
@@ -247,15 +248,15 @@ def test_format_env_vars():
     assert all("SSKEYIN" not in x for x in formatted)
 
 
-def test_catch_existing_env_var(caplog):
+def test_catch_existing_env_var(caplog, monkeypatch):
     rs = SrunSettings(
         "python",
         env_vars={
             "SMARTSIM_TEST_VAR": "B",
         },
     )
-    os.environ["SMARTSIM_TEST_VAR"] = "A"
-    os.environ["SMARTSIM_TEST_CSVAR"] = "A,B"
+    monkeypatch.setenv("SMARTSIM_TEST_VAR", "A")
+    monkeypatch.setenv("SMARTSIM_TEST_CSVAR", "A,B")
     caplog.clear()
     rs.format_env_vars()
 
@@ -276,9 +277,6 @@ def test_catch_existing_env_var(caplog):
     for record in caplog.records:
         assert record.levelname == "WARNING"
         assert record.message == msg
-
-    os.environ.pop("SMARTSIM_TEST_VAR", None)
-    os.environ.pop("SMARTSIM_TEST_CSVAR", None)
 
 
 def test_format_comma_sep_env_vars():
