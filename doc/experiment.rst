@@ -3,14 +3,14 @@
 Experiments
 ***********
 
-The Experiment acts as both a factory class for constructing the
-stages of an experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc.)
-as well as an interface to interact with the entities created by the experiment.
+The Experiment acts as both a factory class for constructing the stages of an
+experiment (``Model``, ``Ensemble``, ``Orchestrator``, etc.) as well as an
+interface to interact with the entities created by the experiment.
 
-Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a Jupyter notebook,
-interactive python session, or Python file and use the ``Experiment`` to
-iteratively create, configure and launch computational kernels on the
-system through the specified launcher.
+Users can initialize an :ref:`Experiment <experiment_api>` at the beginning of a
+Jupyter notebook, interactive python session, or Python file and use the
+``Experiment`` to iteratively create, configure and launch computational kernels
+on the system through the specified launcher.
 
 .. |SmartSim Architecture| image:: images/ss-arch-overview.png
   :width: 700
@@ -19,21 +19,21 @@ system through the specified launcher.
 |SmartSim Architecture|
 
 
-The interface was designed to be simple, with as little complexity
-as possible, and agnostic to the backend launching mechanism (local,
-Slurm, PBSPro, etc.).
+The interface was designed to be simple, with as little complexity as possible,
+and agnostic to the backend launching mechanism (local, Slurm, PBSPro, etc.).
 
 Model
 =====
 
 ``Model(s)`` are subclasses of ``SmartSimEntity(s)`` and are created through the
-Experiment API. Models represent any computational kernel. Models are flexible enough
-to support many different applications, however, to be used with our clients
-(SmartRedis) the application will have to be written in Python, C, C++, or Fortran.
+Experiment API. Models represent any computational kernel. Models are flexible
+enough to support many different applications, however, to be used with our
+clients (SmartRedis) the application will have to be written in Python, C, C++,
+or Fortran.
 
-Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel should
-be executed with regard to the workload manager (e.g. Slurm) and the available
-compute resources on the system.
+Models are given :ref:`RunSettings <rs-api>` objects that specify how a kernel
+should be executed with regard to the workload manager (e.g. Slurm) and the
+available compute resources on the system.
 
 Each launcher supports specific types of ``RunSettings``.
 
@@ -45,7 +45,8 @@ Each launcher supports specific types of ``RunSettings``.
 These settings can be manually specified by the user, or auto-detected by the
 SmartSim Experiment through the ``Experiment.create_run_settings`` method.
 
-A simple example of using the Experiment API to create a model and run it locally:
+A simple example of using the Experiment API to create a model and run it
+locally:
 
 .. code-block:: Python
 
@@ -83,9 +84,9 @@ For example with Slurm
 
   print(exp.get_status(model))
 
-The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor it's execution,
-and inform the user when it is completed. This driver script can be executed in
-an interactive allocation, or placed into a batch script as follows:
+The above will run ``srun -n 32 -N 1 echo Hello World!``, monitor its
+execution, and inform the user when it is completed. This driver script can be
+executed in an interactive allocation, or placed into a batch script as follows:
 
 .. code-block:: bash
 
@@ -108,8 +109,8 @@ An ``Ensemble`` can be constructed in three ways:
   2. Replica creation (by specifying ``replicas`` argument)
   3. Manually (by adding created ``Model`` objects) if launching as a batch job
 
-Ensembles can be given parameters and permutation strategies that
-define how the ``Ensemble`` will create the underlying model objects.
+Ensembles can be given parameters and permutation strategies that define how the
+``Ensemble`` will create the underlying model objects.
 
 Three strategies are built in:
   1. ``all_perm``: for generating all permutations of model parameters
@@ -117,9 +118,9 @@ Three strategies are built in:
   3. ``random``: for random selection from predefined parameter spaces
 
 Here is an example that uses the ``random`` strategy to intialize four models
-with random parameters within a set range. We use the ``params_as_args``
-field to specify that the randomly selected learning rate parameter should
-be passed to the created models as a executable argument.
+with random parameters within a set range. We use the ``params_as_args`` field
+to specify that the randomly selected learning rate parameter should be passed
+to the created models as a executable argument.
 
 .. code-block:: bash
 
@@ -145,11 +146,11 @@ be passed to the created models as a executable argument.
   exp.start(ensemble, summary=True)
 
 
-A callable function can also be supplied for custom permutation strategies.
-The function should take two arguments: a list of parameter names, and a list of lists
-of potential parameter values. The function should return a list of dictionaries that
-will be supplied as model parameters. The length of the list returned will determine
-how many ``Model`` instances are created.
+A callable function can also be supplied for custom permutation strategies.  The
+function should take two arguments: a list of parameter names, and a list of
+lists of potential parameter values. The function should return a list of
+dictionaries that will be supplied as model parameters. The length of the list
+returned will determine how many ``Model`` instances are created.
 
 For example, the following is the built-in strategy ``all_perm``:
 

@@ -276,7 +276,7 @@ Released on May 5, 2021
 
 Description:
 This release was dedicated to making the install process
-easier. SmartSim can be installed from PyPi now and the
+easier. SmartSim can be installed from PyPI now and the
 ``smart`` cli tool makes installing the machine learning
 runtimes much easier.
 
