@@ -155,7 +155,7 @@ def train_tf(generator):
 @pytest.mark.skipif(not shouldrun_tf, reason="Test needs TensorFlow to run")
 def test_tf_dataloaders(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir()
-    exp = Experiment("test_tf_dataloaders", test_dir)
+    exp = Experiment("test_tf_dataloaders", test_dir, launcher=wlmutils.get_test_launcher())
     orc: Orchestrator = wlmutils.get_orchestrator()
     exp.generate(orc)
     exp.start(orc)
@@ -318,7 +318,7 @@ def test_data_info_repr():
 )
 def test_wrong_dataloaders(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir()
-    exp = Experiment("test-wrong-dataloaders", exp_path=test_dir)
+    exp = Experiment("test-wrong-dataloaders", exp_path=test_dir, launcher=wlmutils.get_test_launcher())
     orc = wlmutils.get_orchestrator()
     exp.generate(orc)
     exp.start(orc)

@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+import os
+
 import pytest
 
 from smartsim.error import SSUnsupportedError
@@ -208,7 +211,7 @@ def test_mpmd_non_compound_no_exports():
     srun = SrunSettings("printenv")
     srun.in_batch = True
     srun.alloc = 12345
-    srun.env_vars = {} 
+    srun.env_vars = {}
     srun_2 = SrunSettings("printenv")
     srun_2.env_vars = {}
     srun.make_mpmd(srun_2)
@@ -243,6 +246,37 @@ def test_format_env_vars():
     assert "OMP_NUM_THREADS=20" in formatted
     assert "LOGGING=verbose" in formatted
     assert all("SSKEYIN" not in x for x in formatted)
+
+
+def test_catch_existing_env_var(caplog, monkeypatch):
+    rs = SrunSettings(
+        "python",
+        env_vars={
+            "SMARTSIM_TEST_VAR": "B",
+        },
+    )
+    monkeypatch.setenv("SMARTSIM_TEST_VAR", "A")
+    monkeypatch.setenv("SMARTSIM_TEST_CSVAR", "A,B")
+    caplog.clear()
+    rs.format_env_vars()
+
+    msg = f"Variable SMARTSIM_TEST_VAR is set to A in current environment. "
+    msg += f"If the job is running in an interactive allocation, the value B will not be set. "
+    msg += "Please consider removing the variable from the environment and re-running the experiment."
+
+    for record in caplog.records:
+        assert record.levelname == "WARNING"
+        assert record.message == msg
+
+    caplog.clear()
+
+    env_vars = {"SMARTSIM_TEST_VAR": "B", "SMARTSIM_TEST_CSVAR": "C,D"}
+    settings = SrunSettings("python", env_vars=env_vars)
+    settings.format_comma_sep_env_vars()
+
+    for record in caplog.records:
+        assert record.levelname == "WARNING"
+        assert record.message == msg
 
 
 def test_format_comma_sep_env_vars():

@@ -25,10 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import os
 from typing import List, Tuple
 
 from ..error import SSUnsupportedError
+from ..log import get_logger
 from .base import BatchSettings, RunSettings
+
+logger = get_logger(__name__)
 
 
 class SrunSettings(RunSettings):
@@ -277,12 +281,30 @@ class SrunSettings(RunSettings):
                     opts += ["=".join((prefix + opt, str(value)))]
         return opts
 
+    def check_env_vars(self):
+        """Warn a user trying to set a variable which is set in the environment
+
+        Given Slurm's env var precedence, trying to export a variable which is already
+        present in the environment will not work.
+        """
+        for k, v in self.env_vars.items():
+            if "," not in str(v):
+                # If a variable is defined, it will take precedence over --export
+                # we warn the user
+                preexisting_var = os.environ.get(k, None)
+                if preexisting_var is not None:
+                    msg = f"Variable {k} is set to {preexisting_var} in current environment. "
+                    msg += f"If the job is running in an interactive allocation, the value {v} will not be set. "
+                    msg += "Please consider removing the variable from the environment and re-run the experiment."
+                    logger.warning(msg)
+
     def format_env_vars(self):
         """Build bash compatible environment variable string for Slurm
 
         :returns: the formatted string of environment variables
         :rtype: list[str]
         """
+        self.check_env_vars()
         return [f"{k}={v}" for k, v in self.env_vars.items() if "," not in str(v)]
 
     def format_comma_sep_env_vars(self) -> Tuple[str, List[str]]:
@@ -295,7 +317,7 @@ class SrunSettings(RunSettings):
         :returns: the formatted string of environment variables
         :rtype: tuple[str, list[str]]
         """
-
+        self.check_env_vars()
         exportable_env, compound_env, key_only = [], [], []
 
         for k, v in self.env_vars.items():
