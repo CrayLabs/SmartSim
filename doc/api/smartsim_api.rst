@@ -429,6 +429,8 @@ Model
    Model.__init__
    Model.attach_generator_files
    Model.colocate_db
+   Model.colocate_db_tcp
+   Model.colocate_db_uds
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing
