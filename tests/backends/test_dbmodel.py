@@ -123,6 +123,7 @@ try:
             output = F.log_softmax(x, dim=1)
             return output
 
+
 except Exception:
     should_run_pt = False
 

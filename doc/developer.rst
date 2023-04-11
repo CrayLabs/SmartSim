@@ -6,18 +6,62 @@ Developer
 This section details common practices and tips for contributors
 to SmartSim and SmartRedis.
 
+==========================
+Building the Documentation
+==========================
+
+Users can optionally build documentation of SmartSim through ``make docs`` or
+``make docks``.  ``make docs`` requires the user to install the documentation
+build dependencies, whereas ``make docks`` only requires docker. ``make docks``
+is the recommended method for building the documentation locally, due to ease of
+use.
+
+With docker
+===========
+
+.. note::
+
+  To build the full documentation with ``make docks``, users need to install
+  `docker <https://docs.docker.com/desktop/>`_ so that ``docker`` is available
+  on the command line.
+
+.. code-block:: bash
+
+  # From top level smartsim git repository directory
+  make docks
+
+Once the documentation has successfully built, users can open the main documents
+page from ``docs/develop/index.html``.
+
+Without docker
+==============
+
+.. note::
+
+  To build the full documentation via ``make docs``, users need to install
+  ``doxygen 1.9.1``. For Mac OS users, doxygen can be installed through ``brew
+  install doxygen``
+
+.. code-block:: bash
+
+  # From top level smartsim git repository directory
+  git clone https://github.com/CrayLabs/SmartRedis.git smartredis
+  make docs
+
+Once the documentation has successfully built, users can open the main documents
+page from ``doc/_build/html/index.html``
+
 ================
 Testing SmartSim
 ================
 
 .. note::
 
-    This section describes how to run the SmartSim (infrastructure library)
-    test suite. For testing SmartRedis, see below
+    This section describes how to run the SmartSim (infrastructure library) test
+    suite. For testing SmartRedis, see below
 
-SmartSim utilizes ``Pytest`` for running its test suite. In the
-top level of SmartSim, users can run multiple testing commands
-with the developer Makefile
+SmartSim utilizes ``Pytest`` for running its test suite. In the top level of
+SmartSim, users can run multiple testing commands with the developer Makefile
 
 .. code-block:: text
 
@@ -29,27 +73,26 @@ with the developer Makefile
 
 .. note::
 
-  For the test to run, you must have the ``requirements-dev.txt``
-  dependencies installed in your python environment.
+  For the test to run, you must have the ``requirements-dev.txt`` dependencies
+  installed in your python environment.
 
 
 Local
 =====
 
-There are two levels of testing in SmartSim. The first
-runs by default and does not launch any jobs out onto
-a system through a workload manager like Cobalt.
+There are two levels of testing in SmartSim. The first runs by default and does
+not launch any jobs out onto a system through a workload manager like Cobalt.
 
-If any of the above commands are used, the test suite will
-run the "light" test suite by default.
+If any of the above commands are used, the test suite will run the "light" test
+suite by default.
 
 
 PBSPro, Slurm, Cobalt, LSF
 ==========================
 
-To run the full test suite, users will have to be on a system
-with one of the above workload managers. Additionally, users will
-need to obtain an allocation of at least 3 nodes.
+To run the full test suite, users will have to be on a system with one of the
+above workload managers. Additionally, users will need to obtain an allocation
+of at least 3 nodes.
 
 .. code-block:: bash
 
@@ -63,13 +106,12 @@ need to obtain an allocation of at least 3 nodes.
   qsub -n 3 -t 00:10:00 -A account -q queue -I
 
   # for LSF (with jsrun)
-  bsub -Is -W 00:30 -nnodes 3 -P project $SHELL 
+  bsub -Is -W 00:30 -nnodes 3 -P project $SHELL
 
 Values for queue, account, or project should be substituted appropriately.
 
-Once in an iterative allocation, users will need to set the test
-launcher environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one
-of the following values
+Once in an iterative allocation, users will need to set the test launcher
+environment variable: ``SMARTSIM_TEST_LAUNCHER`` to one of the following values
 
  - slurm
  - cobalt
@@ -77,8 +119,8 @@ of the following values
  - lsf
  - local
 
-If tests have to run on an account or project, 
-the environment variable ``SMARTSIM_TEST_ACCOUNT`` can be set.
+If tests have to run on an account or project, the environment variable
+``SMARTSIM_TEST_ACCOUNT`` can be set.
 
 -------------------------------------------------------
 

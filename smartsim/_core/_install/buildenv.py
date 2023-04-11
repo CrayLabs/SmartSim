@@ -148,17 +148,6 @@ class RedisAIVersion(Version_):
     """
 
     defaults = {
-        "1.2.3": {
-            "tensorflow": "2.5.2",
-            "onnx": "1.9.0",
-            "skl2onnx": "1.10.3",
-            "onnxmltools": "1.10.0",
-            "scikit-learn": "1.0.2",
-            "torch": "1.7.1",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu110",
-            "torchvision": "0.8.2",
-        },
         "1.2.5": {
             "tensorflow": "2.6.2",
             "onnx": "1.9.0",
@@ -182,10 +171,23 @@ class RedisAIVersion(Version_):
             "torchvision": "0.12.0",
         },
     }
-    # deps are the same between the following versions
-    defaults["1.2.4"] = defaults["1.2.3"]
+    # Remove options with unsported wheels for python>=3.10
+    if sys.version_info >= (3, 10):
+        defaults.pop("1.2.5")
+        defaults["1.2.7"].pop("onnx")
+        defaults["1.2.7"].pop("skl2onnx")
+        defaults["1.2.7"].pop("onnxmltools")
+        defaults["1.2.7"].pop("scikit-learn")
+    # Remove incompatible RAI versions for OSX
+    if sys.platform == "darwin":
+        defaults.pop("1.2.5", None)
 
     def __init__(self, vers):
+        min_rai_version = min(Version_(ver) for ver in self.defaults)
+        if min_rai_version > vers:
+            raise SetupError(
+                f"RedisAI version must be greater than or equal to {min_rai_version}"
+            )
         if vers not in self.defaults:
             if vers.startswith("1.2"):
                 # resolve to latest version for 1.2.x
@@ -199,10 +201,20 @@ class RedisAIVersion(Version_):
             self.version = vers
 
     def __getattr__(self, name):
-        return self.defaults[self.version][name]
+        try:
+            return self.defaults[self.version][name]
+        except KeyError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
+                "This is likely a problem with the SmartSim build process;"
+                "if this problem persists please log a new issue at "
+                "https://github.com/CrayLabs/SmartSim/issues "
+                "or get in contact with us at "
+                "https://www.craylabs.org/docs/community.html"
+            ) from None
 
     def get_defaults(self):
-        return self.defaults[self.version]
+        return self.defaults[self.version].copy()
 
 
 class Versioner:
@@ -229,7 +241,7 @@ class Versioner:
     """
 
     # compatible Python version
-    PYTHON_MIN = Version_("3.7.0")
+    PYTHON_MIN = Version_("3.8.0")
 
     # Versions
     SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.4.1"))
@@ -260,7 +272,10 @@ class Versioner:
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
-    ONNX = Version_(REDISAI.onnx)
+    try:
+        ONNX = Version_(REDISAI.onnx)
+    except AttributeError:
+        ONNX = None
 
     def as_dict(self, db_name="REDIS"):
         packages = [
@@ -270,7 +285,6 @@ class Versioner:
             "REDISAI",
             "TORCH",
             "TENSORFLOW",
-            "ONNX",
         ]
         versions = [
             self.SMARTSIM,
@@ -279,8 +293,10 @@ class Versioner:
             self.REDISAI,
             self.TORCH,
             self.TENSORFLOW,
-            self.ONNX,
         ]
+        if self.ONNX:
+            packages.append("ONNX")
+            versions.append(self.ONNX)
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
@@ -516,7 +532,7 @@ class BuildEnv:
     def check_build_dependency(self, command):
         # TODO expand this to parse and check versions.
         try:
-            out = subprocess.check_call(
+            subprocess.check_call(
                 [command, "--version"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

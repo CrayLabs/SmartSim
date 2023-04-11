@@ -570,7 +570,7 @@ class Experiment:
         :param exe_args: arguments to pass to the executable
         :type exe_args: list[str], optional
         :param run_args: arguments to pass to the ``run_command``
-        :type run_args: list[str], optional
+        :type run_args: dict[str, str], optional
         :param env_vars: environment variables to pass to the executable
         :type env_vars: dict[str, str], optional
         :return: the created ``RunSettings``
@@ -777,7 +777,12 @@ class Experiment:
                 )
         else:
             return tabulate(
-                values, headers, showindex=True, tablefmt=format, missingval="None", disable_numparse=True
+                values,
+                headers,
+                showindex=True,
+                tablefmt=format,
+                missingval="None",
+                disable_numparse=True,
             )
 
     def _launch_summary(self, manifest):
