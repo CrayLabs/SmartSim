@@ -107,7 +107,7 @@ def shutdown_db(hosts, ports):  # cov-wlm
             redis_cli = CONFIG.database_cli
             cmd = [redis_cli]
             cmd += ["-h", ip, "-p", str(port)]
-            cmd += ["shutdown", "nosave"]
+            cmd += ["shutdown"]
             returncode, out, err = execute_cmd(
                 cmd, proc_input="yes", shell=False, timeout=10
             )
@@ -115,7 +115,7 @@ def shutdown_db(hosts, ports):  # cov-wlm
             if returncode != 0:
                 logger.error(out)
                 logger.error(err)
-                raise SSInternalError("Database 'shutdown nosave' command failed")
+                raise SSInternalError("Database 'shutdown' command failed")
             logger.debug(out)
 
 

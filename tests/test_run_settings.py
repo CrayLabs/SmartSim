@@ -36,6 +36,7 @@ from smartsim.settings import (
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
+    PalsMpiexecSettings,
     RunSettings,
 )
 from smartsim.settings.settings import create_run_settings
@@ -95,7 +96,10 @@ def test_create_run_settings_handles_mpiexec_settings_correctly():
                 "local", "echo", "hello", run_command="mpiexec"
             )
             assert settings.run_command == _run_command
-            assert isinstance(settings, MpiexecSettings)
+            if which("mpiexec.pals"):
+                assert isinstance(settings, PalsMpiexecSettings)
+            else:
+                assert isinstance(settings, MpiexecSettings)
 
 
 ####### Base Run Settings tests #######
