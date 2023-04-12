@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -290,15 +290,12 @@ class Controller:
                 raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
-        for rc in manifest.ray_clusters:  # cov-wlm
-            rc._update_workers()
-
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
         steps = []
-        all_entity_lists = manifest.ensembles + manifest.ray_clusters
+        all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
@@ -308,14 +305,23 @@ class Controller:
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
-        # models themselves cannot be batch steps
+        # models themselves cannot be batch steps. If batch settings are
+        # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
-            job_step = self._create_job_step(model)
-            steps.append((job_step, model))
+            if model.batch_settings:
+                anon_entity_list = _AnonymousBatchJob(
+                    model.name, model.path, model.batch_settings
+                )
+                anon_entity_list.entities.append(model)
+                batch_step = self._create_batch_job_step(anon_entity_list)
+                steps.append((batch_step, model))
+            else:
+                job_step = self._create_job_step(model)
+                steps.append((job_step, model))
 
         # launch steps
-        for job_step in steps:
-            self._launch_step(*job_step)
+        for step, entity in steps:
+            self._launch_step(step, entity)
 
     def _launch_orchestrator(self, orchestrator):
         """Launch an Orchestrator instance
@@ -381,7 +387,6 @@ class Controller:
         :type entity: SmartSimEntity
         :raises SmartSimError: if launch fails
         """
-
         try:
             job_id = self._launcher.run(job_step)
         except LauncherError as e:
@@ -460,10 +465,21 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
-        if hasattr(entity, "colocated"):
-            if entity.colocated:
-                port = entity.run_settings.colocated_db_settings["port"]
+        if hasattr(entity, "colocated") and entity.colocated:
+            port = entity.run_settings.colocated_db_settings.get("port", None)
+            socket = entity.run_settings.colocated_db_settings.get("unix_socket", None)
+            if socket and port:
+                raise SSInternalError(
+                    "Co-located was configured for both TCP/IP and UDS"
+                )
+            if port:
                 client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+            elif socket:
+                client_env["SSDB"] = f"unix://{socket}"
+            else:
+                raise SSInternalError(
+                    "Colocated database was not configured for either TCP or UDS"
+                )
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator):
@@ -630,3 +646,12 @@ class Controller:
                     for db_script in entity._db_scripts:
                         if db_script not in ensemble._db_scripts:
                             set_script(db_script, client)
+
+
+class _AnonymousBatchJob(EntityList):
+    def __init__(self, name, path, batch_settings, **kwargs):
+        super().__init__(name, path)
+        self.batch_settings = batch_settings
+
+    def _initialize_entities(self, **kwargs):
+        ...

@@ -1,3 +1,30 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 import sys
 
 import pytest
@@ -7,18 +34,28 @@ from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
 
-should_run = True
+should_run_tf = True
+should_run_pt = True
 
+# Check TensorFlow is available for tests
 try:
     import tensorflow.keras as keras
     from tensorflow.keras.layers import Conv2D, Input
 except ImportError:
-    should_run = False
+    should_run_tf = False
 
-should_run &= "tensorflow" in installed_redisai_backends()
+should_run_tf &= "tensorflow" in installed_redisai_backends()
 
-if not should_run:
-    pytest.skip("Test needs TF to run", allow_module_level=True)
+# Check if PyTorch is available for tests
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+except ImportError:
+    should_run_pt = False
+
+should_run_pt &= "torch" in installed_redisai_backends()
+
 
 class Net(keras.Model):
     def __init__(self):
@@ -57,14 +94,55 @@ def create_tf_cnn():
     return serialize_model(model)
 
 
-def test_db_model(fileutils, wlmutils):
-    """Test DB Models on remote DB"""
+# Simple MNIST in PyTorch
+try:
 
-    exp_name = "test-db-model"
+    class PyTorchNet(nn.Module):
+        def __init__(self):
+            super(PyTorchNet, self).__init__()
+            self.conv1 = nn.Conv2d(1, 32, 3, 1)
+            self.conv2 = nn.Conv2d(32, 64, 3, 1)
+            self.dropout1 = nn.Dropout(0.25)
+            self.dropout2 = nn.Dropout(0.5)
+            self.fc1 = nn.Linear(9216, 128)
+            self.fc2 = nn.Linear(128, 10)
+
+        def forward(self, x):
+            x = self.conv1(x)
+            x = F.relu(x)
+            x = self.conv2(x)
+            x = F.relu(x)
+            x = F.max_pool2d(x, 2)
+            x = self.dropout1(x)
+            x = torch.flatten(x, 1)
+            x = self.fc1(x)
+            x = F.relu(x)
+            x = self.dropout2(x)
+            x = self.fc2(x)
+            output = F.log_softmax(x, dim=1)
+            return output
+
+
+except Exception:
+    should_run_pt = False
+
+
+def save_torch_cnn(path, file_name):
+    n = PyTorchNet()
+    example_forward_input = torch.rand(1, 1, 28, 28)
+    module = torch.jit.trace(n, example_forward_input)
+    torch.jit.save(module, path + "/" + file_name)
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+def test_tf_db_model(fileutils, wlmutils):
+    """Test TensorFlow DB Models on remote DB"""
+
+    exp_name = "test-tf-db-model"
 
     # get test setup
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
     # create colocated model
@@ -110,6 +188,50 @@ def test_db_model(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
+@pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
+def test_pt_db_model(fileutils, wlmutils):
+    """Test PyTorch DB Models on remote DB"""
+
+    exp_name = "test-pt-db-model"
+
+    # get test setup
+    test_dir = fileutils.make_test_dir()
+    sr_test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
+
+    exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
+    # create colocated model
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    db = exp.create_database(port=wlmutils.get_test_port(), interface="lo")
+    exp.generate(db)
+
+    save_torch_cnn(test_dir, "model1.pt")
+    model_path = test_dir + "/model1.pt"
+
+    smartsim_model.add_ml_model(
+        "cnn",
+        "TORCH",
+        model_path=model_path,
+        device="CPU",
+        tag="test",
+    )
+
+    for db_model in smartsim_model._db_models:
+        print(db_model)
+
+    # Assert we have added both models
+    assert len(smartsim_model._db_models) == 1
+
+    exp.start(db, smartsim_model, block=True)
+    statuses = exp.get_status(smartsim_model)
+    exp.stop(db)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_db_model_ensemble(fileutils, wlmutils):
     """Test DBModels on remote DB, with an ensemble"""
 
@@ -117,7 +239,7 @@ def test_db_model_ensemble(fileutils, wlmutils):
 
     # get test setup
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
     # create colocated model
@@ -174,15 +296,15 @@ def test_db_model_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-def test_colocated_db_model(fileutils, wlmutils):
-    """Test DB Models on colocated DB"""
+def test_colocated_db_model_tf(fileutils, wlmutils):
+    """Test DB Models on colocated DB (TensorFlow backend)"""
 
-    exp_name = "test-colocated-db-model"
+    exp_name = "test-colocated-db-model-tf"
     exp = Experiment(exp_name, launcher="local")
 
     # get test setup
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # create colocated model
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
@@ -190,7 +312,11 @@ def test_colocated_db_model(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -216,7 +342,43 @@ def test_colocated_db_model(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
+@pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
+def test_colocated_db_model_pytorch(fileutils, wlmutils):
+    """Test DB Models on colocated DB (PyTorch backend)"""
+
+    exp_name = "test-colocated-db-model-pytorch"
+    exp = Experiment(exp_name, launcher="local")
+
+    # get test setup
+    test_dir = fileutils.make_test_dir()
+    sr_test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
+
+    # create colocated model
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+    colo_model.colocate_db(
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
+    )
+
+    save_torch_cnn(test_dir, "model1.pt")
+    model_file = test_dir + "/model1.pt"
+    colo_model.add_ml_model("cnn", "TORCH", model_path=model_file, device="CPU")
+
+    # Assert we have added both models
+    assert len(colo_model._db_models) == 1
+
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_colocated_db_model_ensemble(fileutils, wlmutils):
     """Test DBModel on colocated ensembles, first colocating DB,
     then adding DBModel.
@@ -227,7 +389,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
     # get test setup
     test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # create colocated model
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
@@ -240,7 +402,11 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
@@ -248,7 +414,11 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
         # Test that models added individually do not conflict with enemble ones
         entity.add_ml_model(
@@ -294,7 +464,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
     """Test DBModel on colocated ensembles, first adding the DBModel to the
     ensemble, then colocating DB.
@@ -305,7 +475,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
     # get test setup
     test_dir = fileutils.make_test_dir()
     exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # create colocated model
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
@@ -328,7 +498,11 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
         # Test that models added individually do not conflict with enemble ones
         entity.add_ml_model(
@@ -363,7 +537,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
-@pytest.mark.skipif(not should_run, reason="Test needs TF to run")
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_colocated_db_model_errors(fileutils, wlmutils):
     """Test error when colocated db model has no file."""
 
@@ -372,7 +546,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
 
     # get test setup
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_dbmodel_smartredis.py")
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # create colocated model
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
@@ -380,7 +554,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     model, inputs, outputs = create_tf_cnn()
@@ -396,7 +574,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     colo_ensemble.set_path(test_dir)
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
     with pytest.raises(SSUnsupportedError):
@@ -421,7 +603,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
             entity.colocate_db(
-                port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+                port=wlmutils.get_test_port() + i,
+                db_cpus=1,
+                limit_app_cpus=False,
+                debug=True,
+                ifname="lo",
             )
 
     with pytest.raises(SSUnsupportedError):

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,10 @@ from ..settings import (
     BsubBatchSettings,
     CobaltBatchSettings,
     JsrunSettings,
+    MpiexecSettings,
     MpirunSettings,
+    OrterunSettings,
+    PalsMpiexecSettings,
     QsubBatchSettings,
     SbatchSettings,
     SrunSettings,
@@ -101,9 +104,9 @@ class Orchestrator(EntityList):
             launcher = detect_launcher()
 
         by_launcher = {
-            "slurm": ["srun", "mpirun"],
-            "pbs": ["aprun", "mpirun"],
-            "cobalt": ["aprun", "mpirun"],
+            "slurm": ["srun", "mpirun", "mpiexec"],
+            "pbs": ["aprun", "mpirun", "mpiexec"],
+            "cobalt": ["aprun", "mpirun", "mpiexec"],
             "lsf": ["jsrun"],
             "local": [None],
         }
@@ -719,16 +722,24 @@ class Orchestrator(EntityList):
 
     def _fill_reserved(self):
         """Fill the reserved batch and run arguments dictionaries"""
-        self._reserved_run_args[MpirunSettings] = [
-            "np",
-            "N",
-            "c",
-            "output-filename",
-            "n",
-            "wdir",
-            "wd",
-            "host",
+
+        mpi_like_settings = [
+            MpirunSettings,
+            MpiexecSettings,
+            OrterunSettings,
+            PalsMpiexecSettings,
         ]
+        for settings in mpi_like_settings:
+            self._reserved_run_args[settings] = [
+                "np",
+                "N",
+                "c",
+                "output-filename",
+                "n",
+                "wdir",
+                "wd",
+                "host",
+            ]
         self._reserved_run_args[SrunSettings] = [
             "nodes",
             "N",

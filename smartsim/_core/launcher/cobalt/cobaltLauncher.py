@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,17 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
-from ..step import AprunStep, CobaltBatchStep, LocalStep, MpirunStep
+from ..step import (
+    AprunStep,
+    CobaltBatchStep,
+    LocalStep,
+    MpiexecStep,
+    MpirunStep,
+    OrterunStep,
+)
 from ..stepInfo import CobaltStepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
 
@@ -61,6 +69,8 @@ class CobaltLauncher(WLMLauncher):
         AprunSettings: AprunStep,
         CobaltBatchSettings: CobaltBatchStep,
         MpirunSettings: MpirunStep,
+        MpiexecSettings: MpiexecStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
     }
 
@@ -126,12 +136,13 @@ class CobaltLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_cobalt_step_id(self, step, interval=4, trials=5):
+    def _get_cobalt_step_id(self, step, interval=2):
         """Get the step_id of a step from qstat (rarely used)
 
         Parses cobalt qstat output by looking for the step name
         """
         step_id = None
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["--header", "JobName:JobId", "-u", self.user])
             step_id = parse_cobalt_step_id(output, step.name)

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,16 @@ from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
+from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import AprunStep, LocalStep, MpirunStep, QsubBatchStep
+from ..step import (
+    AprunStep,
+    LocalStep,
+    MpiexecStep,
+    MpirunStep,
+    OrterunStep,
+    QsubBatchStep,
+)
 from ..stepInfo import PBSStepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
@@ -56,8 +64,11 @@ class PBSLauncher(WLMLauncher):
     supported_rs = {
         AprunSettings: AprunStep,
         QsubBatchSettings: QsubBatchStep,
+        MpiexecSettings: MpiexecStep,
         MpirunSettings: MpirunStep,
+        OrterunSettings: OrterunStep,
         RunSettings: LocalStep,
+        PalsMpiexecSettings: MpiexecStep,
     }
 
     def run(self, step):
@@ -121,7 +132,7 @@ class PBSLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_pbs_step_id(self, step, interval=2, trials=5):
+    def _get_pbs_step_id(self, step, interval=2):
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name
@@ -129,6 +140,7 @@ class PBSLauncher(WLMLauncher):
         """
         time.sleep(interval)
         step_id = "unassigned"
+        trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])
             step_id = parse_step_id_from_qstat(output, step.name)

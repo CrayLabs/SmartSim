@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,10 @@ class Config:
     @property
     def jm_interval(self) -> int:
         return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
+
+    @property
+    def wlm_trials(self) -> int:
+        return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
 
     @property
     def test_launcher(self) -> str:
