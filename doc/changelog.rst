@@ -23,10 +23,11 @@ features already provided by SmartSim. Most notably, this release provides
 support to allow users to colocate their models with an orchestrator using
 Unix domain sockets and support for launching models as batch jobs.
 
-Additionally SmartSim has updated its tool chains to provide a better user
-experience. Most notably, SmarSim can now provide Python 3.10 support. Furthermore,
-by bumping SmartSim now utilizes  SmartRedis's aggregation lists to streamline
-utilization and extension of ML data loaders. 
+Additionally, SmartSim has updated its tool chains to provide a better user
+experience. Notably, SmarSim can now be used with Python 3.10, Redis 7.0.5, and 
+RedisAI 1.2.7. Furthermore, SmartSim now utilizes SmartRedis's aggregation lists to
+streamline the use and extension of ML data loaders, making working with popular
+machine learning frameworks in SmartSim a breeze. 
 
 A full list of changes and detailed notes can be found below:
 
