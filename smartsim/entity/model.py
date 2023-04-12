@@ -135,6 +135,7 @@ class Model(SmartSimEntity):
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
     def colocate_db(self, *args, **kwargs):
+        """An alias for ``Model.colocate_db_tcp``"""
         warnings.warn(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"

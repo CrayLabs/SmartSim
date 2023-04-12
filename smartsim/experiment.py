@@ -494,6 +494,13 @@ class Experiment:
         useful for performant online inference or processing
         at runtime.
 
+        New in 0.4.2, ``Model`` instances can now be co-located with
+        an Orchestrator database over either TCP or UDS using the
+        ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` method
+        respectively. The original ``Model.colocate_db`` method is now
+        deprecated, but remains as an alias for ``Model.colocate_db_tcp``
+        for backward compatibility.
+
         :param name: name of the model
         :type name: str
         :param run_settings: defines how ``Model`` should be run

@@ -73,11 +73,14 @@ the distributed application is running.
 
 
 To create a co-located model, first, create a ``Model`` instance and then call
-the ``Model.colocated_db`` function.
+the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
 
 .. currentmodule:: smartsim.entity.model
 
-.. automethod:: Model.colocate_db
+.. automethod:: Model.colocate_db_tcp
+    :noindex:
+
+.. automethod:: Model.colocate_db_uds
     :noindex:
 
 Here is an example of creating a simple model that is co-located with an
@@ -91,7 +94,7 @@ Here is an example of creating a simple model that is co-located with an
   colo_settings = exp.create_run_settings(exe="./some_mpi_app")
 
   colo_model = exp.create_model("colocated_model", colo_settings)
-  colo_model.colocate_db(
+  colo_model.colocate_db_tcp(
           port=6780,              # database port
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
