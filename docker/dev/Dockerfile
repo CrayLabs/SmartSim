@@ -52,7 +52,7 @@ USER craylabs
 
 RUN cd SmartSim && SMARTSIM_SUFFIX=dev python -m pip install .
 
-RUN python -m pip install smartsim[ml,dev]==0.4.1 jupyter jupyterlab matplotlib && \
+RUN python -m pip install smartsim[ml,dev]==0.4.2 jupyter jupyterlab matplotlib && \
     echo "export PATH=/home/craylabs/.local/bin:$PATH" >> /home/craylabs/.bashrc && \
     export PATH=/home/craylabs/.local/bin:$PATH && \
     smart clobber && \

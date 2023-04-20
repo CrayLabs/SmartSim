@@ -251,12 +251,12 @@ the following:
   #SBATCH --partition=gpu
   #SBATCH --account=12345-Cray
 
-  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_0.out --error /lus/smartsim/Training-Ensemble_0.err --job-name Training-Ensemble_0-CHTN0UI2E5DX --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.1-pre/bin/python ./train-model.py --LR=0.17 &
+  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_0.out --error /lus/smartsim/Training-Ensemble_0.err --job-name Training-Ensemble_0-CHTN0UI2E5DX --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.2-pre/bin/python ./train-model.py --LR=0.17 &
 
-  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_1.out --error /lus/smartsim/Training-Ensemble_1.err --job-name Training-Ensemble_1-CHTN0UI2JQR5 --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.1-pre/bin/python ./train-model.py --LR=0.32 &
+  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_1.out --error /lus/smartsim/Training-Ensemble_1.err --job-name Training-Ensemble_1-CHTN0UI2JQR5 --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.2-pre/bin/python ./train-model.py --LR=0.32 &
 
-  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_2.out --error /lus/smartsim/Training-Ensemble_2.err --job-name Training-Ensemble_2-CHTN0UI2P2AR --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.1-pre/bin/python ./train-model.py --LR=0.060000000000000005 &
+  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_2.out --error /lus/smartsim/Training-Ensemble_2.err --job-name Training-Ensemble_2-CHTN0UI2P2AR --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.2-pre/bin/python ./train-model.py --LR=0.060000000000000005 &
 
-  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_3.out --error /lus/smartsim/Training-Ensemble_3.err --job-name Training-Ensemble_3-CHTN0UI2TRE7 --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.1-pre/bin/python ./train-model.py --LR=0.35000000000000003 &
+  cd /lus/smartsim ; /usr/bin/srun --output /lus/smartsim/Training-Ensemble_3.out --error /lus/smartsim/Training-Ensemble_3.err --job-name Training-Ensemble_3-CHTN0UI2TRE7 --nodes=1 --ntasks=24 /lus/miniconda/envs/smartsim-0.4.2-pre/bin/python ./train-model.py --LR=0.35000000000000003 &
 
   wait
