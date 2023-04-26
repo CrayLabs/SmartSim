@@ -712,13 +712,14 @@ class Orchestrator(EntityList):
 
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()
-        if self._interface not in net_if_addrs and self._interface != "lo":
-            available = list(net_if_addrs.keys())
-            logger.warning(
-                f"{self._interface} is not a valid network interface on this node. \n"
-                "This could be because the head node doesn't have the same networks, if so, ignore this."
-            )
-            logger.warning(f"Found network interfaces are: {available}")
+        for interface in self._interface.split(","):
+            if interface not in net_if_addrs and self._interface != "lo":
+                available = list(net_if_addrs.keys())
+                logger.warning(
+                    f"{self._interface} is not a valid network interface on this node. \n"
+                    "This could be because the head node doesn't have the same networks, if so, ignore this."
+                )
+                logger.warning(f"Found network interfaces are: {available}")
 
     def _fill_reserved(self):
         """Fill the reserved batch and run arguments dictionaries"""

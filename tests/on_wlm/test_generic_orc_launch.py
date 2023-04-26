@@ -44,7 +44,7 @@ def test_launch_orc_auto(fileutils, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
-        6780,
+        wlmutils.get_test_port(),
         batch=False,
         interface=network_interface,
         single_cmd=False,
@@ -77,7 +77,7 @@ def test_launch_cluster_orc_single(fileutils, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface=network_interface,
@@ -111,7 +111,7 @@ def test_launch_cluster_orc_multi(fileutils, wlmutils):
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
     orc = exp.create_database(
-        6780,
+        wlmutils.get_test_port(),
         db_nodes=3,
         batch=False,
         interface=network_interface,
@@ -119,6 +119,7 @@ def test_launch_cluster_orc_multi(fileutils, wlmutils):
         hosts=wlmutils.get_test_hostlist(),
     )
     orc.set_path(test_dir)
+    orc.set_run_arg("exclusive", None)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)

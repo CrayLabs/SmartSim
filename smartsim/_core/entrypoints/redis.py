@@ -57,8 +57,12 @@ def main(network_interface: str, command: List[str]):
 
     try:
 
-        ip_address = current_ip(network_interface)
-        cmd = command + [f"--bind {ip_address}"]
+        ip_addresses = [
+            current_ip(net_if) for net_if in network_interface.split(",")
+        ]
+        ip_address = ip_addresses[0]
+        cmd = command + ["--bind " + " ".join(ip_addresses)] + [f"--bind-source-addr {ip_address}"]
+        
 
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
         print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
