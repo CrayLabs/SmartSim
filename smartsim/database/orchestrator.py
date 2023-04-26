@@ -410,7 +410,7 @@ class Orchestrator(EntityList):
         :param frequency: the given number of seconds before the DB saves
         :type frequency: int
         """
-        self.set_db_conf("save", str(frequency) + " 1")
+        self.set_db_conf("SAVE", f'"{frequency} 1"')
 
     def set_max_memory(self, mem):
         """Sets the max memory configuration. By default there is no memory limit.

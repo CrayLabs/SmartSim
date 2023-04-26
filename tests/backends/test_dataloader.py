@@ -203,11 +203,10 @@ def test_tf_dataloaders(fileutils, wlmutils):
         os.environ.pop("SSKEYOUT", "")
 
 
-def create_trainer_torch(experiment: Experiment, filedir):
-    run_settings = experiment.create_run_settings(
+def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
+    run_settings = wlmutils.get_run_settings(
         exe="python",
-        exe_args=["training_service_torch.py"],
-        env_vars={"PYTHONUNBUFFERED": "1"},
+        args=["training_service_torch.py"],
     )
 
     trainer = experiment.create_model("trainer", run_settings=run_settings)
@@ -271,7 +270,7 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 for _ in torch_static:
                     continue
         
-        trainer = create_trainer_torch(exp, config_dir)
+        trainer = create_trainer_torch(exp, config_dir, wlmutils)
         exp.start(trainer, block=True)
         
         assert exp.get_status(trainer)[0] == STATUS_COMPLETED

@@ -297,6 +297,7 @@ def test_db_model_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_colocated_db_model_tf(fileutils, wlmutils):
     """Test DB Models on colocated DB (TensorFlow backend)"""
 
