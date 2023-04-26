@@ -26,6 +26,7 @@
 
 
 import sys
+import time
 
 import pytest
 
@@ -296,6 +297,7 @@ def test_db_model_ensemble(fileutils, wlmutils):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
 def test_colocated_db_model_tf(fileutils, wlmutils):
     """Test DB Models on colocated DB (TensorFlow backend)"""
 
@@ -337,9 +339,19 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
     # Assert we have added both models
     assert len(colo_model._db_models) == 2
 
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    exp.start(colo_model, block=False)
+
+    completed = False
+    timeout = 90
+    check_interval = 5
+    while timeout and not completed:
+        timeout -= check_interval
+        time.sleep(check_interval)
+        statuses = exp.get_status(colo_model)
+        if all([stat == status.STATUS_COMPLETED for stat in statuses]):
+            completed = True
+
+    assert completed
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
