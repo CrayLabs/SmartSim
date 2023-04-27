@@ -184,6 +184,7 @@ def main(
         # bind to both addresses if the user specified a network
         # address that exists and is not the loopback address
         cmd = command + [f"--bind {lo_address} " + " ".join(ip_addresses)]
+        # pin source address to avoid random selection by Redis
         cmd += [f"--bind-source-addr {lo_address}"]
 
     # we generally want to catch all exceptions here as

@@ -61,7 +61,10 @@ def main(network_interface: str, command: List[str]):
             current_ip(net_if) for net_if in network_interface.split(",")
         ]
         ip_address = ip_addresses[0]
-        cmd = command + ["--bind " + " ".join(ip_addresses)] + [f"--bind-source-addr {ip_address}"]
+        cmd = command + ["--bind " + " ".join(ip_addresses)]
+
+        # pin source address to avoid random selection by Redis
+        cmd += [f"--bind-source-addr {ip_address}"]
         
 
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)

@@ -174,7 +174,7 @@ class Manifest:
             s += db_header
             s += f"Shards: {self.db.num_shards}\n"
             s += f"Port: {str(self.db.ports[0])}\n"
-            s += f"Network: {self.db._interface}\n"
+            s += f"Network: {self.db._interfaces}\n"
             s += f"Batch Launch: {self.db.batch}\n"
             if self.db.batch:
                 s += f"{str(self.db.batch_settings)}\n"

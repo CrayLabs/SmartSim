@@ -11,6 +11,28 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+Development branch
+------------------
+
+To be released at some future date
+
+Note
+
+This section details changes made in the development branch that have not yet been applied to a released version of the SmartSim library.
+
+Description
+
+A full list of changes and detailed notes can be found below:
+
+- Add support for multiple network interface binding in Orchestrator and Colocated DBs
+
+Detailed notes
+
+- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The argument name is still `interface`
+  for backward compatibility reasons. (PR281_)
+
+.. _PR281: https://github.com/CrayLabs/SmartSim/pull/282
+
 0.4.2
 -----
 
