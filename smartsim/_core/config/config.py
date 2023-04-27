@@ -164,9 +164,11 @@ class Config:
     @property
     def test_interface(self) -> str:
         interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
-        if "," in interfaces:
-            interfaces = interfaces.split(",")
-        if not interfaces:
+        if interfaces:
+            if "," in interfaces:
+                interfaces = interfaces.split(",")
+            return interfaces
+        else:
             # try to pick a sensible one
             net_if_addrs = psutil.net_if_addrs()
             if "ipogif0" in net_if_addrs:
@@ -180,8 +182,6 @@ class Config:
                 return "ib0"
             # default to aries network
             return "ipogif0"
-        else:
-            return interfaces
 
     @property
     def test_account(self) -> str:
