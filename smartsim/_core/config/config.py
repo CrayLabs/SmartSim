@@ -178,6 +178,7 @@ class Config:
                 for net_if_addr in net_if_addrs:
                     if net_if_addr.startswith("hsn"):
                         interfaces.append(net_if_addr)
+                return interfaces
             elif "ib0" in net_if_addrs:
                 return "ib0"
             # default to aries network
