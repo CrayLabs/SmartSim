@@ -27,7 +27,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import psutil
 
@@ -163,7 +163,7 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> Union[str, list[str]]:
+    def test_interface(self) -> Union[str, List[str]]:
         interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
         if interfaces:
             if "," in interfaces:
