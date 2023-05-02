@@ -27,6 +27,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Union
 
 import psutil
 
@@ -162,27 +163,27 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> str:
+    def test_interface(self) -> Union[str, list[str]]:
         interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
         if interfaces:
             if "," in interfaces:
                 interfaces = interfaces.split(",")
             return interfaces
-        else:
-            # try to pick a sensible one
-            net_if_addrs = psutil.net_if_addrs()
-            if "ipogif0" in net_if_addrs:
-                return "ipogif0"
-            elif "hsn0" in net_if_addrs:
-                interfaces = []
-                for net_if_addr in net_if_addrs:
-                    if net_if_addr.startswith("hsn"):
-                        interfaces.append(net_if_addr)
-                return interfaces
-            elif "ib0" in net_if_addrs:
-                return "ib0"
-            # default to aries network
+    
+        # try to pick a sensible one
+        net_if_addrs = psutil.net_if_addrs()
+        if "ipogif0" in net_if_addrs:
             return "ipogif0"
+        elif "hsn0" in net_if_addrs:
+            interfaces = []
+            for net_if_addr in net_if_addrs:
+                if net_if_addr.startswith("hsn"):
+                    interfaces.append(net_if_addr)
+            return interfaces
+        elif "ib0" in net_if_addrs:
+            return "ib0"
+        # default to aries network
+        return "ipogif0"
 
     @property
     def test_account(self) -> str:

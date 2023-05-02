@@ -715,7 +715,7 @@ class Orchestrator(EntityList):
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()
         for interface in self._interfaces:
-            if interface not in net_if_addrs and self._interfaces != "lo":
+            if interface not in net_if_addrs and interface != "lo":
                 available = list(net_if_addrs.keys())
                 logger.warning(
                     f"{interface} is not a valid network interface on this node. \n"

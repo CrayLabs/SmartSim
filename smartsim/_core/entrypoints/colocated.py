@@ -167,23 +167,21 @@ def main(
 
     lo_address = current_ip("lo")
     try:
-        ip_addresses = []
-        ip_addresses.extend(
-            [current_ip(interface) for interface in network_interface.split(",")]
-        )
+        ip_addresses = [current_ip(interface) for interface in network_interface.split(",")]
+        
     except ValueError as e:
         logger.warning(e)
         ip_addresses = []
 
     if (
-        all([lo_address == ip_address for ip_address in ip_addresses])
+        all(lo_address == ip_address for ip_address in ip_addresses)
         or not ip_addresses
     ):
         cmd = command + [f"--bind {lo_address}"]
     else:
         # bind to both addresses if the user specified a network
         # address that exists and is not the loopback address
-        cmd = command + [f"--bind {lo_address} " + " ".join(ip_addresses)]
+        cmd = command + [f"--bind {lo_address} {' '.join(ip_addresses)}"]
         # pin source address to avoid random selection by Redis
         cmd += [f"--bind-source-addr {lo_address}"]
 
@@ -212,10 +210,10 @@ def main(
             "\n\nCo-located database information\n"
             + "\n".join(
                 (
-                    f"\tIP Address(es): " + " ".join(ip_addresses + [lo_address]),
-                    f"\t# of Database CPUs: {db_cpus}",
+                    f"\tIP Address(es): {' '.join(ip_addresses + [lo_address])}",
                     f"\tAffinity: {cpus_to_use}",
                     f"\tCommand: {' '.join(cmd)}\n\n",
+                    f"\t# of Database CPUs: {db_cpus}",
                 )
             )
         )
