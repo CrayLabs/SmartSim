@@ -167,16 +167,15 @@ def main(
 
     lo_address = current_ip("lo")
     try:
-        ip_addresses = [current_ip(interface) for interface in network_interface.split(",")]
-        
+        ip_addresses = [
+            current_ip(interface) for interface in network_interface.split(",")
+        ]
+
     except ValueError as e:
         logger.warning(e)
         ip_addresses = []
 
-    if (
-        all(lo_address == ip_address for ip_address in ip_addresses)
-        or not ip_addresses
-    ):
+    if all(lo_address == ip_address for ip_address in ip_addresses) or not ip_addresses:
         cmd = command + [f"--bind {lo_address}"]
     else:
         # bind to both addresses if the user specified a network

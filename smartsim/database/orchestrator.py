@@ -935,7 +935,6 @@ class LSFOrchestrator(Orchestrator):
         single_cmd=True,
         **kwargs,
     ):
-
         """Initialize an Orchestrator reference for LSF based systems
 
         The orchestrator launches as a batch by default. If
@@ -1021,7 +1020,6 @@ class SlurmOrchestrator(Orchestrator):
         single_cmd=False,
         **kwargs,
     ):
-
         """Initialize an Orchestrator reference for Slurm based systems
 
         The orchestrator launches as a batch by default. The Slurm orchestrator
