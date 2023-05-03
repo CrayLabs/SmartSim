@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import psutil
 import pytest
 
 from smartsim import Experiment
@@ -90,6 +91,33 @@ def test_orc_active_functions(fileutils, wlmutils):
     # check if orchestrator.get_address() raises an exception
     with pytest.raises(SmartSimError):
         db.get_address()
+
+
+def test_multiple_interfaces(fileutils, wlmutils):
+    exp_name = "test_orc_active_functions"
+    exp = Experiment(exp_name, launcher="local")
+    test_dir = fileutils.make_test_dir()
+
+    net_if_addrs = psutil.net_if_addrs()
+    net_if_addrs = [net_if_addr for net_if_addr in net_if_addrs if net_if_addr != "lo"]
+
+    net_if_addrs = ["lo", net_if_addrs[0]]
+
+    db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    db.set_path(test_dir)
+
+    exp.start(db)
+
+    # check if the orchestrator is active
+    assert db.is_active()
+
+    # check if the orchestrator can get the address
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
+
+    exp.stop(db)
 
 
 def test_catch_local_db_errors():
