@@ -163,17 +163,18 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> Union[str, List[str]]:
+    def test_interface(self) -> List[str]:
         interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
         if interfaces:
             if "," in interfaces:
                 interfaces = interfaces.split(",")
-            return interfaces
+                return interfaces
+            return [interfaces]
     
         # try to pick a sensible one
         net_if_addrs = psutil.net_if_addrs()
         if "ipogif0" in net_if_addrs:
-            return "ipogif0"
+            return ["ipogif0"]
         elif "hsn0" in net_if_addrs:
             interfaces = []
             for net_if_addr in net_if_addrs:
@@ -181,9 +182,9 @@ class Config:
                     interfaces.append(net_if_addr)
             return interfaces
         elif "ib0" in net_if_addrs:
-            return "ib0"
+            return ["ib0"]
         # default to aries network
-        return "ipogif0"
+        return ["ipogif0"]
 
     @property
     def test_account(self) -> str:
