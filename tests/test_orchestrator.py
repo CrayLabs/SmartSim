@@ -99,7 +99,9 @@ def test_multiple_interfaces(fileutils, wlmutils):
     test_dir = fileutils.make_test_dir()
 
     net_if_addrs = psutil.net_if_addrs()
-    net_if_addrs = [net_if_addr for net_if_addr in net_if_addrs if net_if_addr != "lo"]
+    net_if_addrs = [
+        net_if_addr for net_if_addr in net_if_addrs if not net_if_addr.startswith("lo")
+    ]
 
     net_if_addrs = ["lo", net_if_addrs[0]]
 
@@ -121,7 +123,6 @@ def test_multiple_interfaces(fileutils, wlmutils):
 
 
 def test_catch_local_db_errors():
-
     # local database with more than one node not allowed
     with pytest.raises(SSUnsupportedError):
         db = Orchestrator(db_nodes=2)
@@ -300,7 +301,6 @@ def test_catch_orc_errors_lsf(wlmutils):
 
 
 def test_lsf_set_run_args(wlmutils):
-
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -314,7 +314,6 @@ def test_lsf_set_run_args(wlmutils):
 
 
 def test_lsf_set_batch_args(wlmutils):
-
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
