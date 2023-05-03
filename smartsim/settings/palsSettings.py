@@ -185,6 +185,14 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         logger.warning("set_walltime not supported under PALS")
 
+    def set_gpu_affinity_script(self, affinity):
+        """ Set the GPU affinity through a bash script
+
+        :param affinity: path to the affinity script
+        :type affinity: str
+        """
+        self.affinity_script = str(affinity) 
+
     def format_run_args(self):
         """Return a list of MPI-standard formatted run arguments
 
@@ -202,6 +210,10 @@ class PalsMpiexecSettings(_BaseMPISettings):
                     args += [prefix + opt]
                 else:
                     args += [prefix + opt, str(value)]
+
+        if self.affinity_script:
+            args += [self.affinity_script]
+   
         return args
 
     def format_env_vars(self):

@@ -78,6 +78,7 @@ class _BaseMPISettings(RunSettings):
             **kwargs,
         )
         self.mpmd = []
+        self.affinity_script = None
 
         if not shutil.which(self._run_command):
             msg = (
