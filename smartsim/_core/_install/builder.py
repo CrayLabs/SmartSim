@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import os
 import re
 import shutil
@@ -5,8 +31,8 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
-from subprocess import SubprocessError
 from shutil import which
+from subprocess import SubprocessError
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items should be imported into
@@ -34,6 +60,7 @@ def expand_exe_path(exe):
             raise TypeError(f"File, {exe}, is not an executable")
         raise FileNotFoundError(f"Could not locate executable {exe}")
     return os.path.abspath(in_path)
+
 
 class BuildError(Exception):
     pass
@@ -226,7 +253,7 @@ class DatabaseBuilder(Builder):
             database = Path(os.environ.get("REDIS_PATH", database_exe)).resolve()
             _ = expand_exe_path(str(database))
         except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError("Installation of redis-server failed!") from e
+            raise BuildError("Installation of redis-server failed!") from e
 
         # validate install -- redis-cli
         try:
@@ -234,7 +261,8 @@ class DatabaseBuilder(Builder):
             redis_cli = Path(os.environ.get("REDIS_CLI_PATH", redis_cli_exe)).resolve()
             _ = expand_exe_path(str(redis_cli))
         except (TypeError, FileNotFoundError) as e:
-            raise SSConfigError("Installation of redis-cli failed!") from e
+            raise BuildError("Installation of redis-cli failed!") from e
+
 
 class RedisAIBuilder(Builder):
     """Class to build RedisAI from Source
@@ -256,7 +284,6 @@ class RedisAIBuilder(Builder):
         verbose=False,
     ):
         super().__init__(build_env, jobs=jobs, verbose=verbose)
-        self.rai_build_path = Path(self.build_dir, "RedisAI")
 
         # convert to int for RAI build script
         self.torch = 1 if build_torch else 0
@@ -264,6 +291,10 @@ class RedisAIBuilder(Builder):
         self.onnx = 1 if build_onnx else 0
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
+
+    @property
+    def rai_build_path(self):
+        return Path(self.build_dir, "RedisAI")
 
     @property
     def is_built(self):
@@ -350,7 +381,6 @@ class RedisAIBuilder(Builder):
         :param device: cpu or gpu
         :type device: str
         """
-
         # delete previous build dir (should never be there)
         if self.rai_build_path.is_dir():
             shutil.rmtree(self.rai_build_path)
@@ -367,12 +397,32 @@ class RedisAIBuilder(Builder):
             "clone",
             "--recursive",
             git_url,
-            "--branch",
-            branch,
-            "--depth=1",
-            "RedisAI",
         ]
+        # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
+        # TODO: Look for a better way to do this or wait for RAI patch
+        if sys.platform == "darwin" and branch == "v1.2.7" and self.onnx:
+            # Clone RAI patch commit for OSX
+            clone_cmd += ["RedisAI"]
+            checkout_osx_fix = [
+                "git",
+                "checkout",
+                "634916c722e718cc6ea3fad46e63f7d798f9adc2",
+            ]
+        else:
+            # Clone RAI release commit
+            clone_cmd += [
+                "--branch",
+                branch,
+                "--depth=1",
+                "RedisAI",
+            ]
+            checkout_osx_fix = []
+
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
+        if checkout_osx_fix:
+            self.run_command(
+                checkout_osx_fix, out=subprocess.DEVNULL, cwd=self.rai_build_path
+            )
 
         # copy FindTensorFlow.cmake to RAI cmake dir
         self.copy_tf_cmake()

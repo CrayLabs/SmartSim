@@ -267,7 +267,7 @@ def fd2d_heat_steady_test01 (nx, ny ):
   source_centers = 0.2+np.random.rand(np.random.randint(1,6),2)*0.6
 
   Xgrid, Ygrid = np.meshgrid(xvec, yvec)
-  u_init = np.zeros_like(Xgrid).astype(np.bool)
+  u_init = np.zeros_like(Xgrid).astype(bool)
   for center in source_centers:
     u_init |= (Xgrid-center[0])**2 + (Ygrid-center[1])**2 < 0.05**2
 

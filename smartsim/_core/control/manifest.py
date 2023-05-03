@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,12 @@
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError
-from ...exp.ray import RayCluster
 from ..utils.helpers import fmt_dict
 
 # List of types derived from EntityList which require specific behavior
 # A corresponding property needs to exist (like db for Orchestrator),
 # otherwise they will not be accessible
-entity_list_exception_types = [Orchestrator, RayCluster]
+entity_list_exception_types = [Orchestrator]
 
 
 class Manifest:
@@ -102,27 +101,14 @@ class Manifest:
         return _ensembles
 
     @property
-    def ray_clusters(self):
-        """Return all RayCluster instances in Manifest
-
-        :return: list of RayCluster instances
-        :rtype: List[RayCluster]
-        """
-        _ray_cluster = []
-        for deployable in self._deployables:
-            if isinstance(deployable, RayCluster):
-                _ray_cluster.append(deployable)
-        return _ray_cluster
-
-    @property
     def all_entity_lists(self):
         """All entity lists, including ensembles and
-        exceptional ones like Orchestrator and RayCluster
+        exceptional ones like Orchestrator
 
         :return: list of entity lists
         :rtype: List[EntityList]
         """
-        _all_entity_lists = self.ray_clusters + self.ensembles
+        _all_entity_lists = self.ensembles
         db = self.db
         if db is not None:
             _all_entity_lists.append(db)
@@ -164,8 +150,7 @@ class Manifest:
         if self.ensembles:
             s += e_header
 
-            # include ray clusters as an ensemble while still in experimental API
-            all_ensembles = self.ensembles + self.ray_clusters
+            all_ensembles = self.ensembles
             for ensemble in all_ensembles:
                 s += f"{ensemble.name}\n"
                 s += f"Members: {len(ensemble)}\n"
@@ -173,11 +158,14 @@ class Manifest:
                 if ensemble.batch:
                     s += f"{str(ensemble.batch_settings)}\n"
             s += "\n"
+
         if self.models:
             s += m_header
             for model in self.models:
                 s += f"{model.name}\n"
-                s += f"{str(model.run_settings)}\n"
+                if model.batch_settings:
+                    s += f"{model.batch_settings}\n"
+                s += f"{model.run_settings}\n"
                 if model.params:
                     s += f"Parameters: \n{fmt_dict(model.params)}\n"
             s += "\n"

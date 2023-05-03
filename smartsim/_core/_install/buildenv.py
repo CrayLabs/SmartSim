@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import os
 import platform
 import site
@@ -122,17 +148,6 @@ class RedisAIVersion(Version_):
     """
 
     defaults = {
-        "1.2.3": {
-            "tensorflow": "2.5.2",
-            "onnx": "1.9.0",
-            "skl2onnx": "1.10.3",
-            "onnxmltools": "1.10.0",
-            "scikit-learn": "1.0.2",
-            "torch": "1.7.1",
-            "torch_cpu_suffix": "+cpu",
-            "torch_cuda_suffix": "+cu110",
-            "torchvision": "0.8.2",
-        },
         "1.2.5": {
             "tensorflow": "2.6.2",
             "onnx": "1.9.0",
@@ -156,10 +171,23 @@ class RedisAIVersion(Version_):
             "torchvision": "0.12.0",
         },
     }
-    # deps are the same between the following versions
-    defaults["1.2.4"] = defaults["1.2.3"]
+    # Remove options with unsported wheels for python>=3.10
+    if sys.version_info >= (3, 10):
+        defaults.pop("1.2.5")
+        defaults["1.2.7"].pop("onnx")
+        defaults["1.2.7"].pop("skl2onnx")
+        defaults["1.2.7"].pop("onnxmltools")
+        defaults["1.2.7"].pop("scikit-learn")
+    # Remove incompatible RAI versions for OSX
+    if sys.platform == "darwin":
+        defaults.pop("1.2.5", None)
 
     def __init__(self, vers):
+        min_rai_version = min(Version_(ver) for ver in self.defaults)
+        if min_rai_version > vers:
+            raise SetupError(
+                f"RedisAI version must be greater than or equal to {min_rai_version}"
+            )
         if vers not in self.defaults:
             if vers.startswith("1.2"):
                 # resolve to latest version for 1.2.x
@@ -173,10 +201,20 @@ class RedisAIVersion(Version_):
             self.version = vers
 
     def __getattr__(self, name):
-        return self.defaults[self.version][name]
+        try:
+            return self.defaults[self.version][name]
+        except KeyError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'\n\n"
+                "This is likely a problem with the SmartSim build process;"
+                "if this problem persists please log a new issue at "
+                "https://github.com/CrayLabs/SmartSim/issues "
+                "or get in contact with us at "
+                "https://www.craylabs.org/docs/community.html"
+            ) from None
 
     def get_defaults(self):
-        return self.defaults[self.version]
+        return self.defaults[self.version].copy()
 
 
 class Versioner:
@@ -203,15 +241,15 @@ class Versioner:
     """
 
     # compatible Python version
-    PYTHON_MIN = Version_("3.7.0")
+    PYTHON_MIN = Version_("3.8.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.4.1"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.3.1"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.4.2"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.4.0"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
-    REDIS = Version_(get_env("SMARTSIM_REDIS", "6.0.8"))
+    REDIS = Version_(get_env("SMARTSIM_REDIS", "7.0.5"))
     REDIS_URL = get_env("SMARTSIM_REDIS_URL", "https://github.com/redis/redis.git/")
     REDIS_BRANCH = get_env("SMARTSIM_REDIS_BRANCH", REDIS)
 
@@ -227,12 +265,17 @@ class Versioner:
     TORCH = Version_(get_env("SMARTSIM_TORCH", REDISAI.torch))
     TORCHVISION = Version_(get_env("SMARTSIM_TORCHVIS", REDISAI.torchvision))
     TORCH_CPU_SUFFIX = Version_(get_env("TORCH_CPU_SUFFIX", REDISAI.torch_cpu_suffix))
-    TORCH_CUDA_SUFFIX = Version_(get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix))
+    TORCH_CUDA_SUFFIX = Version_(
+        get_env("TORCH_CUDA_SUFFIX", REDISAI.torch_cuda_suffix)
+    )
 
     # TensorFlow and ONNX only use the defaults, but these are not built into
     # the RedisAI package and therefore the user is free to pick other versions.
     TENSORFLOW = Version_(REDISAI.tensorflow)
-    ONNX = Version_(REDISAI.onnx)
+    try:
+        ONNX = Version_(REDISAI.onnx)
+    except AttributeError:
+        ONNX = None
 
     def as_dict(self, db_name="REDIS"):
         packages = [
@@ -242,7 +285,6 @@ class Versioner:
             "REDISAI",
             "TORCH",
             "TENSORFLOW",
-            "ONNX",
         ]
         versions = [
             self.SMARTSIM,
@@ -251,8 +293,10 @@ class Versioner:
             self.REDISAI,
             self.TORCH,
             self.TENSORFLOW,
-            self.ONNX,
         ]
+        if self.ONNX:
+            packages.append("ONNX")
+            versions.append(self.ONNX)
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
@@ -261,7 +305,6 @@ class Versioner:
 
         The defaults are based on the RedisAI version
         """
-        ml_extras = []
         ml_defaults = self.REDISAI.get_defaults()
 
         # remove torch-related fields as they will be installed
@@ -273,14 +316,12 @@ class Versioner:
             "torch",
             "torchvision",
             "torch_cpu_suffix",
-            "torch_cuda_suffix"
+            "torch_cuda_suffix",
         ]
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        for lib, vers in ml_defaults.items():
-            ml_extras.append(f"{lib}=={vers}")
-        return ml_extras
+        return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
 
     def get_sha(self, setup_py_dir) -> str:
         """Get the git sha of the current branch"""
@@ -491,7 +532,7 @@ class BuildEnv:
     def check_build_dependency(self, command):
         # TODO expand this to parse and check versions.
         try:
-            out = subprocess.check_call(
+            subprocess.check_call(
                 [command, "--version"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

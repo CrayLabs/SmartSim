@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,14 @@ from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import BsubBatchStep, JsrunStep, LocalStep, MpirunStep, MpiexecStep, OrterunStep
+from ..step import (
+    BsubBatchStep,
+    JsrunStep,
+    LocalStep,
+    MpiexecStep,
+    MpirunStep,
+    OrterunStep,
+)
 from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
 from .lsfCommands import bjobs, bkill, jskill, jslist
 from .lsfParser import (

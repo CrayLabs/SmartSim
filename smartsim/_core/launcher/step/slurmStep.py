@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -129,6 +129,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
+        compound_env = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -140,10 +141,10 @@ class SrunStep(Step):
             ) = self.run_settings.format_comma_sep_env_vars()
 
             if len(env_var_str) > 0:
-                srun_cmd += ["--export", env_var_str]
+                srun_cmd += ["--export", f"ALL,{env_var_str}"]
 
             if comma_separated_env_vars:
-                srun_cmd = ["env"] + comma_separated_env_vars + srun_cmd
+                compound_env = compound_env.union(comma_separated_env_vars)
 
         srun_cmd += self.run_settings.format_run_args()
 
@@ -160,7 +161,11 @@ class SrunStep(Step):
         if self.run_settings.container:
             srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
+        if compound_env:
+            srun_cmd = ["env"] + list(compound_env) + srun_cmd
+
         srun_cmd += self._build_exe()
+
         return srun_cmd
 
     def _set_alloc(self):
@@ -199,13 +204,18 @@ class SrunStep(Step):
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
         cmd = exe + args
+
+        compound_env_vars = []
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += ["--job-name", self.name]
-            (env_var_str, _) = mpmd.format_comma_sep_env_vars()
+
+            (env_var_str, csv_env_vars) = mpmd.format_comma_sep_env_vars()
             if len(env_var_str) > 0:
-                cmd += ["--export", env_var_str]
+                cmd += ["--export", f"ALL,{env_var_str}"]
+            if csv_env_vars:
+                compound_env_vars.extend(csv_env_vars)
             cmd += mpmd.exe
             cmd += mpmd.exe_args
 

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -164,9 +164,13 @@ def create_run_settings(
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
-        return supported[run_command](exe, exe_args, run_args, env_vars, container=container, **kwargs)
+        return supported[run_command](
+            exe, exe_args, run_args, env_vars, container=container, **kwargs
+        )
 
     # 1) user specified and not implementation in SmartSim
     # 2) user supplied run_command=None
     # 3) local launcher being used and default of "auto" was passed.
-    return RunSettings(exe, exe_args, run_command, run_args, env_vars, container=container)
+    return RunSettings(
+        exe, exe_args, run_command, run_args, env_vars, container=container
+    )

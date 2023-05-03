@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023 Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -166,7 +166,9 @@ def main(
     global DBPID
 
     try:
-        ip_address = current_ip(network_interface)
+        ip_address = None
+        if network_interface:
+            ip_address = current_ip(network_interface)
         lo_address = current_ip("lo")
     except ValueError as e:
         logger.warning(e)
@@ -269,7 +271,7 @@ if __name__ == "__main__":
             prefix_chars="+", description="SmartSim Process Launcher"
         )
         parser.add_argument(
-            "+ifname", type=str, help="Network Interface name", default="lo"
+            "+ifname", type=str, help="Network Interface name", default=""
         )
         parser.add_argument(
             "+lockfile", type=str, help="Filename to create for single proc per host"
@@ -314,4 +316,4 @@ if __name__ == "__main__":
     # we do not want to have start a colocated process. Only one process
     # per node should be running.
     except filelock.Timeout:
-        exit(0)
+        sys.exit(0)

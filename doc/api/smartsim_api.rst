@@ -429,6 +429,8 @@ Model
    Model.__init__
    Model.attach_generator_files
    Model.colocate_db
+   Model.colocate_db_tcp
+   Model.colocate_db_uds
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing
@@ -538,20 +540,3 @@ Slurm
 .. automodule:: smartsim.slurm
     :members:
 
-
-Ray
-===
-
-.. currentmodule:: smartsim.exp.ray
-
-.. _ray_api:
-
-``RayCluster`` is used to launch a Ray cluster
- and can be launched as a batch or in an interactive allocation.
-
-.. autoclass:: RayCluster
-    :show-inheritance:
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :exclude-members: batch set_path type

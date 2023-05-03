@@ -11,28 +11,73 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
-Development branch
-------------------
+0.4.2
+-----
 
-To be released at some future date
-
-Note
-
-This section details changes made in the development branch that have not yet been applied to a released version of the SmartSim library.
+Released on April 12, 2023
 
 Description
 
-- Fix bug in colocated database entrypoint when loading PyTorch models
+This release of SmartSim had a focus on polishing and extending exiting
+features already provided by SmartSim. Most notably, this release provides
+support to allow users to colocate their models with an orchestrator using
+Unix domain sockets and support for launching models as batch jobs.
+
+Additionally, SmartSim has updated its tool chains to provide a better user
+experience. Notably, SmarSim can now be used with Python 3.10, Redis 7.0.5, and 
+RedisAI 1.2.7. Furthermore, SmartSim now utilizes SmartRedis's aggregation lists to
+streamline the use and extension of ML data loaders, making working with popular
+machine learning frameworks in SmartSim a breeze. 
+
+A full list of changes and detailed notes can be found below:
+
+- Add support for colocating an orchestrator over UDS
+- Add support for Python 3.10, deprecate support for Python 3.7 and RedisAI 1.2.3
+- Drop support for Ray
+- Update ML data loaders to make use of SmartRedis's aggregation lists
+- Allow for models to be launched independently as batch jobs
+- Update to current version of Redis to 7.0.5
 - Add support for RedisAI 1.2.7, pyTorch 1.11.0, Tensorflow 2.8.0, ONNXRuntime 1.11.1
+- Fix bug in colocated database entrypoint when loading PyTorch models
+- Fix test suite behavior with environment variables
 
 Detailed Notes
 
-- Fix bug in colocated database entrypoint stemming from uninitialized variables.  This bug affects PyTorch models being loaded into the database. (PR237_)
-- The release of RedisAI 1.2.7 allows us to update support for recent versions of pyTorch, Tensorflow, and ONNX (PR234_)
-- Make installation of correct Torch backend more reliable according to instruction from pyTorch
+- Running some tests could result in some SmartSim-specific environment variables to be set. Such environment variables are now reset
+  after each test execution. Also, a warning for environment variable usage in Slurm was added, to make the user aware in case an environment
+  variable will not be assigned the desired value with `--export`. (PR270_)
+- The PyTorch and TensorFlow data loaders were update to make use of aggregation lists. This breaks their API, but makes them easier to use. (PR264_)
+- The support for Ray was dropped, as its most recent versions caused problems when deployed through SmartSim.
+  We plan to release a separate add-on library to accomplish the same results. If
+  you are interested in getting the Ray launch functionality back in your workflow, please get in touch with us! (PR263_)
+- Update from Redis version 6.0.8 to 7.0.5. (PR258_)
+- Adds support for Python 3.10 without the ONNX machine learning backend. Deprecates support for
+  Python 3.7 as it will stop receiving security updates. Deprecates support for RedisAI 1.2.3.
+  Update the build process to be able to correctly fetch supported dependencies. If a user
+  attempts to build an unsupported dependency, an error message is shown highlighting the
+  discrepancy. (PR256_)
+- Models were given a `batch_settings` attribute. When launching a model through `Experiment.start`
+  the `Experiment` will first check for a non-nullish value at that attribute. If the check is
+  satisfied, the `Experiment` will attempt to wrap the underlying run command in a batch job using
+  the object referenced at `Model.batch_settings` as the batch settings for the job. If the check
+  is not satisfied, the `Model` is launched in the traditional manner as a job step. (PR245_)
+- Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
+- The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (PR234_)
+- Make installation of correct Torch backend more reliable according to instruction from PyTorch
+- In addition to TCP, add UDS support for colocating an orchestrator with models. Methods 
+  `Model.colocate_db_tcp` and `Model.colocate_db_uds` were added to expose this functionality.
+  The `Model.colocate_db` method remains and uses TCP for backward compatibility (PR246_) 
 
+.. _PR270: https://github.com/CrayLabs/SmartSim/pull/270
+.. _PR264: https://github.com/CrayLabs/SmartSim/pull/264
+.. _PR263: https://github.com/CrayLabs/SmartSim/pull/263
+.. _PR258: https://github.com/CrayLabs/SmartSim/pull/258
+.. _PR256: https://github.com/CrayLabs/SmartSim/pull/256
+.. _PR246: https://github.com/CrayLabs/SmartSim/pull/246
+.. _PR245: https://github.com/CrayLabs/SmartSim/pull/245
 .. _PR237: https://github.com/CrayLabs/SmartSim/pull/237
 .. _PR234: https://github.com/CrayLabs/SmartSim/pull/234
+
 
 0.4.1
 -----
@@ -72,7 +117,7 @@ General improvements and bug fixes
     - Optionally use KeyDB for the orchestrator (SmartSim-PR180_)
     - Ability to specify system-level libraries (SmartSim-PR154_) (SmartSim-PR182_)
     - Fix the handling of LSF gpus_per_shard (SmartSim-PR164_)
-    - Fix error when re-running `smart build`` (SmartSim-PR165_)
+    - Fix error when re-running `smart build` (SmartSim-PR165_)
     - Fix generator hanging when tagged configuration variables are missing (SmartSim-PR177_)
 
 Dependency updates
@@ -250,7 +295,7 @@ Released on May 5, 2021
 
 Description:
 This release was dedicated to making the install process
-easier. SmartSim can be installed from PyPi now and the
+easier. SmartSim can be installed from PyPI now and the
 ``smart`` cli tool makes installing the machine learning
 runtimes much easier.
 

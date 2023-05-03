@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 import shutil
 import subprocess
 
-from ..error import SSUnsupportedError, LauncherError
+from ..error import LauncherError, SSUnsupportedError
 from ..log import get_logger
 from .base import RunSettings
 
@@ -38,8 +38,14 @@ class _BaseMPISettings(RunSettings):
     """Base class for all common arguments of MPI-standard run commands"""
 
     def __init__(
-        self, exe, exe_args=None, run_command="mpiexec", run_args=None,
-        env_vars=None, fail_if_missing_exec=True, **kwargs
+        self,
+        exe,
+        exe_args=None,
+        run_command="mpiexec",
+        run_args=None,
+        env_vars=None,
+        fail_if_missing_exec=True,
+        **kwargs,
     ):
         """Settings to format run job with an MPI-standard binary
 
@@ -293,6 +299,7 @@ class MpirunSettings(_BaseMPISettings):
         """
         super().__init__(exe, exe_args, "mpirun", run_args, env_vars, **kwargs)
 
+
 class MpiexecSettings(_BaseMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
         """Settings to run job with ``mpiexec`` command (MPI-standard)
@@ -317,14 +324,14 @@ class MpiexecSettings(_BaseMPISettings):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
-            [self._run_command, "--help"],
-            capture_output=True
+            [self._run_command, "--help"], capture_output=True
         )
         help_statement = completed_process.stdout.decode()
         if "mpiexec.slurm" in help_statement:
             raise SSUnsupportedError(
                 "Slurm's wrapper for mpiexec is unsupported. Use slurmSettings instead"
-                )
+            )
+
 
 class OrterunSettings(_BaseMPISettings):
     def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):

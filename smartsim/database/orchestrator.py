@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,10 @@ from ..settings import (
     BsubBatchSettings,
     CobaltBatchSettings,
     JsrunSettings,
-    MpirunSettings,
     MpiexecSettings,
-    PalsMpiexecSettings,
+    MpirunSettings,
     OrterunSettings,
+    PalsMpiexecSettings,
     QsubBatchSettings,
     SbatchSettings,
     SrunSettings,
@@ -727,7 +727,7 @@ class Orchestrator(EntityList):
             MpirunSettings,
             MpiexecSettings,
             OrterunSettings,
-            PalsMpiexecSettings
+            PalsMpiexecSettings,
         ]
         for settings in mpi_like_settings:
             self._reserved_run_args[settings] = [

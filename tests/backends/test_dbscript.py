@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import sys
 
 import pytest
@@ -125,7 +151,11 @@ def test_colocated_db_script(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
@@ -172,7 +202,11 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
         entity.add_script("test_script1", script_path=torch_script, device="CPU")
@@ -232,7 +266,11 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
         entity.add_script("test_script1", script_path=torch_script, device="CPU")
@@ -275,7 +313,11 @@ def test_db_script_errors(fileutils, wlmutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db(
-        port=wlmutils.get_test_port(), db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+        port=wlmutils.get_test_port(),
+        db_cpus=1,
+        limit_app_cpus=False,
+        debug=True,
+        ifname="lo",
     )
 
     with pytest.raises(SSUnsupportedError):
@@ -291,7 +333,11 @@ def test_db_script_errors(fileutils, wlmutils):
 
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
-            port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+            port=wlmutils.get_test_port() + i,
+            db_cpus=1,
+            limit_app_cpus=False,
+            debug=True,
+            ifname="lo",
         )
 
     with pytest.raises(SSUnsupportedError):
@@ -310,7 +356,11 @@ def test_db_script_errors(fileutils, wlmutils):
     for i, entity in enumerate(colo_ensemble):
         with pytest.raises(SSUnsupportedError):
             entity.colocate_db(
-                port=wlmutils.get_test_port() + i, db_cpus=1, limit_app_cpus=False, debug=True, ifname="lo"
+                port=wlmutils.get_test_port() + i,
+                db_cpus=1,
+                limit_app_cpus=False,
+                debug=True,
+                ifname="lo",
             )
 
     with pytest.raises(SSUnsupportedError):

@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ from .step import Step
 
 logger = get_logger(__name__)
 
+
 class _BaseMPIStep(Step):
     def __init__(self, name, cwd, run_settings):
         """Initialize a job step conforming to the MPI standard
@@ -48,19 +49,13 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd)
 
-
         self.run_settings = run_settings
 
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    _supported_launchers = [
-        "PBS",
-        "COBALT",
-        "SLURM",
-        "LSB"
-    ]
+    _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 
     @property
     def _run_command(self):
@@ -106,12 +101,10 @@ class _BaseMPIStep(Step):
 
         environment_keys = os.environ.keys()
         for launcher in self._supported_launchers:
-            jobid_field = f'{launcher.upper()}_JOBID'
+            jobid_field = f"{launcher.upper()}_JOBID"
             if jobid_field in environment_keys:
                 self.alloc = os.environ[jobid_field]
-                logger.debug(
-                    f"Running on allocation {self.alloc} from {jobid_field}"
-                )
+                logger.debug(f"Running on allocation {self.alloc} from {jobid_field}")
                 return
 
         # If this function did not return above, no allocations were found
@@ -147,6 +140,7 @@ class _BaseMPIStep(Step):
         cmd = sh_split(" ".join(cmd))
         return cmd
 
+
 class MpiexecStep(_BaseMPIStep):
     def __init__(self, name, cwd, run_settings):
         """Initialize an mpiexec job step
@@ -181,6 +175,7 @@ class MpirunStep(_BaseMPIStep):
         """
 
         super().__init__(name, cwd, run_settings)
+
 
 class OrterunStep(_BaseMPIStep):
     def __init__(self, name, cwd, run_settings):

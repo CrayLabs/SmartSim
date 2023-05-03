@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2021-2022, Hewlett Packard Enterprise
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ from ....settings import *
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import LocalStep, MpirunStep, MpiexecStep, SbatchStep, SrunStep, OrterunStep
+from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep
 from ..stepInfo import SlurmStepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct

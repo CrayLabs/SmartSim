@@ -1,3 +1,29 @@
+# BSD 2-Clause License
+#
+# Copyright (c) 2021-2023, Hewlett Packard Enterprise
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import argparse
 import os
 import sys
@@ -38,7 +64,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
     # if we are on linux cpu, either CUDA or CPU must be installed
     elif sys.platform == "linux":
         end_point = "https://download.pytorch.org/whl/torch_stable.html"
-        if device in ["gpu","cuda"] :
+        if device in ["gpu", "cuda"]:
             device_suffix = versions.TORCH_CUDA_SUFFIX
         elif device == "cpu":
             device_suffix = versions.TORCH_CPU_SUFFIX
@@ -47,6 +73,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
     packages.append(f"torchvision=={versions.TORCHVISION}{device_suffix}")
 
     pip_install(packages, end_point=end_point, verbose=verbose)
+
 
 class Build:
     def __init__(self):
@@ -151,11 +178,6 @@ class Build:
                 # REDIS/KeyDB
                 self.build_database()
 
-                if self.verbose:
-                    logger.info("Version Information:")
-                    vers = self.versions.as_dict()
-                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
-
                 # REDISAI
                 self.build_redis_ai(
                     str(args.device),
@@ -175,7 +197,7 @@ class Build:
 
         except (SetupError, BuildError) as e:
             logger.error(str(e))
-            exit(1)
+            sys.exit(1)
 
         logger.info("SmartSim build complete!")
 
@@ -200,23 +222,17 @@ class Build:
     ):
 
         # make sure user isn't trying to do something silly on MacOS
-        if self.build_env.PLATFORM == "darwin":
-            if device == "gpu":
-                logger.error("SmartSim does not support GPU on MacOS")
-                exit(1)
-            if onnx and self.versions.REDISAI < "1.2.6":
-                logger.error("RedisAI < 1.2.6 does not support ONNX on MacOS")
-                exit(1)
-            if self.versions.REDISAI == "1.2.4" or self.versions.REDISAI == "1.2.5":
-                logger.error("RedisAI support for MacOS is broken in 1.2.4 and 1.2.5")
-                exit(1)
+        if self.build_env.PLATFORM == "darwin" and device == "gpu":
+            raise BuildError("SmartSim does not support GPU on MacOS")
 
         # decide which runtimes to build
         print("\nML Backends Requested")
-        print("-----------------------")
-        print(f"    PyTorch {self.versions.TORCH}: {color_bool(torch)}")
-        print(f"    TensorFlow {self.versions.TENSORFLOW}: {color_bool(tf)}")
-        print(f"    ONNX {self.versions.ONNX}: {color_bool(onnx)}\n")
+        backends_table = [
+            ["PyTorch", self.versions.TORCH, color_bool(torch)],
+            ["TensorFlow", self.versions.TENSORFLOW, color_bool(tf)],
+            ["ONNX", self.versions.ONNX or "Unavailable", color_bool(onnx)],
+        ]
+        print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
         print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
 
         self.check_backends_install()
@@ -230,7 +246,6 @@ class Build:
         if tf:
             self.check_tf_install()
 
-        cmd = []
         # TORCH
         if torch:
             if torch_dir:
@@ -240,7 +255,7 @@ class Build:
                     # pip so if we can't find it we know the user suggested a torch
                     # installation path that doesn't exist
                     logger.error("Could not find requested user Torch installation")
-                    exit(1)
+                    sys.exit(1)
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
@@ -340,6 +355,17 @@ class Build:
 
     def check_onnx_install(self):
         """Check Python environment for ONNX installation"""
+        if not self.versions.ONNX:
+            py_version = sys.version_info
+            msg = (
+                "An onnx wheel is not available for "
+                f"Python {py_version.major}.{py_version.minor}. "
+                "Instead consider using Python 3.8 or 3.9 with Onnx "
+            )
+            if sys.platform == "linux":
+                msg += "1.2.5 or "
+            msg += "1.2.7."
+            raise SetupError(msg)
         try:
             if not self.build_env.check_installed("onnx", self.versions.ONNX):
                 msg = (
@@ -388,10 +414,10 @@ class Build:
                 logger.error(
                     f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'."
                 )
-            exit(1)
+            sys.exit(1)
         else:
             if installed_redisai_backends():
                 logger.error(
                     "If you wish to re-run `smart build`, you must first run `smart clean`."
                 )
-                exit(1)
+                sys.exit(1)
