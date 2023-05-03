@@ -170,17 +170,17 @@ class Config:
                 interfaces = interfaces.split(",")
                 return interfaces
             return [interfaces]
-    
+
         # try to pick a sensible one
         net_if_addrs = psutil.net_if_addrs()
         if "ipogif0" in net_if_addrs:
             return ["ipogif0"]
         elif "hsn0" in net_if_addrs:
-            interfaces = []
-            for net_if_addr in net_if_addrs:
-                if net_if_addr.startswith("hsn"):
-                    interfaces.append(net_if_addr)
-            return interfaces
+            return [
+                net_if_addr
+                for net_if_addr in net_if_addrs
+                if net_if_addr.startswith("hsn")
+            ]
         elif "ib0" in net_if_addrs:
             return ["ib0"]
         # default to aries network
@@ -194,6 +194,5 @@ class Config:
 
 @lru_cache(maxsize=128, typed=False)
 def get_config():
-
     # wrap into a function with a cached result
     return Config()
