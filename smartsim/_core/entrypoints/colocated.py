@@ -165,21 +165,24 @@ def main(
 ):
     global DBPID
 
+    lo_address = current_ip("lo")
     try:
-        ip_address = None
-        if network_interface:
-            ip_address = current_ip(network_interface)
-        lo_address = current_ip("lo")
+        ip_addresses = [
+            current_ip(interface) for interface in network_interface.split(",")
+        ]
+
     except ValueError as e:
         logger.warning(e)
-        ip_address = None
+        ip_addresses = []
 
-    if lo_address == ip_address or not ip_address:
+    if all(lo_address == ip_address for ip_address in ip_addresses) or not ip_addresses:
         cmd = command + [f"--bind {lo_address}"]
     else:
         # bind to both addresses if the user specified a network
         # address that exists and is not the loopback address
-        cmd = command + [f"--bind {lo_address} {ip_address}"]
+        cmd = command + [f"--bind {lo_address} {' '.join(ip_addresses)}"]
+        # pin source address to avoid random selection by Redis
+        cmd += [f"--bind-source-addr {lo_address}"]
 
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
@@ -206,10 +209,10 @@ def main(
             "\n\nCo-located database information\n"
             + "\n".join(
                 (
-                    f"\tIP Address: {ip_address}",
-                    f"\t# of Database CPUs: {db_cpus}",
+                    f"\tIP Address(es): {' '.join(ip_addresses + [lo_address])}",
                     f"\tAffinity: {cpus_to_use}",
                     f"\tCommand: {' '.join(cmd)}\n\n",
+                    f"\t# of Database CPUs: {db_cpus}",
                 )
             )
         )

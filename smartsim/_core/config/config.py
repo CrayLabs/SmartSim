@@ -27,6 +27,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import List, Union
 
 import psutil
 
@@ -150,40 +151,48 @@ class Config:
         return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
 
     @property
-    def test_launcher(self) -> str:
+    def test_launcher(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_LAUNCHER", "local")
 
     @property
-    def test_device(self) -> str:
+    def test_device(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
 
     @property
-    def test_port(self) -> int:
+    def test_port(self) -> int:  # pragma: no cover
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> str:
-        interface = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
-        if not interface:
-            # try to pick a sensible one
-            net_if_addrs = psutil.net_if_addrs()
-            if "ipogif0" in net_if_addrs:
-                return "ipogif0"
-            elif "ib0" in net_if_addrs:
-                return "ib0"
-            # default to aries network
-            return "ipogif0"
-        else:
-            return interface
+    def test_interface(self) -> List[str]:  # pragma: no cover
+        interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
+        if interfaces:
+            if "," in interfaces:
+                interfaces = interfaces.split(",")
+                return interfaces
+            return [interfaces]
+
+        # try to pick a sensible one
+        net_if_addrs = psutil.net_if_addrs()
+        if "ipogif0" in net_if_addrs:
+            return ["ipogif0"]
+        elif "hsn0" in net_if_addrs:
+            return [
+                net_if_addr
+                for net_if_addr in net_if_addrs
+                if net_if_addr.startswith("hsn")
+            ]
+        elif "ib0" in net_if_addrs:
+            return ["ib0"]
+        # default to aries network
+        return ["ipogif0"]
 
     @property
-    def test_account(self) -> str:
+    def test_account(self) -> str:  # pragma: no cover
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
 
 
 @lru_cache(maxsize=128, typed=False)
 def get_config():
-
     # wrap into a function with a cached result
     return Config()

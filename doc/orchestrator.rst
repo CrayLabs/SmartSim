@@ -98,8 +98,8 @@ Here is an example of creating a simple model that is co-located with an
           port=6780,              # database port
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
-          limit_app_cpus=False,   # don't overscubscribe app with database cpus
-          ifname=network_interface # specify network interface to use (i.e. "ib0")
+          limit_app_cpus=False,   # don't oversubscribe app with database cpus
+          ifname=network_interface # specify network interface(s) to use (i.e. "ib0" or ["ib0", "lo"])
   )
   exp.start(colo_model)
 

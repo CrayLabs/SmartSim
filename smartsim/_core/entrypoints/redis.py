@@ -56,9 +56,12 @@ def main(network_interface: str, command: List[str]):
     global DBPID
 
     try:
+        ip_addresses = [current_ip(net_if) for net_if in network_interface.split(",")]
+        cmd = command + [f"--bind {' '.join(ip_addresses)}"]
 
-        ip_address = current_ip(network_interface)
-        cmd = command + [f"--bind {ip_address}"]
+        # pin source address to avoid random selection by Redis
+        ip_address = ip_addresses[0]
+        cmd += [f"--bind-source-addr {ip_address}"]
 
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
         print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
@@ -94,7 +97,6 @@ def cleanup():
 
 
 if __name__ == "__main__":
-
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     parser = argparse.ArgumentParser(
