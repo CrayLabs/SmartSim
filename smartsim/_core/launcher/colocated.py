@@ -83,7 +83,7 @@ def _build_colocated_wrapper_cmd(
     ifname=None,
     **kwargs,
 ):
-    """Build the command use to run a colocated db application
+    """Build the command use to run a colocated DB application
 
     :param cpus: db cpus, defaults to 1
     :type cpus: int, optional
@@ -91,6 +91,10 @@ def _build_colocated_wrapper_cmd(
     :type rai_args: dict[str, str], optional
     :param extra_db_args: extra redis args, defaults to None
     :type extra_db_args: dict[str, str], optional
+    :param port: port to bind DB to
+    :type port: int
+    :param ifname: network interface(s) to bind DB to
+    :type ifname: str | list[str], optional
     :return: the command to run
     :rtype: str
     """
@@ -116,7 +120,9 @@ def _build_colocated_wrapper_cmd(
     ]
     # Add in the interface if using TCP/IP
     if ifname:
-        cmd.extend(["+ifname", ifname])
+        if isinstance(ifname, str):
+            ifname = [ifname]
+        cmd.extend(["+ifname", ",".join(ifname)])
     cmd.append("+command")
     # collect DB binaries and libraries from the config
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]

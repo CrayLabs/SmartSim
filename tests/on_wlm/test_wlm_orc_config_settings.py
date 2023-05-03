@@ -41,7 +41,7 @@ except AttributeError:
     pytestmark = pytest.mark.skip(reason="SmartRedis version is < 0.3.1")
 
 
-def test_config_methods_on_wlm(dbutils, db):
+def test_config_methods_on_wlm_single(dbutils, db):
     """Test all configuration file edit methods on single node WLM db"""
 
 

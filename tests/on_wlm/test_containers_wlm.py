@@ -61,8 +61,7 @@ def test_singularity_wlm_smartredis(fileutils, wlmutils):
     )
 
     # create and start a database
-    orc = wlmutils.get_orchestrator()
-
+    orc = exp.create_database(port=wlmutils.get_test_port(), interface=wlmutils.get_test_interface())
     exp.generate(orc)
     exp.start(orc, block=False)
 

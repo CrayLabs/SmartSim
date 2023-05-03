@@ -85,8 +85,8 @@ class Orchestrator(EntityList):
 
         :param port: TCP/IP port, defaults to 6379
         :type port: int, optional
-        :param interface: network interface, defaults to "lo"
-        :type interface: str, optional
+        :param interface: network interface(s), defaults to "lo"
+        :type interface: str, list[str], optional
 
         Extra configurations for RedisAI
 
@@ -146,7 +146,9 @@ class Orchestrator(EntityList):
         self.ports = []
         self.path = getcwd()
         self._hosts = []
-        self._interface = interface
+        if isinstance(interface, str):
+            interface = [interface]
+        self._interfaces = interface
         self._check_network_interface()
         self.queue_threads = kwargs.get("threads_per_queue", None)
         self.inter_threads = kwargs.get("inter_op_threads", None)
@@ -689,7 +691,7 @@ class Orchestrator(EntityList):
         start_script_args = [
             "-m",
             "smartsim._core.entrypoints.redis",  # entrypoint
-            f"+ifname={self._interface}",  # pass interface to start script
+            "+ifname=" + ",".join(self._interfaces),  # pass interface to start script
             "+command",  # command flag for argparser
             self._redis_exe,  # redis-server
             self._redis_conf,  # redis6.conf file
@@ -713,11 +715,11 @@ class Orchestrator(EntityList):
 
     def _check_network_interface(self):
         net_if_addrs = psutil.net_if_addrs()
-        for interface in self._interface.split(","):
-            if interface not in net_if_addrs and self._interface != "lo":
+        for interface in self._interfaces:
+            if interface not in net_if_addrs and interface != "lo":
                 available = list(net_if_addrs.keys())
                 logger.warning(
-                    f"{self._interface} is not a valid network interface on this node. \n"
+                    f"{interface} is not a valid network interface on this node. \n"
                     "This could be because the head node doesn't have the same networks, if so, ignore this."
                 )
                 logger.warning(f"Found network interfaces are: {available}")

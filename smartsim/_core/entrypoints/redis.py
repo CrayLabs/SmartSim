@@ -56,11 +56,13 @@ def main(network_interface: str, command: List[str]):
     global DBPID
 
     try:
-        ip_address = " ".join(
-            current_ip(net_if) for net_if in network_interface.split(",")
-        )
-        cmd = command + [f"--bind {ip_address}"]
-        ip_address = ip_address.split(" ")[0]
+        ip_addresses = [current_ip(net_if) for net_if in network_interface.split(",")]
+        cmd = command + [f"--bind {' '.join(ip_addresses)}"]
+
+        # pin source address to avoid random selection by Redis
+        ip_address = ip_addresses[0]
+        cmd += [f"--bind-source-addr {ip_address}"]
+
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
         print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
         print(f"IPADDRESS: {ip_address}\n", flush=True)

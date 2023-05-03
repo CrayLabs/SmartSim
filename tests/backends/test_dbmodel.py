@@ -351,7 +351,9 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
         if all([stat == status.STATUS_COMPLETED for stat in statuses]):
             completed = True
 
-    assert completed
+    if not completed:
+        exp.stop(colo_model)
+        assert False
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
