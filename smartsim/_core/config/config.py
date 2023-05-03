@@ -147,23 +147,23 @@ class Config:
         return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
 
     @property
-    def wlm_trials(self) -> int:
+    def wlm_trials(self) -> int:  # pragma: no cover
         return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
 
     @property
-    def test_launcher(self) -> str:
+    def test_launcher(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_LAUNCHER", "local")
 
     @property
-    def test_device(self) -> str:
+    def test_device(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
 
     @property
-    def test_port(self) -> int:
+    def test_port(self) -> int:  # pragma: no cover
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> List[str]:
+    def test_interface(self) -> List[str]:  # pragma: no cover
         interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
         if interfaces:
             if "," in interfaces:
