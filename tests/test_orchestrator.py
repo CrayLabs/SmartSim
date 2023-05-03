@@ -94,7 +94,7 @@ def test_orc_active_functions(fileutils, wlmutils):
 
 
 def test_multiple_interfaces(fileutils, wlmutils):
-    exp_name = "test_orc_active_functions"
+    exp_name = "test_multiple_interfaces"
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
 
