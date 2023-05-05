@@ -50,13 +50,9 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
         wlmutils.get_test_port(), batch=True, interface=network_interface, single_cmd=False
     )
 
-    test_account = wlmutils.get_test_account()
-    if test_account:
-        orc.batch_settings.set_account(test_account)
-    if wlmutils.get_test_launcher() == "lsf":
-        orc.batch_settings.set_walltime("00:02")
-    else:
-        orc.batch_settings.set_walltime("00:02:00")
+    orc.batch_settings.set_account(wlmutils.get_test_account())
+
+    orc.batch_settings.set_walltime("00:02:00")
     if wlmutils.get_test_launcher() == "cobalt":
         orc.batch_settings.set_queue("debug-flat-quad")
     
@@ -90,13 +86,9 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
         wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface, single_cmd=True
     )
 
-    test_account = wlmutils.get_test_account()
-    if test_account:
-        orc.batch_settings.set_account(test_account)
-    if wlmutils.get_test_launcher() == "lsf":
-        orc.batch_settings.set_walltime("00:02")
-    else:
-        orc.batch_settings.set_walltime("00:02:00")
+    orc.batch_settings.set_account(wlmutils.get_test_account())
+
+    orc.batch_settings.set_walltime("00:02:00")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
@@ -132,13 +124,10 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     orc = exp.create_database(
         wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface, single_cmd=False
     )
-    test_account = wlmutils.get_test_account()
-    if test_account:
-        orc.batch_settings.set_account(test_account)
-    if wlmutils.get_test_launcher() == "lsf":
-        orc.batch_settings.set_walltime("00:03")
-    else:
-        orc.batch_settings.set_walltime("00:03:00")
+    
+    orc.batch_settings.set_account(wlmutils.get_test_account())
+ 
+    orc.batch_settings.set_walltime("00:03:00")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
@@ -172,13 +161,9 @@ def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     orc = exp.create_database(wlmutils.get_test_port(), db_nodes=3, batch=True, interface=network_interface)
     orc.set_path(test_dir)
 
-    test_account = wlmutils.get_test_account()
-    if test_account:
-        orc.batch_settings.set_account(test_account)
-    if wlmutils.get_test_launcher() == "lsf":
-        orc.batch_settings.set_walltime("00:03")
-    else:
-        orc.batch_settings.set_walltime("00:03:00")
+    orc.batch_settings.set_account(wlmutils.get_test_account())
+
+    orc.batch_settings.set_walltime("00:03:00")
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need

@@ -39,8 +39,6 @@ if pytest.test_launcher != "slurm":
 def test_get_release_allocation(wlmutils):
     """test slurm interface for obtaining allocations"""
     account = wlmutils.get_test_account()
-    if not account:
-        account = None
     alloc = slurm.get_allocation(nodes=1, time="00:05:00", account=account)
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
@@ -50,8 +48,6 @@ def test_get_release_allocation_w_options(wlmutils):
     """test slurm interface for obtaining allocations"""
     options = {"ntasks-per-node": 1}
     account = wlmutils.get_test_account()
-    if not account:
-        account = None
     alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=options, account=account)
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)

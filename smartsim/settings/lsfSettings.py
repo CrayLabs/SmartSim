@@ -457,7 +457,8 @@ class BsubBatchSettings(BatchSettings):
         :param time: project name
         :type time: str
         """
-        self.project = project
+        if project:
+            self.project = project
 
     def set_account(self, account):
         """Set the project

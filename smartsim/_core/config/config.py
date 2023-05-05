@@ -189,7 +189,7 @@ class Config:
     @property
     def test_account(self) -> str:  # pragma: no cover
         # no account by default
-        return os.environ.get("SMARTSIM_TEST_ACCOUNT", "")
+        return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 
 
 @lru_cache(maxsize=128, typed=False)
