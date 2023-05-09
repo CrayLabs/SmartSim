@@ -28,9 +28,12 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
+former began deprecation in May 2022 and was finally removed in May 2023 (PR285_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The argument name is still `interface`
   for backward compatibility reasons. (PR281_)
 
+.. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/282
 
 0.4.2
@@ -46,10 +49,10 @@ support to allow users to colocate their models with an orchestrator using
 Unix domain sockets and support for launching models as batch jobs.
 
 Additionally, SmartSim has updated its tool chains to provide a better user
-experience. Notably, SmarSim can now be used with Python 3.10, Redis 7.0.5, and 
+experience. Notably, SmarSim can now be used with Python 3.10, Redis 7.0.5, and
 RedisAI 1.2.7. Furthermore, SmartSim now utilizes SmartRedis's aggregation lists to
 streamline the use and extension of ML data loaders, making working with popular
-machine learning frameworks in SmartSim a breeze. 
+machine learning frameworks in SmartSim a breeze.
 
 A full list of changes and detailed notes can be found below:
 
@@ -86,9 +89,9 @@ Detailed Notes
 - Fix bug in colocated database entrypoint stemming from uninitialized variables. This bug affects PyTorch models being loaded into the database. (PR237_)
 - The release of RedisAI 1.2.7 allows us to update support for recent versions of PyTorch, Tensorflow, and ONNX (PR234_)
 - Make installation of correct Torch backend more reliable according to instruction from PyTorch
-- In addition to TCP, add UDS support for colocating an orchestrator with models. Methods 
+- In addition to TCP, add UDS support for colocating an orchestrator with models. Methods
   `Model.colocate_db_tcp` and `Model.colocate_db_uds` were added to expose this functionality.
-  The `Model.colocate_db` method remains and uses TCP for backward compatibility (PR246_) 
+  The `Model.colocate_db` method remains and uses TCP for backward compatibility (PR246_)
 
 .. _PR270: https://github.com/CrayLabs/SmartSim/pull/270
 .. _PR264: https://github.com/CrayLabs/SmartSim/pull/264
