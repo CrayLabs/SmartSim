@@ -44,7 +44,7 @@ Fortran::
 
     type(client_type) :: client
     return_code = client%initialize(use_cluster)
-    if (return_code /= SRNoEryyror) stop 'Error in initialization'
+    if (return_code .ne. SRNoError) stop 'Error in initialization'
 
 C::
 
@@ -177,7 +177,7 @@ to the orchestrator. ::
 Following the guidelines from above, the first step is to initialize the client
 and create a unique identifier for the given processor. This should be done
 within roughly the same portion of the code where the rest of the model
-performs the initialization of other components.  ::
+performs the initialization of other components. ::
 
     ! Import SmartRedis modules
     use, only smartredis_client : client_type
@@ -193,7 +193,7 @@ performs the initialization of other components.  ::
     ! Note adding use_cluster as an additional runtime argument for SmartRedis
     call initialize_model(temperature, number_of_timesteps, use_cluster)
     return_code = smartredis_client%initialize(use_cluster)
-    if (return_code /= SRNoError) stop 'Error in init'
+    if (return_code .ne. SRNoError) stop 'Error in init'
     call MPI_Comm_rank(MPI_COMM_WORLD, mpi_rank, mpi_code)
     ! Build the prefix for all tensors set in this model
     write(name_prefix,'(I6.6,A)') mpi_rank, '_'

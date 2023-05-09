@@ -29,14 +29,10 @@ exception handling features of the language to catch errors. This same
 functionality does not exist in Fortran, so instead most SmartRedis
 methods are functions that return error codes that can be checked. This
 also has the added benefit that Fortran programs can incorporate
-SmartRedis calls within their own error handling methods. By convention,
-a ``0`` return code represents a successful completion, whereas non-zero
-returns represent various failures.
-
-The file ``enum_fortran.inc`` contains the definition of these errors and
-can be included in any Fortran file to check. Additionally, the ``errors``
-module has ``get_last_error`` and ``print_last_error`` to retrieve the
-text of the error message emitted within the C++ code.
+SmartRedis calls within their own error handling methods. A full list of
+return codes for Fortran can be found in ``enum_fortran.inc.`` Additionally, the
+``errors`` module has ``get_last_error`` and ``print_last_error`` to retrieve
+the text of the error message emitted within the C++ code.
 
 Tensors
 =======
@@ -79,6 +75,7 @@ if using a clustered database or ``.false.`` otherwise.
     integer :: return_code
 
     return_code = client%initialize(.false.) ! Change .false. to true if using a clustered database
+    if (return_code .ne. SRNoError) stop 'Error in initializing client'
   end program example
 
 **Putting a Fortran array into the database**
@@ -209,6 +206,7 @@ methods are used:
 .. code-block:: Fortran
 
   return_code = client%initialize(.true.)
+  if (return_code .ne. SRNoError) stop 'Error in initializing client'
 
 The only optional argument to the initialize
 routine is to determine whether the RedisAI
@@ -235,7 +233,9 @@ database cluster.
 
   if (pe_id == 0) then
     return_code = client%set_model_from_file(model_key, model_file, "TORCH", "CPU")
+    if (return_code .ne. SRNoError) stop 'Error in setting model'
     return_code = client%set_script_from_file(script_key, "CPU", script_file)
+    if (return_code .ne. SRNoError) stop 'Error in setting script'
   endif
 
 This only needs to be done on the root MPI task because
@@ -324,6 +324,7 @@ into the Redis database.
 
   call random_number(array)
   return_code = client%put_tensor(in_key, array, shape(array))
+  if (return_code .ne. SRNoError) stop 'Error putting tensor in the database'
 
 The Redis database can now be called to run preprocessing
 scripts on these data.
@@ -333,6 +334,7 @@ scripts on these data.
   inputs(1) = in_key
   outputs(1) = script_out_key
   return_code = client%run_script(script_name, "pre_process", inputs, outputs)
+  if (return_code .ne. SRNoError) stop 'Error running script'
 
 The call to ``client%run_script`` specifies the
 key used to identify the script loaded during
@@ -363,6 +365,7 @@ and the output will stored using the same key.
   inputs(1) = script_out_key
   outputs(1) = out_key
   return_code = client%run_model(model_name, inputs, outputs)
+  if (return_code .ne. SRNoError) stop 'Error running model'
 
 As before the results of running the inference are
 stored within the database and are not available to
@@ -372,6 +375,7 @@ the tensor from the database by using the ``unpack_tensor`` method.
 .. code-block:: Fortran
 
   return_code = client%unpack_tensor(out_key, result, shape(result))
+  if (return_code .ne. SRNoError) stop 'Error retrieving the tensor'
 
 The ``result`` array now contains the outcome of the inference.
 It is a 10-element array representing the likelihood that the
