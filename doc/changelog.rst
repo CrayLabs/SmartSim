@@ -34,7 +34,7 @@ former began deprecation in May 2022 and was finally removed in May 2023 (PR285_
   for backward compatibility reasons. (PR281_)
 
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
-.. _PR281: https://github.com/CrayLabs/SmartSim/pull/282
+.. _PR281: https://github.com/CrayLabs/SmartSim/pull/281
 
 0.4.2
 -----
