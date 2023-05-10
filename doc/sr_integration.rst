@@ -116,7 +116,7 @@ Python::
 Fortran::
 
     if (root_client) return_code = client%set_model_from_file(model_name, model_file, backend, device)
-    if (return_code /= SRNoError) stop 'Error setting model'
+    if (return_code .ne. SRNoError) stop 'Error setting model'
 
 C::
 
@@ -202,7 +202,7 @@ performs the initialization of other components. ::
     ! add the prefix to the model name
     if (mpi_rank==0) then
         return_code = set_model_from_file("example_model_name", "path/to/model.pt", "TORCH", "gpu")
-        if (return_code /= SRNoError) stop 'Error in setting model'
+        if (return_code .ne. SRNoError) stop 'Error in setting model'
     endif
 
 
@@ -217,13 +217,13 @@ Next, add the calls in the main loop to send the temperature to the orchestrator
         model_input(1) = name_prefix//"temperature"
         model_output(1) = name_prefix//"temperature_out"
         return_code = smartredis_client%put_tensor(model_input(1), temperature)
-        if (return_code /= SRNoError) stop 'Error in putting tensor'
+        if (return_code .ne. SRNoError) stop 'Error in putting tensor'
 
         ! Run the machine learning model
         return_code = smartredis_client%run_model("example_model_name", model_input, model_output)
         ! The following line overwrites the prognostic temperature array
         return_code = smartredis_client%unpack_tensor(model_output(1), temperature)
-        if (return_code /= SRNoError) stop 'Error in retrieving tensor'
+        if (return_code .ne. SRNoError) stop 'Error in retrieving tensor'
 
         ! Call a time integrator to step the temperature field forward
         call timestep_simulation(temperature)
