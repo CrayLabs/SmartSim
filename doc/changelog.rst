@@ -18,22 +18,27 @@ To be released at some future date
 
 Note
 
-This section details changes made in the development branch that have not yet been applied to a released version of the SmartSim library.
+This section details changes made in the development branch that have not yet
+been applied to a released version of the SmartSim library.
 
 Description
 
 A full list of changes and detailed notes can be found below:
 
+- Update Fortran tutorials for SmartRedis
 - Add support for multiple network interface binding in Orchestrator and Colocated DBs
 
 Detailed notes
 
 - Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
 former began deprecation in May 2022 and was finally removed in May 2023 (PR285_)
-- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The argument name is still `interface`
-  for backward compatibility reasons. (PR281_)
+- The Fortran tutorials had not been fully updated to show how to handle return/error
+codes. These have now all been updated (PR284_)
+- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
+argument name is still `interface` for backward compatibility reasons. (PR281_)
 
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
+.. _PR284: https://github.com/CrayLabs/SmartSim/pull/284
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/281
 
 0.4.2
