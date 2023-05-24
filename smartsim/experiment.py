@@ -487,14 +487,14 @@ class Experiment:
             model.attach_generator_files(to_configure="./train.cfg")
             exp.generate(model)
 
-        New in 0.4.0, ``Model`` instances can be co-located with an
+        New in 0.4.0, ``Model`` instances can be colocated with an
         Orchestrator database shard through ``Model.colocate_db``. This
         will launch a single ``Orchestrator`` instance on each compute
         host used by the (possibly distributed) application. This is
         useful for performant online inference or processing
         at runtime.
 
-        New in 0.4.2, ``Model`` instances can now be co-located with
+        New in 0.4.2, ``Model`` instances can now be colocated with
         an Orchestrator database over either TCP or UDS using the
         ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` method
         respectively. The original ``Model.colocate_db`` method is now

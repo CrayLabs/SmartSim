@@ -193,7 +193,7 @@ def main(
     except Exception as e:
         cleanup()
         logger.error(f"Failed to start database process: {str(e)}")
-        raise SSInternalError("Co-located process failed to start") from e
+        raise SSInternalError("Colocated process failed to start") from e
 
     try:
         if sys.platform != "darwin":
@@ -206,7 +206,7 @@ def main(
             cpus_to_use = "CPU pinning disabled on MacOS"
 
         logger.debug(
-            "\n\nCo-located database information\n"
+            "\n\nColocated database information\n"
             + "\n".join(
                 (
                     f"\tIP Address(es): {' '.join(ip_addresses + [lo_address])}",
@@ -242,15 +242,15 @@ def main(
 
     except Exception as e:
         cleanup()
-        logger.error(f"Co-located database process failed: {str(e)}")
-        raise SSInternalError("Co-located entrypoint raised an error") from e
+        logger.error(f"Colocated database process failed: {str(e)}")
+        raise SSInternalError("Colocated entrypoint raised an error") from e
 
 
 def cleanup():
     global DBPID
     global LOCK
     try:
-        logger.debug("Cleaning up co-located database")
+        logger.debug("Cleaning up colocated database")
         # attempt to stop the database process
         db_proc = psutil.Process(DBPID)
         db_proc.terminate()
@@ -259,7 +259,7 @@ def cleanup():
         logger.warning("Couldn't find database process to kill.")
 
     except OSError as e:
-        logger.warning(f"Failed to clean up co-located database gracefully: {str(e)}")
+        logger.warning(f"Failed to clean up colocated database gracefully: {str(e)}")
     finally:
         if LOCK.is_locked:
             LOCK.release()
@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
         LOCK = filelock.FileLock(tmp_lockfile)
         LOCK.acquire(timeout=0.1)
-        logger.debug(f"Starting co-located database on host: {socket.gethostname()}")
+        logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
 
         os.environ["PYTHONUNBUFFERED"] = "1"
 

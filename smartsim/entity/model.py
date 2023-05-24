@@ -186,7 +186,7 @@ class Model(SmartSimEntity):
         :type db_cpus: int, optional
         :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
         :type limit_app_cpus: bool, optional
-        :param debug: launch Model with extra debug information about the co-located db
+        :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
@@ -243,7 +243,7 @@ class Model(SmartSimEntity):
         :type db_cpus: int, optional
         :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
         :type limit_app_cpus: bool, optional
-        :param debug: launch Model with extra debug information about the co-located db
+        :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
         :type kwargs: dict, optional
@@ -261,12 +261,12 @@ class Model(SmartSimEntity):
     def _set_colocated_db_settings(self, connection_options, common_options, **kwargs):
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
-        for the co-located database
+        for the colocated database
         """
 
         if hasattr(self.run_settings, "mpmd") and len(self.run_settings.mpmd) > 0:
             raise SSUnsupportedError(
-                "Models co-located with databases cannot be run as a mpmd workload"
+                "Models colocated with databases cannot be run as a mpmd workload"
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
