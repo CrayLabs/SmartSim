@@ -109,7 +109,9 @@ class Model(SmartSimEntity):
         """Attach files to an entity for generation
 
         Attach files needed for the entity that, upon generation,
-        will be located in the path of the entity.
+        will be located in the path of the entity.  Invoking this method
+        after files have already been attached will overwrite
+        the previous list of entity files.
 
         During generation, files "to_copy" are copied into
         the path of the entity, and files "to_symlink" are
