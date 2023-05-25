@@ -56,7 +56,7 @@ deployment, the database is *not* connected together in a cluster and each
 shard of the database is addressed individually by the processes running
 on that compute host.
 
-.. |colo-orc| image:: images/colocated-orc-diagram.png
+.. |colo-orc| image:: images/co-located-orc-diagram.png
   :width: 700
   :alt: Alternative text
 
