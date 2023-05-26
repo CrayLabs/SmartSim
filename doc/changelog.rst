@@ -25,6 +25,8 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Remove deprecated code
+- Relax the coloredlogs version
 - Update Fortran tutorials for SmartRedis
 - Add support for multiple network interface binding in Orchestrator and Colocated DBs
 
@@ -32,6 +34,9 @@ Detailed notes
 
 - Update full test suite to no longer require a tensorflow wheel to be available
   at test time. (PR291_)
+- Deprecated launcher-specific orchestrators, constants, and ML utilities
+were removed. (PR289_)
+- Relax the coloredlogs version to be greater than 10.0 (PR288_)
 - Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
 former began deprecation in May 2022 and was finally removed in May 2023. (PR285_)
 - The Fortran tutorials had not been fully updated to show how to handle return/error
@@ -40,6 +45,8 @@ codes. These have now all been updated. (PR284_)
 argument name is still `interface` for backward compatibility reasons. (PR281_)
 
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
+.. _PR289: https://github.com/CrayLabs/SmartSim/pull/289
+.. _PR288: https://github.com/CrayLabs/SmartSim/pull/288
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
 .. _PR284: https://github.com/CrayLabs/SmartSim/pull/284
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/281

@@ -161,7 +161,7 @@ class BinaryDistribution(Distribution):
 # Define needed dependencies for the installation
 deps = [
     "psutil>=5.7.2",
-    "coloredlogs==10.0",
+    "coloredlogs>=10.0",
     "tabulate>=0.8.9",
     "redis-py-cluster==2.1.3",
     "redis==3.5.3",
