@@ -30,10 +30,10 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
-- Update full test suite no longer requires a tensorflow wheel to be present at
-  test time. (PR291_)
+- Update full test suite to no longer require a tensorflow wheel to be available
+  at test time. (PR291_)
 - Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
-former began deprecation in May 2022 and was finally removed in May 2023 (PR285_)
+former began deprecation in May 2022 and was finally removed in May 2023. (PR285_)
 - The Fortran tutorials had not been fully updated to show how to handle return/error
 codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
