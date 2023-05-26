@@ -44,6 +44,17 @@ try:
     from tensorflow.keras.layers import Conv2D, Input
 except ImportError:
     should_run_tf = False
+else:
+
+    class Net(keras.Model):
+        def __init__(self):
+            super(Net, self).__init__(name="cnn")
+            self.conv = Conv2D(1, 3, 1)
+
+        def call(self, x):
+            y = self.conv(x)
+            return y
+
 
 should_run_tf &= "tensorflow" in installed_redisai_backends()
 
@@ -54,18 +65,35 @@ try:
     import torch.nn.functional as F
 except ImportError:
     should_run_pt = False
+else:
+    # Simple MNIST in PyTorch
+    class PyTorchNet(nn.Module):
+        def __init__(self):
+            super(PyTorchNet, self).__init__()
+            self.conv1 = nn.Conv2d(1, 32, 3, 1)
+            self.conv2 = nn.Conv2d(32, 64, 3, 1)
+            self.dropout1 = nn.Dropout(0.25)
+            self.dropout2 = nn.Dropout(0.5)
+            self.fc1 = nn.Linear(9216, 128)
+            self.fc2 = nn.Linear(128, 10)
+
+        def forward(self, x):
+            x = self.conv1(x)
+            x = F.relu(x)
+            x = self.conv2(x)
+            x = F.relu(x)
+            x = F.max_pool2d(x, 2)
+            x = self.dropout1(x)
+            x = torch.flatten(x, 1)
+            x = self.fc1(x)
+            x = F.relu(x)
+            x = self.dropout2(x)
+            x = self.fc2(x)
+            output = F.log_softmax(x, dim=1)
+            return output
+
 
 should_run_pt &= "torch" in installed_redisai_backends()
-
-
-class Net(keras.Model):
-    def __init__(self):
-        super(Net, self).__init__(name="cnn")
-        self.conv = Conv2D(1, 3, 1)
-
-    def call(self, x):
-        y = self.conv(x)
-        return y
 
 
 def save_tf_cnn(path, file_name):
@@ -93,39 +121,6 @@ def create_tf_cnn():
     model = keras.Model(inputs=inputs, outputs=outputs, name=n.name)
 
     return serialize_model(model)
-
-
-# Simple MNIST in PyTorch
-try:
-
-    class PyTorchNet(nn.Module):
-        def __init__(self):
-            super(PyTorchNet, self).__init__()
-            self.conv1 = nn.Conv2d(1, 32, 3, 1)
-            self.conv2 = nn.Conv2d(32, 64, 3, 1)
-            self.dropout1 = nn.Dropout(0.25)
-            self.dropout2 = nn.Dropout(0.5)
-            self.fc1 = nn.Linear(9216, 128)
-            self.fc2 = nn.Linear(128, 10)
-
-        def forward(self, x):
-            x = self.conv1(x)
-            x = F.relu(x)
-            x = self.conv2(x)
-            x = F.relu(x)
-            x = F.max_pool2d(x, 2)
-            x = self.dropout1(x)
-            x = torch.flatten(x, 1)
-            x = self.fc1(x)
-            x = F.relu(x)
-            x = self.dropout2(x)
-            x = self.fc2(x)
-            output = F.log_softmax(x, dim=1)
-            return output
-
-
-except Exception:
-    should_run_pt = False
 
 
 def save_torch_cnn(path, file_name):
