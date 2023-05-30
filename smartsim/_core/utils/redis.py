@@ -35,13 +35,12 @@ from smartredis.error import RedisReplyError
 
 logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
-from .network import get_ip_from_host
 from ...entity import DBModel, DBScript
 from ...error import SSInternalError
 from ...log import get_logger
 from ..config import CONFIG
 from ..launcher.util.shell import execute_cmd
-
+from .network import get_ip_from_host
 
 logger = get_logger(__name__)
 
