@@ -25,6 +25,7 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Update full test suite to not require a TF wheel at test time
 - Update doc strings
 - Remove deprecated code
 - Relax the coloredlogs version
