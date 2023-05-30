@@ -25,6 +25,7 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Migrate from redis-py-cluster to redis-py
 - Update full test suite to not require a TF wheel at test time
 - Update doc strings
 - Remove deprecated code
@@ -34,6 +35,7 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Migrate from redis-py-cluster to redis-py for cluster status checks (PR292_)
 - Update full test suite to no longer require a tensorflow wheel to be available
   at test time. (PR291_)
 - Correct spelling of colocated in doc strings (PR290_)
@@ -47,6 +49,7 @@ codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
 argument name is still `interface` for backward compatibility reasons. (PR281_)
 
+.. _PR292: https://github.com/CrayLabs/SmartSim/pull/292
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
 .. _PR290: https://github.com/CrayLabs/SmartSim/pull/290
 .. _PR289: https://github.com/CrayLabs/SmartSim/pull/289
