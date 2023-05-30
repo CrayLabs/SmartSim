@@ -25,6 +25,8 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Update full test suite to not require a TF wheel at test time
+- Update doc strings
 - Remove deprecated code
 - Relax the coloredlogs version
 - Update Fortran tutorials for SmartRedis
@@ -34,6 +36,7 @@ Detailed notes
 
 - Update full test suite to no longer require a tensorflow wheel to be available
   at test time. (PR291_)
+- Correct spelling of colocated in doc strings (PR290_)
 - Deprecated launcher-specific orchestrators, constants, and ML utilities
 were removed. (PR289_)
 - Relax the coloredlogs version to be greater than 10.0 (PR288_)
@@ -45,6 +48,7 @@ codes. These have now all been updated. (PR284_)
 argument name is still `interface` for backward compatibility reasons. (PR281_)
 
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
+.. _PR290: https://github.com/CrayLabs/SmartSim/pull/290
 .. _PR289: https://github.com/CrayLabs/SmartSim/pull/289
 .. _PR288: https://github.com/CrayLabs/SmartSim/pull/288
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285

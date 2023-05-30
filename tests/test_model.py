@@ -63,7 +63,7 @@ def test_catch_colo_mpmd_model():
 
     model = exp.create_model("bad_colo_model", rs)
 
-    # make it co-located which should raise and error
+    # make it colocated which should raise and error
     with pytest.raises(SSUnsupportedError):
         model.colocate_db()
 

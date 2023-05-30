@@ -47,10 +47,10 @@ The cluster deployment is optimal for high data throughput scenarios such as
 online analysis, training and processing.
 
 
-Co-located Orchestrator
+Colocated Orchestrator
 =======================
 
-A co-located Orchestrator is a special type of Orchestrator that is deployed on
+A colocated Orchestrator is a special type of Orchestrator that is deployed on
 the same compute hosts an a ``Model`` instance defined by the user. In this
 deployment, the database is *not* connected together in a cluster and each
 shard of the database is addressed individually by the processes running
@@ -72,7 +72,7 @@ process and the ``Orchestrator`` is deployed locally on each compute host where
 the distributed application is running.
 
 
-To create a co-located model, first, create a ``Model`` instance and then call
+To create a colocated model, first, create a ``Model`` instance and then call
 the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
 
 .. currentmodule:: smartsim.entity.model
@@ -83,7 +83,7 @@ the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
 .. automethod:: Model.colocate_db_uds
     :noindex:
 
-Here is an example of creating a simple model that is co-located with an
+Here is an example of creating a simple model that is colocated with an
 ``Orchestrator`` deployment
 
 .. code-block:: python
