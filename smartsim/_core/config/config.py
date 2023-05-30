@@ -45,15 +45,15 @@ from ..utils.helpers import expand_exe_path
 #
 # REDIS_CONF
 #   - Path to the redis.conf file
-#   - Default: /SmartSim/smartsim/config/redis6.conf
+#   - Default: /SmartSim/smartsim/_core/config/redis6.conf
 #
 # REDIS_PATH
 #   - Path to the redis-server executable
-#   - Default: /SmartSim/smartsim/bin/redis-server
+#   - Default: /SmartSim/smartsim/_core/bin/redis-server
 #
 # REDIS_CLI_PATH
 #   - Path to the redis-cli executable
-#   - Default: /SmartSim/smartsim/bin/redis-cli
+#   - Default: /SmartSim/smartsim/_core/bin/redis-cli
 #
 # SMARTSIM_LOG_LEVEL
 #   - Log level for SmartSim
