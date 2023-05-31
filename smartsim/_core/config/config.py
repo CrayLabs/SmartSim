@@ -45,7 +45,7 @@ from ..utils.helpers import expand_exe_path
 #
 # REDIS_CONF
 #   - Path to the redis.conf file
-#   - Default: /SmartSim/smartsim/_core/config/redis6.conf
+#   - Default: /SmartSim/smartsim/_core/config/redis.conf
 #
 # REDIS_PATH
 #   - Path to the redis-server executable
@@ -93,7 +93,7 @@ class Config:
 
         self.lib_path = Path(dependency_path, "lib").resolve()
         self.bin_path = Path(dependency_path, "bin").resolve()
-        self.conf_path = Path(dependency_path, "config", "redis6.conf")
+        self.conf_path = Path(dependency_path, "config", "redis.conf")
 
     @property
     def redisai(self) -> str:
