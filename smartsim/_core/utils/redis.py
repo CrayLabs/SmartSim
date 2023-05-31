@@ -90,10 +90,8 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
 
     :raises SmartSimError: If cluster status cannot be verified
     """
-    cluster_nodes = []
-    for host in hosts:
-        for port in ports:
-            cluster_nodes.append(ClusterNode(get_ip_from_host(host), port))
+    cluster_nodes = [ClusterNode(get_ip_from_host(host), port)
+                     for host, port in itertools.product(hosts, ports)]
 
     if not cluster_nodes:
         raise SSInternalError("No cluster nodes have been set for database status check.")
