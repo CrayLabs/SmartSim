@@ -26,6 +26,7 @@
 
 import logging
 import time
+from itertools import product
 
 import redis
 from redis.cluster import RedisCluster, ClusterNode
@@ -91,7 +92,7 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
     :raises SmartSimError: If cluster status cannot be verified
     """
     cluster_nodes = [ClusterNode(get_ip_from_host(host), port)
-                     for host, port in itertools.product(hosts, ports)]
+                     for host, port in product(hosts, ports)]
 
     if not cluster_nodes:
         raise SSInternalError("No cluster nodes have been set for database status check.")
