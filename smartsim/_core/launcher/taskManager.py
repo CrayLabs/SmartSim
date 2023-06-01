@@ -97,7 +97,7 @@ class TaskManager:
                 if verbose_tm:
                     logger.debug("Sleeping, no tasks to monitor")
 
-    def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+    def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE, wait_on_task=False):
         """Start a task managed by the TaskManager
 
         This is an "unmanaged" task, meaning it is NOT managed
@@ -124,6 +124,8 @@ class TaskManager:
                 logger.debug(f"Starting Task {task.pid}")
             self.tasks.append(task)
             self.task_history[task.pid] = (None, None, None)
+            if (wait_on_task):
+                proc.wait()
             return task.pid
 
         finally:

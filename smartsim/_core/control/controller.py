@@ -302,7 +302,20 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities if not isinstance(e.run_settings, list) ]
+
+                # support multi-step jobs with seperate run_settings
+                for e in elist.entities:
+                    if isinstance(e.run_settings, list):
+                        run = e.run_settings
+                        for i in range(len(run)):
+                            e.run_settings = run[i]
+                            # wait on tasks unless it's the last task (or just one task)
+                            if (i == len(run)-1):
+                                steps.extend([(self._create_job_step(e, False), e)])
+                            else:
+                                steps.extend([(self._create_job_step(e, True), e)])
+                        run = e.run_settings
                 steps.extend(job_steps)
 
         # models themselves cannot be batch steps. If batch settings are
@@ -394,7 +407,7 @@ class Controller:
             msg += "Check error and output files for details.\n"
             msg += f"{entity}"
             logger.error(msg)
-            raise SmartSimError(f"Job step {entity.name} failed to launch") from e
+            raise SmartSimError(f"Job step {job_step.name} failed to launch") from e
 
         # a job step is a task if it is not managed by a workload manager (i.e. Slurm)
         # but is rather started, monitored, and exited through the Popen interface
@@ -426,7 +439,7 @@ class Controller:
             batch_step.add_to_batch(step)
         return batch_step
 
-    def _create_job_step(self, entity):
+    def _create_job_step(self, entity, wait_on_task=False):
         """Create job steps for all entities with the launcher
 
         :param entities: list of all entities to create steps for
@@ -438,7 +451,7 @@ class Controller:
         if not isinstance(entity, DBNode):
             self._prep_entity_client_env(entity)
 
-        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
+        step = self._launcher.create_step(entity.name, entity.path, entity.run_settings, wait_on_task)
         return step
 
     def _prep_entity_client_env(self, entity):
@@ -480,7 +493,11 @@ class Controller:
                 raise SSInternalError(
                     "Colocated database was not configured for either TCP or UDS"
                 )
-        entity.run_settings.update_env(client_env)
+        if isinstance(entity.run_settings, list):
+            for e in entity.run_settings:
+                e.update_env(client_env)
+        else:
+            entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator):
         """Save the orchestrator object via pickle
