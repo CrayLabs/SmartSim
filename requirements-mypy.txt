@@ -1,0 +1,7 @@
+# From typeshed
+types-psutil
+types-redis
+types-tabulate
+types-tqdm
+
+# Not from typeshed

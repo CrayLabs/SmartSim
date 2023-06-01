@@ -65,3 +65,41 @@ ignore_errors = true
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+[tool.mypy]
+python_version = "3.9"
+namespace_packages = true
+files = [
+  "smartsim"
+]
+plugins = []
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# Ignore packages that are not used or not typed
+module = [
+  "coloredlogs",
+  "smartredis",
+  "smartredis.error"
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "smartsim.database.*",
+  "smartsim.entity.*",
+  "smartsim.experiment"
+]
+
+ignore_errors=false
+
+# Strict fn defs
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+
+# Safety/Upgrading Mypy
+warn_unused_ignores = true
+# warn_redundant_casts = true # not a per-module setting?
