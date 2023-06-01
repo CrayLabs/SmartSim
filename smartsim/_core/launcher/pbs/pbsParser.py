@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import typing as t
 
 
-def parse_qsub(output):
+def parse_qsub(output: str) -> str:
     """Parse qsub output and return job id. For PBS, the
     output is the job id itself.
 
@@ -39,7 +40,7 @@ def parse_qsub(output):
     return output
 
 
-def parse_qsub_error(output):
+def parse_qsub_error(output: str) -> str:
     """Parse and return error output of a failed qsub command.
 
     :param output: stderr of qsub command
@@ -60,7 +61,7 @@ def parse_qsub_error(output):
     return base_err
 
 
-def parse_qstat_jobid(output, job_id):
+def parse_qstat_jobid(output: str, job_id: str) -> str:
     """Parse and return output of the qstat command run with options
     to obtain job status.
 
@@ -82,7 +83,7 @@ def parse_qstat_jobid(output, job_id):
     return result
 
 
-def parse_qstat_nodes(output):
+def parse_qstat_nodes(output: str) -> t.List[str]:
     """Parse and return the qstat command run with
     options to obtain node list.
 
@@ -96,7 +97,7 @@ def parse_qstat_nodes(output):
     :return: compute nodes of the allocation or job
     :rtype: list of str
     """
-    nodes = []
+    nodes: t.List[str] = []
     out_json = load_and_clean_json(output)
     if "Jobs" not in out_json:
         return nodes
@@ -111,7 +112,7 @@ def parse_qstat_nodes(output):
     return list(sorted(set(nodes)))
 
 
-def parse_step_id_from_qstat(output, step_name):
+def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
     """Parse and return the step id from a qstat command
 
     :param output: output qstat
@@ -135,7 +136,7 @@ def parse_step_id_from_qstat(output, step_name):
     return step_id
 
 
-def load_and_clean_json(out):
+def load_and_clean_json(out: str) -> t.Any:
     if len(out.strip()) == 0:
         return ""
     try:
