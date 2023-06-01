@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-from subprocess import PIPE, TimeoutExpired
-
 import psutil
+import time
+import typing as t
+from subprocess import PIPE, TimeoutExpired
 
 from ....error import ShellError
 from ....log import get_logger
@@ -37,7 +37,14 @@ logger = get_logger(__name__)
 verbose_shell = check_dev_log_level()
 
 
-def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None):
+def execute_cmd(
+    cmd_list: t.List[str],
+    shell: bool = False,
+    cwd: t.Optional[str] = None,
+    env: t.Dict = None,
+    proc_input: str = "",
+    timeout: t.Optional[int] = None,
+) -> t.Tuple[int, str, str]:
     """Execute a command locally
 
     :param cmd_list: list of command with arguments
@@ -86,7 +93,9 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
     return proc.returncode, out.decode("utf-8"), err.decode("utf-8")
 
 
-def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+def execute_async_cmd(
+    cmd_list: t.List[str], cwd: str, env: t.Dict = None, out=PIPE, err=PIPE
+) -> psutil.Popen:
     """Execute an asynchronous command
 
     This function executes an asynchronous command and returns a
