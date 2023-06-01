@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import psutil
+import typing as t
 
 from ...status import (
     SMARTSIM_STATUS,
@@ -38,15 +39,20 @@ from ...status import (
 
 class StepInfo:
     def __init__(
-        self, status="", launcher_status="", returncode=None, output=None, error=None
-    ):
+        self,
+        status: str = "",
+        launcher_status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         self.status = status
         self.launcher_status = launcher_status
         self.returncode = returncode
         self.output = output
         self.error = error
 
-    def __str__(self):
+    def __str__(self) -> str:
         info_str = f"Status: {self.status}"
         info_str += f" | Launcher Status {self.launcher_status}"
         info_str += f" | Returncode {str(self.returncode)}"
@@ -54,7 +60,6 @@ class StepInfo:
 
 
 class UnmanagedStepInfo(StepInfo):
-
     # see https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
     # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py
     mapping = {
@@ -72,13 +77,19 @@ class UnmanagedStepInfo(StepInfo):
         psutil.STATUS_ZOMBIE: STATUS_COMPLETED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         smartsim_status = self._get_smartsim_status(status)
         super().__init__(
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         if status in self.mapping:
@@ -117,13 +128,19 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
         "SUSPENDED": STATUS_PAUSED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         smartsim_status = self._get_smartsim_status(status)
         super().__init__(
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         if status in self.mapping:
@@ -150,7 +167,13 @@ class PBSStepInfo(StepInfo):  # cov-pbs
         "X": STATUS_COMPLETED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
                 smartsim_status = "Completed" if returncode == 0 else "Failed"
@@ -164,7 +187,7 @@ class PBSStepInfo(StepInfo):  # cov-pbs
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
@@ -173,7 +196,6 @@ class PBSStepInfo(StepInfo):  # cov-pbs
 
 
 class CobaltStepInfo(StepInfo):  # cov-cobalt
-
     mapping = {
         "running": STATUS_RUNNING,
         "queued": STATUS_PAUSED,
@@ -187,7 +209,13 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
         "exiting": STATUS_COMPLETED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         if status == "NOTFOUND":
             # returncode not logged by Cobalt
             # if job has exited the queue then we consider it "completed"
@@ -200,7 +228,7 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status):
+    def _get_smartsim_status(self, status: str):
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
@@ -220,7 +248,13 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
         "DONE": STATUS_COMPLETED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
                 smartsim_status = "Completed" if returncode == 0 else "Failed"
@@ -233,7 +267,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status, returncode):
+    def _get_smartsim_status(self, status: str, returncode: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
@@ -251,7 +285,13 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
         "Complete": STATUS_COMPLETED,
     }
 
-    def __init__(self, status="", returncode=None, output=None, error=None):
+    def __init__(
+        self,
+        status: str = "",
+        returncode: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+        error: t.Optional[str] = None,
+    ) -> None:
         if status == "NOTFOUND":
             if returncode is not None:
                 smartsim_status = "Completed" if returncode == 0 else "Failed"
@@ -264,7 +304,7 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status, returncode):
+    def _get_smartsim_status(self, status: str, returncode: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:

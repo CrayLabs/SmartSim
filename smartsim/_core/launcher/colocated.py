@@ -25,13 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import typing as t
 
-from ...error import SSInternalError, SSUnsupportedError
+
+
+from ...error import SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
+from ...entity.dbobject import DBModel, DBScript
 
-
-def write_colocated_launch_script(file_name, db_log, colocated_settings):
+def write_colocated_launch_script(file_name: str, db_log: str, colocated_settings: t.Dict[str, t.Any]) -> None:
     """Write the colocated launch script
 
     This file will be written into the cwd of the step that
@@ -75,16 +78,18 @@ def write_colocated_launch_script(file_name, db_log, colocated_settings):
 
 
 def _build_colocated_wrapper_cmd(
-    db_log,
-    cpus=1,
-    rai_args=None,
-    extra_db_args=None,
-    port=6780,
-    ifname=None,
-    **kwargs,
-):
+    db_log: str,
+    cpus: int = 1,
+    rai_args: t.Optional[t.Dict[str, str]] = None,
+    extra_db_args: t.Optional[t.Dict[str, str]] = None,
+    port: int = 6780,
+    ifname: t.Union[str, t.List[str]] = None,
+    **kwargs: t.Any,
+) -> None:
     """Build the command use to run a colocated DB application
 
+    :param db_log: log file for the db
+    :type db_log: str    
     :param cpus: db cpus, defaults to 1
     :type cpus: int, optional
     :param rai_args: redisai args, defaults to None
@@ -182,7 +187,7 @@ def _build_colocated_wrapper_cmd(
     return " ".join(cmd)
 
 
-def _build_db_model_cmd(db_models):
+def _build_db_model_cmd(db_models: t.List[DBModel]) -> t.List[str]:
     cmd = []
     for db_model in db_models:
         cmd.append("+db_model")
@@ -211,7 +216,7 @@ def _build_db_model_cmd(db_models):
     return cmd
 
 
-def _build_db_script_cmd(db_scripts):
+def _build_db_script_cmd(db_scripts: t.List[DBScript]) -> t.List[str]:
     cmd = []
     for db_script in db_scripts:
         cmd.append("+db_script")
