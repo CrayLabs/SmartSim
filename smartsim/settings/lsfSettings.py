@@ -24,6 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import typing as t
 from pprint import pformat
 
 from ..error import SSUnsupportedError
@@ -34,7 +37,14 @@ logger = get_logger(__name__)
 
 
 class JsrunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, str]] = None,
+        env_vars: t.Optional[t.Dict[str, str]] = None,
+        **kwargs,
+    ) -> None:
         """Settings to run job with ``jsrun`` command
 
         ``JsrunSettings`` should only be used on LSF-based systems.
@@ -64,7 +74,7 @@ class JsrunSettings(RunSettings):
 
     reserved_run_args = {"chdir", "h"}
 
-    def set_num_rs(self, num_rs):
+    def set_num_rs(self, num_rs: t.Union[str, int]) -> None:
         """Set the number of resource sets to use
 
         This sets ``--nrs``.
@@ -77,7 +87,7 @@ class JsrunSettings(RunSettings):
         else:
             self.run_args["nrs"] = int(num_rs)
 
-    def set_cpus_per_rs(self, cpus_per_rs):
+    def set_cpus_per_rs(self, cpus_per_rs: int) -> None:
         """Set the number of cpus to use per resource set
 
         This sets ``--cpu_per_rs``
@@ -96,7 +106,7 @@ class JsrunSettings(RunSettings):
         else:
             self.run_args["cpu_per_rs"] = int(cpus_per_rs)
 
-    def set_gpus_per_rs(self, gpus_per_rs):
+    def set_gpus_per_rs(self, gpus_per_rs: int) -> None:
         """Set the number of gpus to use per resource set
 
         This sets ``--gpu_per_rs``
@@ -109,7 +119,7 @@ class JsrunSettings(RunSettings):
         else:
             self.run_args["gpu_per_rs"] = int(gpus_per_rs)
 
-    def set_rs_per_host(self, rs_per_host):
+    def set_rs_per_host(self, rs_per_host: int) -> None:
         """Set the number of resource sets to use per host
 
         This sets ``--rs_per_host``
@@ -119,7 +129,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["rs_per_host"] = int(rs_per_host)
 
-    def set_tasks(self, tasks):
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--np``
@@ -129,7 +139,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["np"] = int(tasks)
 
-    def set_tasks_per_rs(self, tasks_per_rs):
+    def set_tasks_per_rs(self, tasks_per_rs: int) -> None:
         """Set the number of tasks per resource set
 
         This sets ``--tasks_per_rs``
@@ -139,7 +149,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["tasks_per_rs"] = int(tasks_per_rs)
 
-    def set_tasks_per_node(self, tasks_per_node):
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks per resource set.
 
         This function is an alias for `set_tasks_per_rs`.
@@ -149,7 +159,7 @@ class JsrunSettings(RunSettings):
         """
         self.set_tasks_per_rs(tasks_per_node)
 
-    def set_cpus_per_task(self, cpus_per_task):
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus per tasks.
 
         This function is an alias for `set_cpus_per_rs`.
@@ -159,7 +169,7 @@ class JsrunSettings(RunSettings):
         """
         self.set_cpus_per_rs(int(cpus_per_task))
 
-    def set_memory_per_rs(self, memory_per_rs):
+    def set_memory_per_rs(self, memory_per_rs: int) -> None:
         """Specify the number of megabytes of memory to assign to a resource set
 
         This sets ``--memory_per_rs``
@@ -169,7 +179,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["memory_per_rs"] = int(memory_per_rs)
 
-    def set_memory_per_node(self, memory_per_node):
+    def set_memory_per_node(self, memory_per_node: int) -> None:
         """Specify the number of megabytes of memory to assign to a resource set
 
         Alias for `set_memory_per_rs`.
@@ -179,7 +189,7 @@ class JsrunSettings(RunSettings):
         """
         self.set_memory_per_rs(memory_per_node)
 
-    def set_binding(self, binding):
+    def set_binding(self, binding: str) -> None:
         """Set binding
 
         This sets ``--bind``
@@ -189,7 +199,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["bind"] = binding
 
-    def make_mpmd(self, jsrun_settings=None):
+    def make_mpmd(self, jsrun_settings: t.Optional[JsrunSettings] = None):
         """Make step an MPMD (or SPMD) job.
 
         This method will activate job execution through an ERF file.
@@ -210,7 +220,7 @@ class JsrunSettings(RunSettings):
         if jsrun_settings:
             self.mpmd.append(jsrun_settings)
 
-    def set_mpmd_preamble(self, preamble_lines):
+    def set_mpmd_preamble(self, preamble_lines: t.List[str]) -> None:
         """Set preamble used in ERF file. Typical lines include
         `oversubscribe-cpu : allow` or `overlapping-rs : allow`.
         Can be used to set `launch_distribution`. If it is not present,
@@ -223,7 +233,7 @@ class JsrunSettings(RunSettings):
         """
         self.mpmd_preamble_lines = preamble_lines
 
-    def set_erf_sets(self, erf_sets):
+    def set_erf_sets(self, erf_sets: t.Dict[str, str]) -> None:
         """Set resource sets used for ERF (SPMD or MPMD) steps.
 
         ``erf_sets`` is a dictionary used to fill the ERF
@@ -241,7 +251,7 @@ class JsrunSettings(RunSettings):
         """
         self.erf_sets = erf_sets
 
-    def format_env_vars(self):
+    def format_env_vars(self) -> t.List[str]:
         """Format environment variables. Each variable needs
         to be passed with ``--env``. If a variable is set to ``None``,
         its value is propagated from the current environment.
@@ -257,7 +267,7 @@ class JsrunSettings(RunSettings):
                 format_str += ["-E", f"{k}"]
         return format_str
 
-    def set_individual_output(self, suffix=None):
+    def set_individual_output(self, suffix: t.Optional[str] = None) -> None:
         """Set individual std output.
 
         This sets ``--stdio_mode individual``
@@ -274,7 +284,7 @@ class JsrunSettings(RunSettings):
         if suffix:
             self.individual_suffix = suffix
 
-    def format_run_args(self):
+    def format_run_args(self) -> t.List[str]:
         """Return a list of LSF formatted run arguments
 
         :return: list of LSF arguments for these settings
@@ -333,13 +343,13 @@ class JsrunSettings(RunSettings):
                         args += ["=".join((prefix + opt, str(value)))]
         return args
 
-    def __str__(self):
+    def __str__(self) -> str:
         string = super().__str__()
         if self.mpmd:
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
 
-    def _prep_colocated_db(self, db_cpus):
+    def _prep_colocated_db(self, db_cpus: int) -> None:
         cpus_per_flag_set = False
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
             if cpu_per_rs_flag in self.run_args:
@@ -380,13 +390,13 @@ class JsrunSettings(RunSettings):
 class BsubBatchSettings(BatchSettings):
     def __init__(
         self,
-        nodes=None,
-        time=None,
-        project=None,
-        batch_args=None,
-        smts=None,
-        **kwargs,
-    ):
+        nodes: t.Optional[int] = None,
+        time: t.Optional[str] = None,
+        project: t.Optional[str] = None,
+        batch_args: t.Optional[t.Dict[str, str]] = None,
+        smts: t.Optional[int] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Specify ``bsub`` batch parameters for a job
 
         :param nodes: number of nodes for batch, defaults to None
@@ -421,7 +431,7 @@ class BsubBatchSettings(BatchSettings):
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime
 
         This sets ``-W``.
@@ -437,7 +447,7 @@ class BsubBatchSettings(BatchSettings):
                 walltime = ":".join(walltime.split(":")[:2])
         self.walltime = walltime
 
-    def set_smts(self, smts):
+    def set_smts(self, smts: int) -> None:
         """Set SMTs
 
         This sets ``-alloc_flags``. If the user sets
@@ -449,7 +459,7 @@ class BsubBatchSettings(BatchSettings):
         """
         self.smts = int(smts)
 
-    def set_project(self, project):
+    def set_project(self, project: str) -> None:
         """Set the project
 
         This sets ``-P``.
@@ -460,7 +470,7 @@ class BsubBatchSettings(BatchSettings):
         if project:
             self.project = project
 
-    def set_account(self, account):
+    def set_account(self, account: str) -> None:
         """Set the project
 
         this function is an alias for `set_project`.
@@ -470,7 +480,7 @@ class BsubBatchSettings(BatchSettings):
         """
         self.set_project(account)
 
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
         This sets ``-nnodes``.
@@ -481,7 +491,7 @@ class BsubBatchSettings(BatchSettings):
         if num_nodes:
             self.batch_args["nnodes"] = int(num_nodes)
 
-    def set_expert_mode_req(self, res_req, slots):
+    def set_expert_mode_req(self, res_req: str, slots: int) -> None:
         """Set allocation for expert mode. This
         will activate expert mode (``-csm``) and
         disregard all other allocation options.
@@ -493,7 +503,7 @@ class BsubBatchSettings(BatchSettings):
         self.batch_args["R"] = res_req
         self.batch_args["n"] = slots
 
-    def set_hostlist(self, host_list):
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -508,7 +518,7 @@ class BsubBatchSettings(BatchSettings):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["m"] = '"' + " ".join(host_list) + '"'
 
-    def set_tasks(self, tasks):
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``-n``
@@ -518,7 +528,7 @@ class BsubBatchSettings(BatchSettings):
         """
         self.batch_args["n"] = int(tasks)
 
-    def set_queue(self, queue):
+    def set_queue(self, queue: str) -> None:
         """Set the queue for this job
 
         :param queue: The queue to submit the job on
@@ -527,7 +537,7 @@ class BsubBatchSettings(BatchSettings):
         if queue:
             self.batch_args["q"] = queue
 
-    def _format_alloc_flags(self):
+    def _format_alloc_flags(self) -> None:
         """Format ``alloc_flags`` checking if user already
         set it. Currently only adds SMT flag if missing
         and ``self.smts`` is set.
@@ -549,7 +559,7 @@ class BsubBatchSettings(BatchSettings):
             if len(flags) > 1:
                 self.batch_args["alloc_flags"] = '"' + " ".join(flags) + '"'
 
-    def format_batch_args(self):
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: list of batch arguments for Qsub
