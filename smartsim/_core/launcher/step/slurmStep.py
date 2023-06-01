@@ -27,16 +27,18 @@
 import os
 import shutil
 from shlex import split as sh_split
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings.base import BatchSettings, RunSettings
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings):
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -51,7 +53,7 @@ class SbatchStep(Step):
         self.step_cmds = []
         self.managed = True
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -60,7 +62,7 @@ class SbatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, "--parsable", script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -71,7 +73,7 @@ class SbatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing
@@ -102,7 +104,7 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -119,7 +121,7 @@ class SrunStep(Step):
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -168,7 +170,7 @@ class SrunStep(Step):
 
         return srun_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -186,7 +188,7 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _build_exe(self):
+    def _build_exe(self) -> None:
         """Build the executable for this step
 
         :return: executable list
@@ -199,7 +201,7 @@ class SrunStep(Step):
             args = self.run_settings.exe_args
             return exe + args
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
