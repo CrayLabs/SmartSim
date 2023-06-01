@@ -26,6 +26,8 @@
 
 import pathlib
 import shutil
+import typing as t
+
 from distutils import dir_util
 from os import mkdir, path, symlink
 
@@ -33,6 +35,9 @@ from ...entity import Model
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
+from ...database import Orchestrator
+from ...entity import SmartSimEntity, EntityList
+
 
 logger = get_logger(__name__)
 logger.propagate = False
@@ -44,7 +49,7 @@ class Generator:
     and writing into configuration files as well.
     """
 
-    def __init__(self, gen_path, overwrite=False):
+    def __init__(self, gen_path: str, overwrite: bool = False) -> None:
         """Initialize a generator object
 
         if overwrite is true, replace any existing
@@ -61,7 +66,7 @@ class Generator:
         self.gen_path = gen_path
         self.overwrite = overwrite
 
-    def generate_experiment(self, *args):
+    def generate_experiment(self, *args: t.Any) -> None:
         """Run ensemble and experiment file structure generation
 
         Generate the file structure for a SmartSim experiment. This
@@ -87,7 +92,7 @@ class Generator:
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
 
-    def set_tag(self, tag, regex=None):
+    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag used for tagging input files
 
         Set a tag or a regular expression for the
@@ -122,7 +127,7 @@ class Generator:
         else:
             logger.info("Working in previously created experiment")
 
-    def _gen_orc_dir(self, orchestrator):
+    def _gen_orc_dir(self, orchestrator: Orchestrator) -> None:
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
@@ -141,7 +146,7 @@ class Generator:
             shutil.rmtree(orc_path, ignore_errors=True)
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
-    def _gen_entity_list_dir(self, entity_lists):
+    def _gen_entity_list_dir(self, entity_lists: t.List[EntityList]) -> None:
         """Generate directories for EntityList instances
 
         :param entity_lists: list of EntityList instances
@@ -152,7 +157,6 @@ class Generator:
             return
 
         for elist in entity_lists:
-
             elist_dir = path.join(self.gen_path, elist.name)
             if path.isdir(elist_dir):
                 if self.overwrite:
@@ -164,7 +168,11 @@ class Generator:
 
             self._gen_entity_dirs(elist.entities, entity_list=elist)
 
-    def _gen_entity_dirs(self, entities, entity_list=None):
+    def _gen_entity_dirs(
+        self,
+        entities: t.List[SmartSimEntity],
+        entity_list: t.Optional[EntityList] = None,
+    ) -> None:
         """Generate directories for Entity instances
 
         :param entities: list of Entity instances
@@ -198,7 +206,7 @@ class Generator:
             self._link_entity_files(entity)
             self._write_tagged_entity_files(entity)
 
-    def _write_tagged_entity_files(self, entity):
+    def _write_tagged_entity_files(self, entity: SmartSimEntity) -> None:
         """Read, configure and write the tagged input files for
            a Model instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -236,7 +244,7 @@ class Generator:
                 )
                 self._writer.configure_tagged_model_files(to_write, entity.params)
 
-    def _copy_entity_files(self, entity):
+    def _copy_entity_files(self, entity: SmartSimEntity) -> None:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: SmartSimEntity
@@ -250,7 +258,7 @@ class Generator:
                 else:
                     shutil.copyfile(to_copy, dst_path)
 
-    def _link_entity_files(self, entity):
+    def _link_entity_files(self, entity: SmartSimEntity) -> None:
         """Symlink the entity files attached to this entity.
 
         :param entity: SmartSimEntity
