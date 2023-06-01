@@ -25,8 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
 from ...status import STATUS_NEW
+from ...entity import SmartSimEntity
 
 
 class Job:
@@ -36,7 +38,14 @@ class Job:
     the controller class.
     """
 
-    def __init__(self, job_name, job_id, entity, launcher, is_task):
+    def __init__(
+        self,
+        job_name: str,
+        job_id: str,
+        entity: SmartSimEntity,
+        launcher: str,
+        is_task: bool,
+    ) -> None:
         """Initialize a Job.
 
         :param job_name: Name of the job step
@@ -65,11 +74,18 @@ class Job:
         self.history = History()
 
     @property
-    def ename(self):
+    def ename(self) -> str:
         """Return the name of the entity this job was created from"""
         return self.entity.name
 
-    def set_status(self, new_status, raw_status, returncode, error=None, output=None):
+    def set_status(
+        self,
+        new_status: str,
+        raw_status: str,
+        returncode: str,
+        error: str = None,
+        output: str = None,
+    ) -> None:
         """Set the status  of a job.
 
         :param new_status: The new status of the job
@@ -83,12 +99,12 @@ class Job:
         self.error = error
         self.output = output
 
-    def record_history(self):
+    def record_history(self) -> None:
         """Record the launching history of a job."""
         job_time = time.time() - self.start_time
         self.history.record(self.jid, self.status, self.returncode, job_time)
 
-    def reset(self, new_job_name, new_job_id, is_task):
+    def reset(self, new_job_name: str, new_job_id: str, is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
@@ -109,7 +125,7 @@ class Job:
         self.start_time = time.time()
         self.history.new_run()
 
-    def error_report(self):
+    def error_report(self) -> str:
         """A descriptive error report based on job fields
 
         :return: error report for display in terminal
@@ -129,7 +145,7 @@ class Job:
         warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return user-readable string of the Job
 
         :returns: A user-readable string of the Job
@@ -148,7 +164,7 @@ class History:
     on the previous launches of a job.
     """
 
-    def __init__(self, runs=0):
+    def __init__(self, runs: int = 0) -> None:
         """Init a history object for a job
 
         :param runs: number of runs so far, defaults to 0
@@ -160,13 +176,13 @@ class History:
         self.returns = dict()
         self.job_times = dict()
 
-    def record(self, job_id, status, returncode, job_time):
+    def record(self, job_id: str, status: str, returncode: str, job_time: str):
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
         self.returns[self.runs] = returncode
         self.job_times[self.runs] = job_time
 
-    def new_run(self):
+    def new_run(self) -> None:
         """increment run total"""
         self.runs += 1
