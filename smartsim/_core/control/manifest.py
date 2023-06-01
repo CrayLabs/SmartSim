@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity
 from ...error import SmartSimError
@@ -44,14 +46,14 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args: SmartSimEntity) -> None:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
         self._check_entity_lists_nonempty()
 
     @property
-    def db(self):
+    def db(self) -> Orchestrator:
         """Return Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
@@ -69,7 +71,7 @@ class Manifest:
         return _db
 
     @property
-    def models(self):
+    def models(self) -> t.List[SmartSimEntity]:
         """Return Model instances in Manifest
 
         :return: model instances
@@ -82,13 +84,13 @@ class Manifest:
         return _models
 
     @property
-    def ensembles(self):
+    def ensembles(self) -> t.List[EntityList]:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
         :rtype: List[Ensemble]
         """
-        _ensembles = []
+        _ensembles: t.List[EntityList] = []
         for deployable in self._deployables:
             if isinstance(deployable, EntityList):
                 is_exceptional_type = False
@@ -101,7 +103,7 @@ class Manifest:
         return _ensembles
 
     @property
-    def all_entity_lists(self):
+    def all_entity_lists(self) -> t.List[EntityList]:
         """All entity lists, including ensembles and
         exceptional ones like Orchestrator
 
@@ -115,7 +117,7 @@ class Manifest:
 
         return _all_entity_lists
 
-    def _check_names(self, deployables):
+    def _check_names(self, deployables: t.List[t.Any]) -> None:
         used = []
         for deployable in deployables:
             name = getattr(deployable, "name", None)
@@ -125,7 +127,7 @@ class Manifest:
                 raise SmartSimError("User provided two entities with the same name")
             used.append(name)
 
-    def _check_types(self, deployables):
+    def _check_types(self, deployables: t.List[t.Any]) -> None:
         for deployable in deployables:
             if not (
                 isinstance(deployable, SmartSimEntity)
@@ -135,14 +137,14 @@ class Manifest:
                     f"Entity has type {type(deployable)}, not SmartSimEntity or EntityList"
                 )
 
-    def _check_entity_lists_nonempty(self):
+    def _check_entity_lists_nonempty(self) -> None:
         """Check deployables for sanity before launching"""
 
         for entity_list in self.all_entity_lists:
             if len(entity_list) < 1:
                 raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ""
         e_header = "=== Ensembles ===\n"
         m_header = "=== Models ===\n"
@@ -183,14 +185,14 @@ class Manifest:
         return s
 
     @property
-    def has_db_objects(self):
+    def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
 
-        def has_db_models(entity):
+        def has_db_models(entity: SmartSimEntity) -> bool:
             if hasattr(entity, "_db_models"):
                 return len(entity._db_models) > 0
 
-        def has_db_scripts(entity):
+        def has_db_scripts(entity: SmartSimEntity) -> bool:
             if hasattr(entity, "_db_scripts"):
                 return len(entity._db_scripts) > 0
 
