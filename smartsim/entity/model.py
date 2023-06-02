@@ -24,7 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
 
+import typing as t
 import warnings
 
 from .._core.utils.helpers import cat_arg_and_value, init_default
@@ -32,11 +34,18 @@ from ..error import EntityExistsError, SSUnsupportedError
 from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
+from ..settings.base import BatchSettings, RunSettings
 
 
 class Model(SmartSimEntity):
     def __init__(
-        self, name, params, path, run_settings, params_as_args=None, batch_settings=None
+        self,
+        name: str,
+        params: t.Dict[str, str],
+        path: str,
+        run_settings: RunSettings,
+        params_as_args: t.Optional[t.List[str]] = None,
+        batch_settings: t.Optional[BatchSettings] = None,
     ):
         """Initialize a ``Model``
 
@@ -60,19 +69,19 @@ class Model(SmartSimEntity):
         super().__init__(name, path, run_settings)
         self.params = params
         self.params_as_args = params_as_args
-        self.incoming_entities = []
+        self.incoming_entities: t.List[SmartSimEntity] = []
         self._key_prefixing_enabled = False
         self.batch_settings = batch_settings
-        self._db_models = []
-        self._db_scripts = []
-        self.files = None
-
+        self._db_models: t.List[DBModel] = []
+        self._db_scripts: t.List[DBScript] = []
+        self.files: t.Optional[EntityFiles] = None
+        
     @property
-    def colocated(self):
+    def colocated(self) -> bool:
         """Return True if this Model will run with a colocated Orchestrator"""
         return bool(self.run_settings.colocated_db_settings)
 
-    def register_incoming_entity(self, incoming_entity):
+    def register_incoming_entity(self, incoming_entity: SmartSimEntity) -> None:
         """Register future communication between entities.
 
         Registers the named data sources that this entity
@@ -93,19 +102,24 @@ class Model(SmartSimEntity):
 
         self.incoming_entities.append(incoming_entity)
 
-    def enable_key_prefixing(self):
+    def enable_key_prefixing(self) -> None:
         """If called, the entity will prefix its keys with its own model name"""
         self._key_prefixing_enabled = True
 
-    def disable_key_prefixing(self):
+    def disable_key_prefixing(self) -> None:
         """If called, the entity will not prefix its keys with its own model name"""
         self._key_prefixing_enabled = False
 
-    def query_key_prefixing(self):
+    def query_key_prefixing(self) -> bool:
         """Inquire as to whether this entity will prefix its keys with its name"""
         return self._key_prefixing_enabled
 
-    def attach_generator_files(self, to_copy=None, to_symlink=None, to_configure=None):
+    def attach_generator_files(
+        self,
+        to_copy: t.Optional[t.List[str]] = None,
+        to_symlink: t.Optional[t.List[str]] = None,
+        to_configure: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Attach files to an entity for generation
 
         Attach files needed for the entity that, upon generation,
@@ -136,7 +150,7 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
-    def colocate_db(self, *args, **kwargs):
+    def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
         """An alias for ``Model.colocate_db_tcp``"""
         warnings.warn(
             (
@@ -149,13 +163,13 @@ class Model(SmartSimEntity):
 
     def colocate_db_uds(
         self,
-        unix_socket="/tmp/redis.socket",
-        socket_permissions=755,
-        db_cpus=1,
-        limit_app_cpus=True,
-        debug=False,
-        **kwargs,
-    ):
+        unix_socket: str = "/tmp/redis.socket",
+        socket_permissions: int = 755,
+        db_cpus: int = 1,
+        limit_app_cpus: bool = True,
+        debug: bool = False,
+        **kwargs: t.Any,
+    ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
 
         This method will initialize settings which add an unsharded
@@ -206,13 +220,13 @@ class Model(SmartSimEntity):
 
     def colocate_db_tcp(
         self,
-        port=6379,
-        ifname="lo",
-        db_cpus=1,
-        limit_app_cpus=True,
-        debug=False,
-        **kwargs,
-    ):
+        port: int = 6379,
+        ifname: str = "lo",
+        db_cpus: int = 1,
+        limit_app_cpus: bool = True,
+        debug: bool = False,
+        **kwargs: t.Any,
+    ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
 
         This method will initialize settings which add an unsharded
@@ -258,7 +272,12 @@ class Model(SmartSimEntity):
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
-    def _set_colocated_db_settings(self, connection_options, common_options, **kwargs):
+    def _set_colocated_db_settings(
+        self,
+        connection_options: t.Dict[str, t.Any],
+        common_options: t.Dict[str, t.Any],
+        **kwargs: t.Any,
+    ) -> None:
         """
         Ingest the connection-specific options (UDS/TCP) and set the final settings
         for the colocated database
@@ -296,7 +315,7 @@ class Model(SmartSimEntity):
 
         self.run_settings.colocated_db_settings = colo_db_config
 
-    def params_to_args(self):
+    def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""
         for param in self.params_as_args:
             if not param in self.params:
@@ -313,18 +332,18 @@ class Model(SmartSimEntity):
 
     def add_ml_model(
         self,
-        name,
-        backend,
-        model=None,
-        model_path=None,
-        device="CPU",
-        devices_per_node=1,
-        batch_size=0,
-        min_batch_size=0,
-        tag="",
-        inputs=None,
-        outputs=None,
-    ):
+        name: str,
+        backend: str,
+        model: t.Optional[str] = None,
+        model_path: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+        batch_size: int = 0,
+        min_batch_size: int = 0,
+        tag: str = "",
+        inputs: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[t.List[str]] = None,
+    ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         Each ML Model added will be loaded into an
@@ -371,8 +390,13 @@ class Model(SmartSimEntity):
         self._append_db_model(db_model)
 
     def add_script(
-        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
-    ):
+        self,
+        name: str,
+        script: t.Optional[str] = None,
+        script_path: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+    ) -> None:
         """TorchScript to launch with this Model instance
 
         Each script added to the model will be loaded into an
@@ -408,7 +432,13 @@ class Model(SmartSimEntity):
         )
         self._append_db_script(db_script)
 
-    def add_function(self, name, function=None, device="CPU", devices_per_node=1):
+    def add_function(
+        self,
+        name: str,
+        function: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+    ) -> None:
         """TorchScript function to launch with this Model instance
 
         Each script function to the model will be loaded into a
@@ -439,7 +469,7 @@ class Model(SmartSimEntity):
         )
         self._append_db_script(db_script)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Model) -> bool:
         if self.name == other.name:
             return True
         return False
@@ -454,7 +484,7 @@ class Model(SmartSimEntity):
             entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
 
-    def _append_db_model(self, db_model):
+    def _append_db_model(self, db_model: DBModel) -> None:
         if not db_model.is_file and self.colocated:
             err_msg = "ML model can not be set from memory for colocated databases.\n"
             err_msg += (
@@ -465,7 +495,7 @@ class Model(SmartSimEntity):
 
         self._db_models.append(db_model)
 
-    def _append_db_script(self, db_script):
+    def _append_db_script(self, db_script: DBScript) -> None:
         if db_script.func and self.colocated:
             if not isinstance(db_script.func, str):
                 err_msg = (
@@ -476,8 +506,7 @@ class Model(SmartSimEntity):
                 raise SSUnsupportedError(err_msg)
         self._db_scripts.append(db_script)
 
-    def _check_db_objects_colo(self):
-
+    def _check_db_objects_colo(self) -> None:
         for db_model in self._db_models:
             if not db_model.is_file:
                 err_msg = (
