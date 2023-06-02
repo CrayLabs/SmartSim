@@ -24,12 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import itertools
+import psutil
 import sys
+import typing as t
+
 from os import getcwd
 from shlex import split as sh_split
 from warnings import simplefilter, warn
 
-import psutil
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
@@ -40,6 +42,7 @@ from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
+from ..settings.base import BatchSettings, RunSettings
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
@@ -68,19 +71,19 @@ class Orchestrator(EntityList):
 
     def __init__(
         self,
-        port=6379,
-        interface="lo",
-        launcher="local",
-        run_command="auto",
-        db_nodes=1,
-        batch=False,
-        hosts=None,
-        account=None,
-        time=None,
-        alloc=None,
-        single_cmd=False,
-        **kwargs,
-    ):
+        port: int = 6379,
+        interface: t.Union[str, t.List[str]] = "lo",
+        launcher: str = "local",
+        run_command: str = "auto",
+        db_nodes: int = 1,
+        batch: bool = False,
+        hosts: t.Optional[t.List[str]] = None,
+        account: str = None,
+        time: str = None,
+        alloc: str = None,
+        single_cmd: bool = False,
+        **kwargs: t.Any,
+    ) -> None:
         """Initialize an Orchestrator reference for local launch
 
         :param port: TCP/IP port, defaults to 6379
@@ -103,7 +106,7 @@ class Orchestrator(EntityList):
         if launcher == "auto":
             launcher = detect_launcher()
 
-        by_launcher = {
+        by_launcher: t.Dict[str, t.List[t.Union[str, None]]] = {
             "slurm": ["srun", "mpirun", "mpiexec"],
             "pbs": ["aprun", "mpirun", "mpiexec"],
             "cobalt": ["aprun", "mpirun", "mpiexec"],
@@ -133,6 +136,7 @@ class Orchestrator(EntityList):
         if launcher == "local" and batch:
             msg = "Local orchestrator can not be launched with batch=True"
             raise SmartSimError(msg)
+
         if run_command == "aprun" and batch and single_cmd:
             msg = "aprun can not launch an orchestrator with batch=True and single_cmd=True. "
             msg += "Automatically switching to single_cmd=False."
@@ -142,9 +146,9 @@ class Orchestrator(EntityList):
         self.launcher = launcher
         self.run_command = run_command
 
-        self.ports = []
+        self.ports: t.List[int] = []
         self.path = getcwd()
-        self._hosts = []
+        self._hosts: t.List[str] = []
         if isinstance(interface, str):
             interface = [interface]
         self._interfaces = interface
@@ -181,9 +185,9 @@ class Orchestrator(EntityList):
         try:
             # try to obtain redis binaries needed to launch Redis
             # will raise SSConfigError if not found
-            self._redis_exe
-            self._redis_conf
-            CONFIG.database_cli
+            self._redis_exe  # pylint: disable=W0104
+            self._redis_conf  # pylint: disable=W0104
+            CONFIG.database_cli  # pylint: disable=W0104
         except SSConfigError as e:
             msg = "SmartSim not installed with pre-built extensions (Redis)\n"
             msg += "Use the `smart` cli tool to install needed extensions\n"
@@ -201,12 +205,12 @@ class Orchestrator(EntityList):
                 raise SmartSimError(
                     "hosts argument is required when launching Orchestrator with mpirun"
                 )
-            self._reserved_run_args = {}
-            self._reserved_batch_args = {}
+            self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
+            self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
 
     @property
-    def num_shards(self):
+    def num_shards(self) -> int:
         """Return the number of DB shards contained in the orchestrator.
         This might differ from the number of ``DBNode`` objects, as each
         ``DBNode`` may start more than one shard (e.g. with MPMD).
@@ -217,7 +221,7 @@ class Orchestrator(EntityList):
         return self.db_nodes
 
     @property
-    def hosts(self):
+    def hosts(self) -> t.List[str]:
         """Return the hostnames of orchestrator instance hosts
 
         Note that this will only be populated after the orchestrator
@@ -230,13 +234,13 @@ class Orchestrator(EntityList):
             self._hosts = self._get_db_hosts()
         return self._hosts
 
-    def remove_stale_files(self):
+    def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
 
         for dbnode in self.entities:
             dbnode.remove_stale_dbnode_files()
 
-    def get_address(self):
+    def get_address(self) -> t.List[str]:
         """Return database addresses
 
         :return: addresses
@@ -250,13 +254,13 @@ class Orchestrator(EntityList):
             raise SmartSimError("Database is not active")
         return self._get_address()
 
-    def _get_address(self):
-        addresses = []
+    def _get_address(self) -> t.List[str]:
+        addresses: t.List[str] = []
         for ip, port in itertools.product(self._hosts, self.ports):
             addresses.append(":".join((ip, str(port))))
         return addresses
 
-    def is_active(self):
+    def is_active(self) -> bool:
         """Check if the database is active
 
         :return: True if database is active, False otherwise
@@ -268,7 +272,7 @@ class Orchestrator(EntityList):
         return db_is_active(self._hosts, self.ports, self.num_shards)
 
     @property
-    def _rai_module(self):
+    def _rai_module(self) -> str:
         """Get the RedisAI module from third-party installations
 
         :return: path to module or "" if not found
@@ -284,14 +288,14 @@ class Orchestrator(EntityList):
         return " ".join(module)
 
     @property
-    def _redis_exe(self):
+    def _redis_exe(self) -> str:
         return CONFIG.database_exe
 
     @property
-    def _redis_conf(self):
+    def _redis_conf(self) -> str:
         return CONFIG.database_conf
 
-    def set_cpus(self, num_cpus):
+    def set_cpus(self, num_cpus: int) -> None:
         """Set the number of CPUs available to each database shard
 
         This effectively will determine how many cpus can be used for
@@ -311,7 +315,7 @@ class Orchestrator(EntityList):
                 for mpmd in db.run_settings.mpmd:
                     mpmd.set_cpus_per_task(num_cpus)
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the batch walltime of the orchestrator
 
         Note: This will only effect orchestrators launched as a batch
@@ -322,9 +326,10 @@ class Orchestrator(EntityList):
         """
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set walltime")
+
         self.batch_settings.set_walltime(walltime)
 
-    def set_hosts(self, host_list):
+    def set_hosts(self, host_list: t.List[str]) -> None:
         """Specify the hosts for the ``Orchestrator`` to launch on
 
         :param host_list: list of host (compute node names)
@@ -355,7 +360,7 @@ class Orchestrator(EntityList):
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                         mpmd_runsettings.set_hostlist(host_list[i + 1])
 
-    def set_batch_arg(self, arg, value):
+    def set_batch_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a batch argument the orchestrator should launch with
 
         Some commonly used arguments such as --job-name are used
@@ -376,7 +381,7 @@ class Orchestrator(EntityList):
         else:
             self.batch_settings.batch_args[arg] = value
 
-    def set_run_arg(self, arg, value):
+    def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a run argument the orchestrator should launch
         each node with (it will be passed to `jrun`)
 
@@ -400,7 +405,7 @@ class Orchestrator(EntityList):
                     for mpmd in db.run_settings.mpmd:
                         mpmd.run_args[arg] = value
 
-    def enable_checkpoints(self, frequency):
+    def enable_checkpoints(self, frequency: int) -> None:
         """Sets the database's save configuration to save the
         DB every 'frequency' seconds given that at least one
         write operation against the DB occurred in that time.
@@ -413,7 +418,7 @@ class Orchestrator(EntityList):
         """
         self.set_db_conf("save", str(frequency) + " 1")
 
-    def set_max_memory(self, mem):
+    def set_max_memory(self, mem: int) -> None:
         """Sets the max memory configuration. By default there is no memory limit.
         Setting max memory to zero also results in no memory limit. Once a limit is
         surpassed, keys will be removed according to the eviction strategy. The
@@ -433,7 +438,7 @@ class Orchestrator(EntityList):
         """
         self.set_db_conf("maxmemory", mem)
 
-    def set_eviction_strategy(self, strategy):
+    def set_eviction_strategy(self, strategy: str) -> None:
         """Sets how the database will select what to remove when
         'maxmemory' is reached. The default is noeviction.
 
@@ -445,7 +450,7 @@ class Orchestrator(EntityList):
         """
         self.set_db_conf("maxmemory-policy", strategy)
 
-    def set_max_clients(self, clients=50_000):
+    def set_max_clients(self, clients: int = 50_000) -> None:
         """Sets the max number of connected clients at the same time.
         When the number of DB shards contained in the orchestrator is
         more than two, then every node will use two connections, one
@@ -456,7 +461,7 @@ class Orchestrator(EntityList):
         """
         self.set_db_conf("maxclients", str(clients))
 
-    def set_max_message_size(self, size=1_073_741_824):
+    def set_max_message_size(self, size: int = 1_073_741_824) -> None:
         """Sets the database's memory size limit for bulk requests,
         which are elements representing single strings. The default
         is 1 gigabyte. Message size must be greater than or equal to 1mb.
@@ -469,7 +474,7 @@ class Orchestrator(EntityList):
         """
         self.set_db_conf("proto-max-bulk-len", str(size))
 
-    def set_db_conf(self, key, value):
+    def set_db_conf(self, key: str, value: t.Union[int, str]) -> None:
         """Set any valid configuration at runtime without the need
         to restart the database. All configuration parameters
         that are set are immediately loaded by the database and
@@ -506,7 +511,15 @@ class Orchestrator(EntityList):
                 "The SmartSim Orchestrator must be active in order to set the database's configurations."
             )
 
-    def _build_batch_settings(self, db_nodes, alloc, batch, account, time, **kwargs):
+    def _build_batch_settings(
+        self,
+        db_nodes: int,
+        alloc: str,
+        batch: bool,
+        account: str,
+        time: str,
+        **kwargs: t.Any,
+    ) -> t.Optional[BatchSettings]:
         batch_settings = None
         launcher = kwargs.pop("launcher")
 
@@ -519,7 +532,9 @@ class Orchestrator(EntityList):
 
         return batch_settings
 
-    def _build_run_settings(self, exe, exe_args, **kwargs):
+    def _build_run_settings(
+        self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
+    ) -> RunSettings:
         run_args = kwargs.pop("run_args", {})
         db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
@@ -556,11 +571,13 @@ class Orchestrator(EntityList):
 
         return run_settings
 
-    def _build_run_settings_lsf(self, exe, exe_args, **kwargs):
+    def _build_run_settings_lsf(
+        self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
+    ) -> RunSettings:
         run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
-        erf_rs = None
+        erf_rs: t.Optional[RunSettings] = None
 
         # We always run the DB on cpus 0:cpus_per_shard-1
         # and gpus 0:gpus_per_shard-1
@@ -596,7 +613,7 @@ class Orchestrator(EntityList):
         kwargs["run_args"] = run_args
         return erf_rs
 
-    def _initialize_entities(self, **kwargs):
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
         self.db_nodes = kwargs.get("db_nodes", 1)
         single_cmd = kwargs.get("single_cmd", True)
 
@@ -643,11 +660,11 @@ class Orchestrator(EntityList):
 
             self.ports = [port]
 
-    def _initialize_entities_mpmd(self, **kwargs):
+    def _initialize_entities_mpmd(self, **kwargs: t.Any) -> None:
         port = kwargs.get("port", 6379)
         cluster = not bool(self.db_nodes < 3)
 
-        exe_args_mpmd = []
+        exe_args_mpmd: t.List[t.List[str]] = []
 
         for db_id in range(self.db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
@@ -680,13 +697,15 @@ class Orchestrator(EntityList):
         self.ports = [port]
 
     @staticmethod
-    def _get_cluster_args(name, port):
+    def _get_cluster_args(name: str, port: int) -> t.List[str]:
         """Create the arguments necessary for cluster creation"""
         cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
         db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
         return db_args
 
-    def _get_start_script_args(self, name, port, cluster):
+    def _get_start_script_args(
+        self, name: str, port: int, cluster: bool
+    ) -> t.List[str]:
         start_script_args = [
             "-m",
             "smartsim._core.entrypoints.redis",  # entrypoint
@@ -703,7 +722,7 @@ class Orchestrator(EntityList):
 
         return start_script_args
 
-    def _get_db_hosts(self):
+    def _get_db_hosts(self) -> t.List[str]:
         hosts = []
         for dbnode in self.entities:
             if not dbnode._mpmd:
@@ -712,7 +731,7 @@ class Orchestrator(EntityList):
                 hosts.extend(dbnode.hosts)
         return hosts
 
-    def _check_network_interface(self):
+    def _check_network_interface(self) -> None:
         net_if_addrs = psutil.net_if_addrs()
         for interface in self._interfaces:
             if interface not in net_if_addrs and interface != "lo":
@@ -723,7 +742,7 @@ class Orchestrator(EntityList):
                 )
                 logger.warning(f"Found network interfaces are: {available}")
 
-    def _fill_reserved(self):
+    def _fill_reserved(self) -> None:
         """Fill the reserved batch and run arguments dictionaries"""
 
         mpi_like_settings = [
