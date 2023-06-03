@@ -60,7 +60,7 @@ class Controller:
     underlying workload manager or run framework.
     """
 
-    def __init__(self, launcher: str="local") -> None:
+    def __init__(self, launcher: str = "local") -> None:
         """Initialize a Controller
 
         :param launcher: the type of launcher being used
@@ -69,10 +69,9 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self,
-              manifest: Manifest,
-              block: bool = True,
-              kill_on_interrupt: bool = True) -> None:
+    def start(
+        self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
+    ) -> None:
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -106,10 +105,9 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self,
-             interval: int,
-             verbose: bool,
-             kill_on_interrupt: bool = True) -> None:
+    def poll(
+        self, interval: int, verbose: bool, kill_on_interrupt: bool = True
+    ) -> None:
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
@@ -552,7 +550,6 @@ class Controller:
                 else:
                     logger.debug("Waiting for orchestrator instances to spin up...")
             except KeyboardInterrupt:
-
                 logger.info("Orchestrator launch cancelled - requesting to stop")
                 self.stop_entity_list(orchestrator)
 
@@ -659,11 +656,9 @@ class Controller:
 
 
 class _AnonymousBatchJob(EntityList):
-    def __init__(self,
-                 name: str,
-                 path: str,
-                 batch_settings: BatchSettings,
-                 **kwargs: t.Any) -> None:
+    def __init__(
+        self, name: str, path: str, batch_settings: BatchSettings, **kwargs: t.Any
+    ) -> None:
         super().__init__(name, path)
         self.batch_settings = batch_settings
 

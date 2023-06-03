@@ -33,7 +33,9 @@ from itertools import product
 
 # create permutations of all parameters
 # single model if parameters only have one value
-def create_all_permutations(param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0) -> t.List[t.Dict[str, str]]:
+def create_all_permutations(
+    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     perms = list(product(*param_values))
     all_permutations = []
     for p in perms:
@@ -42,18 +44,22 @@ def create_all_permutations(param_names: t.List[str], param_values: t.List[t.Lis
     return all_permutations
 
 
-def step_values(param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0) -> t.List[t.Dict[str, str]]:
+def step_values(
+    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
     return permutations
 
 
-def random_permutations(param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0) -> t.List[t.Dict[str, str]]:
+def random_permutations(
+    param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     # first, check if we've requested more values than possible.
     permutations = create_all_permutations(param_names, param_values)
-    
+
     if n_models and n_models < len(permutations):
         permutations = random.sample(permutations, n_models)
-    
+
     return permutations

@@ -32,7 +32,9 @@ class ComputeNode:  # cov-slurm
     about a physical compute node
     """
 
-    def __init__(self, node_name: t.Optional[str] = None, node_ppn: t.Optional[int]  =None) -> None:
+    def __init__(
+        self, node_name: t.Optional[str] = None, node_ppn: t.Optional[int] = None
+    ) -> None:
         """Initialize a ComputeNode
 
         :param node_name: the name of the node

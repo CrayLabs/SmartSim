@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import typing as t
 
 from ...status import STATUS_NEW
 from ...entity import SmartSimEntity
