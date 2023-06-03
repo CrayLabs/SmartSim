@@ -554,7 +554,7 @@ class Experiment:
         run_command: str = "auto",
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        container: bool = None,
+        container: t.Optional[bool] = None,
         **kwargs: t.Any,
     ) -> settings.RunSettings:
         """Create a ``RunSettings`` instance.
@@ -678,9 +678,9 @@ class Experiment:
         hosts: t.Optional[t.List[str]] = None,
         run_command: str = "auto",
         interface: str = "ipogif0",
-        account: str = None,
-        time: str = None,
-        queue: str = None,
+        account: t.Optional[str] = None,
+        time: t.Optional[str] = None,
+        queue: t.Optional[str] = None,
         single_cmd: bool = True,
         **kwargs: t.Any,
     ) -> Orchestrator:

@@ -78,9 +78,9 @@ class Orchestrator(EntityList):
         db_nodes: int = 1,
         batch: bool = False,
         hosts: t.Optional[t.List[str]] = None,
-        account: str = None,
-        time: str = None,
-        alloc: str = None,
+        account: t.Optional[str] = None,
+        time: t.Optional[str] = None,
+        alloc: t.Optional[str] = None,
         single_cmd: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -114,7 +114,7 @@ class Orchestrator(EntityList):
             "local": [None],
         }
 
-        def _detect_command(launcher):
+        def _detect_command(launcher: str) -> str:
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
                     if launcher == "local":
@@ -237,7 +237,7 @@ class Orchestrator(EntityList):
     def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
 
-        for dbnode in self.entities:
+        for dbnode in self.dbnodes:
             dbnode.remove_stale_dbnode_files()
 
     def get_address(self) -> t.List[str]:
@@ -309,7 +309,8 @@ class Orchestrator(EntityList):
                 self.batch_settings.set_ncpus(num_cpus)
             if self.launcher == "slurm":
                 self.batch_settings.set_cpus_per_task(num_cpus)
-        for db in self:
+
+        for db in self.dbnodes:
             db.run_settings.set_cpus_per_task(num_cpus)
             if db._mpmd:
                 for mpmd in db.run_settings.mpmd:
@@ -347,15 +348,16 @@ class Orchestrator(EntityList):
             self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
-            for db in self:
+            for db in self.dbnodes:
                 db.set_hosts(host_list)
         else:
-            for host, db in zip(host_list, self.entities):
+            for host, db in zip(host_list, self.dbnodes):
                 if isinstance(db.run_settings, AprunSettings):
                     if not self.batch:
                         db.run_settings.set_hostlist([host])
                 else:
                     db.run_settings.set_hostlist([host])
+
                 if db._mpmd:
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                         mpmd_runsettings.set_hostlist(host_list[i + 1])
@@ -399,7 +401,7 @@ class Orchestrator(EntityList):
                 f"Can not set run argument {arg}: it is a reserved keyword in Orchestrator"
             )
         else:
-            for db in self.entities:
+            for db in self.dbnodes:
                 db.run_settings.run_args[arg] = value
                 if db._mpmd:
                     for mpmd in db.run_settings.mpmd:
@@ -721,14 +723,22 @@ class Orchestrator(EntityList):
             start_script_args += self._get_cluster_args(name, port)
 
         return start_script_args
+    
+    @property
+    def dbnodes(self) -> t.List[DBNode]:
+        """
+        Helper property to cast self.entities to DBNode type for type correctness
+        """
+        dbnodes = [node for node in self.entities if isinstance(node, DBNode)]
+        return dbnodes
 
     def _get_db_hosts(self) -> t.List[str]:
         hosts = []
-        for dbnode in self.entities:
-            if not dbnode._mpmd:
-                hosts.append(dbnode.host)
+        for db in self.dbnodes:
+            if not db._mpmd:
+                hosts.append(db.host)
             else:
-                hosts.extend(dbnode.hosts)
+                hosts.extend(db.hosts)
         return hosts
 
     def _check_network_interface(self) -> None:

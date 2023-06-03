@@ -74,7 +74,7 @@ class Ensemble(EntityList):
         :param params_as_args: list of params which should be used as command line arguments
                                to the ``Model`` member executables and not written to generator
                                files
-        :type arg_params: list[str]
+        :type params_as_args: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
@@ -101,7 +101,11 @@ class Ensemble(EntityList):
 
     @property
     def models(self) -> t.List[Model]:
-        return self.entities
+        """
+        Helper property to cast self.entities to Model type for type correctness
+        """
+        model_entities = [node for node in self.entities if isinstance(node, Model)]
+        return model_entities
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize all the models within the ensemble based
@@ -214,14 +218,14 @@ class Ensemble(EntityList):
         :param incoming_entity: The entity that data will be received from
         :type incoming_entity: SmartSimEntity
         """
-        for model in self.entities:
+        for model in self.models:
             model.register_incoming_entity(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
         """If called, all models within this ensemble will prefix their keys with its
         own model name.
         """
-        for model in self.entities:
+        for model in self.models:
             model.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
@@ -230,7 +234,7 @@ class Ensemble(EntityList):
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: bool
         """
-        return all([model.query_key_prefixing() for model in self.entities])
+        return all([model.query_key_prefixing() for model in self.models])
 
     def attach_generator_files(
         self,
@@ -261,7 +265,7 @@ class Ensemble(EntityList):
         :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
-        for model in self.entities:
+        for model in self.models:
             model.attach_generator_files(
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
@@ -378,7 +382,7 @@ class Ensemble(EntityList):
             outputs=outputs,
         )
         self._db_models.append(db_model)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_models(entity, [db_model])
 
     def add_script(
@@ -460,7 +464,7 @@ class Ensemble(EntityList):
             name=name, script=function, device=device, devices_per_node=devices_per_node
         )
         self._db_scripts.append(db_script)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_scripts(entity, [db_script])
 
     def _extend_entity_db_models(

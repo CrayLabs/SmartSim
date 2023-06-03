@@ -53,7 +53,7 @@ class DBNode(SmartSimEntity):
         self._host = None
         super().__init__(name, path, run_settings)
         self._mpmd = False
-        self._num_shards = None
+        self._num_shards: t.Optional[int] = None
         self._hosts: t.List[str] = None
         if not output_files:
             raise ValueError("output_files cannot be empty")
@@ -139,7 +139,7 @@ class DBNode(SmartSimEntity):
             for shard_id in range(self._num_shards)
         ]
 
-    def _parse_ips(self, filepath: str, num_ips: int = None) -> t.List[str]:
+    def _parse_ips(self, filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
         ips = []
         with open(filepath, "r") as f:
             lines = f.readlines()
