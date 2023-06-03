@@ -427,7 +427,7 @@ class Experiment:
         try:
             new_ensemble = Ensemble(
                 name,
-                params,
+                params or {},
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -535,7 +535,13 @@ class Experiment:
         :rtype: Model
         """
         path = init_default(getcwd(), path, str)
-        params = init_default({}, params, dict)
+        
+        # mcb
+        if path is None:
+            path = getcwd()
+        if params is None:
+            params = {}
+
         try:
             new_model = Model(
                 name, params, path, run_settings, batch_settings=batch_settings
@@ -595,6 +601,8 @@ class Experiment:
         :return: the created ``RunSettings``
         :rtype: RunSettings
         """
+        container = container or False
+
         try:
             return settings.create_run_settings(
                 self._launcher,

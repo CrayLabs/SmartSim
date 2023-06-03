@@ -309,7 +309,7 @@ class Ensemble(EntityList):
             )
 
         param_names: t.List[str] = []
-        parameters: t.List[t.List[str]] = []
+        parameters: t.List[t.List[t.Union[int, str]]] = []
         for name, val in self.params.items():
             param_names.append(name)
 
@@ -427,7 +427,7 @@ class Ensemble(EntityList):
             devices_per_node=devices_per_node,
         )
         self._db_scripts.append(db_script)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_scripts(entity, [db_script])
 
     def add_function(

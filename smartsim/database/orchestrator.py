@@ -114,7 +114,7 @@ class Orchestrator(EntityList):
             "local": [None],
         }
 
-        def _detect_command(launcher: str) -> str:
+        def _detect_command(launcher: str) -> t.Optional[str]:
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
                     if launcher == "local":
@@ -237,8 +237,8 @@ class Orchestrator(EntityList):
     def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
 
-        for dbnode in self.dbnodes:
-            dbnode.remove_stale_dbnode_files()
+        for db in self.dbnodes:
+            db.remove_stale_dbnode_files()
 
     def get_address(self) -> t.List[str]:
         """Return database addresses
@@ -306,15 +306,19 @@ class Orchestrator(EntityList):
         """
         if self.batch:
             if self.launcher == "pbs" or self.launcher == "cobalt":
-                self.batch_settings.set_ncpus(num_cpus)
+                if hasattr(self, 'batch_settings') and self.batch_settings:
+                    if hasattr(self.batch_settings, 'set_ncpus'):
+                        self.batch_settings.set_ncpus(num_cpus)
             if self.launcher == "slurm":
-                self.batch_settings.set_cpus_per_task(num_cpus)
+                if hasattr(self, 'batch_settings') and self.batch_settings:
+                    if hasattr(self.batch_settings, 'set_cpus_per_task'):
+                        self.batch_settings.set_cpus_per_task(num_cpus)
 
         for db in self.dbnodes:
             db.run_settings.set_cpus_per_task(num_cpus)
-            if db._mpmd:
-                for mpmd in db.run_settings.mpmd:
-                    mpmd.set_cpus_per_task(num_cpus)
+            if db._mpmd and hasattr(db.run_settings, 'mpmd'):
+                    for mpmd in db.run_settings.mpmd:
+                        mpmd.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime: str) -> None:
         """Set the batch walltime of the orchestrator
@@ -328,7 +332,8 @@ class Orchestrator(EntityList):
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set walltime")
 
-        self.batch_settings.set_walltime(walltime)
+        if hasattr(self, 'batch_settings') and self.batch_settings:
+            self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list: t.List[str]) -> None:
         """Specify the hosts for the ``Orchestrator`` to launch on
@@ -345,7 +350,8 @@ class Orchestrator(EntityList):
             raise TypeError("host_list argument must be list of strings")
         # TODO check length
         if self.batch:
-            self.batch_settings.set_hostlist(host_list)
+            if hasattr(self, 'batch_settings') and self.batch_settings:
+                self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
             for db in self.dbnodes:
@@ -358,7 +364,7 @@ class Orchestrator(EntityList):
                 else:
                     db.run_settings.set_hostlist([host])
 
-                if db._mpmd:
+                if db._mpmd and hasattr(db.run_settings, 'mpmd'):
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                         mpmd_runsettings.set_hostlist(host_list[i + 1])
 
@@ -373,15 +379,17 @@ class Orchestrator(EntityList):
         :param value: batch param - set to None if no param value
         :type value: str | None
         :raises SmartSimError: if orchestrator not launching as batch
-        """
-        if not self.batch:
+        """        
+        if not hasattr(self, 'batch_settings') or not self.batch_settings:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
+
         if arg in self._reserved_batch_args[type(self.batch_settings)]:
             logger.warning(
                 f"Can not set batch argument {arg}: it is a reserved keyword in Orchestrator"
             )
         else:
-            self.batch_settings.batch_args[arg] = value
+            if hasattr(self, 'batch_settings') and self.batch_settings:
+                self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a run argument the orchestrator should launch
@@ -403,7 +411,7 @@ class Orchestrator(EntityList):
         else:
             for db in self.dbnodes:
                 db.run_settings.run_args[arg] = value
-                if db._mpmd:
+                if db._mpmd and hasattr(db.run_settings, 'mpmd'):
                     for mpmd in db.run_settings.mpmd:
                         mpmd.run_args[arg] = value
 
@@ -575,7 +583,7 @@ class Orchestrator(EntityList):
 
     def _build_run_settings_lsf(
         self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
-    ) -> RunSettings:
+    ) -> t.Optional[RunSettings]:
         run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
@@ -613,6 +621,7 @@ class Orchestrator(EntityList):
                 erf_rs = run_settings
 
         kwargs["run_args"] = run_args
+
         return erf_rs
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
@@ -691,6 +700,10 @@ class Orchestrator(EntityList):
                 sys.executable, exe_args_mpmd, **kwargs
             )
             output_files = [self.name + ".out"]
+            
+        if not run_settings:
+            raise ValueError(f"Could not build run settings for {self.launcher}")
+        
         node = DBNode(self.name, self.path, run_settings, [port], output_files)
         node._mpmd = True
         node._num_shards = self.db_nodes

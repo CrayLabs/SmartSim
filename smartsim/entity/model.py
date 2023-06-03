@@ -317,18 +317,19 @@ class Model(SmartSimEntity):
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""
-        for param in self.params_as_args:
-            if not param in self.params:
-                raise ValueError(
-                    f"Tried to convert {param} to command line argument "
-                    + f"for Model {self.name}, but its value was not found in model params"
-                )
-            if self.run_settings is None:
-                raise ValueError(
-                    f"Tried to configure command line parameter for Model {self.name}, "
-                    + "but no RunSettings are set."
-                )
-            self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
+        if self.params_as_args is not None:
+            for param in self.params_as_args:
+                if not param in self.params:
+                    raise ValueError(
+                        f"Tried to convert {param} to command line argument "
+                        + f"for Model {self.name}, but its value was not found in model params"
+                    )
+                if self.run_settings is None:
+                    raise ValueError(
+                        f"Tried to configure command line parameter for Model {self.name}, "
+                        + "but no RunSettings are set."
+                    )
+                self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
 
     def add_ml_model(
         self,
@@ -469,12 +470,15 @@ class Model(SmartSimEntity):
         )
         self._append_db_script(db_script)
 
-    def __eq__(self, other: Model) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Model):
+            return False
+
         if self.name == other.name:
             return True
         return False
 
-    def __str__(self):  # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         entity_str = "Name: " + self.name + "\n"
         entity_str += "Type: " + self.type + "\n"
         entity_str += str(self.run_settings) + "\n"

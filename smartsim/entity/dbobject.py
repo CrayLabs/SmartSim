@@ -48,11 +48,9 @@ class DBObject:
     ) -> None:
         self.name = name
         self.func = func
+        self.file: t.Optional[Path] = None  # Need to have this explicitly to check on it
         if file_path:
             self.file = self._check_filepath(file_path)
-        else:
-            # Need to have this explicitly to check on it
-            self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
 
@@ -64,15 +62,16 @@ class DBObject:
 
     @staticmethod
     def _check_tensor_args(
-        inputs: t.Union[str, t.List[str]], outputs: t.Union[str, t.List[str]]
+        inputs: t.Union[str, t.Optional[t.List[str]]], outputs: t.Union[str, t.Optional[t.List[str]]]
     ) -> t.Tuple[t.List[str], t.List[str]]:
         inputs = init_default([], inputs, (list, str))
         outputs = init_default([], outputs, (list, str))
+
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
             outputs = [outputs]
-        return inputs, outputs
+        return inputs or [], outputs or []
 
     @staticmethod
     def _check_backend(backend: str) -> str:

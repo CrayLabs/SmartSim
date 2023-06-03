@@ -49,7 +49,7 @@ class EntityFiles:
     """
 
     def __init__(
-        self, tagged: t.List[str], copy: t.List[str], symlink: t.List[str]
+        self, tagged: t.Optional[t.List[str]] = None, copy: t.Optional[t.List[str]] = None, symlink: t.Optional[t.List[str]] = None
     ) -> None:
         """Initialize an EntityFiles instance
 
@@ -90,7 +90,7 @@ class EntityFiles:
         for i in range(len(self.link)):
             self.link[i] = self._check_path(self.link[i])
 
-    def _type_check_files(self, file_list: t.List[str], file_type: str) -> t.List[str]:
+    def _type_check_files(self, file_list: t.Union[t.List[str], None], file_type: str) -> t.List[str]:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
@@ -112,7 +112,7 @@ class EntityFiles:
             else:
                 if not all([isinstance(f, str) for f in file_list]):
                     raise TypeError(f"Not all {file_type} files were of type str")
-        return file_list
+        return file_list or []
 
     @staticmethod
     def _check_path(file_path: str) -> str:

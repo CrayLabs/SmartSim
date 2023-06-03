@@ -46,6 +46,9 @@ class EntityList:
     @property
     def batch(self) -> bool:
         try:
+            if not hasattr(self, "batch_settings"):
+                return False
+
             if self.batch_settings:
                 return True
             return False

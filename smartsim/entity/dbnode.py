@@ -50,11 +50,12 @@ class DBNode(SmartSimEntity):
     def __init__(self, name: str, path: str, run_settings: RunSettings, ports: t.List[int], output_files: t.List[str]) -> None:
         """Initialize a database node within an orchestrator."""
         self.ports = ports
-        self._host = None
+        self._host: t.Optional[str] = None
         super().__init__(name, path, run_settings)
         self._mpmd = False
-        self._num_shards: t.Optional[int] = None
-        self._hosts: t.List[str] = None
+        self._num_shards: int = 0
+        self._hosts: t.Optional[t.List[str]] = None
+
         if not output_files:
             raise ValueError("output_files cannot be empty")
         if not isinstance(output_files, list) or not all(

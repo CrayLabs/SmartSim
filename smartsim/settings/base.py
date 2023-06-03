@@ -89,7 +89,7 @@ class RunSettings:
         self.container = container
         self._run_command = run_command
         self.in_batch = False
-        self.colocated_db_settings = None
+        self.colocated_db_settings: t.Optional[t.Dict[str, str]] = None
 
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
