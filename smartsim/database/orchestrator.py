@@ -197,7 +197,7 @@ class Orchestrator(EntityList):
 
         if launcher != "local":
             self.batch_settings = self._build_batch_settings(
-                db_nodes, alloc, batch, account, time, launcher=launcher, **kwargs
+                db_nodes, alloc or "", batch, account or "", time or "", launcher=launcher, **kwargs
             )
             if hosts:
                 self.set_hosts(hosts)
