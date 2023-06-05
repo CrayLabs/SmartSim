@@ -106,15 +106,15 @@ class Orchestrator(EntityList):
         if launcher == "auto":
             launcher = detect_launcher()
 
-        by_launcher: t.Dict[str, t.List[t.Union[str, None]]] = {
+        by_launcher: t.Dict[str, t.List[str]] = {
             "slurm": ["srun", "mpirun", "mpiexec"],
             "pbs": ["aprun", "mpirun", "mpiexec"],
             "cobalt": ["aprun", "mpirun", "mpiexec"],
             "lsf": ["jsrun"],
-            "local": [None],
+            "local": [""],
         }
 
-        def _detect_command(launcher: str) -> t.Optional[str]:
+        def _detect_command(launcher: str) -> str:
             if launcher in by_launcher:
                 for cmd in by_launcher[launcher]:
                     if launcher == "local":
