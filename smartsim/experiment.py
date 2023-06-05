@@ -814,17 +814,5 @@ class Experiment:
 
         logger.info(summary)
 
-        wait, steps = 10, 100
-        prog_bar = trange(
-            steps,
-            desc="Launching in...",
-            leave=False,
-            ncols=80,
-            mininterval=0.25,
-            bar_format="{desc}: {bar}| {remaining} {elapsed}",
-        )
-        for _ in prog_bar:
-            time.sleep(wait / steps)
-
     def __str__(self):
         return self.name
