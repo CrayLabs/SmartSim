@@ -1,0 +1,27 @@
+name: check-mypy
+on:
+  pull_request:
+  push:
+    branches: 
+      - master
+      - develop
+      - /feature\/.*/
+
+jobs:
+  check_mypy:
+    name: Static Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Install SmartSim
+        run: python -m pip install .[dev]
+
+      - name: Install mypy and type stubs
+        run: python -m pip install -r./requirements-mypy.txt
+
+      - name: Run mypy
+        run: make check-mypy
