@@ -693,7 +693,7 @@ class Orchestrator(EntityList):
             "+ifname=" + ",".join(self._interfaces),  # pass interface to start script
             "+command",  # command flag for argparser
             self._redis_exe,  # redis-server
-            self._redis_conf,  # redis6.conf file
+            self._redis_conf,  # redis.conf file
             self._rai_module,  # redisai.so
             "--port",  # redis port
             str(port),  # port number
