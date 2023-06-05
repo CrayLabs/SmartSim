@@ -653,8 +653,6 @@ class Orchestrator(EntityList):
                     db_node_name, port, cluster
                 )
 
-                # exe_args = " ".join(start_script_args)
-
                 # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(
                     sys.executable, [start_script_args], **kwargs

@@ -309,14 +309,15 @@ class Ensemble(EntityList):
             )
 
         param_names: t.List[str] = []
-        parameters: t.List[t.List[t.Union[int, str]]] = []
+        parameters: t.List[t.List[str]] = []
         for name, val in self.params.items():
             param_names.append(name)
 
             if isinstance(val, list):
+                val = [str(v) for v in val]
                 parameters.append(val)
             elif isinstance(val, (int, str)):
-                parameters.append([val])
+                parameters.append([str(val)])
             else:
                 raise TypeError(
                     "Incorrect type for ensemble parameters\n"
