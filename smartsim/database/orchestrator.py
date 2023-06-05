@@ -567,7 +567,7 @@ class Orchestrator(EntityList):
                 run_settings.make_mpmd(mpmd_run_settings)
         else:
             run_settings = create_run_settings(
-                exe=exe, exe_args=exe_args, run_args=run_args.copy(), **kwargs
+                exe=exe, exe_args=exe_args[0], run_args=run_args.copy(), **kwargs
             )
 
             if self.launcher != "local":
@@ -653,11 +653,11 @@ class Orchestrator(EntityList):
                     db_node_name, port, cluster
                 )
 
-                exe_args = " ".join(start_script_args)
+                # exe_args = " ".join(start_script_args)
 
                 # if only launching 1 db per command, we don't need a list of exe args lists
                 run_settings = self._build_run_settings(
-                    sys.executable, exe_args, **kwargs
+                    sys.executable, [start_script_args], **kwargs
                 )
 
                 node = DBNode(
