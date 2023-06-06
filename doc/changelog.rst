@@ -48,6 +48,8 @@ former began deprecation in May 2022 and was finally removed in May 2023. (PR285
 codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
 argument name is still `interface` for backward compatibility reasons. (PR281_)
+- Typehints have been added to public APIs. A makefile target to execute static 
+analysis with mypy is available `make check-mypy`. (PR295_)
 
 .. _PR292: https://github.com/CrayLabs/SmartSim/pull/292
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
@@ -57,6 +59,7 @@ argument name is still `interface` for backward compatibility reasons. (PR281_)
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
 .. _PR284: https://github.com/CrayLabs/SmartSim/pull/284
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/281
+.. _PR295: https://github.com/CrayLabs/SmartSim/pull/295
 
 0.4.2
 -----
