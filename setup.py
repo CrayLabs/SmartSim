@@ -180,7 +180,7 @@ extras_require = {
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
-        "mypy>=1.3.0",
+        "mypy>=1.2.0",
         "types-psutil",
         "types-redis",
         "types-tabulate",
