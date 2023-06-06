@@ -199,7 +199,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["bind"] = binding
 
-    def make_mpmd(self, jsrun_settings: t.Optional[JsrunSettings] = None):
+    def make_mpmd(self, jsrun_settings: t.Optional[JsrunSettings] = None) -> None:
         """Make step an MPMD (or SPMD) job.
 
         This method will activate job execution through an ERF file.

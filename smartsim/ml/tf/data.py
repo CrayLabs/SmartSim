@@ -25,13 +25,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+import typing as t
 from tensorflow import keras
 
 from smartsim.ml import DataDownloader
 
 
 class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> np.ndarray:
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
             msg += "Please run init_samples() or initialize generator with init_samples=True"
@@ -47,7 +48,7 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         else:
             return x
 
-    def on_epoch_end(self):
+    def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch
 
         If `self.shuffle` is set to `True`, data is shuffled.
@@ -79,7 +80,7 @@ class StaticDataGenerator(_TFDataGenerationCommon):
     a TensorFlow-specialized sub-class with dynamic=False.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: t.Any) -> None:
         dynamic = kwargs.pop("dynamic", False)
         kwargs["dynamic"] = False
         super().__init__(**kwargs)
@@ -97,7 +98,7 @@ class DynamicDataGenerator(_TFDataGenerationCommon):
     a TensorFlow-specialized sub-class with dynamic=True.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: t.Any) -> None:
         dynamic = kwargs.pop("dynamic", True)
         kwargs["dynamic"] = True
         super().__init__(**kwargs)
@@ -106,7 +107,7 @@ class DynamicDataGenerator(_TFDataGenerationCommon):
                 "Dynamic data generator cannot be started with dynamic=False, setting it to True"
             )
 
-    def on_epoch_end(self):
+    def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch
 
         Update data (the DB is queried for new batches) and

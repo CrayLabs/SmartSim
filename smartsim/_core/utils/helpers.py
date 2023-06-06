@@ -126,7 +126,7 @@ color2num = dict(
 )
 
 
-def colorize(string: str, color: str, bold: bool = False, highlight: bool = False) -> None:
+def colorize(string: str, color: str, bold: bool = False, highlight: bool = False) -> str:
     """
     Colorize a string.
     This function was originally written by John Schulman.

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 from os import environ
 
 import numpy as np
@@ -37,7 +38,7 @@ from ..log import get_logger
 logger = get_logger(__name__)
 
 
-def form_name(*args):
+def form_name(*args: t.Any) -> str:
     return "_".join(str(arg) for arg in args if arg is not None)
 
 
@@ -62,15 +63,15 @@ class DataInfo:
     """
 
     def __init__(
-        self, list_name, sample_name="samples", target_name="targets", num_classes=None
-    ):
+        self, list_name: str, sample_name: str = "samples", target_name: str = "targets", num_classes: t.Optional[int] = None
+    ) -> None:
         self.list_name = list_name
         self.sample_name = sample_name
         self.target_name = target_name
         self.num_classes = num_classes
         self._ds_name = form_name(self.list_name, "info")
 
-    def publish(self, client: Client):
+    def publish(self, client: Client) -> None:
         """Upload DataInfo information to Orchestrator
 
         The information is put on the DB as a DataSet, with strings
@@ -87,7 +88,7 @@ class DataInfo:
             info_ds.add_meta_scalar("num_classes", self.num_classes)
         client.put_dataset(info_ds)
 
-    def download(self, client: Client):
+    def download(self, client: Client) -> None:
         """Download DataInfo information from Orchestrator
 
         The information retrieved from the DB is used to populate
@@ -113,7 +114,7 @@ class DataInfo:
         if "num_classes" in field_names:
             self.num_classes = info_ds.get_meta_scalars("num_classes")[0]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         strings = ["DataInfo object"]
         strings += [f"Aggregation list name: {self.list_name}"]
         strings += [f"Sample tensor name: {self.sample_name}"]
@@ -158,15 +159,15 @@ class TrainingDataUploader:
 
     def __init__(
         self,
-        list_name="training_data",
-        sample_name="samples",
-        target_name="targets",
-        num_classes=None,
-        cluster=True,
-        address=None,
-        rank=None,
-        verbose=False,
-    ):
+        list_name: str = "training_data",
+        sample_name: str = "samples",
+        target_name: str = "targets",
+        num_classes: t.Optional[int] = None,
+        cluster: bool = True,
+        address: t.Optional[str] = None,
+        rank: t.Optional[int] = None,
+        verbose: bool = False,
+    ) -> None:
         if not list_name:
             raise ValueError("Name can not be empty")
         if not sample_name:
@@ -179,25 +180,25 @@ class TrainingDataUploader:
         self._info = DataInfo(list_name, sample_name, target_name, num_classes)
 
     @property
-    def list_name(self):
+    def list_name(self) -> str:
         return self._info.list_name
 
     @property
-    def sample_name(self):
+    def sample_name(self) -> str:
         return self._info.sample_name
 
     @property
-    def target_name(self):
+    def target_name(self) -> str:
         return self._info.target_name
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> t.Optional[int]:
         return self._info.num_classes
 
-    def publish_info(self):
+    def publish_info(self) -> None:
         self._info.publish(self.client)
 
-    def put_batch(self, samples, targets=None):
+    def put_batch(self, samples: np.ndarray, targets=None) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
         batch_ds = Dataset(batch_ds_name)
         batch_ds.add_tensor(self.sample_name, samples)
@@ -282,18 +283,18 @@ class DataDownloader:
 
     def __init__(
         self,
-        data_info_or_list_name,
-        batch_size=32,
-        dynamic=True,
-        shuffle=True,
-        cluster=True,
-        address=None,
-        replica_rank=0,
-        num_replicas=1,
-        verbose=False,
-        init_samples=True,
-        max_fetch_trials=-1,
-    ):
+        data_info_or_list_name: t.Union[str, DataInfo],
+        batch_size: int = 32,
+        dynamic: bool = True,
+        shuffle: bool = True,
+        cluster: bool = True,
+        address: t.Optional[str] = None,
+        replica_rank: int = 0,
+        num_replicas: int = 1,
+        verbose: bool = False,
+        init_samples: bool = True,
+        max_fetch_trials: int = -1,
+    ) -> None:
         self.address = address
         self.cluster = cluster
         self.verbose = verbose
@@ -312,7 +313,7 @@ class DataDownloader:
             self._info.download(client)
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
-        self.client = None
+        self.client: t.Optional[Client] = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -321,37 +322,37 @@ class DataDownloader:
         if init_samples:
             self.init_samples(max_fetch_trials)
 
-    def log(self, message):
+    def log(self, message: str) -> None:
         if self.verbose:
             logger.info(message)
 
-    def set_replica_parameters(self, replica_rank, num_replicas):
+    def set_replica_parameters(self, replica_rank: int, num_replicas: int) -> None:
         self.replica_rank = replica_rank
         self.num_replicas = num_replicas
         self.next_indices = [self.replica_rank] * max(1, len(self.uploader_keys))
 
     @property
-    def autoencoding(self):
+    def autoencoding(self) -> bool:
         return self.sample_name == self.target_name
 
     @property
-    def list_name(self):
+    def list_name(self) -> str:
         return self._info.list_name
 
     @property
-    def sample_name(self):
+    def sample_name(self) -> str:
         return self._info.sample_name
 
     @property
-    def target_name(self):
+    def target_name(self) -> str:
         return self._info.target_name
 
     @property
-    def num_classes(self):
+    def num_classes(self) -> t.Optional[int]:
         return self._info.num_classes
 
     @property
-    def need_targets(self):
+    def need_targets(self) -> bool:
         """Compute if targets have to be downloaded.
 
         :return: Whether targets (or labels) should be downloaded
@@ -359,11 +360,11 @@ class DataDownloader:
         """
         return self.target_name and not self.autoencoding
 
-    def __len__(self):
+    def __len__(self) -> int:
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:
 
         self.update_data()
         # Generate data
@@ -379,7 +380,7 @@ class DataDownloader:
             self._data_generation(_calc_indices(idx)) for idx in range(len(self))
         )
 
-    def init_samples(self, init_trials=-1):
+    def init_samples(self, init_trials: int = -1) -> None:
         """Initialize samples (and targets, if needed).
 
         A new attempt to download samples will be made every ten seconds, for ``init_trials``
@@ -406,7 +407,7 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_exists(self, batch_name, target_name):
+    def _data_exists(self, batch_name: str, target_name: str) -> bool:
 
         if self.need_targets:
             return self.client.tensor_exists(batch_name) and self.client.tensor_exists(
@@ -415,7 +416,7 @@ class DataDownloader:
         else:
             return self.client.tensor_exists(batch_name)
 
-    def _add_samples(self, indices):
+    def _add_samples(self, indices: np.ndarray) -> None:
 
         if self.num_replicas == 1:
             datasets: list[Dataset] = self.client.get_dataset_list_range(
@@ -449,7 +450,7 @@ class DataDownloader:
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
-    def _update_samples_and_targets(self):
+    def _update_samples_and_targets(self) -> None:
         if not self.client:
             self.client = Client(self.address, self.cluster)
             
@@ -473,13 +474,13 @@ class DataDownloader:
                 self._add_samples(indices)
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
-    def update_data(self):
+    def update_data(self) -> None:
         if self.dynamic:
             self._update_samples_and_targets()
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices):
+    def _data_generation(self, indices: np.array) -> t.Tuple[np.ndarray, np.ndarray]:
         # Initialization
         x = self.samples[indices]
 

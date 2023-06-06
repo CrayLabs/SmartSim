@@ -40,9 +40,7 @@ class RunSettings:
         run_command: str = "",
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        # mcb
-        # container: bool = False,
-        container: bool = None,
+        container: t.Optional[bool] = None,
         **kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``
@@ -84,8 +82,8 @@ class RunSettings:
             self.exe = [expand_exe_path(exe)]
 
         self.exe_args = self._set_exe_args(exe_args)
-        self.run_args = init_default({}, run_args, dict)
-        self.env_vars = init_default({}, env_vars, dict)
+        self.run_args: t.Dict[str, t.Optional[str]] = init_default({}, run_args, dict)
+        self.env_vars: t.Dict[str, str] = init_default({}, env_vars, dict)
         self.container = container
         self._run_command = run_command
         self.in_batch = False
@@ -185,7 +183,7 @@ class RunSettings:
             )
         )
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]):
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude

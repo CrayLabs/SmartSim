@@ -85,7 +85,7 @@ from ..utils.helpers import expand_exe_path
 
 
 class Config:
-    def __init__(self):
+    def __init__(self) -> None:
         # SmartSim/smartsim/_core
         self.core_path = Path(os.path.abspath(__file__)).parent.parent
 
@@ -193,6 +193,6 @@ class Config:
 
 
 @lru_cache(maxsize=128, typed=False)
-def get_config():
+def get_config() -> Config:
     # wrap into a function with a cached result
     return Config()

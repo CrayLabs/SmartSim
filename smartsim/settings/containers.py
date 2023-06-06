@@ -161,7 +161,7 @@ class Singularity(Container):
             )
 
         # Construct containerized launch command
-        cmd_list = [singularity, "exec"]
+        cmd_list = [singularity if singularity else "", "exec"]
         if working_directory:
             cmd_list.extend(["--pwd", working_directory])
 

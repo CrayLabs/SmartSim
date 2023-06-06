@@ -49,7 +49,7 @@ class _BaseMPIStep(Step):
         :type run_settings: RunSettings
         """
 
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, run_settings)
 
         self.run_settings = run_settings
 
@@ -60,7 +60,7 @@ class _BaseMPIStep(Step):
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 
     @property
-    def _run_command(self):
+    def _run_command(self) -> str:
         return self.run_settings._run_command
 
     def get_launch_cmd(self) -> t.List[str]:

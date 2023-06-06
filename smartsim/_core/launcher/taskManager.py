@@ -107,7 +107,7 @@ class TaskManager:
         env: t.Dict[str, str] = None,
         out=PIPE,
         err=PIPE,
-    ) -> None:
+    ) -> int:
         """Start a task managed by the TaskManager
 
         This is an "unmanaged" task, meaning it is NOT managed
@@ -143,8 +143,8 @@ class TaskManager:
         self,
         cmd_list: t.List[str],
         cwd: str,
-        env: t.Dict[str, str] = None,
-        timeout: int = None,
+        env: t.Optional[t.Dict[str, str]] = None,
+        timeout: t.Optional[int] = None,
     ) -> t.Tuple[int, str, str]:
         """Start a task not managed by the TaskManager
 
@@ -169,7 +169,7 @@ class TaskManager:
             logger.debug("Ran and waited on task")
         return returncode, out, err
 
-    def add_existing(self, task_id: str) -> None:
+    def add_existing(self, task_id: int) -> None:
         """Add existing task to be managed by the TaskManager
 
         :param task_id: task id of existing task
@@ -211,7 +211,7 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def get_task_update(self, task_id: str) -> str:
+    def get_task_update(self, task_id: str) -> t.Tuple[str, int, str, str]:
         """Get the update of a task
 
         :param task_id: task id
@@ -248,7 +248,7 @@ class TaskManager:
         returncode: int,
         out: t.Optional[str] = None,
         err: t.Optional[str] = None,
-    ):
+    ) -> None:
         """Add a task to the task history
 
         Add a task to record its future returncode, output and error
@@ -323,7 +323,7 @@ class Task:
     def kill(self, timeout: int = 10) -> None:
         """Kill the subprocess and all children"""
 
-        def kill_callback(proc):
+        def kill_callback(proc: psutil.Popen) -> None:
             logger.debug(f"Process terminated with kill {proc.pid}")
 
         children = self.process.children(recursive=True)
@@ -344,7 +344,7 @@ class Task:
         :type timeout: int, optional
         """
 
-        def terminate_callback(proc):
+        def terminate_callback(proc: psutil.Popen) -> None:
             logger.debug(f"Cleanly terminated task {proc.pid}")
 
         children = self.process.children(recursive=True)

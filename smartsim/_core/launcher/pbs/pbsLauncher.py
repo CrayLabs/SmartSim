@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -33,6 +34,7 @@ from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
+    Step,
     AprunStep,
     LocalStep,
     MpiexecStep,
@@ -40,7 +42,7 @@ from ..step import (
     OrterunStep,
     QsubBatchStep,
 )
-from ..stepInfo import PBSStepInfo
+from ..stepInfo import PBSStepInfo, StepInfo
 from .pbsCommands import qdel, qstat
 from .pbsParser import parse_qstat_jobid, parse_step_id_from_qstat
 
@@ -60,18 +62,20 @@ class PBSLauncher(WLMLauncher):
 
     # init in WLMLauncher, launcher.py
 
-    # RunSettings types supported by this launcher
-    supported_rs = {
-        AprunSettings: AprunStep,
-        QsubBatchSettings: QsubBatchStep,
-        MpiexecSettings: MpiexecStep,
-        MpirunSettings: MpirunStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-        PalsMpiexecSettings: MpiexecStep,
-    }
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[RunSettings], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
+            AprunSettings: AprunStep,
+            QsubBatchSettings: QsubBatchStep,
+            MpiexecSettings: MpiexecStep,
+            MpirunSettings: MpirunStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+            PalsMpiexecSettings: MpiexecStep,
+        }
 
-    def run(self, step):
+    def run(self, step: Step) -> str:
         """Run a job step through PBSPro
 
         :param step: a job step instance
@@ -84,8 +88,8 @@ class PBSLauncher(WLMLauncher):
             self.task_manager.start()
 
         cmd_list = step.get_launch_cmd()
-        step_id = None
-        task_id = None
+        step_id: t.Optional[str] = None
+        task_id: t.Optional[str] = None
         if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
             rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
@@ -110,7 +114,7 @@ class PBSLauncher(WLMLauncher):
 
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
@@ -132,7 +136,7 @@ class PBSLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_pbs_step_id(self, step, interval=2):
+    def _get_pbs_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name
@@ -153,7 +157,7 @@ class PBSLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -176,5 +180,5 @@ class PBSLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "PBS"

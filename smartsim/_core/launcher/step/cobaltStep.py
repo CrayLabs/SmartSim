@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 
 class CobaltBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings):
+    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings) -> None:
         """Initialize a Cobalt qsub step
 
         :param name: name of the entity to launch
@@ -46,9 +46,9 @@ class CobaltBatchStep(Step):
         :param batch_settings: batch settings for entity
         :type batch_settings: BatchSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, batch_settings)
         self.batch_settings = batch_settings
-        self.step_cmds = []
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
 
     def get_launch_cmd(self) -> t.List[str]:
@@ -60,7 +60,7 @@ class CobaltBatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
 
-    def add_to_batch(self, step) -> None:
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep

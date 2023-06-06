@@ -31,12 +31,12 @@ from .base import BatchSettings
 class CobaltBatchSettings(BatchSettings):
     def __init__(
         self,
-        nodes: int = None,
+        nodes: t.Optional[int] = None,
         time: str = "",
         queue: t.Optional[str] = None,
         account: t.Optional[str] = None,
         batch_args: t.Optional[t.Dict[str, str]] = None,
-        **kwargs,
+        **kwargs: t.Any,
     ) -> None:
         """Specify settings for a Cobalt ``qsub`` batch launch
 

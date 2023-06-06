@@ -33,12 +33,13 @@ from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
 from ....settings.base import BatchSettings, RunSettings
+from ....settings import SrunSettings, SbatchSettings
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings):
+    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -48,7 +49,7 @@ class SbatchStep(Step):
         :param batch_settings: batch settings for entity
         :type batch_settings: BatchSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, batch_settings)
         self.batch_settings = batch_settings
         self.step_cmds = []
         self.managed = True
@@ -104,7 +105,7 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(self, name: str, cwd: str, run_settings: t.Union[RunSettings, BatchSettings]) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -114,7 +115,7 @@ class SrunStep(Step):
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.alloc = None
         self.managed = True
@@ -131,7 +132,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env = set()
+        compound_env: t.Set = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -188,7 +189,7 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _build_exe(self) -> None:
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list

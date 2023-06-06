@@ -29,6 +29,7 @@ import platform
 import site
 import subprocess
 import sys
+import typing as t 
 from pathlib import Path
 from typing import Iterable
 
@@ -67,7 +68,7 @@ class Version_(str):
     includes some helper methods for comparing versions.
     """
 
-    def _convert_to_version(self, vers):
+    def _convert_to_version(self, vers: t.Union[str, Iterable, Version]) -> Version:
         if isinstance(vers, Version):
             return vers
         elif isinstance(vers, str):
@@ -78,56 +79,56 @@ class Version_(str):
             raise InvalidVersion(vers)
 
     @property
-    def major(self):
+    def major(self) -> int:
         # Version(self).major doesn't work for all Python distributions
         # see https://github.com/lebedov/python-pdfbox/issues/28
         return int(pkg_resources.parse_version(self).base_version.split(".")[0])
 
     @property
-    def minor(self):
+    def minor(self) -> int:
         return int(pkg_resources.parse_version(self).base_version.split(".")[1])
 
     @property
-    def micro(self):
+    def micro(self) -> int:
         return int(pkg_resources.parse_version(self).base_version.split(".")[2])
 
     @property
-    def patch(self):
+    def patch(self) -> str:
         # return micro with string modifier i.e. 1.2.3+cpu -> 3+cpu
         return str(pkg_resources.parse_version(self)).split(".")[2]
 
-    def __gt__(self, cmp):
+    def __gt__(self, cmp: object) -> bool:
         try:
             return Version(self).__gt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__gt__(cmp)
 
-    def __lt__(self, cmp):
+    def __lt__(self, cmp: object) -> bool:
         try:
             return Version(self).__lt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__lt__(cmp)
 
-    def __eq__(self, cmp):
+    def __eq__(self, cmp: object) -> bool:
         try:
             return Version(self).__eq__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__eq__(cmp)
 
-    def __ge__(self, cmp):
+    def __ge__(self, cmp: object) -> bool:
         try:
             return Version(self).__ge__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__ge__(cmp)
 
-    def __le__(self, cmp):
+    def __le__(self, cmp: object) -> bool:
         try:
             return Version(self).__le__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__le__(cmp)
 
 
-def get_env(var, default):
+def get_env(var: str, default: str) -> str:
     return os.environ.get(var, default)
 
 
@@ -182,7 +183,7 @@ class RedisAIVersion(Version_):
     if sys.platform == "darwin":
         defaults.pop("1.2.5", None)
 
-    def __init__(self, vers):
+    def __init__(self, vers: str) -> None:
         min_rai_version = min(Version_(ver) for ver in self.defaults)
         if min_rai_version > vers:
             raise SetupError(
@@ -200,7 +201,7 @@ class RedisAIVersion(Version_):
         else:
             self.version = vers
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> str:
         try:
             return self.defaults[self.version][name]
         except KeyError:
@@ -213,7 +214,7 @@ class RedisAIVersion(Version_):
                 "https://www.craylabs.org/docs/community.html"
             ) from None
 
-    def get_defaults(self):
+    def get_defaults(self) -> t.Dict[str, str]:
         return self.defaults[self.version].copy()
 
 
@@ -277,7 +278,7 @@ class Versioner:
     except AttributeError:
         ONNX = None
 
-    def as_dict(self, db_name="REDIS"):
+    def as_dict(self, db_name: str = "REDIS") -> t.Dict[str, t.Any]:
         packages = [
             "SMARTSIM",
             "SMARTREDIS",
@@ -300,7 +301,7 @@ class Versioner:
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
-    def ml_extras_required(self):
+    def ml_extras_required(self) -> t.List[str]:
         """Optional ML/DL dependencies we suggest for the user.
 
         The defaults are based on the RedisAI version
@@ -323,7 +324,7 @@ class Versioner:
 
         return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
 
-    def get_sha(self, setup_py_dir) -> str:
+    def get_sha(self, setup_py_dir: str) -> str:
         """Get the git sha of the current branch"""
         try:
             sha = (
@@ -336,7 +337,7 @@ class Versioner:
             # return empty string if not in git-repo
             return ""
 
-    def write_version(self, setup_py_dir):
+    def write_version(self, setup_py_dir: str) -> str:
         """
         Write version info to version.py
 
@@ -392,17 +393,17 @@ class BuildEnv:
     CHECKS = int(os.environ.get("NO_CHECKS", 0))
     PLATFORM = sys.platform
 
-    def __init__(self, checks=True):
+    def __init__(self, checks: bool = True) -> None:
         if checks:
             self.check_dependencies()
 
-    def check_dependencies(self):
+    def check_dependencies(self) -> None:
         deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
         if int(self.CHECKS) == 0:
             for dep in deps:
                 self.check_build_dependency(dep)
 
-    def __call__(self):
+    def __call__(self) -> t.Dict[str, str]:
         # return the build env for the build process
         env = os.environ.copy()
         env.update(
@@ -415,7 +416,7 @@ class BuildEnv:
         )
         return env
 
-    def as_dict(self):
+    def as_dict(self) -> t.Dict[str, str]:
         variables = [
             "CC",
             "CXX",
@@ -440,27 +441,27 @@ class BuildEnv:
         return env
 
     @property
-    def python_version(self):
+    def python_version(self) -> str:
         return platform.python_version()
 
-    def is_compatible_python(self, python_min):
+    def is_compatible_python(self, python_min: float) -> bool:
         """Detect if system Python is too old"""
         sys_py = sys.version_info
         system_python = Version_(f"{sys_py.major}.{sys_py.minor}.{sys_py.micro}")
         return system_python > python_min
 
-    def is_windows(self):
+    def is_windows(self) -> bool:
         return self.PLATFORM in ["win32", "cygwin", "msys"]
 
-    def is_macos(self):
+    def is_macos(self) -> bool:
         return self.PLATFORM == "darwin"
 
     @property
-    def torch_cmake_path(self):
+    def torch_cmake_path(self) -> t.Optional[str]:
         """Find the path to the cmake directory within a
         pip installed pytorch package"""
 
-        def _torch_import_path():
+        def _torch_import_path() -> t.Optional[Path]:
             """Find through importing torch"""
             try:
                 import torch as t
@@ -474,7 +475,7 @@ class BuildEnv:
             except ModuleNotFoundError:
                 return None
 
-        def _torch_site_path():
+        def _torch_site_path() -> t.Optional[Path]:
             """find torch through site packages"""
             site_paths = [Path(p) for p in site.getsitepackages()]
 
@@ -496,7 +497,7 @@ class BuildEnv:
         return str(torch_path)
 
     @staticmethod
-    def get_cudnn_env():
+    def get_cudnn_env() -> t.Dict[str, t.Optional[str]]:
         """Collect the environment variables needed for Caffe (Pytorch)
         and throw an error if they are not found
 
@@ -529,7 +530,7 @@ class BuildEnv:
             env["CUDNN_LIBRARY"] = env["CUDNN_LIBRARY_PATH"]
         return env
 
-    def check_build_dependency(self, command):
+    def check_build_dependency(self, command: str) -> None:
         # TODO expand this to parse and check versions.
         try:
             subprocess.check_call(
@@ -541,7 +542,7 @@ class BuildEnv:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
     @staticmethod
-    def check_installed(package, version=None):
+    def check_installed(package: str, version: t.Optional[Version_] = None) -> bool:
         """Check if a package is installed. If version is provided, check if
         it's a compatible version. (major and minor the same)"""
         try:

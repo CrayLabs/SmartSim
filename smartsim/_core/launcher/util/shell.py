@@ -41,7 +41,7 @@ def execute_cmd(
     cmd_list: t.List[str],
     shell: bool = False,
     cwd: t.Optional[str] = None,
-    env: t.Dict = None,
+    env: t.Optional[t.Dict] = None,
     proc_input: str = "",
     timeout: t.Optional[int] = None,
 ) -> t.Tuple[int, str, str]:
@@ -94,7 +94,7 @@ def execute_cmd(
 
 
 def execute_async_cmd(
-    cmd_list: t.List[str], cwd: str, env: t.Dict = None, out=PIPE, err=PIPE
+    cmd_list: t.List[str], cwd: str, env: t.Optional[t.Dict] = None, out: int = PIPE, err: int = PIPE
 ) -> psutil.Popen:
     """Execute an asynchronous command
 

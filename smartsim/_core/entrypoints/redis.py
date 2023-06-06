@@ -28,6 +28,7 @@ import argparse
 import os
 import signal
 from subprocess import PIPE, STDOUT
+from types import FrameType
 from typing import List
 
 import psutil
@@ -48,7 +49,7 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo, frame):
+def handle_signal(signo: int, frame: FrameType) -> None:
     cleanup()
 
 
@@ -81,7 +82,7 @@ def main(network_interface: str, command: List[str]):
         raise SSInternalError("Database process starter raised an exception") from e
 
 
-def cleanup():
+def cleanup() -> None:
     global DBPID
     try:
         logger.debug("Cleaning up database instance")

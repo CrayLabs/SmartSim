@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import typing as t
 
 from smartsim.error.errors import SmartSimError
 
@@ -40,7 +41,7 @@ class ModelWriter:
         self.regex = "(;[^;]+;)"
         self.lines = []
 
-    def set_tag(self, tag, regex=None):
+    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag for the modelwriter to search for within
            tagged files attached to an entity.
 
@@ -58,8 +59,8 @@ class ModelWriter:
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
     def configure_tagged_model_files(
-        self, tagged_files, params, make_missing_tags_fatal=False
-    ):
+        self, tagged_files: t.List[str], params: t.Dict[str, str], make_missing_tags_fatal: bool = False
+    ) -> None:
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -75,7 +76,7 @@ class ModelWriter:
             self._replace_tags(params, make_missing_tags_fatal)
             self._write_changes(tagged_file)
 
-    def _set_lines(self, file_path):
+    def _set_lines(self, file_path: str) -> None:
         """Set the lines for the modelwrtter to iterate over
 
         :param file_path: path to the newly created and tagged file
@@ -89,7 +90,7 @@ class ModelWriter:
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path) from e
 
-    def _write_changes(self, file_path):
+    def _write_changes(self, file_path: str) -> None:
         """Write the ensemble-specific changes
 
         :raises ParameterWriterError: if the newly created file cannot be read
@@ -102,7 +103,7 @@ class ModelWriter:
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
-    def _replace_tags(self, params, make_fatal=False):
+    def _replace_tags(self, params: t.Dict[str, str], make_fatal: bool = False):
         """Replace the tagged within the tagged file attached to this
            model. The tag defaults to ";"
 
@@ -149,13 +150,13 @@ class ModelWriter:
                 logger.warning(missing_tag_message)
         self.lines = edited
 
-    def _is_ensemble_spec(self, tagged_line, model_params):
+    def _is_ensemble_spec(self, tagged_line: str, model_params: t.Dict[str, t.Any]) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():
             return True
         return False
 
-    def _get_prev_value(self, tagged_line):
+    def _get_prev_value(self, tagged_line: str) -> str:
         split_tag = tagged_line.split(self.tag)
         return split_tag[1]

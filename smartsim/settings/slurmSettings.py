@@ -74,7 +74,7 @@ class SrunSettings(RunSettings):
             **kwargs,
         )
         self.alloc = alloc
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
 
     reserved_run_args = {"chdir", "D"}
 
@@ -88,7 +88,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodes"] = int(nodes)
 
-    def make_mpmd(self, srun_settings: SrunSettings) -> None:
+    def make_mpmd(self, srun_settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``srun`` commands
 
         This connects the two settings to be executed with a single
@@ -124,7 +124,7 @@ class SrunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
 
-    def set_hostlist_from_file(self, file_path: str) -> str:
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """Use the contents of a file to set the node list
 
         This sets ``--nodefile``
@@ -259,7 +259,7 @@ class SrunSettings(RunSettings):
             fmt_str = "0" + fmt_str
         return fmt_str
 
-    def set_walltime(self, walltime: str) -> str:
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         format = "HH:MM:SS"
