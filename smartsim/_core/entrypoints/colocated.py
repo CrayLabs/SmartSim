@@ -32,6 +32,7 @@ import sys
 import tempfile
 from pathlib import Path
 from subprocess import PIPE, STDOUT
+from types import FrameType
 from typing import List
 
 import filelock
@@ -51,11 +52,11 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
-def handle_signal(signo, frame):
+def handle_signal(signo: int, frame: FrameType) -> None:
     cleanup()
 
 
-def launch_db_model(client: Client, db_model: List[str]):
+def launch_db_model(client: Client, db_model: List[str]) -> str:
     """Parse options to launch model on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -118,7 +119,7 @@ def launch_db_model(client: Client, db_model: List[str]):
     return args.name
 
 
-def launch_db_script(client: Client, db_script: List[str]):
+def launch_db_script(client: Client, db_script: List[str]) -> str:
     """Parse options to launch script on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -162,7 +163,7 @@ def main(
     command: List[str],
     db_models: List[List[str]],
     db_scripts: List[List[str]],
-):
+) -> None:
     global DBPID
 
     lo_address = current_ip("lo")
@@ -246,7 +247,7 @@ def main(
         raise SSInternalError("Colocated entrypoint raised an error") from e
 
 
-def cleanup():
+def cleanup() -> None:
     global DBPID
     global LOCK
     try:

@@ -25,7 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-def parse_cobalt_step_status(output, step_id):
+def parse_cobalt_step_status(output: str, step_id: str) -> str:
+    """
+    Parse and return the status of a cobalt step
+
+    :param output: output qstat
+    :type output: str
+    :param step_id: the id of the step to query
+    :type step_id: str
+    :rtype: str
+    """
     status = "NOTFOUND"
     for line in output.split("\n"):
         fields = line.split()
@@ -36,7 +45,7 @@ def parse_cobalt_step_status(output, step_id):
     return status
 
 
-def parse_cobalt_step_id(output, step_name):
+def parse_cobalt_step_id(output: str, step_name: str) -> str:
     """Parse and return the step id from a cobalt qstat command
 
     :param output: output qstat
@@ -56,7 +65,15 @@ def parse_cobalt_step_id(output, step_name):
     return step_id
 
 
-def parse_qsub_out(output):
+def parse_qsub_out(output: str) -> str:
+    """
+    Parse and return the step id from a cobalt qsub command
+
+    :param output: output qstat
+    :type output: str
+    :return: the step_id
+    :rtype: str
+    """
     step_id = None
     for line in output.split("\n"):
         try:

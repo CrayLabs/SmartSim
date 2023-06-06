@@ -27,12 +27,13 @@
 from pathlib import Path
 
 import tensorflow as tf
+import typing as t
 from tensorflow.python.framework.convert_to_constants import (
     convert_variables_to_constants_v2,
 )
 
 
-def freeze_model(model, output_dir, file_name):
+def freeze_model(model: tf.Module, output_dir: str, file_name: str):
     """Freeze a Keras or TensorFlow Graph
 
     to use a Keras or TensorFlow model in SmartSim, the model
@@ -78,7 +79,7 @@ def freeze_model(model, output_dir, file_name):
     return model_file_path, input_names, output_names
 
 
-def serialize_model(model):
+def serialize_model(model: tf.Module) -> t.Tuple[str, list[str], list[str]]:
     """Serialize a Keras or TensorFlow Graph
 
     to use a Keras or TensorFlow model in SmartSim, the model

@@ -24,10 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 
 from ....log import get_logger
 from ....settings import RunSettings
 from ..step import LocalStep
+from ..step import Step
 from ..stepInfo import UnmanagedStepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
@@ -38,11 +40,11 @@ logger = get_logger(__name__)
 class LocalLauncher:
     """Launcher used for spawning proceses on a localhost machine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, name, cwd, step_settings):
+    def create_step(self, name: str, cwd: str, step_settings: RunSettings) -> Step:
         """Create a job step to launch an entity locally
 
         :return: Step object
@@ -54,7 +56,7 @@ class LocalLauncher:
         step = LocalStep(name, cwd, step_settings)
         return step
 
-    def get_step_update(self, step_names):
+    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, UnmanagedStepInfo]]:
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
@@ -73,7 +75,7 @@ class LocalLauncher:
             updates.append(update)
         return updates
 
-    def get_step_nodes(self, step_names):
+    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
         """Return the address of nodes assigned to the step
 
         TODO: Use socket to find the actual Lo address?
@@ -81,13 +83,15 @@ class LocalLauncher:
         """
         return [["127.0.0.1"] * len(step_names)]
 
-    def run(self, step):
+    def run(self, step: Step) -> str:
         """Run a local step created by this launcher. Utilize the shell
            library to execute the command with a Popen. Output and error
            files will be written to the entity path.
 
         :param step: LocalStep instance to run
         :type step: LocalStep
+        :return: task_id of the newly created step
+        :rtype: str
         """
         if not self.task_manager.actively_monitoring:
             self.task_manager.start()
@@ -102,7 +106,7 @@ class LocalLauncher:
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: t.List[str]) -> UnmanagedStepInfo:
         """Stop a job step
 
         :param step_name: name of the step to be stopped
@@ -117,5 +121,5 @@ class LocalLauncher:
         status = UnmanagedStepInfo("Cancelled", rc, out, err)
         return status
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Local"

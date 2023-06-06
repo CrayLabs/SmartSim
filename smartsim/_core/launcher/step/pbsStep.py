@@ -44,9 +44,9 @@ class QsubBatchStep(Step):
         :param batch_settings: batch settings for entity
         :type batch_settings: BatchSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, batch_settings)
         self.batch_settings = batch_settings
-        self.step_cmds = []
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
 
     def get_launch_cmd(self) -> t.List[str]:

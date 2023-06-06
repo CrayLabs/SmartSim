@@ -62,9 +62,9 @@ class AprunSettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
 
-    def make_mpmd(self, aprun_settings: AprunSettings) -> None:
+    def make_mpmd(self, aprun_settings: RunSettings) -> None:
         """Make job an MPMD job
 
         This method combines two ``AprunSettings``

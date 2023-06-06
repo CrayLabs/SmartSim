@@ -139,7 +139,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         self.run_args["np"] = int(tasks)
 
-    def set_tasks_per_node(self, tasks_per_node):
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node

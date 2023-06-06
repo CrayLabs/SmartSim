@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -33,6 +34,7 @@ from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
+    Step,
     BsubBatchStep,
     JsrunStep,
     LocalStep,
@@ -40,7 +42,7 @@ from ..step import (
     MpirunStep,
     OrterunStep,
 )
-from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
+from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo, StepInfo
 from .lsfCommands import bjobs, bkill, jskill, jslist
 from .lsfParser import (
     parse_bjobs_jobid,
@@ -65,17 +67,19 @@ class LSFLauncher(WLMLauncher):
 
     # init in WLMLauncher, launcher.py
 
-    # RunSettings types supported by this launcher
-    supported_rs = {
-        JsrunSettings: JsrunStep,
-        BsubBatchSettings: BsubBatchStep,
-        MpirunSettings: MpirunStep,
-        MpiexecSettings: MpiexecStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-    }
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[RunSettings], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
+            JsrunSettings: JsrunStep,
+            BsubBatchSettings: BsubBatchStep,
+            MpirunSettings: MpirunStep,
+            MpiexecSettings: MpiexecStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+        }
 
-    def run(self, step):
+    def run(self, step: Step) -> str:
         """Run a job step through LSF
 
         :param step: a job step instance
@@ -115,7 +119,7 @@ class LSFLauncher(WLMLauncher):
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
@@ -140,7 +144,7 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2):
+    def _get_lsf_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id = "unassigned"
@@ -157,7 +161,7 @@ class LSFLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return f"{step.alloc}.{step_id}"
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -190,5 +194,5 @@ class LSFLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "LSF"

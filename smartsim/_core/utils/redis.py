@@ -46,7 +46,7 @@ logging.getLogger("rediscluster").setLevel(logging.WARNING)
 logger = get_logger(__name__)
 
 
-def create_cluster(hosts: t.List[str], ports: t.List[int]):  # cov-wlm
+def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     """Connect launched cluster instances.
 
     Should only be used in the case where cluster initialization
@@ -79,7 +79,7 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]):  # cov-wlm
     logger.debug(out)
 
 
-def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 10):  # cov-wlm
+def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 10) -> None:  # cov-wlm
     """Check that a Redis/KeyDB cluster is up and running
 
     :param hosts: List of hostnames to connect to

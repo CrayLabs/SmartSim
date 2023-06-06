@@ -29,11 +29,12 @@ import shutil
 import typing as t
 
 from .step import Step
+from ....settings.base import RunSettings
 
 
 class LocalStep(Step):
-    def __init__(self, name, cwd, run_settings):
-        super().__init__(name, cwd)
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.env = self._set_env()
 
@@ -49,7 +50,7 @@ class LocalStep(Step):
 
         if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
-            bash = shutil.which("bash")
+            bash = shutil.which("bash") or ""
 
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])

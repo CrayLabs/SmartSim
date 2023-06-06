@@ -25,6 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
+
 from shutil import which
 
 from ....error import LauncherError
@@ -33,8 +35,8 @@ from ....settings import *
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep
-from ..stepInfo import SlurmStepInfo
+from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep, Step
+from ..stepInfo import SlurmStepInfo, StepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
@@ -55,7 +57,10 @@ class SlurmLauncher(WLMLauncher):
     # init in launcher.py (WLMLauncher)
 
     # RunSettings types supported by this launcher
-    supported_rs = {
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[RunSettings], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
         SrunSettings: SrunStep,
         SbatchSettings: SbatchStep,
         MpirunSettings: MpirunStep,
@@ -64,7 +69,7 @@ class SlurmLauncher(WLMLauncher):
         RunSettings: LocalStep,
     }
 
-    def get_step_nodes(self, step_names):
+    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
         """Return the compute nodes of a specific job or allocation
 
         This function returns the compute nodes of a specific job or allocation
@@ -100,7 +105,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step):
+    def run(self, step: Step) -> str:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -150,7 +155,7 @@ class SlurmLauncher(WLMLauncher):
 
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Step a job step
 
         :param step_name: name of the job to stop
@@ -178,7 +183,7 @@ class SlurmLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_slurm_step_id(self, step, interval=2):
+    def _get_slurm_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -204,7 +209,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -218,7 +223,7 @@ class SlurmLauncher(WLMLauncher):
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 
         # create SlurmStepInfo objects to return
-        updates = []
+        updates: t.List[StepInfo] = []
         for stat_tuple, step_id in zip(stat_tuples, step_ids):
             info = SlurmStepInfo(stat_tuple[0], stat_tuple[1])
 
@@ -236,7 +241,7 @@ class SlurmLauncher(WLMLauncher):
         return updates
 
     @staticmethod
-    def check_for_slurm():
+    def check_for_slurm() -> None:
         """Check if slurm is available
 
         This function checks for slurm commands where the experiment
@@ -248,11 +253,11 @@ class SlurmLauncher(WLMLauncher):
             error = "User attempted Slurm methods without access to Slurm at the call site.\n"
             raise LauncherError(error)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Slurm"
 
 
-def _create_step_id_str(step_ids):
+def _create_step_id_str(step_ids: t.List[str]) -> str:
     step_str = ""
     for step_id in step_ids:
         step_str += str(step_id) + ","

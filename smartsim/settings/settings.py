@@ -104,7 +104,7 @@ def create_run_settings(
     run_command: str = "auto",
     run_args: t.Optional[t.Dict[str, str]] = None,
     env_vars: t.Optional[t.Dict[str, str]] = None,
-    container: bool = None,
+    container: t.Optional[bool] = None,
     **kwargs: t.Any,
 ) -> RunSettings:
     """Create a ``RunSettings`` instance.
@@ -145,15 +145,18 @@ def create_run_settings(
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
+        "local": [""],
     }
 
     if launcher == "auto":
         launcher = detect_launcher()
 
-    def _detect_command(launcher: str):
+    def _detect_command(launcher: str) -> str:
         if launcher in by_launcher:
             for cmd in by_launcher[launcher]:
-                if is_valid_cmd(cmd):
+                if launcher == "local":
+                    return cmd
+                elif is_valid_cmd(cmd):
                     return cmd
         msg = f"Could not automatically detect a run command to use for launcher {launcher}"
         msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
@@ -166,10 +169,7 @@ def create_run_settings(
     # detect run_command automatically for all but local launcher
     if run_command == "auto":
         # no auto detection for local, revert to false
-        if launcher == "local":
-            run_command = None
-        else:
-            run_command = _detect_command(launcher)
+        run_command = _detect_command(launcher)
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:

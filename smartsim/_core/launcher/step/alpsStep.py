@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
@@ -48,7 +48,7 @@ class AprunStep(Step):
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.alloc = None
         if not self.run_settings.in_batch:

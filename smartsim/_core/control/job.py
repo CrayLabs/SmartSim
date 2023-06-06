@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
-from ...status import STATUS_NEW
 from ...entity import SmartSimEntity
+from ...status import STATUS_NEW
 
 
 class Job:
@@ -66,7 +67,7 @@ class Job:
         self.returncode = None
         self.output = None  # only populated if it's system related (e.g. a command failed immediately)
         self.error = None  # same as output
-        self.hosts = []  # currently only used for DB jobs
+        self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
         self.is_task = is_task
         self.start_time = time.time()
@@ -82,8 +83,8 @@ class Job:
         new_status: str,
         raw_status: str,
         returncode: str,
-        error: str = None,
-        output: str = None,
+        error: t.Optional[str] = None,
+        output: t.Optional[str] = None,
     ) -> None:
         """Set the status  of a job.
 
@@ -170,12 +171,12 @@ class History:
         :type runs: int, optional
         """
         self.runs = runs
-        self.jids = dict()
-        self.statuses = dict()
-        self.returns = dict()
-        self.job_times = dict()
+        self.jids: t.Dict[int, int] = dict()
+        self.statuses: t.Dict[int, str] = dict()
+        self.returns: t.Dict[int, str] = dict()
+        self.job_times: t.Dict[int, str] = dict()
 
-    def record(self, job_id: str, status: str, returncode: str, job_time: str):
+    def record(self, job_id: str, status: str, returncode: str, job_time: str) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status

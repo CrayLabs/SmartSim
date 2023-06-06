@@ -36,6 +36,7 @@ def parse_salloc(output: str) -> t.Optional[str]:
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
+    return None
 
 
 def parse_salloc_error(output: str) -> t.Optional[str]:
