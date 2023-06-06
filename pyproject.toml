@@ -67,7 +67,6 @@ ignore_errors = true
 directory = "htmlcov"
 
 [tool.mypy]
-python_version = "3.9"
 namespace_packages = true
 files = [
   "smartsim"
