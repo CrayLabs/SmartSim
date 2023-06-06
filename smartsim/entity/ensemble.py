@@ -83,7 +83,7 @@ class Ensemble(EntityList):
         :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
-                             options are "all_perm", "stepped", "random"
+                             options are "all_perm", "step", "random"
                              or a callable function. Defaults to "all_perm".
         :type perm_strategy: str
         :return: ``Ensemble`` instance

@@ -417,7 +417,7 @@ class Experiment:
         :type replicas: int
         :param perm_strategy: strategy for expanding ``params`` into
                               ``Model`` instances from params argument
-                              options are "all_perm", "stepped", "random"
+                              options are "all_perm", "step", "random"
                               or a callable function. Default is "all_perm".
         :type perm_strategy: str, optional
         :raises SmartSimError: if initialization fails
