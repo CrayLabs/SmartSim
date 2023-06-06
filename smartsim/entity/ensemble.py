@@ -46,6 +46,7 @@ from .strategies import create_all_permutations, random_permutations, step_value
 
 logger = get_logger(__name__)
 
+StrategyFunction = t.Callable[[t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]]
 
 class Ensemble(EntityList):
     """``Ensemble`` is a group of ``Model`` instances that can
@@ -272,7 +273,7 @@ class Ensemble(EntityList):
 
     def _set_strategy(
         self, strategy: str
-    ) -> t.Callable[[t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]]:
+    ) -> StrategyFunction:
         """Set the permutation strategy for generating models within
         the ensemble
 
