@@ -129,8 +129,5 @@ jobs:
           fail_ci_if_error: true
           files: ./coverage.xml
 
-      - name: Install mypy and type stubs
-        run: python -m pip install -r./requirements-mypy.txt
-
       - name: Run mypy
         run: make check-mypy
