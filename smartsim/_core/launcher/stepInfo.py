@@ -42,7 +42,7 @@ class StepInfo:
         self,
         status: str = "",
         launcher_status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -80,7 +80,7 @@ class UnmanagedStepInfo(StepInfo):
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -131,7 +131,7 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -170,7 +170,7 @@ class PBSStepInfo(StepInfo):  # cov-pbs
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -212,7 +212,7 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -228,7 +228,7 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status: str):
+    def _get_smartsim_status(self, status: str) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
@@ -251,7 +251,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -267,7 +267,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status: str, returncode: str) -> str:
+    def _get_smartsim_status(self, status: str, returncode: t.Optional[int] = None) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
@@ -288,7 +288,7 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     def __init__(
         self,
         status: str = "",
-        returncode: t.Optional[str] = None,
+        returncode: t.Optional[int] = None,
         output: t.Optional[str] = None,
         error: t.Optional[str] = None,
     ) -> None:
@@ -304,11 +304,11 @@ class LSFJsrunStepInfo(StepInfo):  # cov-lsf
             smartsim_status, status, returncode, output=output, error=error
         )
 
-    def _get_smartsim_status(self, status: str, returncode: str) -> str:
+    def _get_smartsim_status(self, status: str, returncode: t.Optional[int] = None) -> str:
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
         elif status in self.mapping:
-            if returncode is not None and int(returncode) != 0:
+            if returncode is not None and returncode != 0:
                 return STATUS_FAILED
             else:
                 return self.mapping[status]
