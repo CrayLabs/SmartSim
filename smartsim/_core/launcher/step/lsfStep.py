@@ -118,7 +118,7 @@ class JsrunStep(Step):
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
         """
-        super().__init__(name, cwd)
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.alloc = None
         self.managed = True
