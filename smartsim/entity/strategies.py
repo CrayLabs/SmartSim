@@ -57,9 +57,20 @@ def random_permutations(
     param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0
 ) -> t.List[t.Dict[str, str]]:
     # first, check if we've requested more values than possible.
-    permutations = create_all_permutations(param_names, param_values)
-
-    if n_models and n_models < len(permutations):
-        permutations = random.sample(permutations, n_models)
-
-    return permutations
+    perms = list(product(*param_values))
+    if n_models >= len(perms):
+        return create_all_permutations(param_names, param_values)
+    else:
+        permutations: t.List[t.Dict[str, str]] = []
+        permutation_strings = set()
+        while len(permutations) < n_models:
+            model_dict = dict(
+                zip(
+                    param_names,
+                    map(lambda x: x[random.randint(0, len(x) - 1)], param_values),
+                )
+            )
+            if str(model_dict) not in permutation_strings:
+                permutation_strings.add(str(model_dict))
+                permutations.append(model_dict)
+        return permutations
