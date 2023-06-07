@@ -4,10 +4,3 @@ pylint>=2.6.0
 pytest>=6.0.0
 pytest-cov>=2.10.1
 click==8.0.2
-mypy>=1.2.0
-
-# mypy: From typeshed
-types-psutil
-types-redis
-types-tabulate
-types-tqdm
