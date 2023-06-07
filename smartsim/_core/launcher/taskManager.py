@@ -63,7 +63,7 @@ class TaskManager:
     def __init__(self) -> None:
         """Initialize a task manager thread."""
         self.actively_monitoring = False
-        self.task_history = dict()
+        self.task_history: t.Dict[str, t.Tuple[t.Optional[int], t.Optional[str], t.Optional[str]]] = {}
         self.tasks: t.List[Task] = []
         self._lock = RLock()
 
@@ -104,10 +104,10 @@ class TaskManager:
         self,
         cmd_list: t.List[str],
         cwd: str,
-        env: t.Dict[str, str] = None,
-        out=PIPE,
-        err=PIPE,
-    ) -> int:
+        env: t.Optional[t.Dict[str, str]] = None,
+        out: int = PIPE,
+        err: int = PIPE,
+    ) -> str:
         """Start a task managed by the TaskManager
 
         This is an "unmanaged" task, meaning it is NOT managed
@@ -211,7 +211,7 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def get_task_update(self, task_id: str) -> t.Tuple[str, int, str, str]:
+    def get_task_update(self, task_id: str) -> t.Tuple[str, t.Optional[int], t.Optional[str], t.Optional[str]]:
         """Get the update of a task
 
         :param task_id: task id
@@ -245,7 +245,7 @@ class TaskManager:
     def add_task_history(
         self,
         task_id: str,
-        returncode: int,
+        returncode: t.Optional[int] = None,
         out: t.Optional[str] = None,
         err: t.Optional[str] = None,
     ) -> None:
@@ -283,7 +283,7 @@ class TaskManager:
 
 
 class Task:
-    def __init__(self, process: psutil.Popen) -> None:
+    def __init__(self, process: t.Union[psutil.Popen, psutil.Process]) -> None:
         """Initialize a task
 
         :param process: Popen object
@@ -292,27 +292,28 @@ class Task:
         self.process = process
         self.pid = str(self.process.pid)
 
-    def check_status(self) -> int:
+    def check_status(self) -> t.Optional[int]:
         """Ping the job and return the returncode if finished
 
         :return: returncode if finished otherwise None
         :rtype: int
         """
-        if self.owned:
+        if self.owned and isinstance(self.process, psutil.Popen):
             return self.process.poll()
         # we can't manage Processed we don't own
         # have to rely on .kill() to stop.
         return self.returncode
 
-    def get_io(self) -> t.Tuple[str, str]:
+    def get_io(self) -> t.Tuple[t.Optional[str], t.Optional[str]]:
         """Get the IO from the subprocess
 
         :return: output and error from the Popen
         :rtype: str, str
         """
         # Process class does not implement communicate
-        if not self.owned:
+        if not self.owned or not isinstance(self.process, psutil.Popen):
             return None, None
+
         output, error = self.process.communicate()
         if output:
             output = output.decode("utf-8")
@@ -323,7 +324,7 @@ class Task:
     def kill(self, timeout: int = 10) -> None:
         """Kill the subprocess and all children"""
 
-        def kill_callback(proc: psutil.Popen) -> None:
+        def kill_callback(proc: psutil.Process) -> None:
             logger.debug(f"Process terminated with kill {proc.pid}")
 
         children = self.process.children(recursive=True)
@@ -344,7 +345,7 @@ class Task:
         :type timeout: int, optional
         """
 
-        def terminate_callback(proc: psutil.Popen) -> None:
+        def terminate_callback(proc: psutil.Process) -> None:
             logger.debug(f"Cleanly terminated task {proc.pid}")
 
         children = self.process.children(recursive=True)
@@ -370,7 +371,7 @@ class Task:
 
     @property
     def returncode(self) -> t.Optional[int]:
-        if self.owned:
+        if self.owned and isinstance(self.process, psutil.Popen):
             return self.process.returncode
         if self.is_alive:
             return None

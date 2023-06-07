@@ -67,7 +67,7 @@ class StepMapping:
 
     def get_ids(
         self, step_names: t.List[str], managed: bool = True
-    ) -> t.Tuple[t.List[str], t.List[int]]:
+    ) -> t.Tuple[t.List[str], t.List[t.Union[int, None]]]:
         ids = []
         names = []
         for name in step_names:
