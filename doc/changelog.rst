@@ -25,6 +25,7 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Remove wait time associated with Experiment launch summary
 - Update and rename Redis conf file
 - Migrate from redis-py-cluster to redis-py
 - Update full test suite to not require a TF wheel at test time
@@ -36,6 +37,7 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Remove wait time associated with Experiment launch summary (PR298_)
 - Update Redis conf file to conform with Redis v7.0.5 conf file (PR293_)
 - Migrate from redis-py-cluster to redis-py for cluster status checks (PR292_)
 - Update full test suite to no longer require a tensorflow wheel to be available
@@ -51,6 +53,7 @@ codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
 argument name is still `interface` for backward compatibility reasons. (PR281_)
 
+.. _PR298: https://github.com/CrayLabs/SmartSim/pull/298
 .. _PR293: https://github.com/CrayLabs/SmartSim/pull/293
 .. _PR292: https://github.com/CrayLabs/SmartSim/pull/292
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
