@@ -99,18 +99,19 @@ class ShellError(LauncherError):
     Closely related to error from subprocess(Popen) commands"""
 
     def __init__(
-        self, message: str, shell_error: bool, command_list: t.Union[str, t.List[str]]
+        self, message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]] = None
     ) -> None:
-        msg = self.create_message(message, shell_error, command_list)
+        msg = self.create_message(message, details, command_list)
         super().__init__(msg)
 
+    @staticmethod
     def create_message(
-        self, message: str, shell_error: bool, command_list: t.Union[str, t.List[str]]
+        message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]]
     ) -> str:
         if isinstance(command_list, list):
             command_list = " ".join(command_list)
         msg = message + "\n"
         msg += f"\nCommand: {command_list}"
-        if shell_error:
-            msg += f"\nError from shell: {shell_error}"
+        if details:
+            msg += f"\nError from shell: {details}"
         return msg
