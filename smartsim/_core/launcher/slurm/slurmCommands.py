@@ -96,7 +96,7 @@ def scontrol(args: t.List[str]) -> t.Tuple[str, str]:
     return out, error
 
 
-def scancel(args: t.List[str]) -> t.Tuple[str, str, str]:
+def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls slurm scancel with args.
 
     returncode is also supplied in this function.
