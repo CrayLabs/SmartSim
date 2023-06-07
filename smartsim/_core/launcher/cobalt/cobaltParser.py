@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 
 def parse_cobalt_step_status(output: str, step_id: str) -> str:
     """
@@ -45,7 +47,7 @@ def parse_cobalt_step_status(output: str, step_id: str) -> str:
     return status
 
 
-def parse_cobalt_step_id(output: str, step_name: str) -> str:
+def parse_cobalt_step_id(output: str, step_name: str) -> t.Optional[str]:
     """Parse and return the step id from a cobalt qstat command
 
     :param output: output qstat
@@ -65,7 +67,7 @@ def parse_cobalt_step_id(output: str, step_name: str) -> str:
     return step_id
 
 
-def parse_qsub_out(output: str) -> str:
+def parse_qsub_out(output: str) ->  t.Optional[str]:
     """
     Parse and return the step id from a cobalt qsub command
 

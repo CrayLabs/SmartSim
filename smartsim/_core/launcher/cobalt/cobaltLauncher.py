@@ -30,7 +30,7 @@ import typing as t
 import psutil
 
 from smartsim._core.launcher.step import Step
-from smartsim.settings.base import RunSettings
+from smartsim.settings.base import RunSettings, BatchSettings
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -70,7 +70,7 @@ class CobaltLauncher(WLMLauncher):
         self.user = psutil.Process().username()
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[RunSettings], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[t.Union[RunSettings, BatchSettings]], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
             AprunSettings: AprunStep,
@@ -112,13 +112,17 @@ class CobaltLauncher(WLMLauncher):
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
+
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output, err=error
+                cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_cobalt_step_id(step)
+        if not step_id:
+            raise ValueError("Unable to get step id for job step")
+
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
@@ -136,11 +140,14 @@ class CobaltLauncher(WLMLauncher):
             if qdel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
-                self.task_manager.remove_task(stepmap.task_id)
+                self.task_manager.remove_task(str(stepmap.task_id))
         else:
-            self.task_manager.remove_task(stepmap.task_id)
+            if stepmap.task_id:
+                self.task_manager.remove_task(str(stepmap.task_id))
 
         _, step_info = self.get_step_update([step_name])[0]
+        if not step_info:
+            raise LauncherError(f"Could not get step_info for job step {step_name}")
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
@@ -179,7 +186,7 @@ class CobaltLauncher(WLMLauncher):
             parse_cobalt_step_status(qstat_out, str(step_id)) for step_id in step_ids
         ]
         # create CobaltStepInfo objects to return
-        updates = []
+        updates: t.List[StepInfo] = []
         for stat, _ in zip(stats, step_ids):
             info = CobaltStepInfo(stat, None)  # returncode not logged by Cobalt
 

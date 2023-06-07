@@ -239,8 +239,12 @@ class TaskManager:
                 if rc != 0:
                     return "Failed", rc, out, err
                 return "Completed", rc, out, err
+        except KeyError:
+            logger.warning(f"Task {task_id} not found in task history dictionary")
         finally:
             self._lock.release()
+
+        return "Failed", -1, "", ""
 
     def add_task_history(
         self,

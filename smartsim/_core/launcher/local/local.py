@@ -69,7 +69,7 @@ class LocalLauncher:
         updates = []
         s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_name, step_id in zip(s_names, s_ids):
-            status, rc, out, err = self.task_manager.get_task_update(step_id)
+            status, rc, out, err = self.task_manager.get_task_update(str(step_id))
             step_info = UnmanagedStepInfo(status, rc, out, err)
             update = (step_name, step_info)
             updates.append(update)
@@ -116,7 +116,8 @@ class LocalLauncher:
         """
         # step_id is task_id for local. Naming for consistency
         step_id = self.step_mapping[step_name].task_id
-        self.task_manager.remove_task(step_id)
+        
+        self.task_manager.remove_task(str(step_id))
         status, rc, out, err = self.task_manager.get_task_update(step_id)
         status = UnmanagedStepInfo("Cancelled", rc, out, err)
         return status
