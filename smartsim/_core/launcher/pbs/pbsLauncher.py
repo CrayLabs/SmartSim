@@ -30,6 +30,7 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
+from ....settings.base import BatchSettings
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
@@ -63,7 +64,7 @@ class PBSLauncher(WLMLauncher):
     # init in WLMLauncher, launcher.py
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[RunSettings], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[t.Union[RunSettings, BatchSettings]], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
             AprunSettings: AprunStep,
@@ -104,12 +105,16 @@ class PBSLauncher(WLMLauncher):
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output, err=error
+                cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_pbs_step_id(step)
+        
+        if not step_id:
+            raise ValueError("Unable to get step id for job step")
+        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         return step_id
@@ -128,11 +133,14 @@ class PBSLauncher(WLMLauncher):
             if qdel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
-                self.task_manager.remove_task(stepmap.task_id)
+                self.task_manager.remove_task(str(stepmap.task_id))
         else:
-            self.task_manager.remove_task(stepmap.task_id)
+            self.task_manager.remove_task(str(stepmap.task_id))
 
         _, step_info = self.get_step_update([step_name])[0]
+        if not step_info:
+            raise LauncherError(f"Could not get step_info for job step {step_name}")
+
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
@@ -143,7 +151,7 @@ class PBSLauncher(WLMLauncher):
         TODO: change this to use ``qstat -a -u user``
         """
         time.sleep(interval)
-        step_id = "unassigned"
+        step_id: t.Optional[str] = "unassigned"
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])
@@ -165,7 +173,7 @@ class PBSLauncher(WLMLauncher):
         :return: list of updates for managed jobs
         :rtype: list[StepInfo]
         """
-        updates = []
+        updates: t.List[StepInfo] = []
 
         qstat_out, _ = qstat(step_ids)
         stats = [parse_qstat_jobid(qstat_out, str(step_id)) for step_id in step_ids]
