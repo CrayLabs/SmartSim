@@ -72,19 +72,16 @@ def test_orc_active_functions(fileutils, wlmutils):
 
     db = Orchestrator(port=wlmutils.get_test_port())
     db.set_path(test_dir)
+    
+    try:
+        exp.start(db)
+        # check if the orchestrator is active
+        assert db.is_active()
 
-    exp.start(db)
-
-    # check if the orchestrator is active
-    assert db.is_active()
-
-    # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
+        # check if the orchestrator can get the address
+        assert db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    finally:
         exp.stop(db)
-        assert False
-
-    exp.stop(db)
 
     assert not db.is_active()
 
@@ -108,18 +105,16 @@ def test_multiple_interfaces(fileutils, wlmutils):
     db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
     db.set_path(test_dir)
 
-    exp.start(db)
+    try:
+        exp.start(db)
 
-    # check if the orchestrator is active
-    assert db.is_active()
+        # check if the orchestrator is active
+        assert db.is_active()
 
-    # check if the orchestrator can get the address
-    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
-    if not correct_address:
+        # check if the orchestrator can get the address
+        assert db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    finally:
         exp.stop(db)
-        assert False
-
-    exp.stop(db)
 
 
 def test_catch_local_db_errors():
