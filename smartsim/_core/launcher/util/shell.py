@@ -75,18 +75,18 @@ def execute_cmd(
         cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE, cwd=cwd, shell=shell, env=env
     )
     try:
-        proc_input = proc_input.encode("utf-8")
-        out, err = proc.communicate(input=proc_input, timeout=timeout)
+        proc_bytes = proc_input.encode("utf-8")
+        out, err = proc.communicate(input=proc_bytes, timeout=timeout)
     except TimeoutExpired as e:
         proc.kill()
         _, errs = proc.communicate()
         logger.error(errs)
         raise ShellError(
-            "Failed to execute command, timeout reached", e, cmd_list
+            "Failed to execute command, timeout reached", cmd_list, details=e
         ) from None
     except OSError as e:
         raise ShellError(
-            "Exception while attempting to start a shell process", e, cmd_list
+            "Exception while attempting to start a shell process", cmd_list, details=e
         ) from None
 
     # decoding the output and err and return as a string tuple
@@ -127,7 +127,7 @@ def execute_async_cmd(
                 err_msg += output.decode("utf-8") + " "
             if error:
                 err_msg += error.decode("utf-8")
-            raise ShellError("Command failed immediately", err_msg, cmd_list)
+            raise ShellError("Command failed immediately", cmd_list, details=err_msg)
     except OSError as e:
-        raise ShellError("Failed to run command", e, cmd_list) from None
+        raise ShellError("Failed to run command", cmd_list, details=e) from None
     return popen_obj
