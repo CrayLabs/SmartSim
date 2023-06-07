@@ -100,13 +100,18 @@ class LocalLauncher:
         output = open(out, "w+")
         error = open(err, "w+")
         cmd = step.get_launch_cmd()
+
+        env = {}
+        if isinstance(step, LocalStep):
+            env = step.env
+
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=step.env, out=output, err=error
+            cmd, step.cwd, env=env, out=output.fileno(), err=error.fileno()
         )
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id
 
-    def stop(self, step_name: t.List[str]) -> UnmanagedStepInfo:
+    def stop(self, step_name: str) -> UnmanagedStepInfo:
         """Stop a job step
 
         :param step_name: name of the step to be stopped
@@ -118,9 +123,9 @@ class LocalLauncher:
         step_id = self.step_mapping[step_name].task_id
         
         self.task_manager.remove_task(str(step_id))
-        status, rc, out, err = self.task_manager.get_task_update(step_id)
-        status = UnmanagedStepInfo("Cancelled", rc, out, err)
-        return status
+        _, rc, out, err = self.task_manager.get_task_update(str(step_id))
+        step_info = UnmanagedStepInfo("Cancelled", rc, out, err)
+        return step_info
 
     def __str__(self) -> str:
         return "Local"
