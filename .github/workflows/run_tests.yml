@@ -130,4 +130,5 @@ jobs:
           files: ./coverage.xml
 
       - name: Run mypy
+        if: (matrix.rai != '1.2.5')
         run: make check-mypy
