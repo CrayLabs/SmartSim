@@ -165,7 +165,7 @@ class WLMLauncher(Launcher):  # cov-wlm
         updates = []
         for task_id in task_ids:
             stat, rc, out, err = self.task_manager.get_task_update(task_id)
-            update = UnmanagedStepInfo(stat, str(rc), out, err)
+            update = UnmanagedStepInfo(stat, rc, out, err)
             updates.append(update)
         return updates
 
