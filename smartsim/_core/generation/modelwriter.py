@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 
 class ModelWriter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tag = ";"
         self.regex = "(;[^;]+;)"
         self.lines = []

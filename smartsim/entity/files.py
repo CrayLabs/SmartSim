@@ -190,7 +190,7 @@ class TaggedFilesHierarchy:
         self._base: str = path.join(parent.base, subdir_name) if parent else ""
         self.parent: t.Any = parent
         self.files: t.Set[str] = set()
-        self.dirs: t.Set[str] = set()
+        self.dirs: t.Set[TaggedFilesHierarchy] = set()
 
     @property
     def base(self) -> str:
