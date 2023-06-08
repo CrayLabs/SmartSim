@@ -216,21 +216,24 @@ class JobManager:
         self._lock.acquire()
         try:
             jobs = self().values()
-            job_name_map = dict([(job.name, job.ename) for job in jobs])
+            job_name_map = {job.name: job.ename for job in jobs}
 
             # returns (job step name, StepInfo) tuples
             if self._launcher:
-                statuses = self._launcher.get_step_update(job_name_map.keys())
+                step_names = list(job_name_map.keys())
+                statuses = self._launcher.get_step_update(step_names)
                 for job_name, status in statuses:
                     job = self[job_name_map[job_name]]
-                    # uses abstract step interface
-                    job.set_status(
-                        status.status,
-                        status.launcher_status,
-                        status.returncode,
-                        error=status.error,
-                        output=status.output,
-                    )
+
+                    if status:
+                        # uses abstract step interface
+                        job.set_status(
+                            status.status,
+                            status.launcher_status,
+                            status.returncode,
+                            error=status.error,
+                            output=status.output,
+                        )
         finally:
             self._lock.release()
 
@@ -310,9 +313,12 @@ class JobManager:
         """
         addresses = []
         for db_job in self.db_jobs.values():
-            for combine in itertools.product(db_job.hosts, db_job.entity.ports):
-                ip_addr = get_ip_from_host(combine[0])
-                addresses.append(":".join((ip_addr, str(combine[1]))))
+            if isinstance(db_job.entity, (DBNode, Orchestrator)):
+                db_entity: t.Union[DBNode, Orchestrator] = db_job.entity
+
+                for combine in itertools.product(db_job.hosts, db_entity.ports):
+                    ip_addr = get_ip_from_host(combine[0])
+                    addresses.append(":".join((ip_addr, str(combine[1]))))
         return addresses
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
@@ -327,7 +333,7 @@ class JobManager:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
-                for dbnode in orchestrator:
+                for dbnode in orchestrator.dbnodes:
                     if not dbnode._mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:
