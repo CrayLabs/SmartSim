@@ -31,12 +31,12 @@ import typing as t
 from distutils import dir_util
 from os import mkdir, path, symlink
 
-from ...entity import Model
+from ...entity import Model, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
 from ...database import Orchestrator
-from ...entity import SmartSimEntity, EntityList
+from ...entity import SmartSimEntity, EntityList, Ensemble
 
 
 logger = get_logger(__name__)
@@ -112,7 +112,7 @@ class Generator:
         """
         self._writer.set_tag(tag, regex)
 
-    def _gen_exp_dir(self):
+    def _gen_exp_dir(self) -> None:
         """Create the directory for an experiment if it does not
         already exist.
         """
@@ -146,7 +146,7 @@ class Generator:
             shutil.rmtree(orc_path, ignore_errors=True)
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
-    def _gen_entity_list_dir(self, entity_lists: t.List[EntityList]) -> None:
+    def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for EntityList instances
 
         :param entity_lists: list of EntityList instances
@@ -166,12 +166,12 @@ class Generator:
                 mkdir(elist_dir)
             elist.path = elist_dir
 
-            self._gen_entity_dirs(elist.entities, entity_list=elist)
+            self._gen_entity_dirs(elist.models, entity_list=elist)
 
     def _gen_entity_dirs(
         self,
-        entities: t.List[SmartSimEntity],
-        entity_list: t.Optional[EntityList] = None,
+        entities: t.List[Model],
+        entity_list: t.Optional[Ensemble] = None,
     ) -> None:
         """Generate directories for Entity instances
 
@@ -202,11 +202,13 @@ class Generator:
                     raise FileExistsError(error)
             pathlib.Path(dst).mkdir(exist_ok=True)
             entity.path = dst
-            self._copy_entity_files(entity)
-            self._link_entity_files(entity)
-            self._write_tagged_entity_files(entity)
 
-    def _write_tagged_entity_files(self, entity: SmartSimEntity) -> None:
+            if isinstance(entity, Model):
+                self._copy_entity_files(entity)
+                self._link_entity_files(entity)
+                self._write_tagged_entity_files(entity)
+
+    def _write_tagged_entity_files(self, entity: Model) -> None:
         """Read, configure and write the tagged input files for
            a Model instance within an ensemble. This function
            specifically deals with the tagged files attached to
@@ -218,7 +220,7 @@ class Generator:
         if entity.files:
             to_write = []
 
-            def _build_tagged_files(tagged):
+            def _build_tagged_files(tagged: TaggedFilesHierarchy) -> None:
                 """Using a TaggedFileHierarchy, reproduce the tagged file
                 directory structure
 
@@ -235,7 +237,8 @@ class Generator:
                     mkdir(path.join(entity.path, tagged.base, path.basename(dir.base)))
                     _build_tagged_files(dir)
 
-            _build_tagged_files(entity.files.tagged_hierarchy)
+            if entity.files.tagged_hierarchy:
+                _build_tagged_files(entity.files.tagged_hierarchy)
 
             # write in changes to configurations
             if isinstance(entity, Model):
@@ -244,13 +247,13 @@ class Generator:
                 )
                 self._writer.configure_tagged_model_files(to_write, entity.params)
 
-    def _copy_entity_files(self, entity: SmartSimEntity) -> None:
+    def _copy_entity_files(self, entity: Model) -> None:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: SmartSimEntity
         :type entity: SmartSimEntity
         """
-        if entity.files:
+        if entity.files and entity.files.copy:
             for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
@@ -258,13 +261,13 @@ class Generator:
                 else:
                     shutil.copyfile(to_copy, dst_path)
 
-    def _link_entity_files(self, entity: SmartSimEntity) -> None:
+    def _link_entity_files(self, entity: Model) -> None:
         """Symlink the entity files attached to this entity.
 
         :param entity: SmartSimEntity
         :type entity: SmartSimEntity
         """
-        if entity.files:
+        if entity.files and entity.files.link:
             for to_link in entity.files.link:
                 dst_path = path.join(entity.path, path.basename(to_link))
                 symlink(to_link, dst_path)

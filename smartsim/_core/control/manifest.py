@@ -27,7 +27,7 @@
 import typing as t
 
 from ...database import Orchestrator
-from ...entity import EntityList, SmartSimEntity
+from ...entity import EntityList, SmartSimEntity, Model, Ensemble
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
@@ -71,7 +71,7 @@ class Manifest:
         return _db
 
     @property
-    def models(self) -> t.List[SmartSimEntity]:
+    def models(self) -> t.List[Model]:
         """Return Model instances in Manifest
 
         :return: model instances
@@ -84,7 +84,7 @@ class Manifest:
         return _models
 
     @property
-    def ensembles(self) -> t.List[EntityList]:
+    def ensembles(self) -> t.List[Ensemble]:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
