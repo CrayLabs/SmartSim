@@ -82,7 +82,7 @@ class Job:
         self,
         new_status: str,
         raw_status: str,
-        returncode: int,
+        returncode: t.Optional[int],
         error: t.Optional[str] = None,
         output: t.Optional[str] = None,
     ) -> None:
