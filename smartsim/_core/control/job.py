@@ -41,7 +41,7 @@ class Job:
     def __init__(
         self,
         job_name: str,
-        job_id: str,
+        job_id: int,
         entity: SmartSimEntity,
         launcher: str,
         is_task: bool,
@@ -63,10 +63,10 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status = None  # status before smartsim status mapping is applied
-        self.returncode = None
-        self.output = None  # only populated if it's system related (e.g. a command failed immediately)
-        self.error = None  # same as output
+        self.raw_status: t.Optional[str] = None  # status before smartsim status mapping is applied
+        self.returncode: t.Optional[int] = None
+        self.output: t.Optional[str] = None  # only populated if it's system related (e.g. a command failed immediately)
+        self.error: t.Optional[str] = None  # same as output
         self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
         self.is_task = is_task
@@ -82,7 +82,7 @@ class Job:
         self,
         new_status: str,
         raw_status: str,
-        returncode: str,
+        returncode: int,
         error: t.Optional[str] = None,
         output: t.Optional[str] = None,
     ) -> None:
@@ -99,12 +99,15 @@ class Job:
         self.error = error
         self.output = output
 
+    @property
+    def elapsed(self) -> float:
+        return time.time() - self.start_time
+
     def record_history(self) -> None:
         """Record the launching history of a job."""
-        job_time = time.time() - self.start_time
-        self.history.record(self.jid, self.status, self.returncode, job_time)
+        self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(self, new_job_name: str, new_job_id: str, is_task: bool) -> None:
+    def reset(self, new_job_name: str, new_job_id: int, is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
@@ -173,10 +176,10 @@ class History:
         self.runs = runs
         self.jids: t.Dict[int, int] = dict()
         self.statuses: t.Dict[int, str] = dict()
-        self.returns: t.Dict[int, str] = dict()
-        self.job_times: t.Dict[int, str] = dict()
+        self.returns: t.Dict[int, t.Optional[int]] = dict()
+        self.job_times: t.Dict[int, float] = dict()
 
-    def record(self, job_id: str, status: str, returncode: str, job_time: str) -> None:
+    def record(self, job_id: int, status: str, returncode: t.Optional[int], job_time: float) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
