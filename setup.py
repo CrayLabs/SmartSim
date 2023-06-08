@@ -181,6 +181,15 @@ extras_require = {
         "pytest-cov>=2.10.1",
         "click==8.0.2",
     ],
+    "mypy": [
+        "mypy>=1.3.0",
+        "types-psutil",
+        "types-redis",
+        "types-tabulate",
+        "types-tqdm",
+        "types-tensorflow",
+        "types-setuptools",
+    ],
     # see smartsim/_core/_install/buildenv.py for more details
     "ml": versions.ml_extras_required(),
 }

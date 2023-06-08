@@ -26,6 +26,7 @@
 
 import os.path as osp
 import time
+import typing as t
 
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
@@ -35,26 +36,26 @@ logger = get_logger(__name__)
 
 
 class Step:
-    def __init__(self, name, cwd):
+    def __init__(self, name: str, cwd: str) -> None:
         self.name = self._create_unique_name(name)
         self.entity_name = name
         self.cwd = cwd
         self.managed = False
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         raise NotImplementedError
 
-    def _create_unique_name(self, entity_name):
+    def _create_unique_name(self, entity_name: str) -> str:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
-    def get_output_files(self):
+    def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
         output = self.get_step_file(ending=".out")
         error = self.get_step_file(ending=".err")
         return output, error
 
-    def get_step_file(self, ending=".sh", script_name=None):
+    def get_step_file(self, ending: str = ".sh", script_name: t.Optional[str] = None):
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc"""
@@ -63,7 +64,7 @@ class Step:
             return osp.join(self.cwd, script_name)
         return osp.join(self.cwd, self.entity_name + ending)
 
-    def get_colocated_launch_script(self):
+    def get_colocated_launch_script(self) -> str:
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
 

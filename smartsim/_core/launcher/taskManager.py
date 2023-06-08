@@ -24,11 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-from subprocess import PIPE
-from threading import RLock, Thread
+from __future__ import annotations
 
 import psutil
+import time
+import typing as t
+
+from subprocess import PIPE
+from threading import RLock, Thread
 
 from ...error import LauncherError
 from ...log import get_logger
@@ -57,14 +60,14 @@ class TaskManager:
     lifecycle of the process.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a task manager thread."""
         self.actively_monitoring = False
         self.task_history = dict()
-        self.tasks = []
+        self.tasks: t.List[Task] = []
         self._lock = RLock()
 
-    def start(self):
+    def start(self) -> None:
         """Start the task manager thread
 
         The TaskManager is run as a daemon thread meaning
@@ -73,7 +76,7 @@ class TaskManager:
         monitor = Thread(name="TaskManager", daemon=True, target=self.run)
         monitor.start()
 
-    def run(self):
+    def run(self) -> None:
         """Start monitoring Tasks"""
 
         global verbose_tm
@@ -97,7 +100,14 @@ class TaskManager:
                 if verbose_tm:
                     logger.debug("Sleeping, no tasks to monitor")
 
-    def start_task(self, cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+    def start_task(
+        self,
+        cmd_list: t.List[str],
+        cwd: str,
+        env: t.Dict[str, str] = None,
+        out=PIPE,
+        err=PIPE,
+    ) -> None:
         """Start a task managed by the TaskManager
 
         This is an "unmanaged" task, meaning it is NOT managed
@@ -129,7 +139,13 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def start_and_wait(self, cmd_list, cwd, env=None, timeout=None):
+    def start_and_wait(
+        self,
+        cmd_list: t.List[str],
+        cwd: str,
+        env: t.Dict[str, str] = None,
+        timeout: int = None,
+    ) -> t.Tuple[int, str, str]:
         """Start a task not managed by the TaskManager
 
         This method is used by launchers to launch managed tasks
@@ -153,11 +169,11 @@ class TaskManager:
             logger.debug("Ran and waited on task")
         return returncode, out, err
 
-    def add_existing(self, task_id):
+    def add_existing(self, task_id: str) -> None:
         """Add existing task to be managed by the TaskManager
 
         :param task_id: task id of existing task
-        :type task_id: int
+        :type task_id: str
         :raises LauncherError: If task cannot be found
         """
         self._lock.acquire()
@@ -171,7 +187,7 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def remove_task(self, task_id):
+    def remove_task(self, task_id: str) -> None:
         """Remove a task from the TaskManager
 
         :param task_id: id of the task to remove
@@ -195,7 +211,7 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def get_task_update(self, task_id):
+    def get_task_update(self, task_id: str) -> str:
         """Get the update of a task
 
         :param task_id: task id
@@ -226,7 +242,13 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def add_task_history(self, task_id, returncode, out=None, err=None):
+    def add_task_history(
+        self,
+        task_id: str,
+        returncode: int,
+        out: t.Optional[str] = None,
+        err: t.Optional[str] = None,
+    ):
         """Add a task to the task history
 
         Add a task to record its future returncode, output and error
@@ -242,7 +264,7 @@ class TaskManager:
         """
         self.task_history[task_id] = (returncode, out, err)
 
-    def __getitem__(self, task_id):
+    def __getitem__(self, task_id: str) -> Task:
         self._lock.acquire()
         try:
             for task in self.tasks:
@@ -252,7 +274,7 @@ class TaskManager:
         finally:
             self._lock.release()
 
-    def __len__(self):
+    def __len__(self) -> int:
         self._lock.acquire()
         try:
             return len(self.tasks)
@@ -261,7 +283,7 @@ class TaskManager:
 
 
 class Task:
-    def __init__(self, process):
+    def __init__(self, process: psutil.Popen) -> None:
         """Initialize a task
 
         :param process: Popen object
@@ -270,7 +292,7 @@ class Task:
         self.process = process
         self.pid = str(self.process.pid)
 
-    def check_status(self):
+    def check_status(self) -> int:
         """Ping the job and return the returncode if finished
 
         :return: returncode if finished otherwise None
@@ -282,7 +304,7 @@ class Task:
         # have to rely on .kill() to stop.
         return self.returncode
 
-    def get_io(self):
+    def get_io(self) -> t.Tuple[str, str]:
         """Get the IO from the subprocess
 
         :return: output and error from the Popen
@@ -298,7 +320,7 @@ class Task:
             error = error.decode("utf-8")
         return output, error
 
-    def kill(self, timeout=10):
+    def kill(self, timeout: int = 10) -> None:
         """Kill the subprocess and all children"""
 
         def kill_callback(proc):
@@ -315,7 +337,7 @@ class Task:
             for proc in alive:
                 logger.warning(f"Unable to kill emitted process {proc.pid}")
 
-    def terminate(self, timeout=10):
+    def terminate(self, timeout: int = 10) -> None:
         """Terminate a this process and all children.
 
         :param timeout: time to wait for task death, defaults to 10
@@ -343,11 +365,11 @@ class Task:
             logger.debug(f"SIGTERM failed, using SIGKILL")
             self.process.kill()
 
-    def wait(self):
+    def wait(self) -> None:
         self.process.wait()
 
     @property
-    def returncode(self):
+    def returncode(self) -> t.Optional[int]:
         if self.owned:
             return self.process.returncode
         if self.is_alive:
@@ -355,15 +377,15 @@ class Task:
         return 0
 
     @property
-    def is_alive(self):
+    def is_alive(self) -> bool:
         return self.process.is_running()
 
     @property
-    def status(self):
+    def status(self) -> str:
         return self.process.status()
 
     @property
-    def owned(self):
+    def owned(self) -> bool:
         if isinstance(self.process, psutil.Popen):
             return True
         return False

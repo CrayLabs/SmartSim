@@ -33,7 +33,7 @@ A handful of useful functions for dealing with networks
 """
 
 
-def get_ip_from_host(host):
+def get_ip_from_host(host: str) -> str:
     """Return the IP address for the interconnect.
 
     :param host: hostname of the compute node e.g. nid00004
@@ -46,7 +46,7 @@ def get_ip_from_host(host):
 
 
 # impossible to cover as it's only used in entrypoints
-def get_ip_from_interface(interface):  # pragma: no cover
+def get_ip_from_interface(interface: str) -> str:  # pragma: no cover
     """Get IPV4 address of a network interface
 
     :param interface: interface name
@@ -72,7 +72,7 @@ def get_ip_from_interface(interface):  # pragma: no cover
 
 
 # impossible to cover as it's only used in entrypoints
-def get_lb_interface_name():  # pragma: no cover
+def get_lb_interface_name() -> str:  # pragma: no cover
     """Use psutil to get loopback interface name"""
     net_if_addrs = list(psutil.net_if_addrs())
     for interface in net_if_addrs:
@@ -81,7 +81,7 @@ def get_lb_interface_name():  # pragma: no cover
     raise OSError("Could not find loopback interface name")
 
 
-def current_ip(interface="lo"):  # pragma: no cover
+def current_ip(interface: str = "lo") -> str:  # pragma: no cover
     if interface == "lo":
         loopback = get_lb_interface_name()
         return get_ip_from_interface(loopback)

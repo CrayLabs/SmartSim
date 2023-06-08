@@ -26,10 +26,12 @@
 
 import os
 import shutil
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
 
@@ -50,7 +52,7 @@ class BsubBatchStep(Step):
         self.step_cmds = []
         self.managed = True
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -59,7 +61,7 @@ class BsubBatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -69,7 +71,7 @@ class BsubBatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing
@@ -106,7 +108,7 @@ class BsubBatchStep(Step):
 
 
 class JsrunStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
         """Initialize a LSF jsrun job step
 
         :param name: name of the entity to be launched
@@ -123,7 +125,7 @@ class JsrunStep(Step):
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_output_files(self):
+    def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
         output = self.get_step_file(ending=".out")
         error = self.get_step_file(ending=".err")
@@ -147,7 +149,7 @@ class JsrunStep(Step):
 
         return output, error
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -187,7 +189,7 @@ class JsrunStep(Step):
 
         return jsrun_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -202,7 +204,7 @@ class JsrunStep(Step):
                 "No allocation specified or found and not running in batch"
             )
 
-    def _build_exe(self):
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -212,14 +214,14 @@ class JsrunStep(Step):
         args = self.run_settings.exe_args
         if self.run_settings.mpmd:
             erf_file = self.get_step_file(ending=".mpmd")
-            cmd = self._make_mpmd()
+            _ = self._make_mpmd()
             mp_cmd = ["--erf_input", erf_file]
             return mp_cmd
         else:
             cmd = exe + args
             return cmd
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> None:
         """Build LSF's Explicit Resource File"""
         erf_file = self.get_step_file(ending=".mpmd")
 

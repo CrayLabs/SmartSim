@@ -27,10 +27,13 @@
 import os
 import os.path as osp
 import time
+import typing as t
 
 from ..error import SmartSimError
 from ..log import get_logger
 from .entity import SmartSimEntity
+from ..settings.base import RunSettings
+
 
 logger = get_logger(__name__)
 
@@ -44,14 +47,15 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name, path, run_settings, ports, output_files):
+    def __init__(self, name: str, path: str, run_settings: RunSettings, ports: t.List[int], output_files: t.List[str]) -> None:
         """Initialize a database node within an orchestrator."""
         self.ports = ports
-        self._host = None
+        self._host: t.Optional[str] = None
         super().__init__(name, path, run_settings)
         self._mpmd = False
-        self._num_shards = None
-        self._hosts = None
+        self._num_shards: int = 0
+        self._hosts: t.Optional[t.List[str]] = None
+
         if not output_files:
             raise ValueError("output_files cannot be empty")
         if not isinstance(output_files, list) or not all(
@@ -61,24 +65,24 @@ class DBNode(SmartSimEntity):
         self._output_files = output_files
 
     @property
-    def host(self):
+    def host(self) -> str:
         if not self._host:
             self._host = self._parse_db_host()
         return self._host
 
     @property
-    def hosts(self):
+    def hosts(self) -> t.List[str]:
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
         return self._hosts
 
-    def set_host(self, host):
+    def set_host(self, host: str) -> None:
         self._host = str(host)
 
-    def set_hosts(self, hosts):
+    def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
 
-    def remove_stale_dbnode_files(self):
+    def remove_stale_dbnode_files(self) -> None:
         """This function removes the .conf, .err, and .out files that
         have the same names used by this dbnode that may have been
         created from a previous experiment execution.
@@ -111,7 +115,7 @@ class DBNode(SmartSimEntity):
                     if osp.exists(file_name):
                         os.remove(file_name)
 
-    def _get_cluster_conf_filename(self, port):
+    def _get_cluster_conf_filename(self, port: int) -> str:
         """Returns the .conf file name for the given port number
 
         :param port: port number
@@ -121,7 +125,7 @@ class DBNode(SmartSimEntity):
         """
         return "".join(("nodes-", self.name, "-", str(port), ".conf"))
 
-    def _get_cluster_conf_filenames(self, port):  # cov-lsf
+    def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:  # cov-lsf
         """Returns the .conf file name for the given port number
 
         This function should bu used if and only if ``_mpmd==True``
@@ -136,7 +140,7 @@ class DBNode(SmartSimEntity):
             for shard_id in range(self._num_shards)
         ]
 
-    def _parse_ips(self, filepath, num_ips=None):
+    def _parse_ips(self, filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
         ips = []
         with open(filepath, "r") as f:
             lines = f.readlines()
@@ -149,7 +153,7 @@ class DBNode(SmartSimEntity):
 
         return ips
 
-    def _parse_db_host(self, filepath=None):
+    def _parse_db_host(self, filepath: t.Optional[str] = None) -> str:
         """Parse the database host/IP from the output file
 
         If no file is passed as argument, then the first
@@ -186,7 +190,7 @@ class DBNode(SmartSimEntity):
 
         return ip
 
-    def _parse_db_hosts(self):
+    def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
 
         this uses the RedisIP module that is built as a dependency
@@ -198,13 +202,13 @@ class DBNode(SmartSimEntity):
         :return: ip addresses | hostnames
         :rtype: list[str]
         """
-        ips = []
+        ips: t.List[str] = []
 
         # Find out if all shards' output streams are piped to separate files
         if len(self._output_files) > 1:
             for output_file in self._output_files:
                 filepath = osp.join(self.path, output_file)
-                ip = self._parse_db_host(filepath)
+                _ = self._parse_db_host(filepath)
         else:
             filepath = osp.join(self.path, self._output_files[0])
             trials = 10

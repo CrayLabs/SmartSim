@@ -27,13 +27,14 @@
 import os
 from shutil import which
 from subprocess import run
+import typing as t
 
 from ..error import SSUnsupportedError
 from . import pbs as _pbs
 from . import slurm as _slurm
 
 
-def detect_launcher():
+def detect_launcher() -> str:
     """Detect available launcher."""
     # Precedence: PBS, Cobalt, LSF, Slurm, local
     if which("qsub") and which("qstat") and which("qdel"):
@@ -71,7 +72,7 @@ def detect_launcher():
     return "local"
 
 
-def get_hosts(launcher=None):
+def get_hosts(launcher: t.Optional[str] = None) -> t.List[str]:
     """Get the name of the hosts used in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -90,7 +91,7 @@ def get_hosts(launcher=None):
     raise SSUnsupportedError(f"SmartSim cannot get hosts for launcher `{launcher}`")
 
 
-def get_queue(launcher=None):
+def get_queue(launcher: t.Optional[str] = None) -> str:
     """Get the name of the queue used in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -109,7 +110,7 @@ def get_queue(launcher=None):
     raise SSUnsupportedError(f"SmartSim cannot get queue for launcher `{launcher}`")
 
 
-def get_tasks(launcher=None):
+def get_tasks(launcher: t.Optional[str] = None) -> int:
     """Get the number of tasks in an allocation.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher
@@ -128,7 +129,7 @@ def get_tasks(launcher=None):
     raise SSUnsupportedError(f"SmartSim cannot get tasks for launcher `{launcher}`")
 
 
-def get_tasks_per_node(launcher=None):
+def get_tasks_per_node(launcher: t.Optional[str] = None) -> t.Dict[str, int]:
     """Get a map of nodes in an allocation to the number of tasks on each node.
 
     :param launcher: Name of the WLM to use to collect allocation info. If no launcher

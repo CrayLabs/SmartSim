@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from copy import deepcopy
 from os import getcwd
 
@@ -39,10 +41,12 @@ from ..settings.base import BatchSettings, RunSettings
 from .dbobject import DBModel, DBScript
 from .entityList import EntityList
 from .model import Model
+from .entity import SmartSimEntity
 from .strategies import create_all_permutations, random_permutations, step_values
 
 logger = get_logger(__name__)
 
+StrategyFunction = t.Callable[[t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]]
 
 class Ensemble(EntityList):
     """``Ensemble`` is a group of ``Model`` instances that can
@@ -51,14 +55,14 @@ class Ensemble(EntityList):
 
     def __init__(
         self,
-        name,
-        params,
-        params_as_args=None,
-        batch_settings=None,
-        run_settings=None,
-        perm_strat="all_perm",
-        **kwargs,
-    ):
+        name: str,
+        params: t.Dict[str, t.Any],
+        params_as_args: t.Optional[t.List[str]] = None,
+        batch_settings: t.Optional[BatchSettings] = None,
+        run_settings: t.Optional[RunSettings] = None,
+        perm_strat: str = "all_perm",
+        **kwargs: t.Any,
+    ) -> None:
         """Initialize an Ensemble of Model instances.
 
         The kwargs argument can be used to pass custom input
@@ -71,7 +75,7 @@ class Ensemble(EntityList):
         :param params_as_args: list of params which should be used as command line arguments
                                to the ``Model`` member executables and not written to generator
                                files
-        :type arg_params: list[str]
+        :type params_as_args: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
@@ -80,7 +84,7 @@ class Ensemble(EntityList):
         :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
-                             options are "all_perm", "stepped", "random"
+                             options are "all_perm", "step", "random"
                              or a callable function. Defaults to "all_perm".
         :type perm_strategy: str
         :return: ``Ensemble`` instance
@@ -91,15 +95,20 @@ class Ensemble(EntityList):
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
-        self._db_models = []
-        self._db_scripts = []
+        
+        self._db_models: t.List[DBModel] = []
+        self._db_scripts: t.List[DBScript] = []
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self):
-        return self.entities
+    def models(self) -> t.List[Model]:
+        """
+        Helper property to cast self.entities to Model type for type correctness
+        """
+        model_entities = [node for node in self.entities if isinstance(node, Model)]
+        return model_entities
 
-    def _initialize_entities(self, **kwargs):
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize all the models within the ensemble based
         on the parameters passed to the ensemble and the permutation
         strategy given at init.
@@ -116,7 +125,8 @@ class Ensemble(EntityList):
                 param_names, params = self._read_model_parameters()
 
                 # Compute all combinations of model parameters and arguments
-                all_model_params = strategy(param_names, params, **kwargs)
+                n_models = kwargs.get("n_models", 0)
+                all_model_params = strategy(param_names, params, n_models)
                 if not isinstance(all_model_params, list):
                     raise UserStrategyError(strategy)
 
@@ -172,7 +182,7 @@ class Ensemble(EntityList):
             else:
                 logger.info("Empty ensemble created for batch launch")
 
-    def add_model(self, model):
+    def add_model(self, model: Model) -> None:
         """Add a model to this ensemble
 
         :param model: model instance to be added
@@ -197,7 +207,7 @@ class Ensemble(EntityList):
 
         self.entities.append(model)
 
-    def register_incoming_entity(self, incoming_entity):
+    def register_incoming_entity(self, incoming_entity: SmartSimEntity) -> None:
         """Register future communication between entities.
 
         Registers the named data sources that this entity
@@ -209,25 +219,30 @@ class Ensemble(EntityList):
         :param incoming_entity: The entity that data will be received from
         :type incoming_entity: SmartSimEntity
         """
-        for model in self.entities:
+        for model in self.models:
             model.register_incoming_entity(incoming_entity)
 
-    def enable_key_prefixing(self):
+    def enable_key_prefixing(self) -> None:
         """If called, all models within this ensemble will prefix their keys with its
         own model name.
         """
-        for model in self.entities:
+        for model in self.models:
             model.enable_key_prefixing()
 
-    def query_key_prefixing(self):
+    def query_key_prefixing(self) -> bool:
         """Inquire as to whether each model within the ensemble will prefix its keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: bool
         """
-        return all([model.query_key_prefixing() for model in self.entities])
+        return all([model.query_key_prefixing() for model in self.models])
 
-    def attach_generator_files(self, to_copy=None, to_symlink=None, to_configure=None):
+    def attach_generator_files(
+        self,
+        to_copy: t.Optional[t.List[str]] = None,
+        to_symlink: t.Optional[t.List[str]] = None,
+        to_configure: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Attach files to each model within the ensemble for generation
 
         Attach files needed for the entity that, upon generation,
@@ -251,12 +266,14 @@ class Ensemble(EntityList):
         :param to_configure: input files with tagged parameters, defaults to []
         :type to_configure: list, optional
         """
-        for model in self.entities:
+        for model in self.models:
             model.attach_generator_files(
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
-    def _set_strategy(self, strategy):
+    def _set_strategy(
+        self, strategy: str
+    ) -> StrategyFunction:
         """Set the permutation strategy for generating models within
         the ensemble
 
@@ -278,7 +295,7 @@ class Ensemble(EntityList):
             f"Permutation strategy given is not supported: {strategy}"
         )
 
-    def _read_model_parameters(self):
+    def _read_model_parameters(self) -> t.Tuple[t.List[str], t.List[t.List[str]]]:
         """Take in the parameters given to the ensemble and prepare to
         create models for the ensemble
 
@@ -292,15 +309,16 @@ class Ensemble(EntityList):
                 "Ensemble initialization argument 'params' must be of type dict"
             )
 
-        param_names = []
-        parameters = []
+        param_names: t.List[str] = []
+        parameters: t.List[t.List[str]] = []
         for name, val in self.params.items():
             param_names.append(name)
 
             if isinstance(val, list):
+                val = [str(v) for v in val]
                 parameters.append(val)
             elif isinstance(val, (int, str)):
-                parameters.append([val])
+                parameters.append([str(val)])
             else:
                 raise TypeError(
                     "Incorrect type for ensemble parameters\n"
@@ -310,18 +328,18 @@ class Ensemble(EntityList):
 
     def add_ml_model(
         self,
-        name,
-        backend,
-        model=None,
-        model_path=None,
-        device="CPU",
-        devices_per_node=1,
-        batch_size=0,
-        min_batch_size=0,
-        tag="",
-        inputs=None,
-        outputs=None,
-    ):
+        name: str,
+        backend: str,
+        model: t.Optional[str] = None,
+        model_path: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+        batch_size: int = 0,
+        min_batch_size: int = 0,
+        tag: str = "",
+        inputs: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[t.List[str]] = None,
+    ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         Each ML Model added will be loaded into an
@@ -366,12 +384,17 @@ class Ensemble(EntityList):
             outputs=outputs,
         )
         self._db_models.append(db_model)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_models(entity, [db_model])
 
     def add_script(
-        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
-    ):
+        self,
+        name: str,
+        script: t.Optional[str] = None,
+        script_path: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+    ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
 
         Each script added to the model will be loaded into an
@@ -406,10 +429,16 @@ class Ensemble(EntityList):
             devices_per_node=devices_per_node,
         )
         self._db_scripts.append(db_script)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_scripts(entity, [db_script])
 
-    def add_function(self, name, function=None, device="CPU", devices_per_node=1):
+    def add_function(
+        self,
+        name: str,
+        function: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+    ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble
 
         Each script function to the model will be loaded into a
@@ -426,10 +455,8 @@ class Ensemble(EntityList):
 
         :param name: key to store function under
         :type name: str
-        :param script: TorchScript code
-        :type script: str, optional
-        :param script_path: path to TorchScript code
-        :type script_path: str, optional
+        :param function: TorchScript code
+        :type function: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
         :param devices_per_node: number of devices on each host
@@ -439,16 +466,20 @@ class Ensemble(EntityList):
             name=name, script=function, device=device, devices_per_node=devices_per_node
         )
         self._db_scripts.append(db_script)
-        for entity in self:
+        for entity in self.models:
             self._extend_entity_db_scripts(entity, [db_script])
 
-    def _extend_entity_db_models(self, model, db_models):
+    def _extend_entity_db_models(
+        self, model: Model, db_models: t.List[DBModel]
+    ) -> None:
         entity_db_models = [db_model.name for db_model in model._db_models]
         for db_model in db_models:
             if not db_model.name in entity_db_models:
                 model._append_db_model(db_model)
 
-    def _extend_entity_db_scripts(self, model, db_scripts):
+    def _extend_entity_db_scripts(
+        self, model: Model, db_scripts: t.List[DBScript]
+    ) -> None:
         entity_db_scripts = [db_script.name for db_script in model._db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:

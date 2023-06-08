@@ -27,16 +27,18 @@
 import os
 import shutil
 from shlex import split as sh_split
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
 
 
 class _BaseMPIStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
@@ -61,7 +63,7 @@ class _BaseMPIStep(Step):
     def _run_command(self):
         return self.run_settings._run_command
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -93,7 +95,7 @@ class _BaseMPIStep(Step):
             mpi_cmd += [">", output]
         return mpi_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -112,7 +114,7 @@ class _BaseMPIStep(Step):
             "No allocation specified or found and not running in batch"
         )
 
-    def _build_exe(self):
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -125,7 +127,7 @@ class _BaseMPIStep(Step):
             args = self.run_settings.exe_args
             return exe + args
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
@@ -142,7 +144,7 @@ class _BaseMPIStep(Step):
 
 
 class MpiexecStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
@@ -160,7 +162,7 @@ class MpiexecStep(_BaseMPIStep):
 
 
 class MpirunStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
@@ -178,7 +180,7 @@ class MpirunStep(_BaseMPIStep):
 
 
 class OrterunStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched

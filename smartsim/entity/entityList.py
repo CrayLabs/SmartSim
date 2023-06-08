@@ -24,23 +24,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
+if t.TYPE_CHECKING:
+    import smartsim
+
 
 class EntityList:
     """Abstract class for containers for SmartSimEntities"""
 
-    def __init__(self, name, path, **kwargs):
-        self.name = name
-        self.path = path
-        self.entities = []
+    def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
+        self.name: str = name
+        self.path: str = path
+        self.entities: t.List["smartsim.entity.SmartSimEntity"] = []
         self._initialize_entities(**kwargs)
 
-    def _initialize_entities(self, **kwargs):
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""
         raise NotImplementedError
 
     @property
-    def batch(self):
+    def batch(self) -> bool:
         try:
+            if not hasattr(self, "batch_settings"):
+                return False
+
             if self.batch_settings:
                 return True
             return False
@@ -49,23 +57,24 @@ class EntityList:
             return False
 
     @property
-    def type(self):
+    def type(self) -> str:
         """Return the name of the class"""
         return type(self).__name__
 
-    def set_path(self, new_path):
+    def set_path(self, new_path: str) -> None:
         self.path = new_path
         for entity in self.entities:
             entity.path = new_path
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> t.Optional["smartsim.entity.SmartSimEntity"]:
         for entity in self.entities:
             if entity.name == name:
                 return entity
+        return None
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator["smartsim.entity.SmartSimEntity"]:
         for entity in self.entities:
             yield entity
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.entities)

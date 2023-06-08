@@ -26,6 +26,7 @@
 
 import os
 import shutil
+import typing as t
 
 from .step import Step
 
@@ -36,7 +37,7 @@ class LocalStep(Step):
         self.run_settings = run_settings
         self.env = self._set_env()
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         cmd = []
 
         # Add run command and args if user specified
@@ -62,7 +63,7 @@ class LocalStep(Step):
             cmd.extend(self.run_settings.exe_args)
         return cmd
 
-    def _set_env(self):
+    def _set_env(self) -> t.Dict[str, str]:
         env = os.environ.copy()
         if self.run_settings.env_vars:
             for k, v in self.run_settings.env_vars.items():

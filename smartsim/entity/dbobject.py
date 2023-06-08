@@ -24,10 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 
 from pathlib import Path
+from .._core.utils import init_default
 
-from .._core.utils.helpers import init_default
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
 
@@ -37,35 +38,43 @@ class DBObject:
     be instantiated.
     """
 
-    def __init__(self, name, func, file_path, device, devices_per_node):
+    def __init__(
+        self,
+        name: str,
+        func: t.Optional[str],
+        file_path: t.Optional[str],
+        device: str,
+        devices_per_node: int,
+    ) -> None:
         self.name = name
         self.func = func
+        self.file: t.Optional[Path] = None  # Need to have this explicitly to check on it
         if file_path:
             self.file = self._check_filepath(file_path)
-        else:
-            # Need to have this explicitly to check on it
-            self.file = None
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
 
     @property
-    def is_file(self):
+    def is_file(self) -> bool:
         if self.func:
             return False
         return True
 
     @staticmethod
-    def _check_tensor_args(inputs, outputs):
+    def _check_tensor_args(
+        inputs: t.Union[str, t.Optional[t.List[str]]], outputs: t.Union[str, t.Optional[t.List[str]]]
+    ) -> t.Tuple[t.List[str], t.List[str]]:
         inputs = init_default([], inputs, (list, str))
         outputs = init_default([], outputs, (list, str))
+
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(outputs, str):
             outputs = [outputs]
-        return inputs, outputs
+        return inputs or [], outputs or []
 
     @staticmethod
-    def _check_backend(backend):
+    def _check_backend(backend: str) -> str:
         backend = backend.upper()
         all_backends = ["TF", "TORCH", "ONNX"]
         if backend in all_backends:
@@ -76,20 +85,20 @@ class DBObject:
             )
 
     @staticmethod
-    def _check_filepath(file):
+    def _check_filepath(file: str) -> Path:
         file_path = Path(file).resolve()
         if not file_path.is_file():
             raise FileNotFoundError(file_path)
         return file_path
 
     @staticmethod
-    def _check_device(device):
+    def _check_device(device: str) -> str:
         device = device.upper()
         if not device.startswith("CPU") and not device.startswith("GPU"):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
-    def _enumerate_devices(self):
+    def _enumerate_devices(self) -> t.List[str]:
         """Enumerate devices for a DBObject
 
         :param dbobject: DBObject to enumerate
@@ -113,7 +122,12 @@ class DBObject:
 
 class DBScript(DBObject):
     def __init__(
-        self, name, script=None, script_path=None, device="CPU", devices_per_node=1
+        self,
+        name: str,
+        script: t.Optional[str] = None,
+        script_path: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
     ):
         """TorchScript code represenation
 
@@ -142,10 +156,10 @@ class DBScript(DBObject):
             raise ValueError("Either script or script_path must be provided")
 
     @property
-    def script(self):
+    def script(self) -> t.Optional[str]:
         return self.func
 
-    def __str__(self):
+    def __str__(self) -> str:
         desc_str = "Name: " + self.name + "\n"
         if self.func:
             desc_str += "Func: " + self.func + "\n"
@@ -161,19 +175,19 @@ class DBScript(DBObject):
 class DBModel(DBObject):
     def __init__(
         self,
-        name,
-        backend,
-        model=None,
-        model_file=None,
-        device="CPU",
-        devices_per_node=1,
-        batch_size=0,
-        min_batch_size=0,
-        min_batch_timeout=0,
-        tag="",
-        inputs=None,
-        outputs=None,
-    ):
+        name: str,
+        backend: str,
+        model: t.Optional[str] = None,
+        model_file: t.Optional[str] = None,
+        device: str = "CPU",
+        devices_per_node: int = 1,
+        batch_size: int = 0,
+        min_batch_size: int = 0,
+        min_batch_timeout: int = 0,
+        tag: str = "",
+        inputs: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[t.List[str]] = None,
+    ) -> None:
         """A TF, TF-lite, PT, or ONNX model to load into the DB at runtime
 
         One of either model (in memory representation) or model_path (file)
@@ -215,10 +229,10 @@ class DBModel(DBObject):
         self.inputs, self.outputs = self._check_tensor_args(inputs, outputs)
 
     @property
-    def model(self):
+    def model(self) -> t.Union[str, None]:
         return self.func
 
-    def __str__(self):
+    def __str__(self) -> str:
         desc_str = "Name: " + self.name + "\n"
         if self.model:
             desc_str += "Model stored in memory\n"

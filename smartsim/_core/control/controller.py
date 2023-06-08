@@ -29,13 +29,13 @@ import pickle
 import signal
 import threading
 import time
+import typing as t
 
 from smartredis import Client
-from smartredis.error import RedisConnectionError, RedisReplyError
 
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBModel, DBNode, DBObject, DBScript, EntityList, SmartSimEntity
+from ...entity import DBNode, EntityList, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
@@ -43,6 +43,10 @@ from ..config import CONFIG
 from ..launcher import *
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
+from .manifest import Manifest
+from .job import Job
+from ...settings.base import BatchSettings
+
 
 logger = get_logger(__name__)
 
@@ -56,7 +60,7 @@ class Controller:
     underlying workload manager or run framework.
     """
 
-    def __init__(self, launcher="local"):
+    def __init__(self, launcher: str = "local") -> None:
         """Initialize a Controller
 
         :param launcher: the type of launcher being used
@@ -65,7 +69,9 @@ class Controller:
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
 
-    def start(self, manifest, block=True, kill_on_interrupt=True):
+    def start(
+        self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
+    ) -> None:
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -90,7 +96,7 @@ class Controller:
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     @property
-    def orchestrator_active(self):
+    def orchestrator_active(self) -> bool:
         JM_LOCK.acquire()
         try:
             if len(self._jobs.db_jobs) > 0:
@@ -99,7 +105,9 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def poll(self, interval, verbose, kill_on_interrupt=True):
+    def poll(
+        self, interval: int, verbose: bool, kill_on_interrupt: bool = True
+    ) -> None:
         """Poll running jobs and receive logging output of job status
 
         :param interval: number of seconds to wait before polling again
@@ -124,7 +132,7 @@ class Controller:
                 finally:
                     JM_LOCK.release()
 
-    def finished(self, entity):
+    def finished(self, entity: SmartSimEntity) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
@@ -149,7 +157,7 @@ class Controller:
                 f"Entity {entity.name} has not been launched in this experiment"
             ) from None
 
-    def stop_entity(self, entity):
+    def stop_entity(self, entity: SmartSimEntity) -> None:
         """Stop an instance of an entity
 
         This function will also update the status of the job in
@@ -180,7 +188,7 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def stop_entity_list(self, entity_list):
+    def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
@@ -192,7 +200,7 @@ class Controller:
             for entity in entity_list.entities:
                 self.stop_entity(entity)
 
-    def get_jobs(self):
+    def get_jobs(self) -> t.Dict[str, Job]:
         """Return a dictionary of completed job data
 
         :returns: dict[str, Job]
@@ -203,7 +211,7 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def get_entity_status(self, entity):
+    def get_entity_status(self, entity: SmartSimEntity) -> str:
         """Get the status of an entity
 
         :param entity: entity to get status of
@@ -218,7 +226,7 @@ class Controller:
             )
         return self._jobs.get_status(entity)
 
-    def get_entity_list_status(self, entity_list):
+    def get_entity_list_status(self, entity_list: EntityList) -> t.List[str]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
@@ -237,7 +245,7 @@ class Controller:
             statuses.append(self.get_entity_status(entity))
         return statuses
 
-    def init_launcher(self, launcher):
+    def init_launcher(self, launcher: str) -> None:
         """Initialize the controller with a specific type of launcher.
         SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
         and local launching
@@ -267,7 +275,7 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
-    def _launch(self, manifest):
+    def _launch(self, manifest: Manifest) -> None:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -323,7 +331,7 @@ class Controller:
         for step, entity in steps:
             self._launch_step(step, entity)
 
-    def _launch_orchestrator(self, orchestrator):
+    def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Launch an Orchestrator instance
 
         This function will launch the Orchestrator instance and
@@ -378,7 +386,7 @@ class Controller:
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-    def _launch_step(self, job_step, entity):
+    def _launch_step(self, job_step, entity: SmartSimEntity) -> None:
         """Use the launcher to launch a job stop
 
         :param job_step: a job step instance
@@ -408,7 +416,7 @@ class Controller:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
-    def _create_batch_job_step(self, entity_list):
+    def _create_batch_job_step(self, entity_list: EntityList) -> t.Any:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
@@ -426,7 +434,7 @@ class Controller:
             batch_step.add_to_batch(step)
         return batch_step
 
-    def _create_job_step(self, entity):
+    def _create_job_step(self, entity: SmartSimEntity) -> t.Any:
         """Create job steps for all entities with the launcher
 
         :param entities: list of all entities to create steps for
@@ -441,7 +449,7 @@ class Controller:
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
         return step
 
-    def _prep_entity_client_env(self, entity):
+    def _prep_entity_client_env(self, entity: SmartSimEntity) -> None:
         """Retrieve all connections registered to this entity
 
         :param entity: The entity to retrieve connections from
@@ -482,7 +490,7 @@ class Controller:
                 )
         entity.run_settings.update_env(client_env)
 
-    def _save_orchestrator(self, orchestrator):
+    def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Save the orchestrator object via pickle
 
         This function saves the orchestrator information to a pickle
@@ -503,7 +511,7 @@ class Controller:
         with open(dat_file, "wb") as pickle_file:
             pickle.dump(orc_data, pickle_file)
 
-    def _orchestrator_launch_wait(self, orchestrator):
+    def _orchestrator_launch_wait(self, orchestrator: Orchestrator) -> None:
         """Wait for the orchestrator instances to run
 
         In the case where the orchestrator is launched as a batch
@@ -542,7 +550,6 @@ class Controller:
                 else:
                     logger.debug("Waiting for orchestrator instances to spin up...")
             except KeyboardInterrupt:
-
                 logger.info("Orchestrator launch cancelled - requesting to stop")
                 self.stop_entity_list(orchestrator)
 
@@ -552,7 +559,7 @@ class Controller:
                 # launch explicitly
                 raise
 
-    def reload_saved_db(self, checkpoint_file):
+    def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
         JM_LOCK.acquire()
         try:
             if self.orchestrator_active:
@@ -609,7 +616,7 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def _set_dbobjects(self, manifest):
+    def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
             return
 
@@ -649,9 +656,11 @@ class Controller:
 
 
 class _AnonymousBatchJob(EntityList):
-    def __init__(self, name, path, batch_settings, **kwargs):
+    def __init__(
+        self, name: str, path: str, batch_settings: BatchSettings, **kwargs: t.Any
+    ) -> None:
         super().__init__(name, path)
         self.batch_settings = batch_settings
 
-    def _initialize_entities(self, **kwargs):
+    def _initialize_entities(self, **kwargs: t.Any) -> None:
         ...

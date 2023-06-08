@@ -23,6 +23,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import typing as t
 import logging
 import os
 import sys
@@ -38,7 +39,7 @@ coloredlogs.DEFAULT_LOG_FORMAT = (
 # coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
 
 
-def _get_log_level():
+def _get_log_level() -> str:
     """Get the logging level based on environment variable
        SMARTSIM_LOG_LEVEL.  If not set, default to info.
 
@@ -65,7 +66,9 @@ def _get_log_level():
     return "info"
 
 
-def get_logger(name, log_level=None, fmt=None):
+def get_logger(
+    name: str, log_level: t.Optional[str] = None, fmt: t.Optional[str] = None
+) -> logging.Logger:
     """Return a logger instance
 
     levels:
@@ -107,7 +110,7 @@ def get_logger(name, log_level=None, fmt=None):
     return logger
 
 
-def log_to_file(filename, log_level="debug"):
+def log_to_file(filename: str, log_level: str = "debug") -> None:
     """Installs a second filestream handler to the root logger,
     allowing subsequent logging calls to be sent to filename.
 

@@ -24,26 +24,34 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from collections import namedtuple
 
 StepMap = namedtuple("StepMap", ["step_id", "task_id", "managed"])
 
 
 class StepMapping:
-    def __init__(self):
+    def __init__(self) -> None:
         # step_name : wlm_id, pid, wlm_managed?
-        self.mapping = {}
+        self.mapping: t.Dict[str, StepMap] = {}
 
-    def __getitem__(self, step_name):
+    def __getitem__(self, step_name: str) -> StepMap:
         return self.mapping[step_name]
 
-    def __setitem__(self, step_name, step_map):
+    def __setitem__(self, step_name: str, step_map: StepMap) -> None:
         self.mapping[step_name] = step_map
 
-    def add(self, step_name, step_id=None, task_id=None, managed=True):
+    def add(
+        self,
+        step_name: str,
+        step_id: t.Optional[int] = None,
+        task_id: t.Optional[int] = None,
+        managed: bool = True,
+    ) -> None:
         self.mapping[step_name] = StepMap(step_id, task_id, managed)
 
-    def get_task_id(self, step_id):
+    def get_task_id(self, step_id: int) -> t.Optional[int]:
         """Get the task id from the step id"""
         task_id = None
         for stepmap in self.mapping.values():
@@ -52,7 +60,9 @@ class StepMapping:
                 break
         return task_id
 
-    def get_ids(self, step_names, managed=True):
+    def get_ids(
+        self, step_names: t.List[str], managed: bool = True
+    ) -> t.Tuple[t.List[str], t.List[int]]:
         ids = []
         names = []
         for name in step_names:

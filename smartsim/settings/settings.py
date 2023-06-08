@@ -24,15 +24,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..wlm import detect_launcher
 from . import *
+from ..settings import base
 
 
 def create_batch_settings(
-    launcher, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
-):
+    launcher: str,
+    nodes: t.Optional[int] = None,
+    time: str = "",
+    queue: t.Optional[str] = None,
+    account: t.Optional[str] = None,
+    batch_args: t.Optional[t.Dict[str, str]] = None,
+    **kwargs: t.Any,
+) -> base.BatchSettings:
     """Create a ``BatchSettings`` instance
 
     See Experiment.create_batch_settings for details
@@ -89,15 +98,15 @@ def create_batch_settings(
 
 
 def create_run_settings(
-    launcher,
-    exe,
-    exe_args=None,
-    run_command="auto",
-    run_args=None,
-    env_vars=None,
-    container=None,
-    **kwargs,
-):
+    launcher: str,
+    exe: str,
+    exe_args: t.Optional[t.List[str]] = None,
+    run_command: str = "auto",
+    run_args: t.Optional[t.Dict[str, str]] = None,
+    env_vars: t.Optional[t.Dict[str, str]] = None,
+    container: bool = None,
+    **kwargs: t.Any,
+) -> RunSettings:
     """Create a ``RunSettings`` instance.
 
     See Experiment.create_run_settings docstring for more details
@@ -141,7 +150,7 @@ def create_run_settings(
     if launcher == "auto":
         launcher = detect_launcher()
 
-    def _detect_command(launcher):
+    def _detect_command(launcher: str):
         if launcher in by_launcher:
             for cmd in by_launcher[launcher]:
                 if is_valid_cmd(cmd):

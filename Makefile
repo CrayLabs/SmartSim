@@ -107,6 +107,12 @@ check-lint:
 	@pylint --rcfile=.pylintrc ./smartsim
 
 
+# help: check-mypy                     - run static type check
+.PHONY: check-mypy
+check-mypy:
+	@mypy --config-file=./pyproject.toml
+
+
 # help:
 # help: Documentation
 # help: -------

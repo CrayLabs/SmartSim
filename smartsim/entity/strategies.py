@@ -25,13 +25,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Generation Strategies
+import random
+import typing as t
 
 from itertools import product
 
 
 # create permutations of all parameters
 # single model if parameters only have one value
-def create_all_permutations(param_names, param_values):
+def create_all_permutations(
+    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     perms = list(product(*param_values))
     all_permutations = []
     for p in perms:
@@ -40,22 +44,24 @@ def create_all_permutations(param_names, param_values):
     return all_permutations
 
 
-def step_values(param_names, param_values):
+def step_values(
+    param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
     return permutations
 
 
-def random_permutations(param_names, param_values, n_models):
-    import random
-
+def random_permutations(
+    param_names: t.List[str], param_values: t.List[t.List[str]], n_models: int = 0
+) -> t.List[t.Dict[str, str]]:
     # first, check if we've requested more values than possible.
     perms = list(product(*param_values))
     if n_models >= len(perms):
         return create_all_permutations(param_names, param_values)
     else:
-        permutations = []
+        permutations: t.List[t.Dict[str, str]] = []
         permutation_strings = set()
         while len(permutations) < n_models:
             model_dict = dict(
