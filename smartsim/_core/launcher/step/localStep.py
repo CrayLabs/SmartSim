@@ -29,11 +29,11 @@ import shutil
 import typing as t
 
 from .step import Step
-from ....settings.base import RunSettings
+from ....settings.base import RunSettings, SettingsBase
 
 
 class LocalStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(self, name: str, cwd: str, run_settings: SettingsBase):
         super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.env = self._set_env()

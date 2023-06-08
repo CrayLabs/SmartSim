@@ -27,7 +27,7 @@
 import time
 import typing as t
 
-from ...entity import SmartSimEntity
+from ...entity import SmartSimEntity, EntityList
 from ...status import STATUS_NEW
 
 
@@ -42,7 +42,7 @@ class Job:
         self,
         job_name: str,
         job_id: int,
-        entity: SmartSimEntity,
+        entity: t.Union[SmartSimEntity, EntityList],
         launcher: str,
         is_task: bool,
     ) -> None:

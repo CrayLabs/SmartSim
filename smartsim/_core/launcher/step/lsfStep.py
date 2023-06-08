@@ -31,13 +31,13 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings.base import RunSettings, BatchSettings
+from ....settings.base import RunSettings, BatchSettings, SettingsBase
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings) -> None:
+    def __init__(self, name: str, cwd: str, batch_settings: SettingsBase) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch

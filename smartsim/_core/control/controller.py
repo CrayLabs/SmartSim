@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os.path as osp
 import pickle
 import signal
@@ -33,19 +35,22 @@ import typing as t
 
 from smartredis import Client
 
+from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity
+from ...entity import DBNode, EntityList, SmartSimEntity, Model, Ensemble
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import *
+# from ..launcher import *
+from ..launcher import SlurmLauncher, PBSLauncher, LocalLauncher, CobaltLauncher, LSFLauncher
+from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 from .manifest import Manifest
 from .job import Job
-from ...settings.base import BatchSettings
+from ...settings.base import BatchSettings, SettingsBase
 
 
 logger = get_logger(__name__)
@@ -157,7 +162,7 @@ class Controller:
                 f"Entity {entity.name} has not been launched in this experiment"
             ) from None
 
-    def stop_entity(self, entity: SmartSimEntity) -> None:
+    def stop_entity(self, entity: t.Union[SmartSimEntity, EntityList]) -> None:
         """Stop an instance of an entity
 
         This function will also update the status of the job in
@@ -211,7 +216,7 @@ class Controller:
         finally:
             JM_LOCK.release()
 
-    def get_entity_status(self, entity: SmartSimEntity) -> str:
+    def get_entity_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
         """Get the status of an entity
 
         :param entity: entity to get status of
@@ -256,7 +261,7 @@ class Controller:
                                     a supported launcher
         :raises TypeError: if no launcher argument is provided.
         """
-        launcher_map = {
+        launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
             "cobalt": CobaltLauncher,
@@ -302,7 +307,7 @@ class Controller:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
-        steps = []
+        steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
@@ -310,7 +315,7 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                job_steps = [(self._create_job_step(e), e) for e in elist.models]
                 steps.extend(job_steps)
 
         # models themselves cannot be batch steps. If batch settings are
@@ -350,7 +355,7 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db), db) for db in orchestrator]
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator.dbnodes]
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -386,7 +391,7 @@ class Controller:
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-    def _launch_step(self, job_step, entity: SmartSimEntity) -> None:
+    def _launch_step(self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]) -> None:
         """Use the launcher to launch a job stop
 
         :param job_step: a job step instance
@@ -416,7 +421,7 @@ class Controller:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
-    def _create_batch_job_step(self, entity_list: EntityList) -> t.Any:
+    def _create_batch_job_step(self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]) -> Step:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
@@ -424,6 +429,9 @@ class Controller:
         :return: job step instance
         :rtype: Step
         """
+        if not entity_list.batch_settings:
+            raise ValueError("EntityList must have batch settings to be launched as batch")
+
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
@@ -434,30 +442,30 @@ class Controller:
             batch_step.add_to_batch(step)
         return batch_step
 
-    def _create_job_step(self, entity: SmartSimEntity) -> t.Any:
+    def _create_job_step(self, entity: SmartSimEntity) -> Step:
         """Create job steps for all entities with the launcher
 
-        :param entities: list of all entities to create steps for
-        :type entities: list of SmartSimEntities
-        :return: list of tuples of (launcher_step, entity)
-        :rtype: list of tuples
+        :param entity: list of all entities to create steps for
+        :type entity: list of SmartSimEntities
+        :return: the job step
+        :rtype: Step
         """
         # get SSDB, SSIN, SSOUT and add to entity run settings
-        if not isinstance(entity, DBNode):
+        if isinstance(entity, Model):
             self._prep_entity_client_env(entity)
 
         step = self._launcher.create_step(entity.name, entity.path, entity.run_settings)
         return step
 
-    def _prep_entity_client_env(self, entity: SmartSimEntity) -> None:
+    def _prep_entity_client_env(self, entity: Model) -> None:
         """Retrieve all connections registered to this entity
 
         :param entity: The entity to retrieve connections from
-        :type entity:  SmartSimEntity
+        :type entity:  Model
         :returns: Dictionary whose keys are environment variables to be set
         :rtype: dict
         """
-        client_env = {}
+        client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
             if len(addresses) <= 128:
@@ -473,21 +481,22 @@ class Controller:
                 client_env["SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
-        if hasattr(entity, "colocated") and entity.colocated:
-            port = entity.run_settings.colocated_db_settings.get("port", None)
-            socket = entity.run_settings.colocated_db_settings.get("unix_socket", None)
-            if socket and port:
-                raise SSInternalError(
-                    "Co-located was configured for both TCP/IP and UDS"
-                )
-            if port:
-                client_env["SSDB"] = f"127.0.0.1:{str(port)}"
-            elif socket:
-                client_env["SSDB"] = f"unix://{socket}"
-            else:
-                raise SSInternalError(
-                    "Colocated database was not configured for either TCP or UDS"
-                )
+        if entity.colocated and entity.run_settings:
+            if colo_cfg := entity.run_settings.colocated_db_settings:
+                port = colo_cfg.get("port", None)
+                socket = colo_cfg.get("unix_socket", None)
+                if socket and port:
+                    raise SSInternalError(
+                        "Co-located was configured for both TCP/IP and UDS"
+                    )
+                if port:
+                    client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+                elif socket:
+                    client_env["SSDB"] = f"unix://{socket}"
+                else:
+                    raise SSInternalError(
+                        "Colocated database was not configured for either TCP or UDS"
+                    )
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
@@ -623,7 +632,7 @@ class Controller:
         db_addresses = self._jobs.get_db_host_addresses()
 
         hosts = list(set([address.split(":")[0] for address in db_addresses]))
-        ports = list(set([address.split(":")[-1] for address in db_addresses]))
+        ports = list(set([int(address.split(":")[-1]) for address in db_addresses]))
 
         if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
             raise SSInternalError("Cannot set DB Objects, DB is not running")
@@ -642,7 +651,7 @@ class Controller:
                 set_ml_model(db_model, client)
             for db_script in ensemble._db_scripts:
                 set_script(db_script, client)
-            for entity in ensemble:
+            for entity in ensemble.models:
                 if not entity.colocated:
                     # Set models which could belong only
                     # to the entities and not to the ensemble

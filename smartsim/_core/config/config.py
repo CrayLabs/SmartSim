@@ -25,11 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import psutil
+import typing as t
+
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Union
-
-import psutil
 
 from ...error import SSConfigError
 from ..utils.helpers import expand_exe_path
@@ -163,13 +163,9 @@ class Config:
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
 
     @property
-    def test_interface(self) -> List[str]:  # pragma: no cover
-        interfaces = os.environ.get("SMARTSIM_TEST_INTERFACE", None)
-        if interfaces:
-            if "," in interfaces:
-                interfaces = interfaces.split(",")
-                return interfaces
-            return [interfaces]
+    def test_interface(self) -> t.List[str]:  # pragma: no cover
+        if interfaces_cfg := os.environ.get("SMARTSIM_TEST_INTERFACE", None):
+            return interfaces_cfg.split(",")
 
         # try to pick a sensible one
         net_if_addrs = psutil.net_if_addrs()
@@ -187,7 +183,7 @@ class Config:
         return ["ipogif0"]
 
     @property
-    def test_account(self) -> str:  # pragma: no cover
+    def test_account(self) -> t.Optional[str]:  # pragma: no cover
         # no account by default
         return os.environ.get("SMARTSIM_TEST_ACCOUNT", None)
 

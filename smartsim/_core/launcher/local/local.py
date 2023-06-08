@@ -26,25 +26,32 @@
 
 import typing as t
 
+from ..launcher import Launcher
 from ....log import get_logger
-from ....settings import RunSettings
+from ....settings import RunSettings, SettingsBase
 from ..step import LocalStep
 from ..step import Step
-from ..stepInfo import UnmanagedStepInfo
+from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
 
 logger = get_logger(__name__)
 
 
-class LocalLauncher:
+class LocalLauncher(Launcher):
     """Launcher used for spawning proceses on a localhost machine."""
 
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+       return {
+            RunSettings: LocalStep,
+        }    
+    
     def __init__(self) -> None:
         self.task_manager = TaskManager()
         self.step_mapping = StepMapping()
 
-    def create_step(self, name: str, cwd: str, step_settings: RunSettings) -> Step:
+    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
         """Create a job step to launch an entity locally
 
         :return: Step object
@@ -56,7 +63,7 @@ class LocalLauncher:
         step = LocalStep(name, cwd, step_settings)
         return step
 
-    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, UnmanagedStepInfo]]:
+    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, t.Optional[StepInfo]]]:
         """Get status updates of each job step name provided
 
         :param step_names: list of step_names
@@ -66,7 +73,7 @@ class LocalLauncher:
         """
         # step ids are process ids of the tasks
         # as there is no WLM intermediary
-        updates = []
+        updates: t.List[t.Tuple[str, t.Optional[StepInfo]]] = []
         s_names, s_ids = self.step_mapping.get_ids(step_names, managed=False)
         for step_name, step_id in zip(s_names, s_ids):
             status, rc, out, err = self.task_manager.get_task_update(str(step_id))

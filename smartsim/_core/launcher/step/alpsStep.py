@@ -33,12 +33,13 @@ from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
 from ....settings import RunSettings
+from ....settings.base import SettingsBase
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
+    def __init__(self, name: str, cwd: str, run_settings: SettingsBase) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched

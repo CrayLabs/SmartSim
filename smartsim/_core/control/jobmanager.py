@@ -31,7 +31,7 @@ from threading import Thread, RLock
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity
+from ...entity import DBNode, SmartSimEntity, EntityList
 from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
@@ -168,7 +168,7 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def add_job(self, job_name: str, job_id: str, entity: SmartSimEntity, is_task: bool = True) -> None:
+    def add_job(self, job_name: str, job_id: str, entity: t.Union[SmartSimEntity, EntityList], is_task: bool = True) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -237,7 +237,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def get_status(self, entity: SmartSimEntity) -> str:
+    def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntityList instance

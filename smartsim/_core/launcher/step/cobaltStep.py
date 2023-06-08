@@ -29,14 +29,14 @@ import stat
 import typing as t
 
 from ....log import get_logger
-from ....settings.base import BatchSettings
+from ....settings.base import SettingsBase
 from .step import Step
 
 logger = get_logger(__name__)
 
 
 class CobaltBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings) -> None:
+    def __init__(self, name: str, cwd: str, batch_settings: SettingsBase) -> None:
         """Initialize a Cobalt qsub step
 
         :param name: name of the entity to launch

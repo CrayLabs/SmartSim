@@ -30,7 +30,7 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
-from ....settings.base import BatchSettings
+from ....settings.base import BatchSettings, SettingsBase
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
@@ -69,7 +69,7 @@ class LSFLauncher(WLMLauncher):
     # init in WLMLauncher, launcher.py
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[t.Union[RunSettings, BatchSettings]], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
             JsrunSettings: JsrunStep,

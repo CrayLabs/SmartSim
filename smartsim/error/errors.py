@@ -101,7 +101,7 @@ class ShellError(LauncherError):
     def __init__(
         self, message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]] = None
     ) -> None:
-        msg = self.create_message(message, details, command_list)
+        msg = self.create_message(message, command_list, details=details)
         super().__init__(msg)
 
     @staticmethod

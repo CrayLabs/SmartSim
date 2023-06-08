@@ -32,7 +32,10 @@ from ..log import get_logger
 logger = get_logger(__name__)
 
 
-class RunSettings:
+class SettingsBase:
+    ...
+
+class RunSettings(SettingsBase):
     def __init__(
         self,
         exe: str,
@@ -540,7 +543,7 @@ class RunSettings:
         return string
 
 
-class BatchSettings:
+class BatchSettings(SettingsBase):
     def __init__(
         self,
         batch_cmd: str,

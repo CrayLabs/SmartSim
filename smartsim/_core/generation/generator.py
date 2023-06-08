@@ -36,7 +36,7 @@ from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
 from ...database import Orchestrator
-from ...entity import SmartSimEntity, EntityList, Ensemble
+from ...entity import Ensemble
 
 
 logger = get_logger(__name__)

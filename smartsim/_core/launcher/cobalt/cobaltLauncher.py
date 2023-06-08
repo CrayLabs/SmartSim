@@ -30,7 +30,7 @@ import typing as t
 import psutil
 
 from smartsim._core.launcher.step import Step
-from smartsim.settings.base import RunSettings, BatchSettings
+from smartsim.settings.base import RunSettings, BatchSettings, SettingsBase
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -70,7 +70,7 @@ class CobaltLauncher(WLMLauncher):
         self.user = psutil.Process().username()
 
     @property
-    def supported_rs(self) -> t.Dict[t.Type[t.Union[RunSettings, BatchSettings]], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
             AprunSettings: AprunStep,

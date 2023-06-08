@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os.path as osp
 import time
 import typing as t
@@ -31,13 +33,13 @@ import typing as t
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
-from ....settings.base import BatchSettings, RunSettings
+from ....settings.base import BatchSettings, RunSettings, SettingsBase
 
 logger = get_logger(__name__)
 
 
 class Step:
-    def __init__(self, name: str, cwd: str, step_settings: t.Union[RunSettings, BatchSettings, None]) -> None:
+    def __init__(self, name: str, cwd: str, step_settings: t.Union[SettingsBase, None]) -> None:
         self.name = self._create_unique_name(name)
         self.entity_name = name
         self.cwd = cwd
@@ -93,3 +95,11 @@ class Step:
         # entity currently being prepped to launch
         write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path
+    
+    def add_to_batch(self, step: Step) -> None:
+        """Add a job step to this batch
+
+        :param step: a job step instance e.g. SrunStep
+        :type step: Step
+        """
+        raise NotImplementedError

@@ -32,7 +32,7 @@ from .stepInfo import UnmanagedStepInfo, StepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
 from .step import Step
-from ...settings.base import BatchSettings, RunSettings
+from ...settings.base import BatchSettings, RunSettings, SettingsBase
 
 
 class Launcher(abc.ABC):  # pragma: no cover
@@ -43,16 +43,18 @@ class Launcher(abc.ABC):  # pragma: no cover
     in SmartSim should implement the methods in this class to
     be fully compatible.
     """
+    step_mapping: StepMapping
+    task_manager: TaskManager
 
     @abc.abstractproperty
-    def supported_rs(self) -> t.Dict[t.Type[t.Union[RunSettings, BatchSettings]], t.Type[Step]]:
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         raise NotImplementedError
 
     def __init__(self) -> None:
         pass
 
     @abc.abstractmethod
-    def create_step(self, name: str, cwd: str, step_settings: RunSettings) -> Step:
+    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -85,7 +87,7 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
-    def create_step(self, name: str, cwd: str, step_settings: t.Union[RunSettings, BatchSettings]) -> Step:  # cov-wlm
+    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:  # cov-wlm
         """Create a WLM job step
 
         :param name: name of the entity to be launched
