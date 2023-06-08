@@ -107,10 +107,13 @@ def expand_exe_path(exe: str) -> str:
 
 def is_valid_cmd(command: t.Union[str, None]) -> bool:
     try:
-        expand_exe_path(command)
-        return True
+        if command:
+            expand_exe_path(command)
+            return True
     except (TypeError, FileNotFoundError):
         return False
+
+    return False
 
 
 color2num = dict(
@@ -207,10 +210,10 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     from ..._core.config import CONFIG
 
     installed = []
-    if not backends_path:
-        backends_path = CONFIG.lib_path / "backends"
+    base_path: Path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+
     for backend in ["tensorflow", "torch", "onnxruntime", "tflite"]:
-        backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
+        backend_path = base_path / f"redisai_{backend}" / f"redisai_{backend}.so"
         backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
         if backend_so.is_file():
             installed.append(backend)

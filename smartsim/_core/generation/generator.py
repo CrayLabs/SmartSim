@@ -127,7 +127,7 @@ class Generator:
         else:
             logger.info("Working in previously created experiment")
 
-    def _gen_orc_dir(self, orchestrator: Orchestrator) -> None:
+    def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
