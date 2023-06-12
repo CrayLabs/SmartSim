@@ -58,7 +58,7 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
 
     def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:
         # Initialization
-        if not self.samples:
+        if self.samples is None:
             raise ValueError("No samples loaded for data generation")
             
         x = self.samples[indices]
