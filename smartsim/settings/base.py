@@ -85,8 +85,8 @@ class RunSettings(SettingsBase):
             self.exe = [expand_exe_path(exe)]
 
         self.exe_args = self._set_exe_args(exe_args)
-        self.run_args: t.Dict[str, t.Optional[str]] = init_default({}, run_args, dict)
-        self.env_vars: t.Dict[str, str] = init_default({}, env_vars, dict)
+        self.run_args: t.Dict[str, t.Optional[t.Union[str, int]]] = init_default({}, run_args, dict)
+        self.env_vars: t.Dict[str, t.Union[str, int, bool, float]] = init_default({}, env_vars, dict)
         self.container = container
         self._run_command = run_command
         self.in_batch = False

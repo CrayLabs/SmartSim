@@ -134,7 +134,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodefile"] = str(file_path)
 
-    def set_excluded_hosts(self, host_list: t.List[str]) -> None:
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -341,7 +341,7 @@ class SrunSettings(RunSettings):
         fmt_exported_env = ",".join(v for v in exportable_env + key_only)
 
         for mpmd in self.mpmd:
-            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in v}
+            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in str(v)}
             compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
             compound_env.extend(compound_mpmd_fmt)
 

@@ -617,7 +617,7 @@ class Orchestrator(EntityList):
             if erf_rs:
                 erf_rs.make_mpmd(run_settings)
             else:
-                run_settings.make_mpmd()
+                run_settings.make_mpmd(run_settings)
                 erf_rs = run_settings
 
         kwargs["run_args"] = run_args

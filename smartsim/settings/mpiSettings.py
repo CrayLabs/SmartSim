@@ -80,7 +80,7 @@ class _BaseMPISettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
 
         if not shutil.which(self._run_command):
             msg = (
@@ -94,20 +94,20 @@ class _BaseMPISettings(RunSettings):
 
     reserved_run_args = {"wd", "wdir"}
 
-    def make_mpmd(self, mpirun_settings: MpirunSettings) -> None:
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``mpirun`` commands
 
         This connects the two settings to be executed with a single
         Model instance
 
-        :param mpirun_settings: MpirunSettings instance
-        :type mpirun_settings: MpirunSettings
+        :param settings: MpirunSettings instance
+        :type settings: MpirunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )
-        self.mpmd.append(mpirun_settings)
+        self.mpmd.append(settings)
 
     def set_task_map(self, task_mapping: str) -> None:
         """Set ``mpirun`` task mapping
