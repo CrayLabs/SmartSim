@@ -32,7 +32,7 @@ from smartsim.ml import DataDownloader
 
 
 class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
-    def __getitem__(self, index: int) -> np.ndarray:
+    def __getitem__(self, index: int) -> t.Tuple[np.ndarray, np.ndarray]:
         if len(self) < 1:
             msg = "Not enough samples in generator for one batch. "
             msg += "Please run init_samples() or initialize generator with init_samples=True"
@@ -56,8 +56,11 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices):
+    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:
         # Initialization
+        if not self.samples:
+            raise ValueError("No samples loaded for data generation")
+            
         x = self.samples[indices]
 
         if self.need_targets:
