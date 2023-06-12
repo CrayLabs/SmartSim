@@ -198,7 +198,7 @@ class TrainingDataUploader:
     def publish_info(self) -> None:
         self._info.publish(self.client)
 
-    def put_batch(self, samples: np.ndarray, targets=None) -> None:
+    def put_batch(self, samples: np.ndarray, targets: t.Optional[np.ndarray] = None) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
         batch_ds = Dataset(batch_ds_name)
         batch_ds.add_tensor(self.sample_name, samples)
@@ -358,11 +358,16 @@ class DataDownloader:
         :return: Whether targets (or labels) should be downloaded
         :rtype: bool
         """
-        return self.target_name and not self.autoencoding
+        return bool(self.target_name) and not self.autoencoding
 
     def __len__(self) -> int:
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
+
+    def _calc_indices(self, index: int) -> np.ndarray:
+        return self.indices[
+            index * self.batch_size : (index + 1) * self.batch_size
+        ]
 
     def __iter__(self) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:
 
@@ -373,11 +378,8 @@ class DataDownloader:
             msg += "Please run init_samples() or initialize generator with init_samples=True"
             raise ValueError(msg)
 
-        _calc_indices = lambda index: self.indices[
-            index * self.batch_size : (index + 1) * self.batch_size
-        ]
         yield from (
-            self._data_generation(_calc_indices(idx)) for idx in range(len(self))
+            self._data_generation(self._calc_indices(idx)) for idx in range(len(self))
         )
 
     def init_samples(self, init_trials: int = -1) -> None:
@@ -408,6 +410,8 @@ class DataDownloader:
             np.random.shuffle(self.indices)
 
     def _data_exists(self, batch_name: str, target_name: str) -> bool:
+        if not self.client:
+            raise ValueError("Client not initialized")
 
         if self.need_targets:
             return self.client.tensor_exists(batch_name) and self.client.tensor_exists(
@@ -416,14 +420,17 @@ class DataDownloader:
         else:
             return self.client.tensor_exists(batch_name)
 
-    def _add_samples(self, indices: np.ndarray) -> None:
+    def _add_samples(self, indices: t.List[int]) -> None:
+        if not self.client:
+            raise ValueError("Client not initialized")
+
+        datasets: list[Dataset] = []
 
         if self.num_replicas == 1:
-            datasets: list[Dataset] = self.client.get_dataset_list_range(
+            datasets = self.client.get_dataset_list_range(
                 self.list_name, start_index=indices[0], end_index=indices[-1]
             )
         else:
-            datasets: list[Dataset] = []
             for idx in indices:
                 datasets += self.client.get_dataset_list_range(
                     self.list_name, start_index=idx, end_index=idx
@@ -437,17 +444,19 @@ class DataDownloader:
             if len(datasets) > 1:
                 datasets = datasets[1:]
 
-        for dataset in datasets:
-            self.samples = np.concatenate(
-                (self.samples, dataset.get_tensor(self.sample_name))
-            )
-            if self.need_targets:
-                self.targets = np.concatenate(
-                    (self.targets, dataset.get_tensor(self.target_name))
+        if self.samples is not None:
+            for dataset in datasets:
+                self.samples = np.concatenate(
+                    (self.samples, dataset.get_tensor(self.sample_name))
                 )
+                if self.need_targets:
+                    self.targets = np.concatenate(
+                        (self.targets, dataset.get_tensor(self.target_name))
+                    )
 
-        self.num_samples = self.samples.shape[0]
-        self.indices = np.arange(self.num_samples)
+            self.num_samples = self.samples.shape[0]
+            self.indices = np.arange(self.num_samples)
+
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
     def _update_samples_and_targets(self) -> None:
@@ -480,8 +489,11 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices: np.array) -> t.Tuple[np.ndarray, np.ndarray]:
+    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:
         # Initialization
+        if self.samples is None:
+            raise ValueError("Samples have not been initialized")
+
         x = self.samples[indices]
 
         if self.need_targets:
