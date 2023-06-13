@@ -424,7 +424,7 @@ class DataDownloader:
         if not self.client:
             raise ValueError("Client not initialized")
 
-        datasets: list[Dataset] = []
+        datasets: t.List[Dataset] = []
 
         if self.num_replicas == 1:
             datasets = self.client.get_dataset_list_range(
