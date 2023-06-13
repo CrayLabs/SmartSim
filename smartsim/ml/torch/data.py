@@ -48,7 +48,7 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
         else:
             client = self.client
 
-        datasets: list[Dataset] = []
+        datasets: t.List[Dataset] = []
         if self.num_replicas == 1:
             datasets = client.get_dataset_list_range(
                 self.list_name, start_index=indices[0], end_index=indices[-1]
