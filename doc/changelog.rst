@@ -34,6 +34,7 @@ A full list of changes and detailed notes can be found below:
 - Relax the coloredlogs version
 - Update Fortran tutorials for SmartRedis
 - Add support for multiple network interface binding in Orchestrator and Colocated DBs
+- Add typehints and static analysis
 
 Detailed notes
 
@@ -52,8 +53,8 @@ former began deprecation in May 2022 and was finally removed in May 2023. (PR285
 codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
 argument name is still `interface` for backward compatibility reasons. (PR281_)
-- Typehints have been added to public APIs. A makefile target to execute static 
-analysis with mypy is available `make check-mypy`. (PR295_)
+- Typehints have been added. A makefile target `make check-mypy` executes static 
+analysis with mypy. (PR295_, PR303_)
 
 .. _PR298: https://github.com/CrayLabs/SmartSim/pull/298
 .. _PR293: https://github.com/CrayLabs/SmartSim/pull/293
@@ -66,6 +67,7 @@ analysis with mypy is available `make check-mypy`. (PR295_)
 .. _PR284: https://github.com/CrayLabs/SmartSim/pull/284
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/281
 .. _PR295: https://github.com/CrayLabs/SmartSim/pull/295
+.. _PR303: https://github.com/CrayLabs/SmartSim/pull/303
 
 0.4.2
 -----
