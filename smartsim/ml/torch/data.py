@@ -76,7 +76,7 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
                     (self.targets, torch.tensor(dataset.get_tensor(self.target_name)))
                 )
 
-        if self.samples:
+        if self.samples is not None:
             self.num_samples = self.samples.shape[0]
         self.indices = np.arange(self.num_samples)
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
