@@ -32,7 +32,7 @@ from .stepInfo import UnmanagedStepInfo, StepInfo
 from .stepMapping import StepMapping
 from .taskManager import TaskManager
 from .step import Step
-from ...settings.base import BatchSettings, RunSettings, SettingsBase
+from ...settings import SettingsBase
 
 
 class Launcher(abc.ABC):  # pragma: no cover

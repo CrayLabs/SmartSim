@@ -583,11 +583,11 @@ class Orchestrator(EntityList):
 
     def _build_run_settings_lsf(
         self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
-    ) -> t.Optional[RunSettings]:
+    ) -> t.Optional[JsrunSettings]:
         run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
         gpus_per_shard = kwargs.get("gpus_per_shard", None)
-        erf_rs: t.Optional[RunSettings] = None
+        erf_rs: t.Optional[JsrunSettings] = None
 
         # We always run the DB on cpus 0:cpus_per_shard-1
         # and gpus 0:gpus_per_shard-1
@@ -685,6 +685,8 @@ class Orchestrator(EntityList):
             exe_args = " ".join(start_script_args)
             exe_args_mpmd.append(sh_split(exe_args))
 
+        run_settings: t.Optional[RunSettings] = None
+        
         if self.launcher == "lsf":
             run_settings = self._build_run_settings_lsf(
                 sys.executable, exe_args_mpmd, **kwargs

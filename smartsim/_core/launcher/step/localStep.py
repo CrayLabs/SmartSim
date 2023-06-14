@@ -29,14 +29,17 @@ import shutil
 import typing as t
 
 from .step import Step
-from ....settings.base import RunSettings, SettingsBase
+from ....settings.base import RunSettings
 
 
 class LocalStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: SettingsBase):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
         super().__init__(name, cwd, run_settings)
-        self.run_settings = run_settings
         self.env = self._set_env()
+
+    @property
+    def run_settings(self) -> RunSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []

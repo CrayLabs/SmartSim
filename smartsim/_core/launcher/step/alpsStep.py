@@ -32,14 +32,13 @@ from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import RunSettings
-from ....settings.base import SettingsBase
+from ....settings import AprunSettings
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: SettingsBase) -> None:
+    def __init__(self, name: str, cwd: str, run_settings: AprunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
@@ -50,10 +49,13 @@ class AprunStep(Step):
         :type run_settings: AprunSettings
         """
         super().__init__(name, cwd, run_settings)
-        self.run_settings = run_settings
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    @property
+    def run_settings(self) -> AprunSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step

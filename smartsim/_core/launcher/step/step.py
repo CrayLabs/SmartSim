@@ -33,7 +33,7 @@ import typing as t
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
-from ....settings.base import BatchSettings, RunSettings, SettingsBase
+from ....settings.base import SettingsBase
 
 logger = get_logger(__name__)
 

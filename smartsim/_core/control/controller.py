@@ -49,7 +49,7 @@ from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
 from .manifest import Manifest
 from .job import Job
-from ...settings.base import BatchSettings, SettingsBase
+from ...settings.base import BatchSettings
 
 
 logger = get_logger(__name__)

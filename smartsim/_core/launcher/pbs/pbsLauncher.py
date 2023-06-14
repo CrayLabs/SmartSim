@@ -30,7 +30,7 @@ import typing as t
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
-from ....settings.base import BatchSettings, SettingsBase
+from ....settings import SettingsBase
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher

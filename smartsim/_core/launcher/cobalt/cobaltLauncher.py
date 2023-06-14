@@ -30,7 +30,7 @@ import typing as t
 import psutil
 
 from smartsim._core.launcher.step import Step
-from smartsim.settings.base import RunSettings, BatchSettings, SettingsBase
+from smartsim.settings import RunSettings, SettingsBase
 
 from ....error import LauncherError
 from ....log import get_logger

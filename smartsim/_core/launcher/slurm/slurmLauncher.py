@@ -31,8 +31,15 @@ from shutil import which
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import *
-from ....settings.base import BatchSettings, SettingsBase
+from ....settings import (
+    MpiexecSettings, 
+    MpirunSettings, 
+    OrterunSettings, 
+    RunSettings, 
+    SbatchSettings, 
+    SettingsBase, 
+    SrunSettings, 
+)
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
