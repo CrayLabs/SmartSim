@@ -102,8 +102,8 @@ def create_run_settings(
     exe: str,
     exe_args: t.Optional[t.List[str]] = None,
     run_command: str = "auto",
-    run_args: t.Optional[t.Dict[str, str]] = None,
-    env_vars: t.Optional[t.Dict[str, str]] = None,
+    run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+    env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
     container: t.Optional[Container] = None,
     **kwargs: t.Any,
 ) -> RunSettings:

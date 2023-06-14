@@ -87,6 +87,61 @@ def test_create_bsub():
     assert args == ["-core_isolation", "-nnodes 1", "-q default"]
 
 
+def test_existing_batch_args_mutation():
+    """
+    Ensure that if the batch_args dict is changed, any previously
+    created batch settings don't reflect the change due to pass-by-ref
+    """
+    batch_args = {"k1": "v1", "k2": "v2"}
+    orig_bargs = {"k1": "v1", "k2": "v2"}
+    bsub = create_batch_settings(
+        "lsf",
+        nodes=1,
+        time="10:00:00",
+        account="myproject",  # test that account is set
+        queue="default",
+        batch_args=batch_args,
+    )
+    
+    # verify initial expectations
+    assert "k1" in bsub.batch_args
+    assert "k2" in bsub.batch_args
+
+    # modify the batch_args dict
+    batch_args["k1"] = f'not-{batch_args["k1"]}'
+
+    # verify that the batch_settings do not reflect the change
+    assert bsub.batch_args["k1"] == orig_bargs["k1"]
+    assert bsub.batch_args["k1"] != batch_args["k1"]
+
+def test_direct_set_batch_args_mutation():
+    """
+    Ensure that if the batch_args dict is set directly, any previously
+    created batch settings don't reflect the change due to pass-by-ref
+    """
+    batch_args = {"k1": "v1", "k2": "v2"}
+    orig_bargs = {"k1": "v1", "k2": "v2"}
+    bsub = create_batch_settings(
+        "lsf",
+        nodes=1,
+        time="10:00:00",
+        account="myproject",  # test that account is set
+        queue="default",
+    )
+    bsub.batch_args = batch_args
+    
+    # verify initial expectations
+    assert "k1" in bsub.batch_args
+    assert "k2" in bsub.batch_args
+
+    # modify the batch_args dict
+    batch_args["k1"] = f'not-{batch_args["k1"]}'
+
+    # verify that the batch_settings do not reflect the change
+    assert bsub.batch_args["k1"] == orig_bargs["k1"]
+    assert bsub.batch_args["k1"] != batch_args["k1"]
+
+
 @pytest.mark.parametrize(
     "batch_args",
     [

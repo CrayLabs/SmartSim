@@ -36,8 +36,8 @@ class AprunSettings(RunSettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ):
         """Settings to run job with ``aprun`` command
@@ -50,7 +50,7 @@ class AprunSettings(RunSettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -136,7 +136,7 @@ class AprunSettings(RunSettings):
         :param file_path: Path to the hostlist file
         :type file_path: str
         """
-        self.run_args["node-list-file"] = str(file_path)
+        self.run_args["node-list-file"] = file_path
 
     def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job

@@ -158,7 +158,7 @@ def test_models_batch_settings_are_ignored_in_ensemble(monkeypatch_exp_controlle
     step, entity = entity_steps[0]
     assert isinstance(entity, Ensemble)
     assert isinstance(step, SbatchStep)
-    assert step.batch_settings.batch_args["nodes"] == 10
+    assert step.batch_settings.batch_args["nodes"] == "10"
     assert len(step.step_cmds) == 1
     step_cmd = step.step_cmds[0]
     assert any("srun" in tok for tok in step_cmd)  # call the model using run settings

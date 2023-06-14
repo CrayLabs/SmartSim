@@ -95,11 +95,36 @@ def test_jsrun_args():
     assert formatted == result
 
 
+def test_jsrun_args_mutation():
+    """Ensure re-using ERF settings doesn't mutate existing run settings"""
+    run_args = {
+        "latency_priority": "gpu-gpu",
+        "immediate": None,
+        "d": "packed",  # test single letter variables
+        "nrs": 10,
+        "np": 100,
+    }
+    settings = JsrunSettings("python", run_args=run_args)
+    
+    erf_settings = {"foo": "1", "bar": "2"}
+    
+    settings.set_erf_sets(erf_settings)
+    assert settings.erf_sets["foo"] == "1"
+    assert settings.erf_sets["bar"] == "2"
+
+    erf_settings["foo"] = "111"
+    erf_settings["bar"] = "111"
+    
+    assert settings.erf_sets["foo"] == "1"
+    assert settings.erf_sets["bar"] == "2"
+
+
 def test_jsrun_update_env():
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
     settings = JsrunSettings("python", env_vars=env_vars)
-    settings.update_env({"OMP_NUM_THREADS": 10})
-    assert settings.env_vars["OMP_NUM_THREADS"] == 10
+    num_threads = 10
+    settings.update_env({"OMP_NUM_THREADS": num_threads})
+    assert settings.env_vars["OMP_NUM_THREADS"] == str(num_threads)
 
 
 def test_jsrun_format_env():

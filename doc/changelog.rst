@@ -38,14 +38,15 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Fix defect where dictionaries used to create run settings can be changed 
+  unexpectedly due to copy-by-ref (PR305_)
 - Typehints have been added. A makefile target `make check-mypy` executes static
   analysis with mypy. (PR295_, PR303_)
 - Simplify code in `random_permutations` parameter generation strategy (PR300_)
 - Remove wait time associated with Experiment launch summary (PR298_)
 - Update Redis conf file to conform with Redis v7.0.5 conf file (PR293_)
 - Migrate from redis-py-cluster to redis-py for cluster status checks (PR292_)
-- Update full test suite to no longer require a tensorflow wheel to be available
-  at test time. (PR291_)
+- Update full test suite to no longer require a tensorflow wheel to be available at test time. (PR291_)
 - Correct spelling of colocated in doc strings (PR290_)
 - Deprecated launcher-specific orchestrators, constants, and ML 
   utilities were removed. (PR289_)
@@ -57,9 +58,11 @@ Detailed notes
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The 
   argument name is still `interface` for backward compatibility reasons. (PR281_)
 
+.. _PR305: https://github.com/CrayLabs/SmartSim/pull/305
 .. _PR303: https://github.com/CrayLabs/SmartSim/pull/303
 .. _PR300: https://github.com/CrayLabs/SmartSim/pull/300
 .. _PR298: https://github.com/CrayLabs/SmartSim/pull/298
+.. _PR295: https://github.com/CrayLabs/SmartSim/pull/295
 .. _PR293: https://github.com/CrayLabs/SmartSim/pull/293
 .. _PR292: https://github.com/CrayLabs/SmartSim/pull/292
 .. _PR291: https://github.com/CrayLabs/SmartSim/pull/291
@@ -69,7 +72,6 @@ Detailed notes
 .. _PR285: https://github.com/CrayLabs/SmartSim/pull/285
 .. _PR284: https://github.com/CrayLabs/SmartSim/pull/284
 .. _PR281: https://github.com/CrayLabs/SmartSim/pull/281
-.. _PR295: https://github.com/CrayLabs/SmartSim/pull/295
 
 0.4.2
 -----

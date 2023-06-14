@@ -59,8 +59,8 @@ class PalsMpiexecSettings(_BaseMPISettings):
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_command: str = "mpiexec",
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         fail_if_missing_exec: bool = True,
         **kwargs: t.Any,
     ) -> None:
@@ -79,7 +79,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         :param fail_if_missing_exec: Throw an exception of the MPI command
@@ -129,7 +129,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param bind_type: binding type
         :type bind_type: str
         """
-        self.run_args["cpu-bind"] = str(bind_type)
+        self.run_args["cpu-bind"] = bind_type
 
     def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks

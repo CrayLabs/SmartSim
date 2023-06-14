@@ -71,8 +71,9 @@ def test_srun_args():
 def test_update_env():
     env_vars = {"OMP_NUM_THREADS": 20, "LOGGING": "verbose"}
     settings = SrunSettings("python", env_vars=env_vars)
-    settings.update_env({"OMP_NUM_THREADS": 10})
-    assert settings.env_vars["OMP_NUM_THREADS"] == 10
+    num_threads = 10
+    settings.update_env({"OMP_NUM_THREADS": num_threads})
+    assert settings.env_vars["OMP_NUM_THREADS"] == str(num_threads)
 
 
 def test_catch_colo_mpmd():

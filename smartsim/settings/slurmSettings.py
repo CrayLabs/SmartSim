@@ -42,8 +42,8 @@ class SrunSettings(RunSettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         alloc: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -59,7 +59,7 @@ class SrunSettings(RunSettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: list[str] | str, optional
         :param run_args: srun arguments without dashes, defaults to None
-        :type run_args: dict[str, str | None], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment variables for job, defaults to None
         :type env_vars: dict[str, str], optional
         :param alloc: allocation ID if running on existing alloc, defaults to None
@@ -132,7 +132,7 @@ class SrunSettings(RunSettings):
         :param file_path: Path to the hostlist file
         :type file_path: str
         """
-        self.run_args["nodefile"] = str(file_path)
+        self.run_args["nodefile"] = file_path
 
     def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
@@ -354,7 +354,7 @@ class SbatchSettings(BatchSettings):
         nodes: t.Optional[int] = None,
         time: str = "",
         account: t.Optional[str] = None,
-        batch_args: t.Optional[t.Dict[str, str]] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Specify run parameters for a Slurm batch job
@@ -405,7 +405,7 @@ class SbatchSettings(BatchSettings):
         :type num_nodes: int
         """
         if num_nodes:
-            self.batch_args["nodes"] = int(num_nodes)
+            self.batch_args["nodes"] = str(int(num_nodes))
 
     def set_account(self, account: str) -> None:
         """Set the account for this batch job
@@ -443,7 +443,7 @@ class SbatchSettings(BatchSettings):
         :param num_cpus: number of cpus to use per task
         :type num_cpus: int
         """
-        self.batch_args["cpus-per-task"] = int(cpus_per_task)
+        self.batch_args["cpus-per-task"] = str(int(cpus_per_task))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
