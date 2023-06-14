@@ -75,7 +75,7 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
-        
+
     @property
     def colocated(self) -> bool:
         """Return True if this Model will run with a colocated Orchestrator"""
@@ -356,14 +356,18 @@ class Model(SmartSimEntity):
 
         :param name: key to store model under
         :type name: str
+        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
+        :type backend: str
         :param model: model in memory
         :type model: byte string, optional
         :param model_path: serialized model
         :type model_path: file path to model
-        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
         :param device: name of device for execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
+        :type devices_per_node: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -421,7 +425,9 @@ class Model(SmartSimEntity):
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
-        :param devices_per_node: number of devices on each host
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
         :type devices_per_node: int
         """
         db_script = DBScript(
@@ -462,7 +468,9 @@ class Model(SmartSimEntity):
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
-        :param devices_per_node: number of devices on each host
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
         :type devices_per_node: int
         """
         db_script = DBScript(
