@@ -94,8 +94,8 @@ class SrunSettings(RunSettings):
         This connects the two settings to be executed with a single
         Model instance
 
-        :param srun_settings: SrunSettings instance
-        :type srun_settings: SrunSettings
+        :param srun_settings: RunSettings instance
+        :type srun_settings: RunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(

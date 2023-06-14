@@ -43,7 +43,6 @@ from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupporte
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
-# from ..launcher import *
 from ..launcher import SlurmLauncher, PBSLauncher, LocalLauncher, CobaltLauncher, LSFLauncher
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster
