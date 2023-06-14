@@ -75,7 +75,7 @@ def get_allocation(nodes: int = 1, time: t.Optional[str] = None, account: t.Opti
 
     options = init_default({}, options, dict)
 
-    salloc_args = _get_alloc_cmd(nodes, time or "", account or "", options=options)
+    salloc_args = _get_alloc_cmd(nodes, time, account, options=options)
     debug_msg = " ".join(salloc_args[1:])
     logger.debug(f"Allocation settings: {debug_msg}")
 
@@ -219,7 +219,10 @@ def _get_system_partition_info() -> t.Dict[str, Partition]:
     return partitions
 
 
-def _get_alloc_cmd(nodes: int, time: str, account: str, options: t.Optional[t.Dict[str, str]]=None) -> t.List[str]:
+def _get_alloc_cmd(nodes: int, 
+                   time: t.Optional[str] = None, 
+                   account: t.Optional[str] = None, 
+                   options: t.Optional[t.Dict[str, str]] = None) -> t.List[str]:
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options."""
 

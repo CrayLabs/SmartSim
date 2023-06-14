@@ -35,7 +35,7 @@ class QsubBatchSettings(BatchSettings):
     def __init__(
         self,
         nodes: t.Optional[int] = None,
-        ncpus: int = 0,
+        ncpus: t.Optional[int] = None,
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         account: t.Optional[str] = None,
