@@ -431,6 +431,10 @@ Model
    Model.colocate_db
    Model.colocate_db_tcp
    Model.colocate_db_uds
+   Model.colocated
+   Model.add_ml_model
+   Model.add_script
+   Model.add_function
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing
