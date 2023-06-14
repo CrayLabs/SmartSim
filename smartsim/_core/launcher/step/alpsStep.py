@@ -47,7 +47,7 @@ class AprunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: AprunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings

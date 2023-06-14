@@ -107,8 +107,12 @@ class Generator:
         files don't need to be tagged manually.
 
         :param tag: A string of characters that signify
-                    an string to be changed. Defaults to ``;``
+                    the string to be changed. Defaults to ``;``
         :type tag: str
+
+        :param regex: full regex for the modelwriter to search for,
+                      defaults to None
+        :type regex: str | None
         """
         self._writer.set_tag(tag, regex)
 
@@ -132,7 +136,7 @@ class Generator:
            configuration files for the orchestrator.
 
         :param orchestrator: Orchestrator instance
-        :type orchestrator: Orchestrator
+        :type orchestrator: Orchestrator | None
         """
 
         if not orchestrator:
@@ -175,10 +179,10 @@ class Generator:
     ) -> None:
         """Generate directories for Entity instances
 
-        :param entities: list of Entity instances
+        :param entities: list of Model instances
         :type entities: list
-        :param entity_list: EntityList instance, defaults to None
-        :type entity_list: EntityList, optional
+        :param entity_list: Ensemble instance, defaults to None
+        :type entity_list: Ensemble | None
         :raises EntityExistsError: if a directory already exists for an
                                    entity by that name
         """

@@ -260,7 +260,7 @@ class TaskManager:
         :param task_id: id of the task
         :type task_id: str
         :param returncode: returncode
-        :type returncode: int
+        :type returncode: int, defaults to None
         :param out: output, defaults to None
         :type out: str, optional
         :param err: output, defaults to None
@@ -291,7 +291,7 @@ class Task:
         """Initialize a task
 
         :param process: Popen object
-        :type process: psutil.Popen
+        :type process: psutil.Popen | psutil.Process
         """
         self.process = process
         self.pid = str(self.process.pid)

@@ -52,8 +52,8 @@ class Job:
         :type job_name: str
         :param job_id: The id associated with the job
         :type job_id: str
-        :param entity: The SmartSim entity associated with the job
-        :type entity: SmartSimEntity
+        :param entity: The SmartSim entity(list) associated with the job
+        :type entity: SmartSimEntity | EntityList
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
@@ -113,7 +113,7 @@ class Job:
         :param new_job_name: name of the new job step
         :type new_job_name: str
         :param new_job_id: new job id to launch under
-        :type new_job_id: str
+        :type new_job_id: int
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """

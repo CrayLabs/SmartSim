@@ -79,8 +79,8 @@ def parse_jslist_stepid(output: str, step_id: str) -> t.Tuple[str, t.Optional[st
 
     :param output: output of the bjobs command
     :type output: str
-    :param job_id: allocation id or job step id
-    :type job_id: str
+    :param step_id: allocation id or job step id
+    :type step_id: str
     :return: status and return code
     :rtype: (str, str)
     """

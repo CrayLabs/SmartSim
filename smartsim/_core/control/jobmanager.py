@@ -176,7 +176,7 @@ class JobManager:
         :param job_id: job step id created by launcher
         :type job_id: str
         :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity
+        :type entity: SmartSimEntity | EntityList
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """

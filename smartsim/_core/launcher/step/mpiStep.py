@@ -152,7 +152,7 @@ class MpiexecStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: MpiexecSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional
@@ -170,7 +170,7 @@ class MpirunStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: MpirunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional
@@ -188,7 +188,7 @@ class OrterunStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: OrterunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional

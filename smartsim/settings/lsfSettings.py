@@ -215,9 +215,6 @@ class JsrunSettings(RunSettings):
                 "Colocated models cannot be run as a mpmd workload"
             )
 
-        # if self not in self.mpmd:
-        #     self.mpmd.insert(0, self)
-
         if settings:
             self.mpmd.append(settings)
 

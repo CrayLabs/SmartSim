@@ -42,7 +42,7 @@ class QsubBatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: QsubBatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.batch_settings = batch_settings

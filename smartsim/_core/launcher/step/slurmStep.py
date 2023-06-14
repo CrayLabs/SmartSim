@@ -47,7 +47,7 @@ class SbatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: SbatchSettings
         """
         super().__init__(name, cwd, batch_settings)
         self.batch_settings = batch_settings
@@ -113,7 +113,7 @@ class SrunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: SrunSettings
         """
         super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings

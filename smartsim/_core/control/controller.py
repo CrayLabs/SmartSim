@@ -136,7 +136,7 @@ class Controller:
                 finally:
                     JM_LOCK.release()
 
-    def finished(self, entity: SmartSimEntity) -> bool:
+    def finished(self, entity: t.Union[SmartSimEntity, EntityList]) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
@@ -168,7 +168,7 @@ class Controller:
         the jobmanager so that the job appears as "cancelled".
 
         :param entity: entity to be stopped
-        :type entity: SmartSimEntity
+        :type entity: Entity | EntityList
         """
         JM_LOCK.acquire()
         try:
@@ -219,8 +219,8 @@ class Controller:
         """Get the status of an entity
 
         :param entity: entity to get status of
-        :type entity: SmartSimEntity
-        :raises TypeError: if not SmartSimEntity
+        :type entity: SmartSimEntity | EntityList
+        :raises TypeError: if not SmartSimEntity | EntityList
         :return: status of entity
         :rtype: str
         """
@@ -444,8 +444,8 @@ class Controller:
     def _create_job_step(self, entity: SmartSimEntity) -> Step:
         """Create job steps for all entities with the launcher
 
-        :param entity: list of all entities to create steps for
-        :type entity: list of SmartSimEntities
+        :param entity: an entity to create a step for
+        :type entity: SmartSimEntity
         :return: the job step
         :rtype: Step
         """

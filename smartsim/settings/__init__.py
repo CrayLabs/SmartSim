@@ -44,6 +44,7 @@ __all__ = [
     "OrterunSettings",
     "QsubBatchSettings",
     "RunSettings",
+    "SettingsBase",
     "SbatchSettings",
     "SrunSettings",
     "PalsMpiexecSettings",

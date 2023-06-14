@@ -53,7 +53,7 @@ class Manifest:
 
         :raises SmartSimError: if user added to databases to manifest
         :return: orchestrator instances
-        :rtype: Orchestrator
+        :rtype: Orchestrator | None
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
 
@@ -79,9 +79,6 @@ class Manifest:
         :return: list of ensembles
         :rtype: List[Ensemble]
         """
-        # entity_lists = [e for e in self._deployables if isinstance(e, EntityList)]
-        # entity_lists = [e for e in entity_lists if not isinstance(e, Orchestrator)]
-        # return entity_lists
         return  [e for e in self._deployables if isinstance(e, Ensemble)]
 
     @property
