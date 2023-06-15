@@ -79,6 +79,10 @@ from ..utils.helpers import expand_exe_path
 #  - CPU or GPU for model serving tests
 #  - Default: CPU
 #
+# SMARTSIM_TEST_NUM_GPUS
+#  - Number of GPUs on the host for testing
+#  - Defaults: 1
+#
 # SMARTSIM_TEST_ACCOUNT
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
@@ -157,6 +161,10 @@ class Config:
     @property
     def test_device(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
+
+    @property
+    def test_num_gpus(self) -> str:  # pragma: no cover
+        return os.environ.get("SMARTSIM_TEST_NUM_GPUS", 1)
 
     @property
     def test_port(self) -> int:  # pragma: no cover

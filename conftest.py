@@ -51,6 +51,7 @@ test_path = os.path.dirname(os.path.abspath(__file__))
 test_dir = os.path.join(test_path, "tests", "test_output")
 test_launcher = CONFIG.test_launcher
 test_device = CONFIG.test_device
+test_num_gpus = CONFIG.test_num_gpus
 test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
@@ -591,3 +592,8 @@ class MLUtils:
     def get_test_device():
         global test_device
         return test_device
+
+    @staticmethod
+    def get_test_num_gpus():
+        global test_num_gpus
+        return test_num_gpus

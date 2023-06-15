@@ -131,7 +131,7 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(fileutils, wlmutils):
+def test_tf_db_model(fileutils, wlmutils, mlutils):
     """Test TensorFlow DB Models on remote DB"""
 
     exp_name = "test-tf-db-model"
@@ -153,11 +153,15 @@ def test_tf_db_model(fileutils, wlmutils):
     model, inputs, outputs = create_tf_cnn()
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     smartsim_model.add_ml_model(
         "cnn",
         "TF",
         model=model,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs,
         outputs=outputs,
         tag="test",
@@ -166,7 +170,8 @@ def test_tf_db_model(fileutils, wlmutils):
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs2,
         outputs=outputs2,
         tag="test",
@@ -185,7 +190,7 @@ def test_tf_db_model(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(fileutils, wlmutils):
+def test_pt_db_model(fileutils, wlmutils, mlutils):
     """Test PyTorch DB Models on remote DB"""
 
     exp_name = "test-pt-db-model"
@@ -207,11 +212,15 @@ def test_pt_db_model(fileutils, wlmutils):
     save_torch_cnn(test_dir, "model1.pt")
     model_path = test_dir + "/model1.pt"
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     smartsim_model.add_ml_model(
         "cnn",
         "TORCH",
         model_path=model_path,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         tag="test",
     )
 
@@ -228,7 +237,7 @@ def test_pt_db_model(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(fileutils, wlmutils):
+def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     """Test DBModels on remote DB, with an ensemble"""
 
     exp_name = "test-db-model-ensemble"
@@ -259,13 +268,17 @@ def test_db_model_ensemble(fileutils, wlmutils):
         "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
     )
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     for entity in smartsim_ensemble:
         entity.disable_key_prefixing()
         entity.add_ml_model(
             "cnn2",
             "TF",
             model_path=model_file2,
-            device="CPU",
+            device=test_device,
+            devices_per_node=test_num_gpus,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -276,7 +289,8 @@ def test_db_model_ensemble(fileutils, wlmutils):
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -293,7 +307,7 @@ def test_db_model_ensemble(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_tf(fileutils, wlmutils):
+def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     """Test DB Models on colocated DB (TensorFlow backend)"""
 
     exp_name = "test-colocated-db-model-tf"
@@ -319,14 +333,24 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     colo_model.add_ml_model(
-        "cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs
+        "cnn",
+        "TF",
+        model_path=model_file,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        inputs=inputs,
+        outputs=outputs
     )
     colo_model.add_ml_model(
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -352,7 +376,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_colocated_db_model_pytorch(fileutils, wlmutils):
+def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     """Test DB Models on colocated DB (PyTorch backend)"""
 
     exp_name = "test-colocated-db-model-pytorch"
@@ -375,9 +399,16 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils):
         ifname="lo",
     )
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     save_torch_cnn(test_dir, "model1.pt")
     model_file = test_dir + "/model1.pt"
-    colo_model.add_ml_model("cnn", "TORCH", model_path=model_file, device="CPU")
+    colo_model.add_ml_model("cnn",
+                            "TORCH",
+                            model_path=model_file,
+                            device=test_device,
+                            devices_per_node=test_num_gpus)
 
     # Assert we have added both models
     assert len(colo_model._db_models) == 1
@@ -388,7 +419,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble(fileutils, wlmutils):
+def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     """Test DBModel on colocated ensembles, first colocating DB,
     then adding DBModel.
     """
@@ -421,6 +452,9 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db(
             port=wlmutils.get_test_port() + i,
@@ -434,7 +468,8 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
             "cnn2",
             "TF",
             model_path=model_file2,
-            device="CPU",
+            device=test_device,
+            devices_per_node=test_num_gpus,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -444,7 +479,8 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
         "cnn",
         "TF",
         model_path=model_file,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs,
         outputs=outputs,
         tag="test",
@@ -463,7 +499,8 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -474,7 +511,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
+def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     """Test DBModel on colocated ensembles, first adding the DBModel to the
     ensemble, then colocating DB.
     """
@@ -500,6 +537,9 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     # Test adding a model from ensemble
     colo_ensemble.add_ml_model(
         "cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs
@@ -518,7 +558,8 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
             "cnn2",
             "TF",
             model_path=model_file2,
-            device="CPU",
+            device=test_device,
+            devices_per_node=test_num_gpus,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -536,7 +577,8 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -547,7 +589,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_errors(fileutils, wlmutils):
+def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     """Test error when colocated db model has no file."""
 
     exp_name = "test-colocated-db-model-error"
@@ -572,9 +614,13 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
 
     model, inputs, outputs = create_tf_cnn()
 
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+
     with pytest.raises(SSUnsupportedError):
         colo_model.add_ml_model(
-            "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+            "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
         )
 
     colo_ensemble = exp.create_ensemble(
@@ -592,7 +638,8 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
 
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_ml_model(
-            "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+            "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
         )
 
     # Check errors for reverse order of DBModel addition and DB colocation
@@ -607,7 +654,8 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     )
     colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
-        "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+        "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
     )
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
