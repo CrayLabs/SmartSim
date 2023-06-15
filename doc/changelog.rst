@@ -38,6 +38,7 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Simplify code in `random_permutations` parameter generation strategy (PR300_)
 - Remove wait time associated with Experiment launch summary (PR298_)
 - Update Redis conf file to conform with Redis v7.0.5 conf file (PR293_)
 - Migrate from redis-py-cluster to redis-py for cluster status checks (PR292_)
@@ -56,6 +57,7 @@ argument name is still `interface` for backward compatibility reasons. (PR281_)
 - Typehints have been added. A makefile target `make check-mypy` executes static 
 analysis with mypy. (PR295_, PR303_)
 
+.. _PR300: https://github.com/CrayLabs/SmartSim/pull/300
 .. _PR298: https://github.com/CrayLabs/SmartSim/pull/298
 .. _PR293: https://github.com/CrayLabs/SmartSim/pull/293
 .. _PR292: https://github.com/CrayLabs/SmartSim/pull/292
