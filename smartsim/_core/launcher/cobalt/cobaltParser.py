@@ -67,7 +67,7 @@ def parse_cobalt_step_id(output: str, step_name: str) -> str:
     return step_id
 
 
-def parse_qsub_out(output: str) ->  t.Optional[str]:
+def parse_qsub_out(output: str) -> str:
     """
     Parse and return the step id from a cobalt qsub command
 
@@ -76,11 +76,13 @@ def parse_qsub_out(output: str) ->  t.Optional[str]:
     :return: the step_id
     :rtype: str
     """
-    step_id = None
+    step_id = ""
     for line in output.split("\n"):
         try:
-            step_id = int(line.strip())
+            value = line.strip()
+            int(value) # if the cast works, return original string
+            step_id = value
             break
         except ValueError:
             continue
-    return str(step_id)
+    return step_id
