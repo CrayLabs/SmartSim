@@ -64,7 +64,7 @@ def get_queue() -> str:
     """
     if "PBS_QUEUE" in os.environ:
         return os.environ["PBS_QUEUE"]
-    raise SmartSimError("Could not parse queue from SLURM_JOB_PARTITION")
+    raise SmartSimError("Could not parse queue from PBS_QUEUE")
 
 
 def get_tasks() -> int:
