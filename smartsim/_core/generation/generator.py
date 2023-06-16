@@ -253,8 +253,8 @@ class Generator:
     def _copy_entity_files(self, entity: Model) -> None:
         """Copy the entity files and directories attached to this entity.
 
-        :param entity: SmartSimEntity
-        :type entity: SmartSimEntity
+        :param entity: Model
+        :type entity: Model
         """
         if entity.files and entity.files.copy:
             for to_copy in entity.files.copy:
@@ -267,8 +267,8 @@ class Generator:
     def _link_entity_files(self, entity: Model) -> None:
         """Symlink the entity files attached to this entity.
 
-        :param entity: SmartSimEntity
-        :type entity: SmartSimEntity
+        :param entity: Model
+        :type entity: Model
         """
         if entity.files and entity.files.link:
             for to_link in entity.files.link:
