@@ -47,7 +47,7 @@ def parse_cobalt_step_status(output: str, step_id: str) -> str:
     return status
 
 
-def parse_cobalt_step_id(output: str, step_name: str) -> t.Optional[str]:
+def parse_cobalt_step_id(output: str, step_name: str) -> str:
     """Parse and return the step id from a cobalt qstat command
 
     :param output: output qstat
@@ -57,7 +57,7 @@ def parse_cobalt_step_id(output: str, step_name: str) -> t.Optional[str]:
     :return: the step_id
     :rtype: str
     """
-    step_id = None
+    step_id = ""
     for line in output.split("\n"):
         fields = line.split()
         if len(fields) >= 2:
