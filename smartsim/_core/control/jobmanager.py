@@ -341,7 +341,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def signal_interrupt(self, signo: int, frame: t.Optional[FrameType]) -> t.Any:
+    def signal_interrupt(self, signo: int, frame: t.Optional[FrameType]) -> None:
         """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:

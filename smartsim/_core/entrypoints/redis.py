@@ -48,7 +48,7 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo: int, frame: t.Optional[FrameType]) -> t.Any:
+def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
     cleanup()
 
 
