@@ -210,7 +210,7 @@ class SlurmLauncher(WLMLauncher):
         m2-119225.1|119225.1|
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = "unassigned"
+        step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = sacct(["--noheader", "-p", "--format=jobname,jobid"])

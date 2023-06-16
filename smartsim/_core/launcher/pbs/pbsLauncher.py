@@ -151,7 +151,7 @@ class PBSLauncher(WLMLauncher):
         TODO: change this to use ``qstat -a -u user``
         """
         time.sleep(interval)
-        step_id: t.Optional[str] = "unassigned"
+        step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = qstat(["-f", "-F", "json"])

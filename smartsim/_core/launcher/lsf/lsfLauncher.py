@@ -153,7 +153,7 @@ class LSFLauncher(WLMLauncher):
     def _get_lsf_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
-        step_id: t.Optional[str] = "unassigned"
+        step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = jslist([])
