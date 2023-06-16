@@ -180,7 +180,7 @@ class Generator:
         """Generate directories for Entity instances
 
         :param entities: list of Model instances
-        :type entities: list
+        :type entities: list[Model]
         :param entity_list: Ensemble instance, defaults to None
         :type entity_list: Ensemble | None
         :raises EntityExistsError: if a directory already exists for an
@@ -217,8 +217,8 @@ class Generator:
            specifically deals with the tagged files attached to
            an Ensemble.
 
-        :param entity: a SmartSimEntity, for now just Models
-        :type entity: SmartSimEntity
+        :param entity: a Model instance
+        :type entity: Model
         """
         if entity.files:
             to_write = []
