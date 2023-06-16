@@ -38,7 +38,10 @@ from ..log import get_logger
 logger = get_logger(__name__)
 
 
-def get_allocation(nodes: int = 1, time: t.Optional[str] = None, account: t.Optional[str] = None, options: t.Optional[t.Dict[str, str]] = None) -> str:
+def get_allocation(nodes: int = 1, 
+                   time: t.Optional[str] = None, 
+                   account: t.Optional[str] = None, 
+                   options: t.Optional[t.Dict[str, str]] = None) -> str:
     """Request an allocation
 
     This function requests an allocation with the specified arguments.
