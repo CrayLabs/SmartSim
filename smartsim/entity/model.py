@@ -358,7 +358,7 @@ class Model(SmartSimEntity):
         :type name: str
         :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
         :type backend: str
-        :param model: model in memory
+        :param model: A model in memory (only supported for non-colocated orchestrators)
         :type model: byte string, optional
         :param model_path: serialized model
         :type model_path: file path to model
@@ -419,7 +419,7 @@ class Model(SmartSimEntity):
 
         :param name: key to store script under
         :type name: str
-        :param script: TorchScript code
+        :param script: TorchScript code (only supported for non-colocated orchestrators)
         :type script: str, optional
         :param script_path: path to TorchScript code
         :type script_path: str, optional
