@@ -461,8 +461,6 @@ class Controller:
 
         :param entity: The entity to retrieve connections from
         :type entity:  Model
-        :returns: Dictionary whose keys are environment variables to be set
-        :rtype: dict
         """
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         addresses = self._jobs.get_db_host_addresses()
