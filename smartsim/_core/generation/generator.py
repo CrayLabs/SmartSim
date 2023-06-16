@@ -256,7 +256,7 @@ class Generator:
         :param entity: Model
         :type entity: Model
         """
-        if entity.files and entity.files.copy:
+        if entity.files:
             for to_copy in entity.files.copy:
                 dst_path = path.join(entity.path, path.basename(to_copy))
                 if path.isdir(to_copy):
@@ -270,7 +270,7 @@ class Generator:
         :param entity: Model
         :type entity: Model
         """
-        if entity.files and entity.files.link:
+        if entity.files:
             for to_link in entity.files.link:
                 dst_path = path.join(entity.path, path.basename(to_link))
                 symlink(to_link, dst_path)

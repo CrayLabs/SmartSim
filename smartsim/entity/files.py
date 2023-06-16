@@ -49,7 +49,10 @@ class EntityFiles:
     """
 
     def __init__(
-        self, tagged: t.Optional[t.List[str]] = None, copy: t.Optional[t.List[str]] = None, symlink: t.Optional[t.List[str]] = None
+        self, 
+        tagged: t.Optional[t.List[str]] = None, 
+        copy: t.Optional[t.List[str]] = None, 
+        symlink: t.Optional[t.List[str]] = None,
     ) -> None:
         """Initialize an EntityFiles instance
 
@@ -62,9 +65,9 @@ class EntityFiles:
                         directories
         :type symlink: list of str
         """
-        self.tagged = tagged
-        self.copy = copy
-        self.link = symlink
+        self.tagged = tagged or []
+        self.copy = copy or []
+        self.link = symlink or []
         self.tagged_hierarchy = None
         self._check_files()
 
