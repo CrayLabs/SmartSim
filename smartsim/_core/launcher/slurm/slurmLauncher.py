@@ -224,7 +224,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.Optional[t.List[StepInfo]]:  # 
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.Optional[t.List[StepInfo]]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
