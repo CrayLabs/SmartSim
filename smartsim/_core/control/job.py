@@ -41,7 +41,7 @@ class Job:
     def __init__(
         self,
         job_name: str,
-        job_id: int,
+        job_id: str,
         entity: t.Union[SmartSimEntity, EntityList],
         launcher: str,
         is_task: bool,
@@ -107,7 +107,7 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(self, new_job_name: str, new_job_id: int, is_task: bool) -> None:
+    def reset(self, new_job_name: str, new_job_id: str, is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
@@ -174,12 +174,12 @@ class History:
         :type runs: int, optional
         """
         self.runs = runs
-        self.jids: t.Dict[int, int] = dict()
+        self.jids: t.Dict[int, str] = dict()
         self.statuses: t.Dict[int, str] = dict()
         self.returns: t.Dict[int, t.Optional[int]] = dict()
         self.job_times: t.Dict[int, float] = dict()
 
-    def record(self, job_id: int, status: str, returncode: t.Optional[int], job_time: float) -> None:
+    def record(self, job_id: str, status: str, returncode: t.Optional[int], job_time: float) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status

@@ -182,7 +182,7 @@ class JobManager:
         """
         launcher = str(self._launcher)
         # all operations here should be atomic
-        job = Job(job_name, int(job_id), entity, launcher, is_task)
+        job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
         else:
@@ -296,7 +296,7 @@ class JobManager:
         try:
             job = self.completed[entity_name]
             del self.completed[entity_name]
-            job.reset(job_name, int(job_id), is_task)
+            job.reset(job_name, job_id, is_task)
 
             if isinstance(job.entity, (DBNode, Orchestrator)):
                 self.db_jobs[entity_name] = job
