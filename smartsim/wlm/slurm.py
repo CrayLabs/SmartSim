@@ -242,18 +242,17 @@ def _get_alloc_cmd(nodes: int,
     if account:
         salloc_args.extend(["-A", str(account)])
 
-    if options:
-        for opt, val in options.items():
-            if opt not in ["t", "time", "N", "nodes", "A", "account"]:
-                short_arg = bool(len(str(opt)) == 1)
-                prefix = "-" if short_arg else "--"
-                if not val:
-                    salloc_args += [prefix + opt]
+    for opt, val in (options or {}).items():
+        if opt not in ["t", "time", "N", "nodes", "A", "account"]:
+            short_arg = bool(len(str(opt)) == 1)
+            prefix = "-" if short_arg else "--"
+            if not val:
+                salloc_args += [prefix + opt]
+            else:
+                if short_arg:
+                    salloc_args += [prefix + opt, str(val)]
                 else:
-                    if short_arg:
-                        salloc_args += [prefix + opt, str(val)]
-                    else:
-                        salloc_args += ["=".join((prefix + opt, str(val)))]
+                    salloc_args += ["=".join((prefix + opt, str(val)))]
 
     return salloc_args
 
