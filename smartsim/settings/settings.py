@@ -153,10 +153,11 @@ def create_run_settings(
 
     def _detect_command(launcher: str) -> str:
         if launcher in by_launcher:
+            if launcher == "local":
+                return ""
+
             for cmd in by_launcher[launcher]:
-                if launcher == "local":
-                    return cmd
-                elif is_valid_cmd(cmd):
+                if is_valid_cmd(cmd):
                     return cmd
         msg = f"Could not automatically detect a run command to use for launcher {launcher}"
         msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
