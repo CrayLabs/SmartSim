@@ -462,10 +462,8 @@ class Model(SmartSimEntity):
 
         :param name: key to store function under
         :type name: str
-        :param script: TorchScript code
-        :type script: str or byte string, optional
-        :param script_path: path to TorchScript code
-        :type script_path: str, optional
+        :param function: TorchScript function code
+        :type function: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
