@@ -287,11 +287,11 @@ class TaskManager:
 
 
 class Task:
-    def __init__(self, process: t.Union[psutil.Popen, psutil.Process]) -> None:
+    def __init__(self, process: psutil.Process) -> None:
         """Initialize a task
 
         :param process: Popen object
-        :type process: psutil.Popen | psutil.Process
+        :type process: psutil.Process
         """
         self.process = process
         self.pid = str(self.process.pid)
