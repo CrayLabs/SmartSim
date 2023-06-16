@@ -30,6 +30,7 @@ import site
 import subprocess
 import sys
 import typing as t 
+from enum import Enum
 from pathlib import Path
 from typing import Iterable
 
@@ -38,12 +39,11 @@ from pkg_resources import packaging
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
-
+DbEngine = t.Literal["REDIS", "KEYDB"]
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
 #       items should be imported here.
-
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -278,7 +278,7 @@ class Versioner:
     except AttributeError:
         ONNX = None
 
-    def as_dict(self, db_name: str = "REDIS") -> t.Dict[str, t.Any]:
+    def as_dict(self, db_name: DbEngine = "REDIS") -> t.Dict[str, t.Any]:
         packages = [
             "SMARTSIM",
             "SMARTREDIS",

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+from enum import StrEnum
 import os
 import sys
 from pathlib import Path
@@ -34,7 +35,7 @@ from tabulate import tabulate
 
 from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner
+from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner, DbEngine
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -46,6 +47,7 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
+
 
 
 def _install_torch_from_pip(versions, device="cpu", verbose=False):
@@ -170,7 +172,7 @@ class Build:
                         )
 
                 if self.verbose:
-                    db_name = "KEYDB" if self.keydb else "REDIS"
+                    db_name: DbEngine = "KEYDB" if self.keydb else "REDIS"
                     logger.info("Version Information:")
                     vers = self.versions.as_dict(db_name=db_name)
                     print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
