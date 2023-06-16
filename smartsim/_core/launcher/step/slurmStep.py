@@ -137,7 +137,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env: t.Set = set()
+        compound_env: t.Set[str] = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
