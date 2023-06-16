@@ -150,7 +150,7 @@ class ModelWriter:
                 logger.warning(missing_tag_message)
         self.lines = edited
 
-    def _is_ensemble_spec(self, tagged_line: str, model_params: t.Dict[str, t.Any]) -> bool:
+    def _is_ensemble_spec(self, tagged_line: str, model_params: t.Dict[str, str]) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():
