@@ -207,10 +207,9 @@ class Generator:
             pathlib.Path(dst).mkdir(exist_ok=True)
             entity.path = dst
 
-            if isinstance(entity, Model):
-                self._copy_entity_files(entity)
-                self._link_entity_files(entity)
-                self._write_tagged_entity_files(entity)
+            self._copy_entity_files(entity)
+            self._link_entity_files(entity)
+            self._write_tagged_entity_files(entity)
 
     def _write_tagged_entity_files(self, entity: Model) -> None:
         """Read, configure and write the tagged input files for
