@@ -127,7 +127,7 @@ class DynamicDataGenerator(_TorchDataGenerationCommon):
             )
 
 
-def worker_init_fn(worker_id: int) -> None:
+def _worker_init_fn(worker_id: int) -> None:
     worker_info = torch.utils.data.get_worker_info()
     dataset = worker_info.dataset  # the dataset copy in this worker process
 
@@ -157,7 +157,7 @@ class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     def __init__(self, dataset: _TorchDataGenerationCommon, **kwargs: t.Any) -> None:
         super().__init__(
             dataset,
-            worker_init_fn=worker_init_fn,
+            worker_init_fn=_worker_init_fn,
             persistent_workers=True,
             **kwargs,
         )
