@@ -132,13 +132,12 @@ def _build_colocated_wrapper_cmd(
     # collect DB binaries and libraries from the config
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
 
-    if rai_args:
-        # add extra redisAI configurations
-        for arg, value in rai_args.items():
-            if value:
-                # RAI wants arguments for inference in all caps
-                # ex. THREADS_PER_QUEUE=1
-                db_cmd.append(f"{arg.upper()} {str(value)}")
+    # add extra redisAI configurations
+    for arg, value in (rai_args or {}).items():
+        if value:
+            # RAI wants arguments for inference in all caps
+            # ex. THREADS_PER_QUEUE=1
+            db_cmd.append(f"{arg.upper()} {str(value)}")
 
     db_cmd.extend(["--port", str(port)])
 
