@@ -141,9 +141,12 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     parser.add_argument("--device", type=str)
     parser.add_argument("--devices_per_node", type=int)
     args = parser.parse_args(db_script)
+
+    if args.file and args.func:
+        raise ValueError("Both file and func cannot be provided.")
+
     if args.func:
         func = args.func.replace("\\n", "\n")
-
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
             client.set_script_multigpu(args.name, func, 0, args.devices_per_node)
         else:
@@ -153,6 +156,8 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
             client.set_script_from_file_multigpu(args.name, args.file, 0, args.devices_per_node)
         else:
             client.set_script_from_file(args.name, args.file, args.device)
+    else:
+        raise ValueError("No file or func provided.")
 
     return args.name
 
