@@ -46,7 +46,8 @@ class Launcher(abc.ABC):  # pragma: no cover
     step_mapping: StepMapping
     task_manager: TaskManager
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         raise NotImplementedError
 
