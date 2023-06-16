@@ -51,9 +51,6 @@ class Launcher(abc.ABC):  # pragma: no cover
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         raise NotImplementedError
 
-    def __init__(self) -> None:
-        pass
-
     @abc.abstractmethod
     def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:
         raise NotImplementedError
