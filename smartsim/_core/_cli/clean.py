@@ -36,7 +36,7 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 
 
 class Clean:
-    def __init__(self, clean_all=False):
+    def __init__(self, clean_all: bool = False) -> None:
         parser = argparse.ArgumentParser(
             description="Remove previous ML runtime installation"
         )
@@ -52,7 +52,7 @@ class Clean:
         clobber = args.clobber or clean_all
         self.clean(_all=clobber)
 
-    def clean(self, _all=False):
+    def clean(self, _all: bool = False) -> None:
         """Remove pre existing installations of ML runtimes
 
         :param _all: Remove all non-python dependencies

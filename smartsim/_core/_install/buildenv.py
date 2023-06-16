@@ -29,13 +29,12 @@ import platform
 import site
 import subprocess
 import sys
-import typing as t 
-from enum import Enum
+import typing as t
 from pathlib import Path
 from typing import Iterable
 
 import pkg_resources
-from pkg_resources import packaging
+from pkg_resources import packaging  # type: ignore
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
@@ -68,7 +67,7 @@ class Version_(str):
     includes some helper methods for comparing versions.
     """
 
-    def _convert_to_version(self, vers: t.Union[str, Iterable, Version]) -> Version:
+    def _convert_to_version(self, vers: t.Union[str, Iterable, packaging.version.Version]) -> t.Any:
         if isinstance(vers, Version):
             return vers
         elif isinstance(vers, str):
@@ -98,30 +97,40 @@ class Version_(str):
         return str(pkg_resources.parse_version(self)).split(".")[2]
 
     def __gt__(self, cmp: object) -> bool:
+        if not isinstance(cmp, Version):
+            return False
         try:
             return Version(self).__gt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__gt__(cmp)
 
     def __lt__(self, cmp: object) -> bool:
+        if not isinstance(cmp, Version):
+            return False
         try:
             return Version(self).__lt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__lt__(cmp)
 
     def __eq__(self, cmp: object) -> bool:
+        if not isinstance(cmp, Version):
+            return False
         try:
             return Version(self).__eq__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__eq__(cmp)
 
     def __ge__(self, cmp: object) -> bool:
+        if not isinstance(cmp, Version):
+            return False
         try:
             return Version(self).__ge__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__ge__(cmp)
 
     def __le__(self, cmp: object) -> bool:
+        if not isinstance(cmp, Version):
+            return False
         try:
             return Version(self).__le__(self._convert_to_version(cmp))
         except InvalidVersion:
@@ -337,20 +346,20 @@ class Versioner:
             # return empty string if not in git-repo
             return ""
 
-    def write_version(self, setup_py_dir: str) -> str:
+    def write_version(self, setup_py_dir: Path) -> str:
         """
         Write version info to version.py
 
         Use git_sha in the case where smartsim suffix is set in the environment
         """
-        version = self.SMARTSIM
+        ss_version = self.SMARTSIM
         if self.SMARTSIM_SUFFIX:
-            git_sha = self.get_sha(setup_py_dir)
+            git_sha = self.get_sha(str(setup_py_dir))
             if git_sha:
-                version = f"{version}+{self.SMARTSIM_SUFFIX}.{git_sha}"
+                version = f"{ss_version}+{self.SMARTSIM_SUFFIX}.{git_sha}"
             else:
                 # wheel build (python -m build) shouldn't include git sha
-                version = f"{version}+{self.SMARTSIM_SUFFIX}"
+                version = f"{ss_version}+{self.SMARTSIM_SUFFIX}"
 
         version_file = setup_py_dir / "smartsim" / "version.py"
         with open(version_file, "w") as f:
@@ -387,7 +396,7 @@ class BuildEnv:
 
     # build overrides
     MALLOC = os.environ.get("MALLOC", "libc")
-    JOBS = os.environ.get("BUILD_JOBS", 1)
+    JOBS = int(os.environ.get("BUILD_JOBS", 1))
 
     # check for CC/GCC/ETC
     CHECKS = int(os.environ.get("NO_CHECKS", 0))
@@ -417,7 +426,7 @@ class BuildEnv:
         return env
 
     def as_dict(self) -> t.Dict[str, t.List[str]]:
-        variables = [
+        variables: t.List[str] = [
             "CC",
             "CXX",
             "CFLAGS",
@@ -427,13 +436,13 @@ class BuildEnv:
             "PYTHON_VERSION",
             "PLATFORM",
         ]
-        values = [
+        values: t.List[str] = [
             self.CC,
             self.CXX,
             self.CFLAGS,
             self.CXXFLAGS,
             self.MALLOC,
-            self.JOBS,
+            str(self.JOBS),
             self.python_version,
             self.PLATFORM,
         ]
@@ -480,7 +489,7 @@ class BuildEnv:
             site_paths = [Path(p) for p in site.getsitepackages()]
 
             # check user site (~/.local/lib)
-            if Path(site.USER_SITE).is_dir():
+            if site.USER_SITE and Path(site.USER_SITE).is_dir():
                 site_paths.append(Path(site.USER_SITE))
 
             for _path in site_paths:
@@ -497,7 +506,7 @@ class BuildEnv:
         return str(torch_path)
 
     @staticmethod
-    def get_cudnn_env() -> t.Dict[str, t.Optional[str]]:
+    def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
         """Collect the environment variables needed for Caffe (Pytorch)
         and throw an error if they are not found
 
@@ -507,10 +516,10 @@ class BuildEnv:
             - CUDNN_LIBRARY_PATH and CUDNN_INCLUDE_PATH
         """
         env = {
-            "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", None),
-            "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", None),
-            "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", None),
-            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", None),
+            "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", "env-var-not-found"),
+            "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", "env-var-not-found"),
+            "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", "env-var-not-found"),
+            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", "env-var-not-found"),
         }
         torch_cudnn_vars = ["CUDNN_LIBRARY", "CUDNN_INCLUDE_DIR"]
         caffe_cudnn_vars = ["CUDNN_INCLUDE_PATH", "CUDNN_LIBRARY_PATH"]

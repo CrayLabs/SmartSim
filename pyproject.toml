@@ -94,8 +94,6 @@ module = [
   "keras",
   "torch",
   "smartsim._core.launcher.step.*", # hints incomplete
-  "smartsim._core._install.*",      # skip install scripts
-  "smartsim._core._cli.*",          # skip cli scripts
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
 ]
 ignore_missing_imports = true
