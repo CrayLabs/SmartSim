@@ -323,14 +323,13 @@ class Versioner:
 
         return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
 
-    def get_sha(self, setup_py_dir: str) -> str:
+    def get_sha(self, setup_py_dir: Path) -> str:
         """Get the git sha of the current branch"""
         try:
-            sha = (
-                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=setup_py_dir)
-                .decode("ascii")
-                .strip()
-            )
+            rev_cmd = ["git", "rev-parse", "HEAD"]
+            git_rev = subprocess.check_output(rev_cmd, cwd=setup_py_dir.absolute())
+            sha = git_rev.decode("ascii").strip()
+
             return sha[:7]
         except Exception:
             # return empty string if not in git-repo
@@ -342,14 +341,14 @@ class Versioner:
 
         Use git_sha in the case where smartsim suffix is set in the environment
         """
-        ss_version = self.SMARTSIM
+        version = str(self.SMARTSIM)
+
         if self.SMARTSIM_SUFFIX:
-            git_sha = self.get_sha(str(setup_py_dir))
-            if git_sha:
-                version = f"{ss_version}+{self.SMARTSIM_SUFFIX}.{git_sha}"
-            else:
-                # wheel build (python -m build) shouldn't include git sha
-                version = f"{ss_version}+{self.SMARTSIM_SUFFIX}"
+            version += f"+{self.SMARTSIM_SUFFIX}"
+
+            # wheel build (python -m build) won't include git sha
+            if git_sha := self.get_sha(setup_py_dir):
+                version += f".{git_sha}"
 
         version_file = setup_py_dir / "smartsim" / "version.py"
         with open(version_file, "w") as f:
