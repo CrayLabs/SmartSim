@@ -69,13 +69,13 @@ class SlurmLauncher(WLMLauncher):
     def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
         # RunSettings types supported by this launcher
         return {
-        SrunSettings: SrunStep,
-        SbatchSettings: SbatchStep,
-        MpirunSettings: MpirunStep,
-        MpiexecSettings: MpiexecStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-    }
+            SrunSettings: SrunStep,
+            SbatchSettings: SbatchStep,
+            MpirunSettings: MpirunStep,
+            MpiexecSettings: MpiexecStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+        }
 
     def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
         """Return the compute nodes of a specific job or allocation
