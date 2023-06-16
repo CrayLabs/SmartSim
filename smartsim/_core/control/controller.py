@@ -314,7 +314,7 @@ class Controller:
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e), e) for e in elist.models]
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
 
         # models themselves cannot be batch steps. If batch settings are
