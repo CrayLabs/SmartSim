@@ -416,7 +416,7 @@ class BuildEnv:
         )
         return env
 
-    def as_dict(self) -> t.Dict[str, str]:
+    def as_dict(self) -> t.Dict[str, t.List[str]]:
         variables = [
             "CC",
             "CXX",
