@@ -32,7 +32,10 @@ logger = get_logger(__name__)
 
 
 class StepMap:
-    def __init__(self, step_id: t.Optional[str] = None, task_id: t.Optional[int] = None, managed: t.Optional[bool] = None) -> None:
+    def __init__(self,
+                 step_id: t.Optional[str] = None,
+                 task_id: t.Optional[int] = None,
+                 managed: t.Optional[bool] = None) -> None:
         self.step_id = step_id
         self.task_id = task_id
         self.managed = managed
