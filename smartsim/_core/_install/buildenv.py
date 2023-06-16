@@ -96,41 +96,31 @@ class Version_(str):
         # return micro with string modifier i.e. 1.2.3+cpu -> 3+cpu
         return str(pkg_resources.parse_version(self)).split(".")[2]
 
-    def __gt__(self, cmp: object) -> bool:
-        if not isinstance(cmp, Version):
-            return False
+    def __gt__(self, cmp: t.Any) -> bool:
         try:
             return Version(self).__gt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__gt__(cmp)
 
-    def __lt__(self, cmp: object) -> bool:
-        if not isinstance(cmp, Version):
-            return False
+    def __lt__(self, cmp: t.Any) -> bool:
         try:
             return Version(self).__lt__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__lt__(cmp)
 
-    def __eq__(self, cmp: object) -> bool:
-        if not isinstance(cmp, Version):
-            return False
+    def __eq__(self, cmp: t.Any) -> bool:
         try:
             return Version(self).__eq__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__eq__(cmp)
 
-    def __ge__(self, cmp: object) -> bool:
-        if not isinstance(cmp, Version):
-            return False
+    def __ge__(self, cmp: t.Any) -> bool:
         try:
             return Version(self).__ge__(self._convert_to_version(cmp))
         except InvalidVersion:
             return super().__ge__(cmp)
 
-    def __le__(self, cmp: object) -> bool:
-        if not isinstance(cmp, Version):
-            return False
+    def __le__(self, cmp: t.Any) -> bool:
         try:
             return Version(self).__le__(self._convert_to_version(cmp))
         except InvalidVersion:
