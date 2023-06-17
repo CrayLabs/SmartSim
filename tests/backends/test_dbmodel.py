@@ -384,7 +384,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -453,7 +453,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -518,7 +518,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     # Create a third model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -532,7 +532,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
 
     # Colocate a database with the ensemble with two ensemble members
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -638,7 +638,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
 
     # Colocate a database with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port = test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -661,7 +661,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     colo_ensemble.add_model(colo_model)
 
     # Colocate a database with the new ensemble member
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         limit_app_cpus=False,
@@ -714,7 +714,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -741,7 +741,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 
     # Colocate a db with each ensemble member
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -776,7 +776,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     )
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
-            entity.colocate_db(
+            entity.colocate_db_tcp(
                 port=test_port + i,
                 db_cpus=1,
                 limit_app_cpus=False,

@@ -234,7 +234,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -313,7 +313,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     # to each entity via file
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -329,7 +329,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         )
 
     # Colocate a db with the non-ensemble Model
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         limit_app_cpus=False,
@@ -418,7 +418,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     # and then add a script via file
     for i, entity in enumerate(colo_ensemble):
         entity.disable_key_prefixing()
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -434,7 +434,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         )
 
     # Add a colocated database to the non-ensemble SmartSim Model
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         limit_app_cpus=False,
@@ -492,7 +492,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # Create a SmartSim model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
+    colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
         limit_app_cpus=False,
@@ -519,7 +519,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
 
     # Add a colocated database for each ensemble member
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
+        entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
             limit_app_cpus=False,
@@ -557,7 +557,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     for i, entity in enumerate(colo_ensemble):
         with pytest.raises(SSUnsupportedError):
-            entity.colocate_db(
+            entity.colocate_db_tcp(
                 port=test_port + i,
                 db_cpus=1,
                 limit_app_cpus=False,
