@@ -45,10 +45,9 @@ def main():
 
     assert client.poll_model("test_script2", 500, 30)
     client.run_script("test_script2", "negate", ["test_array"], ["test_output"])
-    print(f"Return value from test_script_2: {returned}")
     returned = client.get_tensor("test_output")
+    print(f"Return value from test_script_2: {returned}")
     print(f"Expected value from test_script2: {-array}")
-
     assert returned == approx(-array)
 
     if client.model_exists("test_func"):
