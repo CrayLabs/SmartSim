@@ -41,7 +41,7 @@ def execute_cmd(
     cmd_list: t.List[str],
     shell: bool = False,
     cwd: t.Optional[str] = None,
-    env: t.Optional[t.Dict] = None,
+    env: t.Optional[t.Dict[str, str]] = None,
     proc_input: str = "",
     timeout: t.Optional[int] = None,
 ) -> t.Tuple[int, str, str]:
