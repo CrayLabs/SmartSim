@@ -409,6 +409,9 @@ class RedisAIBuilder(Builder):
             "--recursive",
             git_url,
         ]
+        
+        checkout_osx_fix: t.List[str] = []
+
         # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
         # TODO: Look for a better way to do this or wait for RAI patch
         if sys.platform == "darwin" and branch == "v1.2.7" and self.onnx:
@@ -426,8 +429,7 @@ class RedisAIBuilder(Builder):
                 branch,
                 "--depth=1",
                 "RedisAI",
-            ]
-            checkout_osx_fix: t.List[str] = []
+            ]            
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         if checkout_osx_fix:
