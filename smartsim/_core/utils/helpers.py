@@ -191,6 +191,17 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
         return "=".join(("--" + arg_name, str(value)))
 
 
+def _installed(base_path: Path, backend: str) -> bool:
+    """
+    Check if a backend is available for the RedisAI module.
+    """
+    backend_key = f"redisai_{backend}"
+    backend_path = base_path / backend_key / f"{backend_key}.so"
+    backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+    if backend_so.is_file():
+        return True
+    return False
+
 def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
     """Check which ML backends are available for the RedisAI module.
 
@@ -209,13 +220,8 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     # import here to avoid circular import
     from ..._core.config import CONFIG
 
-    installed = []
-    base_path: Path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    backends = ["tensorflow", "torch", "onnxruntime", "tflite"]
 
-    for backend in ["tensorflow", "torch", "onnxruntime", "tflite"]:
-        backend_path = base_path / f"redisai_{backend}" / f"redisai_{backend}.so"
-        backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-        if backend_so.is_file():
-            installed.append(backend)
-
+    installed = [backend for backend in backends if _installed(base_path, backend)]
     return installed
