@@ -55,7 +55,7 @@ def execute_cmd(
     :type cwd: str, optional
     :param env: environment to launcher process with,
                 defaults to None (current env)
-    :type env: dict, optional
+    :type env: dict[str, str], optional
     :param proc_input: input to the process, defaults to ""
     :type proc_input: str, optional
     :param timeout: timeout of the process, defaults to None
@@ -94,7 +94,7 @@ def execute_cmd(
 
 
 def execute_async_cmd(
-    cmd_list: t.List[str], cwd: str, env: t.Optional[t.Dict] = None, out: int = PIPE, err: int = PIPE
+    cmd_list: t.List[str], cwd: str, env: t.Optional[t.Dict[str, str]] = None, out: int = PIPE, err: int = PIPE
 ) -> psutil.Popen:
     """Execute an asynchronous command
 
@@ -106,7 +106,7 @@ def execute_async_cmd(
     :param cwd: current working directory
     :type cwd: str
     :param env: environment variables to set
-    :type env: dict
+    :type env: dict[str, str]
     :return: the subprocess object
     :rtype: psutil.Popen
     """

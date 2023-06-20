@@ -67,7 +67,7 @@ class Version_(str):
     includes some helper methods for comparing versions.
     """
 
-    def _convert_to_version(self, vers: t.Union[str, Iterable, packaging.version.Version]) -> t.Any:
+    def _convert_to_version(self, vers: t.Union[str, Iterable[packaging.version.Version], packaging.version.Version]) -> t.Any:
         if isinstance(vers, Version):
             return vers
         elif isinstance(vers, str):
