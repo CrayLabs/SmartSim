@@ -88,14 +88,14 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodes"] = int(nodes)
 
-    def make_mpmd(self, srun_settings: RunSettings) -> None:
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``srun`` commands
 
         This connects the two settings to be executed with a single
         Model instance
 
-        :param srun_settings: RunSettings instance
-        :type srun_settings: RunSettings
+        :param settings: SrunSettings instance
+        :type settings: SrunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -105,7 +105,7 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
-        self.mpmd.append(srun_settings)
+        self.mpmd.append(settings)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job

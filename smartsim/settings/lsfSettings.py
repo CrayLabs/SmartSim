@@ -207,8 +207,8 @@ class JsrunSettings(RunSettings):
         Optionally, this method adds an instance of ``JsrunSettings`` to
         the list of settings to be launched in the same ERF file.
 
-        :param aprun_settings: ``JsrunSettings`` instance, defaults to None
-        :type aprun_settings: JsrunSettings, optional
+        :param settings: ``JsrunSettings`` instance
+        :type settings: JsrunSettings, optional
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(

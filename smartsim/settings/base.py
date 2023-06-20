@@ -340,7 +340,7 @@ class RunSettings(SettingsBase):
         """Make job an MPMD job
 
         :param settings: ``RunSettings`` instance
-        :type aprun_settings: RunSettings
+        :type settings: RunSettings
         """
         logger.warning(
             (

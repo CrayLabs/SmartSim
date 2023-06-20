@@ -64,14 +64,14 @@ class AprunSettings(RunSettings):
         )
         self.mpmd: t.List[RunSettings] = []
 
-    def make_mpmd(self, aprun_settings: RunSettings) -> None:
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make job an MPMD job
 
         This method combines two ``AprunSettings``
         into a single MPMD command joined with ':'
 
-        :param aprun_settings: ``AprunSettings`` instance
-        :type aprun_settings: AprunSettings
+        :param settings: ``AprunSettings`` instance
+        :type settings: AprunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -81,7 +81,7 @@ class AprunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
-        self.mpmd.append(aprun_settings)
+        self.mpmd.append(settings)
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus to use per task
