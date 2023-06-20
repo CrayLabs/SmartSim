@@ -102,7 +102,7 @@ def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 1
         # wait for cluster to spin up
         time.sleep(5)
         try:
-            redis_tester = RedisCluster(startup_nodes=cluster_nodes)
+            redis_tester: RedisCluster = RedisCluster(startup_nodes=cluster_nodes)
             redis_tester.set("__test__", "__test__")
             redis_tester.delete("__test__")  # type: ignore
             logger.debug("Cluster status verified")
