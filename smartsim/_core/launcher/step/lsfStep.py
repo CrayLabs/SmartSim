@@ -123,11 +123,14 @@ class JsrunStep(Step):
         :type run_settings: RunSettings
         """
         super().__init__(name, cwd, run_settings)
-        self.run_settings = run_settings
         self.alloc = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    @property
+    def run_settings(self) -> RunSettings:
+        return self.step_settings
 
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
