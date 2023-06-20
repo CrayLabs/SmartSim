@@ -198,9 +198,8 @@ def _installed(base_path: Path, backend: str) -> bool:
     backend_key = f"redisai_{backend}"
     backend_path = base_path / backend_key / f"{backend_key}.so"
     backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-    if backend_so.is_file():
-        return True
-    return False
+    
+    return backend_so.is_file()
 
 def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
     """Check which ML backends are available for the RedisAI module.
