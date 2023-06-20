@@ -352,7 +352,7 @@ class JsrunSettings(RunSettings):
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
             if cpu_per_rs_flag in self.run_args:
                 cpus_per_flag_set = True
-                cpu_per_rs = int(self.run_args.get(cpu_per_rs_flag, None) or 0)
+                cpu_per_rs = int(self.run_args.get(cpu_per_rs_flag, 0))
                 if cpu_per_rs < db_cpus:
                     msg = f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, "
                     msg += f"but colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
