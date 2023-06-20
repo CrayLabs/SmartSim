@@ -53,7 +53,8 @@ class LocalStep(Step):
 
         if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
-            bash = shutil.which("bash") or ""
+            if not (bash := shutil.which("bash")):
+                raise RuntimeError("Unable to locate bash interpreter")
 
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
