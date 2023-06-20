@@ -39,7 +39,7 @@ logger = get_logger(__name__)
 
 
 class Step:
-    def __init__(self, name: str, cwd: str, step_settings: t.Union[SettingsBase, None]) -> None:
+    def __init__(self, name: str, cwd: str, step_settings: SettingsBase) -> None:
         self.name = self._create_unique_name(name)
         self.entity_name = name
         self.cwd = cwd
