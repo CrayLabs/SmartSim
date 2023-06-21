@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import os.path as osp
+import sys
 import time
 import typing as t
 
@@ -69,6 +70,7 @@ class Step:
         return osp.join(self.cwd, self.entity_name + ending)
 
     def get_colocated_launch_script(self) -> str:
+        from .localStep import LocalStep
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
 
@@ -81,15 +83,11 @@ class Step:
         else:
             db_log_file = "/dev/null"
 
-        # if user specified to use taskset with local launcher
-        # (not allowed b/c MacOS doesn't support it)
-        # TODO: support this only on linux
-        if (
-            self.__class__.__name__ == "LocalStep"
-            and db_settings["limit_db_cpus"] is True
-        ):  # pragma: no cover
-            logger.warning("Setting limit_db_cpus=False for local launcher")
-            db_settings["limit_db_cpus"] = False
+        if sys.platform == 'darwin':
+            if isinstance(self, LocalStep) and db_settings["limit_db_cpus"] is True:
+                logger.warning(
+                    "DB pinning is not supported on MacOS, setting limit_db_cpus = False")
+                db_settings["limit_db_cpus"] = False
 
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch

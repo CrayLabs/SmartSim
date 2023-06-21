@@ -122,9 +122,6 @@ def _build_colocated_wrapper_cmd(
     # up the backgrounded db process
 
     cmd = []
-    if limit_db_cpus:
-        cmd.extend(["taskset -c", f"{db_cpu_list}"])
-
     cmd.extend(
         [
             sys.executable,
@@ -143,7 +140,17 @@ def _build_colocated_wrapper_cmd(
         cmd.extend(["+ifname", ",".join(ifname)])
     cmd.append("+command")
     # collect DB binaries and libraries from the config
-    db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
+
+    db_cmd = []
+    if limit_db_cpus:
+        db_cmd.extend([
+            'taskset', '-c', db_cpu_list
+        ])
+    db_cmd.extend([
+        CONFIG.database_exe,
+        CONFIG.database_conf,
+        "--loadmodule", CONFIG.redisai]
+    )
 
     # add extra redisAI configurations
     for arg, value in (rai_args or {}).items():
