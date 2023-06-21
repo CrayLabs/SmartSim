@@ -104,7 +104,7 @@ def create_run_settings(
     run_command: str = "auto",
     run_args: t.Optional[t.Dict[str, str]] = None,
     env_vars: t.Optional[t.Dict[str, str]] = None,
-    container: t.Optional[bool] = None,
+    container: t.Optional[Container] = None,
     **kwargs: t.Any,
 ) -> RunSettings:
     """Create a ``RunSettings`` instance.
@@ -124,6 +124,8 @@ def create_run_settings(
     :type run_args: list[str], optional
     :param env_vars: environment variables to pass to the executable
     :type env_vars: dict[str, str], optional
+    :param container: container type for workload (e.g. "singularity"), defaults to None
+    :type container: Container, optional
     :return: the created ``RunSettings``
     :rtype: RunSettings
     :raises SmartSimError: if run_command=="auto" and detection fails

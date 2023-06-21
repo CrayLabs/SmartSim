@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim.settings import Container
+
 from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
@@ -43,7 +45,7 @@ class RunSettings(SettingsBase):
         run_command: str = "",
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        container: t.Optional[bool] = None,
+        container: t.Optional[Container] = None,
         **kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``

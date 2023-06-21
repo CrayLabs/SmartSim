@@ -38,7 +38,7 @@ from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import get_logger
-from .settings import settings, base
+from .settings import settings, base, Container
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -560,7 +560,7 @@ class Experiment:
         run_command: str = "auto",
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        container: t.Optional[bool] = None,
+        container: t.Optional[Container] = None,
         **kwargs: t.Any,
     ) -> settings.RunSettings:
         """Create a ``RunSettings`` instance.
@@ -597,11 +597,10 @@ class Experiment:
         :param env_vars: environment variables to pass to the executable
         :type env_vars: dict[str, str], optional
         :param container: if execution environment is containerized
-        :type container: bool, optional
+        :type container: Container, optional
         :return: the created ``RunSettings``
         :rtype: RunSettings
         """
-        container = container or False
 
         try:
             return settings.create_run_settings(
