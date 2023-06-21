@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import typing as t
 
-from smartsim.settings import Container
+from smartsim.settings.containers import Container
 
 from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
