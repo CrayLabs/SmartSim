@@ -84,7 +84,7 @@ the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
     :noindex:
 
 Here is an example of creating a simple model that is colocated with an
-``Orchestrator`` deployment
+``Orchestrator`` deployment using Unix Domain Sockets
 
 .. code-block:: python
 
@@ -94,20 +94,25 @@ Here is an example of creating a simple model that is colocated with an
   colo_settings = exp.create_run_settings(exe="./some_mpi_app")
 
   colo_model = exp.create_model("colocated_model", colo_settings)
-  colo_model.colocate_db_tcp(
-          port=6780,              # database port
+  colo_model.colocate_db_uds(
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
-          limit_app_cpus=False,   # don't oversubscribe app with database cpus
-          ifname=network_interface # specify network interface(s) to use (i.e. "ib0" or ["ib0", "lo"])
+          pin_db_cpus=True,       # Pin the affinities of the co-located database
+                                  # to specific processors
   )
   exp.start(colo_model)
 
 
 By default, SmartSim will attempt to make sure that the database and the application
 do not fight over resources by taking over the affinity mapping process locally on
-each node. This can be disabled by setting ``limit_app_cpus`` to ``False``.
+each node. This can be disabled by setting ``pin_db_cpus`` to ``False``.
 
+Especially for multicore machines, it can be useful to pin the CPUs used by the database.
+This is enabled by default and the database will automatically be bound to the first
+logical processors starting from 0 to ``db_cpus-1``. To specify a custom set of cpus,
+set ``db_cpu_list`` following the same syntax as the Linux command ``taskset -c``. The
+RunSettings for the simulation should similarly be bound (e.g. in Slurm using
+``cpu-bind``) to bind the application to a separate set of cores.
 
 Redis
 =====

@@ -167,7 +167,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        limit_db_cpus: bool = False,
+        limit_db_cpus: bool = True,
         db_cpu_list: t.Optional[str] = None,
         debug: bool = False,
         **kwargs: t.Any,
@@ -200,7 +200,7 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_db_cpus: whether to limit the number of cpus used by the app, defaults to True
+        :param limit_db_cpus: whether to limit the number of cpus used by the database defaults to True
         :type limit_db_cpus: bool, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
