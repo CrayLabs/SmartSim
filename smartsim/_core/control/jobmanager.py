@@ -314,7 +314,7 @@ class JobManager:
         addresses = []
         for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
-                db_entity: t.Union[DBNode, Orchestrator] = db_job.entity
+                db_entity = db_job.entity
 
                 for combine in itertools.product(db_job.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
