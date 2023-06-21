@@ -313,7 +313,7 @@ class DataDownloader:
             self._info.download(client)
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
-        self.client: t.Optional[Client] = None
+        self._client: t.Optional[Client] = None
         sskeyin = environ.get("SSKEYIN", "")
         self.uploader_keys = sskeyin.split(",")
 
@@ -321,6 +321,12 @@ class DataDownloader:
 
         if init_samples:
             self.init_samples(max_fetch_trials)
+
+    @property
+    def client(self) -> Client:
+        if self._client is None:
+            raise ValueError("Client not initialized")
+        return self._client
 
     def log(self, message: str) -> None:
         if self.verbose:
@@ -390,7 +396,7 @@ class DataDownloader:
         :param init_trials: maximum number of attempts to fetch data
         :type init_trials: int
         """
-        self.client = Client(self.address, self.cluster)
+        self._client = Client(self.address, self.cluster)
 
         num_trials = 0
         max_trials = init_trials or -1
@@ -410,9 +416,6 @@ class DataDownloader:
             np.random.shuffle(self.indices)
 
     def _data_exists(self, batch_name: str, target_name: str) -> bool:
-        if not self.client:
-            raise ValueError("Client not initialized")
-
         if self.need_targets:
             return self.client.tensor_exists(batch_name) and self.client.tensor_exists(
                 target_name
@@ -421,9 +424,6 @@ class DataDownloader:
             return self.client.tensor_exists(batch_name)
 
     def _add_samples(self, indices: t.List[int]) -> None:
-        if not self.client:
-            raise ValueError("Client not initialized")
-
         datasets: t.List[Dataset] = []
 
         if self.num_replicas == 1:
@@ -460,9 +460,6 @@ class DataDownloader:
         self.log(f"New dataset size: {self.num_samples}, batches: {len(self)}")
 
     def _update_samples_and_targets(self) -> None:
-        if not self.client:
-            self.client = Client(self.address, self.cluster)
-            
         self.log(f"Rank {self.replica_rank} out of {self.num_replicas} replicas")
 
         for uploader_idx, uploader_key in enumerate(self.uploader_keys):
