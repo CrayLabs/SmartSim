@@ -215,8 +215,7 @@ class JsrunSettings(RunSettings):
                 "Colocated models cannot be run as a mpmd workload"
             )
 
-        if settings:
-            self.mpmd.append(settings)
+        self.mpmd.append(settings)
 
     def set_mpmd_preamble(self, preamble_lines: t.List[str]) -> None:
         """Set preamble used in ERF file. Typical lines include

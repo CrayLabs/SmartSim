@@ -614,12 +614,12 @@ class Orchestrator(EntityList):
 
             run_settings.set_erf_sets(erf_sets)
 
-            if erf_rs:
-                erf_rs.make_mpmd(run_settings)
-            else:
-                run_settings.make_mpmd(run_settings)
+            if not erf_rs:
                 erf_rs = run_settings
+                continue
 
+            erf_rs.make_mpmd(run_settings)
+            
         kwargs["run_args"] = run_args
 
         return erf_rs
