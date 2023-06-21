@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import subprocess
 import typing as t
 from pathlib import Path
@@ -60,24 +61,38 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
-    # form pip install command
-    cmd = ["python", "-m", "pip", "install"]
-    cmd.extend(packages)
     if end_point:
-        cmd.extend(["-f", end_point])
+        packages.append(f"-f {end_point}")
 
-    cmd_arg = " ".join(cmd)
+    # form pip install command
+    cmd = [sys.executable, "-m", "pip", "install"] + packages
 
     if verbose:
-        logger.info(f"Installing packages {packages}...")
+        logger.info(f"Installing packages: {', '.join(packages)}")
     proc = subprocess.Popen(
-        cmd_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     _, err = proc.communicate()
     returncode = int(proc.returncode)
     if returncode != 0:
-        error = f"{packages} installation failed with exitcode {returncode}\n"
-        error += err.decode("utf-8")
+        error = (
+            f"'{' '.join(cmd)}' installation failed with exitcode {returncode}\n"
+            f"{err.decode('utf-8')}"
+        )
         raise BuildError(error)
     if verbose:
         logger.info(f"{packages} installed successfully")
+
+def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
+    if verbose:
+        logger.info(f"Attempting to uninstall:\n  {', '.join(packages)}")
+    cmd = [sys.executable, "-m", "pip", "uninstall", "-y"] + packages
+    proc = subprocess.Popen(cmd,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    _, err = proc.communicate()
+    retcode = int(proc.returncode)
+    if retcode != 0:
+        raise BuildError(f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
+                f"{err.decode('utf-8')}")

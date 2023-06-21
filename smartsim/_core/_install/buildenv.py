@@ -546,11 +546,13 @@ class BuildEnv:
         try:
             installed = Version_(pkg_resources.get_distribution(package).version)
             if version:
+                if not isinstance(version, Version_):
+                    version = Version_(version)
                 # detect if major or minor versions differ
                 if installed.major != version.major or installed.minor != version.minor:
                     msg = (
-                        f"Incompatible version for {package} detected.\n"
-                        + f"{package} {version} requested but {package} {installed} installed."
+                        f"Incompatible version for {package} detected: "
+                        f"{package} {version} requested but {package} {installed} installed."
                     )
                     raise SetupError(msg)
             return True

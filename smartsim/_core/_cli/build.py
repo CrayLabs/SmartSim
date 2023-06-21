@@ -33,7 +33,7 @@ import pkg_resources
 import typing as t
 from tabulate import tabulate
 
-from smartsim._core._cli.utils import color_bool, pip_install
+from smartsim._core._cli.utils import color_bool, pip_install, pip_uninstall
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner, DbEngine
 from smartsim._core._install.builder import BuildError
@@ -156,7 +156,7 @@ class Build:
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
-                
+
                 if self.verbose:
                     logger.info("Build Environment:")
                     env = self.build_env.as_dict()
@@ -253,9 +253,9 @@ class Build:
         # the build however, as we use onnx and tf directly from RAI instead
         # of pip like we do PyTorch.
         if onnx:
-            self.check_onnx_install()
+            self.install_onnx_wheels(force=True)
         if tf:
-            self.check_tf_install()
+            self.install_tf_wheel(force=True)
 
         # TORCH
         if torch:
@@ -364,53 +364,57 @@ class Build:
                     logger.error(msg)  # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
 
-    def check_onnx_install(self) -> None:
-        """Check Python environment for ONNX installation"""
+    def install_onnx_wheels(self, force: bool = False) -> None:
+        """Check Python environment for a compatible ONNX installation"""
         if not self.versions.ONNX:
             py_version = sys.version_info
             msg = (
                 "An onnx wheel is not available for "
                 f"Python {py_version.major}.{py_version.minor}. "
-                "Instead consider using Python 3.8 or 3.9 with Onnx "
+                "Instead consider using Python 3.8 or 3.9 with RedisAI "
             )
             if sys.platform == "linux":
                 msg += "1.2.5 or "
             msg += "1.2.7."
             raise SetupError(msg)
-        try:
-            if not self.build_env.check_installed("onnx", self.versions.ONNX):
-                msg = (
-                    f"ONNX {self.versions.ONNX} not installed in python environment. "
-                    + f"Consider installing onnx=={self.versions.ONNX} with pip"
-                )
-                logger.warning(msg)
-            else:
-                logger.info(
-                    f"ONNX {self.versions.ONNX} installed in Python environment"
-                )
-        except SetupError as e:
-            logger.warning(str(e))
+        self._install_py_wheels({
+            "onnx": f"{self.versions.ONNX}",
+            "skl2onnx": f"{self.versions.REDISAI.skl2onnx}",
+            "onnxmltools": f"{self.versions.REDISAI.onnxmltools}",
+            "scikit-learn": f"{self.versions.REDISAI.__getattr__('scikit-learn')}",
+        }, force=force)
 
-    def check_tf_install(self) -> None:
-        """Check Python environment for TensorFlow installation"""
+    def install_tf_wheel(self, force: bool = False) -> None:
+        """Check Python environment for a compatible TensorFlow installation"""
+        self._install_py_wheels({"tensorflow": self.versions.TENSORFLOW},
+                 force=force)
 
-        try:
-            if not self.build_env.check_installed(
-                "tensorflow", self.versions.TENSORFLOW
-            ):
-                msg = (
-                    f"TensorFlow {self.versions.TENSORFLOW} not installed in Python environment. "
-                    + f"Consider installing tensorflow=={self.versions.TENSORFLOW} with pip"
-                )
-                logger.warning(msg)
-            else:
-                logger.info(
-                    f"TensorFlow {self.versions.TENSORFLOW} installed in Python environment"
-                )
-        except SetupError as e:
-            logger.warning(str(e))
+    def _install_py_wheels(self, packages: t.Dict[str, t.Optional[str]], force: bool = False) -> None:
+        to_uninstall: t.List[str] = []
+        to_install: t.List[str] = []
 
-    def check_backends_install(self) -> None:
+        for name, version in packages.items():
+            spec = f"{name}=={version}" if version else name
+            try:
+                if self.build_env.check_installed(name, version):
+                    # Installed at the correct version, nothing to do here
+                    logger.info(f"{spec} already installed in Python environment")
+                else:
+                    # Not installed, install prefered version
+                    to_install.append(spec)
+            except SetupError as e:
+                # Incompatible version found
+                logger.warning(str(e))
+                if force:
+                    logger.info(f"Queueing {name} for reinstall")
+                    to_uninstall.append(name)
+                    to_install.append(spec)
+        if to_uninstall:
+            pip_uninstall(to_uninstall, verbose=self.verbose)
+        if to_install:
+            pip_install(to_install, verbose=self.verbose)
+
+    def check_backends_install(self):
         """Checks if backends have already been installed.
         Logs details on how to proceed forward
         if the RAI_PATH environment variable is set or if
