@@ -35,7 +35,9 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 from ..settings.base import BatchSettings, RunSettings
+from ..log import get_logger
 
+logger = get_logger(__name__)
 
 class Model(SmartSimEntity):
     def __init__(
@@ -152,12 +154,11 @@ class Model(SmartSimEntity):
 
     def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
         """An alias for ``Model.colocate_db_tcp``"""
-        warnings.warn(
+        logger.warning(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
                 "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
-            ),
-            category=DeprecationWarning,
+            )
         )
         self.colocate_db_tcp(*args, **kwargs)
 
@@ -166,7 +167,8 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        limit_app_cpus: bool = True,
+        limit_db_cpus: bool = False,
+        db_cpu_list: t.Optional[str] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -198,8 +200,8 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
-        :type limit_app_cpus: bool, optional
+        :param limit_db_cpus: whether to limit the number of cpus used by the app, defaults to True
+        :type limit_db_cpus: bool, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -211,9 +213,11 @@ class Model(SmartSimEntity):
             "socket_permissions": socket_permissions,
             "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
         }
+
         common_options = {
             "cpus": db_cpus,
-            "limit_app_cpus": limit_app_cpus,
+            "limit_db_cpus": limit_db_cpus,
+            "db_cpu_list": db_cpu_list,
             "debug": debug,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
@@ -223,7 +227,8 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        limit_app_cpus: bool = True,
+        limit_db_cpus: bool = True,
+        db_cpu_list: t.Optional[str] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -255,8 +260,8 @@ class Model(SmartSimEntity):
         :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
-        :type limit_app_cpus: bool, optional
+        :param limit_db_cpus: whether to limit the number of cpus used by the database, defaults to True
+        :type limit_db_cpus: bool, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -267,7 +272,8 @@ class Model(SmartSimEntity):
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
             "cpus": db_cpus,
-            "limit_app_cpus": limit_app_cpus,
+            "limit_db_cpus": limit_db_cpus,
+            "db_cpu_list": db_cpu_list,
             "debug": debug,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
@@ -292,6 +298,35 @@ class Model(SmartSimEntity):
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
         # TODO list which db settings can be extras
+
+        cpus = common_options["cpus"]
+        print(cpus)
+        # Deal with cases where the database should be pinned to cpus
+        # (1) if the user set a db_cpu_list, but not limit_db_cpus
+        if common_options["db_cpu_list"] and not common_options["limit_db_cpus"]:
+            logger.warning(
+                "limit_db_cpus is False, but db_cpu_list is not None. Setting limit_db_cpus=True"
+            )
+            common_options["limit_db_cpus"] = True
+        # (2) limit_db_cpus, but not db_cpu_list is specified automatically set
+        #     pin to the cpus 0:db_cpus-1
+        if common_options["limit_db_cpus"] and not common_options["db_cpu_list"]:
+            if cpus > 1:
+                cpu_list = f"0-{cpus-1}"
+            elif cpus == 1:
+                cpu_list = "0"
+            else:
+                raise ValueError("db_cpus must be a positive number")
+
+            logger.warning(
+                (
+                    "limit_db_cpus is True, but db_cpu_list was not specified. Automatically "
+                    f"pinning to processors {cpu_list}"
+                )
+            )
+            print(cpu_list)
+            common_options["db_cpu_list"] = cpu_list
+
         colo_db_config = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)

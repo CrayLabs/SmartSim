@@ -70,11 +70,8 @@ def write_colocated_launch_script(file_name: str, db_log: str, colocated_setting
         f.write(f"{colocated_cmd}\n")
         f.write(f"DBPID=$!\n\n")
 
-        if colocated_settings["limit_app_cpus"]:
-            cpus = colocated_settings["cpus"]
-            f.write(f"taskset -c 0-$(nproc --ignore={str(cpus+1)}) $@\n\n")
-        else:
-            f.write(f"$@\n\n")
+        # Write the actual launch command for the app
+        f.write(f"$@\n\n")
 
 
 def _build_colocated_wrapper_cmd(
@@ -84,12 +81,14 @@ def _build_colocated_wrapper_cmd(
     extra_db_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
     ifname: t.Optional[t.Union[str, t.List[str]]] = None,
+    limit_db_cpus: bool = False,
+    db_cpu_list: t.Optional[str] = None,
     **kwargs: t.Any,
 ) -> str:
     """Build the command use to run a colocated DB application
 
     :param db_log: log file for the db
-    :type db_log: str    
+    :type db_log: str
     :param cpus: db cpus, defaults to 1
     :type cpus: int, optional
     :param rai_args: redisai args, defaults to None
@@ -100,6 +99,10 @@ def _build_colocated_wrapper_cmd(
     :type port: int
     :param ifname: network interface(s) to bind DB to
     :type ifname: str | list[str], optional
+    :param limit_db_cpus: If True, limit the cpus that the database can run on
+    :type limit_db_cpus: bool, optional
+    :param db_cpu_list: The list of CPUs that the database should be limited to
+    :type db_cpu_list: str, optional
     :return: the command to run
     :rtype: str
     """
@@ -111,18 +114,28 @@ def _build_colocated_wrapper_cmd(
     # the lock on the file.
     lockfile = create_lockfile_name()
 
+
+
+
     # create the command that will be used to launch the
     # database with the python entrypoint for starting
     # up the backgrounded db process
-    cmd = [
-        sys.executable,
-        "-m",
-        "smartsim._core.entrypoints.colocated",
-        "+lockfile",
-        lockfile,
-        "+db_cpus",
-        str(cpus),
-    ]
+
+    cmd = []
+    if limit_db_cpus:
+        cmd.extend(["taskset -c", f"{db_cpu_list}"])
+
+    cmd.extend(
+        [
+            sys.executable,
+            "-m",
+            "smartsim._core.entrypoints.colocated",
+            "+lockfile",
+            lockfile,
+            "+db_cpus",
+            str(cpus),
+        ]
+    )
     # Add in the interface if using TCP/IP
     if ifname:
         if isinstance(ifname, str):

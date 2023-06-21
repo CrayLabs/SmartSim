@@ -86,10 +86,10 @@ class Step:
         # TODO: support this only on linux
         if (
             self.__class__.__name__ == "LocalStep"
-            and db_settings["limit_app_cpus"] is True
+            and db_settings["limit_db_cpus"] is True
         ):  # pragma: no cover
-            logger.warning("Setting limit_app_cpus=False for local launcher")
-            db_settings["limit_app_cpus"] = False
+            logger.warning("Setting limit_db_cpus=False for local launcher")
+            db_settings["limit_db_cpus"] = False
 
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
