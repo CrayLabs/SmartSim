@@ -61,11 +61,13 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
-    if end_point:
-        packages.append(f"-f {end_point}")
-
     # form pip install command
-    cmd = [sys.executable, "-m", "pip", "install"] + packages
+    cmd = [sys.executable, "-m", "pip", "install"]
+
+    if end_point:
+        cmd.extend(("-f", str(end_point)))
+
+    cmd.extend(packages)
 
     if verbose:
         logger.info(f"Installing packages: {', '.join(packages)}")
@@ -81,7 +83,7 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
         )
         raise BuildError(error)
     if verbose:
-        logger.info(f"{packages} installed successfully")
+        logger.info(f"{', '.join(packages)} installed successfully")
 
 def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
     if verbose:
@@ -96,3 +98,5 @@ def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
     if retcode != 0:
         raise BuildError(f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
                 f"{err.decode('utf-8')}")
+    if verbose:
+        logger.info(f"{', '.join(packages)} uninstalled successfully")
