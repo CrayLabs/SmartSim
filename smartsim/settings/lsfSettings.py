@@ -43,7 +43,7 @@ class JsrunSettings(RunSettings):
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        **kwargs,
+        **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``jsrun`` command
 
@@ -68,9 +68,9 @@ class JsrunSettings(RunSettings):
 
         # Parameters needed for MPMD run
         self.erf_sets = {"host": "*", "cpu": "*", "ranks": "1"}
-        self.mpmd_preamble_lines = []
-        self.mpmd = []
-        self.individual_suffix = None
+        self.mpmd_preamble_lines: t.List[str] = []
+        self.mpmd: t.List[RunSettings] = []
+        self.individual_suffix = ""
 
     reserved_run_args = {"chdir", "h"}
 
@@ -96,7 +96,7 @@ class JsrunSettings(RunSettings):
         :type cpus_per_rs: int or str
         """
         if self.colocated_db_settings:
-            db_cpus = self.colocated_db_settings["db_cpus"]
+            db_cpus = int(self.colocated_db_settings["db_cpus"])
             if cpus_per_rs < db_cpus:
                 raise ValueError(
                     f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than db_cpus ({db_cpus})"
@@ -199,7 +199,7 @@ class JsrunSettings(RunSettings):
         """
         self.run_args["bind"] = binding
 
-    def make_mpmd(self, jsrun_settings: t.Optional[JsrunSettings] = None):
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make step an MPMD (or SPMD) job.
 
         This method will activate job execution through an ERF file.
@@ -207,18 +207,15 @@ class JsrunSettings(RunSettings):
         Optionally, this method adds an instance of ``JsrunSettings`` to
         the list of settings to be launched in the same ERF file.
 
-        :param aprun_settings: ``JsrunSettings`` instance, defaults to None
-        :type aprun_settings: JsrunSettings, optional
+        :param settings: ``JsrunSettings`` instance
+        :type settings: JsrunSettings, optional
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )
 
-        if len(self.mpmd) == 0:
-            self.mpmd.append(self)
-        if jsrun_settings:
-            self.mpmd.append(jsrun_settings)
+        self.mpmd.append(settings)
 
     def set_mpmd_preamble(self, preamble_lines: t.List[str]) -> None:
         """Set preamble used in ERF file. Typical lines include
@@ -352,9 +349,9 @@ class JsrunSettings(RunSettings):
     def _prep_colocated_db(self, db_cpus: int) -> None:
         cpus_per_flag_set = False
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
-            if cpu_per_rs_flag in self.run_args:
+            if run_arg_value := self.run_args.get(cpu_per_rs_flag, 0):
                 cpus_per_flag_set = True
-                cpu_per_rs = self.run_args[cpu_per_rs_flag]
+                cpu_per_rs = int(run_arg_value)
                 if cpu_per_rs < db_cpus:
                     msg = f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, "
                     msg += f"but colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
@@ -394,7 +391,7 @@ class BsubBatchSettings(BatchSettings):
         time: t.Optional[str] = None,
         project: t.Optional[str] = None,
         batch_args: t.Optional[t.Dict[str, str]] = None,
-        smts: t.Optional[int] = None,
+        smts: int = 0,
         **kwargs: t.Any,
     ) -> None:
         """Specify ``bsub`` batch parameters for a job
@@ -407,7 +404,7 @@ class BsubBatchSettings(BatchSettings):
         :type project: str, optional
         :param batch_args: overrides for LSF batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
-        :param smts: SMTs, defaults to None
+        :param smts: SMTs, defaults to 0
         :type smts: int, optional
         """
         if project:
@@ -424,10 +421,10 @@ class BsubBatchSettings(BatchSettings):
             **kwargs,
         )
 
+        self.smts = 0
         if smts:
-            self.set_smts(smts)
-        else:
-            self.smts = None
+            self.set_smts(smts)            
+
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
 
@@ -457,7 +454,7 @@ class BsubBatchSettings(BatchSettings):
         :param smts: SMT (e.g on Summit: 1, 2, or 4)
         :type smts: int
         """
-        self.smts = int(smts)
+        self.smts = smts
 
     def set_project(self, project: str) -> None:
         """Set the project

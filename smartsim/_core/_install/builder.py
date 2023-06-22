@@ -30,6 +30,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import typing as t
 from pathlib import Path
 from shutil import which
 from subprocess import SubprocessError
@@ -42,7 +43,7 @@ from subprocess import SubprocessError
 #   - check cmake version and use system if possible to avoid conflicts
 
 
-def expand_exe_path(exe):
+def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
 
     :param exe: executable or file
@@ -79,8 +80,10 @@ class Builder:
         re.IGNORECASE,
     )
 
-    def __init__(self, env, jobs=1, verbose=False):
-
+    def __init__(self,
+                 env: t.Dict[str, t.Any],
+                 jobs: t.Optional[int] = 1,
+                 verbose: bool = False) -> None:
         # build environment from buildenv
         self.env = env
 
@@ -97,7 +100,7 @@ class Builder:
         self.lib_path = dependency_path / "lib"
 
         # Set wether build process will output to std output
-        self.out = subprocess.DEVNULL
+        self.out: t.Optional[int] = subprocess.DEVNULL
         self.verbose = verbose
         if self.verbose:
             self.out = None
@@ -115,24 +118,24 @@ class Builder:
 
     # implemented in base classes
     @property
-    def is_built(self):
+    def is_built(self) -> bool:
         raise NotImplementedError
 
-    def build_from_git(self):
+    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
         raise NotImplementedError
 
-    def binary_path(self, binary):
+    def binary_path(self, binary: str) -> str:
         binary_ = shutil.which(binary)
         if binary_:
             return binary_
         raise BuildError(f"{binary} not found in PATH")
 
-    def copy_file(self, src, dst, set_exe=False):
+    def copy_file(self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False) -> None:
         shutil.copyfile(src, dst)
         if set_exe:
             Path(dst).chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
 
-    def copy_dir(self, src, dst, set_exe=False):
+    def copy_dir(self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False) -> None:
         src = Path(src)
         dst = Path(dst)
         dst.mkdir(exist_ok=True)
@@ -143,14 +146,18 @@ class Builder:
             else:
                 self.copy_file(content, dst / content.name, set_exe=set_exe)
 
-    def is_valid_url(self, url):
+    def is_valid_url(self, url: str) -> bool:
         return re.match(self.url_regex, url) is not None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.build_dir.is_dir():
             shutil.rmtree(str(self.build_dir))
 
-    def run_command(self, cmd, shell=False, out=None, cwd=None):
+    def run_command(self,
+                    cmd: t.List[str],
+                    shell: bool = False,
+                    out: t.Optional[int] = None,
+                    cwd: t.Union[str, Path, None] = None) -> None:
         # option to manually disable output if necessary
         if not out:
             out = self.out
@@ -178,19 +185,23 @@ class DatabaseBuilder(Builder):
     version and url.
     """
 
-    def __init__(self, build_env={}, malloc="libc", jobs=None, verbose=False):
+    def __init__(self, 
+                 build_env: t.Dict[str, t.Any] = {},
+                 malloc: str = "libc",
+                 jobs: t.Optional[int] = None,
+                 verbose: bool = False) -> None:
         super().__init__(build_env, jobs=jobs, verbose=verbose)
         self.malloc = malloc
 
     @property
-    def is_built(self):
+    def is_built(self) -> bool:
         """Check if Redis or KeyDB is built"""
         bin_files = {file.name for file in self.bin_path.iterdir()}
         redis_files = {"redis-server", "redis-cli"}
         keydb_files = {"keydb-server", "keydb-cli"}
         return redis_files.issubset(bin_files) or keydb_files.issubset(bin_files)
 
-    def build_from_git(self, git_url, branch):
+    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
         """Build Redis from git
         :param git_url: url from which to retrieve Redis
         :type git_url: str
@@ -274,15 +285,15 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
-        build_env={},
-        torch_dir="",
-        libtf_dir="",
-        build_torch=True,
-        build_tf=True,
-        build_onnx=False,
-        jobs=None,
-        verbose=False,
-    ):
+        build_env: t.Dict[str, t.Any]={},
+        torch_dir: str = "",
+        libtf_dir: str = "",
+        build_torch: bool = True,
+        build_tf: bool = True,
+        build_onnx: bool = False,
+        jobs: t.Optional[int ] = None,
+        verbose: bool = False,
+    ) -> None:
         super().__init__(build_env, jobs=jobs, verbose=verbose)
 
         # convert to int for RAI build script
@@ -293,16 +304,16 @@ class RedisAIBuilder(Builder):
         self.torch_dir = torch_dir
 
     @property
-    def rai_build_path(self):
+    def rai_build_path(self) -> Path:
         return Path(self.build_dir, "RedisAI")
 
     @property
-    def is_built(self):
+    def is_built(self) -> bool:
         server = self.lib_path.joinpath("backends").is_dir()
         cli = self.lib_path.joinpath("redisai.so").is_file()
         return server and cli
 
-    def copy_tf_cmake(self):
+    def copy_tf_cmake(self) -> None:
         """Copy the FindTensorFlow.cmake file to the build directory
         as the version included in RedisAI is out of date for us.
         Note: opt/cmake/modules removed in RedisAI v1.2.5
@@ -317,7 +328,7 @@ class RedisAIBuilder(Builder):
                 self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
             )
 
-    def symlink_libtf(self, device):
+    def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
         :param device: cpu or gpu
@@ -372,7 +383,7 @@ class RedisAIBuilder(Builder):
             if not dst_file.is_file():
                 os.symlink(src_file, dst_file)
 
-    def build_from_git(self, git_url, branch, device):
+    def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
         """Build RedisAI from git
         :param git_url: url from which to retrieve RedisAI
         :type git_url: str
@@ -398,6 +409,9 @@ class RedisAIBuilder(Builder):
             "--recursive",
             git_url,
         ]
+        
+        checkout_osx_fix: t.List[str] = []
+
         # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
         # TODO: Look for a better way to do this or wait for RAI patch
         if sys.platform == "darwin" and branch == "v1.2.7" and self.onnx:
@@ -415,8 +429,7 @@ class RedisAIBuilder(Builder):
                 branch,
                 "--depth=1",
                 "RedisAI",
-            ]
-            checkout_osx_fix = []
+            ]            
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         if checkout_osx_fix:
@@ -436,8 +449,8 @@ class RedisAIBuilder(Builder):
             f"WITH_ORT={self.onnx}",
             "VERBOSE=1",
             self.binary_path("bash"),
-            self.rai_build_path / "get_deps.sh",
-            device,
+            str(self.rai_build_path / "get_deps.sh"),
+            str(device),
         ]
 
         self.run_command(
@@ -446,7 +459,7 @@ class RedisAIBuilder(Builder):
             cwd=self.rai_build_path,
         )
 
-        if self.libtf_dir:
+        if self.libtf_dir and device:
             self.symlink_libtf(device)
 
         build_cmd = [
@@ -483,7 +496,7 @@ class RedisAIBuilder(Builder):
             self._move_torch_libs()
         self.cleanup()
 
-    def _install_backends(self, device):
+    def _install_backends(self, device: str) -> None:
         """Move backend libraries to smartsim/_core/lib/
         :param device: cpu or cpu
         :type device: str
@@ -498,7 +511,7 @@ class RedisAIBuilder(Builder):
             self.copy_dir(rai_backends, self.lib_path / "backends", set_exe=True)
             self.copy_file(rai_lib, self.lib_path / "redisai.so", set_exe=True)
 
-    def _move_torch_libs(self):
+    def _move_torch_libs(self) -> None:
         """Move pip install torch libraries
         Since we use pip installed torch libraries for building
         RedisAI, we need to move them into the LD_runpath of redisai.so

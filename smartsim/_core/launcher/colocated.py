@@ -83,9 +83,9 @@ def _build_colocated_wrapper_cmd(
     rai_args: t.Optional[t.Dict[str, str]] = None,
     extra_db_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
-    ifname: t.Union[str, t.List[str]] = None,
+    ifname: t.Optional[t.Union[str, t.List[str]]] = None,
     **kwargs: t.Any,
-) -> None:
+) -> str:
     """Build the command use to run a colocated DB application
 
     :param db_log: log file for the db
@@ -133,7 +133,7 @@ def _build_colocated_wrapper_cmd(
     db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
 
     # add extra redisAI configurations
-    for arg, value in rai_args.items():
+    for arg, value in (rai_args or {}).items():
         if value:
             # RAI wants arguments for inference in all caps
             # ex. THREADS_PER_QUEUE=1
@@ -162,13 +162,14 @@ def _build_colocated_wrapper_cmd(
     db_cmd.extend(
         ["--logfile", db_log]
     )  # usually /dev/null, unless debug was specified
-    for db_arg, value in extra_db_args.items():
-        # replace "_" with "-" in the db_arg because we use kwargs
-        # for the extra configurations and Python doesn't allow a hyphen
-        # in a variable name. All redis and KeyDB configuration options
-        # use hyphens in their names.
-        db_arg = db_arg.replace("_", "-")
-        db_cmd.extend([f"--{db_arg}", value])
+    if extra_db_args:
+        for db_arg, value in extra_db_args.items():
+            # replace "_" with "-" in the db_arg because we use kwargs
+            # for the extra configurations and Python doesn't allow a hyphen
+            # in a variable name. All redis and KeyDB configuration options
+            # use hyphens in their names.
+            db_arg = db_arg.replace("_", "-")
+            db_cmd.extend([f"--{db_arg}", value])
 
     db_models = kwargs.get("db_models", None)
     if db_models:

@@ -74,7 +74,7 @@ class SrunSettings(RunSettings):
             **kwargs,
         )
         self.alloc = alloc
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
 
     reserved_run_args = {"chdir", "D"}
 
@@ -88,14 +88,14 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodes"] = int(nodes)
 
-    def make_mpmd(self, srun_settings: SrunSettings) -> None:
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``srun`` commands
 
         This connects the two settings to be executed with a single
         Model instance
 
-        :param srun_settings: SrunSettings instance
-        :type srun_settings: SrunSettings
+        :param settings: SrunSettings instance
+        :type settings: SrunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -105,7 +105,7 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
-        self.mpmd.append(srun_settings)
+        self.mpmd.append(settings)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -124,7 +124,7 @@ class SrunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
 
-    def set_hostlist_from_file(self, file_path: str) -> str:
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """Use the contents of a file to set the node list
 
         This sets ``--nodefile``
@@ -134,7 +134,7 @@ class SrunSettings(RunSettings):
         """
         self.run_args["nodefile"] = str(file_path)
 
-    def set_excluded_hosts(self, host_list: t.List[str]) -> None:
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -259,7 +259,7 @@ class SrunSettings(RunSettings):
             fmt_str = "0" + fmt_str
         return fmt_str
 
-    def set_walltime(self, walltime: str) -> str:
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         format = "HH:MM:SS"
@@ -341,7 +341,7 @@ class SrunSettings(RunSettings):
         fmt_exported_env = ",".join(v for v in exportable_env + key_only)
 
         for mpmd in self.mpmd:
-            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in v}
+            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in str(v)}
             compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
             compound_env.extend(compound_mpmd_fmt)
 

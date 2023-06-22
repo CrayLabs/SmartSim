@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import typing as t
 from shutil import which
 
 from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinfo
@@ -37,7 +38,10 @@ from ..log import get_logger
 logger = get_logger(__name__)
 
 
-def get_allocation(nodes=1, time=None, account=None, options=None):
+def get_allocation(nodes: int = 1, 
+                   time: t.Optional[str] = None, 
+                   account: t.Optional[str] = None, 
+                   options: t.Optional[t.Dict[str, str]] = None) -> str:
     """Request an allocation
 
     This function requests an allocation with the specified arguments.
@@ -92,7 +96,7 @@ def get_allocation(nodes=1, time=None, account=None, options=None):
     return str(alloc_id)
 
 
-def release_allocation(alloc_id):
+def release_allocation(alloc_id: str) -> None:
     """Free an allocation's resources
 
     :param alloc_id: allocation id
@@ -119,7 +123,7 @@ def release_allocation(alloc_id):
     logger.info(f"Successfully freed allocation {alloc_id}")
 
 
-def validate(nodes=1, ppn=1, partition=None):
+def validate(nodes: int = 1, ppn: int = 1, partition: t.Optional[str] = None) -> bool:
     """Check that there are sufficient resources in the provided Slurm partitions.
 
     if no partition is provided, the default partition is found and used.
@@ -152,7 +156,7 @@ def validate(nodes=1, ppn=1, partition=None):
         raise LauncherError(f"Partition {p_name} is not found on this system")
 
     for node in sys_partitions[p_name].nodes:
-        if node.ppn >= ppn:
+        if node.ppn is not None and node.ppn >= ppn:
             avail_nodes.add(node)
 
     n_avail_nodes = len(avail_nodes)
@@ -169,7 +173,7 @@ def validate(nodes=1, ppn=1, partition=None):
     return True
 
 
-def get_default_partition():
+def get_default_partition() -> str:
     """Returns the default partition from Slurm
 
     This default partition is assumed to be the partition with
@@ -190,7 +194,7 @@ def get_default_partition():
     return default
 
 
-def _get_system_partition_info():
+def _get_system_partition_info() -> t.Dict[str, Partition]:
     """Build a dictionary of slurm partitions
     :returns: dict of Partition objects
     :rtype: dict
@@ -198,7 +202,7 @@ def _get_system_partition_info():
 
     sinfo_output, _ = sinfo(["--noheader", "--format", "%R %n %c"])
 
-    partitions = {}
+    partitions: t.Dict[str, Partition] = {}
     for line in sinfo_output.split("\n"):
         line = line.strip()
         if line == "":
@@ -218,7 +222,10 @@ def _get_system_partition_info():
     return partitions
 
 
-def _get_alloc_cmd(nodes, time, account, options=None):
+def _get_alloc_cmd(nodes: int, 
+                   time: t.Optional[str] = None, 
+                   account: t.Optional[str] = None, 
+                   options: t.Optional[t.Dict[str, str]] = None) -> t.List[str]:
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options."""
 
@@ -235,7 +242,7 @@ def _get_alloc_cmd(nodes, time, account, options=None):
     if account:
         salloc_args.extend(["-A", str(account)])
 
-    for opt, val in options.items():
+    for opt, val in (options or {}).items():
         if opt not in ["t", "time", "N", "nodes", "A", "account"]:
             short_arg = bool(len(str(opt)) == 1)
             prefix = "-" if short_arg else "--"
@@ -250,7 +257,7 @@ def _get_alloc_cmd(nodes, time, account, options=None):
     return salloc_args
 
 
-def get_hosts():
+def get_hosts() -> t.List[str]:
     """Get the name of the nodes used in a slurm allocation.
 
     .. note::
@@ -272,37 +279,37 @@ def get_hosts():
                 )
             )
         nodelist, _ = scontrol(
-            ["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST")]
+            ["show", "hostnames", os.environ.get("SLURM_JOB_NODELIST", "")]
         )
         return sorted(nodelist.split())
     raise SmartSimError("Could not parse allocation nodes from SLURM_JOB_NODELIST")
 
 
-def get_queue():
+def get_queue() -> str:
     """Get the name of queue in a slurm allocation.
 
     :returns: The name of the queue
     :rtype: str
     :raises SmartSimError: ``SLURM_JOB_PARTITION`` is not set
     """
-    if "SLURM_JOB_PARTITION" in os.environ:
-        return os.environ.get("SLURM_JOB_PARTITION")
+    if job_partition := os.environ.get("SLURM_JOB_PARTITION", None):
+        return job_partition
     raise SmartSimError("Could not parse queue from SLURM_JOB_PARTITION")
 
 
-def get_tasks():
+def get_tasks() -> int:
     """Get the number of tasks in a slurm allocation.
 
     :returns: Then number of tasks in the allocation
     :rtype: int
     :raises SmartSimError: ``SLURM_NTASKS`` is not set
     """
-    if "SLURM_NTASKS" in os.environ:
-        return int(os.environ.get("SLURM_NTASKS"))
+    if ntasks_str := os.environ.get("SLURM_NTASKS", 0):
+        return int(ntasks_str)
     raise SmartSimError("Could not parse number of requested tasks from SLURM_NTASKS")
 
 
-def get_tasks_per_node():
+def get_tasks_per_node() -> t.Dict[str, int]:
     """Get the number of tasks per each node in a slurm allocation.
 
     .. note::
@@ -315,7 +322,7 @@ def get_tasks_per_node():
     :raises SmartSimError: ``SLURM_TASKS_PER_NODE`` is not set
     """
     if "SLURM_TASKS_PER_NODE" in os.environ:
-        tasks_per_node_strs = os.environ.get("SLURM_TASKS_PER_NODE").split(",")
+        tasks_per_node_strs = os.environ.get("SLURM_TASKS_PER_NODE", "").split(",")
         tasks_per_node_list = []
         for tasks_per_node_str in tasks_per_node_strs:
             if "(" in tasks_per_node_str:

@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
+from ...entity import SmartSimEntity, EntityList
 from ...status import STATUS_NEW
-from ...entity import SmartSimEntity
 
 
 class Job:
@@ -41,7 +42,7 @@ class Job:
         self,
         job_name: str,
         job_id: str,
-        entity: SmartSimEntity,
+        entity: t.Union[SmartSimEntity, EntityList],
         launcher: str,
         is_task: bool,
     ) -> None:
@@ -51,8 +52,8 @@ class Job:
         :type job_name: str
         :param job_id: The id associated with the job
         :type job_id: str
-        :param entity: The SmartSim entity associated with the job
-        :type entity: SmartSimEntity
+        :param entity: The SmartSim entity(list) associated with the job
+        :type entity: SmartSimEntity | EntityList
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
@@ -62,11 +63,11 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status = None  # status before smartsim status mapping is applied
-        self.returncode = None
-        self.output = None  # only populated if it's system related (e.g. a command failed immediately)
-        self.error = None  # same as output
-        self.hosts = []  # currently only used for DB jobs
+        self.raw_status: t.Optional[str] = None  # status before smartsim status mapping is applied
+        self.returncode: t.Optional[int] = None
+        self.output: t.Optional[str] = None  # only populated if it's system related (e.g. a command failed immediately)
+        self.error: t.Optional[str] = None  # same as output
+        self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
         self.is_task = is_task
         self.start_time = time.time()
@@ -81,9 +82,9 @@ class Job:
         self,
         new_status: str,
         raw_status: str,
-        returncode: str,
-        error: str = None,
-        output: str = None,
+        returncode: t.Optional[int],
+        error: t.Optional[str] = None,
+        output: t.Optional[str] = None,
     ) -> None:
         """Set the status  of a job.
 
@@ -98,10 +99,13 @@ class Job:
         self.error = error
         self.output = output
 
+    @property
+    def elapsed(self) -> float:
+        return time.time() - self.start_time
+
     def record_history(self) -> None:
         """Record the launching history of a job."""
-        job_time = time.time() - self.start_time
-        self.history.record(self.jid, self.status, self.returncode, job_time)
+        self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
     def reset(self, new_job_name: str, new_job_id: str, is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
@@ -109,7 +113,7 @@ class Job:
         :param new_job_name: name of the new job step
         :type new_job_name: str
         :param new_job_id: new job id to launch under
-        :type new_job_id: str
+        :type new_job_id: int
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
@@ -170,12 +174,12 @@ class History:
         :type runs: int, optional
         """
         self.runs = runs
-        self.jids = dict()
-        self.statuses = dict()
-        self.returns = dict()
-        self.job_times = dict()
+        self.jids: t.Dict[int, str] = dict()
+        self.statuses: t.Dict[int, str] = dict()
+        self.returns: t.Dict[int, t.Optional[int]] = dict()
+        self.job_times: t.Dict[int, float] = dict()
 
-    def record(self, job_id: str, status: str, returncode: str, job_time: str):
+    def record(self, job_id: str, status: str, returncode: t.Optional[int], job_time: float) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status

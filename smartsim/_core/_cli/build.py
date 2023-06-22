@@ -30,11 +30,12 @@ import sys
 from pathlib import Path
 
 import pkg_resources
+import typing as t
 from tabulate import tabulate
 
 from smartsim._core._cli.utils import color_bool, pip_install
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner
+from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner, DbEngine
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -48,7 +49,8 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 #       may be installed into a different directory.
 
 
-def _install_torch_from_pip(versions, device="cpu", verbose=False):
+
+def _install_torch_from_pip(versions: Versioner, device: str = "cpu", verbose: bool = False) -> None:
 
     packages = []
     end_point = None
@@ -76,7 +78,7 @@ def _install_torch_from_pip(versions, device="cpu", verbose=False):
 
 
 class Build:
-    def __init__(self):
+    def __init__(self) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "-v",
@@ -154,11 +156,13 @@ class Build:
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
-
+                
                 if self.verbose:
                     logger.info("Build Environment:")
                     env = self.build_env.as_dict()
-                    print(tabulate(env, headers=env.keys(), tablefmt="github"), "\n")
+                    env_vars = list(env.keys())
+                    print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
+
                 if self.keydb:
                     self.versions.REDIS = Version_("6.2.0")
                     self.versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
@@ -170,10 +174,11 @@ class Build:
                         )
 
                 if self.verbose:
-                    db_name = "KEYDB" if self.keydb else "REDIS"
+                    db_name: DbEngine = "KEYDB" if self.keydb else "REDIS"
                     logger.info("Version Information:")
                     vers = self.versions.as_dict(db_name=db_name)
-                    print(tabulate(vers, headers=vers.keys(), tablefmt="github"), "\n")
+                    version_names = list(vers.keys())
+                    print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
                 # REDIS/KeyDB
                 self.build_database()
@@ -201,7 +206,7 @@ class Build:
 
         logger.info("SmartSim build complete!")
 
-    def build_database(self):
+    def build_database(self) -> None:
         # check database installation
         database_name = "KeyDB" if self.keydb else "Redis"
         database_builder = builder.DatabaseBuilder(
@@ -218,8 +223,14 @@ class Build:
         logger.info(f"{database_name} build complete!")
 
     def build_redis_ai(
-        self, device, torch=True, tf=True, onnx=False, torch_dir=None, libtf_dir=None
-    ):
+        self,
+        device: str,
+        torch: bool = True,
+        tf: bool = True,
+        onnx: bool = False,
+        torch_dir: t.Union[str, Path, None] = None,
+        libtf_dir: t.Union[str, Path, None] = None
+    ) -> None:
 
         # make sure user isn't trying to do something silly on MacOS
         if self.build_env.PLATFORM == "darwin" and device == "gpu":
@@ -268,8 +279,8 @@ class Build:
 
         rai_builder = builder.RedisAIBuilder(
             build_env=self.build_env(),
-            torch_dir=str(torch_dir) if torch_dir else None,
-            libtf_dir=str(libtf_dir) if libtf_dir else None,
+            torch_dir=str(torch_dir) if torch_dir else "",
+            libtf_dir=str(libtf_dir) if libtf_dir else "",
             build_torch=torch,
             build_tf=tf,
             build_onnx=onnx,
@@ -313,14 +324,14 @@ class Build:
             )
             logger.info("ML Backends and RedisAI build complete!")
 
-    def infer_torch_device(self):
+    def infer_torch_device(self) -> str:
         backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
         device = "cpu"
         if Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file():
             device = "gpu"
         return device
 
-    def install_torch(self, device="cpu"):
+    def install_torch(self, device: str = "cpu") -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
@@ -353,7 +364,7 @@ class Build:
                     logger.error(msg)  # error because this is usually fatal
             logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
 
-    def check_onnx_install(self):
+    def check_onnx_install(self) -> None:
         """Check Python environment for ONNX installation"""
         if not self.versions.ONNX:
             py_version = sys.version_info
@@ -380,7 +391,7 @@ class Build:
         except SetupError as e:
             logger.warning(str(e))
 
-    def check_tf_install(self):
+    def check_tf_install(self) -> None:
         """Check Python environment for TensorFlow installation"""
 
         try:
@@ -399,7 +410,7 @@ class Build:
         except SetupError as e:
             logger.warning(str(e))
 
-    def check_backends_install(self):
+    def check_backends_install(self) -> None:
         """Checks if backends have already been installed.
         Logs details on how to proceed forward
         if the RAI_PATH environment variable is set or if

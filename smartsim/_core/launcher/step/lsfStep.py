@@ -31,13 +31,14 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings import BsubBatchSettings
 from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
 
 
 class BsubBatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: BsubBatchSettings) -> None:
         """Initialize a LSF bsub step
 
         :param name: name of the entity to launch
@@ -45,12 +46,15 @@ class BsubBatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: BsubBatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
+        super().__init__(name, cwd, batch_settings)
         self.step_cmds = []
         self.managed = True
+
+    @property
+    def batch_settings(self) -> BsubBatchSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -118,12 +122,15 @@ class JsrunStep(Step):
         :param run_settings: run settings for entity
         :type run_settings: RunSettings
         """
-        super().__init__(name, cwd)
-        self.run_settings = run_settings
+        super().__init__(name, cwd, run_settings)
         self.alloc = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    @property
+    def run_settings(self) -> RunSettings:
+        return self.step_settings
 
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""

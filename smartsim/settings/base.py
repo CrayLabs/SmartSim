@@ -26,13 +26,18 @@ from __future__ import annotations
 
 import typing as t
 
+from smartsim.settings.containers import Container
+
 from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
 
 
-class RunSettings:
+class SettingsBase:
+    ...
+
+class RunSettings(SettingsBase):
     def __init__(
         self,
         exe: str,
@@ -40,9 +45,7 @@ class RunSettings:
         run_command: str = "",
         run_args: t.Optional[t.Dict[str, str]] = None,
         env_vars: t.Optional[t.Dict[str, str]] = None,
-        # mcb
-        # container: bool = False,
-        container: bool = None,
+        container: t.Optional[Container] = None,
         **kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``
@@ -84,8 +87,8 @@ class RunSettings:
             self.exe = [expand_exe_path(exe)]
 
         self.exe_args = self._set_exe_args(exe_args)
-        self.run_args = init_default({}, run_args, dict)
-        self.env_vars = init_default({}, env_vars, dict)
+        self.run_args: t.Dict[str, t.Optional[t.Union[str, int]]] = init_default({}, run_args, dict)
+        self.env_vars: t.Dict[str, t.Union[str, int, bool, float]] = init_default({}, env_vars, dict)
         self.container = container
         self._run_command = run_command
         self.in_batch = False
@@ -185,7 +188,7 @@ class RunSettings:
             )
         )
 
-    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]):
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -339,7 +342,7 @@ class RunSettings:
         """Make job an MPMD job
 
         :param settings: ``RunSettings`` instance
-        :type aprun_settings: RunSettings
+        :type settings: RunSettings
         """
         logger.warning(
             (
@@ -542,7 +545,7 @@ class RunSettings:
         return string
 
 
-class BatchSettings:
+class BatchSettings(SettingsBase):
     def __init__(
         self,
         batch_cmd: str,

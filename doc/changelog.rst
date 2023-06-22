@@ -34,9 +34,12 @@ A full list of changes and detailed notes can be found below:
 - Relax the coloredlogs version
 - Update Fortran tutorials for SmartRedis
 - Add support for multiple network interface binding in Orchestrator and Colocated DBs
+- Add typehints and static analysis
 
 Detailed notes
 
+- Typehints have been added. A makefile target `make check-mypy` executes static
+  analysis with mypy. (PR295_, PR303_)
 - Simplify code in `random_permutations` parameter generation strategy (PR300_)
 - Remove wait time associated with Experiment launch summary (PR298_)
 - Update Redis conf file to conform with Redis v7.0.5 conf file (PR293_)
@@ -44,18 +47,17 @@ Detailed notes
 - Update full test suite to no longer require a tensorflow wheel to be available
   at test time. (PR291_)
 - Correct spelling of colocated in doc strings (PR290_)
-- Deprecated launcher-specific orchestrators, constants, and ML utilities
-were removed. (PR289_)
+- Deprecated launcher-specific orchestrators, constants, and ML 
+  utilities were removed. (PR289_)
 - Relax the coloredlogs version to be greater than 10.0 (PR288_)
 - Update the Github Actions runner image from `macos-10.15`` to `macos-12``. The
-former began deprecation in May 2022 and was finally removed in May 2023. (PR285_)
-- The Fortran tutorials had not been fully updated to show how to handle return/error
-codes. These have now all been updated. (PR284_)
-- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
-argument name is still `interface` for backward compatibility reasons. (PR281_)
-- Typehints have been added to public APIs. A makefile target to execute static 
-analysis with mypy is available `make check-mypy`. (PR295_)
+  former began deprecation in May 2022 and was finally removed in May 2023. (PR285_)
+- The Fortran tutorials had not been fully updated to show how to handle 
+  return/error codes. These have now all been updated. (PR284_)
+- Orchestrator and Colocated DB now accept a list of interfaces to bind to. The 
+  argument name is still `interface` for backward compatibility reasons. (PR281_)
 
+.. _PR303: https://github.com/CrayLabs/SmartSim/pull/303
 .. _PR300: https://github.com/CrayLabs/SmartSim/pull/300
 .. _PR298: https://github.com/CrayLabs/SmartSim/pull/298
 .. _PR293: https://github.com/CrayLabs/SmartSim/pull/293

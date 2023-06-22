@@ -49,7 +49,10 @@ class EntityFiles:
     """
 
     def __init__(
-        self, tagged: t.Optional[t.List[str]] = None, copy: t.Optional[t.List[str]] = None, symlink: t.Optional[t.List[str]] = None
+        self, 
+        tagged: t.Optional[t.List[str]] = None, 
+        copy: t.Optional[t.List[str]] = None, 
+        symlink: t.Optional[t.List[str]] = None,
     ) -> None:
         """Initialize an EntityFiles instance
 
@@ -62,9 +65,9 @@ class EntityFiles:
                         directories
         :type symlink: list of str
         """
-        self.tagged = tagged
-        self.copy = copy
-        self.link = symlink
+        self.tagged = tagged or []
+        self.copy = copy or []
+        self.link = symlink or []
         self.tagged_hierarchy = None
         self._check_files()
 
@@ -190,7 +193,7 @@ class TaggedFilesHierarchy:
         self._base: str = path.join(parent.base, subdir_name) if parent else ""
         self.parent: t.Any = parent
         self.files: t.Set[str] = set()
-        self.dirs: t.Set[str] = set()
+        self.dirs: t.Set[TaggedFilesHierarchy] = set()
 
     @property
     def base(self) -> str:

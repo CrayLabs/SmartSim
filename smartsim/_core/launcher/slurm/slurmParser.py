@@ -36,6 +36,7 @@ def parse_salloc(output: str) -> t.Optional[str]:
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
+    return None
 
 
 def parse_salloc_error(output: str) -> t.Optional[str]:
@@ -95,12 +96,12 @@ def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:
     """
     result: t.Tuple[str, t.Optional[str]] = ("PENDING", None)
     for line in output.split("\n"):
-        line = line.split("|")
-        if len(line) >= 3:
-            if jobid_exact_match(line[0], job_id):
-                stat = line[1]
-                code = line[2].split(":")[0]
-                result = (stat, code)
+        parts = line.split("|")
+        if len(parts) >= 3:
+            if jobid_exact_match(parts[0], job_id):
+                stat = parts[1]
+                return_code = parts[2].split(":")[0]
+                result = (stat, return_code)
                 break
     return result
 

@@ -25,9 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import typing as t
 
 
-def parse_bsub(output):
+def parse_bsub(output: str) -> str:
     """Parse bsub output and return job id.
 
     :param output: stdout of bsub command
@@ -38,9 +39,10 @@ def parse_bsub(output):
     for line in output.split("\n"):
         if line.startswith("Job"):
             return line.split()[1][1:-1]
+    return ""
 
 
-def parse_bsub_error(output):
+def parse_bsub_error(output: str) -> str:
     """Parse and return error output of a failed bsub command.
 
     :param output: stderr of qsub command
@@ -71,18 +73,18 @@ def parse_bsub_error(output):
     return base_err
 
 
-def parse_jslist_stepid(output, step_id):
+def parse_jslist_stepid(output: str, step_id: str) -> t.Tuple[str, t.Optional[str]]:
     """Parse and return output of the jslist command run with
     options to obtain step status
 
     :param output: output of the bjobs command
     :type output: str
-    :param job_id: allocation id or job step id
-    :type job_id: str
+    :param step_id: allocation id or job step id
+    :type step_id: str
     :return: status and return code
     :rtype: (str, str)
     """
-    result = ("NOTFOUND", None)
+    result: t.Tuple[str, t.Optional[str]] = ("NOTFOUND", None)
 
     for line in output.split("\n"):
         fields = line.split()
@@ -92,11 +94,10 @@ def parse_jslist_stepid(output, step_id):
                 return_code = fields[5]
                 result = (stat, return_code)
                 break
-
     return result
 
 
-def parse_bjobs_jobid(output, job_id):
+def parse_bjobs_jobid(output: str, job_id: str) -> str:
     """Parse and return output of the bjobs command run with options
     to obtain job status.
 
@@ -118,7 +119,7 @@ def parse_bjobs_jobid(output, job_id):
     return result
 
 
-def parse_bjobs_nodes(output):
+def parse_bjobs_nodes(output: str) -> t.List[str]:
     """Parse and return the bjobs command run with
     options to obtain node list, i.e. with `-w`.
 
@@ -139,7 +140,7 @@ def parse_bjobs_nodes(output):
     return list(dict.fromkeys(nodes))
 
 
-def parse_max_step_id_from_jslist(output):
+def parse_max_step_id_from_jslist(output: str) -> t.Optional[str]:
     """Parse and return the maximum step id from a jslist command.
     This function must be called immedietaly after a call to jsrun,
     and before the next one, to ensure the id of the last spawned task is

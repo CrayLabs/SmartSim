@@ -39,6 +39,7 @@ from smartsim.settings import (
     OrterunSettings,
     RunSettings,
 )
+from smartsim.settings import Singularity
 from smartsim.settings.settings import create_run_settings
 
 
@@ -276,11 +277,13 @@ def test_set_conditional():
 def test_container_check():
     """Ensure path is expanded when run outside of a container"""
     sample_exe = "python"
+    containerURI = "docker://alrigazzi/smartsim-testing:latest"
+    container = Singularity(containerURI)
 
-    rs = RunSettings(sample_exe, container=True)
+    rs = RunSettings(sample_exe, container=container)
     assert sample_exe in rs.exe
 
-    rs = RunSettings(sample_exe, container=False)
+    rs = RunSettings(sample_exe, container=None)
     assert len(rs.exe[0]) > len(sample_exe)
 
 

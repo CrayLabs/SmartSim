@@ -26,9 +26,19 @@
 
 import typing as t
 
-from collections import namedtuple
+from ...log import get_logger
 
-StepMap = namedtuple("StepMap", ["step_id", "task_id", "managed"])
+logger = get_logger(__name__)
+
+
+class StepMap:
+    def __init__(self,
+                 step_id: t.Optional[str] = None,
+                 task_id: t.Optional[int] = None,
+                 managed: t.Optional[bool] = None) -> None:
+        self.step_id = step_id
+        self.task_id = task_id
+        self.managed = managed
 
 
 class StepMapping:
@@ -45,11 +55,16 @@ class StepMapping:
     def add(
         self,
         step_name: str,
-        step_id: t.Optional[int] = None,
-        task_id: t.Optional[int] = None,
+        step_id: t.Optional[str] = None,
+        task_id: t.Optional[str] = None,
         managed: bool = True,
     ) -> None:
-        self.mapping[step_name] = StepMap(step_id, task_id, managed)
+        try:
+            n_task_id = int(task_id) if task_id else None
+            self.mapping[step_name] = StepMap(step_id, n_task_id, managed)
+        except Exception as e:
+            msg = f"Could not add step {step_name} to mapping: {e}"
+            logger.exception(msg)
 
     def get_task_id(self, step_id: int) -> t.Optional[int]:
         """Get the task id from the step id"""
@@ -62,8 +77,8 @@ class StepMapping:
 
     def get_ids(
         self, step_names: t.List[str], managed: bool = True
-    ) -> t.Tuple[t.List[str], t.List[int]]:
-        ids = []
+    ) -> t.Tuple[t.List[str], t.List[t.Union[str, None]]]:
+        ids: t.List[t.Union[str, None]] = []
         names = []
         for name in step_names:
             if name in self.mapping:
@@ -74,5 +89,6 @@ class StepMapping:
                     ids.append(stepmap.step_id)
                 elif not managed and not stepmap.managed:
                     names.append(name)
-                    ids.append(stepmap.task_id)
+                    s_task_id = str(stepmap.task_id) if stepmap.task_id else None
+                    ids.append(s_task_id)
         return names, ids

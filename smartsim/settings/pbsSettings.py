@@ -68,7 +68,7 @@ class QsubBatchSettings(BatchSettings):
         """
         self._time: t.Optional[str] = None
         self._nodes: t.Optional[int] = None
-        self._ncpus: int = ncpus
+        self._ncpus = ncpus
 
         # time, queue, nodes, and account set in parent class init
         super().__init__(
@@ -81,7 +81,7 @@ class QsubBatchSettings(BatchSettings):
             **kwargs,
         )
         self.resources = init_default({}, resources, dict)
-        self._hosts = None
+        self._hosts: t.List[str] = []
 
     def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job

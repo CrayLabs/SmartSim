@@ -30,9 +30,12 @@ import signal
 import socket
 import sys
 import tempfile
+import typing as t
+
 from pathlib import Path
 from subprocess import PIPE, STDOUT
-from typing import List
+from types import FrameType
+
 
 import filelock
 import psutil
@@ -51,11 +54,11 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
-def handle_signal(signo, frame):
+def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
     cleanup()
 
 
-def launch_db_model(client: Client, db_model: List[str]):
+def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     """Parse options to launch model on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -118,7 +121,7 @@ def launch_db_model(client: Client, db_model: List[str]):
     return args.name
 
 
-def launch_db_script(client: Client, db_script: List[str]):
+def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     """Parse options to launch script on local cluster
 
     :param client: SmartRedis client connected to local DB
@@ -159,10 +162,10 @@ def launch_db_script(client: Client, db_script: List[str]):
 def main(
     network_interface: str,
     db_cpus: int,
-    command: List[str],
-    db_models: List[List[str]],
-    db_scripts: List[List[str]],
-):
+    command: t.List[str],
+    db_models: t.List[t.List[str]],
+    db_scripts: t.List[t.List[str]],
+) -> None:
     global DBPID
 
     lo_address = current_ip("lo")
@@ -199,7 +202,7 @@ def main(
         if sys.platform != "darwin":
             # Set CPU affinity to the last $db_cpus CPUs
             affinity = p.cpu_affinity()
-            cpus_to_use = affinity[-db_cpus:]
+            cpus_to_use = affinity[-db_cpus:] if affinity else None
             p.cpu_affinity(cpus_to_use)
         else:
             # psutil doesn't support pinning on MacOS
@@ -246,7 +249,7 @@ def main(
         raise SSInternalError("Colocated entrypoint raised an error") from e
 
 
-def cleanup():
+def cleanup() -> None:
     global DBPID
     global LOCK
     try:

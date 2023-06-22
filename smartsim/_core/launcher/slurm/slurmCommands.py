@@ -24,12 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ....error import LauncherError
 from ...utils.helpers import expand_exe_path
 from ..util.shell import execute_cmd
 
 
-def sstat(args):
+def sstat(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls sstat with args
 
     :param args: List of command arguments
@@ -42,7 +44,7 @@ def sstat(args):
     return out, error
 
 
-def sacct(args):
+def sacct(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls sacct with args
 
     :param args: List of command arguments
@@ -55,7 +57,7 @@ def sacct(args):
     return out, error
 
 
-def salloc(args):
+def salloc(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls slurm salloc with args
 
     :param args: List of command arguments
@@ -68,7 +70,7 @@ def salloc(args):
     return out, error
 
 
-def sinfo(args):
+def sinfo(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls slurm sinfo with args
 
     :param args: List of command arguments
@@ -81,7 +83,7 @@ def sinfo(args):
     return out, error
 
 
-def scontrol(args):
+def scontrol(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls slurm scontrol with args
 
     :param args: List of command arguments
@@ -94,7 +96,7 @@ def scontrol(args):
     return out, error
 
 
-def scancel(args):
+def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls slurm scancel with args.
 
     returncode is also supplied in this function.
@@ -110,7 +112,7 @@ def scancel(args):
     return returncode, out, error
 
 
-def _find_slurm_command(cmd):
+def _find_slurm_command(cmd: str) -> str:
     try:
         full_cmd = expand_exe_path(cmd)
         return full_cmd

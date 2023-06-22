@@ -28,13 +28,14 @@ import typing as t
 
 from ....log import get_logger
 from .step import Step
+from ....settings import QsubBatchSettings
 from ....settings.base import BatchSettings
 
 logger = get_logger(__name__)
 
 
 class QsubBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings) -> None:
+    def __init__(self, name: str, cwd: str, batch_settings: QsubBatchSettings) -> None:
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch
@@ -42,12 +43,15 @@ class QsubBatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: QsubBatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
-        self.step_cmds = []
+        super().__init__(name, cwd, batch_settings)
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
+
+    @property
+    def batch_settings(self) -> QsubBatchSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch

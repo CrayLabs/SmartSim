@@ -107,10 +107,13 @@ def expand_exe_path(exe: str) -> str:
 
 def is_valid_cmd(command: t.Union[str, None]) -> bool:
     try:
-        expand_exe_path(command)
-        return True
+        if command:
+            expand_exe_path(command)
+            return True
     except (TypeError, FileNotFoundError):
         return False
+
+    return False
 
 
 color2num = dict(
@@ -126,7 +129,7 @@ color2num = dict(
 )
 
 
-def colorize(string: str, color: str, bold: bool = False, highlight: bool = False) -> None:
+def colorize(string: str, color: str, bold: bool = False, highlight: bool = False) -> str:
     """
     Colorize a string.
     This function was originally written by John Schulman.
@@ -188,6 +191,16 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
         return "=".join(("--" + arg_name, str(value)))
 
 
+def _installed(base_path: Path, backend: str) -> bool:
+    """
+    Check if a backend is available for the RedisAI module.
+    """
+    backend_key = f"redisai_{backend}"
+    backend_path = base_path / backend_key / f"{backend_key}.so"
+    backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
+    
+    return backend_so.is_file()
+
 def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
     """Check which ML backends are available for the RedisAI module.
 
@@ -206,13 +219,8 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     # import here to avoid circular import
     from ..._core.config import CONFIG
 
-    installed = []
-    if not backends_path:
-        backends_path = CONFIG.lib_path / "backends"
-    for backend in ["tensorflow", "torch", "onnxruntime", "tflite"]:
-        backend_path = backends_path / f"redisai_{backend}" / f"redisai_{backend}.so"
-        backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-        if backend_so.is_file():
-            installed.append(backend)
+    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    backends = ["tensorflow", "torch", "onnxruntime", "tflite"]
 
+    installed = [backend for backend in backends if _installed(base_path, backend)]
     return installed

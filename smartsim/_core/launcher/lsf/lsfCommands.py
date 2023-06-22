@@ -24,10 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ..util.shell import execute_cmd
 
 
-def bjobs(args):
+def bjobs(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls LSF bjobs with args
 
     :param args: List of command arguments
@@ -39,7 +41,7 @@ def bjobs(args):
     return out, error
 
 
-def bkill(args):
+def bkill(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls LSF bkill with args.
 
     returncode is also supplied in this function.
@@ -54,7 +56,7 @@ def bkill(args):
     return returncode, out, error
 
 
-def jskill(args):
+def jskill(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls LSF jskill with args.
 
     returncode is also supplied in this function.
@@ -70,7 +72,7 @@ def jskill(args):
     return returncode, out, error
 
 
-def jslist(args):
+def jslist(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls LSF jslist with args
 
     :param args: List of command arguments

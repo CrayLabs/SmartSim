@@ -24,10 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ..util.shell import execute_cmd
 
 
-def qstat(args):
+def qstat(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls PBS qstat with args
 
     :param args: List of command arguments
@@ -39,7 +41,7 @@ def qstat(args):
     return out, error
 
 
-def qsub(args):
+def qsub(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls PBS qsub with args
 
     :param args: List of command arguments
@@ -51,7 +53,7 @@ def qsub(args):
     return out, error
 
 
-def qdel(args):
+def qdel(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls PBS qdel with args.
 
     returncode is also supplied in this function.

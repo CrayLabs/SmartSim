@@ -26,15 +26,15 @@
 
 import argparse
 import os
-import signal
-from subprocess import PIPE, STDOUT
-from typing import List
-
 import psutil
+import signal
+import typing as t
 
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
+from subprocess import PIPE, STDOUT
+from types import FrameType
 
 logger = get_logger(__name__)
 
@@ -48,11 +48,11 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo, frame):
+def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
     cleanup()
 
 
-def main(network_interface: str, command: List[str]):
+def main(network_interface: str, command: t.List[str]) -> None:
     global DBPID
 
     try:
@@ -81,7 +81,7 @@ def main(network_interface: str, command: List[str]):
         raise SSInternalError("Database process starter raised an exception") from e
 
 
-def cleanup():
+def cleanup() -> None:
     global DBPID
     try:
         logger.debug("Cleaning up database instance")

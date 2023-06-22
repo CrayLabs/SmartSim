@@ -32,13 +32,13 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings.base import BatchSettings, RunSettings
+from ....settings import SrunSettings, SbatchSettings
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: BatchSettings):
+    def __init__(self, name: str, cwd: str, batch_settings: SbatchSettings) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -46,12 +46,15 @@ class SbatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: SbatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
+        super().__init__(name, cwd, batch_settings)
         self.step_cmds = []
         self.managed = True
+
+    @property
+    def batch_settings(self) -> SbatchSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -104,7 +107,7 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+    def __init__(self, name: str, cwd: str, run_settings: SrunSettings) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -112,14 +115,17 @@ class SrunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: SrunSettings
         """
-        super().__init__(name, cwd)
-        self.run_settings = run_settings
+        super().__init__(name, cwd, run_settings)
         self.alloc = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
+
+    @property
+    def run_settings(self) -> SrunSettings:
+        return self.step_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -131,7 +137,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env = set()
+        compound_env: t.Set[str] = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -188,7 +194,7 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _build_exe(self) -> None:
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
