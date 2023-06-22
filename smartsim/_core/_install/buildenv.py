@@ -388,18 +388,17 @@ class BuildEnv:
     JOBS = int(os.environ.get("BUILD_JOBS", 1))
 
     # check for CC/GCC/ETC
-    CHECKS = int(os.environ.get("NO_CHECKS", 0))
+    NO_CHECKS = int(os.environ.get("NO_CHECKS", 0))
     PLATFORM = sys.platform
 
-    def __init__(self, checks: bool = True) -> None:
-        if checks:
+    def __init__(self, checks=True):
+        if checks and not self.NO_CHECKS:
             self.check_dependencies()
 
     def check_dependencies(self) -> None:
         deps = ["git", "git-lfs", "make", "wget", "cmake", self.CC, self.CXX]
-        if int(self.CHECKS) == 0:
-            for dep in deps:
-                self.check_build_dependency(dep)
+        for dep in deps:
+            self.check_build_dependency(dep)
 
     def __call__(self) -> t.Dict[str, str]:
         # return the build env for the build process
@@ -463,15 +462,15 @@ class BuildEnv:
             """Find through importing torch"""
             try:
                 import torch as t
-
-                torch_paths = [Path(p) for p in t.__path__]
+            except ModuleNotFoundError:
+                return None
+            else:
+                torch_paths = (Path(p) for p in t.__path__)
                 for _path in torch_paths:
                     torch_path = _path / "share/cmake/Torch"
                     if torch_path.is_dir():
                         return torch_path
-                return None
-            except ModuleNotFoundError:
-                return None
+            return None
 
         def _torch_site_path() -> t.Optional[Path]:
             """find torch through site packages"""
@@ -487,9 +486,7 @@ class BuildEnv:
                     return torch_path
             return None
 
-        torch_path = _torch_import_path()
-        if not torch_path:
-            torch_path = _torch_site_path()
+        torch_path = _torch_import_path() or _torch_site_path()
         if not torch_path:
             raise SetupError("Could not locate torch cmake path")
         return str(torch_path)
@@ -539,12 +536,12 @@ class BuildEnv:
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
-    @staticmethod
-    def check_installed(package: str, version: t.Optional[Version_] = None) -> bool:
+    @classmethod
+    def check_installed(cls, package, version=None):
         """Check if a package is installed. If version is provided, check if
         it's a compatible version. (major and minor the same)"""
         try:
-            installed = Version_(pkg_resources.get_distribution(package).version)
+            installed = cls.get_package_version(package)
             if version:
                 if not isinstance(version, Version_):
                     version = Version_(version)
@@ -558,3 +555,9 @@ class BuildEnv:
             return True
         except pkg_resources.DistributionNotFound:
             return False
+
+    @staticmethod
+    def get_package_version(package):
+        return Version_(pkg_resources.get_distribution(package).version)
+
+

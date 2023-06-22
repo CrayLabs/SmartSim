@@ -151,8 +151,13 @@ class Build:
             if args.only_python_packages:
                 logger.info("Only installing Python packages...skipping build")
                 self.build_env = BuildEnv(checks=False)
-                if not args.no_pt:
-                    self.install_torch(device=args.device)
+                # XXX: focrce install??
+                if onnx:
+                    self.install_onnx_wheels(force=True)
+                if tf:
+                    self.install_tf_wheel(force=True)
+                if pt:
+                    self.install_torch(device=args.device, force=True)
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
@@ -248,6 +253,7 @@ class Build:
 
         self.check_backends_install()
 
+        # XXX: force install and update this comment
         # Check for onnx and tf in user python environemnt and prompt user
         # to download them if they are not installed. this should not break
         # the build however, as we use onnx and tf directly from RAI instead
@@ -270,7 +276,7 @@ class Build:
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
-                self.install_torch(device=device)
+                self.install_torch(device=device, force=True)
                 torch_dir = self.build_env.torch_cmake_path
 
         if tf:
@@ -331,38 +337,45 @@ class Build:
             device = "gpu"
         return device
 
-    def install_torch(self, device: str = "cpu") -> None:
+    def install_torch(self, device="cpu", force: bool = False):
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
-
-        if not self.build_env.check_installed("torch", self.versions.TORCH):
-            inferred_device = self.infer_torch_device()
-            if (inferred_device == "gpu") and (device == "cpu"):
-                logger.warning("CPU requested, but GPU backend is available")
-            _install_torch_from_pip(self.versions, device, self.verbose)
-        # if torch already installed, check the versions to make sure correct
-        # torch version is downloaded for that particular device
-        else:
-            installed = Version_(pkg_resources.get_distribution("torch").version)
-            if device == "gpu":
-                # if torch version is x.x.x+cpu
-                if "cpu" in installed.patch:
-                    msg = (
-                        "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages "
-                        + "and run the `smart build` command again to obtain Torch GPU libraries"
-                    )
-                    logger.warning(msg)
-
+        if self.build_env.is_macos():
+            end_point = None
+            device_suffix = ""
+        else:  # linux
+            end_point="https://download.pytorch.org/whl/torch_stable.html"
             if device == "cpu":
-                # if torch version if x.x.x then we need to install the cpu version
-                if "cpu" not in installed.patch and not self.build_env.is_macos():
-                    msg = (
-                        "Torch GPU installed in python environment but requested Torch CPU. "
-                        + " Run `pip uninstall torch torchvision` and run `smart build` again"
-                    )
-                    logger.error(msg)  # error because this is usually fatal
-            logger.info(f"Torch {self.versions.TORCH} installed in Python environment")
+                device_suffix = self.versions.TORCH_CPU_SUFFIX
+            elif device in ["gpu", "cuda"]:
+                device_suffix = self.versions.TORCH_CUDA_SUFFIX
+            else:
+                raise BuildError("Unrecognized device requested")
+
+        torch_packages = {
+            "torch": f"{self.versions.TORCH}{device_suffix}",
+            "torchvision": f"{self.versions.TORCHVISION}{device_suffix}",
+            }
+
+        def torch_validator(package, version):
+            if not self.build_env.check_installed(package, version):
+                return False
+            # Previous check only looks at major/minor version numbers,
+            # Torch requires we look at the patch as well
+            installed = self.build_env.get_package_version(package)
+            if device_suffix and device_suffix not in installed.patch:
+                # XXX: Check w/ andrew, prev this was only enforced for cpu
+                # Torch requires that we compare to the patch
+                raise SetupError(f"{package}=={installed} does not satisfy device "
+                                 f"suffix requirement: {device_suffix}")
+            return True
+
+        self._install_py_wheels(
+            torch_packages,
+            end_point=end_point,
+            validator=torch_validator,
+            force=force)
 
     def install_onnx_wheels(self, force: bool = False) -> None:
         """Check Python environment for a compatible ONNX installation"""
@@ -389,14 +402,19 @@ class Build:
         self._install_py_wheels({"tensorflow": self.versions.TENSORFLOW},
                  force=force)
 
-    def _install_py_wheels(self, packages: t.Dict[str, t.Optional[str]], force: bool = False) -> None:
+    def _install_py_wheels(self, 
+            packages: t.Dict[str, t.Optional[str]], 
+            end_point: t.Optional[str] = None,
+            validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
+            force: bool = False) -> None:
         to_uninstall: t.List[str] = []
         to_install: t.List[str] = []
+        validator = validator or self.build_env.check_installed
 
         for name, version in packages.items():
             spec = f"{name}=={version}" if version else name
             try:
-                if self.build_env.check_installed(name, version):
+                if validator(name, version):
                     # Installed at the correct version, nothing to do here
                     logger.info(f"{spec} already installed in Python environment")
                 else:
@@ -412,7 +430,7 @@ class Build:
         if to_uninstall:
             pip_uninstall(to_uninstall, verbose=self.verbose)
         if to_install:
-            pip_install(to_install, verbose=self.verbose)
+            pip_install(to_install, end_point=end_point, verbose=self.verbose)
 
     def check_backends_install(self):
         """Checks if backends have already been installed.
