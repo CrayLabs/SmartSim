@@ -25,7 +25,7 @@ level of the SmartSim directory::
 
 .. note::
 
-You must have the ``extras_require==dev`` dependencies installed in 
+You must have the extra dev dependencies installed in 
 your python environment to execute tests.
 
 Install ``dev`` dependencies with ``pip``

@@ -73,7 +73,7 @@ SmartSim, users can run multiple testing commands with the developer Makefile
 
 .. note::
 
-You must have the ``extras_require==dev`` dependencies installed in 
+You must have the extra dev dependencies installed in 
 your python environment to execute tests.
 
 - Install smartsim with ``dev`` extension ``pip install -e .[dev]``
