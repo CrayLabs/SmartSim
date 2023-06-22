@@ -49,34 +49,6 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 #       may be installed into a different directory.
 
 
-
-def _install_torch_from_pip(versions: Versioner, device: str = "cpu", verbose: bool = False) -> None:
-
-    packages = []
-    end_point = None
-
-    if sys.platform == "darwin":
-        if device == "gpu":
-            logger.warning("GPU support is not available on Mac OS X")
-        # The following is deliberately left blank as there is no
-        # alternative package available on Mac OS X
-        device_suffix = ""
-        end_point = None
-
-    # if we are on linux cpu, either CUDA or CPU must be installed
-    elif sys.platform == "linux":
-        end_point = "https://download.pytorch.org/whl/torch_stable.html"
-        if device in ["gpu", "cuda"]:
-            device_suffix = versions.TORCH_CUDA_SUFFIX
-        elif device == "cpu":
-            device_suffix = versions.TORCH_CPU_SUFFIX
-
-    packages.append(f"torch=={versions.TORCH}{device_suffix}")
-    packages.append(f"torchvision=={versions.TORCHVISION}{device_suffix}")
-
-    pip_install(packages, end_point=end_point, verbose=verbose)
-
-
 class Build:
     def __init__(self) -> None:
         parser = argparse.ArgumentParser()
