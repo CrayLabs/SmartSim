@@ -35,74 +35,33 @@ smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 
-class Clean:
-    # def __init__(self, clean_all: bool = False) -> None:
+class DbCLI(MenuItem):
     def execute(self, args: argparse.Namespace) -> None:
-        self._core_path = get_install_path() / "_core"
-        clobber = args.clobber # or clean_all
-        self.clean(_all=clobber)
-
-    def clean(self, _all: bool = False) -> None:
-        """Remove pre existing installations of ML runtimes
-
-        :param _all: Remove all non-python dependencies
-        :type _all: bool, optional
-        """
-
-        build_temp = self._core_path / ".third-party"
-        if build_temp.is_dir():
-            shutil.rmtree(build_temp, ignore_errors=True)
-
-        lib_path = self._core_path / "lib"
-        if lib_path.is_dir():
-
-            # remove RedisAI
-            rai_path = lib_path / "redisai.so"
-            if rai_path.is_file():
-                rai_path.unlink()
-                logger.info("Successfully removed existing RedisAI installation")
-
-            backend_path = lib_path / "backends"
-            if backend_path.is_dir():
-                shutil.rmtree(backend_path, ignore_errors=True)
-                logger.info("Successfully removed ML runtimes")
-
-        bin_path = self._core_path / "bin"
-        if bin_path.is_dir() and _all:
-            files_to_remove = ["redis-server", "redis-cli", "keydb-server", "keydb-cli"]
-            removed = False
-            for _file in files_to_remove:
-                file_path = bin_path.joinpath(_file)
-
-                if file_path.is_file():
-                    removed = True
-                    file_path.unlink()
-            if removed:
-                logger.info("Successfully removed SmartSim database installation")
+        bin_path = get_install_path() / "_core" / "bin"
+        for option in bin_path.iterdir():
+            if option.name in ("redis-cli", "keydb-cli"):
+                print(option)
+                sys.exit(0)
+        print("Database (Redis or KeyDB) dependencies not found")
+        sys.exit(1)
 
     @staticmethod
     def command() -> str:
-        return "clean"
+        return "dbcli"
     
     @staticmethod
     def help() -> str:
-        return "(help for) Remove previous ML runtime installation"
+        return "(help for) Print the path to the redis-cli binary"
     
     @staticmethod
     def usage() -> str:
-        return f"smart {Clean.command()} [options]"
+        return f"smart {DbCLI.command()} [options]"
     
     @staticmethod
     def desc() -> str:
-        return "Remove previous ML runtime installation"
+        return "Print the path to the redis-cli binary"
 
     @staticmethod
     def configure_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         """Builds the parser for the command"""
-        parser.add_argument(
-            "--clobber",
-            action="store_true",
-            default=False,
-            help="Remove all SmartSim non-python dependencies as well",
-        )
         return parser

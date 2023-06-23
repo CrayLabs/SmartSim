@@ -26,6 +26,7 @@
 
 import subprocess
 import typing as t
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
@@ -81,3 +82,28 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
         raise BuildError(error)
     if verbose:
         logger.info(f"{packages} installed successfully")
+
+
+class MenuItem(t.Protocol):
+    @staticmethod
+    def configure_parser(parser: ArgumentParser) -> ArgumentParser:
+        ...
+
+    @staticmethod
+    def command() -> str:
+        ...
+
+    @staticmethod
+    def usage() -> str:
+        ...
+
+    @staticmethod
+    def help() -> str:
+        ...
+
+    @staticmethod
+    def desc() -> str:
+        ...
+
+    def execute(self, args: Namespace) -> None:
+        ...

@@ -28,70 +28,74 @@
 
 import argparse
 import sys
+import typing as t
 
-from smartsim._core._cli.build import Build
-from smartsim._core._cli.clean import Clean
-from smartsim._core._cli.utils import get_install_path
+import smartsim._core._cli as cli
+from smartsim._core._cli.utils import get_install_path, MenuItem
 
 
-def _usage() -> str:
+def _usage(subs: t.Dict[str, t.Type[MenuItem]]) -> str:
     usage = [
         "smart <command> [<args>]\n",
         "Commands:",
-        "\tbuild       Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-        "\tclean       Remove previous ML runtime installation",
-        "\tclobber     Remove all previous dependency installations",
-        "\nDeveloper:",
-        "\tsite        Print the installation site of SmartSim",
-        "\tdbcli       Print the path to the redis-cli binary" "\n\n",
+        # "\tbuild       Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
+        # "\tclean       Remove previous ML runtime installation",
+        # "\tclobber     Remove all previous dependency installations",
+        # "\nDeveloper:",
+        # "\tsite        Print the installation site of SmartSim",
+        # "\tdbcli       Print the path to the redis-cli binary" "\n\n",
     ]
+    sub_rows = [f"\t{key}\t\t{subs[key].desc()}" for key in subs.keys()]
+    usage.extend(sub_rows)
     return "\n".join(usage)
 
 
 class SmartCli:
-    def __init__(self) -> None:
+    def __init__(self, menu: t.Dict[str, t.Type[MenuItem]]) -> None:
+        self.menu = menu
         parser = argparse.ArgumentParser(
-            description="SmartSim command line interface", usage=_usage()
+            prog="smart",
+            description="SmartSim command line interface",
+            # usage=_usage(self._p),
         )
+        self.parser = parser
 
-        parser.add_argument("command", help="Subcommand to run")
+        subparsers = parser.add_subparsers(title="command", 
+                                           dest="command", 
+                                           required=True,
+                                           help="Available commands")
 
-        # smart
+        for cmd, item in self.menu.items():
+            # usage = "smart <command> [<args>]"
+            p = subparsers.add_parser(cmd, description=item.desc(), help=item.help())
+            item.configure_parser(p)
+
+    def execute(self) -> None:
         if len(sys.argv) < 2:
-            parser.print_help()
+            self.parser.print_help()
             sys.exit(0)
 
-        args = parser.parse_args(sys.argv[1:2])
-        if not hasattr(self, args.command):
-            parser.print_help()
+        app_args = sys.argv[1:]        
+        args = self.parser.parse_args(app_args)
+
+        if not (handler := self.menu.get(app_args[0], None)):
+            self.parser.print_help()
             sys.exit(0)
-        getattr(self, args.command)()
 
-    def build(self) -> None:
-        Build()
+        handler().execute(args)
         sys.exit(0)
 
-    def clean(self) -> None:
-        Clean()
-        sys.exit(0)
-
-    def clobber(self) -> None:
-        Clean(clean_all=True)
-        sys.exit(0)
-
-    def site(self) -> None:
-        print(get_install_path())
-        sys.exit(0)
-
-    def dbcli(self) -> None:
-        bin_path = get_install_path() / "_core" / "bin"
-        for option in bin_path.iterdir():
-            if option.name in ("redis-cli", "keydb-cli"):
-                print(option)
-                sys.exit(0)
-        print("Database (Redis or KeyDB) dependencies not found")
-        sys.exit(1)
+    # def clobber(self, args: argparse.Namespace) -> None:
+    #     Clean(clean_all=True)
+    #     sys.exit(0)
 
 
 def main() -> None:
-    SmartCli()
+    menu: t.Dict[str, t.Type[MenuItem]] = {
+        cli.Build.command(): cli.Build,
+        cli.Clean.command(): cli.Clean,
+        cli.DbCLI.command(): cli.DbCLI,
+        cli.Site.command(): cli.Site,
+    }
+    smart_cli = SmartCli(menu)
+    smart_cli.execute()
