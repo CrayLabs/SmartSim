@@ -368,7 +368,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = "lo"
+    test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
@@ -436,7 +436,6 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = "lo"
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
@@ -495,7 +494,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = "lo"
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
@@ -597,7 +595,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = "lo"
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
@@ -697,7 +694,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
-    test_interface = "lo"
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
