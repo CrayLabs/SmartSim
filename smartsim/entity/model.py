@@ -221,7 +221,7 @@ class Model(SmartSimEntity):
     def colocate_db_tcp(
         self,
         port: int = 6379,
-        ifname: str = "lo",
+        ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
         limit_app_cpus: bool = True,
         debug: bool = False,
@@ -252,7 +252,7 @@ class Model(SmartSimEntity):
         :param port: port to use for orchestrator database, defaults to 6379
         :type port: int, optional
         :param ifname: interface to use for orchestrator, defaults to "lo"
-        :type ifname: str, optional
+        :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
         :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
