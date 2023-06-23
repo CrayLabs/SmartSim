@@ -148,7 +148,7 @@ class Config:
 
     @property
     def jm_interval(self) -> int:
-        return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
+        return int(os.environ.get("SMARTSIM_JM_INTERVAL") or 10)
 
     @property
     def wlm_trials(self) -> int:
@@ -163,8 +163,8 @@ class Config:
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
 
     @property
-    def test_num_gpus(self) -> str:  # pragma: no cover
-        return os.environ.get("SMARTSIM_TEST_NUM_GPUS", 1)
+    def test_num_gpus(self) -> int:  # pragma: no cover
+        return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
     def test_port(self) -> int:  # pragma: no cover
