@@ -23,12 +23,13 @@ level of the SmartSim directory::
   test-full           - Run all WLM tests with Python coverage (full test suite)
                         WARNING: do not run test-full on shared systems.
 
-For the test to run, you must have the ``requirements-dev.txt``
-dependencies installed in your python environment.
+.. note::
 
-There are two ways to do this
-1. Install smartsim with ``dev`` extension ``pip install -e .[dev]``
-2. ``pip install -r requirements-dev.txt`` after you install smartsim.
+You must have the extra dev dependencies installed in 
+your python environment to execute tests.
+
+Install ``dev`` dependencies with ``pip``
+- Install smartsim with ``dev`` extension ``pip install -e .[dev]``
 
 
 Test Suites
