@@ -595,5 +595,4 @@ class MLUtils:
 
     @staticmethod
     def get_test_num_gpus():
-        global test_num_gpus
         return test_num_gpus
