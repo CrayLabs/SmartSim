@@ -152,7 +152,7 @@ class Config:
 
     @property
     def wlm_trials(self) -> int:
-        return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
+        return int(os.environ.get("SMARTSIM_WLM_TRIALS") or 10)
 
     @property
     def test_launcher(self) -> str:  # pragma: no cover
