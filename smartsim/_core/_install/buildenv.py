@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Iterable
 
 import importlib.metadata
+import importlib.resources
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
@@ -470,15 +471,15 @@ class BuildEnv:
         def _torch_import_path() -> t.Optional[Path]:
             """Find through importing torch"""
             try:
-                import torch as t
+                # Cannot import torch directly in case it was previously
+                # imported, the module was cached, and then reinstalled
+                py_torch_import_dir = importlib.resources.files('torch')
             except ModuleNotFoundError:
                 return None
             else:
-                torch_paths = (Path(p) for p in t.__path__)
-                for _path in torch_paths:
-                    torch_path = _path / "share/cmake/Torch"
-                    if torch_path.is_dir():
-                        return torch_path
+                torch_path = py_torch_import_dir / "share/cmake/Torch"
+                if torch_path.is_dir():
+                    return torch_path
             return None
 
         def _torch_site_path() -> t.Optional[Path]:
