@@ -306,7 +306,7 @@ class Build:
             device = "gpu"
         return device
 
-    def install_torch(self, device="cpu", force: bool = False):
+    def install_torch(self, device: str = "cpu", force: bool = False) -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
@@ -328,7 +328,7 @@ class Build:
             "torchvision": f"{self.versions.TORCHVISION}{device_suffix}",
             }
 
-        def torch_validator(package, version):
+        def torch_validator(package: str, version: t.Optional[str]) -> bool:
             if not self.build_env.check_installed(package, version):
                 return False
             # Previous check only looks at major/minor version numbers,
@@ -375,7 +375,7 @@ class Build:
                  force=force)
 
     def _install_py_wheels(self, 
-            packages: t.Dict[str, t.Optional[str]], 
+            packages: t.Mapping[str, t.Optional[str]], 
             end_point: t.Optional[str] = None,
             validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
             force: bool = False) -> None:
@@ -404,7 +404,7 @@ class Build:
         if to_install:
             pip_install(to_install, end_point=end_point, verbose=self.verbose)
 
-    def check_backends_install(self):
+    def check_backends_install(self) -> None:
         """Checks if backends have already been installed.
         Logs details on how to proceed forward
         if the RAI_PATH environment variable is set or if

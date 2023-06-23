@@ -48,7 +48,7 @@ import importlib.metadata
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
 import  pkg_resources
-from pkg_resources import packaging
+from pkg_resources import packaging  # type: ignore
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
@@ -400,7 +400,7 @@ class BuildEnv:
     NO_CHECKS = int(os.environ.get("NO_CHECKS", 0))
     PLATFORM = sys.platform
 
-    def __init__(self, checks=True):
+    def __init__(self, checks: bool = True) -> None:
         if checks and not self.NO_CHECKS:
             self.check_dependencies()
 
@@ -546,7 +546,7 @@ class BuildEnv:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
     @classmethod
-    def check_installed(cls, package, version=None):
+    def check_installed(cls, package: str, version: t.Optional[str] = None) -> bool:
         """Check if a package is installed. If version is provided, check if
         it's a compatible version. (major and minor the same)"""
         try:
@@ -566,7 +566,7 @@ class BuildEnv:
         return True
 
     @staticmethod
-    def get_package_version(package):
+    def get_package_version(package: str) -> Version_:
         return Version_(importlib.metadata.version(package))
 
 
