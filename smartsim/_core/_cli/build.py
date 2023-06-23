@@ -124,11 +124,11 @@ class Build:
                 self.build_env = BuildEnv(checks=False)
                 # XXX: focrce install??
                 if onnx:
-                    self.install_onnx_wheels(force=True)
+                    self.check_py_onnx_version(allow_install=True)
                 if tf:
-                    self.install_tf_wheel(force=True)
+                    self.check_py_tf_version(allow_install=True)
                 if pt:
-                    self.install_torch(device=args.device, force=True)
+                    self.check_py_torch_version(device=args.device, allow_install=True)
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
@@ -229,9 +229,9 @@ class Build:
         # they be downloaded, we still should not break the build, as we use
         # onnx and tf directly from RAI instead of pip like we do PyTorch.
         if onnx:
-            self.install_onnx_wheels(force=True)
+            self.check_py_onnx_version(allow_install=True)
         if tf:
-            self.install_tf_wheel(force=True)
+            self.check_py_tf_version(allow_install=True)
 
         # TORCH
         if torch:
@@ -245,7 +245,7 @@ class Build:
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
-                self.install_torch(device=device, force=True)
+                self.check_py_torch_version(device=device, allow_install=True)
                 torch_dir = self.build_env.torch_cmake_path
 
         if tf:
@@ -306,7 +306,7 @@ class Build:
             device = "gpu"
         return device
 
-    def install_torch(self, device: str = "cpu", force: bool = False) -> None:
+    def check_py_torch_version(self, device: str = "cpu", allow_install: bool = False) -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
@@ -341,13 +341,13 @@ class Build:
                                  f"suffix requirement: {device_suffix}")
             return True
 
-        self._install_py_wheels(
+        self._check_py_package_version(
             torch_packages,
             end_point=end_point,
             validator=torch_validator,
-            force=force)
+            allow_install=allow_install)
 
-    def install_onnx_wheels(self, force: bool = False) -> None:
+    def check_py_onnx_version(self, allow_install: bool = False) -> None:
         """Check Python environment for a compatible ONNX installation"""
         logger.info(f"Searching for a compatible python ONNX install...")
         if not self.versions.ONNX:
@@ -361,24 +361,24 @@ class Build:
                 msg += "1.2.5 or "
             msg += "1.2.7."
             raise SetupError(msg)
-        self._install_py_wheels({
+        self._check_py_package_version({
             "onnx": f"{self.versions.ONNX}",
             "skl2onnx": f"{self.versions.REDISAI.skl2onnx}",
             "onnxmltools": f"{self.versions.REDISAI.onnxmltools}",
             "scikit-learn": f"{self.versions.REDISAI.__getattr__('scikit-learn')}",
-        }, force=force)
+        }, allow_install=allow_install)
 
-    def install_tf_wheel(self, force: bool = False) -> None:
+    def check_py_tf_version(self, allow_install: bool = False) -> None:
         """Check Python environment for a compatible TensorFlow installation"""
         logger.info(f"Searching for a compatible TF install...")
-        self._install_py_wheels({"tensorflow": self.versions.TENSORFLOW},
-                 force=force)
+        self._check_py_package_version({"tensorflow": self.versions.TENSORFLOW},
+                 allow_install=allow_install)
 
-    def _install_py_wheels(self, 
+    def _check_py_package_version(self,
             packages: t.Mapping[str, t.Optional[str]], 
             end_point: t.Optional[str] = None,
             validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
-            force: bool = False) -> None:
+            allow_install: bool = False) -> None:
         to_uninstall: t.List[str] = []
         to_install: t.List[str] = []
         validator = validator or self.build_env.check_installed
@@ -395,7 +395,7 @@ class Build:
             except SetupError as e:
                 # Incompatible version found
                 logger.warning(str(e))
-                if force:
+                if allow_install:
                     logger.info(f"Queueing {name} for reinstall")
                     to_uninstall.append(name)
                     to_install.append(spec)
