@@ -29,7 +29,6 @@ import os
 import sys
 from pathlib import Path
 
-import pkg_resources
 import typing as t
 from tabulate import tabulate
 
@@ -225,11 +224,10 @@ class Build:
 
         self.check_backends_install()
 
-        # XXX: force install and update this comment
-        # Check for onnx and tf in user python environemnt and prompt user
-        # to download them if they are not installed. this should not break
-        # the build however, as we use onnx and tf directly from RAI instead
-        # of pip like we do PyTorch.
+        # Check for onnx and tf in user python environemnt or download
+        # them if requested. If they are not present and the user did not request
+        # they be downloaded, we still should not break the build, as we use
+        # onnx and tf directly from RAI instead of pip like we do PyTorch.
         if onnx:
             self.install_onnx_wheels(force=True)
         if tf:
@@ -243,8 +241,7 @@ class Build:
                     # we will always be able to find a torch version downloaded by
                     # pip so if we can't find it we know the user suggested a torch
                     # installation path that doesn't exist
-                    logger.error("Could not find requested user Torch installation")
-                    sys.exit(1)
+                    raise SetupError("Could not find requested user Torch installation")
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
@@ -313,6 +310,7 @@ class Build:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
+        logger.info(f"Searching for a compatible TORCH install...")
         if self.build_env.is_macos():
             end_point = None
             device_suffix = ""
@@ -351,6 +349,7 @@ class Build:
 
     def install_onnx_wheels(self, force: bool = False) -> None:
         """Check Python environment for a compatible ONNX installation"""
+        logger.info(f"Searching for a compatible python ONNX install...")
         if not self.versions.ONNX:
             py_version = sys.version_info
             msg = (
@@ -371,6 +370,7 @@ class Build:
 
     def install_tf_wheel(self, force: bool = False) -> None:
         """Check Python environment for a compatible TensorFlow installation"""
+        logger.info(f"Searching for a compatible TF install...")
         self._install_py_wheels({"tensorflow": self.versions.TENSORFLOW},
                  force=force)
 

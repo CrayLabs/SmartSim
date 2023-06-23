@@ -87,7 +87,7 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
 
 def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
     if verbose:
-        logger.info(f"Attempting to uninstall:\n  {', '.join(packages)}")
+        logger.info(f"Attempting to uninstall: {', '.join(packages)}")
     cmd = [sys.executable, "-m", "pip", "uninstall", "-y"] + packages
     proc = subprocess.Popen(cmd,
         shell=False,

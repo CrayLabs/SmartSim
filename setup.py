@@ -60,8 +60,7 @@
 #  if set, the version number is set to a developer build
 #  with the current version, git-sha, and suffix. This version
 #  is then written into SmartSim/smartsim/version.py
-#
-#
+
 # This future is needed to print Python2 EOL message
 from __future__ import print_function
 import sys

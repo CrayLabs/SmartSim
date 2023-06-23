@@ -33,16 +33,27 @@ import typing as t
 from pathlib import Path
 from typing import Iterable
 
-import pkg_resources
-from pkg_resources import packaging  # type: ignore
-
-Version = packaging.version.Version
-InvalidVersion = packaging.version.InvalidVersion
-DbEngine = t.Literal["REDIS", "KEYDB"]
+import importlib.metadata
 
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
 #       items should be imported here.
+
+
+# TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
+#       packaging implementation, as we cannot assume a user will have `packaging`
+#       prior to `pip install` time. We really only use pkg_resources for their
+#       vendored version of `packaging.version.Version` so we should probably try
+#       to remove
+# https://setuptools.pypa.io/en/latest/pkg_resources.html
+
+import  pkg_resources
+from pkg_resources import packaging
+
+Version = packaging.version.Version
+InvalidVersion = packaging.version.InvalidVersion
+
+DbEngine = t.Literal["REDIS", "KEYDB"]
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -57,8 +68,6 @@ class SetupError(Exception):
 
     See setup.py for more
     """
-
-    pass
 
 
 # so as to not conflict with pkg_resources.packaging.version.Version
@@ -134,7 +143,7 @@ def get_env(var: str, default: str) -> str:
 class RedisAIVersion(Version_):
     """A subclass of Version_ that holds the dependency sets for RedisAI
 
-    this class serves two purposes:
+    This class serves two purposes:
 
     1. It is used to populate the [ml] ``extras_require`` of the setup.py.
     This is because the RedisAI version will determine which ML based
@@ -542,22 +551,22 @@ class BuildEnv:
         it's a compatible version. (major and minor the same)"""
         try:
             installed = cls.get_package_version(package)
-            if version:
-                if not isinstance(version, Version_):
-                    version = Version_(version)
-                # detect if major or minor versions differ
-                if installed.major != version.major or installed.minor != version.minor:
-                    msg = (
-                        f"Incompatible version for {package} detected: "
-                        f"{package} {version} requested but {package} {installed} installed."
-                    )
-                    raise SetupError(msg)
-            return True
-        except pkg_resources.DistributionNotFound:
+        except importlib.metadata.PackageNotFoundError:
             return False
+        if version:
+            if not isinstance(version, Version_):
+                version = Version_(version)
+            # detect if major or minor versions differ
+            if installed.major != version.major or installed.minor != version.minor:
+                msg = (
+                    f"Incompatible version for {package} detected: "
+                    f"{package} {version} requested but {package} {installed} installed."
+                )
+                raise SetupError(msg)
+        return True
 
     @staticmethod
     def get_package_version(package):
-        return Version_(pkg_resources.get_distribution(package).version)
+        return Version_(importlib.metadata.version(package))
 
 
