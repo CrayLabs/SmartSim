@@ -75,9 +75,6 @@ def print_test_configuration():
     global test_alloc_specs_path
     global test_port
 
-    env_var = os.environ.get("SMARTSIM_TEST_INTERFACE")
-    print(f"THE ENVIRONMENT VALUE OF SMARTSIM_TEST_INTERFACE is {env_var}")
-
     print("TEST_SMARTSIM_LOCATION:", smartsim.__path__)
     print("TEST_PATH:", test_path)
     print("TEST_LAUNCHER:", test_launcher)
