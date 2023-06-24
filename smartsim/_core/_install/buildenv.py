@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import importlib.metadata
-import importlib.resources
 import os
 import platform
 import site
@@ -458,15 +457,15 @@ class BuildEnv:
 
         def _torch_import_path() -> t.Optional[Path]:
             """Find through importing torch"""
+            # Try not to import torch directly in case it was previously, cached, and
+            # then reinstalled in a new location out from under the interpreter.
+            # Probably overcautious, but best to be safe
             try:
-                # Cannot import torch directly in case it was previously
-                # imported, the module was cached, and then reinstalled
-                torch_import_loc = importlib.resources.files("torch")
-            except ModuleNotFoundError:
+                torch_dir = self.find_py_pkg("torch")
+            except (importlib.metadata.PackageNotFoundError, FileNotFoundError):
                 return None
-            with importlib.resources.as_file(torch_import_loc) as f:
-                torch_path = f / "share/cmake/Torch"
-                return torch_path if torch_path.is_dir() else None
+            torch_path = torch_dir / "share/cmake/Torch"
+            return torch_path if torch_path.is_dir() else None
 
         def _torch_site_path() -> t.Optional[Path]:
             """find torch through site packages"""
@@ -486,6 +485,26 @@ class BuildEnv:
         if not torch_path:
             raise SetupError("Could not locate torch cmake path")
         return str(torch_path)
+
+    @staticmethod
+    def find_py_pkg(dist_pkg: str, imp_pkg: t.Optional[str] = None) -> Path:
+        """Find the path to an python import package from a distribution package
+        without checking previously cached modules.
+
+        .. note::
+            Currently this function is only suited to finding namespace dirs or *.py
+            files. It is unable to handle other python importables (*.so, *.zip, etc.)
+        """
+        dist = importlib.metadata.distribution(dist_pkg)
+        imp_pkg = imp_pkg or dist_pkg  # Many distributions ship an import of same name
+        imp_file = os.path.sep.join(imp_pkg.split("."))
+        path = Path(dist.locate_file(imp_file))
+        if path.is_dir():
+            return path
+        path = path.parent / (path.name + ".py")
+        if path.is_file():
+            return path
+        raise FileNotFoundError("Could not locate `{imp_pkg}` in dist `{dist_pkg}`")
 
     @staticmethod
     def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
