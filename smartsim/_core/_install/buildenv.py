@@ -321,29 +321,6 @@ class Versioner:
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
-    def ml_extras_required(self) -> t.List[str]:
-        """Optional ML/DL dependencies we suggest for the user.
-
-        The defaults are based on the RedisAI version
-        """
-        ml_defaults = self.REDISAI.get_defaults()
-
-        # remove torch-related fields as they will be installed
-        # by the cli process for use in the RAI build. We don't install
-        # them here as the user needs to decide between GPU/CPU. All other
-        # libraries work on both devices. The correct versions and suffixes
-        # were scraped from https://pytorch.org/get-started/previous-versions/
-        _torch_fields = [
-            "torch",
-            "torchvision",
-            "torch_cpu_suffix",
-            "torch_cuda_suffix",
-        ]
-        for field in _torch_fields:
-            ml_defaults.pop(field)
-
-        return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
-
     def get_sha(self, setup_py_dir: Path) -> str:
         """Get the git sha of the current branch"""
         try:
