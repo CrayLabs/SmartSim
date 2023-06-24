@@ -531,7 +531,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     # Colocate a database with the ensemble with two ensemble members
     for i, entity in enumerate(colo_ensemble):
         entity.colocate_db_tcp(
-            port=test_port + i,
+            port=test_port + i + 1,
             db_cpus=1,
             limit_app_cpus=False,
             debug=True,
