@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import subprocess
+import sys
 import typing as t
 from pathlib import Path
 
@@ -57,7 +57,9 @@ def color_bool(trigger: bool = True) -> str:
     return colorize(str(trigger), color=_color)
 
 
-def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False) -> None:
+def pip_install(
+    packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False
+) -> None:
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
@@ -85,18 +87,20 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
     if verbose:
         logger.info(f"{', '.join(packages)} installed successfully")
 
+
 def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
     if verbose:
         logger.info(f"Attempting to uninstall: {', '.join(packages)}")
     cmd = [sys.executable, "-m", "pip", "uninstall", "-y"] + packages
-    proc = subprocess.Popen(cmd,
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     _, err = proc.communicate()
     retcode = int(proc.returncode)
     if retcode != 0:
-        raise BuildError(f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
-                f"{err.decode('utf-8')}")
+        raise BuildError(
+            f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
+            f"{err.decode('utf-8')}"
+        )
     if verbose:
         logger.info(f"{', '.join(packages)} uninstalled successfully")

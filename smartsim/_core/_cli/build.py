@@ -27,14 +27,21 @@
 import argparse
 import os
 import sys
+import typing as t
 from pathlib import Path
 
-import typing as t
 from tabulate import tabulate
 
 from smartsim._core._cli.utils import color_bool, pip_install, pip_uninstall
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, SetupError, VersionConflictError, Version_, Versioner, DbEngine
+from smartsim._core._install.buildenv import (
+    BuildEnv,
+    DbEngine,
+    SetupError,
+    Version_,
+    VersionConflictError,
+    Versioner,
+)
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -107,7 +114,7 @@ class Build:
                 "If true, `smart` will use `pip` to attempt to modifiy the current "
                 "python enviornment to statify the package dependencies of smartsim "
                 "and RedisAI"
-                ),
+            ),
         )
         parser.add_argument(
             "--keydb",
@@ -139,7 +146,9 @@ class Build:
                 if tf:
                     self.check_py_tf_version(handle_conflict=self.modify_py_env)
                 if pt:
-                    self.check_py_torch_version(device=args.device, handle_conflict=self.modify_py_env)
+                    self.check_py_torch_version(
+                        device=args.device, handle_conflict=self.modify_py_env
+                    )
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
@@ -165,7 +174,9 @@ class Build:
                     logger.info("Version Information:")
                     vers = self.versions.as_dict(db_name=db_name)
                     version_names = list(vers.keys())
-                    print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
+                    print(
+                        tabulate(vers, headers=version_names, tablefmt="github"), "\n"
+                    )
 
                 # REDIS/KeyDB
                 self.build_database()
@@ -218,7 +229,6 @@ class Build:
         torch_dir: t.Union[str, Path, None] = None,
         libtf_dir: t.Union[str, Path, None] = None,
     ) -> None:
-
         # make sure user isn't trying to do something silly on MacOS
         if self.build_env.PLATFORM == "darwin" and device == "gpu":
             raise BuildError("SmartSim does not support GPU on MacOS")
@@ -256,7 +266,9 @@ class Build:
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
-                self.check_py_torch_version(device=device, handle_conflict=self.modify_py_env)
+                self.check_py_torch_version(
+                    device=device, handle_conflict=self.modify_py_env
+                )
                 torch_dir = self.build_env.torch_cmake_path
 
         if tf:
@@ -317,7 +329,9 @@ class Build:
             device = "gpu"
         return device
 
-    def check_py_torch_version(self, device: str = "cpu", handle_conflict: bool = False) -> None:
+    def check_py_torch_version(
+        self, device: str = "cpu", handle_conflict: bool = False
+    ) -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
@@ -326,7 +340,7 @@ class Build:
             end_point = None
             device_suffix = ""
         else:  # linux
-            end_point="https://download.pytorch.org/whl/torch_stable.html"
+            end_point = "https://download.pytorch.org/whl/torch_stable.html"
             if device == "cpu":
                 device_suffix = self.versions.TORCH_CPU_SUFFIX
             elif device in ["gpu", "cuda"]:
@@ -337,7 +351,7 @@ class Build:
         torch_packages = {
             "torch": f"{self.versions.TORCH}{device_suffix}",
             "torchvision": f"{self.versions.TORCHVISION}{device_suffix}",
-            }
+        }
 
         def torch_validator(package: str, version: t.Optional[str]) -> bool:
             if not self.build_env.check_installed(package, version):
@@ -349,7 +363,8 @@ class Build:
                 # Torch requires that we compare to the patch
                 raise VersionConflictError(
                     f"{package}=={installed} does not satisfy device "
-                    f"suffix requirement: {device_suffix}")
+                    f"suffix requirement: {device_suffix}"
+                )
             return True
 
         self._check_py_package_version(
@@ -357,7 +372,7 @@ class Build:
             end_point=end_point,
             validator=torch_validator,
             install_on_absent=True,
-            install_on_conflict=handle_conflict
+            install_on_conflict=handle_conflict,
         )
 
     def check_py_onnx_version(self, handle_conflict: bool = False) -> None:
@@ -374,7 +389,8 @@ class Build:
                 msg += "1.2.5 or "
             msg += "1.2.7."
             raise SetupError(msg)
-        self._check_py_package_version({
+        self._check_py_package_version(
+            {
                 "onnx": f"{self.versions.ONNX}",
                 "skl2onnx": f"{self.versions.REDISAI.skl2onnx}",
                 "onnxmltools": f"{self.versions.REDISAI.onnxmltools}",
@@ -395,7 +411,7 @@ class Build:
 
     def _check_py_package_version(
         self,
-        packages: t.Mapping[str, t.Optional[str]], 
+        packages: t.Mapping[str, t.Optional[str]],
         end_point: t.Optional[str] = None,
         validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
         install_on_absent: bool = False,
@@ -437,7 +453,8 @@ class Build:
         if missing or conflicts:
             indent = "\n    "
             fmt_list: t.Callable[[str, t.List[str]], str] = (
-                    lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else "")
+                lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+            )
             missing_str = fmt_list("Missing", missing)
             conflict_str = fmt_list("Conflicting", conflicts)
             sep = "\n" if missing_str else ""

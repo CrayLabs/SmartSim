@@ -80,10 +80,9 @@ class Builder:
         re.IGNORECASE,
     )
 
-    def __init__(self,
-                 env: t.Dict[str, t.Any],
-                 jobs: t.Optional[int] = 1,
-                 verbose: bool = False) -> None:
+    def __init__(
+        self, env: t.Dict[str, t.Any], jobs: t.Optional[int] = 1, verbose: bool = False
+    ) -> None:
         # build environment from buildenv
         self.env = env
 
@@ -130,12 +129,16 @@ class Builder:
             return binary_
         raise BuildError(f"{binary} not found in PATH")
 
-    def copy_file(self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False) -> None:
+    def copy_file(
+        self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False
+    ) -> None:
         shutil.copyfile(src, dst)
         if set_exe:
             Path(dst).chmod(stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
 
-    def copy_dir(self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False) -> None:
+    def copy_dir(
+        self, src: t.Union[str, Path], dst: t.Union[str, Path], set_exe: bool = False
+    ) -> None:
         src = Path(src)
         dst = Path(dst)
         dst.mkdir(exist_ok=True)
@@ -153,11 +156,13 @@ class Builder:
         if self.build_dir.is_dir():
             shutil.rmtree(str(self.build_dir))
 
-    def run_command(self,
-                    cmd: t.List[str],
-                    shell: bool = False,
-                    out: t.Optional[int] = None,
-                    cwd: t.Union[str, Path, None] = None) -> None:
+    def run_command(
+        self,
+        cmd: t.List[str],
+        shell: bool = False,
+        out: t.Optional[int] = None,
+        cwd: t.Union[str, Path, None] = None,
+    ) -> None:
         # option to manually disable output if necessary
         if not out:
             out = self.out
@@ -185,11 +190,13 @@ class DatabaseBuilder(Builder):
     version and url.
     """
 
-    def __init__(self, 
-                 build_env: t.Dict[str, t.Any] = {},
-                 malloc: str = "libc",
-                 jobs: t.Optional[int] = None,
-                 verbose: bool = False) -> None:
+    def __init__(
+        self,
+        build_env: t.Dict[str, t.Any] = {},
+        malloc: str = "libc",
+        jobs: t.Optional[int] = None,
+        verbose: bool = False,
+    ) -> None:
         super().__init__(build_env, jobs=jobs, verbose=verbose)
         self.malloc = malloc
 
@@ -285,13 +292,13 @@ class RedisAIBuilder(Builder):
 
     def __init__(
         self,
-        build_env: t.Dict[str, t.Any]={},
+        build_env: t.Dict[str, t.Any] = {},
         torch_dir: str = "",
         libtf_dir: str = "",
         build_torch: bool = True,
         build_tf: bool = True,
         build_onnx: bool = False,
-        jobs: t.Optional[int ] = None,
+        jobs: t.Optional[int] = None,
         verbose: bool = False,
     ) -> None:
         super().__init__(build_env, jobs=jobs, verbose=verbose)
@@ -409,7 +416,7 @@ class RedisAIBuilder(Builder):
             "--recursive",
             git_url,
         ]
-        
+
         checkout_osx_fix: t.List[str] = []
 
         # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
@@ -429,7 +436,7 @@ class RedisAIBuilder(Builder):
                 branch,
                 "--depth=1",
                 "RedisAI",
-            ]            
+            ]
 
         self.run_command(clone_cmd, out=subprocess.DEVNULL, cwd=self.build_dir)
         if checkout_osx_fix:

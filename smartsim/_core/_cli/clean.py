@@ -65,7 +65,6 @@ class Clean:
 
         lib_path = self._core_path / "lib"
         if lib_path.is_dir():
-
             # remove RedisAI
             rai_path = lib_path / "redisai.so"
             if rai_path.is_file():

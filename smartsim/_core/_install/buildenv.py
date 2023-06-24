@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import importlib.metadata
+import importlib.resources
 import os
 import platform
 import site
@@ -33,13 +35,9 @@ import typing as t
 from pathlib import Path
 from typing import Iterable
 
-import importlib.metadata
-import importlib.resources
-
 # NOTE: This will be imported by setup.py and hence no
 #       smartsim related items or non-standand library
 #       items should be imported here.
-
 
 # TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
 #       packaging implementation, as we cannot assume a user will have `packaging`
@@ -48,13 +46,15 @@ import importlib.resources
 #       to remove
 # https://setuptools.pypa.io/en/latest/pkg_resources.html
 
-import  pkg_resources
+import pkg_resources
 from pkg_resources import packaging  # type: ignore
+
 
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
 
 DbEngine = t.Literal["REDIS", "KEYDB"]
+
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -70,6 +70,7 @@ class SetupError(Exception):
     See setup.py for more
     """
 
+
 class VersionConflictError(SetupError):
     """An error for when version numbers of some library/package/program/etc
     do not match and build may not be able to continue
@@ -82,7 +83,12 @@ class Version_(str):
     includes some helper methods for comparing versions.
     """
 
-    def _convert_to_version(self, vers: t.Union[str, Iterable[packaging.version.Version], packaging.version.Version]) -> t.Any:
+    def _convert_to_version(
+        self,
+        vers: t.Union[
+            str, Iterable[packaging.version.Version], packaging.version.Version
+        ],
+    ) -> t.Any:
         if isinstance(vers, Version):
             return vers
         elif isinstance(vers, str):
@@ -478,7 +484,7 @@ class BuildEnv:
             try:
                 # Cannot import torch directly in case it was previously
                 # imported, the module was cached, and then reinstalled
-                torch_import_loc = importlib.resources.files('torch')
+                torch_import_loc = importlib.resources.files("torch")
             except ModuleNotFoundError:
                 return None
             with importlib.resources.as_file(torch_import_loc) as f:
@@ -516,9 +522,15 @@ class BuildEnv:
         """
         env = {
             "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", "env-var-not-found"),
-            "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", "env-var-not-found"),
-            "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", "env-var-not-found"),
-            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", "env-var-not-found"),
+            "CUDNN_INCLUDE_DIR": os.environ.get(
+                "CUDNN_INCLUDE_DIR", "env-var-not-found"
+            ),
+            "CUDNN_LIBRARY_PATH": os.environ.get(
+                "CUDNN_LIBRARY_PATH", "env-var-not-found"
+            ),
+            "CUDNN_INCLUDE_PATH": os.environ.get(
+                "CUDNN_INCLUDE_PATH", "env-var-not-found"
+            ),
         }
         torch_cudnn_vars = ["CUDNN_LIBRARY", "CUDNN_INCLUDE_DIR"]
         caffe_cudnn_vars = ["CUDNN_INCLUDE_PATH", "CUDNN_LIBRARY_PATH"]
@@ -572,5 +584,3 @@ class BuildEnv:
     @staticmethod
     def get_package_version(package: str) -> Version_:
         return Version_(importlib.metadata.version(package))
-
-
