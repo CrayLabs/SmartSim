@@ -34,7 +34,7 @@ from tabulate import tabulate
 
 from smartsim._core._cli.utils import color_bool, pip_install, pip_uninstall
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner, DbEngine
+from smartsim._core._install.buildenv import BuildEnv, SetupError, VersionConflictError, Version_, Versioner, DbEngine
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
@@ -97,7 +97,17 @@ class Build:
             "--only_python_packages",
             action="store_true",
             default=False,
-            help="If true, only install the python packages (i.e. skip backend builds)",
+            help="If true, only validate the python packages (i.e. skip backend builds)",
+        )
+        parser.add_argument(
+            "--modify_python_env",
+            action="store_true",
+            default=False,
+            help=(
+                "If true, `smart` will use `pip` to attempt to modifiy the current "
+                "python enviornment to statify the package dependencies of smartsim "
+                "and RedisAI"
+                ),
         )
         parser.add_argument(
             "--keydb",
@@ -108,6 +118,7 @@ class Build:
         args = parser.parse_args(sys.argv[2:])
         self.verbose = args.v
         self.keydb = args.keydb
+        self.modify_py_env = args.modify_python_env
 
         # torch and tf build by default
         pt = not args.no_pt
@@ -124,11 +135,11 @@ class Build:
                 self.build_env = BuildEnv(checks=False)
                 # XXX: focrce install??
                 if onnx:
-                    self.check_py_onnx_version(allow_install=True)
+                    self.check_py_onnx_version(handle_conflict=self.modify_py_env)
                 if tf:
-                    self.check_py_tf_version(allow_install=True)
+                    self.check_py_tf_version(handle_conflict=self.modify_py_env)
                 if pt:
-                    self.check_py_torch_version(device=args.device, allow_install=True)
+                    self.check_py_torch_version(device=args.device, handle_conflict=self.modify_py_env)
             else:
                 logger.info("Checking for build tools...")
                 self.build_env = BuildEnv()
@@ -205,7 +216,7 @@ class Build:
         tf: bool = True,
         onnx: bool = False,
         torch_dir: t.Union[str, Path, None] = None,
-        libtf_dir: t.Union[str, Path, None] = None
+        libtf_dir: t.Union[str, Path, None] = None,
     ) -> None:
 
         # make sure user isn't trying to do something silly on MacOS
@@ -229,9 +240,9 @@ class Build:
         # they be downloaded, we still should not break the build, as we use
         # onnx and tf directly from RAI instead of pip like we do PyTorch.
         if onnx:
-            self.check_py_onnx_version(allow_install=True)
+            self.check_py_onnx_version(handle_conflict=self.modify_py_env)
         if tf:
-            self.check_py_tf_version(allow_install=True)
+            self.check_py_tf_version(handle_conflict=self.modify_py_env)
 
         # TORCH
         if torch:
@@ -245,7 +256,7 @@ class Build:
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
-                self.check_py_torch_version(device=device, allow_install=True)
+                self.check_py_torch_version(device=device, handle_conflict=self.modify_py_env)
                 torch_dir = self.build_env.torch_cmake_path
 
         if tf:
@@ -306,7 +317,7 @@ class Build:
             device = "gpu"
         return device
 
-    def check_py_torch_version(self, device: str = "cpu", allow_install: bool = False) -> None:
+    def check_py_torch_version(self, device: str = "cpu", handle_conflict: bool = False) -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
         """
@@ -335,21 +346,23 @@ class Build:
             # Torch requires we look at the patch as well
             installed = self.build_env.get_package_version(package)
             if device_suffix and device_suffix not in installed.patch:
-                # XXX: Check w/ andrew, prev this was only enforced for cpu
                 # Torch requires that we compare to the patch
-                raise SetupError(f"{package}=={installed} does not satisfy device "
-                                 f"suffix requirement: {device_suffix}")
+                raise VersionConflictError(
+                    f"{package}=={installed} does not satisfy device "
+                    f"suffix requirement: {device_suffix}")
             return True
 
         self._check_py_package_version(
             torch_packages,
             end_point=end_point,
             validator=torch_validator,
-            allow_install=allow_install)
+            install_on_absent=True,
+            install_on_conflict=handle_conflict
+        )
 
-    def check_py_onnx_version(self, allow_install: bool = False) -> None:
+    def check_py_onnx_version(self, handle_conflict: bool = False) -> None:
         """Check Python environment for a compatible ONNX installation"""
-        logger.info(f"Searching for a compatible python ONNX install...")
+        logger.info(f"Searching for a compatible ONNX install...")
         if not self.versions.ONNX:
             py_version = sys.version_info
             msg = (
@@ -362,43 +375,79 @@ class Build:
             msg += "1.2.7."
             raise SetupError(msg)
         self._check_py_package_version({
-            "onnx": f"{self.versions.ONNX}",
-            "skl2onnx": f"{self.versions.REDISAI.skl2onnx}",
-            "onnxmltools": f"{self.versions.REDISAI.onnxmltools}",
-            "scikit-learn": f"{self.versions.REDISAI.__getattr__('scikit-learn')}",
-        }, allow_install=allow_install)
+                "onnx": f"{self.versions.ONNX}",
+                "skl2onnx": f"{self.versions.REDISAI.skl2onnx}",
+                "onnxmltools": f"{self.versions.REDISAI.onnxmltools}",
+                "scikit-learn": f"{self.versions.REDISAI.__getattr__('scikit-learn')}",
+            },
+            install_on_absent=handle_conflict,
+            install_on_conflict=handle_conflict,
+        )
 
-    def check_py_tf_version(self, allow_install: bool = False) -> None:
+    def check_py_tf_version(self, handle_conflict: bool = False) -> None:
         """Check Python environment for a compatible TensorFlow installation"""
         logger.info(f"Searching for a compatible TF install...")
-        self._check_py_package_version({"tensorflow": self.versions.TENSORFLOW},
-                 allow_install=allow_install)
+        self._check_py_package_version(
+            {"tensorflow": self.versions.TENSORFLOW},
+            install_on_absent=handle_conflict,
+            install_on_conflict=handle_conflict,
+        )
 
-    def _check_py_package_version(self,
-            packages: t.Mapping[str, t.Optional[str]], 
-            end_point: t.Optional[str] = None,
-            validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
-            allow_install: bool = False) -> None:
+    def _check_py_package_version(
+        self,
+        packages: t.Mapping[str, t.Optional[str]], 
+        end_point: t.Optional[str] = None,
+        validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
+        install_on_absent: bool = False,
+        install_on_conflict: bool = False,
+    ) -> None:
+        missing: t.List[str] = []
+        conflicts: t.List[str] = []
         to_uninstall: t.List[str] = []
         to_install: t.List[str] = []
         validator = validator or self.build_env.check_installed
+        verbose_info: t.Callable[[str], t.Any] = lambda s: ...
+        if self.verbose:
+            verbose_info = logger.info
 
         for name, version in packages.items():
             spec = f"{name}=={version}" if version else name
             try:
                 if validator(name, version):
                     # Installed at the correct version, nothing to do here
-                    logger.info(f"{spec} already installed in Python environment")
+                    verbose_info(f"{spec} already installed in environment")
                 else:
-                    # Not installed, install prefered version
-                    to_install.append(spec)
-            except SetupError as e:
+                    # Not installed! Install preferred version or warn user
+                    if install_on_absent:
+                        verbose_info(
+                            f"Package not found: Queueing `{spec}` for install"
+                        )
+                        to_install.append(spec)
+                    else:
+                        missing.append(spec)
+            except VersionConflictError as e:
                 # Incompatible version found
-                logger.warning(str(e))
-                if allow_install:
-                    logger.info(f"Queueing {name} for reinstall")
+                if install_on_conflict:
+                    verbose_info(f"{e}: Queueing `{name}` for reinstall")
                     to_uninstall.append(name)
                     to_install.append(spec)
+                else:
+                    conflicts.append(spec)
+
+        if missing or conflicts:
+            indent = "\n    "
+            fmt_list: t.Callable[[str, t.List[str]], str] = (
+                    lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else "")
+            missing_str = fmt_list("Missing", missing)
+            conflict_str = fmt_list("Conflicting", conflicts)
+            sep = "\n" if missing_str else ""
+            logger.warning(
+                "Python Env Status Warning!\n"
+                "Requested Packages are Missing or Conflicting:\n\n"
+                f"{missing_str}{sep}{conflict_str}"
+                "\n\nConsider installing packages at the requested versions via "
+                "`pip` or re-running `smart build` with `--modify_python_env`"
+            )
         if to_uninstall:
             pip_uninstall(to_uninstall, verbose=self.verbose)
         if to_install:

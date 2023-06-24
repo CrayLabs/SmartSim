@@ -70,6 +70,11 @@ class SetupError(Exception):
     See setup.py for more
     """
 
+class VersionConflictError(SetupError):
+    """An error for when version numbers of some library/package/program/etc
+    do not match and build may not be able to continue
+    """
+
 
 # so as to not conflict with pkg_resources.packaging.version.Version
 class Version_(str):
@@ -473,14 +478,12 @@ class BuildEnv:
             try:
                 # Cannot import torch directly in case it was previously
                 # imported, the module was cached, and then reinstalled
-                py_torch_import_dir = importlib.resources.files('torch')
+                torch_import_loc = importlib.resources.files('torch')
             except ModuleNotFoundError:
                 return None
-            else:
-                torch_path = py_torch_import_dir / "share/cmake/Torch"
-                if torch_path.is_dir():
-                    return torch_path
-            return None
+            with importlib.resources.as_file(torch_import_loc) as f:
+                torch_path = f / "share/cmake/Torch"
+                return torch_path if torch_path.is_dir() else None
 
         def _torch_site_path() -> t.Optional[Path]:
             """find torch through site packages"""
@@ -563,7 +566,7 @@ class BuildEnv:
                     f"Incompatible version for {package} detected: "
                     f"{package} {version} requested but {package} {installed} installed."
                 )
-                raise SetupError(msg)
+                raise VersionConflictError(msg)
         return True
 
     @staticmethod
