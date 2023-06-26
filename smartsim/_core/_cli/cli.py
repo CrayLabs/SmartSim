@@ -33,33 +33,16 @@ import typing as t
 from pkg_resources import require
 
 import smartsim._core._cli as cli
+from smartsim._core._cli.dbcli import DbCLI
 from smartsim._core._cli.utils import get_install_path, MenuItem
 
 
-def _usage(subs: t.Dict[str, t.Type[MenuItem]]) -> str:
-    usage = [
-        "smart <command> [<args>]\n",
-        "Commands:",
-        # "\tbuild       Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-        # "\tclean       Remove previous ML runtime installation",
-        # "\tclobber     Remove all previous dependency installations",
-        # "\nDeveloper:",
-        # "\tsite        Print the installation site of SmartSim",
-        # "\tdbcli       Print the path to the redis-cli binary" "\n\n",
-    ]
-    sub_rows = [f"\t{key}\t\t{subs[key].desc()}" for key in subs.keys()]
-    usage.extend(sub_rows)
-
-    return "\n".join(usage)
-
-
 class SmartCli:
-    def __init__(self, menu: t.Dict[str, t.Type[MenuItem]]) -> None:
-        self.menu = menu
+    def __init__(self, menu: t.List[t.Type[MenuItem]]) -> None:
+        self.menu = {item.command(): item for item in menu}
         parser = argparse.ArgumentParser(
             prog="smart",
             description="SmartSim command line interface",
-            # usage=_usage(menu),
         )
         self.parser = parser
 
@@ -93,12 +76,10 @@ class SmartCli:
 
 
 def main() -> None:
-    menu: t.Dict[str, t.Type[MenuItem]] = {
-        cli.Build.command(): cli.Build,
-        cli.Clean.command(): cli.Clean,
-        cli.DbCLI.command(): cli.DbCLI,
-        cli.Site.command(): cli.Site,
-        cli.Clobber.command(): cli.Clobber,
-    }
+    menu: t.Type[MenuItem] = [cli.Build,
+                              cli.Clean,
+                              cli.DbCLI,
+                              cli.Site,
+                              cli.Clobber]
     smart_cli = SmartCli(menu)
     smart_cli.execute()
