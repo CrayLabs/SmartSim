@@ -140,7 +140,6 @@ class Build:
             if args.only_python_packages:
                 logger.info("Only installing Python packages...skipping build")
                 self.build_env = BuildEnv(checks=False)
-                # XXX: focrce install??
                 if onnx:
                     self.check_py_onnx_version(handle_conflict=self.modify_py_env)
                 if tf:
