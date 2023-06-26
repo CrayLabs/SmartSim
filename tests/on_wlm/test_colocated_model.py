@@ -41,13 +41,14 @@ if launcher not in pytest.wlm_options:
 @pytest.mark.parametrize("db_type", ["uds", "tcp", "deprecated"])
 def test_launch_colocated_model(fileutils, coloutils, db_type):
     """Test the launch of a model with a colocated database"""
+
+    exp = Experiment("colocated_model_wlm", launcher=launcher)
     db_args = { }
-    exp, colo_model = coloutils.setup_test_colo(
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_with_restart",
+        exp,
         db_args,
-        launcher
     )
 
     exp.start(colo_model, block=True)
@@ -66,35 +67,40 @@ def test_launch_colocated_pinned_model(fileutils, coloutils, db_type):
         "db_cpus": 2,
     }
 
+    exp = Experiment("colocated_model_pinning_auto_2cpu", launcher=launcher)
+
     # Check to make sure that the CPU mask was correctly generated
-    exp, colo_model = coloutils.setup_test_colo(
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_pinning_auto_2cpu",
+        exp,
         db_args,
-        launcher
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0-1"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
-    exp.start(colo_model)
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_manual(fileutils, db_type):
+def test_colocated_model_pinning_manual(fileutils, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
 
+    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
     db_args = {
         "limit_db_cpus": True,
         "db_cpus": 2,
         "db_cpu_list": "0,2"
     }
 
-    exp, colo_model = _setup_test_colo(
+    colo_model = coloutils._setup_test_colo(
         fileutils,
         db_type,
         "colocated_model_pinning_manual",
         db_args,
-        launcher
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0,2"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
-    exp.start(colo_model)
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])

@@ -142,7 +142,7 @@ def _build_colocated_wrapper_cmd(
     # collect DB binaries and libraries from the config
 
     db_cmd = []
-    if limit_db_cpus:
+    if limit_db_cpus and db_cpu_list:
         db_cmd.extend([
             'taskset', '-c', db_cpu_list
         ])

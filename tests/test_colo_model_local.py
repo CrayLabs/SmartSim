@@ -40,12 +40,12 @@ def test_launch_colocated_model_defaults(fileutils, coloutils, db_type, launcher
 
     db_args = { }
 
-    exp, colo_model = coloutils.setup_test_colo(
+    exp = Experiment("colocated_model_defaults", launcher=launcher)
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_with_restart",
+        exp,
         db_args,
-        launcher
     )
 
     exp.start(colo_model, block=True)
@@ -60,18 +60,18 @@ def test_launch_colocated_model_defaults(fileutils, coloutils, db_type, launcher
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_1cpu(fileutils, coloutils, db_type, launcher="local"):
 
+    exp = Experiment("colocated_model_pinning_auto_1cpu", launcher=launcher)
     db_args = {
         "limit_db_cpus": True,
         "db_cpus": 1,
     }
 
     # Check to make sure that the CPU mask was correctly generated
-    exp, colo_model = coloutils.setup_test_colo(
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_pinning_auto_1cpu",
+        exp,
         db_args,
-        launcher
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
@@ -82,18 +82,19 @@ def test_colocated_model_pinning_auto_1cpu(fileutils, coloutils, db_type, launch
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type, launcher="local"):
 
+    exp = Experiment("colocated_model_pinning_auto_2cpu", launcher=launcher)
+
     db_args = {
         "limit_db_cpus": True,
         "db_cpus": 2,
     }
 
     # Check to make sure that the CPU mask was correctly generated
-    exp, colo_model = coloutils.setup_test_colo(
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_pinning_auto_2cpu",
+        exp,
         db_args,
-        launcher
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0-1"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
@@ -105,18 +106,19 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type, launch
 def test_colocated_model_pinning_manual(fileutils, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
 
+    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+
     db_args = {
         "limit_db_cpus": True,
         "db_cpus": 2,
         "db_cpu_list": "0,2"
     }
 
-    exp, colo_model = coloutils.setup_test_colo(
+    colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
-        "colocated_model_pinning_manual",
+        exp,
         db_args,
-        launcher
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0,2"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]

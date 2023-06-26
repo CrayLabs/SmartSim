@@ -604,11 +604,8 @@ def coloutils():
     return ColoUtils
 
 class ColoUtils:
-    def setup_test_colo(fileutils, db_type, exp_name, db_args, launcher="local"):
+    def setup_test_colo(fileutils, db_type, exp, db_args):
         """Setup things needed for setting up the colo pinning tests"""
-
-        exp = Experiment(exp_name, launcher=launcher)
-
         # get test setup
         test_dir = fileutils.make_test_dir()
         sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
@@ -632,4 +629,4 @@ class ColoUtils:
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
-        return exp, colo_model
+        return colo_model
