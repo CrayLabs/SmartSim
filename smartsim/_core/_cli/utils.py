@@ -102,4 +102,4 @@ class MenuItem(t.Protocol):
 
     @staticmethod
     def help() -> str:
-        return __class__.desc()
+        ...
