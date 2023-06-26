@@ -33,8 +33,7 @@ import typing as t
 from pkg_resources import require
 
 import smartsim._core._cli as cli
-from smartsim._core._cli.dbcli import DbCLI
-from smartsim._core._cli.utils import get_install_path, MenuItem
+from smartsim._core._cli.utils import MenuItem
 
 
 class SmartCli:
