@@ -26,6 +26,7 @@ Description
 A full list of changes and detailed notes can be found below:
 
 - Fix add_ml_model() and add_script() documentation, tests, and code
+- Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators
 - Remove wait time associated with Experiment launch summary
 - Update and rename Redis conf file
 - Migrate from redis-py-cluster to redis-py
@@ -47,6 +48,10 @@ Detailed notes
   testing interface has been changed to lo instead of ipogif. (PR304_)
 - Typehints have been added. A makefile target `make check-mypy` executes static
   analysis with mypy. (PR295_, PR303_)
+- Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators.
+  This resolves some incorrect behavior/assumptions about how the application
+  would be pinned.  Instead, users should directly specify the binding options in
+  their application using the options appropriate for their launcher
 - Simplify code in `random_permutations` parameter generation strategy (PR300_)
 - Remove wait time associated with Experiment launch summary (PR298_)
 - Update Redis conf file to conform with Redis v7.0.5 conf file (PR293_)
@@ -62,6 +67,8 @@ Detailed notes
   return/error codes. These have now all been updated. (PR284_)
 - Orchestrator and Colocated DB now accept a list of interfaces to bind to. The
   argument name is still `interface` for backward compatibility reasons. (PR281_)
+- Typehints have been added to public APIs. A makefile target to execute static
+  analysis with mypy is available `make check-mypy`. (PR295_)
 
 .. _PR305: https://github.com/CrayLabs/SmartSim/pull/305
 .. _PR304: https://github.com/CrayLabs/SmartSim/pull/304

@@ -23,10 +23,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import pdb
 
 import sys
-import warnings
 
 import pytest
 
@@ -36,44 +34,13 @@ if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
-
-def _setup_test_colo(fileutils, db_type, exp_name, db_args, launcher="local"):
-    """Setup things needed for setting up the colo pinning tests"""
-
-    exp = Experiment(exp_name, launcher=launcher)
-
-    # get test setup
-    test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
-
-    # Create an app with a colo_db which uses 1 db_cpu
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
-    colo_model = exp.create_model(f"colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
-
-    if db_type in ['tcp', "deprecated"]:
-        db_args["port"] = 6780
-        db_args["ifname"] = "lo"
-
-    colocate_fun = {
-        "tcp": colo_model.colocate_db_tcp,
-        "deprecated": colo_model.colocate_db,
-        "uds":colo_model.colocate_db_uds
-    }
-    colocate_fun[db_type](**db_args)
-
-    # assert model will launch with colocated db
-    assert colo_model.colocated
-    # Check to make sure that limit_db_cpus made it into the colo settings
-    return exp, colo_model
-
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_launch_colocated_model_defaults(fileutils, db_type, launcher="local"):
+def test_launch_colocated_model_defaults(fileutils, coloutils, db_type, launcher="local"):
     """Test the launch of a model with a colocated database and local launcher"""
 
     db_args = { }
 
-    exp, colo_model = _setup_test_colo(
+    exp, colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         "colocated_model_with_restart",
@@ -91,7 +58,7 @@ def test_launch_colocated_model_defaults(fileutils, db_type, launcher="local"):
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_auto_1cpu(fileutils, db_type, launcher="local"):
+def test_colocated_model_pinning_auto_1cpu(fileutils, coloutils, db_type, launcher="local"):
 
     db_args = {
         "limit_db_cpus": True,
@@ -99,7 +66,7 @@ def test_colocated_model_pinning_auto_1cpu(fileutils, db_type, launcher="local")
     }
 
     # Check to make sure that the CPU mask was correctly generated
-    exp, colo_model = _setup_test_colo(
+    exp, colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         "colocated_model_pinning_auto_1cpu",
@@ -108,10 +75,12 @@ def test_colocated_model_pinning_auto_1cpu(fileutils, db_type, launcher="local")
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
-    exp.start(colo_model)
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_auto_2cpu(fileutils, db_type, launcher="local"):
+def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type, launcher="local"):
 
     db_args = {
         "limit_db_cpus": True,
@@ -119,7 +88,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, db_type, launcher="local")
     }
 
     # Check to make sure that the CPU mask was correctly generated
-    exp, colo_model = _setup_test_colo(
+    exp, colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         "colocated_model_pinning_auto_2cpu",
@@ -128,10 +97,12 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, db_type, launcher="local")
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0-1"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
-    exp.start(colo_model)
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_colocated_model_pinning_manual(fileutils, db_type, launcher="local"):
+def test_colocated_model_pinning_manual(fileutils, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
 
     db_args = {
@@ -140,7 +111,7 @@ def test_colocated_model_pinning_manual(fileutils, db_type, launcher="local"):
         "db_cpu_list": "0,2"
     }
 
-    exp, colo_model = _setup_test_colo(
+    exp, colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         "colocated_model_pinning_manual",
@@ -149,4 +120,6 @@ def test_colocated_model_pinning_manual(fileutils, db_type, launcher="local"):
     )
     assert colo_model.run_settings.colocated_db_settings["db_cpu_list"] == "0,2"
     assert colo_model.run_settings.colocated_db_settings["limit_db_cpus"]
-    exp.start(colo_model)
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])

@@ -27,7 +27,6 @@
 import json
 import os
 import inspect
-import shutil
 import pytest
 import psutil
 import shutil
@@ -44,6 +43,7 @@ from smartsim.settings import (
 from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 from subprocess import run
+import sys
 
 
 # Globals, yes, but its a testing file
@@ -115,7 +115,8 @@ def pytest_sessionfinish(session, exitstatus):
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        shutil.rmtree(test_dir)
+        # shutil.rmtree(test_dir)
+        pass
     else:
         # kill all spawned processes in case of error
         kill_all_test_spawned_processes()
@@ -597,3 +598,38 @@ class MLUtils:
     @staticmethod
     def get_test_num_gpus():
         return test_num_gpus
+
+@pytest.fixture
+def coloutils():
+    return ColoUtils
+
+class ColoUtils:
+    def setup_test_colo(fileutils, db_type, exp_name, db_args, launcher="local"):
+        """Setup things needed for setting up the colo pinning tests"""
+
+        exp = Experiment(exp_name, launcher=launcher)
+
+        # get test setup
+        test_dir = fileutils.make_test_dir()
+        sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+
+        # Create an app with a colo_db which uses 1 db_cpu
+        colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+        colo_model = exp.create_model(f"colocated_model", colo_settings)
+        colo_model.set_path(test_dir)
+
+        if db_type in ['tcp', "deprecated"]:
+            db_args["port"] = 6780
+            db_args["ifname"] = "lo"
+
+        colocate_fun = {
+            "tcp": colo_model.colocate_db_tcp,
+            "deprecated": colo_model.colocate_db,
+            "uds":colo_model.colocate_db_uds
+        }
+        colocate_fun[db_type](**db_args)
+
+        # assert model will launch with colocated db
+        assert colo_model.colocated
+        # Check to make sure that limit_db_cpus made it into the colo settings
+        return exp, colo_model

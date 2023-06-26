@@ -202,6 +202,9 @@ class Model(SmartSimEntity):
         :type db_cpus: int, optional
         :param limit_db_cpus: whether to limit the number of cpus used by the database defaults to True
         :type limit_db_cpus: bool, optional
+        :param db_cpu_list: lists the cpus which the database can be run on. Follows `taskset -c` syntax
+                            e.g. '0-2,5' specifies processors 0, 1, 2, and 5
+        :type db_cpu_list: str, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -262,6 +265,9 @@ class Model(SmartSimEntity):
         :type db_cpus: int, optional
         :param limit_db_cpus: whether to limit the number of cpus used by the database, defaults to True
         :type limit_db_cpus: bool, optional
+        :param db_cpu_list: lists the cpus which the database can be run on. Follows `taskset -c` syntax
+                            e.g. '0-2,5' specifies processors 0, 1, 2, and 5
+        :type db_cpu_list: str, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -297,10 +303,14 @@ class Model(SmartSimEntity):
         if hasattr(self.run_settings, "_prep_colocated_db"):
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
-        # TODO list which db settings can be extras
+        if "limit_app_cpus" in common_options:
+            raise SSUnsupportedError(
+                "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings " +
+                "instead using the correct binding option for your launcher."
+            )
 
+        # TODO list which db settings can be extras
         cpus = common_options["cpus"]
-        print(cpus)
         # Deal with cases where the database should be pinned to cpus
         # (1) if the user set a db_cpu_list, but not limit_db_cpus
         if common_options["db_cpu_list"] and not common_options["limit_db_cpus"]:
@@ -324,7 +334,6 @@ class Model(SmartSimEntity):
                     f"pinning to processors {cpu_list}"
                 )
             )
-            print(cpu_list)
             common_options["db_cpu_list"] = cpu_list
 
         colo_db_config = {}

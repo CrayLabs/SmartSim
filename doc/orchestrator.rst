@@ -97,22 +97,24 @@ Here is an example of creating a simple model that is colocated with an
   colo_model.colocate_db_uds(
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
-          pin_db_cpus=True,       # Pin the affinities of the co-located database
-                                  # to specific processors
+          limit_db_cpus=True,     # Limit the database to a specific set of cpus
+          ifname=network_interface # specify network interface(s) to use (i.e. "ib0" or ["ib0", "lo"])
   )
   exp.start(colo_model)
 
 
-By default, SmartSim will attempt to make sure that the database and the application
-do not fight over resources by taking over the affinity mapping process locally on
-each node. This can be disabled by setting ``pin_db_cpus`` to ``False``.
+By default, SmartSim will pin the database to the first _N_ CPUs according to ``db_cpus``. By
+specifying the optional argument ``db_cpu_list``, an alternative pinning can be specified (
+following the format used by ``taskset``). For example, ``db_cpu_list=0-2,5`` limits the database
+to be run on processors 0, 1, 2 and 5. Setting ``limit_db_cpus=False`` disables pinning for the database
+kernel scheduler. For optimal performance, most users will want to also modify the RunSettings for
+the model to pin their application to cores not occupied by the database.
 
-Especially for multicore machines, it can be useful to pin the CPUs used by the database.
-This is enabled by default and the database will automatically be bound to the first
-logical processors starting from 0 to ``db_cpus-1``. To specify a custom set of cpus,
-set ``db_cpu_list`` following the same syntax as the Linux command ``taskset -c``. The
-RunSettings for the simulation should similarly be bound (e.g. in Slurm using
-``cpu-bind``) to bind the application to a separate set of cores.
+.. note::
+
+  Pinning _only_ affects the co-located deployment because both the application and the database
+  are sharing the same compute node. For the clustered deployment, a shard occupies the entirerty
+  of the node.
 
 Redis
 =====
