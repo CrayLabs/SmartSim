@@ -383,7 +383,7 @@ class Build(MenuItem):
     
     @staticmethod
     def help() -> str:
-        return "(help for) Build SmartSim dependencies (Redis, RedisAI, ML runtimes)"
+        return Build.desc()
     
     @staticmethod
     def desc() -> str:

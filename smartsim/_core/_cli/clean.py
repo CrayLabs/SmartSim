@@ -86,7 +86,7 @@ class Clean(MenuItem):
     
     @staticmethod
     def help() -> str:
-        return "(help for) Remove previous ML runtime installation"
+        return Clean.desc()
     
     @staticmethod
     def desc() -> str:

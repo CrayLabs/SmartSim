@@ -57,7 +57,7 @@ class SmartCli:
         parser = argparse.ArgumentParser(
             prog="smart",
             description="SmartSim command line interface",
-            # usage=_usage(self._p),
+            # usage=_usage(menu),
         )
         self.parser = parser
 

@@ -43,7 +43,7 @@ class Site(MenuItem):
     
     @staticmethod
     def help() -> str:
-        return "(help for) Print the installation site of SmartSim"
+        return Site.desc()
     
     @staticmethod
     def desc() -> str:
