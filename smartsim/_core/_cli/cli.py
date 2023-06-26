@@ -47,6 +47,7 @@ def _usage(subs: t.Dict[str, t.Type[MenuItem]]) -> str:
     ]
     sub_rows = [f"\t{key}\t\t{subs[key].desc()}" for key in subs.keys()]
     usage.extend(sub_rows)
+
     return "\n".join(usage)
 
 

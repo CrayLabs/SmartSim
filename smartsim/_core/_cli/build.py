@@ -386,10 +386,6 @@ class Build(MenuItem):
         return "(help for) Build SmartSim dependencies (Redis, RedisAI, ML runtimes)"
     
     @staticmethod
-    def usage() -> str:
-        return f"smart {Build.command()} [options]"
-    
-    @staticmethod
     def desc() -> str:
         return "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)"
 

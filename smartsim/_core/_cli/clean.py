@@ -35,7 +35,7 @@ smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 
-class Clean:
+class Clean(MenuItem):
     # def __init__(self, clean_all: bool = False) -> None:
     def execute(self, args: argparse.Namespace) -> None:
         self._core_path = get_install_path() / "_core"
@@ -87,10 +87,6 @@ class Clean:
     @staticmethod
     def help() -> str:
         return "(help for) Remove previous ML runtime installation"
-    
-    @staticmethod
-    def usage() -> str:
-        return f"smart {Clean.command()} [options]"
     
     @staticmethod
     def desc() -> str:

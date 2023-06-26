@@ -46,10 +46,6 @@ class Site(MenuItem):
         return "(help for) Print the installation site of SmartSim"
     
     @staticmethod
-    def usage() -> str:
-        return f"smart {Site.command()} [options]"
-    
-    @staticmethod
     def desc() -> str:
         return "Print the installation site of SmartSim"
 

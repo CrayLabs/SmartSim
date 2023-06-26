@@ -54,10 +54,6 @@ class DbCLI(MenuItem):
         return "(help for) Print the path to the redis-cli binary"
     
     @staticmethod
-    def usage() -> str:
-        return f"smart {DbCLI.command()} [options]"
-    
-    @staticmethod
     def desc() -> str:
         return "Print the path to the redis-cli binary"
 
