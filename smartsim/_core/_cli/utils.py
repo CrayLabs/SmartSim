@@ -33,6 +33,7 @@ from pathlib import Path
 from smartsim._core._install.buildenv import SetupError
 from smartsim._core._install.builder import BuildError
 from smartsim._core.utils import colorize
+
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -124,22 +125,50 @@ def clean(core_path: str, _all: bool = False) -> None:
             logger.info("Successfully removed SmartSim database installation")
 
 
-class MenuItem(t.Protocol):
-    @staticmethod
-    def configure_parser(parser: ArgumentParser) -> ArgumentParser:
-        return parser
+def get_db_path() -> Path:
+    bin_path = get_install_path() / "_core" / "bin"
+    for option in bin_path.iterdir():
+        if option.name in ("redis-cli", "keydb-cli"):
+            return option
+    return "Database (Redis or KeyDB) dependencies not found"
 
-    @staticmethod
-    def command() -> str:
-        ...
 
-    @staticmethod
-    def desc() -> str:
-        ...
+class MenuItemConfig:
+    def __init__(self, cmd: str, help: str, handler: t.Callable[[Namespace], None], configurator: t.Callable[[ArgumentParser], ArgumentParser]):
+        self.command = cmd
+        self.help = help
+        self.handler = handler
+        self.configurator = configurator
 
-    def execute(self, args: Namespace) -> None:
-        ...
+    @property
+    def command(self) -> str:
+        return self._cmd
 
-    @staticmethod
-    def help() -> str:
-        ...
+    @command.setter
+    def command(self, value: str) -> None:
+        self._cmd = value
+
+    @property
+    def help(self) -> str:
+        return self._help
+
+    @help.setter
+    def help(self, value: str) -> None:
+        self._help = value
+
+    @property
+    def handler(self) -> t.Callable[[Namespace], None]:
+        return self._handler
+
+    @handler.setter
+    def handler(self, value: t.Callable[[Namespace], None]) -> None:
+        self._handler = value    
+
+    @property
+    def configurator(self) -> t.Callable[[ArgumentParser], None]:
+        return self._config
+
+    @configurator.setter
+    def configurator(self, value: t.Callable[[ArgumentParser], None]) -> None:
+        self._config = value
+    
