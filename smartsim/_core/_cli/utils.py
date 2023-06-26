@@ -102,9 +102,4 @@ class MenuItem(t.Protocol):
 
     @staticmethod
     def help() -> str:
-        ...
-    
-    # @staticmethod
-    # def usage() -> str:
-    #     cmd = __class__.command()
-    #     return f"smart {cmd} [options]"
+        return __class__.desc()

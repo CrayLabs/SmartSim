@@ -26,7 +26,7 @@
 
 import argparse
 import shutil
-import sys
+import typing as t
 
 from smartsim._core._cli.utils import get_install_path, MenuItem
 from smartsim.log import get_logger
@@ -101,4 +101,27 @@ class Clean(MenuItem):
             default=False,
             help="Remove all SmartSim non-python dependencies as well",
         )
+        return parser
+
+    
+class Clobber(MenuItem):
+    def execute(self, args: argparse.Namespace) -> None:
+        core_path = get_install_path() / "_core"
+        clean(core_path, _all=True)
+
+    @staticmethod
+    def command() -> str:
+        return "clobber"
+    
+    @staticmethod
+    def help() -> str:
+        return Clobber.desc()
+    
+    @staticmethod
+    def desc() -> str:
+        return "Remove all previous dependency installations"
+
+    @staticmethod
+    def configure_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        """Builds the parser for the command"""
         return parser

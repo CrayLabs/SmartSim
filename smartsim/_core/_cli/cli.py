@@ -30,6 +30,8 @@ import argparse
 import sys
 import typing as t
 
+from pkg_resources import require
+
 import smartsim._core._cli as cli
 from smartsim._core._cli.utils import get_install_path, MenuItem
 
@@ -61,14 +63,17 @@ class SmartCli:
         )
         self.parser = parser
 
-        subparsers = parser.add_subparsers(title="command", 
-                                           dest="command", 
+        subparsers = parser.add_subparsers(dest="command",
                                            required=True,
+                                           metavar="<command>",
                                            help="Available commands")
 
         for cmd, item in self.menu.items():
             # usage = "smart <command> [<args>]"
-            p = subparsers.add_parser(cmd, description=item.desc(), help=item.help())
+            p = subparsers.add_parser(cmd, 
+                                      description=item.desc(), 
+                                      help=item.help(),
+            )
             item.configure_parser(p)
 
     def execute(self) -> None:
@@ -86,10 +91,6 @@ class SmartCli:
         handler().execute(args)
         sys.exit(0)
 
-    # def clobber(self, args: argparse.Namespace) -> None:
-    #     Clean(clean_all=True)
-    #     sys.exit(0)
-
 
 def main() -> None:
     menu: t.Dict[str, t.Type[MenuItem]] = {
@@ -97,6 +98,7 @@ def main() -> None:
         cli.Clean.command(): cli.Clean,
         cli.DbCLI.command(): cli.DbCLI,
         cli.Site.command(): cli.Site,
+        cli.Clobber.command(): cli.Clobber,
     }
     smart_cli = SmartCli(menu)
     smart_cli.execute()

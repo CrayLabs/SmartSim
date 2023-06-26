@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .build import Build
-from .clean import Clean
+from .clean import Clean, Clobber
 from .dbcli import DbCLI
 from .site import Site
 from .utils import get_install_path, MenuItem

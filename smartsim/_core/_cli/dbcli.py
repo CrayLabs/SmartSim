@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import shutil
 import sys
 
 from smartsim._core._cli.utils import get_install_path, MenuItem
