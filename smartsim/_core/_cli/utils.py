@@ -87,7 +87,7 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
 class MenuItem(t.Protocol):
     @staticmethod
     def configure_parser(parser: ArgumentParser) -> ArgumentParser:
-        ...
+        return parser
 
     @staticmethod
     def command() -> str:

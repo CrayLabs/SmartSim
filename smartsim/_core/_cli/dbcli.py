@@ -55,8 +55,3 @@ class DbCLI(MenuItem):
     @staticmethod
     def desc() -> str:
         return "Print the path to the redis-cli binary"
-
-    @staticmethod
-    def configure_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-        """Builds the parser for the command"""
-        return parser

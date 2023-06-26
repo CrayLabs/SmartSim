@@ -48,8 +48,3 @@ class Site(MenuItem):
     @staticmethod
     def desc() -> str:
         return "Print the installation site of SmartSim"
-
-    @staticmethod
-    def configure_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-        """Builds the parser for the command"""
-        return parser
