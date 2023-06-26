@@ -243,7 +243,7 @@ class SlurmLauncher(WLMLauncher):
             _rc = int(stat_tuple[1]) if stat_tuple[1] else None
             info = SlurmStepInfo(stat_tuple[0], _rc)
 
-            task_id = self.step_mapping.get_task_id(int(step_id))
+            task_id = self.step_mapping.get_task_id(step_id)
             if task_id:
                 # we still check the task manager for jobs that didn't ever
                 # become a fully managed job (e.g. error in slurm arguments)
