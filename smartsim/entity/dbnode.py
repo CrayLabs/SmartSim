@@ -176,7 +176,7 @@ class DBNode(SmartSimEntity):
             try:
                 ip = self._parse_ips(filepath, 1)[0]
             # suppress error
-            except (FileNotFoundError, IndexError):
+            except FileNotFoundError:
                 pass
 
             logger.debug("Waiting for Redis output files to populate...")
