@@ -80,7 +80,7 @@ class LSFLauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through LSF
 
         :param step: a job step instance

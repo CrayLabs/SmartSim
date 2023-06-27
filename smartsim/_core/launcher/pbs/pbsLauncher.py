@@ -76,7 +76,7 @@ class PBSLauncher(WLMLauncher):
             PalsMpiexecSettings: MpiexecStep,
         }
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through PBSPro
 
         :param step: a job step instance

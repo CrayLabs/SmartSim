@@ -113,7 +113,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
 
         :param step: a job step instance

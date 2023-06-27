@@ -82,7 +82,7 @@ class CobaltLauncher(WLMLauncher):
         }    
 
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Cobalt
 
         :param step: a job step instance
