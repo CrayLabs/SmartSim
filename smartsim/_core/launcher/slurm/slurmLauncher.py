@@ -156,9 +156,6 @@ class SlurmLauncher(WLMLauncher):
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
         
-        if not step_id:
-            raise ValueError("Unable to get step id for job step")
-        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         # give slurm a rest
