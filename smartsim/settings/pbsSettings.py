@@ -39,8 +39,8 @@ class QsubBatchSettings(BatchSettings):
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         account: t.Optional[str] = None,
-        resources: t.Optional[t.Dict[str, str]] = None,
-        batch_args: t.Optional[t.Dict[str, str]] = None,
+        resources: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ):
         """Specify ``qsub`` batch parameters for a job

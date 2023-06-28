@@ -45,8 +45,8 @@ class _BaseMPISettings(RunSettings):
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_command: str = "mpiexec",
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         fail_if_missing_exec: bool = True,
         **kwargs: t.Any,
     ) -> None:
@@ -119,7 +119,7 @@ class _BaseMPISettings(RunSettings):
         :param task_mapping: task mapping
         :type task_mapping: str
         """
-        self.run_args["map-by"] = str(task_mapping)
+        self.run_args["map-by"] = task_mapping
 
     def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of tasks for this job
@@ -142,7 +142,7 @@ class _BaseMPISettings(RunSettings):
         :param bind_type: binding type
         :type bind_type: str
         """
-        self.run_args["bind-to"] = str(bind_type)
+        self.run_args["bind-to"] = bind_type
 
     def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks per node
@@ -187,7 +187,7 @@ class _BaseMPISettings(RunSettings):
         :param file_path: Path to the hostlist file
         :type file_path: str
         """
-        self.run_args["hostfile"] = str(file_path)
+        self.run_args["hostfile"] = file_path
 
     def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
@@ -240,7 +240,7 @@ class _BaseMPISettings(RunSettings):
         :param walltime: number like string of seconds that a job will run in secs
         :type walltime: str
         """
-        self.run_args["timeout"] = str(walltime)
+        self.run_args["timeout"] = walltime
 
     def format_run_args(self) -> t.List[str]:
         """Return a list of MPI-standard formatted run arguments
@@ -284,8 +284,8 @@ class MpirunSettings(_BaseMPISettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``mpirun`` command (MPI-standard)
@@ -303,7 +303,7 @@ class MpirunSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -315,8 +315,8 @@ class MpiexecSettings(_BaseMPISettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``mpiexec`` command (MPI-standard)
@@ -334,7 +334,7 @@ class MpiexecSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -355,8 +355,8 @@ class OrterunSettings(_BaseMPISettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``orterun`` command (MPI-standard)
@@ -374,7 +374,7 @@ class OrterunSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """

@@ -24,6 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import annotations
 
+import copy
 import typing as t
 
 from smartsim.settings.containers import Container
@@ -43,8 +44,8 @@ class RunSettings(SettingsBase):
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_command: str = "",
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         container: t.Optional[Container] = None,
         **kwargs: t.Any,
     ) -> None:
@@ -81,19 +82,39 @@ class RunSettings(SettingsBase):
         :type container: Container, optional
         """
         # Do not expand executable if running within a container
-        if container:
-            self.exe = [exe]
-        else:
-            self.exe = [expand_exe_path(exe)]
-
-        self.exe_args = self._set_exe_args(exe_args)
-        self.run_args: t.Dict[str, t.Optional[t.Union[str, int]]] = init_default({}, run_args, dict)
-        self.env_vars: t.Dict[str, t.Union[str, int, bool, float]] = init_default({}, env_vars, dict)
+        self.exe = [exe] if container else [expand_exe_path(exe)]
+        self.exe_args = exe_args or []
+        self.run_args = run_args or {}
+        self.env_vars = env_vars or {}
         self.container = container
         self._run_command = run_command
         self.in_batch = False
         self.colocated_db_settings: t.Optional[t.Dict[str, str]] = None
 
+    @property
+    def exe_args(self) -> t.Union[str, t.List[str]]:
+        return self._exe_args
+
+    @exe_args.setter
+    def exe_args(self, value: t.Union[str, t.List[str], None]) -> None:
+        self._exe_args = self._build_exe_args(value)
+
+    @property
+    def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
+        return self._run_args
+    
+    @run_args.setter
+    def run_args(self, value: t.Dict[str, t.Union[int, str, float, None]]) -> None:
+        self._run_args = copy.deepcopy(value)
+
+    @property
+    def env_vars(self) -> t.Dict[str, t.Optional[str]]:
+        return self._env_vars
+    
+    @env_vars.setter
+    def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
+        self._env_vars = copy.deepcopy(value)
+    
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
 
@@ -393,7 +414,7 @@ class RunSettings(SettingsBase):
                     f"env_vars[{env}] was of type {type(val)}, not {val_types}"
                 )
             else:
-                self.env_vars[env] = val
+                self.env_vars[env] = str(val)
 
     def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
         """Add executable arguments to executable
@@ -404,10 +425,12 @@ class RunSettings(SettingsBase):
         """
         if isinstance(args, str):
             args = args.split()
+        
         for arg in args:
             if not isinstance(arg, str):
                 raise TypeError("Executable arguments should be a list of str")
-            self.exe_args.append(arg)
+
+        self._exe_args.extend(args)
 
     def set(self, arg: str, value: t.Optional[str] = None, condition: bool = True) -> None:
         """Allows users to set individual run arguments.
@@ -480,11 +503,14 @@ class RunSettings(SettingsBase):
             logger.warning(f"Overwritting argument '{arg}' with value '{value}'")
         self.run_args[arg] = value
 
-    def _set_exe_args(self, exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
+    @staticmethod
+    def _build_exe_args(exe_args: t.Optional[t.Union[str, t.List[str]]]) -> t.List[str]:
+        """Convert exe_args input to a desired collection format"""
         if exe_args:
             if isinstance(exe_args, str):
                 return exe_args.split()
             if isinstance(exe_args, list):
+                exe_args = copy.deepcopy(exe_args)
                 plain_type = all([isinstance(arg, (str)) for arg in exe_args])
                 if not plain_type:
                     nested_type = all(
@@ -549,11 +575,11 @@ class BatchSettings(SettingsBase):
     def __init__(
         self,
         batch_cmd: str,
-        batch_args: t.Optional[t.Dict[str, t.Any]] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         self._batch_cmd = batch_cmd
-        self.batch_args = init_default({}, batch_args, dict)
+        self.batch_args = batch_args or {}
         self._preamble: t.List[str] = []
         self.set_nodes(kwargs.get("nodes", None))
         self.set_walltime(kwargs.get("time", None))
@@ -575,6 +601,14 @@ class BatchSettings(SettingsBase):
             return expand_exe_path(self._batch_cmd)
         else:
             return self._batch_cmd
+
+    @property
+    def batch_args(self) -> t.Dict[str, t.Optional[str]]:
+        return self._batch_args
+    
+    @batch_args.setter
+    def batch_args(self, value: t.Dict[str, t.Optional[str]]) -> None:
+        self._batch_args = copy.deepcopy(value) if value else {}
 
     def set_nodes(self, num_nodes: int) -> None:
         raise NotImplementedError

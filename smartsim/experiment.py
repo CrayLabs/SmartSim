@@ -558,8 +558,8 @@ class Experiment:
         exe: str,
         exe_args: t.Optional[t.List[str]] = None,
         run_command: str = "auto",
-        run_args: t.Optional[t.Dict[str, str]] = None,
-        env_vars: t.Optional[t.Dict[str, str]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         container: t.Optional[Container] = None,
         **kwargs: t.Any,
     ) -> settings.RunSettings:
@@ -593,7 +593,7 @@ class Experiment:
         :param exe_args: arguments to pass to the executable
         :type exe_args: list[str], optional
         :param run_args: arguments to pass to the ``run_command``
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment variables to pass to the executable
         :type env_vars: dict[str, str], optional
         :param container: if execution environment is containerized
