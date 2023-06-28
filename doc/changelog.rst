@@ -43,7 +43,8 @@ Detailed notes
   unexpectedly due to copy-by-ref (PR305_)
 - The underlying code for Model.add_ml_model() and Model.add_script() was fixed
   to correctly handle multi-GPU configurations.  Tests were updated to run on
-  non-local launchers.  Documentation was updated and fixed. (PR304_)
+  non-local launchers.  Documentation was updated and fixed.  Also, the default
+  testing interface has been changed to lo instead of ipogif. (PR304_)
 - Typehints have been added. A makefile target `make check-mypy` executes static
   analysis with mypy. (PR295_, PR303_)
 - Simplify code in `random_permutations` parameter generation strategy (PR300_)
