@@ -82,7 +82,7 @@ class CobaltLauncher(WLMLauncher):
         }    
 
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Cobalt
 
         :param step: a job step instance
@@ -120,8 +120,6 @@ class CobaltLauncher(WLMLauncher):
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_cobalt_step_id(step)
-        if not step_id:
-            raise ValueError("Unable to get step id for job step")
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id

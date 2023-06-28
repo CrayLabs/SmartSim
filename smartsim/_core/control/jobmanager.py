@@ -168,7 +168,7 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def add_job(self, job_name: str, job_id: str, entity: t.Union[SmartSimEntity, EntityList], is_task: bool = True) -> None:
+    def add_job(self, job_name: str, job_id: t.Optional[str], entity: t.Union[SmartSimEntity, EntityList], is_task: bool = True) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -278,7 +278,7 @@ class JobManager:
             return True
         return False
 
-    def restart_job(self, job_name: str, job_id: str, entity_name: str, is_task: bool = True) -> None:
+    def restart_job(self, job_name: str, job_id: t.Optional[str], entity_name: str, is_task: bool = True) -> None:
         """Function to reset a job to record history and be
         ready to launch again.
 

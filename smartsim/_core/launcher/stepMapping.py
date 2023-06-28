@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 class StepMap:
     def __init__(self,
                  step_id: t.Optional[str] = None,
-                 task_id: t.Optional[int] = None,
+                 task_id: t.Optional[str] = None,
                  managed: t.Optional[bool] = None) -> None:
         self.step_id = step_id
         self.task_id = task_id
@@ -60,13 +60,13 @@ class StepMapping:
         managed: bool = True,
     ) -> None:
         try:
-            n_task_id = int(task_id) if task_id else None
+            n_task_id = str(task_id) if task_id else None
             self.mapping[step_name] = StepMap(step_id, n_task_id, managed)
         except Exception as e:
             msg = f"Could not add step {step_name} to mapping: {e}"
             logger.exception(msg)
 
-    def get_task_id(self, step_id: int) -> t.Optional[int]:
+    def get_task_id(self, step_id: str) -> t.Optional[str]:
         """Get the task id from the step id"""
         task_id = None
         for stepmap in self.mapping.values():
