@@ -188,7 +188,7 @@ class Config:
         elif "ib0" in net_if_addrs:
             return ["ib0"]
         # default to aries network
-        return ["ipogif0"]
+        return ["lo"]
 
     @property
     def test_account(self) -> t.Optional[str]:  # pragma: no cover

@@ -64,7 +64,6 @@ jobs:
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
-      SMARTSIM_TEST_INTERFACE: lo
 
     steps:
       - uses: actions/checkout@v2
