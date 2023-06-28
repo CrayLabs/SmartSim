@@ -32,13 +32,13 @@ from shutil import which
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
-    MpiexecSettings, 
-    MpirunSettings, 
-    OrterunSettings, 
-    RunSettings, 
-    SbatchSettings, 
-    SettingsBase, 
-    SrunSettings, 
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    RunSettings,
+    SbatchSettings,
+    SettingsBase,
+    SrunSettings,
 )
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
@@ -49,7 +49,6 @@ from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
 logger = get_logger(__name__)
-
 
 class SlurmLauncher(WLMLauncher):
     """This class encapsulates the functionality needed
@@ -149,13 +148,16 @@ class SlurmLauncher(WLMLauncher):
                 out, err = step.get_output_files()
                 output = open(out, "w+")
                 error = open(err, "w+")
+                env = None
+                if hasattr(step,"env"):
+                    env = step.env
                 task_id = self.task_manager.start_task(
-                    cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
+                    cmd_list, step.cwd, env=env, out=output.fileno(), err=error.fileno()
                 )
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
-        
+
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         # give slurm a rest
@@ -191,7 +193,7 @@ class SlurmLauncher(WLMLauncher):
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
-        
+
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
