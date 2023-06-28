@@ -25,7 +25,7 @@ level of the SmartSim directory::
 
 .. note::
 
-You must have the extra dev dependencies installed in 
+You must have the extra dev dependencies installed in
 your python environment to execute tests.
 
 Install ``dev`` dependencies with ``pip``
@@ -105,6 +105,8 @@ are a few other runtime test configuration options for SmartSim
  - ``SMARTSIM_TEST_LAUNCHER``: Workload manager of the system (local by default)
  - ``SMARTSIM_TEST_ACCOUNT``: Project account for allocations (used for customer systems mostly)
  - ``SMARTSIM_TEST_DEVICE``: ``cpu`` or ``gpu``
+ - ``SMARTSIM_TEST_NUM_GPUS``: the number of GPUs to use for model and script testing (defaults to 1)
+ - ``SMARTSIM_TEST_PORT``: the port to use for database communication (defaults to 6780)
  - ``SMARTSIM_TEST_INTERFACE``: network interface to use.
 
 For the ``SMARTSIM_TEST_INTERFACE``, the default is ``ipogif0`` which

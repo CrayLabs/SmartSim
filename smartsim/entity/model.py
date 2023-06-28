@@ -75,7 +75,7 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
-        
+
     @property
     def colocated(self) -> bool:
         """Return True if this Model will run with a colocated Orchestrator"""
@@ -221,7 +221,7 @@ class Model(SmartSimEntity):
     def colocate_db_tcp(
         self,
         port: int = 6379,
-        ifname: str = "lo",
+        ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
         limit_app_cpus: bool = True,
         debug: bool = False,
@@ -252,7 +252,7 @@ class Model(SmartSimEntity):
         :param port: port to use for orchestrator database, defaults to 6379
         :type port: int, optional
         :param ifname: interface to use for orchestrator, defaults to "lo"
-        :type ifname: str, optional
+        :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
         :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
@@ -356,14 +356,18 @@ class Model(SmartSimEntity):
 
         :param name: key to store model under
         :type name: str
-        :param model: model in memory
+        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
+        :type backend: str
+        :param model: A model in memory (only supported for non-colocated orchestrators)
         :type model: byte string, optional
         :param model_path: serialized model
         :type model_path: file path to model
-        :param backend: name of the backend (TORCH, TF, TFLITE, ONNX)
-        :type backend: str
         :param device: name of device for execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
+        :type devices_per_node: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -415,13 +419,15 @@ class Model(SmartSimEntity):
 
         :param name: key to store script under
         :type name: str
-        :param script: TorchScript code
+        :param script: TorchScript code (only supported for non-colocated orchestrators)
         :type script: str, optional
         :param script_path: path to TorchScript code
         :type script_path: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
-        :param devices_per_node: number of devices on each host
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
         :type devices_per_node: int
         """
         db_script = DBScript(
@@ -456,13 +462,13 @@ class Model(SmartSimEntity):
 
         :param name: key to store function under
         :type name: str
-        :param script: TorchScript code
-        :type script: str or byte string, optional
-        :param script_path: path to TorchScript code
-        :type script_path: str, optional
+        :param function: TorchScript function code
+        :type function: str, optional
         :param device: device for script execution, defaults to "CPU"
         :type device: str, optional
-        :param devices_per_node: number of devices on each host
+        :param devices_per_node: The number of GPU devices available on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
         :type devices_per_node: int
         """
         db_script = DBScript(
