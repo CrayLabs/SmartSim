@@ -83,8 +83,7 @@ class Step:
         else:
             db_log_file = "/dev/null"
 
-        if sys.platform == 'darwin':
-            if isinstance(self, LocalStep) and db_settings["limit_db_cpus"] is True:
+        if sys.platform == 'darwin' and db_settings["db_cpu_list"]:
                 logger.warning(
                     "DB pinning is not supported on MacOS, setting limit_db_cpus = False")
                 db_settings["limit_db_cpus"] = False
@@ -93,7 +92,7 @@ class Step:
         # entity currently being prepped to launch
         write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path
-    
+
     def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 

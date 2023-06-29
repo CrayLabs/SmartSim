@@ -454,7 +454,6 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_db_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -518,7 +517,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_db_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -532,7 +530,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port=test_port + i + 1,
             db_cpus=1,
-            limit_db_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -629,7 +626,62 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         device=test_device,
         devices_per_node=test_num_gpus,
         inputs=inputs,
-        outputs=outputs
+        outputs=outputs,
+        tag="test",
+    )
+
+    # Ensemble should add all available DBModels to new model
+    colo_ensemble.add_model(colo_model)
+    colo_model.colocate_db(
+        port=wlmutils.get_test_port() + len(colo_ensemble),
+        db_cpus=1,
+        debug=True,
+        ifname="lo",
+    )
+    colo_model.add_ml_model(
+        "cnn2",
+        "TF",
+        model_path=model_file2,
+        device="CPU",
+        inputs=inputs2,
+        outputs=outputs2,
+    )
+
+    exp.start(colo_ensemble, block=True)
+    statuses = exp.get_status(colo_ensemble)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
+    """Test DBModel on colocated ensembles, first adding the DBModel to the
+    ensemble, then colocating DB.
+    """
+
+    exp_name = "test-colocated-db-model-ensemble-reordered"
+
+    # get test setup
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
+    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # create colocated model
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+
+    colo_ensemble = exp.create_ensemble(
+        "colocated_ens", run_settings=colo_settings, replicas=2
+    )
+    colo_ensemble.set_path(test_dir)
+
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+
+    model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
+    model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
+
+    # Test adding a model from ensemble
+    colo_ensemble.add_ml_model(
+        "cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs
     )
 
     # Colocate a database with the first ensemble members
@@ -637,7 +689,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port = test_port + i,
             db_cpus=1,
-            limit_db_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -660,7 +711,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port + len(colo_ensemble),
         db_cpus=1,
-        limit_db_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -712,7 +762,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_db_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -739,7 +788,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
-            limit_db_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -774,7 +822,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
             entity.colocate_db_tcp(
                 port=test_port + i,
                 db_cpus=1,
-                limit_db_cpus=False,
                 debug=True,
                 ifname=test_interface,
             )

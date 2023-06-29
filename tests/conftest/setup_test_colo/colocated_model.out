@@ -1,4 +1,0 @@
-SmartRedis Library@19-19-36:WARNING: Environment variable SR_LOG_FILE is not set. Defaulting to stdout
-SmartRedis Library@19-19-36:WARNING: Environment variable SR_LOG_LEVEL is not set. Defaulting to INFO
-default@19-19-36:ERROR: Unable to connect to backend database: Failed to connect to Redis: Connection refused
-Test worked! Sent and received array: [1 2 3 4]

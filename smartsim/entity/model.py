@@ -26,8 +26,10 @@
 
 from __future__ import annotations
 
+import itertools
 import typing as t
 import warnings
+import collections.abc
 
 from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
@@ -154,10 +156,11 @@ class Model(SmartSimEntity):
 
     def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
         """An alias for ``Model.colocate_db_tcp``"""
-        logger.warning(
+        warnings.warn(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
-                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
+                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`.",
+                FutureWarning
             )
         )
         self.colocate_db_tcp(*args, **kwargs)
@@ -167,8 +170,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        limit_db_cpus: bool = True,
-        db_cpu_list: t.Optional[str] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -200,11 +202,9 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_db_cpus: whether to limit the number of cpus used by the database defaults to True
-        :type limit_db_cpus: bool, optional
-        :param db_cpu_list: lists the cpus which the database can be run on. Follows `taskset -c` syntax
-                            e.g. '0-2,5' specifies processors 0, 1, 2, and 5
-        :type db_cpu_list: str, optional
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
+                               disables pinning
+        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -219,8 +219,7 @@ class Model(SmartSimEntity):
 
         common_options = {
             "cpus": db_cpus,
-            "limit_db_cpus": limit_db_cpus,
-            "db_cpu_list": db_cpu_list,
+            "custom_pinning": custom_pinning,
             "debug": debug,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
@@ -230,8 +229,7 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        limit_db_cpus: bool = True,
-        db_cpu_list: t.Optional[str] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -263,11 +261,9 @@ class Model(SmartSimEntity):
         :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_db_cpus: whether to limit the number of cpus used by the database, defaults to True
-        :type limit_db_cpus: bool, optional
-        :param db_cpu_list: lists the cpus which the database can be run on. Follows `taskset -c` syntax
-                            e.g. '0-2,5' specifies processors 0, 1, 2, and 5
-        :type db_cpu_list: str, optional
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
+                               disables pinning
+        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -278,8 +274,7 @@ class Model(SmartSimEntity):
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
             "cpus": db_cpus,
-            "limit_db_cpus": limit_db_cpus,
-            "db_cpu_list": db_cpu_list,
+            "custom_pinning": custom_pinning,
             "debug": debug,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
@@ -305,36 +300,15 @@ class Model(SmartSimEntity):
 
         if "limit_app_cpus" in common_options:
             raise SSUnsupportedError(
-                "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings " +
+                "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings "
                 "instead using the correct binding option for your launcher."
             )
 
         # TODO list which db settings can be extras
-        cpus = common_options["cpus"]
-        # Deal with cases where the database should be pinned to cpus
-        # (1) if the user set a db_cpu_list, but not limit_db_cpus
-        if common_options["db_cpu_list"] and not common_options["limit_db_cpus"]:
-            logger.warning(
-                "limit_db_cpus is False, but db_cpu_list is not None. Setting limit_db_cpus=True"
-            )
-            common_options["limit_db_cpus"] = True
-        # (2) limit_db_cpus, but not db_cpu_list is specified automatically set
-        #     pin to the cpus 0:db_cpus-1
-        if common_options["limit_db_cpus"] and not common_options["db_cpu_list"]:
-            if cpus > 1:
-                cpu_list = f"0-{cpus-1}"
-            elif cpus == 1:
-                cpu_list = "0"
-            else:
-                raise ValueError("db_cpus must be a positive number")
-
-            logger.warning(
-                (
-                    "limit_db_cpus is True, but db_cpu_list was not specified. Automatically "
-                    f"pinning to processors {cpu_list}"
-                )
-            )
-            common_options["db_cpu_list"] = cpu_list
+        common_options["custom_pinning"] = self._create_pinning_string(
+            common_options["custom_pinning"],
+            common_options["cpus"]
+        )
 
         colo_db_config = {}
         colo_db_config.update(connection_options)
@@ -358,6 +332,30 @@ class Model(SmartSimEntity):
         colo_db_config["db_scripts"] = self._db_scripts
 
         self.run_settings.colocated_db_settings = colo_db_config
+
+    @staticmethod
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]],
+        cpus: int
+        ):
+        """Create a comma-separated string CPU ids. By default, None returns
+        0,1,...,cpus-1; an empty iterable will disable pinning altogether,
+        and an iterable constructs a comma separate string (e.g. 0,2,5)
+        """
+        if pin_ids is None:
+            return ','.join(str(i) for i in range(cpus))
+        elif not pin_ids:
+            return None
+        elif isinstance(pin_ids, collections.abc.Iterable):
+            pin_list = []
+            for i in pin_ids:
+                if isinstance(i, collections.abc.Iterable):
+                    pin_list.extend([str(j) for j in i])
+                else:
+                    pin_list.append(str(i))
+            return ','.join(pin_list)
+        else:
+            raise TypeError("pin_ids must be an iterable of ints")
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""

@@ -81,8 +81,7 @@ def _build_colocated_wrapper_cmd(
     extra_db_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
     ifname: t.Optional[t.Union[str, t.List[str]]] = None,
-    limit_db_cpus: bool = False,
-    db_cpu_list: t.Optional[str] = None,
+    custom_pinning: t.Optional[str] = None,
     **kwargs: t.Any,
 ) -> str:
     """Build the command use to run a colocated DB application
@@ -99,8 +98,6 @@ def _build_colocated_wrapper_cmd(
     :type port: int
     :param ifname: network interface(s) to bind DB to
     :type ifname: str | list[str], optional
-    :param limit_db_cpus: If True, limit the cpus that the database can run on
-    :type limit_db_cpus: bool, optional
     :param db_cpu_list: The list of CPUs that the database should be limited to
     :type db_cpu_list: str, optional
     :return: the command to run
@@ -114,16 +111,11 @@ def _build_colocated_wrapper_cmd(
     # the lock on the file.
     lockfile = create_lockfile_name()
 
-
-
-
     # create the command that will be used to launch the
     # database with the python entrypoint for starting
     # up the backgrounded db process
 
-    cmd = []
-    cmd.extend(
-        [
+    cmd = [
             sys.executable,
             "-m",
             "smartsim._core.entrypoints.colocated",
@@ -132,7 +124,6 @@ def _build_colocated_wrapper_cmd(
             "+db_cpus",
             str(cpus),
         ]
-    )
     # Add in the interface if using TCP/IP
     if ifname:
         if isinstance(ifname, str):
@@ -142,9 +133,9 @@ def _build_colocated_wrapper_cmd(
     # collect DB binaries and libraries from the config
 
     db_cmd = []
-    if limit_db_cpus and db_cpu_list:
+    if custom_pinning:
         db_cmd.extend([
-            'taskset', '-c', db_cpu_list
+            'taskset', '-c', custom_pinning
         ])
     db_cmd.extend([
         CONFIG.database_exe,

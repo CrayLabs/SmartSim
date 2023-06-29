@@ -115,8 +115,7 @@ def pytest_sessionfinish(session, exitstatus):
     returning the exit status to the system.
     """
     if exitstatus == 0:
-        # shutil.rmtree(test_dir)
-        pass
+        shutil.rmtree(test_dir)
     else:
         # kill all spawned processes in case of error
         kill_all_test_spawned_processes()
@@ -604,6 +603,7 @@ def coloutils():
     return ColoUtils
 
 class ColoUtils:
+    @staticmethod
     def setup_test_colo(fileutils, db_type, exp, db_args):
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
