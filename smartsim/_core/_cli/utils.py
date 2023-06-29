@@ -86,7 +86,7 @@ def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbos
         logger.info(f"{packages} installed successfully")
 
 
-def clean(core_path: str, _all: bool = False) -> None:
+def clean(core_path: Path, _all: bool = False) -> int:
     """Remove pre existing installations of ML runtimes
 
     :param _all: Remove all non-python dependencies
@@ -124,17 +124,27 @@ def clean(core_path: str, _all: bool = False) -> None:
         if removed:
             logger.info("Successfully removed SmartSim database installation")
 
+    return 0
 
-def get_db_path() -> Path:
+
+def get_db_path() -> t.Optional[Path]:
     bin_path = get_install_path() / "_core" / "bin"
     for option in bin_path.iterdir():
         if option.name in ("redis-cli", "keydb-cli"):
             return option
-    return "Database (Redis or KeyDB) dependencies not found"
+    logger.warning("Database (Redis or KeyDB) dependencies not found")
+    return None
 
+
+CliHandler = t.Callable[[Namespace], int]
+CliParseConfigurator = t.Callable[[ArgumentParser], None]
 
 class MenuItemConfig:
-    def __init__(self, cmd: str, help: str, handler: t.Callable[[Namespace], None], configurator: t.Callable[[ArgumentParser], ArgumentParser]):
+    def __init__(self,
+                 cmd: str,
+                 help: str,
+                 handler: CliHandler,
+                 configurator: t.Optional[CliParseConfigurator] = None):
         self.command = cmd
         self.help = help
         self.handler = handler
@@ -157,18 +167,18 @@ class MenuItemConfig:
         self._help = value
 
     @property
-    def handler(self) -> t.Callable[[Namespace], None]:
+    def handler(self) -> CliHandler:
         return self._handler
 
     @handler.setter
-    def handler(self, value: t.Callable[[Namespace], None]) -> None:
+    def handler(self, value: CliHandler) -> None:
         self._handler = value    
 
     @property
-    def configurator(self) -> t.Callable[[ArgumentParser], None]:
+    def configurator(self) -> t.Optional[CliParseConfigurator]:
         return self._config
 
     @configurator.setter
-    def configurator(self, value: t.Callable[[ArgumentParser], None]) -> None:
+    def configurator(self, value: t.Optional[CliParseConfigurator]) -> None:
         self._config = value
     

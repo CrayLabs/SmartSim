@@ -25,8 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import typing as t
 
+from smartsim._core._cli.utils import MenuItemConfig, clean, get_install_path, get_db_path
 from smartsim.log import get_logger
 
 smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
@@ -41,3 +41,10 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=False,
         help="Remove all SmartSim non-python dependencies as well",
     )
+
+def execute(args: argparse.Namespace) -> int:
+    return clean(get_install_path() / "_core", _all=args.clobber)
+
+def execute_all(args: argparse.Namespace) -> int:
+    args.clobber = True
+    return execute(args)

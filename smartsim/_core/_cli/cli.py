@@ -33,8 +33,16 @@ import typing as t
 # from pkg_resources import require
 
 # import smartsim._core._cli as cli
-from smartsim._core._cli.utils import MenuItemConfig, clean, get_install_path, get_db_path
-from smartsim._core._cli.clean import configure_parser as clean_parser
+from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.clean import (
+    configure_parser as clean_parser,
+    execute as clean_execute,
+    execute_all as clobber_execute,
+)
+import smartsim._core._cli.clean as clean
+from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.dbcli import execute as dbcli_execute
+from smartsim._core._cli.build import configure_parser as build_parser, execute as build_execute
 
 class SmartCli:
     def __init__(self, menu: t.List[MenuItemConfig]) -> None:
@@ -52,50 +60,47 @@ class SmartCli:
 
         for cmd, item in self.menu.items():
             p = subparsers.add_parser(cmd, description=item.help, help=item.help)
-            item.configurator(p)
+            if item.configurator:
+                item.configurator(p)
 
-    def execute(self) -> None:
-        if len(sys.argv) < 2:
+    def execute(self, cli_args: t.List[str]) -> int:
+        if len(cli_args) < 2:
             self.parser.print_help()
-            sys.exit(0)
+            return 0
 
-        app_args = sys.argv[1:]        
+        app_args = cli_args[1:]
         args = self.parser.parse_args(app_args)
 
         if not (menu_item := self.menu.get(app_args[0], None)):
             self.parser.print_help()
-            sys.exit(0)
+            return 0
 
-        menu_item.handler(args)
-        sys.exit(0)
+        return menu_item.handler(args)
 
 
-def main() -> None:
+def default_cli() -> SmartCli:
     build = MenuItemConfig("build",
                            "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-                           lambda args: print('fake build'),
-                           lambda p: p)
+                           build_execute,
+                           build_parser)
     
     cleanx = MenuItemConfig("clean",
                             "Remove previous ML runtime installation",
-                            lambda args: clean(get_install_path() / "_core", _all=args.clobber),
+                            clean_execute,
                             clean_parser)
     
     dbcli = MenuItemConfig("dbcli",
                            "Print the path to the redis-cli binary",
-                           lambda args: print(get_db_path()),
-                           lambda p: p)
+                           dbcli_execute)
     
     site = MenuItemConfig("site",
                           "Print the installation site of SmartSim",
-                          lambda args: print(get_install_path()),
-                          lambda p: p)
+                          site_execute)
     
     clobber = MenuItemConfig("clobber",
                              "Remove all previous dependency installations",
-                             lambda args: clean(get_install_path() / "_core", _all=True),
-                             lambda p: p)
+                             clobber_execute)
     
     menu = [build, cleanx, dbcli, site, clobber]
     smart_cli = SmartCli(menu)
-    smart_cli.execute()
+    return smart_cli
