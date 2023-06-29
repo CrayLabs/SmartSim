@@ -211,7 +211,7 @@ def test_command_execution(capsys):
 
 
 def test_default_cli(capsys):
-    """Ensure the default CLI handles supports expected top-level commands"""
+    """Ensure the default CLI supports expected top-level commands"""
     smart_cli = cli.default_cli()
     
     captured = capsys.readouterr()  # throw away existing output
