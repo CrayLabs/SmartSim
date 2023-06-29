@@ -37,11 +37,23 @@ class EntityList:
         self.name: str = name
         self.path: str = path
         self.entities: t.List["smartsim.entity.SmartSimEntity"] = []
+        self._db_models: t.List["smartsim.entity.DBModel"] = []
+        self._db_scripts: t.List["smartsim.entity.DBScript"] = []
         self._initialize_entities(**kwargs)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""
         raise NotImplementedError
+
+    @property
+    def db_models(self) -> t.List["smartsim.entity.DBModel"]:
+        """Return list of DBModel objects"""
+        return self._db_models
+
+    @property
+    def db_scripts(self) -> t.List["smartsim.entity.DBScript"]:
+        """Return list of DBScript objects"""
+        return self._db_scripts
 
     @property
     def batch(self) -> bool:

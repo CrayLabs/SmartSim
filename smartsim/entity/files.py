@@ -49,9 +49,9 @@ class EntityFiles:
     """
 
     def __init__(
-        self, 
-        tagged: t.Optional[t.List[str]] = None, 
-        copy: t.Optional[t.List[str]] = None, 
+        self,
+        tagged: t.Optional[t.List[str]] = None,
+        copy: t.Optional[t.List[str]] = None,
         symlink: t.Optional[t.List[str]] = None,
     ) -> None:
         """Initialize an EntityFiles instance
@@ -88,12 +88,16 @@ class EntityFiles:
             self.tagged, dir_contents_to_base=True
         )
 
-        for i in range(len(self.copy)):
-            self.copy[i] = self._check_path(self.copy[i])
-        for i in range(len(self.link)):
-            self.link[i] = self._check_path(self.link[i])
+        for i, value in enumerate(self.copy):
+            self.copy[i] = self._check_path(value)
 
-    def _type_check_files(self, file_list: t.Union[t.List[str], None], file_type: str) -> t.List[str]:
+        for i, value in enumerate(self.link):
+            self.link[i] = self._check_path(value)
+
+    @staticmethod
+    def _type_check_files(
+        file_list: t.Union[t.List[str], None], file_type: str
+    ) -> t.List[str]:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
@@ -113,7 +117,7 @@ class EntityFiles:
                         f"{file_type} files given were not of type list or str"
                     )
             else:
-                if not all([isinstance(f, str) for f in file_list]):
+                if not all(isinstance(f, str) for f in file_list):
                     raise TypeError(f"Not all {file_type} files were of type str")
         return file_list or []
 
@@ -224,13 +228,16 @@ class TaggedFilesHierarchy:
         tagged_file_hierarchy = cls()
         if dir_contents_to_base:
             new_paths = []
-            for path in path_list:
-                if os.path.isdir(path):
-                    new_paths += [os.path.join(path, file) for file in os.listdir(path)]
+            for tagged_path in path_list:
+                if os.path.isdir(tagged_path):
+                    new_paths += [
+                        os.path.join(tagged_path, file)
+                        for file in os.listdir(tagged_path)
+                    ]
                 else:
-                    new_paths.append(path)
+                    new_paths.append(tagged_path)
             path_list = new_paths
-        tagged_file_hierarchy._add_paths(path_list)
+        tagged_file_hierarchy.add_paths(path_list)
         return tagged_file_hierarchy
 
     def _add_file(self, file: str) -> None:
@@ -241,7 +248,7 @@ class TaggedFilesHierarchy:
         """
         self.files.add(file)
 
-    def _add_dir(self, dir: str) -> None:
+    def _add_dir(self, dir_path: str) -> None:
         """Add a dir contianing tagged files by creating a new sub level in the
         tagged file hierarchy. All paths within the directroy are added to the
         the new level sub level tagged file hierarchy
@@ -249,12 +256,12 @@ class TaggedFilesHierarchy:
         :param dir: absoute path to a dir to add to the hierarchy
         :type dir: str
         """
-        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir))
-        tagged_file_hierarchy._add_paths(
-            [path.join(dir, file) for file in os.listdir(dir)]
+        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir_path))
+        tagged_file_hierarchy.add_paths(
+            [path.join(dir_path, file) for file in os.listdir(dir_path)]
         )
 
-    def _add_paths(self, paths: t.List[str]) -> None:
+    def add_paths(self, paths: t.List[str]) -> None:
         """Takes a list of paths and iterates over it, determining if each
         path is to a file or a dir and then appropriatly adding it to the
         TaggedFilesHierarchy.
@@ -264,16 +271,16 @@ class TaggedFilesHierarchy:
         :raises ValueError: if link to dir is found
         :raises FileNotFoundError: if path does not exist
         """
-        for path in paths:
-            path = os.path.abspath(path)
-            if os.path.isdir(path):
-                if os.path.islink(path):
+        for candidate in paths:
+            candidate = os.path.abspath(candidate)
+            if os.path.isdir(candidate):
+                if os.path.islink(candidate):
                     raise ValueError(
                         "Tagged directories and thier subdirectories cannot be links"
                         + " to prevent circular directory structures"
                     )
-                self._add_dir(path)
-            elif os.path.isfile(path):
-                self._add_file(path)
+                self._add_dir(candidate)
+            elif os.path.isfile(candidate):
+                self._add_file(candidate)
             else:
-                raise FileNotFoundError(f"File or Directory {path} not found")
+                raise FileNotFoundError(f"File or Directory {candidate} not found")

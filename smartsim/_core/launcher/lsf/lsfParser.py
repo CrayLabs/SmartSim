@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
 import typing as t
 
 
@@ -166,5 +165,4 @@ def parse_max_step_id_from_jslist(output: str) -> t.Optional[str]:
 
     if max_step_id:
         return str(max_step_id)
-    else:
-        return None
+    return None

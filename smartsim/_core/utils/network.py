@@ -85,5 +85,5 @@ def current_ip(interface: str = "lo") -> str:  # pragma: no cover
     if interface == "lo":
         loopback = get_lb_interface_name()
         return get_ip_from_interface(loopback)
-    else:
-        return get_ip_from_interface(interface)
+
+    return get_ip_from_interface(interface)

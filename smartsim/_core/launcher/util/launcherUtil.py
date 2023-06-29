@@ -45,7 +45,7 @@ class ComputeNode:  # cov-slurm
         self.name: t.Optional[str] = node_name
         self.ppn: t.Optional[int] = node_ppn
 
-    def _is_valid_node(self) -> bool:
+    def is_valid_node(self) -> bool:
         """Check if the node is complete
 
         Currently, validity is judged by name
@@ -87,7 +87,7 @@ class Partition:  # cov-slurm
         if len(self.nodes) <= 0:
             return False
         for node in self.nodes:
-            if not node._is_valid_node():
+            if not node.is_valid_node():
                 return False
 
         return True

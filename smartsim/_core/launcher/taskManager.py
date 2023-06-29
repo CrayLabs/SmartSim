@@ -39,10 +39,9 @@ from ..utils.helpers import check_dev_log_level
 from .util.shell import execute_async_cmd, execute_cmd
 
 logger = get_logger(__name__)
-verbose_tm = check_dev_log_level()
+VERBOSE_TM = check_dev_log_level()  # pylint: disable=invalid-name
 
-
-TM_INTERVAL = 1
+TM_INTERVAL = 1  # pylint: disable=invalid-name
 
 
 class TaskManager:
@@ -63,7 +62,9 @@ class TaskManager:
     def __init__(self) -> None:
         """Initialize a task manager thread."""
         self.actively_monitoring = False
-        self.task_history: t.Dict[str, t.Tuple[t.Optional[int], t.Optional[str], t.Optional[str]]] = {}
+        self.task_history: t.Dict[
+            str, t.Tuple[t.Optional[int], t.Optional[str], t.Optional[str]]
+        ] = {}
         self.tasks: t.List[Task] = []
         self._lock = RLock()
 
@@ -79,8 +80,7 @@ class TaskManager:
     def run(self) -> None:
         """Start monitoring Tasks"""
 
-        global verbose_tm
-        if verbose_tm:
+        if VERBOSE_TM:
             logger.debug("Starting Task Manager")
 
         self.actively_monitoring = True
@@ -97,7 +97,7 @@ class TaskManager:
 
             if len(self) == 0:
                 self.actively_monitoring = False
-                if verbose_tm:
+                if VERBOSE_TM:
                     logger.debug("Sleeping, no tasks to monitor")
 
     def start_task(
@@ -126,21 +126,17 @@ class TaskManager:
         :return: task id
         :rtype: int
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             proc = execute_async_cmd(cmd_list, cwd, env=env, out=out, err=err)
             task = Task(proc)
-            if verbose_tm:
+            if VERBOSE_TM:
                 logger.debug(f"Starting Task {task.pid}")
             self.tasks.append(task)
             self.task_history[task.pid] = (None, None, None)
             return task.pid
 
-        finally:
-            self._lock.release()
-
+    @staticmethod
     def start_and_wait(
-        self,
         cmd_list: t.List[str],
         cwd: str,
         env: t.Optional[t.Dict[str, str]] = None,
@@ -165,7 +161,7 @@ class TaskManager:
         :rtype: int, str, str
         """
         returncode, out, err = execute_cmd(cmd_list, cwd=cwd, env=env, timeout=timeout)
-        if verbose_tm:
+        if VERBOSE_TM:
             logger.debug("Ran and waited on task")
         return returncode, out, err
 
@@ -176,16 +172,15 @@ class TaskManager:
         :type task_id: str
         :raises LauncherError: If task cannot be found
         """
-        self._lock.acquire()
-        try:
-            process = psutil.Process(pid=task_id)
-            task = Task(process)
-            self.tasks.append(task)
-            self.task_history[task.pid] = (None, None, None)
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            raise LauncherError(f"Process provided {task_id} does not exist") from None
-        finally:
-            self._lock.release()
+        with self._lock:
+            try:
+                process = psutil.Process(pid=task_id)
+                task = Task(process)
+                self.tasks.append(task)
+                self.task_history[task.pid] = (None, None, None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                msg = f"Process provided {task_id} does not exist"
+                raise LauncherError(msg) from None
 
     def remove_task(self, task_id: str) -> None:
         """Remove a task from the TaskManager
@@ -193,25 +188,25 @@ class TaskManager:
         :param task_id: id of the task to remove
         :type task_id: str
         """
-        self._lock.acquire()
-        if verbose_tm:
-            logger.debug(f"Removing Task {task_id}")
-        try:
-            task = self[task_id]
-            if task.is_alive:
-                task.kill()
-                returncode = task.check_status()
-                out, err = task.get_io()
-                self.add_task_history(task_id, returncode, out, err)
-            self.tasks.remove(task)
-        except psutil.NoSuchProcess:
-            logger.debug("Failed to kill a task during removal")
-        except KeyError:
-            logger.debug("Failed to remove a task, task was already removed")
-        finally:
-            self._lock.release()
+        with self._lock:
+            if VERBOSE_TM:
+                logger.debug(f"Removing Task {task_id}")
+            try:
+                task = self[task_id]
+                if task.is_alive:
+                    task.kill()
+                    returncode = task.check_status()
+                    out, err = task.get_io()
+                    self.add_task_history(task_id, returncode, out, err)
+                self.tasks.remove(task)
+            except psutil.NoSuchProcess:
+                logger.debug("Failed to kill a task during removal")
+            except KeyError:
+                logger.debug("Failed to remove a task, task was already removed")
 
-    def get_task_update(self, task_id: str) -> t.Tuple[str, t.Optional[int], t.Optional[str], t.Optional[str]]:
+    def get_task_update(
+        self, task_id: str
+    ) -> t.Tuple[str, t.Optional[int], t.Optional[str], t.Optional[str]]:
         """Get the update of a task
 
         :param task_id: task id
@@ -219,30 +214,28 @@ class TaskManager:
         :return: status, returncode, output, error
         :rtype: str, int, str, str
         """
-        self._lock.acquire()
-        try:
-            rc, out, err = self.task_history[task_id]
-            # has to be == None because rc can be 0
-            if rc == None:
-                try:
-                    task = self[task_id]
-                    return task.status, rc, out, err
-                # removed forcefully either by OS or us, no returncode set
-                # either way, job has completed and we won't have returncode
-                # Usually hits when jobs last less then the TM_INTERVAL
-                except (KeyError, psutil.NoSuchProcess):
-                    return "Completed", rc, out, err
+        with self._lock:
+            try:
+                return_code, out, err = self.task_history[task_id]
+                # has to be == None because rc can be 0
+                if return_code is None:
+                    try:
+                        task = self[task_id]
+                        return task.status, return_code, out, err
+                    # removed forcefully either by OS or us, no returncode set
+                    # either way, job has completed and we won't have returncode
+                    # Usually hits when jobs last less then the TM_INTERVAL
+                    except (KeyError, psutil.NoSuchProcess):
+                        return "Completed", return_code, out, err
 
-            # process has completed, status set manually as we don't
-            # save task statuses during runtime.
-            else:
-                if rc != 0:
-                    return "Failed", rc, out, err
-                return "Completed", rc, out, err
-        except KeyError:
-            logger.warning(f"Task {task_id} not found in task history dictionary")
-        finally:
-            self._lock.release()
+                # process has completed, status set manually as we don't
+                # save task statuses during runtime.
+                else:
+                    if return_code != 0:
+                        return "Failed", return_code, out, err
+                    return "Completed", return_code, out, err
+            except KeyError:
+                logger.warning(f"Task {task_id} not found in task history dictionary")
 
         return "Failed", -1, "", ""
 
@@ -269,21 +262,15 @@ class TaskManager:
         self.task_history[task_id] = (returncode, out, err)
 
     def __getitem__(self, task_id: str) -> Task:
-        self._lock.acquire()
-        try:
+        with self._lock:
             for task in self.tasks:
                 if task.pid == task_id:
                     return task
             raise KeyError
-        finally:
-            self._lock.release()
 
     def __len__(self) -> int:
-        self._lock.acquire()
-        try:
+        with self._lock:
             return len(self.tasks)
-        finally:
-            self._lock.release()
 
 
 class Task:
@@ -357,7 +344,7 @@ class Task:
 
         # try SIGTERM first for clean exit
         for child in children:
-            if verbose_tm:
+            if VERBOSE_TM:
                 logger.debug(child)
             child.terminate()
 
@@ -367,7 +354,7 @@ class Task:
         )
 
         if alive:
-            logger.debug(f"SIGTERM failed, using SIGKILL")
+            logger.debug("SIGTERM failed, using SIGKILL")
             self.process.kill()
 
     def wait(self) -> None:

@@ -48,7 +48,8 @@ class CobaltBatchSettings(BatchSettings):
 
         :param nodes: number of nodes, defaults to None
         :type nodes: int, optional
-        :param time: walltime for job, e.g. "10:00:00" for 10 hours, defaults to empty str
+        :param time: walltime for job, e.g. "10:00:00" for 10 hours, 
+            defaults to empty str
         :type time: str, optional
         :param queue: queue to launch job in, defaults to None
         :type queue: str, optional
@@ -104,7 +105,7 @@ class CobaltBatchSettings(BatchSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         hosts = ",".join(host_list)
         self.batch_args["attrs"] = f"location={hosts}"

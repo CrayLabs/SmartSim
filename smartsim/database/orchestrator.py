@@ -30,7 +30,6 @@ import typing as t
 
 from os import getcwd
 from shlex import split as sh_split
-from warnings import simplefilter, warn
 
 from smartredis import Client
 from smartredis.error import RedisReplyError
@@ -60,6 +59,74 @@ from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
 logger = get_logger(__name__)
+
+
+by_launcher: t.Dict[str, t.List[str]] = {
+    "slurm": ["srun", "mpirun", "mpiexec"],
+    "pbs": ["aprun", "mpirun", "mpiexec"],
+    "cobalt": ["aprun", "mpirun", "mpiexec"],
+    "lsf": ["jsrun"],
+    "local": [""],
+}
+
+
+def _detect_command(launcher: str) -> str:
+    if launcher in by_launcher:
+        for cmd in by_launcher[launcher]:
+            if launcher == "local":
+                return cmd
+            if is_valid_cmd(cmd):
+                return cmd
+    msg = (
+        "Could not automatically detect a run command to use for launcher "
+        + f"{launcher}\nSearched for and could not find the following "
+        + f"commands: {by_launcher[launcher]}"
+    )
+    raise SmartSimError(msg)
+
+
+def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
+    """Automatically detect the launcher and run command to use"""
+    if launcher == "auto":
+        launcher = detect_launcher()
+
+    if run_command == "auto":
+        run_command = _detect_command(launcher)
+
+    return launcher, run_command
+
+
+def _check_run_command(launcher: str, run_command: str) -> None:
+    """Check that the run command is supported by the launcher"""
+    if run_command not in by_launcher[launcher]:
+        msg = (
+            f"Run command {run_command} is not supported on launcher {launcher}\n"
+            + "Supported run commands for the given launcher are: "
+            + f"{by_launcher[launcher]}"
+        )
+        raise SmartSimError(msg)
+
+
+def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
+    if not batch or not single_cmd:
+        return single_cmd
+
+    if run_command == "aprun":
+        msg = (
+            "aprun can not launch an orchestrator with batch=True and "
+            + "single_cmd=True. Automatically switching to single_cmd=False."
+        )
+        logger.info(msg)
+        return False
+
+    return single_cmd
+
+
+def _check_local_constraints(launcher: str, batch: bool) -> None:
+    """Check that the local launcher is not launched with invalid batch config"""
+    if launcher == "local" and batch:
+        msg = "Local orchestrator can not be launched with batch=True"
+        raise SmartSimError(msg)
 
 
 class Orchestrator(EntityList):
@@ -102,46 +169,12 @@ class Orchestrator(EntityList):
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional
         """
+        launcher, run_command = _autodetect(launcher, run_command)
 
-        if launcher == "auto":
-            launcher = detect_launcher()
+        _check_run_command(launcher, run_command)
+        _check_local_constraints(launcher, batch)
 
-        by_launcher: t.Dict[str, t.List[str]] = {
-            "slurm": ["srun", "mpirun", "mpiexec"],
-            "pbs": ["aprun", "mpirun", "mpiexec"],
-            "cobalt": ["aprun", "mpirun", "mpiexec"],
-            "lsf": ["jsrun"],
-            "local": [""],
-        }
-
-        def _detect_command(launcher: str) -> str:
-            if launcher in by_launcher:
-                for cmd in by_launcher[launcher]:
-                    if launcher == "local":
-                        return cmd
-                    if is_valid_cmd(cmd):
-                        return cmd
-            msg = f"Could not automatically detect a run command to use for launcher {launcher}"
-            msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
-            raise SmartSimError(msg)
-
-        if run_command == "auto":
-            run_command = _detect_command(launcher)
-
-        if run_command not in by_launcher[launcher]:
-            msg = f"Run command {run_command} is not supported on launcher {launcher}\n"
-            msg += f"Supported run commands for the given launcher are: {by_launcher[launcher]}"
-            raise SmartSimError(msg)
-
-        if launcher == "local" and batch:
-            msg = "Local orchestrator can not be launched with batch=True"
-            raise SmartSimError(msg)
-
-        if run_command == "aprun" and batch and single_cmd:
-            msg = "aprun can not launch an orchestrator with batch=True and single_cmd=True. "
-            msg += "Automatically switching to single_cmd=False."
-            logger.info(msg)
-            single_cmd = False
+        single_cmd = _get_single_command(run_command, batch, single_cmd)
 
         self.launcher = launcher
         self.run_command = run_command
@@ -197,7 +230,13 @@ class Orchestrator(EntityList):
 
         if launcher != "local":
             self.batch_settings = self._build_batch_settings(
-                db_nodes, alloc or "", batch, account or "", time or "", launcher=launcher, **kwargs
+                db_nodes,
+                alloc or "",
+                batch,
+                account or "",
+                time or "",
+                launcher=launcher,
+                **kwargs,
             )
             if hosts:
                 self.set_hosts(hosts)
@@ -250,14 +289,14 @@ class Orchestrator(EntityList):
         """
         if not self._hosts:
             raise SmartSimError("Could not find database address")
-        elif not self.is_active():
+        if not self.is_active():
             raise SmartSimError("Database is not active")
         return self._get_address()
 
     def _get_address(self) -> t.List[str]:
         addresses: t.List[str] = []
-        for ip, port in itertools.product(self._hosts, self.ports):
-            addresses.append(":".join((ip, str(port))))
+        for ip_address, port in itertools.product(self._hosts, self.ports):
+            addresses.append(":".join((ip_address, str(port))))
         return addresses
 
     def is_active(self) -> bool:
@@ -305,20 +344,20 @@ class Orchestrator(EntityList):
         :type num_cpus: int
         """
         if self.batch:
-            if self.launcher == "pbs" or self.launcher == "cobalt":
-                if hasattr(self, 'batch_settings') and self.batch_settings:
-                    if hasattr(self.batch_settings, 'set_ncpus'):
+            if self.launcher in ["pbs", "cobalt"]:
+                if hasattr(self, "batch_settings") and self.batch_settings:
+                    if hasattr(self.batch_settings, "set_ncpus"):
                         self.batch_settings.set_ncpus(num_cpus)
             if self.launcher == "slurm":
-                if hasattr(self, 'batch_settings') and self.batch_settings:
-                    if hasattr(self.batch_settings, 'set_cpus_per_task'):
+                if hasattr(self, "batch_settings") and self.batch_settings:
+                    if hasattr(self.batch_settings, "set_cpus_per_task"):
                         self.batch_settings.set_cpus_per_task(num_cpus)
 
         for db in self.dbnodes:
             db.run_settings.set_cpus_per_task(num_cpus)
-            if db._mpmd and hasattr(db.run_settings, 'mpmd'):
-                    for mpmd in db.run_settings.mpmd:
-                        mpmd.set_cpus_per_task(num_cpus)
+            if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
+                for mpmd in db.run_settings.mpmd:
+                    mpmd.set_cpus_per_task(num_cpus)
 
     def set_walltime(self, walltime: str) -> None:
         """Set the batch walltime of the orchestrator
@@ -332,7 +371,7 @@ class Orchestrator(EntityList):
         if not self.batch:
             raise SmartSimError("Not running as batch, cannot set walltime")
 
-        if hasattr(self, 'batch_settings') and self.batch_settings:
+        if hasattr(self, "batch_settings") and self.batch_settings:
             self.batch_settings.set_walltime(walltime)
 
     def set_hosts(self, host_list: t.List[str]) -> None:
@@ -346,11 +385,11 @@ class Orchestrator(EntityList):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         # TODO check length
         if self.batch:
-            if hasattr(self, 'batch_settings') and self.batch_settings:
+            if hasattr(self, "batch_settings") and self.batch_settings:
                 self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
@@ -364,7 +403,7 @@ class Orchestrator(EntityList):
                 else:
                     db.run_settings.set_hostlist([host])
 
-                if db._mpmd and hasattr(db.run_settings, 'mpmd'):
+                if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
                     for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
                         mpmd_runsettings.set_hostlist(host_list[i + 1])
 
@@ -379,16 +418,20 @@ class Orchestrator(EntityList):
         :param value: batch param - set to None if no param value
         :type value: str | None
         :raises SmartSimError: if orchestrator not launching as batch
-        """        
-        if not hasattr(self, 'batch_settings') or not self.batch_settings:
+        """
+        if not hasattr(self, "batch_settings") or not self.batch_settings:
             raise SmartSimError("Not running as batch, cannot set batch_arg")
 
         if arg in self._reserved_batch_args[type(self.batch_settings)]:
             logger.warning(
-                f"Can not set batch argument {arg}: it is a reserved keyword in Orchestrator"
+                (
+                    "Can not set batch argument {}: "
+                    "it is a reserved keyword in Orchestrator"
+                ),
+                arg,
             )
         else:
-            if hasattr(self, 'batch_settings') and self.batch_settings:
+            if hasattr(self, "batch_settings") and self.batch_settings:
                 self.batch_settings.batch_args[arg] = value
 
     def set_run_arg(self, arg: str, value: t.Optional[str] = None) -> None:
@@ -406,12 +449,16 @@ class Orchestrator(EntityList):
         """
         if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
             logger.warning(
-                f"Can not set run argument {arg}: it is a reserved keyword in Orchestrator"
+                (
+                    "Can not set run argument {}: it is a reserved keyword "
+                    "in Orchestrator"
+                ),
+                arg,
             )
         else:
             for db in self.dbnodes:
                 db.run_settings.run_args[arg] = value
-                if db._mpmd and hasattr(db.run_settings, 'mpmd'):
+                if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
                     for mpmd in db.run_settings.mpmd:
                         mpmd.run_args[arg] = value
 
@@ -452,7 +499,8 @@ class Orchestrator(EntityList):
         """Sets how the database will select what to remove when
         'maxmemory' is reached. The default is noeviction.
 
-        :param strategy: The max memory policy to use e.g. "volatile-lru", "allkeys-lru", etc.
+        :param strategy: The max memory policy to use
+            e.g. "volatile-lru", "allkeys-lru", etc.
         :type strategy: str
 
         :raises SmartSimError: If 'strategy' is an invalid maxmemory policy
@@ -514,15 +562,17 @@ class Orchestrator(EntityList):
                 ) from None
             except TypeError:
                 raise TypeError(
-                    "Incompatible function arguments. The key and value used for setting the database configurations must be strings."
+                    "Incompatible function arguments. The key and value used for "
+                    + "setting the database configurations must be strings."
                 ) from None
         else:
             raise SmartSimError(
-                "The SmartSim Orchestrator must be active in order to set the database's configurations."
+                "The SmartSim Orchestrator must be active in order to set the "
+                + "database's configurations."
             )
 
+    @staticmethod
     def _build_batch_settings(
-        self,
         db_nodes: int,
         alloc: str,
         batch: bool,
@@ -581,8 +631,9 @@ class Orchestrator(EntityList):
 
         return run_settings
 
+    @staticmethod
     def _build_run_settings_lsf(
-        self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
+        exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
     ) -> t.Optional[JsrunSettings]:
         run_args = kwargs.pop("run_args", {})
         cpus_per_shard = kwargs.get("cpus_per_shard", None)
@@ -598,7 +649,8 @@ class Orchestrator(EntityList):
             run_settings = JsrunSettings(exe, args, run_args=run_args.copy())
             run_settings.set_binding("none")
 
-            # This makes sure output is written to orchestrator_0.out, orchestrator_1.out, and so on
+            # This makes sure output is written to orchestrator_0.out,
+            # orchestrator_1.out, and so on
             run_settings.set_individual_output("_%t")
 
             erf_sets = {
@@ -619,7 +671,7 @@ class Orchestrator(EntityList):
                 continue
 
             erf_rs.make_mpmd(run_settings)
-            
+
         kwargs["run_args"] = run_args
 
         return erf_rs
@@ -653,7 +705,8 @@ class Orchestrator(EntityList):
                     db_node_name, port, cluster
                 )
 
-                # if only launching 1 db per command, we don't need a list of exe args lists
+                # if only launching 1 db per command, we don't need a
+                # list of exe args lists
                 run_settings = self._build_run_settings(
                     sys.executable, [start_script_args], **kwargs
                 )
@@ -686,7 +739,7 @@ class Orchestrator(EntityList):
             exe_args_mpmd.append(sh_split(exe_args))
 
         run_settings: t.Optional[RunSettings] = None
-        
+
         if self.launcher == "lsf":
             run_settings = self._build_run_settings_lsf(
                 sys.executable, exe_args_mpmd, **kwargs
@@ -700,13 +753,13 @@ class Orchestrator(EntityList):
                 sys.executable, exe_args_mpmd, **kwargs
             )
             output_files = [self.name + ".out"]
-            
+
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
-        
+
         node = DBNode(self.name, self.path, run_settings, [port], output_files)
-        node._mpmd = True
-        node._num_shards = self.db_nodes
+        node.is_mpmd = True
+        node.num_shards = self.db_nodes
         self.entities.append(node)
 
         self.ports = [port]
@@ -736,7 +789,7 @@ class Orchestrator(EntityList):
             start_script_args += self._get_cluster_args(name, port)
 
         return start_script_args
-    
+
     @property
     def dbnodes(self) -> t.List[DBNode]:
         """
@@ -748,7 +801,7 @@ class Orchestrator(EntityList):
     def _get_db_hosts(self) -> t.List[str]:
         hosts = []
         for db in self.dbnodes:
-            if not db._mpmd:
+            if not db.is_mpmd:
                 hosts.append(db.host)
             else:
                 hosts.extend(db.hosts)
@@ -760,8 +813,12 @@ class Orchestrator(EntityList):
             if interface not in net_if_addrs and interface != "lo":
                 available = list(net_if_addrs.keys())
                 logger.warning(
-                    f"{interface} is not a valid network interface on this node. \n"
-                    "This could be because the head node doesn't have the same networks, if so, ignore this."
+                    (
+                        "{} is not a valid network interface on this node. \n"
+                        "This could be because the head node doesn't have the same "
+                        "networks, if so, ignore this."
+                    ),
+                    interface,
                 )
                 logger.warning(f"Found network interfaces are: {available}")
 

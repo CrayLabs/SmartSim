@@ -43,14 +43,15 @@ def form_name(*args: t.Any) -> str:
 
 
 class DataInfo:
-    """A class holding all relevant information to download datasets from aggregation lists
+    """A class holding all relevant information to download datasets from aggregation
+    lists
 
     This class can be passed as argument to SmartSim's ML data loaders, as it wraps the
     information about the aggregation list holding the training datasets.
 
-    Each training dataset will store batches of samples and (optionally) labels or targets in the
-    form of tensors. The tensors must always have the same names, which can be accessed
-    in ``DataInfo.sample_name`` and ``DataInfo.target_name``.
+    Each training dataset will store batches of samples and (optionally) labels or
+    targets in the form of tensors. The tensors must always have the same names, which
+    can be accessed in ``DataInfo.sample_name`` and ``DataInfo.target_name``.
 
     :param list_name: Name of the aggregation list used for sample datasets
     :type list_name: str
@@ -63,7 +64,11 @@ class DataInfo:
     """
 
     def __init__(
-        self, list_name: str, sample_name: str = "samples", target_name: str = "targets", num_classes: t.Optional[int] = None
+        self,
+        list_name: str,
+        sample_name: str = "samples",
+        target_name: str = "targets",
+        num_classes: t.Optional[int] = None,
     ) -> None:
         self.list_name = list_name
         self.sample_name = sample_name
@@ -103,7 +108,10 @@ class DataInfo:
         except RedisReplyError:
             # If the info was not published, proceed with default parameters
             logger.warning(
-                f"Could not retrieve data for DataInfo object, the following values will be kept."
+                (
+                    "Could not retrieve data for DataInfo object, the following "
+                    "values will be kept."
+                )
             )
             logger.warning(str(self))
             return
@@ -198,7 +206,9 @@ class TrainingDataUploader:
     def publish_info(self) -> None:
         self._info.publish(self.client)
 
-    def put_batch(self, samples: np.ndarray, targets: t.Optional[np.ndarray] = None) -> None:
+    def put_batch(
+        self, samples: np.ndarray, targets: t.Optional[np.ndarray] = None
+    ) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
         batch_ds = Dataset(batch_ds_name)
         batch_ds.add_tensor(self.sample_name, samples)
@@ -236,8 +246,8 @@ class DataDownloader:
 
      - By supplying a string as value of ``data_info_or_list_name``.
        in this case, an attempt is made to download information from the
-       DB, where a Dataset called ``<data_info_or_list_name>_info`` should be available
-       and have the information normally stored by DataInfo.publish()
+       DB, where a Dataset called ``<data_info_or_list_name>_info`` should be
+       available and have the information normally stored by DataInfo.publish()
 
     The flag `init_samples` defines whether samples should automatically
     be set up in the costructor.
@@ -248,18 +258,21 @@ class DataDownloader:
     `init_samples()`.
 
     Calling `update_data()`
-     - check if new batches are available and download them, if `dynamic` is set to `True`
+     - check if new batches are available and download them,
+       if `dynamic` is set to `True`
      - shuffle the dataset if `shuffle` is set to ``True``.
 
     :param batch_size: Size of batches obtained with __iter__
     :type batch_size: int
-    :param dynamic: Whether new batches should be donwnloaded when ``update_data`` is called.
+    :param dynamic: Whether new batches should be donwnloaded when ``update_data``
+        is called.
     :type dtnamic: bool
-    :param shuffle: whether order of samples has to be shuffled when calling `update_data`
+    :param shuffle: whether order of samples has to be shuffled when
+        calling `update_data`
     :type shuffle: bool
-    :param data_info_or_list_name: DataInfo object with details about dataset to download, if a string is passed,
-                      it is used to download DataInfo data from DB, assuming it was stored with
-                      ``list_name=data_info_or_list_name``
+    :param data_info_or_list_name: DataInfo object with details about dataset to
+        download, if a string is passed, it is used to download DataInfo data
+        from DB, assuming it was stored with ``list_name=data_info_or_list_name``
     :type data_info_or_list_name: DataInfo | str
     :param list_name: Name of aggregation list used to upload data
     :type list_name: str
@@ -267,8 +280,8 @@ class DataDownloader:
     :type cluster: bool
     :param address: Address of Redis client as <ip_address>:<port>
     :type address: str
-    :param replica_rank: When StaticDataDownloader is used distributedly, indicates
-                         the rank of this object
+    :param replica_rank: When StaticDataDownloader is used distributedly,
+        indicates the rank of this object
     :type replica_rank: int
     :param num_replicas: When BatchDownlaoder is used distributedly, indicates
                          the total number of ranks
@@ -371,18 +384,16 @@ class DataDownloader:
         return length
 
     def _calc_indices(self, index: int) -> np.ndarray:
-        return self.indices[
-            index * self.batch_size : (index + 1) * self.batch_size
-        ]
+        return self.indices[index * self.batch_size : (index + 1) * self.batch_size]
 
     def __iter__(self) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:
-
         self.update_data()
         # Generate data
         if len(self) < 1:
-            msg = "Not enough samples in generator for one batch. "
-            msg += "Please run init_samples() or initialize generator with init_samples=True"
-            raise ValueError(msg)
+            raise ValueError(
+                "Not enough samples in generator for one batch. Please run "
+                + "init_samples() or initialize generator with init_samples=True"
+            )
 
         yield from (
             self._data_generation(self._calc_indices(idx)) for idx in range(len(self))
@@ -391,8 +402,8 @@ class DataDownloader:
     def init_samples(self, init_trials: int = -1) -> None:
         """Initialize samples (and targets, if needed).
 
-        A new attempt to download samples will be made every ten seconds, for ``init_trials``
-        times.
+        A new attempt to download samples will be made every ten seconds,
+        for ``init_trials`` times.
         :param init_trials: maximum number of attempts to fetch data
         :type init_trials: int
         """
@@ -400,7 +411,7 @@ class DataDownloader:
 
         num_trials = 0
         max_trials = init_trials or -1
-        while not len(self) and num_trials != max_trials:
+        while not self and num_trials != max_trials:
             self._update_samples_and_targets()
             self.log(
                 "DataLoader could not download samples, will try again in 10 seconds"
@@ -408,7 +419,7 @@ class DataDownloader:
             time.sleep(10)
             num_trials += 1
 
-        if not len(self):
+        if not self:
             raise SSInternalError(
                 "Could not download samples in given number of trials"
             )
@@ -420,8 +431,8 @@ class DataDownloader:
             return self.client.tensor_exists(batch_name) and self.client.tensor_exists(
                 target_name
             )
-        else:
-            return self.client.tensor_exists(batch_name)
+
+        return self.client.tensor_exists(batch_name)
 
     def _add_samples(self, indices: t.List[int]) -> None:
         datasets: t.List[Dataset] = []
@@ -471,12 +482,8 @@ class DataDownloader:
 
             # Strictly greater, because next_index is 0-based
             if list_length > self.next_indices[uploader_idx]:
-                indices = [
-                    idx
-                    for idx in range(
-                        self.next_indices[uploader_idx], list_length, self.num_replicas
-                    )
-                ]
+                start, end = self.next_indices[uploader_idx], list_length
+                indices = list(range(start, end, self.num_replicas))
                 self._add_samples(indices)
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
@@ -491,13 +498,13 @@ class DataDownloader:
         if self.samples is None:
             raise ValueError("Samples have not been initialized")
 
-        x = self.samples[indices]
+        xval = self.samples[indices]
 
         if self.need_targets:
-            y = self.targets[indices]
+            yval = self.targets[indices]
         elif self.autoencoding:
-            y = x
+            yval = xval
         else:
-            return x
+            return xval
 
-        return x, y
+        return xval, yval

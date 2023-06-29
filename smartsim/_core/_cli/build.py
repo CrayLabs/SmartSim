@@ -36,15 +36,21 @@ from tabulate import tabulate
 from smartsim._core._cli.utils import (color_bool, pip_install,
                                        smart_logger_format)
 from smartsim._core._install import builder
-from smartsim._core._install.buildenv import (BuildEnv, DbEngine, SetupError,
-                                              Version_, Versioner)
+from smartsim._core._install.buildenv import (
+    BuildEnv,
+    SetupError,
+    Version_,
+    Versioner,
+    DbEngine,
+)
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim._core.utils.helpers import installed_redisai_backends, redis_install_base
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
-logger = get_logger("Smart", fmt=smart_logger_format)
+SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
@@ -53,9 +59,9 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 def _install_torch_from_pip(
     versions: Versioner, device: str = "cpu", verbose: bool = False
 ) -> None:
-
     packages = []
     end_point = None
+    device_suffix = ""
 
     if sys.platform == "darwin":
         if device == "gpu":

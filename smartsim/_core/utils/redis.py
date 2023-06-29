@@ -60,9 +60,9 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     """
     ip_list = []
     for host in hosts:
-        ip = get_ip_from_host(host)
+        ip_address = get_ip_from_host(host)
         for port in ports:
-            address = ":".join((ip, str(port) + " "))
+            address = ":".join((ip_address, str(port) + " "))
             ip_list.append(address)
 
     # call cluster command
@@ -79,7 +79,9 @@ def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     logger.debug(out)
 
 
-def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 10) -> None:  # cov-wlm
+def check_cluster_status(
+    hosts: t.List[str], ports: t.List[int], trials: int = 10
+) -> None:  # cov-wlm
     """Check that a Redis/KeyDB cluster is up and running
 
     :param hosts: List of hostnames to connect to
@@ -91,11 +93,15 @@ def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 1
 
     :raises SmartSimError: If cluster status cannot be verified
     """
-    cluster_nodes = [ClusterNode(get_ip_from_host(host), port)
-                     for host, port in product(hosts, ports)]
+    cluster_nodes = [
+        ClusterNode(get_ip_from_host(host), port)
+        for host, port in product(hosts, ports)
+    ]
 
     if not cluster_nodes:
-        raise SSInternalError("No cluster nodes have been set for database status check.")
+        raise SSInternalError(
+            "No cluster nodes have been set for database status check."
+        )
 
     logger.debug("Beginning database cluster status check...")
     while trials > 0:
@@ -152,7 +158,7 @@ def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> boo
 
 def set_ml_model(db_model: DBModel, client: Client) -> None:
     logger.debug(f"Adding DBModel named {db_model.name}")
-    devices = db_model._enumerate_devices()
+    devices = db_model.enumerate_devices()
 
     for device in devices:
         try:
@@ -188,7 +194,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
 def set_script(db_script: DBScript, client: Client) -> None:
     logger.debug(f"Adding DBScript named {db_script.name}")
 
-    devices = db_script._enumerate_devices()
+    devices = db_script.enumerate_devices()
 
     for device in devices:
         try:

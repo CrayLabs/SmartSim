@@ -120,7 +120,7 @@ class SrunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
 
@@ -145,7 +145,7 @@ class SrunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude"] = ",".join(host_list)
 
@@ -239,7 +239,8 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
-    def _fmt_walltime(self, hours: int, minutes: int, seconds: int) -> str:
+    @staticmethod
+    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
 
         Converts time to format HH:MM:SS
@@ -301,9 +302,13 @@ class SrunSettings(RunSettings):
                 # we warn the user
                 preexisting_var = os.environ.get(k, None)
                 if preexisting_var is not None:
-                    msg = f"Variable {k} is set to {preexisting_var} in current environment. "
-                    msg += f"If the job is running in an interactive allocation, the value {v} will not be set. "
-                    msg += "Please consider removing the variable from the environment and re-run the experiment."
+                    msg = (
+                        f"Variable {k} is set to {preexisting_var} in current "
+                        + "environment. If the job is running in an interactive "
+                        + f"allocation, the value {v} will not be set. Please "
+                        + "consider removing the variable from the environment "
+                        + "and re-run the experiment."
+                    )
                     logger.warning(msg)
 
     def format_env_vars(self) -> t.List[str]:
@@ -341,7 +346,9 @@ class SrunSettings(RunSettings):
         fmt_exported_env = ",".join(v for v in exportable_env + key_only)
 
         for mpmd in self.mpmd:
-            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in str(v)}
+            compound_mpmd_env = {
+                k: v for k, v in mpmd.env_vars.items() if "," in str(v)
+            }
             compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
             compound_env.extend(compound_mpmd_fmt)
 
@@ -456,7 +463,7 @@ class SbatchSettings(BatchSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["nodelist"] = ",".join(host_list)
 

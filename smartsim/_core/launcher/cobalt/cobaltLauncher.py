@@ -30,11 +30,18 @@ import typing as t
 import psutil
 
 from smartsim._core.launcher.step import Step
-from smartsim.settings import RunSettings, SettingsBase
+from smartsim.settings import (
+    RunSettings,
+    SettingsBase,
+    AprunSettings,
+    CobaltBatchSettings,
+    MpirunSettings,
+    MpiexecSettings,
+    OrterunSettings,
+)
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import *
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
@@ -79,8 +86,7 @@ class CobaltLauncher(WLMLauncher):
             MpiexecSettings: MpiexecStep,
             OrterunSettings: OrterunStep,
             RunSettings: LocalStep,
-        }    
-
+        }
 
     def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Cobalt
@@ -99,8 +105,8 @@ class CobaltLauncher(WLMLauncher):
         task_id = None
         if isinstance(step, CobaltBatchStep):
             # wait for batch step to submit successfully
-            rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
-            if rc != 0:
+            return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
+            if return_code != 0:
                 raise LauncherError(
                     f"Cobalt qsub batch submission failed\n {out}\n {err}"
                 )
@@ -110,8 +116,14 @@ class CobaltLauncher(WLMLauncher):
         else:
             # aprun doesn't direct output for us.
             out, err = step.get_output_files()
-            output = open(out, "w+")
-            error = open(err, "w+")
+            # pylint: disable-next=consider-using-with
+            output = open(
+                out, "w+", encoding="utf-8"
+            )
+            # pylint: disable-next=consider-using-with
+            error = open(
+                err, "w+", encoding="utf-8"
+            )
 
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output.fileno(), err=error.fileno()

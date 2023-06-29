@@ -183,3 +183,8 @@ test-cov:
 .PHONY: test-full
 test-full:
 	@python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
+
+# help: test-wlm                   - Run the wlm-specific tests
+.PHONY: test-wlm
+test-wlm:
+	@python -m pytest -vv tests/full_wlm/ tests/on_wlm

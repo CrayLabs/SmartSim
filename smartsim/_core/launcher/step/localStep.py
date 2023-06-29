@@ -60,7 +60,7 @@ class LocalStep(Step):
             cmd.extend([bash, launch_script_path])
 
         if self.run_settings.container:
-            cmd += self.run_settings.container._container_cmds(self.cwd)
+            cmd += self.run_settings.container.container_cmds(self.cwd)
 
         # build executable
         cmd.extend(self.run_settings.exe)

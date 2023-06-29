@@ -38,12 +38,18 @@ from smartredis import Client
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
 from ...database import Orchestrator
-from ...entity import DBNode, EntityList, SmartSimEntity, Model, Ensemble
+from ...entity import EntityList, SmartSimEntity, Model, Ensemble
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...status import STATUS_RUNNING, TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import SlurmLauncher, PBSLauncher, LocalLauncher, CobaltLauncher, LSFLauncher
+from ..launcher import (
+    SlurmLauncher,
+    PBSLauncher,
+    LocalLauncher,
+    CobaltLauncher,
+    LSFLauncher,
+)
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster
 from .jobmanager import JobManager
@@ -101,13 +107,10 @@ class Controller:
 
     @property
     def orchestrator_active(self) -> bool:
-        JM_LOCK.acquire()
-        try:
+        with JM_LOCK:
             if len(self._jobs.db_jobs) > 0:
                 return True
             return False
-        finally:
-            JM_LOCK.release()
 
     def poll(
         self, interval: int, verbose: bool, kill_on_interrupt: bool = True
@@ -129,12 +132,9 @@ class Controller:
             # acquire lock to avoid "dictionary changed during iteration" error
             # without having to copy dictionary each time.
             if verbose:
-                JM_LOCK.acquire()
-                try:
+                with JM_LOCK:
                     for job in to_monitor.values():
                         logger.info(job)
-                finally:
-                    JM_LOCK.release()
 
     def finished(self, entity: t.Union[SmartSimEntity, EntityList]) -> bool:
         """Return a boolean indicating wether a job has finished or not
@@ -148,7 +148,7 @@ class Controller:
             if isinstance(entity, Orchestrator):
                 raise TypeError("Finished() does not support Orchestrator instances")
             if isinstance(entity, EntityList):
-                return all([self.finished(ent) for ent in entity.entities])
+                return all(self.finished(ent) for ent in entity.entities)
             if not isinstance(entity, SmartSimEntity):
                 raise TypeError(
                     f"Argument was of type {type(entity)} not derived "
@@ -170,8 +170,7 @@ class Controller:
         :param entity: entity to be stopped
         :type entity: Entity | EntityList
         """
-        JM_LOCK.acquire()
-        try:
+        with JM_LOCK:
             job = self._jobs[entity.name]
             if job.status not in TERMINAL_STATUSES:
                 logger.info(
@@ -189,8 +188,6 @@ class Controller:
                     output=status.output,
                 )
                 self._jobs.move_to_completed(job)
-        finally:
-            JM_LOCK.release()
 
     def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
@@ -209,11 +206,8 @@ class Controller:
 
         :returns: dict[str, Job]
         """
-        JM_LOCK.acquire()
-        try:
+        with JM_LOCK:
             return self._jobs.completed
-        finally:
-            JM_LOCK.release()
 
     def get_entity_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
         """Get the status of an entity
@@ -226,7 +220,8 @@ class Controller:
         """
         if not isinstance(entity, (SmartSimEntity, EntityList)):
             raise TypeError(
-                f"Argument must be of type SmartSimEntity or EntityList, not {type(entity)}"
+                "Argument must be of type SmartSimEntity or EntityList, "
+                + f"not {type(entity)}"
             )
         return self._jobs.get_status(entity)
 
@@ -373,14 +368,13 @@ class Controller:
                 try:
                     create_cluster(orchestrator.hosts, orchestrator.ports)
                     check_cluster_status(orchestrator.hosts, orchestrator.ports)
-                    logger.info(
-                        f"Database cluster created with {orchestrator.num_shards} shards"
-                    )
+                    num_shards = orchestrator.num_shards
+                    logger.info("Database cluster created with {} shards", num_shards)
                     cluster_created = True
                 except SSInternalError:
                     if num_trials > 0:
                         logger.debug(
-                            "Cluster creation failed, attempting again in five seconds..."
+                            "Cluster creation failed, attempting again in five seconds."
                         )
                         num_trials -= 1
                         time.sleep(5)
@@ -390,7 +384,9 @@ class Controller:
         self._save_orchestrator(orchestrator)
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
-    def _launch_step(self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]) -> None:
+    def _launch_step(
+        self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]
+    ) -> None:
         """Use the launcher to launch a job stop
 
         :param job_step: a job step instance
@@ -420,7 +416,9 @@ class Controller:
             logger.debug(f"Launching {entity.name}")
             self._jobs.add_job(job_step.name, job_id, entity, is_task)
 
-    def _create_batch_job_step(self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]) -> Step:
+    def _create_batch_job_step(
+        self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]
+    ) -> Step:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
@@ -429,7 +427,9 @@ class Controller:
         :rtype: Step
         """
         if not entity_list.batch_settings:
-            raise ValueError("EntityList must have batch settings to be launched as batch")
+            raise ValueError(
+                "EntityList must have batch settings to be launched as batch"
+            )
 
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
@@ -544,11 +544,11 @@ class Controller:
 
                 # _jobs.get_status acquires JM lock for main thread, no need for locking
                 statuses = self.get_entity_list_status(orchestrator)
-                if all([stat == STATUS_RUNNING for stat in statuses]):
+                if all(stat == STATUS_RUNNING for stat in statuses):
                     ready = True
                     # TODO remove in favor of by node status check
                     time.sleep(CONFIG.jm_interval)
-                elif any([stat in TERMINAL_STATUSES for stat in statuses]):
+                elif any(stat in TERMINAL_STATUSES for stat in statuses):
                     self.stop_entity_list(orchestrator)
                     msg = "Orchestrator failed during startup"
                     msg += f" See {orchestrator.path} for details"
@@ -566,14 +566,14 @@ class Controller:
                 raise
 
     def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
-        JM_LOCK.acquire()
-        try:
+        with JM_LOCK:
             if self.orchestrator_active:
                 raise SmartSimError("Orchestrator exists and is active")
 
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
-                    f"The SmartSim database config file {checkpoint_file} cannot be found."
+                    f"The SmartSim database config file {checkpoint_file} "
+                    + "cannot be found."
                 )
 
             try:
@@ -619,8 +619,6 @@ class Controller:
                 self._jobs.start()
 
             return orc
-        finally:
-            JM_LOCK.release()
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
@@ -628,8 +626,8 @@ class Controller:
 
         db_addresses = self._jobs.get_db_host_addresses()
 
-        hosts = list(set([address.split(":")[0] for address in db_addresses]))
-        ports = list(set([int(address.split(":")[-1]) for address in db_addresses]))
+        hosts = list({address.split(":")[0] for address in db_addresses})
+        ports = list({int(address.split(":")[-1]) for address in db_addresses})
 
         if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
             raise SSInternalError("Cannot set DB Objects, DB is not running")
@@ -638,26 +636,26 @@ class Controller:
 
         for model in manifest.models:
             if not model.colocated:
-                for db_model in model._db_models:
+                for db_model in model.db_models:
                     set_ml_model(db_model, client)
-                for db_script in model._db_scripts:
+                for db_script in model.db_scripts:
                     set_script(db_script, client)
 
         for ensemble in manifest.ensembles:
-            for db_model in ensemble._db_models:
+            for db_model in ensemble.db_models:
                 set_ml_model(db_model, client)
-            for db_script in ensemble._db_scripts:
+            for db_script in ensemble.db_scripts:
                 set_script(db_script, client)
             for entity in ensemble.models:
                 if not entity.colocated:
                     # Set models which could belong only
                     # to the entities and not to the ensemble
                     # but avoid duplicates
-                    for db_model in entity._db_models:
-                        if db_model not in ensemble._db_models:
+                    for db_model in entity.db_models:
+                        if db_model not in ensemble.db_models:
                             set_ml_model(db_model, client)
-                    for db_script in entity._db_scripts:
-                        if db_script not in ensemble._db_scripts:
+                    for db_script in entity.db_scripts:
+                        if db_script not in ensemble.db_scripts:
                             set_script(db_script, client)
 
 

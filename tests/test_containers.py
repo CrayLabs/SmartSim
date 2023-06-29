@@ -48,23 +48,23 @@ def test_singularity_commands(fileutils):
     # Note: We skip first element so singularity is not needed to run test
 
     c = Singularity(containerURI)
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec {containerURI}"
 
     c = Singularity(containerURI, args="--verbose")
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec --verbose {containerURI}"
 
     c = Singularity(containerURI, args=["--verbose", "--cleanenv"])
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec --verbose --cleanenv {containerURI}"
 
     c = Singularity(containerURI, mount="/usr/local/bin")
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec --bind /usr/local/bin {containerURI}"
 
     c = Singularity(containerURI, mount=["/usr/local/bin", "/lus/datasets"])
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec --bind /usr/local/bin,/lus/datasets {containerURI}"
 
     c = Singularity(
@@ -75,14 +75,14 @@ def test_singularity_commands(fileutils):
             "/cray/css/smartsim": None,
         },
     )
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert (
         cmd
         == f"exec --bind /usr/local/bin:/bin,/lus/datasets:/datasets,/cray/css/smartsim {containerURI}"
     )
 
     c = Singularity(containerURI, args="--verbose", mount="/usr/local/bin")
-    cmd = " ".join(c._container_cmds()[1:])
+    cmd = " ".join(c.container_cmds()[1:])
     assert cmd == f"exec --verbose --bind /usr/local/bin {containerURI}"
 
 

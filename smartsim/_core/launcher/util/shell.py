@@ -34,7 +34,7 @@ from ....log import get_logger
 from ...utils.helpers import check_dev_log_level
 
 logger = get_logger(__name__)
-verbose_shell = check_dev_log_level()
+VERBOSE_SHELL = check_dev_log_level()
 
 
 def execute_cmd(
@@ -65,8 +65,7 @@ def execute_cmd(
     :return: returncode, output, and error of the process
     :rtype: tuple of (int, str, str)
     """
-    global verbose_shell
-    if verbose_shell:
+    if VERBOSE_SHELL:
         source = "shell" if shell else "Popen"
         logger.debug(f"Executing {source} cmd: {' '.join(cmd_list)}")
 
@@ -94,7 +93,11 @@ def execute_cmd(
 
 
 def execute_async_cmd(
-    cmd_list: t.List[str], cwd: str, env: t.Optional[t.Dict[str, str]] = None, out: int = PIPE, err: int = PIPE
+    cmd_list: t.List[str],
+    cwd: str,
+    env: t.Optional[t.Dict[str, str]] = None,
+    out: int = PIPE,
+    err: int = PIPE,
 ) -> psutil.Popen:
     """Execute an asynchronous command
 
@@ -110,8 +113,7 @@ def execute_async_cmd(
     :return: the subprocess object
     :rtype: psutil.Popen
     """
-    global verbose_shell
-    if verbose_shell:
+    if VERBOSE_SHELL:
         logger.debug(f"Executing command: {' '.join(cmd_list)}")
 
     try:
@@ -120,14 +122,19 @@ def execute_async_cmd(
         )
         time.sleep(0.2)
         popen_obj.poll()
+    except OSError as e:
+        raise ShellError("Failed to run command", cmd_list, details=e) from None
+
+    err_msg = ""
+    try:
         if not popen_obj.is_running() and popen_obj.returncode != 0:
             output, error = popen_obj.communicate()
-            err_msg = ""
             if output:
                 err_msg += output.decode("utf-8") + " "
             if error:
                 err_msg += error.decode("utf-8")
             raise ShellError("Command failed immediately", cmd_list, details=err_msg)
     except OSError as e:
-        raise ShellError("Failed to run command", cmd_list, details=e) from None
+        raise ShellError("Command failed", cmd_list, details=e) from None
+
     return popen_obj

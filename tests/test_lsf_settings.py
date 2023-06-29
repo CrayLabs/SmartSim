@@ -213,7 +213,7 @@ def test_bsub_batch_manual():
     sbatch.set_nodes(5)
     sbatch.set_project("A3531")
     sbatch.set_walltime("10:00:00")
-    sbatch._format_alloc_flags()
+    sbatch.format_alloc_flags()
     # Enclose in quotes if user did not
     assert sbatch.batch_args["alloc_flags"] == '"gpumps smt4"'
     sbatch.set_smts("2")  # This should have no effect as per our docs
@@ -229,7 +229,7 @@ def test_bsub_batch_manual():
     assert formatted == result
     sbatch.add_preamble("module load gcc")
     sbatch.add_preamble(["module load openmpi", "conda activate smartsim"])
-    assert sbatch._preamble == [
+    assert sbatch.preamble == [
         "module load gcc",
         "module load openmpi",
         "conda activate smartsim",

@@ -84,30 +84,30 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        self.batch_settings._format_alloc_flags()
+        self.batch_settings.format_alloc_flags()
 
         opts = self.batch_settings.format_batch_args()
 
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n\n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n\n")
             if self.batch_settings.walltime:
-                f.write(f"#BSUB -W {self.batch_settings.walltime}\n")
+                script_file.write(f"#BSUB -W {self.batch_settings.walltime}\n")
             if self.batch_settings.project:
-                f.write(f"#BSUB -P {self.batch_settings.project}\n")
-            f.write(f"#BSUB -J {self.name}\n")
-            f.write(f"#BSUB -o {output}\n")
-            f.write(f"#BSUB -e {error}\n")
+                script_file.write(f"#BSUB -P {self.batch_settings.project}\n")
+            script_file.write(f"#BSUB -J {self.name}\n")
+            script_file.write(f"#BSUB -o {output}\n")
+            script_file.write(f"#BSUB -e {error}\n")
 
             # add additional bsub options
             for opt in opts:
-                f.write(f"#BSUB {opt}\n")
+                script_file.write(f"#BSUB {opt}\n")
 
             for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+                script_file.write("\n")
+                script_file.write(f"{' '.join((cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         return batch_script
 
 
@@ -221,16 +221,16 @@ class JsrunStep(Step):
         args = self.run_settings.exe_args
         if self.run_settings.mpmd:
             erf_file = self.get_step_file(ending=".mpmd")
-            _ = self._make_mpmd()
+            self._make_mpmd()
             mp_cmd = ["--erf_input", erf_file]
             return mp_cmd
-        else:
-            cmd = exe + args
-            return cmd
+
+        cmd = exe + args
+        return cmd
 
     def _make_mpmd(self) -> None:
         """Build LSF's Explicit Resource File"""
-        erf_file = self.get_step_file(ending=".mpmd")
+        erf_file_path = self.get_step_file(ending=".mpmd")
 
         # Find launch_distribution command
         preamble_lines = self.run_settings.mpmd_preamble_lines.copy()
@@ -252,16 +252,17 @@ class JsrunStep(Step):
         if not distr_line:
             distr_line = "launch_distribution : packed"
 
-        with open(erf_file, "w+") as f:
-            f.write(distr_line + "\n")
+        with open(erf_file_path, "w+", encoding="utf-8") as erf_file:
+            erf_file.write(distr_line + "\n")
             for line in preamble_lines:
-                f.write(line + "\n")
-            f.write("\n")
+                erf_file.write(line + "\n")
+            erf_file.write("\n")
 
             # First we list the apps
             for app_id, jrs in enumerate(self.run_settings.mpmd):
-                f.write(f"app {app_id} : " + " ".join(jrs.exe + jrs.exe_args) + "\n")
-            f.write("\n")
+                job_rs = " ".join(jrs.exe + jrs.exe_args)
+                erf_file.write(f"app {app_id} : {job_rs}\n")
+            erf_file.write("\n")
 
             # Then we list the resources
             for app_id, jrs in enumerate(self.run_settings.mpmd):
@@ -292,8 +293,8 @@ class JsrunStep(Step):
 
                 rs_line += "}: app " + str(app_id) + "\n"
 
-                f.write(rs_line)
+                erf_file.write(rs_line)
 
-        with open(erf_file) as f:
-            f.flush()
-            os.fsync(f)
+        with open(erf_file_path, encoding="utf-8") as erf_file:
+            erf_file.flush()
+            os.fsync(erf_file)

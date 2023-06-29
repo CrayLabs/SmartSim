@@ -27,14 +27,15 @@
 from __future__ import annotations
 
 import os.path as osp
-import sys
 import time
 import typing as t
+
+from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
-from ....settings.base import SettingsBase
+from ....settings.base import SettingsBase, RunSettings
 
 logger = get_logger(__name__)
 
@@ -50,7 +51,8 @@ class Step:
     def get_launch_cmd(self) -> t.List[str]:
         raise NotImplementedError
 
-    def _create_unique_name(self, entity_name: str) -> str:
+    @staticmethod
+    def _create_unique_name(entity_name: str) -> str:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
@@ -60,7 +62,9 @@ class Step:
         error = self.get_step_file(ending=".err")
         return output, error
 
-    def get_step_file(self, ending: str = ".sh", script_name: t.Optional[str] = None) -> str:
+    def get_step_file(
+        self, ending: str = ".sh", script_name: t.Optional[str] = None
+    ) -> str:
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc"""
@@ -73,7 +77,9 @@ class Step:
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
 
-        db_settings = self.run_settings.colocated_db_settings
+        db_settings = {}
+        if isinstance(self.step_settings, RunSettings):
+            db_settings = self.step_settings.colocated_db_settings
 
         # db log file causes write contention and kills performance so by
         # default we turn off logging unless user specified debug=True
@@ -87,10 +93,11 @@ class Step:
         write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path
 
+    # pylint: disable=no-self-use
     def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
         :type step: Step
         """
-        raise NotImplementedError
+        raise SmartSimError("add_to_batch not implemented for this step type")
