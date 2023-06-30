@@ -70,7 +70,7 @@ def pip_install(
         cmd.extend(("-f", str(end_point)))
 
     packages.sort()
-    pkg_str_list = '\n\t'.join(packages)
+    pkg_str_list = "\n\t".join(packages)
 
     if verbose:
         logger.info(f"Attempting to Install Packages:\n\t{pkg_str_list}")
@@ -92,7 +92,7 @@ def pip_install(
 
 def pip_uninstall(packages_to_remove: t.List[str], verbose: bool = False) -> None:
     packages_to_remove.sort()
-    pkg_str_list = '\n\t'.join(packages_to_remove)
+    pkg_str_list = "\n\t".join(packages_to_remove)
     if verbose:
         logger.info(f"Attempting to Uninstall Packages:\n\t{pkg_str_list}")
     cmd = [sys.executable, "-m", "pip", "uninstall", "-y"]

@@ -365,12 +365,15 @@ class Build:
             torch_packages,
             end_point=end_point,
             validate_installed_version=self.__create_torch_version_validator(
-                with_suffix=device_suffix),
+                with_suffix=device_suffix
+            ),
             install_on_absent=True,
             install_on_conflict=handle_conflict,
         )
 
-    def __create_torch_version_validator(self, with_suffix: str) -> t.Callable[[str, t.Optional[str]], bool]:
+    def __create_torch_version_validator(
+        self, with_suffix: str
+    ) -> t.Callable[[str, t.Optional[str]], bool]:
         def check_torch_version(package: str, version: t.Optional[str]) -> bool:
             if not self.build_env.check_installed(package, version):
                 return False
@@ -386,7 +389,7 @@ class Build:
                     msg=(
                         f"{package}=={installed} does not satisfy device "
                         f"suffix requirement: {with_suffix}"
-                    )
+                    ),
                 )
             return True
 
@@ -431,7 +434,9 @@ class Build:
         packages: t.Mapping[str, t.Optional[str]],
         package_pinning: _TPinningStr = "==",
         end_point: t.Optional[str] = None,
-        validate_installed_version: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
+        validate_installed_version: t.Optional[
+            t.Callable[[str, t.Optional[str]], bool]
+        ] = None,
         install_on_absent: bool = False,
         install_on_conflict: bool = False,
     ) -> None:
@@ -439,7 +444,8 @@ class Build:
         #       a `==` pinning. Maybe turn `BuildEnv.check_installed` into a factory
         #       that takes a pinning and an appropiate validation fn?
         validate_installed_version = (
-            validate_installed_version or self.build_env.check_installed)
+            validate_installed_version or self.build_env.check_installed
+        )
         missing, conflicts, to_install, to_uninstall = self._assess_python_env(
             packages,
             package_pinning,
@@ -506,7 +512,6 @@ class Build:
                     conflicts.append(spec)
 
         return missing, conflicts, to_install, to_uninstall
-
 
     def check_backends_install(self) -> None:
         """Checks if backends have already been installed.

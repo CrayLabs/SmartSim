@@ -94,7 +94,6 @@ class VersionConflictError(SetupError):
         self.target_version = target_version
 
 
-
 # so as to not conflict with pkg_resources.packaging.version.Version
 class Version_(str):
     """A subclass of pkg_resources.packaging.version.Version that
