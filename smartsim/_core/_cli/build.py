@@ -55,6 +55,10 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 #       may be installed into a different directory.
 
 
+_TDeviceStr = t.Literal["cpu", "gpu"]
+_TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
+
+
 class Build:
     def __init__(self) -> None:
         parser = argparse.ArgumentParser()
@@ -68,6 +72,7 @@ class Build:
             "--device",
             type=str.lower,
             default="cpu",
+            choices=["cpu", "gpu"],
             help="Device to build ML runtimes for (cpu || gpu)",
         )
         parser.add_argument(
@@ -111,8 +116,8 @@ class Build:
             action="store_true",
             default=False,
             help=(
-                "If true, `smart` will use `pip` to attempt to modifiy the current "
-                "python enviornment to statify the package dependencies of smartsim "
+                "If true, `smart` will use `pip` to attempt to modify the current "
+                "python environment to satisfy the package dependencies of SmartSim "
                 "and RedisAI"
             ),
         )
@@ -123,7 +128,12 @@ class Build:
             help="Build KeyDB instead of Redis",
         )
         args = parser.parse_args(sys.argv[2:])
+
         self.verbose = args.v
+        self.verbose_info: t.Callable[[str], t.Any] = lambda s: ...
+        if self.verbose:
+            self.verbose_info = logger.info
+
         self.keydb = args.keydb
         self.modify_py_env = args.modify_python_env
 
@@ -141,11 +151,11 @@ class Build:
                 logger.info("Only installing Python packages...skipping build")
                 self.build_env = BuildEnv(checks=False)
                 if onnx:
-                    self.check_py_onnx_version(handle_conflict=self.modify_py_env)
+                    self.install_py_onnx_version(handle_conflict=self.modify_py_env)
                 if tf:
-                    self.check_py_tf_version(handle_conflict=self.modify_py_env)
+                    self.install_py_tf_version(handle_conflict=self.modify_py_env)
                 if pt:
-                    self.check_py_torch_version(
+                    self.install_py_torch_version(
                         device=args.device, handle_conflict=self.modify_py_env
                     )
             else:
@@ -182,7 +192,7 @@ class Build:
 
                 # REDISAI
                 self.build_redis_ai(
-                    str(args.device),
+                    args.device,
                     pt,
                     tf,
                     onnx,
@@ -196,7 +206,6 @@ class Build:
                 logger.info(
                     (", ".join(backends) if backends else "No") + " backend(s) built"
                 )
-
         except (SetupError, BuildError) as e:
             logger.error(str(e))
             sys.exit(1)
@@ -221,7 +230,7 @@ class Build:
 
     def build_redis_ai(
         self,
-        device: str,
+        device: _TDeviceStr,
         torch: bool = True,
         tf: bool = True,
         onnx: bool = False,
@@ -249,9 +258,9 @@ class Build:
         # they be downloaded, we still should not break the build, as we use
         # onnx and tf directly from RAI instead of pip like we do PyTorch.
         if onnx:
-            self.check_py_onnx_version(handle_conflict=self.modify_py_env)
+            self.install_py_onnx_version(handle_conflict=self.modify_py_env)
         if tf:
-            self.check_py_tf_version(handle_conflict=self.modify_py_env)
+            self.install_py_tf_version(handle_conflict=self.modify_py_env)
 
         # TORCH
         if torch:
@@ -265,7 +274,7 @@ class Build:
             else:
                 # install pytorch wheel, and get the path to the cmake dir
                 # we will use in the RAI build
-                self.check_py_torch_version(
+                self.install_py_torch_version(
                     device=device, handle_conflict=self.modify_py_env
                 )
                 torch_dir = self.build_env.torch_cmake_path
@@ -328,8 +337,8 @@ class Build:
             device = "gpu"
         return device
 
-    def check_py_torch_version(
-        self, device: str = "cpu", handle_conflict: bool = False
+    def install_py_torch_version(
+        self, device: _TDeviceStr = "cpu", handle_conflict: bool = False
     ) -> None:
         """Torch shared libraries installed by pip are used in the build
         for SmartSim backends so we download them here.
@@ -342,7 +351,7 @@ class Build:
             end_point = "https://download.pytorch.org/whl/torch_stable.html"
             if device == "cpu":
                 device_suffix = self.versions.TORCH_CPU_SUFFIX
-            elif device in ["gpu", "cuda"]:
+            elif device == "gpu":
                 device_suffix = self.versions.TORCH_CUDA_SUFFIX
             else:
                 raise BuildError("Unrecognized device requested")
@@ -352,31 +361,40 @@ class Build:
             "torchvision": f"{self.versions.TORCHVISION}{device_suffix}",
         }
 
-        def torch_validator(package: str, version: t.Optional[str]) -> bool:
-            if not self.build_env.check_installed(package, version):
-                return False
-            # Previous check only looks at major/minor version numbers,
-            # Torch requires we look at the patch as well
-            installed = self.build_env.get_package_version(package)
-            if device_suffix and device_suffix not in installed.patch:
-                # Torch requires that we compare to the patch
-                raise VersionConflictError(
-                    f"{package}=={installed} does not satisfy device "
-                    f"suffix requirement: {device_suffix}"
-                )
-            return True
-
         self._check_py_package_version(
             torch_packages,
             end_point=end_point,
-            validator=torch_validator,
+            validate_installed_version=self.__create_torch_version_validator(
+                with_suffix=device_suffix),
             install_on_absent=True,
             install_on_conflict=handle_conflict,
         )
 
-    def check_py_onnx_version(self, handle_conflict: bool = False) -> None:
+    def __create_torch_version_validator(self, with_suffix: str) -> t.Callable[[str, t.Optional[str]], bool]:
+        def check_torch_version(package: str, version: t.Optional[str]) -> bool:
+            if not self.build_env.check_installed(package, version):
+                return False
+            # Default check only looks at major/minor version numbers,
+            # Torch requires we look at the patch as well
+            installed = self.build_env.get_package_version(package)
+            if with_suffix and with_suffix not in installed.patch:
+                # Torch requires that we compare to the patch
+                raise VersionConflictError(
+                    package,
+                    installed,
+                    version or f"X.X.X{with_suffix}",
+                    msg=(
+                        f"{package}=={installed} does not satisfy device "
+                        f"suffix requirement: {with_suffix}"
+                    )
+                )
+            return True
+
+        return check_torch_version
+
+    def install_py_onnx_version(self, handle_conflict: bool = False) -> None:
         """Check Python environment for a compatible ONNX installation"""
-        logger.info(f"Searching for a compatible ONNX install...")
+        logger.info("Searching for a compatible ONNX install...")
         if not self.versions.ONNX:
             py_version = sys.version_info
             msg = (
@@ -399,7 +417,7 @@ class Build:
             install_on_conflict=handle_conflict,
         )
 
-    def check_py_tf_version(self, handle_conflict: bool = False) -> None:
+    def install_py_tf_version(self, handle_conflict: bool = False) -> None:
         """Check Python environment for a compatible TensorFlow installation"""
         logger.info(f"Searching for a compatible TF install...")
         self._check_py_package_version(
@@ -411,52 +429,33 @@ class Build:
     def _check_py_package_version(
         self,
         packages: t.Mapping[str, t.Optional[str]],
+        package_pinning: _TPinningStr = "==",
         end_point: t.Optional[str] = None,
-        validator: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
+        validate_installed_version: t.Optional[t.Callable[[str, t.Optional[str]], bool]] = None,
         install_on_absent: bool = False,
         install_on_conflict: bool = False,
     ) -> None:
-        missing: t.List[str] = []
-        conflicts: t.List[str] = []
-        to_uninstall: t.List[str] = []
-        to_install: t.List[str] = []
-        validator = validator or self.build_env.check_installed
-        verbose_info: t.Callable[[str], t.Any] = lambda s: ...
-        if self.verbose:
-            verbose_info = logger.info
-
-        for name, version in packages.items():
-            spec = f"{name}=={version}" if version else name
-            try:
-                if validator(name, version):
-                    # Installed at the correct version, nothing to do here
-                    verbose_info(f"{spec} already installed in environment")
-                else:
-                    # Not installed! Install preferred version or warn user
-                    if install_on_absent:
-                        verbose_info(
-                            f"Package not found: Queueing `{spec}` for install"
-                        )
-                        to_install.append(spec)
-                    else:
-                        missing.append(spec)
-            except VersionConflictError as e:
-                # Incompatible version found
-                if install_on_conflict:
-                    verbose_info(f"{e}: Queueing `{name}` for reinstall")
-                    to_uninstall.append(name)
-                    to_install.append(spec)
-                else:
-                    conflicts.append(spec)
+        # TODO: Do not like how the defualt validation function will always look for
+        #       a `==` pinning. Maybe turn `BuildEnv.check_installed` into a factory
+        #       that takes a pinning and an appropiate validation fn?
+        validate_installed_version = (
+            validate_installed_version or self.build_env.check_installed)
+        missing, conflicts, to_install, to_uninstall = self._assess_python_env(
+            packages,
+            package_pinning,
+            validate_installed_version,
+            install_on_absent,
+            install_on_conflict,
+        )
 
         if missing or conflicts:
-            indent = "\n    "
-            fmt_list: t.Callable[[str, t.List[str]], str] = (
+            indent = "\n\t"
+            fmt_list: t.Callable = (
                 lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
             )
             missing_str = fmt_list("Missing", missing)
             conflict_str = fmt_list("Conflicting", conflicts)
-            sep = "\n" if missing_str else ""
+            sep = "\n" if missing_str and conflict_str else ""
             logger.warning(
                 "Python Env Status Warning!\n"
                 "Requested Packages are Missing or Conflicting:\n\n"
@@ -468,6 +467,46 @@ class Build:
             pip_uninstall(to_uninstall, verbose=self.verbose)
         if to_install:
             pip_install(to_install, end_point=end_point, verbose=self.verbose)
+
+    def _assess_python_env(
+        self,
+        packages: t.Mapping[str, t.Optional[str]],
+        package_pinning: _TPinningStr,
+        validate_installed_version: t.Callable[[str, t.Optional[str]], bool],
+        install_on_absent: bool,
+        install_on_conflict: bool,
+    ) -> t.Tuple[t.List[str], t.List[str], t.List[str], t.List[str]]:
+        missing: t.List[str] = []
+        conflicts: t.List[str] = []
+        to_uninstall: t.List[str] = []
+        to_install: t.List[str] = []
+
+        for name, version in packages.items():
+            spec = f"{name}{package_pinning}{version}" if version else name
+            try:
+                if validate_installed_version(name, version):
+                    # Installed at the correct version, nothing to do here
+                    self.verbose_info(f"{spec} already installed in environment")
+                else:
+                    # Not installed! Install preferred version or warn user
+                    if install_on_absent:
+                        self.verbose_info(
+                            f"Package not found: Queueing `{spec}` for install"
+                        )
+                        to_install.append(spec)
+                    else:
+                        missing.append(spec)
+            except VersionConflictError as e:
+                # Incompatible version found
+                if install_on_conflict:
+                    self.verbose_info(f"{e}: Queueing `{name}` for reinstall")
+                    to_uninstall.append(name)
+                    to_install.append(spec)
+                else:
+                    conflicts.append(spec)
+
+        return missing, conflicts, to_install, to_uninstall
+
 
     def check_backends_install(self) -> None:
         """Checks if backends have already been installed.

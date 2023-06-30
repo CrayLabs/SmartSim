@@ -75,6 +75,25 @@ class VersionConflictError(SetupError):
     do not match and build may not be able to continue
     """
 
+    def __init__(
+        self,
+        name: str,
+        current_version: str,
+        target_version: str,
+        msg: t.Optional[str] = None,
+    ) -> None:
+        if msg is None:
+            msg = (
+                f"Incompatible version for {name} detected: "
+                f"{name} {target_version} requested but {name} {current_version} "
+                "installed."
+            )
+        super().__init__(msg)
+        self.name = name
+        self.current_version = current_version
+        self.target_version = target_version
+
+
 
 # so as to not conflict with pkg_resources.packaging.version.Version
 class Version_(str):
@@ -501,10 +520,10 @@ class BuildEnv:
         path = Path(dist.locate_file(imp_file))
         if path.is_dir():
             return path
-        path = path.parent / (path.name + ".py")
+        path = path.parent / f"{path.name}.py"
         if path.is_file():
             return path
-        raise FileNotFoundError("Could not locate `{imp_pkg}` in dist `{dist_pkg}`")
+        raise FileNotFoundError(f"Could not locate `{imp_pkg}` in dist `{dist_pkg}`")
 
     @staticmethod
     def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
@@ -570,11 +589,7 @@ class BuildEnv:
                 version = Version_(version)
             # detect if major or minor versions differ
             if installed.major != version.major or installed.minor != version.minor:
-                msg = (
-                    f"Incompatible version for {package} detected: "
-                    f"{package} {version} requested but {package} {installed} installed."
-                )
-                raise VersionConflictError(msg)
+                raise VersionConflictError(package, installed, version)
         return True
 
     @staticmethod

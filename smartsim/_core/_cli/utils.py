@@ -69,38 +69,43 @@ def pip_install(
     if end_point:
         cmd.extend(("-f", str(end_point)))
 
-    cmd.extend(packages)
+    packages.sort()
+    pkg_str_list = '\n\t'.join(packages)
 
     if verbose:
-        logger.info(f"Installing packages: {', '.join(packages)}")
-    proc = subprocess.Popen(
-        cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    _, err = proc.communicate()
-    returncode = int(proc.returncode)
-    if returncode != 0:
-        error = (
-            f"'{' '.join(cmd)}' installation failed with exitcode {returncode}\n"
-            f"{err.decode('utf-8')}"
+        logger.info(f"Attempting to Install Packages:\n\t{pkg_str_list}")
+    for package in packages:
+        proc = subprocess.Popen(
+            cmd + [package], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        raise BuildError(error)
+        _, err = proc.communicate()
+        returncode = int(proc.returncode)
+        if returncode != 0:
+            error = (
+                f"'{package}' installation failed with exitcode {returncode}\n"
+                f"{err.decode('utf-8')}"
+            )
+            raise BuildError(error)
     if verbose:
-        logger.info(f"{', '.join(packages)} installed successfully")
+        logger.info("Packages Installed Successfully")
 
 
-def pip_uninstall(packages: t.List[str], verbose: bool = False) -> None:
+def pip_uninstall(packages_to_remove: t.List[str], verbose: bool = False) -> None:
+    packages_to_remove.sort()
+    pkg_str_list = '\n\t'.join(packages_to_remove)
     if verbose:
-        logger.info(f"Attempting to uninstall: {', '.join(packages)}")
-    cmd = [sys.executable, "-m", "pip", "uninstall", "-y"] + packages
-    proc = subprocess.Popen(
-        cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    _, err = proc.communicate()
-    retcode = int(proc.returncode)
-    if retcode != 0:
-        raise BuildError(
-            f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
-            f"{err.decode('utf-8')}"
+        logger.info(f"Attempting to Uninstall Packages:\n\t{pkg_str_list}")
+    cmd = [sys.executable, "-m", "pip", "uninstall", "-y"]
+    for package in packages_to_remove:
+        proc = subprocess.Popen(
+            cmd + [package], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
+        _, err = proc.communicate()
+        retcode = int(proc.returncode)
+        if retcode != 0:
+            raise BuildError(
+                f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
+                f"{err.decode('utf-8')}"
+            )
     if verbose:
-        logger.info(f"{', '.join(packages)} uninstalled successfully")
+        logger.info(f"Packages Uninstalled Successfully")
