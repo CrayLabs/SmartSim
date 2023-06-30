@@ -137,10 +137,12 @@ def _build_colocated_wrapper_cmd(
         db_cmd.extend([
             'taskset', '-c', custom_pinning
         ])
-    db_cmd.extend([
+    db_cmd.extend(
+        [
             CONFIG.database_exe,
             CONFIG.database_conf,
-            "--loadmodule", CONFIG.redisai
+            "--loadmodule",
+            CONFIG.redisai
         ]
     )
 

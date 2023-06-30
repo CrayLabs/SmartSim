@@ -40,7 +40,6 @@ from ..settings.base import BatchSettings, RunSettings
 from ..log import get_logger
 
 logger = get_logger(__name__)
-_default_pinning = [] if sys.platform == 'darwin' else None
 
 class Model(SmartSimEntity):
     def __init__(
@@ -170,7 +169,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = _default_pinning,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -229,7 +228,7 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = _default_pinning,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -298,7 +297,7 @@ class Model(SmartSimEntity):
         if hasattr(self.run_settings, "_prep_colocated_db"):
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
-        if "limit_app_cpus" in common_options:
+        if "limit_app_cpus" in kwargs:
             raise SSUnsupportedError(
                 "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings "
                 "instead using the correct binding option for your launcher."
@@ -352,15 +351,25 @@ class Model(SmartSimEntity):
             else:
                 raise TypeError(f"Argument is of type '{type(id)}' not 'int'")
 
-        # Deal with MacOSX limitations first
+        _invalid_input_message = (
+            "Expected a cpu pinning specification of type iterable of ints or "
+            f"iterables of ints. Instead got type `{type(pin_ids)}`"
+        )
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is an iterable
         if "darwin" in sys.platform:
-            if (pin_ids is None) or isinstance(pin_ids, collections.abc.Iterable):
-                logger.warning(
-                    "CPU pinning is not supported on MacOSX. Setting pin_ids = []. "
-                    "To eliminate this message, set custom_pinning = [] when adding "
-                    "the colocated db."
+            if not (pin_ids is None) or not pin_ids:
+                return None
+            elif isinstance(pin_ids, collections.abc.Iterable):
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning
                 )
                 return None
+            else:
+                raise TypeError(_invalid_input_message)
         # Flatten the iterable into a list and check to make sure that the resulting
         # elements are all ints
         if pin_ids is None:
@@ -376,9 +385,7 @@ class Model(SmartSimEntity):
                     pin_list.append(_stringify_id(pin_id))
             return ','.join(sorted(set(pin_list)))
         else:
-            raise TypeError(
-                    "Expected a cpu pinning spec of type iterable of ints or "
-                    f"iterables of ints. Instead got type `{type(pin_ids)}`")
+            raise TypeError(_invalid_input_message)
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""
