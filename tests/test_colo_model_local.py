@@ -37,7 +37,9 @@ if sys.platform == "darwin":
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
-@pytest.mark.skipif(not (sys.platform=='darwin'), reason='MacOS-only test')
+is_mac = sys.platform == 'darwin'
+
+@pytest.mark.skipif(not is_mac, reason='MacOS-only test')
 def test_macosx_warning(fileutils, coloutils):
     db_args = {"custom_pinning":[1]}
     db_type = 'uds' # Test is insensitive to choice of db
@@ -106,7 +108,11 @@ def test_launch_colocated_model_defaults(fileutils, coloutils, db_type, launcher
         db_args,
     )
 
-    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0"
+    if is_mac:
+        true_pinning = None
+    else:
+        true_pinning = "0"
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
@@ -153,11 +159,16 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type, launch
         exp,
         db_args,
     )
-    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    if is_mac:
+        true_pinning = None
+    else:
+        true_pinning = "0,1"
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
+@pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
@@ -180,6 +191,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
+@pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_list(fileutils, coloutils, db_type, launcher="local"):
     # Check to make sure that the CPU mask was correctly generated
