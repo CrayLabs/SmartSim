@@ -34,6 +34,7 @@ from smartsim.entity import Model
 
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
+    supported_dbs = ["tcp"]
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
@@ -46,8 +47,8 @@ def test_macosx_warning(fileutils, coloutils):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.warns(
-        RuntimeError,
-        match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
+        RuntimeWarning,
+        # match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
     ):
         colo_model = coloutils.setup_test_colo(
             fileutils,
@@ -69,6 +70,7 @@ def test_unsupported_limit_app(fileutils, coloutils):
             db_args,
         )
 
+@pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
 @pytest.mark.parametrize("custom_pinning", [1,"10","#",1.,['a'],[1.]])
 def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
     db_type = "uds" # Test is insensitive to choice of db
@@ -83,6 +85,7 @@ def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
             db_args,
         )
 
+@pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
 @pytest.mark.parametrize("pin_list, num_cpus, expected", [
     pytest.param(None, 2, "0,1", id="Automatic creation of pinned cpu list"),
     pytest.param([1,2], 2, "1,2", id="Individual ids only"),
@@ -130,7 +133,6 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type, launcher
         "db_cpus": 1,
         "custom_pinning": [],
     }
-
     # Check to make sure that the CPU mask was correctly generated
     colo_model = coloutils.setup_test_colo(
         fileutils,

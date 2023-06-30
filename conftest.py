@@ -513,7 +513,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def get_test_dir(caller_function=None, caller_fspath=None):
+    def get_test_dir(caller_function=None, caller_fspath=None, level=1):
         """Get path to test output.
 
         This function should be called without arguments from within
@@ -532,7 +532,7 @@ class FileUtils:
         :rtype: str
         """
         if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[1]
+            caller_frame = inspect.stack()[level]
             caller_fspath = caller_frame.filename
             caller_function = caller_frame.function
 
@@ -543,7 +543,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_dir(caller_function=None, caller_fspath=None):
+    def make_test_dir(caller_function=None, caller_fspath=None, level=2):
         """Create test output directory and return path to it.
 
         This function should be called without arguments from within
@@ -560,7 +560,7 @@ class FileUtils:
         :rtype: str
         """
         if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[1]
+            caller_frame = inspect.stack()[level]
             caller_fspath = caller_frame.filename
             caller_function = caller_frame.function
 
@@ -603,11 +603,10 @@ def coloutils():
     return ColoUtils
 
 class ColoUtils:
-    @staticmethod
     def setup_test_colo(fileutils, db_type, exp, db_args):
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
-        test_dir = fileutils.make_test_dir()
+        test_dir = fileutils.make_test_dir(level=2)
         sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
 
         # Create an app with a colo_db which uses 1 db_cpu
@@ -625,7 +624,6 @@ class ColoUtils:
             "uds":colo_model.colocate_db_uds
         }
         colocate_fun[db_type](**db_args)
-
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings

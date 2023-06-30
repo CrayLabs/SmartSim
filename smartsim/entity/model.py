@@ -358,8 +358,8 @@ class Model(SmartSimEntity):
 
         # Deal with MacOSX limitations first. The "None" (default) disables pinning
         # and is equivalent to []. The only invalid option is an iterable
-        if "darwin" in sys.platform:
-            if not (pin_ids is None) or not pin_ids:
+        if "darwin" == sys.platform:
+            if pin_ids is None or not pin_ids:
                 return None
             elif isinstance(pin_ids, collections.abc.Iterable):
                 warnings.warn(
