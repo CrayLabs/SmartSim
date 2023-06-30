@@ -26,10 +26,10 @@
 
 from __future__ import annotations
 
-import itertools
+import collections.abc
+import sys
 import typing as t
 import warnings
-import collections.abc
 
 from .._core.utils.helpers import cat_arg_and_value, init_default
 from ..error import EntityExistsError, SSUnsupportedError
@@ -40,6 +40,7 @@ from ..settings.base import BatchSettings, RunSettings
 from ..log import get_logger
 
 logger = get_logger(__name__)
+_default_pinning = [] if sys.platform == 'darwin' else None
 
 class Model(SmartSimEntity):
     def __init__(
@@ -159,9 +160,8 @@ class Model(SmartSimEntity):
         warnings.warn(
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
-                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`.",
-                FutureWarning
-            )
+                "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
+            ), FutureWarning
         )
         self.colocate_db_tcp(*args, **kwargs)
 
@@ -170,7 +170,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = _default_pinning,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -229,7 +229,7 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = _default_pinning,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -337,25 +337,48 @@ class Model(SmartSimEntity):
     def _create_pinning_string(
         pin_ids: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]],
         cpus: int
-        ):
+        ) -> t.Optional[str]:
         """Create a comma-separated string CPU ids. By default, None returns
         0,1,...,cpus-1; an empty iterable will disable pinning altogether,
         and an iterable constructs a comma separate string (e.g. 0,2,5)
         """
+        def _stringify_id(id: int) -> int:
+            """Return the cPU id as a string if an int, otherwise raise a ValueError"""
+            if isinstance(id, int):
+                if id < 0:
+                    raise ValueError("CPU id must be a nonnegative number")
+                else:
+                    return str(id)
+            else:
+                raise TypeError(f"Argument is of type '{type(id)}' not 'int'")
+
+        # Deal with MacOSX limitations first
+        if "darwin" in sys.platform:
+            if (pin_ids is None) or isinstance(pin_ids, collections.abc.Iterable):
+                logger.warning(
+                    "CPU pinning is not supported on MacOSX. Setting pin_ids = []. "
+                    "To eliminate this message, set custom_pinning = [] when adding "
+                    "the colocated db."
+                )
+                return None
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
         if pin_ids is None:
-            return ','.join(str(i) for i in range(cpus))
+            return ','.join(_stringify_id(i) for i in range(cpus))
         elif not pin_ids:
             return None
         elif isinstance(pin_ids, collections.abc.Iterable):
             pin_list = []
-            for i in pin_ids:
-                if isinstance(i, collections.abc.Iterable):
-                    pin_list.extend([str(j) for j in i])
+            for pin_id in pin_ids:
+                if isinstance(pin_id, collections.abc.Iterable):
+                    pin_list.extend([_stringify_id(j) for j in pin_id])
                 else:
-                    pin_list.append(str(i))
-            return ','.join(pin_list)
+                    pin_list.append(_stringify_id(pin_id))
+            return ','.join(sorted(set(pin_list)))
         else:
-            raise TypeError("pin_ids must be an iterable of ints")
+            raise TypeError(
+                    "Expected a cpu pinning spec of type iterable of ints or "
+                    f"iterables of ints. Instead got type `{type(pin_ids)}`")
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""

@@ -36,15 +36,15 @@ if sys.platform == "darwin":
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
-def test_create_pinning_string():
-    # Automatic creation of pinned cpu list
-    assert Model._create_pinning_string(None,2) == '0,1'
-    # Individual ids only
-    assert Model._create_pinning_string([1,2],2) == '1,2'
-    # Mixed ranges and individual ids
-    assert Model._create_pinning_string([range(2),3],3) == '0,1,3'
-    # Range only
-    assert Model._create_pinning_string(range(3),3) == '0,1,2'
+@pytest.mark.parametrize("pin_list, num_cpus, expected", [
+    pytest.param(None, 2, "0,1", id="Automatic creation of pinned cpu list"),
+    pytest.param([1,2], 2, "1,2", id="Individual ids only"),
+    pytest.param([range(2),3], 3, "0,1,3", id="Mixed ranges and individual ids"),
+    pytest.param(range(3), 3, "0,1,2", id="Range only"),
+    pytest.param([range(8, 10), range(6, 1, -2)], 4, "2,4,6,8,9", id="Multiple ranges"),
+])
+def test_create_pinning_string(pin_list, num_cpus, expected):
+    assert Model._create_pinning_string(pin_list, num_cpus) == expected
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)

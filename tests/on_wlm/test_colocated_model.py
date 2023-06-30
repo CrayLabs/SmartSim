@@ -35,7 +35,6 @@ if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
-    supported_dbs = ["uds"]
 
 # retrieved from pytest fixtures
 launcher = pytest.test_launcher

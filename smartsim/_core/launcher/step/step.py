@@ -70,7 +70,6 @@ class Step:
         return osp.join(self.cwd, self.entity_name + ending)
 
     def get_colocated_launch_script(self) -> str:
-        from .localStep import LocalStep
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
 
@@ -82,11 +81,6 @@ class Step:
             db_log_file = self.get_step_file(ending="-db.log")
         else:
             db_log_file = "/dev/null"
-
-        if sys.platform == 'darwin' and db_settings["db_cpu_list"]:
-                logger.warning(
-                    "DB pinning is not supported on MacOS, setting limit_db_cpus = False")
-                db_settings["limit_db_cpus"] = False
 
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch

@@ -138,9 +138,10 @@ def _build_colocated_wrapper_cmd(
             'taskset', '-c', custom_pinning
         ])
     db_cmd.extend([
-        CONFIG.database_exe,
-        CONFIG.database_conf,
-        "--loadmodule", CONFIG.redisai]
+            CONFIG.database_exe,
+            CONFIG.database_conf,
+            "--loadmodule", CONFIG.redisai
+        ]
     )
 
     # add extra redisAI configurations
