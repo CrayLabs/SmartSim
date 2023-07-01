@@ -97,18 +97,21 @@ Here is an example of creating a simple model that is colocated with an
   colo_model.colocate_db_uds(
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
-          limit_db_cpus=True,     # Limit the database to a specific set of cpus
           ifname=network_interface # specify network interface(s) to use (i.e. "ib0" or ["ib0", "lo"])
   )
   exp.start(colo_model)
 
 
 By default, SmartSim will pin the database to the first _N_ CPUs according to ``db_cpus``. By
-specifying the optional argument ``db_cpu_list``, an alternative pinning can be specified (
-following the format used by ``taskset``). For example, ``db_cpu_list=0-2,5`` limits the database
-to be run on processors 0, 1, 2 and 5. Setting ``limit_db_cpus=False`` disables pinning for the database
-kernel scheduler. For optimal performance, most users will want to also modify the RunSettings for
-the model to pin their application to cores not occupied by the database.
+specifying the optional argument ``custom_pinning``, an alternative pinning can be specified
+by sending in a list of CPU ids (e.g [0,2,range(5,8)]). For optimal performance, most users
+will want to also modify the RunSettings for the model to pin their application to cores not
+occupied by the database.
+
+.. warning::
+
+  Pinning is not supported on MacOS X. Setting ``custom_pinning`` to anything
+  other than ``None`` will raise a warning and the input will be ignored.
 
 .. note::
 
