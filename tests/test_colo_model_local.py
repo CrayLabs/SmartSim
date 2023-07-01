@@ -34,7 +34,6 @@ from smartsim.entity import Model
 
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
-    supported_dbs = ["tcp"]
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
