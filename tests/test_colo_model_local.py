@@ -48,7 +48,7 @@ def test_macosx_warning(fileutils, coloutils):
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.warns(
         RuntimeWarning,
-        # match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
+        match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
     ):
         colo_model = coloutils.setup_test_colo(
             fileutils,
