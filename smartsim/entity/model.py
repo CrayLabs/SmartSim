@@ -169,7 +169,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -228,7 +228,7 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        custom_pinning: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]] = None,
+        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -334,14 +334,14 @@ class Model(SmartSimEntity):
 
     @staticmethod
     def _create_pinning_string(
-        pin_ids: t.Optional[t.Iterable[t.Union(int, t.Iterable[int])]],
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
         cpus: int
         ) -> t.Optional[str]:
         """Create a comma-separated string CPU ids. By default, None returns
         0,1,...,cpus-1; an empty iterable will disable pinning altogether,
         and an iterable constructs a comma separate string (e.g. 0,2,5)
         """
-        def _stringify_id(id: int) -> int:
+        def _stringify_id(id: int) -> str:
             """Return the cPU id as a string if an int, otherwise raise a ValueError"""
             if isinstance(id, int):
                 if id < 0:
