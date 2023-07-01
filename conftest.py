@@ -543,7 +543,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_dir(caller_function=None, caller_fspath=None, level=2):
+    def make_test_dir(caller_function=None, caller_fspath=None, level=1):
         """Create test output directory and return path to it.
 
         This function should be called without arguments from within
