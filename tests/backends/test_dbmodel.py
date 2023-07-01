@@ -387,7 +387,6 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -455,7 +454,6 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -519,7 +517,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -533,7 +530,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port=test_port + i + 1,
             db_cpus=1,
-            limit_app_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -638,7 +634,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port = test_port + i,
             db_cpus=1,
-            limit_app_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -661,7 +656,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port + len(colo_ensemble),
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -713,7 +707,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     colo_model.colocate_db_tcp(
         port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
         ifname=test_interface
     )
@@ -740,7 +733,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
         entity.colocate_db_tcp(
             port=test_port + i,
             db_cpus=1,
-            limit_app_cpus=False,
             debug=True,
             ifname=test_interface
         )
@@ -775,7 +767,6 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
             entity.colocate_db_tcp(
                 port=test_port + i,
                 db_cpus=1,
-                limit_app_cpus=False,
                 debug=True,
                 ifname=test_interface,
             )

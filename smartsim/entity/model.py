@@ -26,6 +26,8 @@
 
 from __future__ import annotations
 
+import collections.abc
+import sys
 import typing as t
 import warnings
 
@@ -35,7 +37,9 @@ from .dbobject import DBModel, DBScript
 from .entity import SmartSimEntity
 from .files import EntityFiles
 from ..settings.base import BatchSettings, RunSettings
+from ..log import get_logger
 
+logger = get_logger(__name__)
 
 class Model(SmartSimEntity):
     def __init__(
@@ -156,8 +160,7 @@ class Model(SmartSimEntity):
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
                 "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
-            ),
-            category=DeprecationWarning,
+            ), FutureWarning
         )
         self.colocate_db_tcp(*args, **kwargs)
 
@@ -166,7 +169,7 @@ class Model(SmartSimEntity):
         unix_socket: str = "/tmp/redis.socket",
         socket_permissions: int = 755,
         db_cpus: int = 1,
-        limit_app_cpus: bool = True,
+        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -198,8 +201,9 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
-        :type limit_app_cpus: bool, optional
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
+                               disables pinning
+        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -211,9 +215,10 @@ class Model(SmartSimEntity):
             "socket_permissions": socket_permissions,
             "port": 0,  # This is hardcoded to 0 as recommended by redis for UDS
         }
+
         common_options = {
             "cpus": db_cpus,
-            "limit_app_cpus": limit_app_cpus,
+            "custom_pinning": custom_pinning,
             "debug": debug,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
@@ -223,7 +228,7 @@ class Model(SmartSimEntity):
         port: int = 6379,
         ifname: t.Union[str, list[str]] = "lo",
         db_cpus: int = 1,
-        limit_app_cpus: bool = True,
+        custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
         **kwargs: t.Any,
     ) -> None:
@@ -255,8 +260,9 @@ class Model(SmartSimEntity):
         :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param limit_app_cpus: whether to limit the number of cpus used by the app, defaults to True
-        :type limit_app_cpus: bool, optional
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
+                               disables pinning
+        :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
         :param kwargs: additional keyword arguments to pass to the orchestrator database
@@ -267,7 +273,7 @@ class Model(SmartSimEntity):
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
             "cpus": db_cpus,
-            "limit_app_cpus": limit_app_cpus,
+            "custom_pinning": custom_pinning,
             "debug": debug,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
@@ -291,7 +297,18 @@ class Model(SmartSimEntity):
         if hasattr(self.run_settings, "_prep_colocated_db"):
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
+        if "limit_app_cpus" in kwargs:
+            raise SSUnsupportedError(
+                "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings "
+                "instead using the correct binding option for your launcher."
+            )
+
         # TODO list which db settings can be extras
+        common_options["custom_pinning"] = self._create_pinning_string(
+            common_options["custom_pinning"],
+            common_options["cpus"]
+        )
+
         colo_db_config = {}
         colo_db_config.update(connection_options)
         colo_db_config.update(common_options)
@@ -314,6 +331,61 @@ class Model(SmartSimEntity):
         colo_db_config["db_scripts"] = self._db_scripts
 
         self.run_settings.colocated_db_settings = colo_db_config
+
+    @staticmethod
+    def _create_pinning_string(
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
+        cpus: int
+        ) -> t.Optional[str]:
+        """Create a comma-separated string CPU ids. By default, None returns
+        0,1,...,cpus-1; an empty iterable will disable pinning altogether,
+        and an iterable constructs a comma separate string (e.g. 0,2,5)
+        """
+        def _stringify_id(id: int) -> str:
+            """Return the cPU id as a string if an int, otherwise raise a ValueError"""
+            if isinstance(id, int):
+                if id < 0:
+                    raise ValueError("CPU id must be a nonnegative number")
+                else:
+                    return str(id)
+            else:
+                raise TypeError(f"Argument is of type '{type(id)}' not 'int'")
+
+        _invalid_input_message = (
+            "Expected a cpu pinning specification of type iterable of ints or "
+            f"iterables of ints. Instead got type `{type(pin_ids)}`"
+        )
+
+        # Deal with MacOSX limitations first. The "None" (default) disables pinning
+        # and is equivalent to []. The only invalid option is an iterable
+        if "darwin" == sys.platform:
+            if pin_ids is None or not pin_ids:
+                return None
+            elif isinstance(pin_ids, collections.abc.Iterable):
+                warnings.warn(
+                    "CPU pinning is not supported on MacOSX. Ignoring pinning "
+                    "specification.",
+                    RuntimeWarning
+                )
+                return None
+            else:
+                raise TypeError(_invalid_input_message)
+        # Flatten the iterable into a list and check to make sure that the resulting
+        # elements are all ints
+        if pin_ids is None:
+            return ','.join(_stringify_id(i) for i in range(cpus))
+        elif not pin_ids:
+            return None
+        elif isinstance(pin_ids, collections.abc.Iterable):
+            pin_list = []
+            for pin_id in pin_ids:
+                if isinstance(pin_id, collections.abc.Iterable):
+                    pin_list.extend([_stringify_id(j) for j in pin_id])
+                else:
+                    pin_list.append(_stringify_id(pin_id))
+            return ','.join(sorted(set(pin_list)))
+        else:
+            raise TypeError(_invalid_input_message)
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""

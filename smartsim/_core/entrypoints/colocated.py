@@ -202,21 +202,11 @@ def main(
         raise SSInternalError("Colocated process failed to start") from e
 
     try:
-        if sys.platform != "darwin":
-            # Set CPU affinity to the last $db_cpus CPUs
-            affinity = p.cpu_affinity()
-            cpus_to_use = affinity[-db_cpus:] if affinity else None
-            p.cpu_affinity(cpus_to_use)
-        else:
-            # psutil doesn't support pinning on MacOS
-            cpus_to_use = "CPU pinning disabled on MacOS"
-
         logger.debug(
             "\n\nColocated database information\n"
             + "\n".join(
                 (
                     f"\tIP Address(es): {' '.join(ip_addresses + [lo_address])}",
-                    f"\tAffinity: {cpus_to_use}",
                     f"\tCommand: {' '.join(cmd)}\n\n",
                     f"\t# of Database CPUs: {db_cpus}",
                 )

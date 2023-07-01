@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import os.path as osp
+import sys
 import time
 import typing as t
 
@@ -81,21 +82,11 @@ class Step:
         else:
             db_log_file = "/dev/null"
 
-        # if user specified to use taskset with local launcher
-        # (not allowed b/c MacOS doesn't support it)
-        # TODO: support this only on linux
-        if (
-            self.__class__.__name__ == "LocalStep"
-            and db_settings["limit_app_cpus"] is True
-        ):  # pragma: no cover
-            logger.warning("Setting limit_app_cpus=False for local launcher")
-            db_settings["limit_app_cpus"] = False
-
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
         write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path
-    
+
     def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 

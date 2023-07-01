@@ -157,10 +157,7 @@ class SrunStep(Step):
         srun_cmd += self.run_settings.format_run_args()
 
         if self.run_settings.colocated_db_settings:
-            # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
-            srun_cmd.append("--cpu-bind=none")
-
+            
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             launch_script_path = self.get_colocated_launch_script()

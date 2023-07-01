@@ -24,68 +24,193 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 import sys
-import warnings
 
 import pytest
 
 from smartsim import Experiment, status
+from smartsim.error import SSUnsupportedError
+from smartsim.entity import Model
 
 if sys.platform == "darwin":
     supported_dbs = ["tcp", "deprecated"]
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
+is_mac = sys.platform == 'darwin'
+
+@pytest.mark.skipif(not is_mac, reason='MacOS-only test')
+def test_macosx_warning(fileutils, coloutils):
+    db_args = {"custom_pinning":[1]}
+    db_type = 'uds' # Test is insensitive to choice of db
+
+    exp = Experiment("colocated_model_defaults", launcher="local")
+    with pytest.warns(
+        RuntimeWarning,
+        match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
+    ):
+        colo_model = coloutils.setup_test_colo(
+            fileutils,
+            db_type,
+            exp,
+            db_args,
+        )
+
+def test_unsupported_limit_app(fileutils, coloutils):
+    db_args = {"limit_app_cpus":True}
+    db_type = 'uds' # Test is insensitive to choice of db
+
+    exp = Experiment("colocated_model_defaults", launcher="local")
+    with pytest.raises(SSUnsupportedError):
+        colo_model = coloutils.setup_test_colo(
+            fileutils,
+            db_type,
+            exp,
+            db_args,
+        )
+
+@pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
+@pytest.mark.parametrize("custom_pinning", [1,"10","#",1.,['a'],[1.]])
+def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
+    db_type = "uds" # Test is insensitive to choice of db
+    db_args = {"custom_pinning": custom_pinning}
+
+    exp = Experiment("colocated_model_defaults", launcher="local")
+    with pytest.raises(TypeError):
+        colo_model = coloutils.setup_test_colo(
+            fileutils,
+            db_type,
+            exp,
+            db_args,
+        )
+
+@pytest.mark.skipif(is_mac, reason="Unsupported on MacOSX")
+@pytest.mark.parametrize("pin_list, num_cpus, expected", [
+    pytest.param(None, 2, "0,1", id="Automatic creation of pinned cpu list"),
+    pytest.param([1,2], 2, "1,2", id="Individual ids only"),
+    pytest.param([range(2),3], 3, "0,1,3", id="Mixed ranges and individual ids"),
+    pytest.param(range(3), 3, "0,1,2", id="Range only"),
+    pytest.param([range(8, 10), range(6, 1, -2)], 4, "2,4,6,8,9", id="Multiple ranges"),
+])
+def test_create_pinning_string(pin_list, num_cpus, expected):
+    assert Model._create_pinning_string(pin_list, num_cpus) == expected
+
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_launch_colocated_model(fileutils, db_type):
+def test_launch_colocated_model_defaults(fileutils, coloutils, db_type, launcher="local"):
     """Test the launch of a model with a colocated database and local launcher"""
 
-    exp_name = "test-launch-colocated-model-with-restart"
-    exp = Experiment(exp_name, launcher="local")
+    db_args = { }
 
-    # get test setup
-    test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+    exp = Experiment("colocated_model_defaults", launcher=launcher)
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        db_args,
+    )
 
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
-
-    colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
-
-    db_args = {
-        "db_cpus": 1,
-        "limit_app_cpus": False,
-        "debug": True,
-    }
-
-    if db_type in ["tcp", "deprecated"]:
-        colocate_fun = {
-            "tcp": colo_model.colocate_db_tcp,
-            "deprecated": colo_model.colocate_db,
-        }
-        with warnings.catch_warnings(record=True) as w:
-            colocate_fun[db_type](port=6780, ifname="lo", **db_args)
-            if db_type == "deprecated":
-                assert len(w) == 1
-                assert issubclass(w[-1].category, DeprecationWarning)
-                assert "Please use `colocate_db_tcp` or `colocate_db_uds`" in str(
-                    w[-1].message
-                )
-    elif db_type == "uds":
-        colo_model.colocate_db_uds(**db_args)
-
-    # assert model will launch with colocated db
-    assert colo_model.colocated
-
+    if is_mac:
+        true_pinning = None
+    else:
+        true_pinning = "0"
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
     # test restarting the colocated model
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_colocated_model_disable_pinning(fileutils, coloutils, db_type, launcher="local"):
+
+    exp = Experiment("colocated_model_pinning_auto_1cpu", launcher=launcher)
+    db_args = {
+        "db_cpus": 1,
+        "custom_pinning": [],
+    }
+    # Check to make sure that the CPU mask was correctly generated
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        db_args,
+    )
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type, launcher="local"):
+
+    exp = Experiment("colocated_model_pinning_auto_2cpu", launcher=launcher)
+
+    db_args = {
+        "db_cpus": 2,
+    }
+
+    # Check to make sure that the CPU mask was correctly generated
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        db_args,
+    )
+    if is_mac:
+        true_pinning = None
+    else:
+        true_pinning = "0,1"
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == true_pinning
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+@pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="local"):
+    # Check to make sure that the CPU mask was correctly generated
+
+    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+
+    db_args = {
+        "db_cpus": 2,
+        "custom_pinning": range(2)
+    }
+
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        db_args,
+    )
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
+    exp.start(colo_model, block=True)
+    statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+@pytest.mark.skipif(is_mac, reason="unsupported on MacOSX")
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_colocated_model_pinning_list(fileutils, coloutils, db_type, launcher="local"):
+    # Check to make sure that the CPU mask was correctly generated
+
+    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+
+    db_args = {
+        "db_cpus": 1,
+        "custom_pinning": [1]
+    }
+
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        db_type,
+        exp,
+        db_args,
+    )
+    assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "1"
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
