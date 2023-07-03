@@ -116,7 +116,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type):
 
     db_args = {
         "db_cpus": 4,
-        "custom_pinning": range(5)
+        "custom_pinning": range(4)
     }
 
     colo_model = coloutils.setup_test_colo(
