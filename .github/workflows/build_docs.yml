@@ -55,12 +55,12 @@ jobs:
           cp -r doc-branch/docs/* ./docs/
           rm -rf doc-branch
 
-      - name: build documentation with docker
+      - name: Build documentation with docker
         run: make docks
 
       - name: Commit files
         run: |
-          git add -A
+          git add -Af
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -m "Update develop documentation"
