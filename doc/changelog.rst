@@ -25,6 +25,7 @@ Description
 
 A full list of changes and detailed notes can be found below:
 
+- Fix tests for db models and scripts
 - Fix add_ml_model() and add_script() documentation, tests, and code
 - Replace `limit_app_cpus` with `limit_db_cpus` for co-located orchestrators
 - Remove wait time associated with Experiment launch summary
@@ -40,6 +41,8 @@ A full list of changes and detailed notes can be found below:
 
 Detailed notes
 
+- Fix a defect in the tests related to database models and scripts that was
+  causing key collisions when testing on workload managers (PR313_)
 - Fix defect where dictionaries used to create run settings can be changed
   unexpectedly due to copy-by-ref (PR305_)
 - The underlying code for Model.add_ml_model() and Model.add_script() was fixed
@@ -70,6 +73,7 @@ Detailed notes
 - Typehints have been added to public APIs. A makefile target to execute static
   analysis with mypy is available `make check-mypy`. (PR295_)
 
+.. _PR313: https://github.com/CrayLabs/SmartSim/pull/313
 .. _PR305: https://github.com/CrayLabs/SmartSim/pull/305
 .. _PR304: https://github.com/CrayLabs/SmartSim/pull/304
 .. _PR303: https://github.com/CrayLabs/SmartSim/pull/303
