@@ -119,7 +119,6 @@ def test_launch_cluster_orc_multi(fileutils, wlmutils):
         hosts=wlmutils.get_test_hostlist(),
     )
     orc.set_path(test_dir)
-    orc.set_run_arg("exclusive", None)
 
     exp.start(orc, block=True)
     statuses = exp.get_status(orc)
