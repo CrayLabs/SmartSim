@@ -25,11 +25,8 @@ level of the SmartSim directory::
 
 .. note::
 
-You must have the extra dev dependencies installed in
-your python environment to execute tests.
-
-Install ``dev`` dependencies with ``pip``
-- Install smartsim with ``dev`` extension ``pip install -e .[dev]``
+  You must have the extra dev dependencies installed in your python environment to
+  execute tests. Install ``dev`` dependencies with ``pip install -e .[dev]``
 
 
 Test Suites
