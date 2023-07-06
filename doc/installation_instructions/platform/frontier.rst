@@ -10,11 +10,11 @@ As of 2023-07-06, users can use the following instructions, however we
 anticipate that all the SmartSim dependencies will be available system-wide via
 the modules system.
 
-Known issues
-------------
+Known limitations
+-----------------
 
-We are continually working on getting all the SmartSim on Frontier, however we
-do have some known issues:
+We are continually working on getting all the features of SmartSim working on
+Frontier, however we do have some known limitations:
 
 * For now, only Torch models are supported. We are working to find a recipe to
   install Tensorflow with ROCm support from scratch
