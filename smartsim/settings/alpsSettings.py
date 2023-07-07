@@ -24,12 +24,22 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+import typing as t
+
 from ..error import SSUnsupportedError
 from .base import RunSettings
 
 
 class AprunSettings(RunSettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
+    ):
         """Settings to run job with ``aprun`` command
 
         ``AprunSettings`` can be used for both the `pbs` and `cobalt`
@@ -40,7 +50,7 @@ class AprunSettings(RunSettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -52,16 +62,16 @@ class AprunSettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
 
-    def make_mpmd(self, aprun_settings):
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make job an MPMD job
 
         This method combines two ``AprunSettings``
         into a single MPMD command joined with ':'
 
-        :param aprun_settings: ``AprunSettings`` instance
-        :type aprun_settings: AprunSettings
+        :param settings: ``AprunSettings`` instance
+        :type settings: AprunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
@@ -71,9 +81,9 @@ class AprunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
-        self.mpmd.append(aprun_settings)
+        self.mpmd.append(settings)
 
-    def set_cpus_per_task(self, cpus_per_task):
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of cpus to use per task
 
         This sets ``--cpus-per-pe``
@@ -83,7 +93,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["cpus-per-pe"] = int(cpus_per_task)
 
-    def set_tasks(self, tasks):
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--pes``
@@ -93,7 +103,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["pes"] = int(tasks)
 
-    def set_tasks_per_node(self, tasks_per_node):
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--pes-per-node``
@@ -103,7 +113,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["pes-per-node"] = int(tasks_per_node)
 
-    def set_hostlist(self, host_list):
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -118,7 +128,7 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["node-list"] = ",".join(host_list)
 
-    def set_hostlist_from_file(self, file_path):
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """Use the contents of a file to set the node list
 
         This sets ``--node-list-file``
@@ -126,9 +136,9 @@ class AprunSettings(RunSettings):
         :param file_path: Path to the hostlist file
         :type file_path: str
         """
-        self.run_args["node-list-file"] = str(file_path)
+        self.run_args["node-list-file"] = file_path
 
-    def set_excluded_hosts(self, host_list):
+    def set_excluded_hosts(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify a list of hosts to exclude for launching this job
 
         :param host_list: hosts to exclude
@@ -143,7 +153,7 @@ class AprunSettings(RunSettings):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude-node-list"] = ",".join(host_list)
 
-    def set_cpu_bindings(self, bindings):
+    def set_cpu_bindings(self, bindings: t.Union[int, t.List[int]]) -> None:
         """Specifies the cores to which MPI processes are bound
 
         This sets ``--cpu-binding``
@@ -155,7 +165,7 @@ class AprunSettings(RunSettings):
             bindings = [bindings]
         self.run_args["cpu-binding"] = ",".join(str(int(num)) for num in bindings)
 
-    def set_memory_per_node(self, memory_per_node):
+    def set_memory_per_node(self, memory_per_node: int) -> None:
         """Specify the real memory required per node
 
         This sets ``--memory-per-pe`` in megabytes
@@ -165,7 +175,7 @@ class AprunSettings(RunSettings):
         """
         self.run_args["memory-per-pe"] = int(memory_per_node)
 
-    def set_verbose_launch(self, verbose):
+    def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
 
         This sets ``--debug`` arg to the highest level
@@ -178,7 +188,7 @@ class AprunSettings(RunSettings):
         else:
             self.run_args.pop("debug", None)
 
-    def set_quiet_launch(self, quiet):
+    def set_quiet_launch(self, quiet: bool) -> None:
         """Set the job to run in quiet mode
 
         This sets ``--quiet``
@@ -191,7 +201,7 @@ class AprunSettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def format_run_args(self):
+    def format_run_args(self) -> t.List[str]:
         """Return a list of ALPS formatted run arguments
 
         :return: list of ALPS arguments for these settings
@@ -214,7 +224,7 @@ class AprunSettings(RunSettings):
                         args += ["=".join((prefix + opt, str(value)))]
         return args
 
-    def format_env_vars(self):
+    def format_env_vars(self) -> t.List[str]:
         """Format the environment variables for aprun
 
         :return: list of env vars
@@ -226,7 +236,7 @@ class AprunSettings(RunSettings):
                 formatted += ["-e", name + "=" + str(value)]
         return formatted
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         Walltime is given in total number of seconds

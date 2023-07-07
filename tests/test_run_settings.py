@@ -39,6 +39,7 @@ from smartsim.settings import (
     OrterunSettings,
     RunSettings,
 )
+from smartsim.settings import Singularity
 from smartsim.settings.settings import create_run_settings
 
 
@@ -97,6 +98,35 @@ def test_create_run_settings_handles_mpiexec_settings_correctly():
             assert settings.run_command == _run_command
             assert isinstance(settings, MpiexecSettings)
 
+def test_create_run_settings_input_mutation():
+    # Tests that the run args passed in are not modified after initialization
+    key0, key1, key2 = "arg0", "arg1", "arg2"
+    val0, val1, val2 = "val0", "val1", "val2"
+
+    default_run_args = {
+        key0: val0,
+        key1: val1,
+        key2: val2,
+    }
+    rs0 = create_run_settings("local", 
+                               "echo", 
+                               "hello", 
+                               run_command="auto",
+                               run_args=default_run_args)
+    
+    # Confirm initial values are set
+    assert rs0.run_args[key0] == val0
+    assert rs0.run_args[key1] == val1
+    assert rs0.run_args[key2] == val2
+
+    # Update our common run arguments
+    val2_upd = f"not-{val2}"
+    default_run_args[key2] = val2_upd
+
+    # Confirm previously created run settings are not changed
+    assert rs0.run_args[key2] == val2
+
+    
 
 ####### Base Run Settings tests #######
 
@@ -136,6 +166,50 @@ def test_addto_existing_exe_args():
     args = ["sleep.py", "--time=5", "--stop=10"]
     assert list_exe_args_settings.exe_args == args
     assert str_exe_args_settings.exe_args == args
+
+def test_existing_exe_args_mutation():
+    """ 
+    Ensure that if the argument list is changed, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    args = ["sleep.py", "--time=5"]
+    orig = ["sleep.py", "--time=5"]
+    rs0 = RunSettings("python", args)
+
+    # both should be the same
+    assert rs0.exe_args == args
+
+    # modify the args list
+    args.append("--foo")
+    assert rs0.exe_args == orig
+
+    # create another run settings instance
+    rs1 = RunSettings("python", args)
+    assert rs1.exe_args == args
+    assert rs0.exe_args != rs1.exe_args
+
+def test_direct_set_exe_args_mutation():
+    """ 
+    Ensure that if the argument list is set directly, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    args = ["sleep.py", "--time=5"]
+    orig = ["sleep.py", "--time=5"]
+    rs0 = RunSettings("python")
+    rs0.exe_args = args
+
+    # both should be the same
+    assert rs0.exe_args == args
+
+    # modify the args list
+    args.append("--foo")
+    assert rs0.exe_args == orig
+
+    # create another run settings instance
+    rs1 = RunSettings("python")
+    rs1.exe_args = args
+    assert rs1.exe_args == args
+    assert rs0.exe_args != rs1.exe_args
 
 
 def test_bad_exe_args():
@@ -276,11 +350,13 @@ def test_set_conditional():
 def test_container_check():
     """Ensure path is expanded when run outside of a container"""
     sample_exe = "python"
+    containerURI = "docker://alrigazzi/smartsim-testing:latest"
+    container = Singularity(containerURI)
 
-    rs = RunSettings(sample_exe, container=True)
+    rs = RunSettings(sample_exe, container=container)
     assert sample_exe in rs.exe
 
-    rs = RunSettings(sample_exe, container=False)
+    rs = RunSettings(sample_exe, container=None)
     assert len(rs.exe[0]) > len(sample_exe)
 
 
@@ -317,6 +393,53 @@ def test_update_env_initialized(env_vars):
 
     assert len(rs.env_vars) == len(combined_keys)
     assert {k for k in rs.env_vars.keys()} == combined_keys
+
+
+def test_env_vars_mutation():
+    """
+    Ensure that if the env_vars dict is changed, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    sample_exe = "python"
+    cmd = "echo"
+
+    env_vars = {"k1": "v1", "k2": "v2"}
+    orig_env = {"k1": "v1", "k2": "v2"}
+    rs = RunSettings(sample_exe, run_command=cmd, env_vars=env_vars)
+
+    # verify initial expectations
+    assert len(rs.env_vars) == len(env_vars)
+    assert rs.env_vars == orig_env
+
+    # update a value in the env_vars dict & verify
+    # that the run settings do not reflect the change
+    env_vars["k1"] = f"not-{env_vars['k1']}"
+    assert rs.env_vars["k1"] != env_vars['k1']
+    assert rs.env_vars["k1"] == orig_env['k1']
+
+
+def test_direct_set_env_vars_mutation():
+    """
+    Ensure that if the env_vars dict is explicitly set, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    sample_exe = "python"
+    cmd = "echo"
+
+    env_vars = {"k1": "v1", "k2": "v2"}
+    orig_env = {"k1": "v1", "k2": "v2"}
+    rs = RunSettings(sample_exe, run_command=cmd)
+    rs.env_vars = env_vars
+
+    # verify initial expectations
+    assert len(rs.env_vars) == len(env_vars)
+    assert rs.env_vars == orig_env
+
+    # update a value in the env_vars dict & verify
+    # that the run settings do not reflect the change
+    env_vars["k1"] = f"not-{env_vars['k1']}"
+    assert rs.env_vars["k1"] != env_vars['k1']
+    assert rs.env_vars["k1"] == orig_env['k1']
 
 
 @pytest.mark.parametrize(

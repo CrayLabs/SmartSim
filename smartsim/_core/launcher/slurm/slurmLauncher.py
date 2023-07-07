@@ -25,16 +25,26 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
+
 from shutil import which
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import *
+from ....settings import (
+    MpiexecSettings, 
+    MpirunSettings, 
+    OrterunSettings, 
+    RunSettings, 
+    SbatchSettings, 
+    SettingsBase, 
+    SrunSettings, 
+)
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep
-from ..stepInfo import SlurmStepInfo
+from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep, Step
+from ..stepInfo import SlurmStepInfo, StepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
 
@@ -55,16 +65,19 @@ class SlurmLauncher(WLMLauncher):
     # init in launcher.py (WLMLauncher)
 
     # RunSettings types supported by this launcher
-    supported_rs = {
-        SrunSettings: SrunStep,
-        SbatchSettings: SbatchStep,
-        MpirunSettings: MpirunStep,
-        MpiexecSettings: MpiexecStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-    }
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
+            SrunSettings: SrunStep,
+            SbatchSettings: SbatchStep,
+            MpirunSettings: MpirunStep,
+            MpiexecSettings: MpiexecStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+        }
 
-    def get_step_nodes(self, step_names):
+    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:
         """Return the compute nodes of a specific job or allocation
 
         This function returns the compute nodes of a specific job or allocation
@@ -85,7 +98,7 @@ class SlurmLauncher(WLMLauncher):
         :rtype: list[str]
         """
         _, step_ids = self.step_mapping.get_ids(step_names, managed=True)
-        step_str = _create_step_id_str(step_ids)
+        step_str = _create_step_id_str([val for val in step_ids if val is not None])
         output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
 
         if "error:" in error.split(" "):
@@ -94,13 +107,13 @@ class SlurmLauncher(WLMLauncher):
         # parse node list for each step
         node_lists = []
         for step_id in step_ids:
-            node_lists.append(parse_sstat_nodes(output, step_id))
+            node_lists.append(parse_sstat_nodes(output, step_id or ""))
 
         if len(node_lists) < 1:
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step):
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -137,11 +150,12 @@ class SlurmLauncher(WLMLauncher):
                 output = open(out, "w+")
                 error = open(err, "w+")
                 task_id = self.task_manager.start_task(
-                    cmd_list, step.cwd, out=output, err=error
+                    cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
                 )
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
+        
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         # give slurm a rest
@@ -150,7 +164,7 @@ class SlurmLauncher(WLMLauncher):
 
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Step a job step
 
         :param step_name: name of the job to stop
@@ -170,15 +184,18 @@ class SlurmLauncher(WLMLauncher):
             if scancel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
-                self.task_manager.remove_task(stepmap.task_id)
+                self.task_manager.remove_task(str(stepmap.task_id))
         else:
-            self.task_manager.remove_task(stepmap.task_id)
+            self.task_manager.remove_task(str(stepmap.task_id))
 
         _, step_info = self.get_step_update([step_name])[0]
+        if not step_info:
+            raise LauncherError(f"Could not get step_info for job step {step_name}")
+        
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_slurm_step_id(self, step, interval=2):
+    def _get_slurm_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -190,7 +207,7 @@ class SlurmLauncher(WLMLauncher):
         m2-119225.1|119225.1|
         """
         time.sleep(interval)
-        step_id = "unassigned"
+        step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = sacct(["--noheader", "-p", "--format=jobname,jobid"])
@@ -204,7 +221,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.Optional[t.List[StepInfo]]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -218,15 +235,16 @@ class SlurmLauncher(WLMLauncher):
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 
         # create SlurmStepInfo objects to return
-        updates = []
+        updates: t.List[StepInfo] = []
         for stat_tuple, step_id in zip(stat_tuples, step_ids):
-            info = SlurmStepInfo(stat_tuple[0], stat_tuple[1])
+            _rc = int(stat_tuple[1]) if stat_tuple[1] else None
+            info = SlurmStepInfo(stat_tuple[0], _rc)
 
             task_id = self.step_mapping.get_task_id(step_id)
             if task_id:
                 # we still check the task manager for jobs that didn't ever
                 # become a fully managed job (e.g. error in slurm arguments)
-                _, rc, out, err = self.task_manager.get_task_update(task_id)
+                _, rc, out, err = self.task_manager.get_task_update(str(task_id))
                 if rc and rc != 0:
                     # tack on Popen error and output to status update.
                     info.output = out
@@ -236,7 +254,7 @@ class SlurmLauncher(WLMLauncher):
         return updates
 
     @staticmethod
-    def check_for_slurm():
+    def check_for_slurm() -> None:
         """Check if slurm is available
 
         This function checks for slurm commands where the experiment
@@ -248,13 +266,9 @@ class SlurmLauncher(WLMLauncher):
             error = "User attempted Slurm methods without access to Slurm at the call site.\n"
             raise LauncherError(error)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Slurm"
 
 
-def _create_step_id_str(step_ids):
-    step_str = ""
-    for step_id in step_ids:
-        step_str += str(step_id) + ","
-    step_str = step_str.strip(",")
-    return step_str
+def _create_step_id_str(step_ids: t.List[str]) -> str:
+    return ",".join(step_ids)

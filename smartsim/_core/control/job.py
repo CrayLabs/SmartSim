@@ -25,7 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
+from ...entity import SmartSimEntity, EntityList
 from ...status import STATUS_NEW
 
 
@@ -36,15 +38,22 @@ class Job:
     the controller class.
     """
 
-    def __init__(self, job_name, job_id, entity, launcher, is_task):
+    def __init__(
+        self,
+        job_name: str,
+        job_id: t.Optional[str],
+        entity: t.Union[SmartSimEntity, EntityList],
+        launcher: str,
+        is_task: bool,
+    ) -> None:
         """Initialize a Job.
 
         :param job_name: Name of the job step
         :type job_name: str
         :param job_id: The id associated with the job
         :type job_id: str
-        :param entity: The SmartSim entity associated with the job
-        :type entity: SmartSimEntity
+        :param entity: The SmartSim entity(list) associated with the job
+        :type entity: SmartSimEntity | EntityList
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
@@ -54,22 +63,29 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status = None  # status before smartsim status mapping is applied
-        self.returncode = None
-        self.output = None  # only populated if it's system related (e.g. a command failed immediately)
-        self.error = None  # same as output
-        self.hosts = []  # currently only used for DB jobs
+        self.raw_status: t.Optional[str] = None  # status before smartsim status mapping is applied
+        self.returncode: t.Optional[int] = None
+        self.output: t.Optional[str] = None  # only populated if it's system related (e.g. a command failed immediately)
+        self.error: t.Optional[str] = None  # same as output
+        self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
         self.is_task = is_task
         self.start_time = time.time()
         self.history = History()
 
     @property
-    def ename(self):
+    def ename(self) -> str:
         """Return the name of the entity this job was created from"""
         return self.entity.name
 
-    def set_status(self, new_status, raw_status, returncode, error=None, output=None):
+    def set_status(
+        self,
+        new_status: str,
+        raw_status: str,
+        returncode: t.Optional[int],
+        error: t.Optional[str] = None,
+        output: t.Optional[str] = None,
+    ) -> None:
         """Set the status  of a job.
 
         :param new_status: The new status of the job
@@ -83,18 +99,21 @@ class Job:
         self.error = error
         self.output = output
 
-    def record_history(self):
-        """Record the launching history of a job."""
-        job_time = time.time() - self.start_time
-        self.history.record(self.jid, self.status, self.returncode, job_time)
+    @property
+    def elapsed(self) -> float:
+        return time.time() - self.start_time
 
-    def reset(self, new_job_name, new_job_id, is_task):
+    def record_history(self) -> None:
+        """Record the launching history of a job."""
+        self.history.record(self.jid, self.status, self.returncode, self.elapsed)
+
+    def reset(self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
         :type new_job_name: str
         :param new_job_id: new job id to launch under
-        :type new_job_id: str
+        :type new_job_id: int
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
@@ -109,7 +128,7 @@ class Job:
         self.start_time = time.time()
         self.history.new_run()
 
-    def error_report(self):
+    def error_report(self) -> str:
         """A descriptive error report based on job fields
 
         :return: error report for display in terminal
@@ -129,7 +148,7 @@ class Job:
         warning += f"Error and output file located at: {self.entity.path}"
         return warning
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return user-readable string of the Job
 
         :returns: A user-readable string of the Job
@@ -148,25 +167,25 @@ class History:
     on the previous launches of a job.
     """
 
-    def __init__(self, runs=0):
+    def __init__(self, runs: int = 0) -> None:
         """Init a history object for a job
 
         :param runs: number of runs so far, defaults to 0
         :type runs: int, optional
         """
         self.runs = runs
-        self.jids = dict()
-        self.statuses = dict()
-        self.returns = dict()
-        self.job_times = dict()
+        self.jids: t.Dict[int, t.Optional[str]] = dict()
+        self.statuses: t.Dict[int, str] = dict()
+        self.returns: t.Dict[int, t.Optional[int]] = dict()
+        self.job_times: t.Dict[int, float] = dict()
 
-    def record(self, job_id, status, returncode, job_time):
+    def record(self, job_id: t.Optional[str], status: str, returncode: t.Optional[int], job_time: float) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status
         self.returns[self.runs] = returncode
         self.job_times[self.runs] = job_time
 
-    def new_run(self):
+    def new_run(self) -> None:
         """increment run total"""
         self.runs += 1

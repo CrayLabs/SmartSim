@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 
 # Exceptions
 
@@ -45,11 +46,11 @@ class UserStrategyError(SmartSimError):
     """Raised when there is an error with model creation inside an ensemble
     that is from a user provided permutation strategy"""
 
-    def __init__(self, perm_strat):
+    def __init__(self, perm_strat: str) -> None:
         message = self.create_message(perm_strat)
         super().__init__(message)
 
-    def create_message(self, perm_strat):
+    def create_message(self, perm_strat: str) -> str:
         prefix = "User provided ensemble generation strategy"
         message = "failed to generate valid parameter names and values"
         return " ".join((prefix, str(perm_strat), message))
@@ -60,11 +61,11 @@ class ParameterWriterError(SmartSimError):
     could not be written.
     """
 
-    def __init__(self, file_path, read=True):
+    def __init__(self, file_path: str, read: bool = True) -> None:
         message = self.create_message(file_path, read)
         super().__init__(message)
 
-    def create_message(self, fp, read):
+    def create_message(self, fp: str, read: bool) -> str:
         if read:
             msg = f"Failed to read configuration file to write at {fp}"
         else:
@@ -79,8 +80,6 @@ class SSInternalError(Exception):
     """
     SSInternalError is raised when an internal error is encountered.
     """
-
-    pass
 
 
 class SSConfigError(SSInternalError):
@@ -99,15 +98,20 @@ class ShellError(LauncherError):
     """Raised when error arises from function within launcher.shell
     Closely related to error from subprocess(Popen) commands"""
 
-    def __init__(self, message, shell_error, command_list):
-        msg = self.create_message(message, shell_error, command_list)
+    def __init__(
+        self, message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]] = None
+    ) -> None:
+        msg = self.create_message(message, command_list, details=details)
         super().__init__(msg)
 
-    def create_message(self, message, shell_error, command_list):
+    @staticmethod
+    def create_message(
+        message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]]
+    ) -> str:
         if isinstance(command_list, list):
             command_list = " ".join(command_list)
         msg = message + "\n"
         msg += f"\nCommand: {command_list}"
-        if shell_error:
-            msg += f"\nError from shell: {shell_error}"
+        if details:
+            msg += f"\nError from shell: {details}"
         return msg

@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import shutil
+import typing as t
 
 from ..log import get_logger
 
@@ -47,7 +48,9 @@ class Container:
     :type working_directory: str
     """
 
-    def __init__(self, image, args="", mount="", working_directory=""):
+    def __init__(
+        self, image: str, args: str = "", mount: str = "", working_directory: str = ""
+    ) -> None:
         # Validate types
         if not isinstance(image, str):
             raise TypeError("image must be a str")
@@ -63,7 +66,7 @@ class Container:
         self.mount = mount
         self.working_directory = working_directory
 
-    def _containerized_run_command(self, run_command: str):
+    def _containerized_run_command(self, run_command: str) -> str:
         """Return modified run_command with container commands prepended.
 
         :param run_command: run command from a RunSettings class
@@ -97,10 +100,10 @@ class Singularity(Container):
     :type mount: str | list[str] | dict[str, str], optional
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
 
-    def _container_cmds(self, default_working_directory=""):
+    def _container_cmds(self, default_working_directory: str = "") -> t.List[str]:
         """Return list of container commands to be inserted before exe.
             Container members are validated during this call.
 
@@ -158,7 +161,7 @@ class Singularity(Container):
             )
 
         # Construct containerized launch command
-        cmd_list = [singularity, "exec"]
+        cmd_list = [singularity or "singularity", "exec"]
         if working_directory:
             cmd_list.extend(["--pwd", working_directory])
 

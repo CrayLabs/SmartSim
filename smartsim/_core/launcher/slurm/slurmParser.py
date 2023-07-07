@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 from shutil import which
 
 """
@@ -31,13 +32,14 @@ Parsers for various slurm functions.
 """
 
 
-def parse_salloc(output):
+def parse_salloc(output: str) -> t.Optional[str]:
     for line in output.split("\n"):
         if line.startswith("salloc: Granted job allocation"):
             return line.split()[-1]
+    return None
 
 
-def parse_salloc_error(output):
+def parse_salloc_error(output: str) -> t.Optional[str]:
     """Parse and return error output of a failed salloc command
 
     :param output: stderr output of salloc command
@@ -66,7 +68,7 @@ def parse_salloc_error(output):
     return None
 
 
-def jobid_exact_match(parsed_id, job_id):
+def jobid_exact_match(parsed_id: str, job_id: str) -> bool:
     """Check that job_id is an exact match and not
     the prefix of another job_id, like 1 and 11
     or 1.1 and 1.10. Works with job id or step
@@ -82,7 +84,7 @@ def jobid_exact_match(parsed_id, job_id):
         return parsed_id.split(".")[0] == job_id
 
 
-def parse_sacct(output, job_id):
+def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:
     """Parse and return output of the sacct command
 
     :param output: output of the sacct command
@@ -92,19 +94,19 @@ def parse_sacct(output, job_id):
     :return: status and returncode
     :rtype: tuple
     """
-    result = ("PENDING", None)
+    result: t.Tuple[str, t.Optional[str]] = ("PENDING", None)
     for line in output.split("\n"):
-        line = line.split("|")
-        if len(line) >= 3:
-            if jobid_exact_match(line[0], job_id):
-                stat = line[1]
-                code = line[2].split(":")[0]
-                result = (stat, code)
+        parts = line.split("|")
+        if len(parts) >= 3:
+            if jobid_exact_match(parts[0], job_id):
+                stat = parts[1]
+                return_code = parts[2].split(":")[0]
+                result = (stat, return_code)
                 break
     return result
 
 
-def parse_sstat_nodes(output, job_id):
+def parse_sstat_nodes(output: str, job_id: str) -> t.List[str]:
     """Parse and return the sstat command
 
     This function parses and returns the nodes of
@@ -127,7 +129,7 @@ def parse_sstat_nodes(output, job_id):
     return list(set(nodes))
 
 
-def parse_step_id_from_sacct(output, step_name):
+def parse_step_id_from_sacct(output: str, step_name: str) -> t.Optional[str]:
     """Parse and return the step id from a sacct command
 
     :param output: output of sacct --noheader -p

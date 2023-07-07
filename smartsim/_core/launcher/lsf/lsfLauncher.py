@@ -25,14 +25,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import *
+from ....settings import SettingsBase
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..step import (
+    Step,
     BsubBatchStep,
     JsrunStep,
     LocalStep,
@@ -40,7 +43,7 @@ from ..step import (
     MpirunStep,
     OrterunStep,
 )
-from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo
+from ..stepInfo import LSFBatchStepInfo, LSFJsrunStepInfo, StepInfo
 from .lsfCommands import bjobs, bkill, jskill, jslist
 from .lsfParser import (
     parse_bjobs_jobid,
@@ -65,17 +68,19 @@ class LSFLauncher(WLMLauncher):
 
     # init in WLMLauncher, launcher.py
 
-    # RunSettings types supported by this launcher
-    supported_rs = {
-        JsrunSettings: JsrunStep,
-        BsubBatchSettings: BsubBatchStep,
-        MpirunSettings: MpirunStep,
-        MpiexecSettings: MpiexecStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-    }
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
+            JsrunSettings: JsrunStep,
+            BsubBatchSettings: BsubBatchStep,
+            MpirunSettings: MpirunStep,
+            MpiexecSettings: MpiexecStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+        }
 
-    def run(self, step):
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through LSF
 
         :param step: a job step instance
@@ -109,13 +114,13 @@ class LSFLauncher(WLMLauncher):
             output = open(out, "w+")
             error = open(err, "w+")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output, err=error
+                cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Stop/cancel a job step
 
         :param step_name: name of the job to stop
@@ -125,25 +130,28 @@ class LSFLauncher(WLMLauncher):
         """
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
-            if "." in stepmap.step_id:
+            if stepmap.step_id and "." in stepmap.step_id:
                 rc, _, err = jskill([stepmap.step_id.rpartition(".")[-1]])
             else:
                 rc, _, err = bkill([str(stepmap.step_id)])
             if rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
-                self.task_manager.remove_task(stepmap.task_id)
+                self.task_manager.remove_task(str(stepmap.task_id))
         else:
-            self.task_manager.remove_task(stepmap.task_id)
+            self.task_manager.remove_task(str(stepmap.task_id))
 
         _, step_info = self.get_step_update([step_name])[0]
+        if not step_info:
+            raise LauncherError(f"Could not get step_info for job step {step_name}")
+
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step, interval=2):
+    def _get_lsf_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
-        step_id = "unassigned"
+        step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
             output, _ = jslist([])
@@ -155,9 +163,12 @@ class LSFLauncher(WLMLauncher):
                 trials -= 1
         if not step_id:
             raise LauncherError("Could not find id of launched job step")
+        if not hasattr(step, "alloc"):
+            raise LauncherError("Could not find alloc for launched job step")
+
         return f"{step.alloc}.{step_id}"
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -165,10 +176,9 @@ class LSFLauncher(WLMLauncher):
         :return: list of updates for managed jobs
         :rtype: list[StepInfo]
         """
-        updates = []
+        updates: t.List[StepInfo] = []
 
         for step_id in step_ids:
-
             # Batch jobs have integer step id,
             # Jsrun processes have {alloc}.{task_id}
             # Include recently finished jobs
@@ -176,19 +186,20 @@ class LSFLauncher(WLMLauncher):
                 jsrun_step_id = step_id.rpartition(".")[-1]
                 jslist_out, _ = jslist([])
                 stat, return_code = parse_jslist_stepid(jslist_out, jsrun_step_id)
-                info = LSFJsrunStepInfo(stat, return_code)
+                n_rc = int(return_code) if return_code is not None else None
+                step_info = LSFJsrunStepInfo(stat, n_rc)
+                updates.append(step_info)
             else:
                 bjobs_args = ["-a"] + step_ids
                 bjobs_out, _ = bjobs(bjobs_args)
                 stat = parse_bjobs_jobid(bjobs_out, str(step_id))
                 # create LSFBatchStepInfo objects to return
-                info = LSFBatchStepInfo(stat, None)
+                batch_info = LSFBatchStepInfo(stat, None)
                 # account for case where job history is not logged by LSF
-                if info.status == STATUS_COMPLETED:
-                    info.returncode = 0
-
-            updates.append(info)
+                if batch_info.status == STATUS_COMPLETED:
+                    batch_info.returncode = 0
+                updates.append(batch_info)
         return updates
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "LSF"

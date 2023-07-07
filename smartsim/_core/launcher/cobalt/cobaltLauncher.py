@@ -25,8 +25,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import typing as t
 
 import psutil
+
+from smartsim._core.launcher.step import Step
+from smartsim.settings import RunSettings, SettingsBase
 
 from ....error import LauncherError
 from ....log import get_logger
@@ -36,6 +40,7 @@ from ...config import CONFIG
 from ..launcher import WLMLauncher
 from ..pbs.pbsCommands import qdel, qstat
 from ..step import (
+    Step,
     AprunStep,
     CobaltBatchStep,
     LocalStep,
@@ -43,7 +48,7 @@ from ..step import (
     MpirunStep,
     OrterunStep,
 )
-from ..stepInfo import CobaltStepInfo
+from ..stepInfo import CobaltStepInfo, StepInfo
 from .cobaltParser import parse_cobalt_step_id, parse_cobalt_step_status, parse_qsub_out
 
 logger = get_logger(__name__)
@@ -60,21 +65,24 @@ class CobaltLauncher(WLMLauncher):
     i.e. a psutil.Popen object
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.user = psutil.Process().username()
 
-    # RunSettings types supported by this launcher
-    supported_rs = {
-        AprunSettings: AprunStep,
-        CobaltBatchSettings: CobaltBatchStep,
-        MpirunSettings: MpirunStep,
-        MpiexecSettings: MpiexecStep,
-        OrterunSettings: OrterunStep,
-        RunSettings: LocalStep,
-    }
+    @property
+    def supported_rs(self) -> t.Dict[t.Type[SettingsBase], t.Type[Step]]:
+        # RunSettings types supported by this launcher
+        return {
+            AprunSettings: AprunStep,
+            CobaltBatchSettings: CobaltBatchStep,
+            MpirunSettings: MpirunStep,
+            MpiexecSettings: MpiexecStep,
+            OrterunSettings: OrterunStep,
+            RunSettings: LocalStep,
+        }    
 
-    def run(self, step):
+
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Cobalt
 
         :param step: a job step instance
@@ -104,17 +112,19 @@ class CobaltLauncher(WLMLauncher):
             out, err = step.get_output_files()
             output = open(out, "w+")
             error = open(err, "w+")
+
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output, err=error
+                cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
 
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_cobalt_step_id(step)
+
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id
 
-    def stop(self, step_name):
+    def stop(self, step_name: str) -> StepInfo:
         """Step a job step
 
         :param step_name: name of the job to stop
@@ -128,15 +138,18 @@ class CobaltLauncher(WLMLauncher):
             if qdel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
-                self.task_manager.remove_task(stepmap.task_id)
+                self.task_manager.remove_task(str(stepmap.task_id))
         else:
-            self.task_manager.remove_task(stepmap.task_id)
+            if stepmap.task_id:
+                self.task_manager.remove_task(str(stepmap.task_id))
 
         _, step_info = self.get_step_update([step_name])[0]
+        if not step_info:
+            raise LauncherError(f"Could not get step_info for job step {step_name}")
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_cobalt_step_id(self, step, interval=2):
+    def _get_cobalt_step_id(self, step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from qstat (rarely used)
 
         Parses cobalt qstat output by looking for the step name
@@ -155,7 +168,7 @@ class CobaltLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids):
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -171,7 +184,7 @@ class CobaltLauncher(WLMLauncher):
             parse_cobalt_step_status(qstat_out, str(step_id)) for step_id in step_ids
         ]
         # create CobaltStepInfo objects to return
-        updates = []
+        updates: t.List[StepInfo] = []
         for stat, _ in zip(stats, step_ids):
             info = CobaltStepInfo(stat, None)  # returncode not logged by Cobalt
 
@@ -181,5 +194,5 @@ class CobaltLauncher(WLMLauncher):
             updates.append(info)
         return updates
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Cobalt"

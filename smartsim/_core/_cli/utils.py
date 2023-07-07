@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import subprocess
+import typing as t
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
@@ -36,7 +37,7 @@ smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 
-def get_install_path():
+def get_install_path() -> Path:
     try:
         import smartsim as _
     except (ImportError, ModuleNotFoundError):
@@ -50,27 +51,27 @@ def get_install_path():
     return package_path
 
 
-def color_bool(trigger=True):
+def color_bool(trigger: bool = True) -> str:
     _color = "green" if trigger else "red"
     return colorize(str(trigger), color=_color)
 
 
-def pip_install(packages, end_point=None, verbose=False):
+def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False) -> None:
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
-    if end_point:
-        packages.append(f"-f {end_point}")
-    packages = " ".join(packages)
-
     # form pip install command
-    cmd = ["python", "-m", "pip", "install", packages]
-    cmd = " ".join(cmd)
+    cmd = ["python", "-m", "pip", "install"]
+    cmd.extend(packages)
+    if end_point:
+        cmd.extend(["-f", end_point])
+
+    cmd_arg = " ".join(cmd)
 
     if verbose:
         logger.info(f"Installing packages {packages}...")
     proc = subprocess.Popen(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        cmd_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     _, err = proc.communicate()
     returncode = int(proc.returncode)

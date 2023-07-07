@@ -44,10 +44,9 @@ def test_batch_model(fileutils, wlmutils):
 
     script = fileutils.get_test_conf_path("sleep.py")
     batch_settings = exp.create_batch_settings(nodes=1, time="00:01:00")
-    if wlmutils.get_test_launcher() == "lsf":
-        batch_settings.set_account(wlmutils.get_test_account())
+
+    batch_settings.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":
-        batch_settings.set_account(wlmutils.get_test_account())
         batch_settings.set_queue("debug-flat-quad")
     run_settings = wlmutils.get_run_settings("python", f"{script} --time=5")
     model = exp.create_model(
@@ -74,10 +73,9 @@ def test_batch_ensemble(fileutils, wlmutils):
     M2 = exp.create_model("m2", path=test_dir, run_settings=settings)
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
-    if wlmutils.get_test_launcher() == "lsf":
-        batch.set_account(wlmutils.get_test_account())
+
+    batch.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":
-        batch.set_account(wlmutils.get_test_account())
         batch.set_queue("debug-flat-quad")
     ensemble = exp.create_ensemble("batch-ens", batch_settings=batch)
     ensemble.add_model(M1)
@@ -98,14 +96,13 @@ def test_batch_ensemble_replicas(fileutils, wlmutils):
     settings = wlmutils.get_run_settings("python", f"{script} --time=5")
 
     batch = exp.create_batch_settings(nodes=1, time="00:01:00")
-    if wlmutils.get_test_launcher() == "lsf":
-        batch.set_account(wlmutils.get_test_account())
+
+    batch.set_account(wlmutils.get_test_account())
     if wlmutils.get_test_launcher() == "cobalt":
         # As Cobalt won't allow us to run two
         # jobs in the same debug queue, we need
         # to make sure the previous test's one is over
         sleep(30)
-        batch.set_account(wlmutils.get_test_account())
         batch.set_queue("debug-flat-quad")
     ensemble = exp.create_ensemble(
         "batch-ens-replicas", batch_settings=batch, run_settings=settings, replicas=2

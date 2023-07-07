@@ -24,15 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ...database import Orchestrator
-from ...entity import EntityList, SmartSimEntity
+from ...entity import EntityList, SmartSimEntity, Model, Ensemble
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
-
-# List of types derived from EntityList which require specific behavior
-# A corresponding property needs to exist (like db for Orchestrator),
-# otherwise they will not be accessible
-entity_list_exception_types = [Orchestrator]
 
 
 class Manifest:
@@ -44,78 +41,64 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args: SmartSimEntity) -> None:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
         self._check_entity_lists_nonempty()
 
     @property
-    def db(self):
+    def db(self) -> t.Optional[Orchestrator]:
         """Return Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
         :return: orchestrator instances
-        :rtype: Orchestrator
+        :rtype: Orchestrator | None
         """
-        _db = None
-        for deployable in self._deployables:
-            if isinstance(deployable, Orchestrator):
-                if _db:
-                    raise SmartSimError(
-                        "User attempted to create more than one Orchestrator"
-                    )
-                _db = deployable
-        return _db
+        dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
+
+        if len(dbs) > 1:
+            raise SmartSimError("User attempted to create more than one Orchestrator")
+        
+        return dbs[0] if dbs else None
 
     @property
-    def models(self):
+    def models(self) -> t.List[Model]:
         """Return Model instances in Manifest
 
         :return: model instances
         :rtype: List[Model]
         """
-        _models = []
-        for deployable in self._deployables:
-            if isinstance(deployable, SmartSimEntity):
-                _models.append(deployable)
+        _models: t.List[Model] = [item for item in self._deployables if isinstance(item, Model)]
         return _models
 
     @property
-    def ensembles(self):
+    def ensembles(self) -> t.List[Ensemble]:
         """Return Ensemble instances in Manifest
 
         :return: list of ensembles
         :rtype: List[Ensemble]
         """
-        _ensembles = []
-        for deployable in self._deployables:
-            if isinstance(deployable, EntityList):
-                is_exceptional_type = False
-                for exceptional_type in entity_list_exception_types:
-                    if isinstance(deployable, exceptional_type):
-                        is_exceptional_type |= True
-                if not is_exceptional_type:
-                    _ensembles.append(deployable)
-
-        return _ensembles
+        return  [e for e in self._deployables if isinstance(e, Ensemble)]
 
     @property
-    def all_entity_lists(self):
+    def all_entity_lists(self) -> t.List[EntityList]:
         """All entity lists, including ensembles and
         exceptional ones like Orchestrator
 
         :return: list of entity lists
         :rtype: List[EntityList]
         """
-        _all_entity_lists = self.ensembles
+        _all_entity_lists: t.List[EntityList] = []
+        _all_entity_lists.extend(self.ensembles)
+
         db = self.db
         if db is not None:
             _all_entity_lists.append(db)
 
         return _all_entity_lists
 
-    def _check_names(self, deployables):
+    def _check_names(self, deployables: t.List[t.Any]) -> None:
         used = []
         for deployable in deployables:
             name = getattr(deployable, "name", None)
@@ -125,7 +108,7 @@ class Manifest:
                 raise SmartSimError("User provided two entities with the same name")
             used.append(name)
 
-    def _check_types(self, deployables):
+    def _check_types(self, deployables: t.List[t.Any]) -> None:
         for deployable in deployables:
             if not (
                 isinstance(deployable, SmartSimEntity)
@@ -135,14 +118,14 @@ class Manifest:
                     f"Entity has type {type(deployable)}, not SmartSimEntity or EntityList"
                 )
 
-    def _check_entity_lists_nonempty(self):
+    def _check_entity_lists_nonempty(self) -> None:
         """Check deployables for sanity before launching"""
 
         for entity_list in self.all_entity_lists:
             if len(entity_list) < 1:
                 raise ValueError(f"{entity_list.name} is empty. Nothing to launch.")
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ""
         e_header = "=== Ensembles ===\n"
         m_header = "=== Models ===\n"
@@ -174,7 +157,7 @@ class Manifest:
             s += db_header
             s += f"Shards: {self.db.num_shards}\n"
             s += f"Port: {str(self.db.ports[0])}\n"
-            s += f"Network: {self.db._interface}\n"
+            s += f"Network: {self.db._interfaces}\n"
             s += f"Batch Launch: {self.db.batch}\n"
             if self.db.batch:
                 s += f"{str(self.db.batch_settings)}\n"
@@ -183,16 +166,18 @@ class Manifest:
         return s
 
     @property
-    def has_db_objects(self):
+    def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
 
-        def has_db_models(entity):
+        def has_db_models(entity: t.Union[EntityList, SmartSimEntity]) -> bool:
             if hasattr(entity, "_db_models"):
                 return len(entity._db_models) > 0
+            return False
 
-        def has_db_scripts(entity):
+        def has_db_scripts(entity: t.Union[EntityList, SmartSimEntity]) -> bool:
             if hasattr(entity, "_db_scripts"):
                 return len(entity._db_scripts) > 0
+            return False
 
         has_db_objects = False
         for model in self.models:

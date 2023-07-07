@@ -27,16 +27,18 @@
 import os
 import shutil
 from shlex import split as sh_split
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings import SrunSettings, SbatchSettings
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: SbatchSettings) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -44,14 +46,17 @@ class SbatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: SbatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
+        super().__init__(name, cwd, batch_settings)
         self.step_cmds = []
         self.managed = True
 
-    def get_launch_cmd(self):
+    @property
+    def batch_settings(self) -> SbatchSettings:
+        return self.step_settings
+
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -60,7 +65,7 @@ class SbatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, "--parsable", script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -71,7 +76,7 @@ class SbatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing
@@ -102,7 +107,7 @@ class SbatchStep(Step):
 
 
 class SrunStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: SrunSettings) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -110,16 +115,19 @@ class SrunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: SrunSettings
         """
-        super().__init__(name, cwd)
-        self.run_settings = run_settings
+        super().__init__(name, cwd, run_settings)
         self.alloc = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_launch_cmd(self):
+    @property
+    def run_settings(self) -> SrunSettings:
+        return self.step_settings
+
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -129,7 +137,7 @@ class SrunStep(Step):
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env = set()
+        compound_env: t.Set[str] = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
@@ -149,10 +157,7 @@ class SrunStep(Step):
         srun_cmd += self.run_settings.format_run_args()
 
         if self.run_settings.colocated_db_settings:
-            # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
-            srun_cmd.append("--cpu-bind=none")
-
+            
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             launch_script_path = self.get_colocated_launch_script()
@@ -168,7 +173,7 @@ class SrunStep(Step):
 
         return srun_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -186,7 +191,7 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _build_exe(self):
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -199,7 +204,7 @@ class SrunStep(Step):
             args = self.run_settings.exe_args
             return exe + args
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args

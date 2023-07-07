@@ -26,15 +26,15 @@
 
 import argparse
 import os
-import signal
-from subprocess import PIPE, STDOUT
-from typing import List
-
 import psutil
+import signal
+import typing as t
 
 from smartsim._core.utils.network import current_ip
 from smartsim.error import SSInternalError
 from smartsim.log import get_logger
+from subprocess import PIPE, STDOUT
+from types import FrameType
 
 logger = get_logger(__name__)
 
@@ -48,17 +48,20 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo, frame):
+def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
     cleanup()
 
 
-def main(network_interface: str, command: List[str]):
+def main(network_interface: str, command: t.List[str]) -> None:
     global DBPID
 
     try:
+        ip_addresses = [current_ip(net_if) for net_if in network_interface.split(",")]
+        cmd = command + [f"--bind {' '.join(ip_addresses)}"]
 
-        ip_address = current_ip(network_interface)
-        cmd = command + [f"--bind {ip_address}"]
+        # pin source address to avoid random selection by Redis
+        ip_address = ip_addresses[0]
+        cmd += [f"--bind-source-addr {ip_address}"]
 
         print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
         print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
@@ -78,7 +81,7 @@ def main(network_interface: str, command: List[str]):
         raise SSInternalError("Database process starter raised an exception") from e
 
 
-def cleanup():
+def cleanup() -> None:
     global DBPID
     try:
         logger.debug("Cleaning up database instance")
@@ -94,7 +97,6 @@ def cleanup():
 
 
 if __name__ == "__main__":
-
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     parser = argparse.ArgumentParser(

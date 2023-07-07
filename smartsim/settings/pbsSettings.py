@@ -24,6 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from .._core.utils import init_default
 from ..error import SmartSimError
 from .base import BatchSettings
@@ -32,14 +34,14 @@ from .base import BatchSettings
 class QsubBatchSettings(BatchSettings):
     def __init__(
         self,
-        nodes=None,
-        ncpus=None,
-        time=None,
-        queue=None,
-        account=None,
-        resources=None,
-        batch_args=None,
-        **kwargs,
+        nodes: t.Optional[int] = None,
+        ncpus: t.Optional[int] = None,
+        time: t.Optional[str] = None,
+        queue: t.Optional[str] = None,
+        account: t.Optional[str] = None,
+        resources: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
     ):
         """Specify ``qsub`` batch parameters for a job
 
@@ -64,8 +66,8 @@ class QsubBatchSettings(BatchSettings):
         :param batch_args: overrides for PBS batch arguments, defaults to None
         :type batch_args: dict[str, str], optional
         """
-        self._time = None
-        self._nodes = None
+        self._time: t.Optional[str] = None
+        self._nodes: t.Optional[int] = None
         self._ncpus = ncpus
 
         # time, queue, nodes, and account set in parent class init
@@ -79,9 +81,9 @@ class QsubBatchSettings(BatchSettings):
             **kwargs,
         )
         self.resources = init_default({}, resources, dict)
-        self._hosts = None
+        self._hosts: t.List[str] = []
 
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
         If a select argument is provided in ``QsubBatchSettings.resources``
@@ -93,7 +95,7 @@ class QsubBatchSettings(BatchSettings):
         if num_nodes:
             self._nodes = int(num_nodes)
 
-    def set_hostlist(self, host_list):
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -108,7 +110,7 @@ class QsubBatchSettings(BatchSettings):
             raise TypeError("host_list argument must be a list of strings")
         self._hosts = host_list
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         format = "HH:MM:SS"
@@ -123,7 +125,7 @@ class QsubBatchSettings(BatchSettings):
         if walltime:
             self._time = walltime
 
-    def set_queue(self, queue):
+    def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
 
         :param queue: queue name
@@ -132,7 +134,7 @@ class QsubBatchSettings(BatchSettings):
         if queue:
             self.batch_args["q"] = str(queue)
 
-    def set_ncpus(self, num_cpus):
+    def set_ncpus(self, num_cpus: t.Union[int, str]) -> None:
         """Set the number of cpus obtained in each node.
 
         If a select argument is provided in
@@ -144,7 +146,7 @@ class QsubBatchSettings(BatchSettings):
         """
         self._ncpus = int(num_cpus)
 
-    def set_account(self, account):
+    def set_account(self, account: str) -> None:
         """Set the account for this batch job
 
         :param acct: account id
@@ -153,7 +155,7 @@ class QsubBatchSettings(BatchSettings):
         if account:
             self.batch_args["A"] = str(account)
 
-    def set_resource(self, resource_name, value):
+    def set_resource(self, resource_name: str, value: str) -> None:
         """Set a resource value for the Qsub batch
 
         If a select statement is provided, the nodes and ncpus
@@ -168,7 +170,7 @@ class QsubBatchSettings(BatchSettings):
         # TODO include option to overwrite place (warning for orchestrator?)
         self.resources[resource_name] = value
 
-    def format_batch_args(self):
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: batch arguments for Qsub
@@ -183,7 +185,7 @@ class QsubBatchSettings(BatchSettings):
             opts += [" ".join((prefix + opt, str(value)))]
         return opts
 
-    def _create_resource_list(self):
+    def _create_resource_list(self) -> t.List[str]:
         res = []
 
         # get select statement from resources or kwargs

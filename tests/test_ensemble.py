@@ -45,7 +45,7 @@ TODO: test to add
 # ---- helpers ------------------------------------------------------
 
 
-def step_values(param_names, param_values):
+def step_values(param_names, param_values, n_models = 0):
     permutations = []
     for p in zip(*param_values):
         permutations.append(dict(zip(param_names, p)))
@@ -54,13 +54,13 @@ def step_values(param_names, param_values):
 
 # bad permuation strategy that doesnt return
 # a list of dictionaries
-def bad_strategy(names, values):
+def bad_strategy(names, values, n_models = 0):
     return -1
 
 
 # test bad perm strat that returns a list but of lists
 # not dictionaries
-def bad_strategy_2(names, values):
+def bad_strategy_2(names, values, n_models = 0):
     return [values]
 
 
@@ -74,8 +74,8 @@ def test_all_perm():
     params = {"h": [5, 6]}
     ensemble = Ensemble("all_perm", params, run_settings=rs, perm_strat="all_perm")
     assert len(ensemble) == 2
-    assert ensemble.entities[0].params["h"] == 5
-    assert ensemble.entities[1].params["h"] == 6
+    assert ensemble.entities[0].params["h"] == "5"
+    assert ensemble.entities[1].params["h"] == "6"
 
 
 def test_step():
@@ -84,10 +84,10 @@ def test_step():
     ensemble = Ensemble("step", params, run_settings=rs, perm_strat="step")
     assert len(ensemble) == 2
 
-    model_1_params = {"h": 5, "g": 7}
+    model_1_params = {"h": "5", "g": "7"}
     assert ensemble.entities[0].params == model_1_params
 
-    model_2_params = {"h": 6, "g": 8}
+    model_2_params = {"h": "6", "g": "8"}
     assert ensemble.entities[1].params == model_2_params
 
 
@@ -104,7 +104,7 @@ def test_random():
     )
     assert len(ensemble) == len(random_ints)
     assigned_params = [m.params["h"] for m in ensemble.entities]
-    assert all([x in random_ints for x in assigned_params])
+    assert all([int(x) in random_ints for x in assigned_params])
 
     ensemble = Ensemble(
         "random_test",
@@ -115,7 +115,7 @@ def test_random():
     )
     assert len(ensemble) == len(random_ints) - 1
     assigned_params = [m.params["h"] for m in ensemble.entities]
-    assert all([x in random_ints for x in assigned_params])
+    assert all([int(x) in random_ints for x in assigned_params])
 
 
 def test_user_strategy():
@@ -124,10 +124,10 @@ def test_user_strategy():
     ensemble = Ensemble("step", params, run_settings=rs, perm_strat=step_values)
     assert len(ensemble) == 2
 
-    model_1_params = {"h": 5, "g": 7}
+    model_1_params = {"h": "5", "g": "7"}
     assert ensemble.entities[0].params == model_1_params
 
-    model_2_params = {"h": 6, "g": 8}
+    model_2_params = {"h": "6", "g": "8"}
     assert ensemble.entities[1].params == model_2_params
 
 
@@ -181,10 +181,10 @@ def test_arg_and_model_params_step():
     exe_args_1 = rs_orig_args + ["-H", "6", "--g_param=b"]
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
 
-    model_1_params = {"H": 5, "g_param": "a", "h": 5, "g": 7}
+    model_1_params = {"H": "5", "g_param": "a", "h": "5", "g": "7"}
     assert ensemble.entities[0].params == model_1_params
 
-    model_2_params = {"H": 6, "g_param": "b", "h": 6, "g": 8}
+    model_2_params = {"H": "6", "g_param": "b", "h": "6", "g": "8"}
     assert ensemble.entities[1].params == model_2_params
 
 
@@ -214,13 +214,13 @@ def test_arg_and_model_params_all_perms():
     assert ensemble.entities[1].run_settings.exe_args == exe_args_1
     assert ensemble.entities[3].run_settings.exe_args == exe_args_1
 
-    model_0_params = {"g_param": "a", "h": 5}
+    model_0_params = {"g_param": "a", "h": "5"}
     assert ensemble.entities[0].params == model_0_params
-    model_1_params = {"g_param": "b", "h": 5}
+    model_1_params = {"g_param": "b", "h": "5"}
     assert ensemble.entities[1].params == model_1_params
-    model_2_params = {"g_param": "a", "h": 6}
+    model_2_params = {"g_param": "a", "h": "6"}
     assert ensemble.entities[2].params == model_2_params
-    model_3_params = {"g_param": "b", "h": 6}
+    model_3_params = {"g_param": "b", "h": "6"}
     assert ensemble.entities[3].params == model_3_params
 
 

@@ -24,15 +24,24 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..wlm import detect_launcher
 from . import *
+from ..settings import base
 
 
 def create_batch_settings(
-    launcher, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
-):
+    launcher: str,
+    nodes: t.Optional[int] = None,
+    time: str = "",
+    queue: t.Optional[str] = None,
+    account: t.Optional[str] = None,
+    batch_args: t.Optional[t.Dict[str, str]] = None,
+    **kwargs: t.Any,
+) -> base.BatchSettings:
     """Create a ``BatchSettings`` instance
 
     See Experiment.create_batch_settings for details
@@ -89,15 +98,15 @@ def create_batch_settings(
 
 
 def create_run_settings(
-    launcher,
-    exe,
-    exe_args=None,
-    run_command="auto",
-    run_args=None,
-    env_vars=None,
-    container=None,
-    **kwargs,
-):
+    launcher: str,
+    exe: str,
+    exe_args: t.Optional[t.List[str]] = None,
+    run_command: str = "auto",
+    run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+    env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+    container: t.Optional[Container] = None,
+    **kwargs: t.Any,
+) -> RunSettings:
     """Create a ``RunSettings`` instance.
 
     See Experiment.create_run_settings docstring for more details
@@ -115,6 +124,8 @@ def create_run_settings(
     :type run_args: list[str], optional
     :param env_vars: environment variables to pass to the executable
     :type env_vars: dict[str, str], optional
+    :param container: container type for workload (e.g. "singularity"), defaults to None
+    :type container: Container, optional
     :return: the created ``RunSettings``
     :rtype: RunSettings
     :raises SmartSimError: if run_command=="auto" and detection fails
@@ -136,13 +147,17 @@ def create_run_settings(
         "pbs": ["aprun", "mpirun", "mpiexec"],
         "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
+        "local": [""],
     }
 
     if launcher == "auto":
         launcher = detect_launcher()
 
-    def _detect_command(launcher):
+    def _detect_command(launcher: str) -> str:
         if launcher in by_launcher:
+            if launcher == "local":
+                return ""
+
             for cmd in by_launcher[launcher]:
                 if is_valid_cmd(cmd):
                     return cmd
@@ -157,10 +172,7 @@ def create_run_settings(
     # detect run_command automatically for all but local launcher
     if run_command == "auto":
         # no auto detection for local, revert to false
-        if launcher == "local":
-            run_command = None
-        else:
-            run_command = _detect_command(launcher)
+        run_command = _detect_command(launcher)
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:

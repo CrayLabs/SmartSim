@@ -23,10 +23,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import smartsim.settings.base
 
 class SmartSimEntity:
-    def __init__(self, name, path, run_settings):
+    def __init__(self, name: str, path: str, run_settings: smartsim.settings.base.RunSettings) -> None:
         """Initialize a SmartSim entity.
 
         Each entity must have a name, path, and
@@ -46,14 +46,14 @@ class SmartSimEntity:
         self.path = path
 
     @property
-    def type(self):
+    def type(self) -> str:
         """Return the name of the class"""
         return type(self).__name__
 
-    def set_path(self, path):
+    def set_path(self, path: str) -> None:
         if not isinstance(path, str):
             raise TypeError("path argument must be a string")
         self.path = path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.name

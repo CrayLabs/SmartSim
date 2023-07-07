@@ -26,15 +26,17 @@
 
 import itertools
 import time
-from threading import Thread
+import typing as t
+from threading import Thread, RLock
+from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode
+from ...entity import DBNode, SmartSimEntity, EntityList
 from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
-from ..launcher import LocalLauncher
+from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
 from .job import Job
 
@@ -54,18 +56,18 @@ class JobManager:
     wlm to query information about jobs that the user requests.
     """
 
-    def __init__(self, lock, launcher=None):
+    def __init__(self, lock: RLock, launcher: t.Optional[Launcher] = None) -> None:
         """Initialize a Jobmanager
 
         :param launcher: a Launcher object to manage jobs
         :type: SmartSim.Launcher
         """
         # active jobs
-        self.jobs = {}
-        self.db_jobs = {}
+        self.jobs: t.Dict[str, Job] = {}
+        self.db_jobs: t.Dict[str, Job] = {}
 
         # completed jobs
-        self.completed = {}
+        self.completed: t.Dict[str, Job] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -73,12 +75,12 @@ class JobManager:
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
 
-    def start(self):
+    def start(self) -> None:
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
 
-    def run(self):
+    def run(self) -> None:
         """Start the JobManager thread to continually check
         the status of all jobs. Whichever launcher is selected
         by the user will be responsible for returning statuses
@@ -116,7 +118,7 @@ class JobManager:
                 self.actively_monitoring = False
                 logger.debug("Sleeping, no jobs to monitor")
 
-    def move_to_completed(self, job):
+    def move_to_completed(self, job: Job) -> None:
         """Move job to completed queue so that its no longer
            actively monitored by the job manager
 
@@ -136,7 +138,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def __getitem__(self, entity_name):
+    def __getitem__(self, entity_name: str) -> Job:
         """Return the job associated with the name of the entity
         from which it was created.
 
@@ -157,7 +159,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def __call__(self):
+    def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
 
         :returns: Dictionary of all jobs
@@ -166,7 +168,7 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def add_job(self, job_name, job_id, entity, is_task=True):
+    def add_job(self, job_name: str, job_id: t.Optional[str], entity: t.Union[SmartSimEntity, EntityList], is_task: bool = True) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -174,7 +176,7 @@ class JobManager:
         :param job_id: job step id created by launcher
         :type job_id: str
         :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity
+        :type entity: SmartSimEntity | EntityList
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
@@ -186,7 +188,7 @@ class JobManager:
         else:
             self.jobs[entity.name] = job
 
-    def is_finished(self, entity):
+    def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
 
         :param entity: entity to check
@@ -204,7 +206,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def check_jobs(self):
+    def check_jobs(self) -> None:
         """Update all jobs in jobmanager
 
         Update all jobs returncode, status, error and output
@@ -214,24 +216,28 @@ class JobManager:
         self._lock.acquire()
         try:
             jobs = self().values()
-            job_name_map = dict([(job.name, job.ename) for job in jobs])
+            job_name_map = {job.name: job.ename for job in jobs}
 
             # returns (job step name, StepInfo) tuples
-            statuses = self._launcher.get_step_update(job_name_map.keys())
-            for job_name, status in statuses:
-                job = self[job_name_map[job_name]]
-                # uses abstract step interface
-                job.set_status(
-                    status.status,
-                    status.launcher_status,
-                    status.returncode,
-                    error=status.error,
-                    output=status.output,
-                )
+            if self._launcher:
+                step_names = list(job_name_map.keys())
+                statuses = self._launcher.get_step_update(step_names)
+                for job_name, status in statuses:
+                    job = self[job_name_map[job_name]]
+
+                    if status:
+                        # uses abstract step interface
+                        job.set_status(
+                            status.status,
+                            status.launcher_status,
+                            status.returncode,
+                            error=status.error,
+                            output=status.output,
+                        )
         finally:
             self._lock.release()
 
-    def get_status(self, entity):
+    def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntityList instance
@@ -243,7 +249,7 @@ class JobManager:
             if entity.name in self.completed:
                 return self.completed[entity.name].status
 
-            job = self[entity.name]  # locked
+            job: Job = self[entity.name]  # locked
         except KeyError:
             raise SmartSimError(
                 f"Entity {entity.name} has not been launched in this Experiment"
@@ -252,7 +258,7 @@ class JobManager:
             self._lock.release()
         return job.status
 
-    def set_launcher(self, launcher):
+    def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
 
         :param launcher: child of Launcher
@@ -260,7 +266,7 @@ class JobManager:
         """
         self._launcher = launcher
 
-    def query_restart(self, entity_name):
+    def query_restart(self, entity_name: str) -> bool:
         """See if the job just started should be restarted or not.
 
         :param entity_name: name of entity to check for a job for
@@ -272,7 +278,7 @@ class JobManager:
             return True
         return False
 
-    def restart_job(self, job_name, job_id, entity_name, is_task=True):
+    def restart_job(self, job_name: str, job_id: t.Optional[str], entity_name: str, is_task: bool = True) -> None:
         """Function to reset a job to record history and be
         ready to launch again.
 
@@ -299,7 +305,7 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def get_db_host_addresses(self):
+    def get_db_host_addresses(self) -> t.List[str]:
         """Retrieve the list of hosts for the database
 
         :return: list of host ip addresses
@@ -307,12 +313,15 @@ class JobManager:
         """
         addresses = []
         for db_job in self.db_jobs.values():
-            for combine in itertools.product(db_job.hosts, db_job.entity.ports):
-                ip_addr = get_ip_from_host(combine[0])
-                addresses.append(":".join((ip_addr, str(combine[1]))))
+            if isinstance(db_job.entity, (DBNode, Orchestrator)):
+                db_entity = db_job.entity
+
+                for combine in itertools.product(db_job.hosts, db_entity.ports):
+                    ip_addr = get_ip_from_host(combine[0])
+                    addresses.append(":".join((ip_addr, str(combine[1]))))
         return addresses
 
-    def set_db_hosts(self, orchestrator):
+    def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
 
         :param orchestrator: orchestrator instance
@@ -324,7 +333,7 @@ class JobManager:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
-                for dbnode in orchestrator:
+                for dbnode in orchestrator.dbnodes:
                     if not dbnode._mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:
@@ -332,12 +341,12 @@ class JobManager:
         finally:
             self._lock.release()
 
-    def signal_interrupt(self, sig, frame):
+    def signal_interrupt(self, signo: int, frame: t.Optional[FrameType]) -> None:
         """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():
-                    if job.status not in TERMINAL_STATUSES:
+                    if job.status not in TERMINAL_STATUSES and self._launcher:
                         self._launcher.stop(job.name)
             else:
                 logger.warning("SmartSim process interrupted before resource cleanup")
@@ -352,7 +361,7 @@ class JobManager:
                             f"Job {job_name} with {job.launched_with} id: {job.jid}"
                         )
 
-    def _thread_sleep(self):
+    def _thread_sleep(self) -> None:
         """Sleep the job manager for a specific constant
         set for the launcher type.
         """
@@ -362,6 +371,6 @@ class JobManager:
         else:
             time.sleep(CONFIG.jm_interval)
 
-    def __len__(self):
+    def __len__(self) -> int:
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)

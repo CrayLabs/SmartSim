@@ -26,17 +26,19 @@
 
 import os
 import shutil
+import typing as t
 from shlex import split as sh_split
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings import AprunSettings
 
 logger = get_logger(__name__)
 
 
 class AprunStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: AprunSettings) -> None:
         """Initialize a ALPS aprun job step
 
         :param name: name of the entity to be launched
@@ -44,15 +46,18 @@ class AprunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: AprunSettings
         """
-        super().__init__(name, cwd)
-        self.run_settings = run_settings
+        super().__init__(name, cwd, run_settings)
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_launch_cmd(self):
+    @property
+    def run_settings(self) -> AprunSettings:
+        return self.step_settings
+
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -87,7 +92,7 @@ class AprunStep(Step):
             aprun_cmd.extend([">", output])
         return aprun_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -107,7 +112,7 @@ class AprunStep(Step):
                 "No allocation specified or found and not running in batch"
             )
 
-    def _build_exe(self):
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -120,7 +125,7 @@ class AprunStep(Step):
             args = self.run_settings.exe_args
             return exe + args
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> t.List[str]:
         """Build Aprun (MPMD) executable"""
 
         exe = self.run_settings.exe

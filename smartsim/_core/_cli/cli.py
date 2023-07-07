@@ -34,7 +34,7 @@ from smartsim._core._cli.clean import Clean
 from smartsim._core._cli.utils import get_install_path
 
 
-def _usage():
+def _usage() -> str:
     usage = [
         "smart <command> [<args>]\n",
         "Commands:",
@@ -49,7 +49,7 @@ def _usage():
 
 
 class SmartCli:
-    def __init__(self):
+    def __init__(self) -> None:
         parser = argparse.ArgumentParser(
             description="SmartSim command line interface", usage=_usage()
         )
@@ -67,23 +67,23 @@ class SmartCli:
             sys.exit(0)
         getattr(self, args.command)()
 
-    def build(self):
+    def build(self) -> None:
         Build()
         sys.exit(0)
 
-    def clean(self):
+    def clean(self) -> None:
         Clean()
         sys.exit(0)
 
-    def clobber(self):
+    def clobber(self) -> None:
         Clean(clean_all=True)
         sys.exit(0)
 
-    def site(self):
+    def site(self) -> None:
         print(get_install_path())
         sys.exit(0)
 
-    def dbcli(self):
+    def dbcli(self) -> None:
         bin_path = get_install_path() / "_core" / "bin"
         for option in bin_path.iterdir():
             if option.name in ("redis-cli", "keydb-cli"):
@@ -93,5 +93,5 @@ class SmartCli:
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     SmartCli()

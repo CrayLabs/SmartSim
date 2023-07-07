@@ -23,8 +23,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import os
+import typing as t
+
 from os import path
 
 
@@ -47,7 +48,12 @@ class EntityFiles:
     without necessary having to copy the entire file.
     """
 
-    def __init__(self, tagged, copy, symlink):
+    def __init__(
+        self, 
+        tagged: t.Optional[t.List[str]] = None, 
+        copy: t.Optional[t.List[str]] = None, 
+        symlink: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Initialize an EntityFiles instance
 
         :param tagged: tagged files for model configuration
@@ -59,13 +65,13 @@ class EntityFiles:
                         directories
         :type symlink: list of str
         """
-        self.tagged = tagged
-        self.copy = copy
-        self.link = symlink
+        self.tagged = tagged or []
+        self.copy = copy or []
+        self.link = symlink or []
         self.tagged_hierarchy = None
         self._check_files()
 
-    def _check_files(self):
+    def _check_files(self) -> None:
         """Ensure the files provided by the user are of the correct
            type and actually exist somewhere on the filesystem.
 
@@ -87,7 +93,7 @@ class EntityFiles:
         for i in range(len(self.link)):
             self.link[i] = self._check_path(self.link[i])
 
-    def _type_check_files(self, file_list, file_type):
+    def _type_check_files(self, file_list: t.Union[t.List[str], None], file_type: str) -> t.List[str]:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
@@ -107,12 +113,12 @@ class EntityFiles:
                         f"{file_type} files given were not of type list or str"
                     )
             else:
-                if not all(isinstance(f, str) for f in file_list):
+                if not all([isinstance(f, str) for f in file_list]):
                     raise TypeError(f"Not all {file_type} files were of type str")
-        return file_list
+        return file_list or []
 
     @staticmethod
-    def _check_path(file_path):
+    def _check_path(file_path: str) -> str:
         """Given a user provided path-like str, find the actual path to
            the directory or file and create a full path.
 
@@ -150,7 +156,7 @@ class TaggedFilesHierarchy:
     tagged file directory structure can be replicated
     """
 
-    def __init__(self, parent=None, subdir_name=""):
+    def __init__(self, parent: t.Optional[t.Any] = None, subdir_name: str = "") -> None:
         """Initialize a TaggedFilesHierarchy
 
         :param parent: The parent hierarchy of the new hierarchy,
@@ -184,18 +190,20 @@ class TaggedFilesHierarchy:
         if parent:
             parent.dirs.add(self)
 
-        self._base = path.join(parent.base, subdir_name) if parent else ""
-        self.parent = parent
-        self.files = set()
-        self.dirs = set()
+        self._base: str = path.join(parent.base, subdir_name) if parent else ""
+        self.parent: t.Any = parent
+        self.files: t.Set[str] = set()
+        self.dirs: t.Set[TaggedFilesHierarchy] = set()
 
     @property
-    def base(self):
+    def base(self) -> str:
         """Property to ensure that self.base is read-only"""
         return self._base
 
     @classmethod
-    def from_list_paths(cls, path_list, dir_contents_to_base=False):
+    def from_list_paths(
+        cls, path_list: t.List[str], dir_contents_to_base: bool = False
+    ) -> t.Any:
         """Given a list of absolute paths to files and dirs, create and return
         a TaggedFilesHierarchy instance representing the file hierarchy of
         tagged files. All files in the path list will be placed in the base of
@@ -225,7 +233,7 @@ class TaggedFilesHierarchy:
         tagged_file_hierarchy._add_paths(path_list)
         return tagged_file_hierarchy
 
-    def _add_file(self, file):
+    def _add_file(self, file: str) -> None:
         """Add a file to the current level in the file hierarchy
 
         :param file: absoute path to a file to add to the hierarchy
@@ -233,7 +241,7 @@ class TaggedFilesHierarchy:
         """
         self.files.add(file)
 
-    def _add_dir(self, dir):
+    def _add_dir(self, dir: str) -> None:
         """Add a dir contianing tagged files by creating a new sub level in the
         tagged file hierarchy. All paths within the directroy are added to the
         the new level sub level tagged file hierarchy
@@ -246,7 +254,7 @@ class TaggedFilesHierarchy:
             [path.join(dir, file) for file in os.listdir(dir)]
         )
 
-    def _add_paths(self, paths):
+    def _add_paths(self, paths: t.List[str]) -> None:
         """Takes a list of paths and iterates over it, determining if each
         path is to a file or a dir and then appropriatly adding it to the
         TaggedFilesHierarchy.

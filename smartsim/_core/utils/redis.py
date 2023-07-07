@@ -25,15 +25,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
-import time
-
 import redis
-from rediscluster import RedisCluster
-from rediscluster.exceptions import ClusterDownError, RedisClusterException
+import time
+import typing as t
+
+from itertools import product
+from redis.cluster import RedisCluster, ClusterNode
+from redis.exceptions import ClusterDownError, RedisClusterException
 from smartredis import Client
 from smartredis.error import RedisReplyError
-
-logging.getLogger("rediscluster").setLevel(logging.WARNING)
 
 from ...entity import DBModel, DBScript
 from ...error import SSInternalError
@@ -42,10 +42,11 @@ from ..config import CONFIG
 from ..launcher.util.shell import execute_cmd
 from .network import get_ip_from_host
 
+logging.getLogger("rediscluster").setLevel(logging.WARNING)
 logger = get_logger(__name__)
 
 
-def create_cluster(hosts, ports):  # cov-wlm
+def create_cluster(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     """Connect launched cluster instances.
 
     Should only be used in the case where cluster initialization
@@ -78,7 +79,7 @@ def create_cluster(hosts, ports):  # cov-wlm
     logger.debug(out)
 
 
-def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
+def check_cluster_status(hosts: t.List[str], ports: t.List[int], trials: int = 10) -> None:  # cov-wlm
     """Check that a Redis/KeyDB cluster is up and running
 
     :param hosts: List of hostnames to connect to
@@ -90,22 +91,20 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
 
     :raises SmartSimError: If cluster status cannot be verified
     """
-    host_list = []
-    for host in hosts:
-        for port in ports:
-            host_dict = dict()
-            host_dict["host"] = get_ip_from_host(host)
-            host_dict["port"] = port
-            host_list.append(host_dict)
+    cluster_nodes = [ClusterNode(get_ip_from_host(host), port)
+                     for host, port in product(hosts, ports)]
+
+    if not cluster_nodes:
+        raise SSInternalError("No cluster nodes have been set for database status check.")
 
     logger.debug("Beginning database cluster status check...")
     while trials > 0:
         # wait for cluster to spin up
         time.sleep(5)
         try:
-            redis_tester = RedisCluster(startup_nodes=host_list)
+            redis_tester: RedisCluster = RedisCluster(startup_nodes=cluster_nodes)
             redis_tester.set("__test__", "__test__")
-            redis_tester.delete("__test__")
+            redis_tester.delete("__test__")  # type: ignore
             logger.debug("Cluster status verified")
             return
         except (ClusterDownError, RedisClusterException, redis.RedisError):
@@ -115,7 +114,7 @@ def check_cluster_status(hosts, ports, trials=10):  # cov-wlm
         raise SSInternalError("Cluster setup could not be verified")
 
 
-def db_is_active(hosts, ports, num_shards):
+def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> bool:
     """Check if a DB is running
 
     if the DB is clustered, check cluster status, otherwise
@@ -151,7 +150,7 @@ def db_is_active(hosts, ports, num_shards):
             return False
 
 
-def set_ml_model(db_model: DBModel, client: Client):
+def set_ml_model(db_model: DBModel, client: Client) -> None:
     logger.debug(f"Adding DBModel named {db_model.name}")
     devices = db_model._enumerate_devices()
 
@@ -186,7 +185,7 @@ def set_ml_model(db_model: DBModel, client: Client):
             raise error
 
 
-def set_script(db_script: DBScript, client: Client):
+def set_script(db_script: DBScript, client: Client) -> None:
     logger.debug(f"Adding DBScript named {db_script.name}")
 
     devices = db_script._enumerate_devices()

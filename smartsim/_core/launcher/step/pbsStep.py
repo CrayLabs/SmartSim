@@ -24,14 +24,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
+
 from ....log import get_logger
 from .step import Step
+from ....settings import QsubBatchSettings
+from ....settings.base import BatchSettings
 
 logger = get_logger(__name__)
 
 
 class QsubBatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: QsubBatchSettings) -> None:
         """Initialize a PBSpro qsub step
 
         :param name: name of the entity to launch
@@ -39,14 +43,17 @@ class QsubBatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: QsubBatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
-        self.step_cmds = []
+        super().__init__(name, cwd, batch_settings)
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
 
-    def get_launch_cmd(self):
+    @property
+    def batch_settings(self) -> QsubBatchSettings:
+        return self.step_settings
+
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -55,7 +62,7 @@ class QsubBatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -65,7 +72,7 @@ class QsubBatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing

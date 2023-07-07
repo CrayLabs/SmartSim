@@ -27,16 +27,19 @@
 import os
 import shutil
 from shlex import split as sh_split
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings import MpirunSettings, MpiexecSettings, OrterunSettings
+from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
 
 
 class _BaseMPIStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings) -> None:
         """Initialize a job step conforming to the MPI standard
 
         :param name: name of the entity to be launched
@@ -47,21 +50,23 @@ class _BaseMPIStep(Step):
         :type run_settings: RunSettings
         """
 
-        super().__init__(name, cwd)
-
-        self.run_settings = run_settings
+        super().__init__(name, cwd, run_settings)
 
         self.alloc = None
         if not self.run_settings.in_batch:
             self._set_alloc()
 
+    @property
+    def run_settings(self) -> RunSettings:
+        return self.step_settings
+
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 
     @property
-    def _run_command(self):
+    def _run_command(self) -> str:
         return self.run_settings._run_command
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
@@ -93,7 +98,7 @@ class _BaseMPIStep(Step):
             mpi_cmd += [">", output]
         return mpi_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
@@ -112,7 +117,7 @@ class _BaseMPIStep(Step):
             "No allocation specified or found and not running in batch"
         )
 
-    def _build_exe(self):
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
@@ -125,7 +130,7 @@ class _BaseMPIStep(Step):
             args = self.run_settings.exe_args
             return exe + args
 
-    def _make_mpmd(self):
+    def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
         args = self.run_settings.exe_args
@@ -142,7 +147,7 @@ class _BaseMPIStep(Step):
 
 
 class MpiexecStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: MpiexecSettings) -> None:
         """Initialize an mpiexec job step
 
         :param name: name of the entity to be launched
@@ -150,7 +155,7 @@ class MpiexecStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: MpiexecSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional
@@ -160,7 +165,7 @@ class MpiexecStep(_BaseMPIStep):
 
 
 class MpirunStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: MpirunSettings) -> None:
         """Initialize an mpirun job step
 
         :param name: name of the entity to be launched
@@ -168,7 +173,7 @@ class MpirunStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: MpirunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional
@@ -178,7 +183,7 @@ class MpirunStep(_BaseMPIStep):
 
 
 class OrterunStep(_BaseMPIStep):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: OrterunSettings) -> None:
         """Initialize an orterun job step
 
         :param name: name of the entity to be launched
@@ -186,7 +191,7 @@ class OrterunStep(_BaseMPIStep):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: OrterunSettings
         :param default_run_command: The default command to launch an MPI
                                     application
         :type default_run_command: str, optional

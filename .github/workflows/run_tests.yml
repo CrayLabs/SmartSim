@@ -49,13 +49,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, ubuntu-20.04] # Operating systems
+        os: [macos-12, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
         rai: [1.2.5, 1.2.7] # Redis AI versions
         py_v: [3.8, 3.9, '3.10'] # Python versions
         exclude:
           # Do not build with Redis AI 1.2.5 on MacOS
-          - os: macos-10.15
+          - os: macos-12
             rai: 1.2.5
           # Do not build Redis AI 1.2.5 with py3.10
           # as wheels for dependecies are not availble
@@ -128,3 +128,10 @@ jobs:
         with:
           fail_ci_if_error: true
           files: ./coverage.xml
+
+      - name: Run mypy
+        # TF 2.6.2 has a dep conflict with new mypy versions
+        if: (matrix.rai != '1.2.5')
+        run: |
+          python -m pip install .[mypy]
+          make check-mypy

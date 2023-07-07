@@ -24,10 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-from subprocess import PIPE, TimeoutExpired
-
 import psutil
+import time
+import typing as t
+from subprocess import PIPE, TimeoutExpired
 
 from ....error import ShellError
 from ....log import get_logger
@@ -37,7 +37,14 @@ logger = get_logger(__name__)
 verbose_shell = check_dev_log_level()
 
 
-def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeout=None):
+def execute_cmd(
+    cmd_list: t.List[str],
+    shell: bool = False,
+    cwd: t.Optional[str] = None,
+    env: t.Optional[t.Dict[str, str]] = None,
+    proc_input: str = "",
+    timeout: t.Optional[int] = None,
+) -> t.Tuple[int, str, str]:
     """Execute a command locally
 
     :param cmd_list: list of command with arguments
@@ -48,7 +55,7 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
     :type cwd: str, optional
     :param env: environment to launcher process with,
                 defaults to None (current env)
-    :type env: dict, optional
+    :type env: dict[str, str], optional
     :param proc_input: input to the process, defaults to ""
     :type proc_input: str, optional
     :param timeout: timeout of the process, defaults to None
@@ -68,25 +75,27 @@ def execute_cmd(cmd_list, shell=False, cwd=None, env=None, proc_input="", timeou
         cmd_list, stderr=PIPE, stdout=PIPE, stdin=PIPE, cwd=cwd, shell=shell, env=env
     )
     try:
-        proc_input = proc_input.encode("utf-8")
-        out, err = proc.communicate(input=proc_input, timeout=timeout)
+        proc_bytes = proc_input.encode("utf-8")
+        out, err = proc.communicate(input=proc_bytes, timeout=timeout)
     except TimeoutExpired as e:
         proc.kill()
         _, errs = proc.communicate()
         logger.error(errs)
         raise ShellError(
-            "Failed to execute command, timeout reached", e, cmd_list
+            "Failed to execute command, timeout reached", cmd_list, details=e
         ) from None
     except OSError as e:
         raise ShellError(
-            "Exception while attempting to start a shell process", e, cmd_list
+            "Exception while attempting to start a shell process", cmd_list, details=e
         ) from None
 
     # decoding the output and err and return as a string tuple
     return proc.returncode, out.decode("utf-8"), err.decode("utf-8")
 
 
-def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
+def execute_async_cmd(
+    cmd_list: t.List[str], cwd: str, env: t.Optional[t.Dict[str, str]] = None, out: int = PIPE, err: int = PIPE
+) -> psutil.Popen:
     """Execute an asynchronous command
 
     This function executes an asynchronous command and returns a
@@ -97,7 +106,7 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
     :param cwd: current working directory
     :type cwd: str
     :param env: environment variables to set
-    :type env: dict
+    :type env: dict[str, str]
     :return: the subprocess object
     :rtype: psutil.Popen
     """
@@ -118,7 +127,7 @@ def execute_async_cmd(cmd_list, cwd, env=None, out=PIPE, err=PIPE):
                 err_msg += output.decode("utf-8") + " "
             if error:
                 err_msg += error.decode("utf-8")
-            raise ShellError("Command failed immediately", err_msg, cmd_list)
+            raise ShellError("Command failed immediately", cmd_list, details=err_msg)
     except OSError as e:
-        raise ShellError("Failed to run command", e, cmd_list) from None
+        raise ShellError("Failed to run command", cmd_list, details=e) from None
     return popen_obj
