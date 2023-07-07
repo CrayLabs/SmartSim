@@ -28,23 +28,29 @@ import argparse
 import pytest
 import smartsim
 import typing as t
+from pathlib import Path
 from smartsim._core._cli import utils, site, dbcli, cli, clean, build
-
+from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.dbcli import execute as dbcli_execute
+from smartsim._core._cli.build import configure_parser as build_parser, execute as build_execute
+from smartsim._core._cli.clean import configure_parser as clean_parser, execute as clean_execute, execute_all as clobber_execute
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
     print(msg)
     return retval
 
-def mock_execute_good(ns: argparse.Namespace) -> int:
+
+def mock_execute_good(_ns: argparse.Namespace) -> int:
     return mock_execute_custom("GOOD THINGS", good = True)
 
 
-def mock_execute_fail(ns: argparse.Namespace) -> int:
+def mock_execute_fail(_ns: argparse.Namespace) -> int:
     return mock_execute_custom("BAD THINGS", good = False)
 
 
-def test_default_args_parsing(capsys):
+def test_cli_default_args_parsing(capsys):
     """Test default parser behaviors with no subparsers"""
     menu: t.List[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)    
@@ -61,7 +67,30 @@ def test_default_args_parsing(capsys):
     assert e.value.code == 2
 
 
-def test_bad_default_args_parsing_bad_help(capsys):
+def test_cli_invalid_command(capsys):
+    """Ensure the response when an unsupported command is given"""
+    exp_help = "this is my mock help text for build"
+    exp_cmd = "build"
+    actual_cmd = f"not{exp_cmd}"
+    menu = [cli.MenuItemConfig(exp_cmd,
+                               exp_help,
+                               mock_execute_good,
+                               build.configure_parser)]
+    smart_cli = cli.SmartCli(menu)    
+    
+    captured = capsys.readouterr()  # throw away existing output
+    with pytest.raises(SystemExit) as e:
+        build_args = [actual_cmd, "-h"]
+        smart_cli.parser.parse_args(build_args)
+        
+    captured = capsys.readouterr() # capture new output
+    
+    # show that the command was not recognized
+    assert "invalid choice" in captured.err
+    assert e.value.code == 2
+
+
+def test_cli_bad_default_args_parsing_bad_help(capsys):
     """Test passing an argument name that is incorrect"""
     menu: t.List[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)    
@@ -77,7 +106,7 @@ def test_bad_default_args_parsing_bad_help(capsys):
     assert e.value.code == 2
 
 
-def test_bad_default_args_parsing_good_help(capsys):
+def test_cli_bad_default_args_parsing_good_help(capsys):
     """Test passing an argument name that is correct"""
     menu: t.List[cli.MenuItemConfig] = []
     smart_cli = cli.SmartCli(menu)    
@@ -94,8 +123,10 @@ def test_bad_default_args_parsing_good_help(capsys):
     assert e.value.code == 0
 
 
-def test_add_subparser(capsys):
-    """Test passing a subparser command"""
+def test_cli_add_subparser(capsys):
+    """Test that passing configuration for a command causes the command 
+    to be added to the CLI
+    """
     exp_help = "this is my mock help text for build"
     exp_cmd = "build"
     menu = [cli.MenuItemConfig(exp_cmd,
@@ -127,7 +158,7 @@ def test_add_subparser(capsys):
     assert e.value.code == 0
 
 
-def test_subparser_selection(capsys):
+def test_cli_subparser_selection(capsys):
     """Ensure the right subparser is selected"""
     exp_a_help = "this is my mock help text for dbcli"
     exp_a_cmd = "dbcli"
@@ -168,7 +199,7 @@ def test_subparser_selection(capsys):
     assert e.value.code == 0
 
 
-def test_command_execution(capsys):
+def test_cli_command_execution(capsys):
     """Ensure the right command is executed"""
     exp_a_help = "this is my mock help text for dbcli"
     exp_a_cmd = "dbcli"
@@ -210,7 +241,7 @@ def test_command_execution(capsys):
     assert ret_val == 0
 
 
-def test_default_cli(capsys):
+def test_cli_default_cli(capsys):
     """Ensure the default CLI supports expected top-level commands"""
     smart_cli = cli.default_cli()
     
@@ -312,7 +343,7 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
     
     captured = capsys.readouterr()  # throw away existing output
     
-    # execute with `<command>` argument, expect <command>-specific help text
+    # execute with `<command>` argument, expect <command>-specific output text
     build_args = ["smart", command]
     ret_val = smart_cli.execute(build_args)
 
@@ -323,29 +354,33 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
 
 
 @pytest.mark.parametrize(
-    "command,mock_location,exp_output,optional_arg,exp_valid,exp_err_msg",
+    "command,mock_location,exp_output,optional_arg,exp_valid,exp_err_msg,check_prop,exp_prop_val",
     [
-        pytest.param("build", "build_execute", "verbose mocked-build", "-v", True, "", id="verbose 'on'"),
-        pytest.param("build", "build_execute", "cpu mocked-build", "--device=cpu", True, "", id="device 'cpu'"),
-        pytest.param("build", "build_execute", "gpu mocked-build", "--device=gpu", True, "", id="device 'gpu'"),
-        pytest.param("build", "build_execute", "gpuX mocked-build", "--device=gpux", False, "invalid choice: 'gpux'", id="set bad device 'gpuX'"),
-        pytest.param("build", "build_execute", "no tensorflow mocked-build", "--no_pt", True, "", id="set no TF"),
-        pytest.param("build", "build_execute", "no torch mocked-build", "--no_pt", True, "", id="set no torch"),
-        pytest.param("build", "build_execute", "onnx mocked-build", "--onnx", True, "", id="set w/onnx"),
-        pytest.param("build", "build_execute", "torch-dir mocked-build", "--torch_dir /foo/bar", True, "", id="set torch dir"),
-        pytest.param("build", "build_execute", "bad-torch-dir mocked-build", "--torch_dir", False, "error: argument --torch_dir", id="set torch dir, no path"),
-        pytest.param("build", "build_execute", "keydb mocked-build", "--keydb", True, "", id="keydb on"),
-        pytest.param("build", "build_execute", "only-pkg mocked-build", "--only_python_packages", True, "", id="only-python-packages on"),
+        pytest.param("build", "build_execute", "verbose mocked-build", "-v", True, "", "v", True, id="verbose 'on'"),
+        pytest.param("build", "build_execute", "cpu mocked-build", "--device=cpu", True, "", "device", "cpu", id="device 'cpu'"),
+        pytest.param("build", "build_execute", "gpu mocked-build", "--device=gpu", True, "", "device", "gpu", id="device 'gpu'"),
+        pytest.param("build", "build_execute", "gpuX mocked-build", "--device=gpux", False, "invalid choice: 'gpux'", "", "", id="set bad device 'gpuX'"),
+        pytest.param("build", "build_execute", "no tensorflow mocked-build", "--no_tf", True, "", "no_tf", True, id="set no TF"),
+        pytest.param("build", "build_execute", "no torch mocked-build", "--no_pt", True, "", "no_pt", True, id="set no torch"),
+        pytest.param("build", "build_execute", "onnx mocked-build", "--onnx", True, "", "onnx", True, id="set w/onnx"),
+        pytest.param("build", "build_execute", "torch-dir mocked-build", "--torch_dir /foo/bar", True, "", "torch_dir", "/foo/bar", id="set torch dir"),
+        pytest.param("build", "build_execute", "bad-torch-dir mocked-build", "--torch_dir", False, "error: argument --torch_dir", "", "", id="set torch dir, no path"),
+        pytest.param("build", "build_execute", "keydb mocked-build", "--keydb", True, "", "keydb", True, id="keydb on"),
+        pytest.param("build", "build_execute", "only-pkg mocked-build", "--only_python_packages", True, "", "only_python_packages", True, id="only-python-packages on"),
+
+        pytest.param("clean", "clean_execute", "clobbering mocked-clean", "--clobber", True, "", "clobber", True, id="clean w/clobber"),
     ]
 )
-def test_cli_optional_args(capsys, 
-                           monkeypatch, 
-                           command, 
-                           mock_location, 
-                           exp_output, 
-                           optional_arg, 
-                           exp_valid,
-                           exp_err_msg):
+def test_cli_optional_args(capsys,
+                           monkeypatch,
+                           command: str,
+                           mock_location: str,
+                           exp_output: str,
+                           optional_arg: str,
+                           exp_valid: bool,
+                           exp_err_msg: str,
+                           check_prop: str,
+                           exp_prop_val: t.Any):
     """Ensure the parser for a command handles expected optional arguments"""
     def mock_execute(ns: argparse.Namespace):
         print(exp_output)
@@ -357,15 +392,17 @@ def test_cli_optional_args(capsys,
     
     captured = capsys.readouterr()  # throw away existing output
     
-    # execute with `<command>` argument, expect <command>-specific help text
     build_args = ["smart", command] + optional_arg.split()
     if exp_valid:
         ret_val = smart_cli.execute(build_args)
 
         captured = capsys.readouterr() # capture new output
+
+        assert exp_output in captured.out  # did the expected execution method occur?
+        assert ret_val == 0  # is the retval is non-failure code?
         
-        assert exp_output in captured.out
-        assert ret_val == 0
+        # is the value from the optional argument set in the parsed args?
+        assert smart_cli.parsed_args.__dict__[check_prop] == exp_prop_val
     else:
         with pytest.raises(SystemExit) as e:
             ret_val = smart_cli.execute(build_args)
@@ -373,3 +410,257 @@ def test_cli_optional_args(capsys,
 
         captured = capsys.readouterr() # capture new output
         assert exp_err_msg in captured.err
+
+
+@pytest.mark.parametrize(
+    "command,mock_location,mock_output,exp_output",
+    [
+        pytest.param("build", "build_execute", "verbose mocked-build", "usage: smart build", id="build"),
+        pytest.param("clean", "clean_execute", "helpful mocked-clean", "usage: smart clean", id="clean"),
+        pytest.param("clobber", "clean_execute", "helpful mocked-clobber", "usage: smart clobber", id="clobber"),
+        pytest.param("dbcli", "clean_execute", "helpful mocked-dbcli", "usage: smart dbcli", id="dbcli"),
+        pytest.param("site", "clean_execute", "helpful mocked-site", "usage: smart site", id="site"),
+    ]
+)
+def test_cli_help_support(capsys,
+                           monkeypatch,
+                           command: str,
+                           mock_location: str,
+                           mock_output: str,
+                           exp_output: str):
+    """Ensure the parser supports help optional for commands as expected"""
+    def mock_execute(ns: argparse.Namespace):
+        print(mock_output)
+        return 0
+
+    monkeypatch.setattr(smartsim._core._cli.cli, mock_location, mock_execute)
+    
+    smart_cli = cli.default_cli()
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    # execute with `<command>` argument, expect <command>-specific help text
+    build_args = ["smart", command] + ["-h"]
+    with pytest.raises(SystemExit) as e:
+        ret_val = smart_cli.execute(build_args)
+        assert ret_val == 0
+
+    captured = capsys.readouterr() # capture new output
+    assert exp_output in captured.out
+
+
+@pytest.mark.parametrize(
+    "command,mock_location,exp_output",
+    [
+        pytest.param("build", "build_execute", "verbose mocked-build", id="build"),
+        pytest.param("clean", "clean_execute", "verbose mocked-clean", id="clean"),
+        pytest.param("clobber", "clobber_execute", "verbose mocked-clobber", id="clobber"),
+        pytest.param("dbcli", "dbcli_execute", "verbose mocked-dbcli", id="dbcli"),
+        pytest.param("site", "site_execute", "verbose mocked-site", id="site"),
+    ]
+)
+def test_cli_invalid_optional_args(capsys,
+                           monkeypatch,
+                           command: str,
+                           mock_location: str,
+                           exp_output: str):
+    """Ensure the parser throws expected error for an invalid argument"""
+    def mock_execute(ns: argparse.Namespace):
+        print(exp_output)
+        return 0
+
+    monkeypatch.setattr(smartsim._core._cli.cli, mock_location, mock_execute)
+    
+    smart_cli = cli.default_cli()
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    # execute with `<command>` argument, expect CLI to raise invalid arg error
+    build_args = ["smart", command] + ["-xyz"]
+    with pytest.raises(SystemExit) as e:
+        ret_val = smart_cli.execute(build_args)
+        assert ret_val > 0
+
+    captured = capsys.readouterr() # capture new output
+    assert "unrecognized argument" in captured.err
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        pytest.param("build", id="build"),
+        pytest.param("clean", id="clean"),
+        pytest.param("clobber", id="clobber"),
+        pytest.param("dbcli", id="dbcli"),
+        pytest.param("site", id="site"),
+    ]
+)
+def test_cli_invalid_optional_args(capsys, command):
+    """Ensure the parser throws expected error for an invalid command"""
+    smart_cli = cli.default_cli()
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    # execute with `<command>` argument, expect CLI to raise invalid arg error
+    build_args = ["smart", command] + ["-xyz"]
+    with pytest.raises(SystemExit) as e:
+        ret_val = smart_cli.execute(build_args)
+        assert ret_val > 0
+
+    captured = capsys.readouterr() # capture new output
+    assert "unrecognized argument" in captured.err
+
+
+def test_cli_full_clean_execute(capsys, monkeypatch):
+    """Ensure that the execute method of clean is called """
+    exp_retval = 0
+    exp_output = "mocked-clean utility"
+
+    def mock_operation(*args, **kwargs) -> int:
+        print(exp_output)
+        return exp_retval
+
+    # mock out the internal clean method so we don't actually delete anything
+    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_operation)
+
+    command = "clean"
+    cfg = MenuItemConfig(command,
+                        f"test {command} help text",
+                        clean_execute,
+                        clean_parser)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    build_args = ["smart", command]
+    actual_retval = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert exp_output in captured.out
+    assert actual_retval == exp_retval
+
+
+def test_cli_full_clobber_execute(capsys, monkeypatch):
+    """Ensure that the execute method of clobber is called """
+    exp_retval = 0
+    exp_output = "mocked-clobber utility"
+
+    def mock_operation(*args, **kwargs) -> int:
+        print(exp_output)
+        return exp_retval
+
+    # mock out the internal clean method so we don't actually delete anything
+    monkeypatch.setattr(smartsim._core._cli.clean, "clean", mock_operation)
+
+    command = "clobber"
+    cfg = MenuItemConfig(command,
+                        f"test {command} help text",
+                        clobber_execute)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    build_args = ["smart", command]
+    actual_retval = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert exp_output in captured.out
+    assert actual_retval == exp_retval
+
+
+def test_cli_full_dbcli_execute(capsys, monkeypatch):
+    """Ensure that the execute method of dbcli is called """
+    exp_retval = 0
+    exp_output = "mocked-get_db_path utility"
+
+    def mock_operation(*args, **kwargs) -> int:
+        print(exp_output)
+        return exp_retval
+
+    # mock out the internal get_db_path method so we don't actually do file system ops
+    monkeypatch.setattr(smartsim._core._cli.dbcli, "get_db_path", mock_operation)
+
+    command = "dbcli"
+    cfg = MenuItemConfig(command,
+                        f"test {command} help text",
+                        dbcli_execute)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    build_args = ["smart", command]
+    actual_retval = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert exp_output in captured.out
+    assert actual_retval == exp_retval
+
+
+def test_cli_full_site_execute(capsys, monkeypatch):
+    """Ensure that the execute method of site is called """
+    exp_retval = 0
+    exp_output = "mocked-get_install_path utility"
+
+    def mock_operation(*args, **kwargs) -> int:
+        print(exp_output)
+        return exp_retval
+
+    # mock out the internal get_db_path method so we don't actually do file system ops
+    monkeypatch.setattr(smartsim._core._cli.site, "get_install_path", mock_operation)
+
+    command = "site"
+    cfg = MenuItemConfig(command,
+                        f"test {command} help text",
+                        site_execute)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    build_args = ["smart", command]
+    actual_retval = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert exp_output in captured.out
+    assert actual_retval == exp_retval
+
+
+def test_cli_full_build_execute(capsys, monkeypatch):
+    """Ensure that the execute method of build is called """
+    exp_retval = 0
+    exp_output = "mocked-execute-build utility"
+
+    def mock_operation(*args, **kwargs) -> int:
+        print(exp_output)
+        return exp_retval
+
+    # mock out the internal get_db_path method so we don't actually do file system ops
+    monkeypatch.setattr(smartsim._core._cli.build, "install_torch", mock_operation)
+    monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
+    monkeypatch.setattr(smartsim._core._cli.build, "build_database", mock_operation)
+    monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
+
+    command = "build"
+    cfg = MenuItemConfig(command,
+                        f"test {command} help text",
+                        build_execute,
+                        build_parser)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+    
+    captured = capsys.readouterr()  # throw away existing output
+    
+    build_args = ["smart", command]
+    actual_retval = smart_cli.execute(build_args)
+
+    captured = capsys.readouterr() # capture new output
+    
+    assert exp_output in captured.out
+    assert actual_retval == exp_retval

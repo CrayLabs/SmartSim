@@ -52,6 +52,7 @@ class SmartCli:
             description="SmartSim command line interface",
         )
         self.parser = parser
+        self.args: t.Optional[argparse.Namespace] = None
 
         subparsers = parser.add_subparsers(dest="command",
                                            required=True,
@@ -69,13 +70,17 @@ class SmartCli:
             return 0
 
         app_args = cli_args[1:]
-        args = self.parser.parse_args(app_args)
+        self.args = self.parser.parse_args(app_args)
 
         if not (menu_item := self.menu.get(app_args[0], None)):
             self.parser.print_help()
             return 0
 
-        return menu_item.handler(args)
+        return menu_item.handler(self.args)
+
+    @property
+    def parsed_args(self) -> argparse.Namespace:
+        return self.args
 
 
 def default_cli() -> SmartCli:
