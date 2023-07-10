@@ -577,8 +577,7 @@ def test_cli_full_dbcli_execute(capsys, monkeypatch):
     exp_output = "mocked-get_db_path utility"
 
     def mock_operation(*args, **kwargs) -> int:
-        print(exp_output)
-        return exp_retval
+        return exp_output
 
     # mock out the internal get_db_path method so we don't actually do file system ops
     monkeypatch.setattr(smartsim._core._cli.dbcli, "get_db_path", mock_operation)
