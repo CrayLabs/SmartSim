@@ -26,11 +26,7 @@
 
 import argparse
 
-from smartsim._core._cli.utils import MenuItemConfig, clean, get_install_path, get_db_path
-from smartsim.log import get_logger
-
-smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
-logger = get_logger("Smart", fmt=smart_logger_format)
+from smartsim._core._cli.utils import clean, get_install_path
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:

@@ -28,8 +28,7 @@ import argparse
 import pytest
 import smartsim
 import typing as t
-from pathlib import Path
-from smartsim._core._cli import utils, site, dbcli, cli, clean, build
+from smartsim._core._cli import cli, build
 from smartsim._core._cli.utils import MenuItemConfig
 from smartsim._core._cli.site import execute as site_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute

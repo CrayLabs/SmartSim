@@ -28,4 +28,4 @@
 # from .clean import Clean, Clobber
 # from .dbcli import DbCLI
 # from .site import Site
-from .utils import get_install_path, MenuItemConfig
+from .utils import get_install_path, MenuItemConfig, smart_logger_format

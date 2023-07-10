@@ -26,13 +26,13 @@
 
 import argparse
 
-from smartsim._core._cli.utils import get_install_path
+from smartsim._core._cli.utils import get_install_path, smart_logger_format
 from smartsim.log import get_logger
 
-smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
+
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 
 def execute(args: argparse.Namespace) -> int:
-    print(get_install_path())
+    logger.info(get_install_path())
     return 0

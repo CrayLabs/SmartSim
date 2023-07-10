@@ -33,7 +33,7 @@ import pkg_resources
 import typing as t
 from tabulate import tabulate
 
-from smartsim._core._cli.utils import color_bool, pip_install
+from smartsim._core._cli.utils import color_bool, pip_install, smart_logger_format
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import BuildEnv, SetupError, Version_, Versioner, DbEngine
 from smartsim._core._install.builder import BuildError
@@ -42,7 +42,7 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
-smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
+
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 # NOTE: all smartsim modules need full paths as the smart cli

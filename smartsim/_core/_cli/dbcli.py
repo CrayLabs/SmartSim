@@ -26,12 +26,13 @@
 
 import argparse
 
-from smartsim._core._cli.utils import get_db_path
+from smartsim._core._cli.utils import get_db_path, smart_logger_format
 from smartsim.log import get_logger
 
-smart_logger_format = "[%(name)s] %(levelname)s %(message)s"
+
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 def execute(args: argparse.Namespace) -> int:
-    print(get_db_path())
+    db_path = get_db_path()
+    logger.info(db_path)
     return 0
