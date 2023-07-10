@@ -108,7 +108,7 @@ jobs:
       - name: Install SmartSim (with ML backends)
         run: |
           python -m pip install git+https://github.com/CrayLabs/SmartRedis.git@develop#egg=smartredis
-          python -m pip install .[dev,ml]
+          python -m pip install .[dev,ml,mypy]
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
         if: (matrix.py_v != '3.10')
@@ -117,6 +117,14 @@ jobs:
       - name: Install ML Runtimes with Smart (with pt and tf support)
         if: (matrix.py_v == '3.10')
         run: smart build --device cpu -v
+
+      - name: Run mypy
+        # TF 2.6.2 has a dep conflict with new mypy versions
+        if: (matrix.rai != '1.2.5')
+        run: make check-mypy
+
+      - name: Run Pylint
+        run: make check-lint
 
       - name: Run Pytest
         run: |
@@ -128,13 +136,3 @@ jobs:
         with:
           fail_ci_if_error: true
           files: ./coverage.xml
-
-      - name: Run mypy
-        # TF 2.6.2 has a dep conflict with new mypy versions
-        if: (matrix.rai != '1.2.5')
-        run: |
-          python -m pip install .[mypy]
-          make check-mypy
-
-      - name: Run Pylint
-        run: make check-lint
