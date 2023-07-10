@@ -27,7 +27,6 @@
 import argparse
 
 from smartsim._core._cli.utils import get_db_path
-from smartsim.log import get_logger
 
 
 def execute(args: argparse.Namespace) -> int:
