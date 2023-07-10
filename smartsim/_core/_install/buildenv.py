@@ -192,7 +192,7 @@ class RedisAIVersion(Version_):
     if sys.platform == "darwin":
         defaults.pop("1.2.5", None)
 
-    def __init__(self, vers: str) -> None:
+    def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
         min_rai_version = min(Version_(ver) for ver in self.defaults)
         if min_rai_version > vers:
             raise SetupError(

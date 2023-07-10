@@ -27,7 +27,7 @@
 import typing as t
 
 if t.TYPE_CHECKING:
-    import smartsim
+    import smartsim  # pylint: disable=unused-import
 
 
 class EntityList:
