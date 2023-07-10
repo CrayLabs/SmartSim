@@ -27,9 +27,12 @@
 import argparse
 
 from smartsim._core._cli.utils import get_db_path
+from smartsim._core._install.buildenv import SetupError
 
 
 def execute(args: argparse.Namespace) -> int:
-    db_path = get_db_path()
-    print(db_path)
-    return 0
+    if db_path := get_db_path():
+        print(db_path)
+        return 0
+    print("Database (Redis or KeyDB) dependencies not found")
+    return 1

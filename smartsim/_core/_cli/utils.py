@@ -133,7 +133,6 @@ def get_db_path() -> t.Optional[Path]:
     for option in bin_path.iterdir():
         if option.name in ("redis-cli", "keydb-cli"):
             return option
-    logger.warning("Database (Redis or KeyDB) dependencies not found")
     return None
 
 
