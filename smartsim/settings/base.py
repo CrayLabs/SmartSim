@@ -82,7 +82,7 @@ class RunSettings(SettingsBase):
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
-        :param container: container type for workload (e.g. "singularity"), 
+        :param container: container type for workload (e.g. "singularity"),
             defaults to None
         :type container: Container, optional
         """
@@ -479,7 +479,7 @@ class RunSettings(SettingsBase):
                    condition=socket.gethostname()=="testing-system")
 
             rs.format_run_args()
-            # returns ["exclusive", "None", "partition", "debug"] iff 
+            # returns ["exclusive", "None", "partition", "debug"] iff
               socket.gethostname()=="testing-system"
             # otherwise returns ["exclusive", "None"]
 

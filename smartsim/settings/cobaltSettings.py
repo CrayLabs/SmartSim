@@ -48,7 +48,7 @@ class CobaltBatchSettings(BatchSettings):
 
         :param nodes: number of nodes, defaults to None
         :type nodes: int, optional
-        :param time: walltime for job, e.g. "10:00:00" for 10 hours, 
+        :param time: walltime for job, e.g. "10:00:00" for 10 hours,
             defaults to empty str
         :type time: str, optional
         :param queue: queue to launch job in, defaults to None

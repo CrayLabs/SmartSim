@@ -50,8 +50,9 @@ disable=logging-fstring-interpolation,
         broad-except,
         pointless-string-statement,
         too-few-public-methods,
-        fixme,  # TODO: Enable after reaching a release
-        broad-exception-raised,  # TODO: Enable after reaching a MVP
+        fixme,
+        broad-exception-raised,
+        duplicate-code, # TODO: remove this after fixing duplicate code
 
 enable=useless-object-inheritance,
        unused-variable,

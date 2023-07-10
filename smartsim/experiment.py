@@ -107,7 +107,7 @@ class Experiment:
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
                          "cobalt", "lsf", or "local". If set to "auto",
-                         an attempt will be made to find an available launcher 
+                         an attempt will be made to find an available launcher
                          on the system.
                          Defaults to "local"
         :type launcher: str, optional
@@ -718,7 +718,7 @@ class Experiment:
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None
         :type hosts: list[str], optional
-        :param run_command: specify launch binary or detect automatically, 
+        :param run_command: specify launch binary or detect automatically,
             defaults to "auto"
         :type run_command: str, optional
         :param interface: Network interface, defaults to "ipogif0"
@@ -732,7 +732,7 @@ class Experiment:
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
         :raises SmartSimError: if detection of launcher or of run command fails
-        :raises SmartSimError: if user indicated an incompatible run command 
+        :raises SmartSimError: if user indicated an incompatible run command
             for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class

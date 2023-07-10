@@ -211,7 +211,7 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty 
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
         :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
@@ -270,7 +270,7 @@ class Model(SmartSimEntity):
         :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty 
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
                                iterable disables pinning
         :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
@@ -363,7 +363,7 @@ class Model(SmartSimEntity):
 
         # Deal with MacOSX limitations first. The "None" (default) disables pinning
         # and is equivalent to []. The only invalid option is an iterable
-        if "darwin" == sys.platform:
+        if sys.platform == "darwin":
             if pin_ids is None or not pin_ids:
                 return None
 

@@ -161,7 +161,7 @@ class PBSStepInfo(StepInfo):  # cov-pbs
             "R": STATUS_RUNNING,
             "B": STATUS_RUNNING,
             "H": STATUS_PAUSED,
-            "M": STATUS_PAUSED,  # Actually means that it was moved to another server, 
+            "M": STATUS_PAUSED,  # Actually means that it was moved to another server,
             # TODO: understand what this implies
             "Q": STATUS_PAUSED,
             "S": STATUS_PAUSED,
