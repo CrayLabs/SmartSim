@@ -266,7 +266,7 @@ def test_cli_default_cli(capsys):
     
     assert "usage: smart build [-h]" in captured.out
     assert "Build SmartSim dependencies" in captured.out
-    assert "optional arguments" in captured.out
+    assert "optional arguments:" in captured.out or "options:" in captured.out
     assert ret_val == 0
 
     # execute with `clean` argument, expect clean-specific help text
@@ -278,7 +278,7 @@ def test_cli_default_cli(capsys):
     
     assert "usage: smart clean [-h]" in captured.out
     assert "Remove previous ML runtime installation" in captured.out
-    assert "optional arguments" in captured.out
+    assert "optional arguments:" in captured.out or "options:" in captured.out
     assert "--clobber" in captured.out
     assert ret_val == 0
 
@@ -291,7 +291,7 @@ def test_cli_default_cli(capsys):
     
     assert "usage: smart dbcli [-h]" in captured.out
     assert "Print the path to the redis-cli binary" in captured.out
-    assert "optional arguments" in captured.out
+    assert "optional arguments:" in captured.out or "options:" in captured.out
     assert ret_val == 0
 
     # execute with `site` argument, expect site-specific help text
@@ -303,7 +303,7 @@ def test_cli_default_cli(capsys):
     
     assert "usage: smart site [-h]" in captured.out
     assert "Print the installation site of SmartSim" in captured.out
-    assert "optional arguments" in captured.out
+    assert "optional arguments:" in captured.out or "options:" in captured.out
     assert ret_val == 0
 
     # execute with `clobber` argument, expect clobber-specific help text
@@ -315,7 +315,7 @@ def test_cli_default_cli(capsys):
     
     assert "usage: smart clobber [-h]" in captured.out
     assert "Remove all previous dependency installations" in captured.out
-    assert "optional arguments" in captured.out
+    assert "optional arguments:" in captured.out or "options:" in captured.out
     # assert "--clobber" not in captured.out
     assert ret_val == 0
 
