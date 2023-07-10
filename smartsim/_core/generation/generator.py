@@ -28,7 +28,7 @@ import pathlib
 import shutil
 import typing as t
 
-from distutils import dir_util
+from distutils import dir_util  # pylint: disable=deprecated-module
 from os import mkdir, path, symlink
 
 from ...entity import Model, TaggedFilesHierarchy
