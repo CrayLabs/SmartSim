@@ -207,14 +207,11 @@ def main(
 
     try:
         logger.debug(
-            ("\n\nColocated database information\n"
-            "\n".join(
-                (
-                    "\tIP Address(es): {}"
-                    "\tCommand: {}\n\n",
-                    "\t# of Database CPUs: {}",
-                )
-            )
+            (
+                "\n\nColocated database information\n"
+                "\n\tIP Address(es): {}"
+                "\n\tCommand: {}\n\n"
+                "\n\t# of Database CPUs: {}"
             ),
             ' '.join(ip_addresses + [lo_address]),
             ' '.join(cmd),
