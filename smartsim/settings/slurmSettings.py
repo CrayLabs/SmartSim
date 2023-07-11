@@ -304,10 +304,10 @@ class SrunSettings(RunSettings):
                 if preexisting_var is not None:
                     msg = (
                         f"Variable {k} is set to {preexisting_var} in current "
-                        + "environment. If the job is running in an interactive "
-                        + f"allocation, the value {v} will not be set. Please "
-                        + "consider removing the variable from the environment "
-                        + "and re-run the experiment."
+                        "environment. If the job is running in an interactive "
+                        f"allocation, the value {v} will not be set. Please "
+                        "consider removing the variable from the environment "
+                        "and re-run the experiment."
                     )
                     logger.warning(msg)
 

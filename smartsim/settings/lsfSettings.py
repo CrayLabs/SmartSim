@@ -362,8 +362,8 @@ class JsrunSettings(RunSettings):
                 if cpu_per_rs < db_cpus:
                     msg = (
                         f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, but "
-                        + f"colocated DB requires {db_cpus} CPUs per RS. Automatically "
-                        + f"setting {cpu_per_rs_flag} flag to {db_cpus}"
+                        f"colocated DB requires {db_cpus} CPUs per RS. Automatically "
+                        f"setting {cpu_per_rs_flag} flag to {db_cpus}"
                     )
                     logger.info(msg)
                     self.run_args[cpu_per_rs_flag] = db_cpus
