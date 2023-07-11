@@ -189,13 +189,13 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
     """
 
     if arg_name.startswith("--"):
-        return "=".join((arg_name, str(value)))
+        return f"{arg_name}={value}"
     if arg_name.startswith("-"):
-        return " ".join((arg_name, str(value)))
+        return f"{arg_name} {value}"
     if len(arg_name) == 1:
-        return " ".join(("-" + arg_name, str(value)))
+        return f"-{arg_name} {value}"
 
-    return "=".join(("--" + arg_name, str(value)))
+    return f"--{arg_name}={value}"
 
 
 def _installed(base_path: Path, backend: str) -> bool:
