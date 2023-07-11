@@ -591,9 +591,9 @@ class Model(SmartSimEntity):
             if not isinstance(db_script.func, str):
                 err_msg = (
                     "Functions can not be set from memory for colocated databases.\n"
-                    + f"Please convert the function named {db_script.name} "
-                    + "to a string or store it as a text file and add it to the "
-                    + "SmartSim Model with add_script."
+                    f"Please convert the function named {db_script.name} "
+                    "to a string or store it as a text file and add it to the "
+                    "SmartSim Model with add_script."
                 )
                 raise SSUnsupportedError(err_msg)
         self._db_scripts.append(db_script)
@@ -603,8 +603,8 @@ class Model(SmartSimEntity):
             if not db_model.is_file:
                 err_msg = (
                     "ML model can not be set from memory for colocated databases.\n"
-                    + f"Please store the ML model named {db_model.name} in binary "
-                    + "format and add it to the SmartSim Model as file."
+                    f"Please store the ML model named {db_model.name} in binary "
+                    "format and add it to the SmartSim Model as file."
                 )
                 raise SSUnsupportedError(err_msg)
 
@@ -613,8 +613,8 @@ class Model(SmartSimEntity):
                 if not isinstance(db_script.func, str):
                     err_msg = (
                         "Functions can not be set from memory for colocated "
-                        + "databases.\nPlease convert the function named "
-                        + f"{db_script.name} to a string or store it as a text"
-                        + "file and add it to the SmartSim Model with add_script."
+                        "databases.\nPlease convert the function named "
+                        f"{db_script.name} to a string or store it as a text"
+                        "file and add it to the SmartSim Model with add_script."
                     )
                     raise SSUnsupportedError(err_msg)

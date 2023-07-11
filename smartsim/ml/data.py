@@ -108,10 +108,8 @@ class DataInfo:
         except RedisReplyError:
             # If the info was not published, proceed with default parameters
             logger.warning(
-                (
-                    "Could not retrieve data for DataInfo object, the following "
-                    "values will be kept."
-                )
+                "Could not retrieve data for DataInfo object, the following "
+                "values will be kept."
             )
             logger.warning(str(self))
             return
@@ -392,7 +390,7 @@ class DataDownloader:
         if len(self) < 1:
             raise ValueError(
                 "Not enough samples in generator for one batch. Please run "
-                + "init_samples() or initialize generator with init_samples=True"
+                "init_samples() or initialize generator with init_samples=True"
             )
 
         yield from (
