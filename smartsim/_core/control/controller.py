@@ -221,7 +221,7 @@ class Controller:
         if not isinstance(entity, (SmartSimEntity, EntityList)):
             raise TypeError(
                 "Argument must be of type SmartSimEntity or EntityList, "
-                + f"not {type(entity)}"
+                f"not {type(entity)}"
             )
         return self._jobs.get_status(entity)
 
