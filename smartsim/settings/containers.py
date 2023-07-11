@@ -146,7 +146,7 @@ class Singularity(Container):
         if self.working_directory:
             working_directory = self.working_directory
 
-        if not working_directory in serialized_mount:
+        if working_directory not in serialized_mount:
             if serialized_mount:
                 serialized_mount = ",".join([working_directory, serialized_mount])
             else:
