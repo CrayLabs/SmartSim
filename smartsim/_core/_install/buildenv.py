@@ -134,7 +134,7 @@ class Version_(str):
             return super().__le__(cmp)
 
     def __hash__(self) -> int:
-        return hash(str(self))
+        return hash(Version(self))
 
 
 def get_env(var: str, default: str) -> str:
