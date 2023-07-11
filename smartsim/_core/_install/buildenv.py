@@ -205,8 +205,10 @@ class RedisAIVersion(Version_):
                 self.version = "1.2.7"
             else:
                 raise SetupError(
-                    f"Invalid RedisAI version {vers}. Options are "
-                    + f"{self.defaults.keys()}"
+                    (
+                        f"Invalid RedisAI version {vers}. Options are "
+                        f"{self.defaults.keys()}"
+                    )
                 )
         else:
             self.version = vers
