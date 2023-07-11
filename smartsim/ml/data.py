@@ -480,8 +480,8 @@ class DataDownloader:
 
             # Strictly greater, because next_index is 0-based
             if list_length > self.next_indices[uploader_idx]:
-                start, end = self.next_indices[uploader_idx], list_length
-                indices = list(range(start, end, self.num_replicas))
+                start = self.next_indices[uploader_idx]
+                indices = list(range(start, list_length, self.num_replicas))
                 self._add_samples(indices)
                 self.next_indices[uploader_idx] = indices[-1] + self.num_replicas
 
