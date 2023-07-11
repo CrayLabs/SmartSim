@@ -277,7 +277,7 @@ class SlurmLauncher(WLMLauncher):
         if not which("sbatch") and not which("sacct"):
             error = (
                 "User attempted Slurm methods without access to Slurm "
-                + "at the call site.\n"
+                "at the call site.\n"
             )
             raise LauncherError(error)
 
