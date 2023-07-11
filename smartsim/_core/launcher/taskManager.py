@@ -41,7 +41,7 @@ from .util.shell import execute_async_cmd, execute_cmd
 logger = get_logger(__name__)
 VERBOSE_TM = check_dev_log_level()  # pylint: disable=invalid-name
 
-TM_INTERVAL = 1  # pylint: disable=invalid-name
+TM_INTERVAL = 1
 
 
 class TaskManager:
