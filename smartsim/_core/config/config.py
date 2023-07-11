@@ -106,7 +106,7 @@ class Config:
         if not redisai.is_file():
             raise SSConfigError(
                 "RedisAI dependency not found. Build with `smart` cli "
-                + "or specify RAI_PATH"
+                "or specify RAI_PATH"
             )
         return str(redisai)
 
