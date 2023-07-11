@@ -424,11 +424,8 @@ class Orchestrator(EntityList):
 
         if arg in self._reserved_batch_args[type(self.batch_settings)]:
             logger.warning(
-                (
-                    "Can not set batch argument {}: "
-                    "it is a reserved keyword in Orchestrator"
-                ),
-                arg,
+                f"Can not set batch argument {arg}: "
+                "it is a reserved keyword in Orchestrator"
             )
         else:
             if hasattr(self, "batch_settings") and self.batch_settings:
@@ -449,11 +446,8 @@ class Orchestrator(EntityList):
         """
         if arg in self._reserved_run_args[type(self.entities[0].run_settings)]:
             logger.warning(
-                (
-                    "Can not set run argument {}: it is a reserved keyword "
-                    "in Orchestrator"
-                ),
-                arg,
+                f"Can not set batch argument {arg}: "
+                "it is a reserved keyword in Orchestrator"
             )
         else:
             for db in self.dbnodes:
