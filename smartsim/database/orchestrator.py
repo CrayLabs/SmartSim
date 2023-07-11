@@ -557,12 +557,12 @@ class Orchestrator(EntityList):
             except TypeError:
                 raise TypeError(
                     "Incompatible function arguments. The key and value used for "
-                    + "setting the database configurations must be strings."
+                    "setting the database configurations must be strings."
                 ) from None
         else:
             raise SmartSimError(
                 "The SmartSim Orchestrator must be active in order to set the "
-                + "database's configurations."
+                "database's configurations."
             )
 
     @staticmethod
