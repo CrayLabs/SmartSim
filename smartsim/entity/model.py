@@ -398,12 +398,12 @@ class Model(SmartSimEntity):
                 if not param in self.params:
                     raise ValueError(
                         f"Tried to convert {param} to command line argument for Model "
-                        + f"{self.name}, but its value was not found in model params"
+                        f"{self.name}, but its value was not found in model params"
                     )
                 if self.run_settings is None:
                     raise ValueError(
                         "Tried to configure command line parameter for Model "
-                        + f"{self.name}, but no RunSettings are set."
+                        f"{self.name}, but no RunSettings are set."
                     )
                 self.run_settings.add_exe_args(
                     cat_arg_and_value(param, self.params[param])

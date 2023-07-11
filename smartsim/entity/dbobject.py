@@ -113,8 +113,8 @@ class DBObject:
         if ":" in self.device and self.devices_per_node > 1:
             msg = (
                 "Cannot set devices_per_node>1 if a device numeral is specified, "
-                + f"the device was set to {self.device} and "
-                + f"devices_per_node=={self.devices_per_node}"
+                f"the device was set to {self.device} and "
+                f"devices_per_node=={self.devices_per_node}"
             )
             raise ValueError(msg)
         if self.device in ["CPU", "GPU"] and self.devices_per_node > 1:

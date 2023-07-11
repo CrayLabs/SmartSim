@@ -807,12 +807,9 @@ class Orchestrator(EntityList):
             if interface not in net_if_addrs and interface != "lo":
                 available = list(net_if_addrs.keys())
                 logger.warning(
-                    (
-                        "{} is not a valid network interface on this node. \n"
-                        "This could be because the head node doesn't have the same "
-                        "networks, if so, ignore this."
-                    ),
-                    interface,
+                    f"{interface} is not a valid network interface on this node. \n"
+                    "This could be because the head node doesn't have the same "
+                    "networks, if so, ignore this."
                 )
                 logger.warning(f"Found network interfaces are: {available}")
 
