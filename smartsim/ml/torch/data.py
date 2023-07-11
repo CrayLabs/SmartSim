@@ -40,7 +40,7 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
         if init_samples:
             self.log(
                 "PyTorch Data Generator has to be created with "
-                + "init_samples=False. Setting it to False automatically."
+                "init_samples=False. Setting it to False automatically."
             )
 
     def _add_samples(self, indices: t.List[int]) -> None:
@@ -103,7 +103,7 @@ class StaticDataGenerator(_TorchDataGenerationCommon):
         if dynamic:
             self.log(
                 "Static data generator cannot be started "
-                + "with dynamic=True, setting it to False"
+                "with dynamic=True, setting it to False"
             )
 
 
@@ -126,7 +126,7 @@ class DynamicDataGenerator(_TorchDataGenerationCommon):
         if not dynamic:
             self.log(
                 "Dynamic data generator cannot be started with dynamic=False, "
-                + "setting it to True"
+                "setting it to True"
             )
 
 
