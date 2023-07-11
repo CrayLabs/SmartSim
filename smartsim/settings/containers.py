@@ -74,7 +74,7 @@ class Container:
         """
         raise NotImplementedError(
             "Containerized run command specification not implemented for this "
-            + f"Container type: {type(self)}"
+            f"Container type: {type(self)}"
         )
 
 
