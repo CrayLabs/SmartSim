@@ -155,8 +155,8 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
 class PBSStepInfo(StepInfo):  # cov-pbs
     @property
     def mapping(self) -> t.Dict[str, str]:
-        # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs
-        # /PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
+        # pylint: disable=line-too-long
+        # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
         return {
             "R": STATUS_RUNNING,
             "B": STATUS_RUNNING,
