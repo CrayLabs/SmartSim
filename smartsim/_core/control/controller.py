@@ -573,7 +573,7 @@ class Controller:
             if not osp.exists(checkpoint_file):
                 raise FileNotFoundError(
                     f"The SmartSim database config file {checkpoint_file} "
-                    + "cannot be found."
+                    "cannot be found."
                 )
 
             try:
