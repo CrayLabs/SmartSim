@@ -572,7 +572,7 @@ class BuildEnv:
                 if installed.major != version.major or installed.minor != version.minor:
                     msg = (
                         f"Incompatible version for {package} detected.\n{package} "
-                        + f"{version} requested but {package} {installed} installed."
+                        f"{version} requested but {package} {installed} installed."
                     )
                     raise SetupError(msg)
             return True
