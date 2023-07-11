@@ -143,7 +143,7 @@ def _worker_init_fn(worker_id: int) -> None:
     )
     dataset.log(
         f"Worker {worker_id+1}/{num_workers}: dataset replica "
-        + str(dataset.replica_rank + 1 / dataset.num_replicas)
+        f"{dataset.replica_rank+1}/{dataset.num_replicas}"
     )
 
     dataset.init_samples()
