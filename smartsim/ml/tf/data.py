@@ -36,7 +36,7 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         if len(self) < 1:
             raise ValueError(
                 "Not enough samples in generator for one batch. Please "
-                + "run init_samples() or initialize generator with init_samples=True"
+                "run init_samples() or initialize generator with init_samples=True"
             )
         # Generate indices of the batch
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
@@ -91,7 +91,7 @@ class StaticDataGenerator(_TFDataGenerationCommon):
         if dynamic:
             msg = (
                 "Static data generator cannot be started with dynamic=True, "
-                + "setting it to False"
+                "setting it to False"
             )
             self.log(msg)
 
@@ -111,7 +111,7 @@ class DynamicDataGenerator(_TFDataGenerationCommon):
         if not dynamic:
             msg = (
                 "Dynamic data generator cannot be started with dynamic=False,"
-                + " setting it to True"
+                " setting it to True"
             )
             self.log(msg)
 

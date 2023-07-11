@@ -42,12 +42,12 @@ try:
 except ImportError:  # pragma: no cover
     raise ModuleNotFoundError(
         f"TensorFlow {TF_VERSION} is not installed. "
-        + "Please install it to use smartsim.tf"
+        "Please install it to use smartsim.tf"
     ) from None
 except AssertionError:  # pragma: no cover
     msg = (
         f"TensorFlow >= {TF_VERSION} is required for smartsim. "
-        + f"tf, you have {tf.__version__}"
+        f"tf, you have {tf.__version__}"
     )
     raise SmartSimError() from None
 
