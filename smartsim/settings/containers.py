@@ -152,11 +152,8 @@ class Singularity(Container):
             else:
                 serialized_mount = working_directory
             logger.warning(
-                (
-                    "Working directory not specified in mount: \n {}\n"
-                    "Automatically adding it to the list of bind points"
-                ),
-                working_directory,
+                f"Working directory not specified in mount: \n {working_directory}\n"
+                "Automatically adding it to the list of bind points"
             )
 
         # Find full path to singularity
