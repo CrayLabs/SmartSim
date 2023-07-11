@@ -116,10 +116,8 @@ def release_allocation(alloc_id: str) -> None:
     if returncode != 0:
         logger.error(f"Unable to revoke your allocation for jobid {str(alloc_id)}")
         logger.error(
-            (
-                "The job may have already timed out, or you may "
-                "need to cancel the job manually"
-            )
+            "The job may have already timed out, or you may "
+            "need to cancel the job manually"
         )
         raise AllocationError(
             f"Unable to revoke your allocation for jobid  {str(alloc_id)}"
