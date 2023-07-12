@@ -260,3 +260,57 @@ the following:
   cd /scratch/smartsim/Training-Run ; /usr/bin/srun --output /scratch/smartsim/Training-Run/Training-Ensemble_3.out --error /scratch/smartsim/Training-Ensemble_3.err --job-name Training-Ensemble_3-CHTN0UI2TRE7 --nodes=1 --ntasks=24 /scratch/pyenvs/smartsim/bin/python ./train-model.py --LR=0.35000000000000003 &
 
   wait
+
+Prefixing Keys in the Orchestrator
+----------------------------------
+
+If each of multiple ensemble members attempt to use the same code access their respective models in
+the Orchestrator, the keys by which they do this will overlap and they can end up accessing each
+others' models inadvertently. To prevent this situation, the SmartSim Entity object supports key
+prefixing, which automatically prepends the name of the model to the keys by which it is accessed.
+With this enabled, key overlapping is no longer an issue and ensemble members can use the same code.
+
+We modify the example above to enable key prefixing as follows:
+
+.. code-block:: bash
+
+  import numpy as np
+  from smartsim import Experiment
+
+  exp = Experiment("Training-Run", launcher="slurm")
+
+  # setup ensemble parameter space
+  learning_rate = list(np.linspace(.01, .5))
+  train_params = {"LR": learning_rate}
+
+  # define resources for all ensemble members
+  sbatch = exp.create_batch_settings(nodes=4,
+                                    time="01:00:00",
+                                    account="12345-Cray",
+                                    queue="gpu")
+
+  # define how each member should run
+  srun = exp.create_run_settings(exe="python",
+                                exe_args="./train-model.py")
+  srun.set_nodes(1)
+  srun.set_tasks(24)
+
+  ensemble = exp.create_ensemble("Training-Ensemble",
+                                params=train_params,
+                                params_as_args=["LR"],
+                                batch_settings=sbatch,
+                                run_settings=srun,
+                                perm_strategy="random",
+                                n_models=4)
+
+  # Enable key prefixing -- note that this should be done
+  # before starting the experiment
+  ensemble.enable_key_prefixing()
+
+  exp.start(ensemble, summary=True)
+
+
+Further Information
+-------------------
+
+For more informtion about Ensembles, please refer to the :ref:`Ensemble API documentation <ensemble_api>`.
