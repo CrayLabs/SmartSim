@@ -772,7 +772,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    # pylint: disable=redefined-builtin
+    # pylint: disable-next=redefined-builtin
     def summary(self, format: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
