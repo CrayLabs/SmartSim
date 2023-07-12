@@ -82,5 +82,5 @@ def test_version_bad_parse_fail():
     v1 = Version_("abcdefg")
 
     # todo: ensure we can't take invalid input and have this IndexError occur.
-    with pytest.raises(IndexError):
+    with pytest.raises((IndexError, packaging.version.InvalidVersion)) as ex:
         _ = v1.minor
