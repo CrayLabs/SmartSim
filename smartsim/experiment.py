@@ -772,7 +772,8 @@ class Experiment:
             logger.error(e)
             raise
 
-    def summary(self, style: str = "github") -> str:
+    # pylint: disable=redefined-builtin
+    def summary(self, format: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
@@ -813,7 +814,7 @@ class Experiment:
             values,
             headers,
             showindex=True,
-            tablefmt=style,
+            tablefmt=format,
             missingval="None",
             disable_numparse=True,
         )

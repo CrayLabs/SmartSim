@@ -103,7 +103,7 @@ def test_summary(fileutils, wlmutils):
     assert exp.get_status(bad)[0] == status.STATUS_FAILED
     assert exp.get_status(sleep)[0] == status.STATUS_COMPLETED
 
-    summary_str = exp.summary(style="plain")
+    summary_str = exp.summary(format="plain")
     print(summary_str)
 
     rows = [s.split() for s in summary_str.split("\n")]

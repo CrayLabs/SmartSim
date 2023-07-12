@@ -70,10 +70,10 @@ class StepInfo:
         """
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
-        
+
         if status in self.mapping and (returncode is None or returncode == 0):
             return self.mapping[status]
-        
+
         return STATUS_FAILED
 
 
