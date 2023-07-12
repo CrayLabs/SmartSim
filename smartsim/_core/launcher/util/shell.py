@@ -135,6 +135,6 @@ def execute_async_cmd(
                 err_msg += error.decode("utf-8")
             raise ShellError("Command failed immediately", cmd_list, details=err_msg)
     except OSError as e:
-        raise ShellError("Command failed", cmd_list, details=e) from None
+        raise ShellError("Failed to run command", cmd_list, details=e) from None
 
     return popen_obj
