@@ -237,3 +237,48 @@ def test_bsub_batch_manual():
 
     with pytest.raises(TypeError):
         sbatch.add_preamble(1)
+
+
+def test_bsub_batch_alloc_flag_formatting_by_smt():
+    """Ensure that alloc_flags are formatted correctly when smts is changed"""
+    
+    # Check when no smt is set in the constructor
+    sbatch = BsubBatchSettings()
+    sbatch.format_alloc_flags()
+    assert "alloc_flags" not in sbatch.batch_args
+
+    # check when using set_smts
+    sbatch = BsubBatchSettings(smts=2)
+    sbatch.format_alloc_flags()
+    assert "alloc_flags" in sbatch.batch_args
+    assert sbatch.batch_args["alloc_flags"] == "smt2"
+
+    # Check when passing alloc_flags in constructor
+    sbatch = BsubBatchSettings(batch_args={"alloc_flags": "unittest-smt"}, smts=0)
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "unittest-smt"
+
+    # if smts=(non-zero), smt is *not* prepended to alloc_flags
+    sbatch = BsubBatchSettings(batch_args={"alloc_flags": "unittest-smt"})
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "unittest-smt"
+
+    # Check when passing only SMT in constructor
+    sbatch = BsubBatchSettings(smts=1)
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "smt1"
+
+    # Check prepending smt to alloc_flags value
+    sbatch = BsubBatchSettings(atch_args={"alloc_flags": "3"}, smts=3)
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "smt3"
+
+    # check multi-smt flag, with prefix
+    sbatch = BsubBatchSettings(batch_args={"alloc_flags": '"smt3 smt4"'}, smts=4)
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "\"smt3 smt4\""  # <-- wrap in quotes
+    
+    # show that mismatched alloc_flags and smts are NOT touched
+    sbatch = BsubBatchSettings(batch_args={"alloc_flags": 'smt10'}, smts=2)
+    sbatch.format_alloc_flags()
+    assert sbatch.batch_args["alloc_flags"] == "smt10"  # <-- not smt2
