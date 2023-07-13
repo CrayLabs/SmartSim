@@ -77,11 +77,9 @@ class Step:
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(script_name=".colocated_launcher.sh")
 
-        if not isinstance(self.step_settings, RunSettings):
-            msg = "get_colocated_launch_script not implemented for this step type"
-            raise SmartSimError(msg)
-
-        db_settings = self.step_settings.colocated_db_settings or {}
+        db_settings: t.Dict[str, str] = {}
+        if isinstance(self.step_settings, RunSettings):
+            db_settings = self.step_settings.colocated_db_settings
 
         # db log file causes write contention and kills performance so by
         # default we turn off logging unless user specified debug=True
