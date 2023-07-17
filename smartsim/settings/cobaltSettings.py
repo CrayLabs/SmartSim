@@ -35,7 +35,7 @@ class CobaltBatchSettings(BatchSettings):
         time: str = "",
         queue: t.Optional[str] = None,
         account: t.Optional[str] = None,
-        batch_args: t.Optional[t.Dict[str, str]] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         **kwargs: t.Any,
     ) -> None:
         """Specify settings for a Cobalt ``qsub`` batch launch
@@ -91,7 +91,7 @@ class CobaltBatchSettings(BatchSettings):
         """
         # TODO catch existing "n" in batch_args
         if num_nodes:
-            self.batch_args["nodecount"] = int(num_nodes)
+            self.batch_args["nodecount"] = str(int(num_nodes))
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
@@ -115,7 +115,7 @@ class CobaltBatchSettings(BatchSettings):
         :param num_tasks: number of processes
         :type num_tasks: int
         """
-        self.batch_args["proccount"] = int(num_tasks)
+        self.batch_args["proccount"] = str(int(num_tasks))
 
     def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job

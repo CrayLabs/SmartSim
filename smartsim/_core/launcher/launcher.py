@@ -64,7 +64,7 @@ class Launcher(abc.ABC):  # pragma: no cover
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -117,7 +117,7 @@ class WLMLauncher(Launcher):  # cov-wlm
     def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
 
-    def run(self, step: Step) -> str:  # pragma: no cover
+    def run(self, step: Step) -> t.Optional[str]:  # pragma: no cover
         raise NotImplementedError
 
     def stop(self, step_name: str) -> StepInfo:  # pragma: no cover

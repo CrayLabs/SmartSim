@@ -431,6 +431,10 @@ Model
    Model.colocate_db
    Model.colocate_db_tcp
    Model.colocate_db_uds
+   Model.colocated
+   Model.add_ml_model
+   Model.add_script
+   Model.add_function
    Model.params_to_args
    Model.register_incoming_entity
    Model.enable_key_prefixing
@@ -451,12 +455,15 @@ Ensemble
 .. autosummary::
 
    Ensemble.__init__
-   Ensemble.models
    Ensemble.add_model
+   Ensemble.add_ml_model
+   Ensemble.add_script
+   Ensemble.add_function
    Ensemble.attach_generator_files
-   Ensemble.register_incoming_entity
    Ensemble.enable_key_prefixing
+   Ensemble.models
    Ensemble.query_key_prefixing
+   Ensemble.register_incoming_entity
 
 .. autoclass:: Ensemble
    :members:

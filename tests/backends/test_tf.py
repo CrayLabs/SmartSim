@@ -54,7 +54,7 @@ def test_keras_model(fileutils, mlutils, wlmutils):
     """This test needs two free nodes, 1 for the db and 1 for a keras model script
 
     this test can run on CPU/GPU by setting SMARTSIM_TEST_DEVICE=GPU
-    Similarly, the test can excute on any launcher by setting SMARTSIM_TEST_LAUNCHER
+    Similarly, the test can execute on any launcher by setting SMARTSIM_TEST_LAUNCHER
     which is local by default.
 
     You may need to put CUDNN in your LD_LIBRARY_PATH if running on GPU

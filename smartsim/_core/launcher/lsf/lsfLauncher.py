@@ -80,7 +80,7 @@ class LSFLauncher(WLMLauncher):
             RunSettings: LocalStep,
         }
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through LSF
 
         :param step: a job step instance
@@ -116,8 +116,6 @@ class LSFLauncher(WLMLauncher):
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
-        if not step_id:
-            raise ValueError("Unable to get step id for job step")
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
         return step_id

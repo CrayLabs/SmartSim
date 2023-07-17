@@ -79,6 +79,10 @@ from ..utils.helpers import expand_exe_path
 #  - CPU or GPU for model serving tests
 #  - Default: CPU
 #
+# SMARTSIM_TEST_NUM_GPUS
+#  - Number of GPUs on the host for testing
+#  - Defaults: 1
+#
 # SMARTSIM_TEST_ACCOUNT
 #  - Account used to run full launcher test suite on external systems
 #  - Default: None
@@ -144,11 +148,11 @@ class Config:
 
     @property
     def jm_interval(self) -> int:
-        return int(os.environ.get("SMARTSIM_JM_INTERVAL", 10))
+        return int(os.environ.get("SMARTSIM_JM_INTERVAL") or 10)
 
     @property
     def wlm_trials(self) -> int:
-        return int(os.environ.get("SMARTSIM_WLM_TRIALS", 10))
+        return int(os.environ.get("SMARTSIM_WLM_TRIALS") or 10)
 
     @property
     def test_launcher(self) -> str:  # pragma: no cover
@@ -157,6 +161,10 @@ class Config:
     @property
     def test_device(self) -> str:  # pragma: no cover
         return os.environ.get("SMARTSIM_TEST_DEVICE", "CPU")
+
+    @property
+    def test_num_gpus(self) -> int:  # pragma: no cover
+        return int(os.environ.get("SMARTSIM_TEST_NUM_GPUS") or 1)
 
     @property
     def test_port(self) -> int:  # pragma: no cover
@@ -180,7 +188,7 @@ class Config:
         elif "ib0" in net_if_addrs:
             return ["ib0"]
         # default to aries network
-        return ["ipogif0"]
+        return ["lo"]
 
     @property
     def test_account(self) -> t.Optional[str]:  # pragma: no cover

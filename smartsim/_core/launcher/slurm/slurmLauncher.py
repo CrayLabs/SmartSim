@@ -113,7 +113,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Failed to retrieve nodelist from stat")
         return node_lists
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through Slurm
 
         :param step: a job step instance
@@ -155,9 +155,6 @@ class SlurmLauncher(WLMLauncher):
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
-        
-        if not step_id:
-            raise ValueError("Unable to get step id for job step")
         
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
@@ -243,7 +240,7 @@ class SlurmLauncher(WLMLauncher):
             _rc = int(stat_tuple[1]) if stat_tuple[1] else None
             info = SlurmStepInfo(stat_tuple[0], _rc)
 
-            task_id = self.step_mapping.get_task_id(int(step_id))
+            task_id = self.step_mapping.get_task_id(step_id)
             if task_id:
                 # we still check the task manager for jobs that didn't ever
                 # become a fully managed job (e.g. error in slurm arguments)

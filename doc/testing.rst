@@ -25,11 +25,8 @@ level of the SmartSim directory::
 
 .. note::
 
-You must have the extra dev dependencies installed in 
-your python environment to execute tests.
-
-Install ``dev`` dependencies with ``pip``
-- Install smartsim with ``dev`` extension ``pip install -e .[dev]``
+  You must have the extra dev dependencies installed in your python environment to
+  execute tests. Install ``dev`` dependencies with ``pip install -e .[dev]``
 
 
 Test Suites
@@ -105,6 +102,8 @@ are a few other runtime test configuration options for SmartSim
  - ``SMARTSIM_TEST_LAUNCHER``: Workload manager of the system (local by default)
  - ``SMARTSIM_TEST_ACCOUNT``: Project account for allocations (used for customer systems mostly)
  - ``SMARTSIM_TEST_DEVICE``: ``cpu`` or ``gpu``
+ - ``SMARTSIM_TEST_NUM_GPUS``: the number of GPUs to use for model and script testing (defaults to 1)
+ - ``SMARTSIM_TEST_PORT``: the port to use for database communication (defaults to 6780)
  - ``SMARTSIM_TEST_INTERFACE``: network interface to use.
 
 For the ``SMARTSIM_TEST_INTERFACE``, the default is ``ipogif0`` which
@@ -164,85 +163,6 @@ for test directories and what not. See tests for examples.
 SmartRedis
 ==========
 
-Before building the tests, it is assumed that the base dependencies
-for SmartRedis described in the installation instructions have already
-been executed.
-
-Test Suites
------------
-
-There are two test suites for SmartRedis
-
-  - ``Integration``
-  - ``Unit``
-
-Both test suites are run together.
-
-Building and Running the Test Suites
-------------------------------------
-
-To build the tests, you first need to install the dependencies for
-testing. To download SmartRedis related testing dependencies, run
-the following:
-
-.. code:: bash
-
-  make test-deps
-  # or to run tests on GPU hardware:
-  make test-deps-gpu
-
-The test suite is currently written to be run on CPU hardware to
-test model and script executions.  Testing on GPU hardware
-currently requires modifications to the test suite.
-
-The tests require
-- GCC > 5
-- CMake > 3
-
-Since these are usually system libraries we do not install them
-for the user
-
-Setting up Test Environment and Redis
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-After installing dependencies and setting up your testing environment with
-``setup_test_env.sh``, all tests can be built with the following command:
-
-.. code:: bash
-
-  ./setup_test_env.sh
-  make build-tests
-
-Before running the tests, users will have to spin up a Redis
-cluster instance and set the ``SSDB`` environment variable.
-
-To spin up a local Redis cluster, use the script
-in ``utils/create_cluster`` as follows:
-
-.. code:: bash
-
-  cd path/to/smartredis          # navigate to the top level dir of smartredis
-  conda activate YOUR_CONDA_ENV  # activate python env with SmartRedis requirements
-  source setup_test_env.sh       # Setup smartredis environment
-  cd utils/create_cluster
-  python local_cluster.py        # spin up Redis cluster locally
-  export SSDB="127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381"  # Set database location
-
-A similar script ``utils/create_cluster/slurm_cluster.py``
-assists with launching a Redis cluster for testing on
-Slurm managed machines.  This script has only been tested
-on a Cray XC, and it may not be portable to all machines.
-
-Running the Tests
-~~~~~~~~~~~~~~~~~
-
-If you are running the tests in a new terminal from the
-one used to build the tests and run the Redis cluster,
-remember to load your python environment with SmartRedis
-dependencies, source the ``setup_test_env.sh`` file,
-and set the ``SSDB`` environment variable.
-
 To build and run all tests, run the following command in the top
 level of the smartredis repository.
 
@@ -250,30 +170,61 @@ level of the smartredis repository.
 
   make test
 
-You can also run tests for individual clients as follows::
+.. note::
 
-  test                           - Build and run all tests (C, C++, Fortran, Python)
-  test-verbose                   - Build and run all tests [verbosely]
-  test-c                         - Build and run all C tests
-  test-cpp                       - Build and run all C++ tests
-  unit-test-cpp                  - Build and run unit tests for C++
-  test-py                        - run python tests
-  test-fortran                   - run fortran tests
-  testpy-cov                     - run python tests with coverage
-  testcpp-cov                    - run cpp unit tests with coverage
+  The tests require:
+   - GCC >= 5
+   - CMake >= 3.13
 
-Tearing down the Test Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Since these are usually system libraries, we do not install them
+  for the user.
 
-To stop Redis, use the following commands
 
-.. code:: bash
+.. code-block:: bash
 
-  cd utils/create_cluster
-  python local_cluster.py --stop # stop the Redis cluster
+  make test-c         # run C tests
+  make test-fortran   # run Fortran tests. Implicitly, SR_FORTRAN=ON
+  make test-cpp       # run all C++ tests
+  make unit-test-cpp  # run unit tests for C++
+  make test-py        # run Python tests. Implicitly, SR_PYTHON=ON
+  make testpy-cov     # run python tests with coverage. Implicitly, SR_PYTHON=ON SR_BUILD=COVERAGE
+  make testcpp-cpv    # run cpp unit tests with coverage. Implicitly, SR_BUILD=COVERAGE
 
-The same works for the Slurm variant, but you can also just
-release the allocation which is easier.
+
+Customizing the Tests
+---------------------
+
+Several Make variables can adjust the manner in which tests are run:
+   - SR_BUILD: change the way that the SmartRedis library is built. (supported: Release, Debug, Coverage; default for testing is Debug)
+   - SR_FORTRAN: enable Fortran language build and testing (default is OFF)
+   - SR_PYTHON: enable Python language build and testing (default is OFF)
+   - SR_TEST_PORT: change the base port for Redis communication (default is 6379)
+   - SR_TEST_NODES: change the number of Redis shards used for testing (default is 3)
+   - SR_TEST_REDIS_MODE: change the type(s) of Redis servers used for testing. Supported is Clustered, Standalone, UDS; default is Clustered)
+   - SR_TEST_REDISAI_VER: change the version of RedisAI used for testing. (Default is v1.2.3; the parameter corresponds the the RedisAI gitHub branch name for the release)
+   - SR_TEST_DEVICE: change the type of device to test against. (Supported is cpu, gpu; default is cpu)
+   - SR_TEST_PYTEST_FLAGS: tweak flags sent to pytest when executing tests (default is -vv -s)
+
+These variables are all orthogonal. For example, to run tests for all languages against
+a standalone Redis server, execute the following command:
+
+.. code-block:: bash
+
+  make test SR_FORTRAN=ON SR_PYTHON=ON SR_TEST_REDIS_MODE=Standalone
+
+Similarly, it is possible to run the tests against each type of Redis server in sequence
+(all tests against a standalone Redis server, then all tests against a Clustered server,
+then all tests against a standalone server with a Unix domain socket connection) via the
+following command:
+
+.. code-block:: bash
+
+  make test SR_FORTRAN=ON SR_PYTHON=ON SR_TEST_REDIS_MODE=All
+
+.. note::
+
+  Unix domain socket connections are not supported on MacOS. If the SmartRedis test
+  system detects that it is running on MacOS, it will automatically skip UDS testing.
 
 Writing Tests for SmartRedis
 ----------------------------
@@ -284,7 +235,7 @@ to SmartSim.
  - Place tests for each client in their language directory (i.e. tests for C client in ``SmartRedis/tests/c``)
  - All test files start with ``test_``
  - All test functions start with ``test_``
- - Function name should signal whats being tested
+ - Function name should signal what's being tested
 
 Writing Integration Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~

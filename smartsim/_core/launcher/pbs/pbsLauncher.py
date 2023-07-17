@@ -76,7 +76,7 @@ class PBSLauncher(WLMLauncher):
             PalsMpiexecSettings: MpiexecStep,
         }
 
-    def run(self, step: Step) -> str:
+    def run(self, step: Step) -> t.Optional[str]:
         """Run a job step through PBSPro
 
         :param step: a job step instance
@@ -111,9 +111,6 @@ class PBSLauncher(WLMLauncher):
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_pbs_step_id(step)
-        
-        if not step_id:
-            raise ValueError("Unable to get step id for job step")
         
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 

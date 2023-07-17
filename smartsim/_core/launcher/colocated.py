@@ -70,11 +70,8 @@ def write_colocated_launch_script(file_name: str, db_log: str, colocated_setting
         f.write(f"{colocated_cmd}\n")
         f.write(f"DBPID=$!\n\n")
 
-        if colocated_settings["limit_app_cpus"]:
-            cpus = colocated_settings["cpus"]
-            f.write(f"taskset -c 0-$(nproc --ignore={str(cpus+1)}) $@\n\n")
-        else:
-            f.write(f"$@\n\n")
+        # Write the actual launch command for the app
+        f.write(f"$@\n\n")
 
 
 def _build_colocated_wrapper_cmd(
@@ -84,12 +81,13 @@ def _build_colocated_wrapper_cmd(
     extra_db_args: t.Optional[t.Dict[str, str]] = None,
     port: int = 6780,
     ifname: t.Optional[t.Union[str, t.List[str]]] = None,
+    custom_pinning: t.Optional[str] = None,
     **kwargs: t.Any,
 ) -> str:
     """Build the command use to run a colocated DB application
 
     :param db_log: log file for the db
-    :type db_log: str    
+    :type db_log: str
     :param cpus: db cpus, defaults to 1
     :type cpus: int, optional
     :param rai_args: redisai args, defaults to None
@@ -100,6 +98,8 @@ def _build_colocated_wrapper_cmd(
     :type port: int
     :param ifname: network interface(s) to bind DB to
     :type ifname: str | list[str], optional
+    :param db_cpu_list: The list of CPUs that the database should be limited to
+    :type db_cpu_list: str, optional
     :return: the command to run
     :rtype: str
     """
@@ -114,15 +114,16 @@ def _build_colocated_wrapper_cmd(
     # create the command that will be used to launch the
     # database with the python entrypoint for starting
     # up the backgrounded db process
+
     cmd = [
-        sys.executable,
-        "-m",
-        "smartsim._core.entrypoints.colocated",
-        "+lockfile",
-        lockfile,
-        "+db_cpus",
-        str(cpus),
-    ]
+            sys.executable,
+            "-m",
+            "smartsim._core.entrypoints.colocated",
+            "+lockfile",
+            lockfile,
+            "+db_cpus",
+            str(cpus),
+        ]
     # Add in the interface if using TCP/IP
     if ifname:
         if isinstance(ifname, str):
@@ -130,7 +131,20 @@ def _build_colocated_wrapper_cmd(
         cmd.extend(["+ifname", ",".join(ifname)])
     cmd.append("+command")
     # collect DB binaries and libraries from the config
-    db_cmd = [CONFIG.database_exe, CONFIG.database_conf, "--loadmodule", CONFIG.redisai]
+
+    db_cmd = []
+    if custom_pinning:
+        db_cmd.extend([
+            'taskset', '-c', custom_pinning
+        ])
+    db_cmd.extend(
+        [
+            CONFIG.database_exe,
+            CONFIG.database_conf,
+            "--loadmodule",
+            CONFIG.redisai
+        ]
+    )
 
     # add extra redisAI configurations
     for arg, value in (rai_args or {}).items():
