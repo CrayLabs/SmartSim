@@ -154,7 +154,7 @@ class Ensemble(EntityList):
             else:
                 raise SmartSimError(
                     "Ensembles without 'params' or 'replicas' argument to "
-                    + "expand into members cannot be given run settings"
+                    "expand into members cannot be given run settings"
                 )
         else:
             if self.run_settings:
@@ -175,7 +175,7 @@ class Ensemble(EntityList):
                 else:
                     raise SmartSimError(
                         "Ensembles without 'params' or 'replicas' argument to "
-                        + "expand into members cannot be given run settings"
+                        "expand into members cannot be given run settings"
                     )
             # if no params, no run settings and no batch settings, error because we
             # don't know how to run the ensemble
