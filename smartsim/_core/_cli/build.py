@@ -229,8 +229,10 @@ def build_redis_ai(
     if tf and libtf_dir:
         libtf_dir = Path(libtf_dir).resolve()
 
+    build_env_dict = build_env()
+
     rai_builder = builder.RedisAIBuilder(
-        build_env=build_env(),
+        build_env=build_env_dict,
         torch_dir=str(torch_dir) if torch_dir else "",
         libtf_dir=str(libtf_dir) if libtf_dir else "",
         build_torch=torch,
@@ -245,8 +247,6 @@ def build_redis_ai(
     else:
         # get the build environment, update with CUDNN env vars
         # if present and building for GPU, otherwise warn the user
-        build_env = build_env()  # type: ignore
-
         if device == "gpu":
             gpu_env = build_env.get_cudnn_env()
             cudnn_env_vars = [
@@ -261,9 +261,9 @@ def build_redis_ai(
                     f"Looked for {cudnn_env_vars}"
                 )
             else:
-                build_env.update(gpu_env)  # type: ignore
+                build_env_dict.update(gpu_env)
         # update RAI build env with cudnn env vars
-        rai_builder.env = build_env  # type: ignore
+        rai_builder.env = build_env_dict
 
         logger.info(
             f"Building RedisAI version {versions.REDISAI}"
