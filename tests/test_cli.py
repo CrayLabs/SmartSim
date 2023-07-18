@@ -25,15 +25,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import pytest
-import smartsim
 import typing as t
-from smartsim._core._cli import cli, build
-from smartsim._core._cli.utils import MenuItemConfig
-from smartsim._core._cli.site import execute as site_execute
+
+import pytest
+
+import smartsim
+from smartsim._core._cli import build, cli
+from smartsim._core._cli.build import configure_parser as build_parser
+from smartsim._core._cli.build import execute as build_execute
+from smartsim._core._cli.clean import configure_parser as clean_parser
+from smartsim._core._cli.clean import execute as clean_execute
+from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
-from smartsim._core._cli.build import configure_parser as build_parser, execute as build_execute
-from smartsim._core._cli.clean import configure_parser as clean_parser, execute as clean_execute, execute_all as clobber_execute
+from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.utils import MenuItemConfig
+
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
