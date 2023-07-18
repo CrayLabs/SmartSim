@@ -49,10 +49,12 @@ class SmartCli:
         self.parser = parser
         self.args: t.Optional[argparse.Namespace] = None
 
-        subparsers = parser.add_subparsers(dest="command",
-                                           required=True,
-                                           metavar="<command>",
-                                           help="Available commands")
+        subparsers = parser.add_subparsers(
+            dest="command",
+            required=True,
+            metavar="<command>",
+            help="Available commands",
+        )
 
         for cmd, item in self.menu.items():
             p = subparsers.add_parser(cmd, description=item.help, help=item.help)
@@ -79,28 +81,33 @@ class SmartCli:
 
 
 def default_cli() -> SmartCli:
-    build = MenuItemConfig("build",
-                           "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-                           build_execute,
-                           build_parser)
-    
-    cleanx = MenuItemConfig("clean",
-                            "Remove previous ML runtime installation",
-                            clean_execute,
-                            clean_parser)
-    
-    dbcli = MenuItemConfig("dbcli",
-                           "Print the path to the redis-cli binary",
-                           dbcli_execute)
-    
-    site = MenuItemConfig("site",
-                          "Print the installation site of SmartSim",
-                          site_execute)
-    
-    clobber = MenuItemConfig("clobber",
-                             "Remove all previous dependency installations",
-                             clobber_execute)
-    
-    menu = [build, cleanx, dbcli, site, clobber]
-    smart_cli = SmartCli(menu)
-    return smart_cli
+    menu = [
+        MenuItemConfig(
+            "build",
+            "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
+            build_execute,
+            build_parser,
+        ),
+        MenuItemConfig(
+            "clean",
+            "Remove previous ML runtime installation",
+            clean_execute,
+            clean_parser,
+        ),
+        MenuItemConfig(
+            "dbcli", 
+            "Print the path to the redis-cli binary", 
+            dbcli_execute
+        ),
+        MenuItemConfig(
+            "site", 
+            "Print the installation site of SmartSim", 
+            site_execute),
+        MenuItemConfig(
+            "clobber", 
+            "Remove all previous dependency installations", 
+            clobber_execute
+        ),
+    ]
+
+    return SmartCli(menu)

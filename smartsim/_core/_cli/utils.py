@@ -58,7 +58,9 @@ def color_bool(trigger: bool = True) -> str:
     return colorize(str(trigger), color=_color)
 
 
-def pip_install(packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False) -> None:
+def pip_install(
+    packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False
+) -> None:
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
@@ -138,11 +140,13 @@ CliHandler = t.Callable[[Namespace], int]
 CliParseConfigurator = t.Callable[[ArgumentParser], None]
 
 class MenuItemConfig:
-    def __init__(self,
-                 cmd: str,
-                 help: str,
-                 handler: CliHandler,
-                 configurator: t.Optional[CliParseConfigurator] = None):
+    def __init__(
+        self,
+        cmd: str,
+        help: str,
+        handler: _CliHandler,
+        configurator: t.Optional[_CliParseConfigurator] = None,
+    ):
         self.command = cmd
         self.help = help
         self.handler = handler

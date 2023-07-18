@@ -50,7 +50,9 @@ logger = get_logger("Smart", fmt=smart_logger_format)
 #       may be installed into a different directory.
 
 
-def _install_torch_from_pip(versions: Versioner, device: str = "cpu", verbose: bool = False) -> None:
+def _install_torch_from_pip(
+    versions: Versioner, device: str = "cpu", verbose: bool = False
+) -> None:
 
     packages = []
     end_point = None
@@ -98,9 +100,7 @@ def check_onnx_install(build_env: BuildEnv, versions: Versioner) -> None:
             )
             logger.warning(msg)
         else:
-            logger.info(
-                f"ONNX {versions.ONNX} installed in Python environment"
-            )
+            logger.info(f"ONNX {versions.ONNX} installed in Python environment")
     except SetupError as e:
         logger.warning(str(e))
 
@@ -109,9 +109,7 @@ def check_tf_install(build_env: BuildEnv, versions: Versioner) -> None:
     """Check Python environment for TensorFlow installation"""
 
     try:
-        if not build_env.check_installed(
-            "tensorflow", versions.TENSORFLOW
-        ):
+        if not build_env.check_installed("tensorflow", versions.TENSORFLOW):
             msg = (
                 f"TensorFlow {versions.TENSORFLOW} not installed in Python environment. "
                 + f"Consider installing tensorflow=={versions.TENSORFLOW} with pip"
@@ -134,8 +132,8 @@ def check_backends_install() -> bool:
     rai_path = os.environ.get("RAI_PATH", "")
     installed = installed_redisai_backends()
     msg = ""
-    
-    if rai_path and installed:    
+
+    if rai_path and installed:
         msg = f"There is no need to build. ackends are already built and "
         msg += f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
     elif rai_path and not installed:
@@ -146,11 +144,13 @@ def check_backends_install() -> bool:
 
     if msg:
         logger.error(msg)
-    
+
     return not bool(msg)
 
 
-def build_database(build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool) -> None:
+def build_database(
+    build_env: BuildEnv, versions: Versioner, keydb: bool, verbose: bool
+) -> None:
     # check database installation
     database_name = "KeyDB" if keydb else "Redis"
     database_builder = builder.DatabaseBuilder(
@@ -160,9 +160,7 @@ def build_database(build_env: BuildEnv, versions: Versioner, keydb: bool, verbos
         logger.info(
             f"Building {database_name} version {versions.REDIS} from {versions.REDIS_URL}"
         )
-        database_builder.build_from_git(
-            versions.REDIS_URL, versions.REDIS_BRANCH
-        )
+        database_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
@@ -241,7 +239,7 @@ def build_redis_ai(
     else:
         # get the build environment, update with CUDNN env vars
         # if present and building for GPU, otherwise warn the user
-        build_env = build_env() # type: ignore
+        build_env = build_env()  # type: ignore
 
         if device == "gpu":
             gpu_env = build_env.get_cudnn_env()
@@ -259,7 +257,7 @@ def build_redis_ai(
             else:
                 build_env.update(gpu_env)  # type: ignore
         # update RAI build env with cudnn env vars
-        rai_builder.env = build_env # type: ignore
+        rai_builder.env = build_env  # type: ignore
 
         logger.info(
             f"Building RedisAI version {versions.REDISAI}"
@@ -282,7 +280,9 @@ def infer_torch_device() -> str:
     return device
 
 
-def install_torch(build_env: BuildEnv, versions: Versioner, device: str = "cpu", verbose: bool = False) -> None:
+def install_torch(
+    build_env: BuildEnv, versions: Versioner, device: str = "cpu", verbose: bool = False
+) -> None:
     """Torch shared libraries installed by pip are used in the build
     for SmartSim backends so we download them here.
     """
@@ -337,14 +337,11 @@ def execute(args: argparse.Namespace) -> int:
             logger.info("Only installing Python packages...skipping build")
             # build_env = BuildEnv(checks=False)
             if pt:
-                install_torch(build_env, 
-                                versions, 
-                                device=device, 
-                                verbose=verbose)
+                install_torch(build_env, versions, device=device, verbose=verbose)
         else:
             logger.info("Checking for build tools...")
             # build_env = BuildEnv()
-            
+
             if verbose:
                 logger.info("Build Environment:")
                 env = build_env.as_dict()
