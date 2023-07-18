@@ -267,8 +267,8 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
 class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     @property
     def mapping(self) -> t.Dict[str, str]:
-        # see https://www.ibm.com
-        # /docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
+        # pylint: disable=line-too-long
+        # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
             "Killed": STATUS_COMPLETED,
             "Running": STATUS_RUNNING,
