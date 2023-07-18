@@ -134,13 +134,20 @@ def check_backends_install() -> bool:
     msg = ""
 
     if rai_path and installed:
-        msg = f"There is no need to build. ackends are already built and "
-        msg += f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
+        msg = (
+            f"There is no need to build. backends are already built and "
+            f"specified in the environment at 'RAI_PATH': {CONFIG.redisai}"
+        )
     elif rai_path and not installed:
-        msg = f"Before running 'smart build', unset your RAI_PATH environment variable with 'unset RAI_PATH'."
+        msg = (
+            "Before running 'smart build', unset your RAI_PATH environment "
+            "variable with 'unset RAI_PATH'."
+        )
     elif not rai_path and installed:
-        msg = "If you wish to re-run `smart build`, you must first run `smart clean`."
-        msg += " The following backend(s) must be removed: " + ", ".join(installed)
+        msg = (
+            "If you wish to re-run `smart build`, you must first run `smart clean`."
+            " The following backend(s) must be removed: " + ", ".join(installed)
+        )
 
     if msg:
         logger.error(msg)
@@ -251,8 +258,8 @@ def build_redis_ai(
             ]
             if not gpu_env:
                 logger.warning(
-                    f"CUDNN environment variables not found.\n"
-                    + f"Looked for {cudnn_env_vars}"
+                    "CUDNN environment variables not found.\n"
+                    f"Looked for {cudnn_env_vars}"
                 )
             else:
                 build_env.update(gpu_env)  # type: ignore
@@ -326,7 +333,8 @@ def execute(args: argparse.Namespace) -> int:
     tf = not args.no_tf
     onnx = args.onnx
 
-    build_env = BuildEnv(checks=False) if args.only_python_packages else BuildEnv()
+    do_checks = not args.only_python_packages
+    build_env = BuildEnv(checks=do_checks)
     logger.info("Running SmartSim build process...")
 
     try:
@@ -335,12 +343,10 @@ def execute(args: argparse.Namespace) -> int:
 
         if args.only_python_packages:
             logger.info("Only installing Python packages...skipping build")
-            # build_env = BuildEnv(checks=False)
             if pt:
                 install_torch(build_env, versions, device=device, verbose=verbose)
         else:
             logger.info("Checking for build tools...")
-            # build_env = BuildEnv()
 
             if verbose:
                 logger.info("Build Environment:")

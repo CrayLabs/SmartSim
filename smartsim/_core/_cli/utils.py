@@ -136,8 +136,9 @@ def get_db_path() -> t.Optional[Path]:
     return None
 
 
-CliHandler = t.Callable[[Namespace], int]
-CliParseConfigurator = t.Callable[[ArgumentParser], None]
+_CliHandler = t.Callable[[Namespace], int]
+_CliParseConfigurator = t.Callable[[ArgumentParser], None]
+
 
 class MenuItemConfig:
     def __init__(
@@ -151,36 +152,3 @@ class MenuItemConfig:
         self.help = help
         self.handler = handler
         self.configurator = configurator
-
-    @property
-    def command(self) -> str:
-        return self._cmd
-
-    @command.setter
-    def command(self, value: str) -> None:
-        self._cmd = value
-
-    @property
-    def help(self) -> str:
-        return self._help
-
-    @help.setter
-    def help(self, value: str) -> None:
-        self._help = value
-
-    @property
-    def handler(self) -> CliHandler:
-        return self._handler
-
-    @handler.setter
-    def handler(self, value: CliHandler) -> None:
-        self._handler = value    
-
-    @property
-    def configurator(self) -> t.Optional[CliParseConfigurator]:
-        return self._config
-
-    @configurator.setter
-    def configurator(self, value: t.Optional[CliParseConfigurator]) -> None:
-        self._config = value
-    

@@ -407,7 +407,7 @@ def test_cli_optional_args(capsys,
         assert ret_val == 0  # is the retval is non-failure code?
         
         # is the value from the optional argument set in the parsed args?
-        assert smart_cli.parsed_args.__dict__[check_prop] == exp_prop_val
+        assert smart_cli.args.__dict__[check_prop] == exp_prop_val
     else:
         with pytest.raises(SystemExit) as e:
             ret_val = smart_cli.execute(build_args)

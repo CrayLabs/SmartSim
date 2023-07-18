@@ -75,10 +75,6 @@ class SmartCli:
 
         return menu_item.handler(self.args)
 
-    @property
-    def parsed_args(self) -> t.Optional[argparse.Namespace]:
-        return self.args
-
 
 def default_cli() -> SmartCli:
     menu = [
