@@ -79,8 +79,8 @@ def _detect_command(launcher: str) -> str:
                 return cmd
     msg = (
         "Could not automatically detect a run command to use for launcher "
-        + f"{launcher}\nSearched for and could not find the following "
-        + f"commands: {by_launcher[launcher]}"
+        f"{launcher}\nSearched for and could not find the following "
+        f"commands: {by_launcher[launcher]}"
     )
     raise SmartSimError(msg)
 
