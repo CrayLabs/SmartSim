@@ -96,7 +96,7 @@ def check_onnx_install(build_env: BuildEnv, versions: Versioner) -> None:
         if not build_env.check_installed("onnx", versions.ONNX):
             msg = (
                 f"ONNX {versions.ONNX} not installed in python environment. "
-                + f"Consider installing onnx=={versions.ONNX} with pip"
+                f"Consider installing onnx=={versions.ONNX} with pip"
             )
             logger.warning(msg)
         else:
@@ -112,7 +112,7 @@ def check_tf_install(build_env: BuildEnv, versions: Versioner) -> None:
         if not build_env.check_installed("tensorflow", versions.TENSORFLOW):
             msg = (
                 f"TensorFlow {versions.TENSORFLOW} not installed in Python environment. "
-                + f"Consider installing tensorflow=={versions.TENSORFLOW} with pip"
+                f"Consider installing tensorflow=={versions.TENSORFLOW} with pip"
             )
             logger.warning(msg)
         else:
@@ -307,8 +307,9 @@ def install_torch(
             # if torch version is x.x.x+cpu
             if "cpu" in installed.patch:
                 msg = (
-                    "Torch CPU is currently installed but torch GPU requested. Uninstall all torch packages "
-                    + "and run the `smart build` command again to obtain Torch GPU libraries"
+                    "Torch CPU is currently installed but torch GPU requested. "
+                    "Uninstall all torch packages and run the `smart build` command "
+                    "again to obtain Torch GPU libraries"
                 )
                 logger.warning(msg)
 
@@ -316,8 +317,8 @@ def install_torch(
             # if torch version if x.x.x then we need to install the cpu version
             if "cpu" not in installed.patch and not build_env.is_macos():
                 msg = (
-                    "Torch GPU installed in python environment but requested Torch CPU. "
-                    + " Run `pip uninstall torch torchvision` and run `smart build` again"
+                    "Torch GPU installed in python environment but requested Torch CPU."
+                    " Run `pip uninstall torch torchvision` and run `smart build` again"
                 )
                 logger.error(msg)  # error because this is usually fatal
         logger.info(f"Torch {versions.TORCH} installed in Python environment")
