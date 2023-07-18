@@ -84,7 +84,7 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        self.batch_settings.format_alloc_flags()
+        self.batch_settings._format_alloc_flags()  # pylint: disable=protected-access
 
         opts = self.batch_settings.format_batch_args()
 

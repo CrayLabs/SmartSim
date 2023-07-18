@@ -94,7 +94,8 @@ class SbatchStep(Step):
             for opt in self.batch_settings.format_batch_args():
                 script_file.write(f"#SBATCH {opt}\n")
 
-            for cmd in self.batch_settings.preamble:
+            # pylint: disable-next=protected-access
+            for cmd in self.batch_settings._preamble:
                 script_file.write(f"{cmd}\n")
 
             for i, cmd in enumerate(self.step_cmds):
@@ -163,7 +164,8 @@ class SrunStep(Step):
             srun_cmd += [bash, launch_script_path]
 
         if self.run_settings.container:
-            srun_cmd += self.run_settings.container.container_cmds(self.cwd)
+            # pylint: disable-next=protected-access
+            srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         if compound_env:
             srun_cmd = ["env"] + list(compound_env) + srun_cmd

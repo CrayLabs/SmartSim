@@ -90,7 +90,8 @@ class QsubBatchStep(Step):
             for opt in self.batch_settings.format_batch_args():
                 script_file.write(f"#PBS {opt}\n")
 
-            for cmd in self.batch_settings.preamble:
+            # pylint: disable-next=protected-access
+            for cmd in self.batch_settings._preamble:
                 script_file.write(f"{cmd}\n")
 
             for i, cmd in enumerate(self.step_cmds):

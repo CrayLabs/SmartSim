@@ -185,10 +185,10 @@ def test_preamble():
     )
 
     bsub.add_preamble(["single line"])
-    assert len(bsub.preamble) == 1
+    assert len(bsub._preamble) == 1
 
     bsub.add_preamble(["another line"])
-    assert len(bsub.preamble) == 2
+    assert len(bsub._preamble) == 2
 
     bsub.add_preamble(["first line", "last line"])
-    assert len(bsub.preamble) == 4
+    assert len(bsub._preamble) == 4

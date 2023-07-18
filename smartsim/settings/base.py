@@ -585,7 +585,7 @@ class BatchSettings(SettingsBase):
     ) -> None:
         self._batch_cmd = batch_cmd
         self.batch_args = batch_args or {}
-        self.preamble: t.List[str] = []
+        self._preamble: t.List[str] = []
         self.set_nodes(kwargs.get("nodes", None))
         self.set_walltime(kwargs.get("time", None))
         self.set_queue(kwargs.get("queue", None))
@@ -651,9 +651,9 @@ class BatchSettings(SettingsBase):
         :type line: str or list[str]
         """
         if isinstance(lines, str):
-            self.preamble += [lines]
+            self._preamble += [lines]
         elif isinstance(lines, list):
-            self.preamble += lines
+            self._preamble += lines
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 

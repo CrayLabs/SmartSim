@@ -109,7 +109,7 @@ class Singularity(Container):
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
 
-    def container_cmds(self, default_working_directory: str = "") -> t.List[str]:
+    def _container_cmds(self, default_working_directory: str = "") -> t.List[str]:
         """Return list of container commands to be inserted before exe.
             Container members are validated during this call.
 

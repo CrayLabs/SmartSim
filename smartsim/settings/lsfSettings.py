@@ -353,7 +353,7 @@ class JsrunSettings(RunSettings):
             string += "\nERF settings: " + pformat(self.erf_sets)
         return string
 
-    def prep_colocated_db(self, db_cpus: int) -> None:
+    def _prep_colocated_db(self, db_cpus: int) -> None:
         cpus_per_flag_set = False
         for cpu_per_rs_flag in ["cpu_per_rs", "c"]:
             if run_arg_value := self.run_args.get(cpu_per_rs_flag, 0):
@@ -545,7 +545,7 @@ class BsubBatchSettings(BatchSettings):
         if queue:
             self.batch_args["q"] = queue
 
-    def format_alloc_flags(self) -> None:
+    def _format_alloc_flags(self) -> None:
         """Format ``alloc_flags`` checking if user already
         set it. Currently only adds SMT flag if missing
         and ``self.smts`` is set.
@@ -579,7 +579,7 @@ class BsubBatchSettings(BatchSettings):
         """
         opts = []
 
-        self.format_alloc_flags()
+        self._format_alloc_flags()
 
         for opt, value in self.batch_args.items():
             if self.expert_mode and opt in self.easy_settings:

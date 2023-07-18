@@ -81,7 +81,8 @@ class AprunStep(Step):
             aprun_cmd.extend([bash, launch_script_path])
 
         if self.run_settings.container:
-            aprun_cmd += self.run_settings.container.container_cmds(self.cwd)
+            # pylint: disable-next=protected-access
+            aprun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         aprun_cmd += self._build_exe()
 
