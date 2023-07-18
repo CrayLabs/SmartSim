@@ -104,16 +104,14 @@ class LocalLauncher(Launcher):
             self.task_manager.start()
 
         out, err = step.get_output_files()
-        output = open(out, "w+")
-        error = open(err, "w+")
-        cmd = step.get_launch_cmd()
-
-        env = {}
-        if isinstance(step, LocalStep):
-            env = step.env
+        # pylint: disable-next=consider-using-with
+        output = open(out, "w+", encoding="utf-8")
+        # pylint: disable-next=consider-using-with
+        error = open(err, "w+", encoding="utf-8")
+        cmd_list = step.get_launch_cmd()
 
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=env, out=output.fileno(), err=error.fileno()
+            cmd_list, cwd=step.cwd, env=step.env, out=output.fileno(), err=error.fileno()
         )
         self.step_mapping.add(step.name, task_id=task_id, managed=False)
         return task_id

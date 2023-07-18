@@ -24,14 +24,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import functools
 import os
 from shutil import which
 from subprocess import run
 import typing as t
 
-from ..error import SSUnsupportedError
+from .._core.utils.helpers import is_valid_cmd
+from ..error import SSUnsupportedError, SmartSimError
 from . import pbs as _pbs
 from . import slurm as _slurm
+
+
+by_launcher: t.Dict[str, t.List[str]] = {
+    "slurm": ["srun", "mpirun", "mpiexec"],
+    "pbs": ["aprun", "mpirun", "mpiexec"],
+    "cobalt": ["aprun", "mpirun", "mpiexec"],
+    "lsf": ["jsrun"],
+    "local": [""],
+}
 
 
 def detect_launcher() -> str:
@@ -72,6 +83,28 @@ def detect_launcher() -> str:
     if "PBS_JOBID" in os.environ:
         return "pbs"
     return "local"
+
+
+@functools.lru_cache
+def detect_command(launcher: str) -> str:
+    command_set = by_launcher.get(launcher, [])
+    if command_set is not None:
+        if launcher == "local":
+            return command_set[0]
+
+        for cmd in command_set:
+            if is_valid_cmd(cmd):
+                return cmd
+    msg = (
+        f"Could not automatically detect a run command to use for launcher {launcher}"
+        f"\nSearched for and could not find the following commands: {command_set}"
+    )
+    raise SmartSimError(msg)
+
+
+@functools.lru_cache
+def get_command_set(launcher: str) -> t.List[str]:
+    return by_launcher.get(launcher, [])
 
 
 def get_hosts(launcher: t.Optional[str] = None) -> t.List[str]:

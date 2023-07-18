@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import shutil
 import typing as t
 
@@ -35,7 +34,6 @@ from ....settings.base import RunSettings
 class LocalStep(Step):
     def __init__(self, name: str, cwd: str, run_settings: RunSettings):
         super().__init__(name, cwd, run_settings)
-        self.env = self._set_env()
 
     @property
     def run_settings(self) -> RunSettings:
@@ -68,10 +66,3 @@ class LocalStep(Step):
         if self.run_settings.exe_args:
             cmd.extend(self.run_settings.exe_args)
         return cmd
-
-    def _set_env(self) -> t.Dict[str, str]:
-        env = os.environ.copy()
-        if self.run_settings.env_vars:
-            for k, v in self.run_settings.env_vars.items():
-                env[k] = v
-        return env

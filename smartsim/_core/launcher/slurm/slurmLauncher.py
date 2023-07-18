@@ -138,7 +138,7 @@ class SlurmLauncher(WLMLauncher):
         step_id = None
         task_id = None
 
-        # Launch a batch step with Slurm
+        # Launch an in-allocation or on-allocation (if srun) command
         if isinstance(step, SbatchStep):
             # wait for batch step to submit successfully
             return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
@@ -147,19 +147,23 @@ class SlurmLauncher(WLMLauncher):
             if out:
                 step_id = out.strip()
                 logger.debug(f"Gleaned batch job id: {step_id} for {step.name}")
-
-        # Launch a in-allocation or on-allocation (if srun) command
+        elif isinstance(step, SrunStep):
+            task_id = self.task_manager.start_task(cmd_list, step.cwd)
         else:
-            if isinstance(step, SrunStep):
-                task_id = self.task_manager.start_task(cmd_list, step.cwd)
-            else:
-                # Mpirun doesn't direct output for us like srun does
-                out, err = step.get_output_files()
-                output = open(out, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
-                error = open(err, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
-                task_id = self.task_manager.start_task(
-                    cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
-                )
+            # Mpirun doesn't direct output for us like srun does
+            out, err = step.get_output_files()
+            # pylint: disable-next=consider-using-with
+            output = open(out, "w+", encoding="utf-8")
+            # pylint: disable-next=consider-using-with
+            error = open(err, "w+", encoding="utf-8")
+
+            task_id = self.task_manager.start_task(
+                cmd_list,
+                cwd=step.cwd,
+                env=step.env,
+                out=output.fileno(),
+                err=error.fileno()
+            )
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)

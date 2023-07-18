@@ -339,6 +339,10 @@ class MpiexecSettings(_BaseMPISettings):
         """
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
+        self._check_mpiexec_support()
+
+    def _check_mpiexec_support(self) -> None:
+        """Invoke mpiexec to determine the executable source"""
         completed_process = subprocess.run(
             [self._run_command, "--help"], capture_output=True, check=False
         )

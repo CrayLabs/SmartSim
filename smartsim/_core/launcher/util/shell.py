@@ -95,7 +95,7 @@ def execute_cmd(
 def execute_async_cmd(
     cmd_list: t.List[str],
     cwd: str,
-    env: t.Optional[t.Dict[str, str]] = None,
+    env: t.Optional[t.Dict[str, t.Optional[str]]] = None,
     out: int = PIPE,
     err: int = PIPE,
 ) -> psutil.Popen:

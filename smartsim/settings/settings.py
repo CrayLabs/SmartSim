@@ -26,9 +26,7 @@
 
 import typing as t
 
-from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
-from ..wlm import detect_launcher
 from ..settings import (
     base,
     CobaltBatchSettings,
@@ -44,6 +42,7 @@ from ..settings import (
     OrterunSettings,
     JsrunSettings,
 )
+from ..wlm import detect_launcher, detect_command
 
 
 def create_batch_settings(
@@ -153,33 +152,8 @@ def create_run_settings(
         "jsrun": JsrunSettings,
     }
 
-    # run commands supported by each launcher
-    # in order of suspected user preference
-    by_launcher = {
-        "slurm": ["srun", "mpirun", "mpiexec"],
-        "pbs": ["aprun", "mpirun", "mpiexec"],
-        "cobalt": ["aprun", "mpirun", "mpiexec"],
-        "lsf": ["jsrun", "mpirun", "mpiexec"],
-        "local": [""],
-    }
-
     if launcher == "auto":
         launcher = detect_launcher()
-
-    def _detect_command(launcher: str) -> str:
-        if launcher in by_launcher:
-            if launcher == "local":
-                return ""
-
-            for cmd in by_launcher[launcher]:
-                if is_valid_cmd(cmd):
-                    return cmd
-        msg = (
-            "Could not automatically detect a run command to use for launcher "
-            f"{launcher}\nSearched for and could not find the following "
-            f"commands: {by_launcher[launcher]}"
-        )
-        raise SmartSimError(msg)
 
     if run_command:
         run_command = run_command.lower()
@@ -188,7 +162,7 @@ def create_run_settings(
     # detect run_command automatically for all but local launcher
     if run_command == "auto":
         # no auto detection for local, revert to false
-        run_command = _detect_command(launcher)
+        run_command = detect_command(launcher)
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:

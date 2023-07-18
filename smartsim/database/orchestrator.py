@@ -23,6 +23,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import itertools
 import psutil
 import sys
@@ -36,7 +37,6 @@ from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import db_is_active
-from .._core.utils.helpers import is_valid_cmd
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
@@ -56,33 +56,10 @@ from ..settings import (
     SrunSettings,
 )
 from ..settings.settings import create_batch_settings, create_run_settings
-from ..wlm import detect_launcher
+from ..wlm import detect_launcher, detect_command, get_command_set
+
 
 logger = get_logger(__name__)
-
-
-by_launcher: t.Dict[str, t.List[str]] = {
-    "slurm": ["srun", "mpirun", "mpiexec"],
-    "pbs": ["aprun", "mpirun", "mpiexec"],
-    "cobalt": ["aprun", "mpirun", "mpiexec"],
-    "lsf": ["jsrun"],
-    "local": [""],
-}
-
-
-def _detect_command(launcher: str) -> str:
-    if launcher in by_launcher:
-        for cmd in by_launcher[launcher]:
-            if launcher == "local":
-                return cmd
-            if is_valid_cmd(cmd):
-                return cmd
-    msg = (
-        "Could not automatically detect a run command to use for launcher "
-        f"{launcher}\nSearched for and could not find the following "
-        f"commands: {by_launcher[launcher]}"
-    )
-    raise SmartSimError(msg)
 
 
 def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
@@ -91,18 +68,19 @@ def _autodetect(launcher: str, run_command: str) -> t.Tuple[str, str]:
         launcher = detect_launcher()
 
     if run_command == "auto":
-        run_command = _detect_command(launcher)
+        run_command = detect_command(launcher)
 
     return launcher, run_command
 
 
 def _check_run_command(launcher: str, run_command: str) -> None:
     """Check that the run command is supported by the launcher"""
-    if run_command not in by_launcher[launcher]:
+    commands = get_command_set(launcher)
+    if run_command not in commands:
         msg = (
             f"Run command {run_command} is not supported on launcher {launcher}\n"
-            + "Supported run commands for the given launcher are: "
-            + f"{by_launcher[launcher]}"
+            "Supported run commands for the given launcher are: "
+            ", ".join(commands)
         )
         raise SmartSimError(msg)
 
@@ -114,7 +92,7 @@ def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool
     if run_command == "aprun":
         msg = (
             "aprun can not launch an orchestrator with batch=True and "
-            + "single_cmd=True. Automatically switching to single_cmd=False."
+            "single_cmd=True. Automatically switching to single_cmd=False."
         )
         logger.info(msg)
         return False
@@ -175,6 +153,17 @@ class Orchestrator(EntityList):
         _check_local_constraints(launcher, batch)
 
         single_cmd = _get_single_command(run_command, batch, single_cmd)
+
+        if launcher == "local" and batch:
+            msg = "Local orchestrator can not be launched with batch=True"
+            raise SmartSimError(msg)
+
+        if run_command == "aprun" and batch and single_cmd:
+            single_cmd = False
+            logger.info(
+                "aprun can not launch an orchestrator with batch=True and "
+                "single_cmd=True. Automatically switching to single_cmd=False."
+            )
 
         self.launcher = launcher
         self.run_command = run_command

@@ -26,15 +26,16 @@
 
 from __future__ import annotations
 
+import os
 import os.path as osp
 import time
 import typing as t
 
-from smartsim.error.errors import SmartSimError
 
-from ....log import get_logger
-from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
+from ...utils.helpers import get_base_36_repr
+from ....error.errors import SmartSimError
+from ....log import get_logger
 from ....settings.base import SettingsBase, RunSettings
 
 logger = get_logger(__name__)
@@ -101,3 +102,17 @@ class Step:
         :type step: Step
         """
         raise SmartSimError("add_to_batch not implemented for this step type")
+
+    @property
+    def env(self) -> t.Dict[str, t.Optional[str]]:
+        return self._set_env()
+
+    def _set_env(self) -> t.Dict[str, str]:
+        env = os.environ.copy()
+        if isinstance(self.step_settings, RunSettings):
+            if self.step_settings.env_vars:
+                env_prime = {k:v or "" for k, v in self.step_settings.env_vars.items()}
+                env.update(env_prime)
+                # todo: test that
+                # an empty env_var overwrites one in env
+        return env
