@@ -237,7 +237,7 @@ class TaggedFilesHierarchy:
                 else:
                     new_paths.append(tagged_path)
             path_list = new_paths
-        tagged_file_hierarchy.add_paths(path_list)
+        tagged_file_hierarchy._add_paths(path_list)
         return tagged_file_hierarchy
 
     def _add_file(self, file: str) -> None:
@@ -257,11 +257,12 @@ class TaggedFilesHierarchy:
         :type dir: str
         """
         tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir_path))
-        tagged_file_hierarchy.add_paths(
+        # pylint: disable-next=protected-access
+        tagged_file_hierarchy._add_paths(
             [path.join(dir_path, file) for file in os.listdir(dir_path)]
         )
 
-    def add_paths(self, paths: t.List[str]) -> None:
+    def _add_paths(self, paths: t.List[str]) -> None:
         """Takes a list of paths and iterates over it, determining if each
         path is to a file or a dir and then appropriatly adding it to the
         TaggedFilesHierarchy.

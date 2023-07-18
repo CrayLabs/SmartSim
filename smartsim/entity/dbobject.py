@@ -101,7 +101,7 @@ class DBObject:
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
 
-    def enumerate_devices(self) -> t.List[str]:
+    def _enumerate_devices(self) -> t.List[str]:
         """Enumerate devices for a DBObject
 
         :param dbobject: DBObject to enumerate
