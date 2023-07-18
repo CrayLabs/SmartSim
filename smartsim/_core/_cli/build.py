@@ -226,9 +226,8 @@ def build_redis_ai(
             install_torch(build_env, versions, device=device)
             torch_dir = build_env.torch_cmake_path
 
-    if tf:
-        if libtf_dir:
-            libtf_dir = Path(libtf_dir).resolve()
+    if tf and libtf_dir:
+        libtf_dir = Path(libtf_dir).resolve()
 
     rai_builder = builder.RedisAIBuilder(
         build_env=build_env(),
