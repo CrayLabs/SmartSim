@@ -179,14 +179,13 @@ def build_database(
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
-
 def build_redis_ai(
     build_env: BuildEnv,
     versions: Versioner,
     device: str,
-    torch: bool = True,
-    tf: bool = True,  # pylint: disable=invalid-name
-    onnx: bool = False,
+    use_torch: bool = True,
+    use_tf: bool = True,
+    use_onnx: bool = False,
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
     verbose: bool = False,
@@ -199,9 +198,9 @@ def build_redis_ai(
     # decide which runtimes to build
     print("\nML Backends Requested")
     backends_table = [
-        ["PyTorch", versions.TORCH, color_bool(torch)],
-        ["TensorFlow", versions.TENSORFLOW, color_bool(tf)],
-        ["ONNX", versions.ONNX or "Unavailable", color_bool(onnx)],
+        ["PyTorch", versions.TORCH, color_bool(use_torch)],
+        ["TensorFlow", versions.TENSORFLOW, color_bool(use_tf)],
+        ["ONNX", versions.ONNX or "Unavailable", color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
     print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
@@ -213,13 +212,13 @@ def build_redis_ai(
     # to download them if they are not installed. this should not break
     # the build however, as we use onnx and tf directly from RAI instead
     # of pip like we do PyTorch.
-    if onnx:
+    if use_onnx:
         check_onnx_install(build_env, versions)
-    if tf:
+    if use_tf:
         check_tf_install(build_env, versions)
 
     # TORCH
-    if torch:
+    if use_torch:
         if torch_dir:
             torch_dir = Path(torch_dir).resolve()
             if not torch_dir.is_dir():
@@ -234,7 +233,7 @@ def build_redis_ai(
             install_torch(build_env, versions, device=device)
             torch_dir = build_env.torch_cmake_path
 
-    if tf and libtf_dir:
+    if use_tf and libtf_dir:
         libtf_dir = Path(libtf_dir).resolve()
 
     build_env_dict = build_env()
@@ -243,9 +242,9 @@ def build_redis_ai(
         build_env=build_env_dict,
         torch_dir=str(torch_dir) if torch_dir else "",
         libtf_dir=str(libtf_dir) if libtf_dir else "",
-        build_torch=torch,
-        build_tf=tf,
-        build_onnx=onnx,
+        build_torch=use_torch,
+        build_tf=use_tf,
+        build_onnx=use_onnx,
         jobs=build_env.JOBS,
         verbose=verbose,
     )
