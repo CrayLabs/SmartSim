@@ -149,11 +149,11 @@ class MenuItemConfig:
     def __init__(
         self,
         cmd: str,
-        help: str,
+        description: str,
         handler: _CliHandler,
         configurator: t.Optional[_CliParseConfigurator] = None,
     ):
         self.command = cmd
-        self.help = help
+        self.description = description
         self.handler = handler
         self.configurator = configurator

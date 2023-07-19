@@ -34,7 +34,7 @@ import pkg_resources
 from tabulate import tabulate
 
 from smartsim._core._cli.utils import (color_bool, pip_install,
-                                       smart_logger_format)
+                                       SMART_LOGGER_FORMAT)
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
@@ -45,7 +45,7 @@ from smartsim._core._install.buildenv import (
 )
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
-from smartsim._core.utils.helpers import installed_redisai_backends, redis_install_base
+from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
@@ -117,8 +117,9 @@ def check_tf_install(build_env: BuildEnv, versions: Versioner) -> None:
     try:
         if not build_env.check_installed("tensorflow", versions.TENSORFLOW):
             msg = (
-                f"TensorFlow {versions.TENSORFLOW} not installed in Python environment. "
-                f"Consider installing tensorflow=={versions.TENSORFLOW} with pip"
+                f"TensorFlow {versions.TENSORFLOW} not installed in Python "
+                "environment. Consider installing tensorflow=="
+                f"{versions.TENSORFLOW} with pip"
             )
             logger.warning(msg)
         else:
@@ -171,7 +172,8 @@ def build_database(
     )
     if not database_builder.is_built:
         logger.info(
-            f"Building {database_name} version {versions.REDIS} from {versions.REDIS_URL}"
+            f"Building {database_name} version {versions.REDIS} "
+            f"from {versions.REDIS_URL}"
         )
         database_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
         database_builder.cleanup()
@@ -183,7 +185,7 @@ def build_redis_ai(
     versions: Versioner,
     device: str,
     torch: bool = True,
-    tf: bool = True,
+    tf: bool = True,  # pylint: disable=invalid-name
     onnx: bool = False,
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
@@ -335,8 +337,8 @@ def execute(args: argparse.Namespace) -> int:
     device = str(args.device)
 
     # torch and tf build by default
-    pt = not args.no_pt
-    tf = not args.no_tf
+    pt = not args.no_pt  # pylint: disable=invalid-name
+    tf = not args.no_tf  # pylint: disable=invalid-name
     onnx = args.onnx
 
     do_checks = not args.only_python_packages
@@ -393,11 +395,9 @@ def execute(args: argparse.Namespace) -> int:
                 verbose=verbose,
             )
 
-            backends = [
-                backend.capitalize() for backend in installed_redisai_backends()
-            ]
+            backends = list(map(str.capitalize, installed_redisai_backends()))
             logger.info(
-                (", ".join(backends) if backends else "No") + " backend(s) built"
+                f"{', '.join(backends) if backends else 'No'} backend(s) built"
             )
 
     except (SetupError, BuildError) as e:
@@ -410,6 +410,7 @@ def execute(args: argparse.Namespace) -> int:
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
     """Builds the parser for the command"""
+    warn_usage = "(ONLY USE IF NEEDED)"
     parser.add_argument(
         "-v",
         action="store_true",
@@ -445,13 +446,13 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--torch_dir",
         default=None,
         type=str,
-        help="Path to custom <path>/torch/share/cmake/Torch/ directory (ONLY USE IF NEEDED)",
+        help=f"Path to custom <path>/torch/share/cmake/Torch/ directory {warn_usage}",
     )
     parser.add_argument(
         "--libtensorflow_dir",
         default=None,
         type=str,
-        help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
+        help=f"Path to custom libtensorflow directory {warn_usage}",
     )
     parser.add_argument(
         "--only_python_packages",
