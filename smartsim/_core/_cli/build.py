@@ -148,11 +148,11 @@ def build_redis_ai(
     if onnx:
         install_py_onnx_version(
             build_env, versions, handle_conflict=modify_python_env, verbose=verbose
-        )  # TODO: this
+        )
     if tf:
         install_py_tf_version(
             build_env, versions, handle_conflict=modify_python_env, verbose=verbose
-        )  # TODO: this
+        )
 
     # TORCH
     if torch:
@@ -172,7 +172,7 @@ def build_redis_ai(
                 device=device,
                 handle_conflict=modify_python_env,
                 verbose=verbose,
-            )  # TODO: this
+            )
             torch_dir = build_env.torch_cmake_path
 
     if tf and libtf_dir:
