@@ -636,26 +636,28 @@ class Controller:
 
         for model in manifest.models:
             if not model.colocated:
-                for db_model in model.db_models:
+                # pylint: disable=protected-access
+                for db_model in model._db_models:
                     set_ml_model(db_model, client)
-                for db_script in model.db_scripts:
+                for db_script in model._db_scripts:
                     set_script(db_script, client)
 
         for ensemble in manifest.ensembles:
-            for db_model in ensemble.db_models:
+            # pylint: disable=protected-access
+            for db_model in ensemble._db_models:
                 set_ml_model(db_model, client)
-            for db_script in ensemble.db_scripts:
+            for db_script in ensemble._db_scripts:
                 set_script(db_script, client)
             for entity in ensemble.models:
                 if not entity.colocated:
                     # Set models which could belong only
                     # to the entities and not to the ensemble
                     # but avoid duplicates
-                    for db_model in entity.db_models:
-                        if db_model not in ensemble.db_models:
+                    for db_model in entity._db_models:
+                        if db_model not in ensemble._db_models:
                             set_ml_model(db_model, client)
-                    for db_script in entity.db_scripts:
-                        if db_script not in ensemble.db_scripts:
+                    for db_script in entity._db_scripts:
+                        if db_script not in ensemble._db_scripts:
                             set_script(db_script, client)
 
 

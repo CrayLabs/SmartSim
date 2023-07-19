@@ -474,14 +474,16 @@ class Ensemble(EntityList):
 
     @staticmethod
     def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
-        entity_db_models = [db_model.name for db_model in model.db_models]
+        # pylint: disable=protected-access
+        entity_db_models = [db_model.name for db_model in model._db_models]
         for db_model in db_models:
             if not db_model.name in entity_db_models:
                 model.append_db_model(db_model)
 
     @staticmethod
     def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
-        entity_db_scripts = [db_script.name for db_script in model.db_scripts]
+        # pylint: disable=protected-access
+        entity_db_scripts = [db_script.name for db_script in model._db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
                 model.append_db_script(db_script)

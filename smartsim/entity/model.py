@@ -81,16 +81,6 @@ class Model(SmartSimEntity):
         self.files: t.Optional[EntityFiles] = None
 
     @property
-    def db_models(self) -> t.List[DBModel]:
-        """Return list of DBModel objects"""
-        return self._db_models
-
-    @property
-    def db_scripts(self) -> t.List[DBScript]:
-        """Return list of DBScript objects"""
-        return self._db_scripts
-
-    @property
     def colocated(self) -> bool:
         """Return True if this Model will run with a colocated Orchestrator"""
         return bool(self.run_settings.colocated_db_settings)

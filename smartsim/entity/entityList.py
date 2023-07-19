@@ -46,16 +46,6 @@ class EntityList:
         raise NotImplementedError
 
     @property
-    def db_models(self) -> t.List["smartsim.entity.DBModel"]:
-        """Return list of DBModel objects"""
-        return self._db_models
-
-    @property
-    def db_scripts(self) -> t.List["smartsim.entity.DBScript"]:
-        """Return list of DBScript objects"""
-        return self._db_scripts
-
-    @property
     def batch(self) -> bool:
         try:
             if not hasattr(self, "batch_settings"):
