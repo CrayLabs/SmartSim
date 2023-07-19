@@ -24,14 +24,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
+import argparse
 
-from smartsim._core._cli.cli import default_cli
-
-def main() -> int:
-    smart_cli = default_cli()
-    return smart_cli.execute(sys.argv)
+from smartsim._core._cli.utils import get_db_path
+from smartsim._core._install.buildenv import SetupError
 
 
-if __name__ == "__main__":
-    main()
+def execute(args: argparse.Namespace) -> int:
+    if db_path := get_db_path():
+        print(db_path)
+        return 0
+    print("Database (Redis or KeyDB) dependencies not found")
+    return 1
