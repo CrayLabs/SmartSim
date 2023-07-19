@@ -93,17 +93,17 @@ def default_cli() -> SmartCli:
             clean_parser,
         ),
         MenuItemConfig(
-            "dbcli", 
-            "Print the path to the redis-cli binary", 
+            "dbcli",
+            "Print the path to the redis-cli binary",
             dbcli_execute
         ),
         MenuItemConfig(
-            "site", 
-            "Print the installation site of SmartSim", 
+            "site",
+            "Print the installation site of SmartSim",
             site_execute),
         MenuItemConfig(
-            "clobber", 
-            "Remove all previous dependency installations", 
+            "clobber",
+            "Remove all previous dependency installations",
             clobber_execute
         ),
     ]
