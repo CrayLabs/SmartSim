@@ -112,7 +112,7 @@ class DBObject:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
             msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
             raise ValueError(msg)
-        if self.device in ["CPU", "GPU"] and self.devices_per_node > 1:
+        if self.device in ["GPU"] and self.devices_per_node > 1:
             for device_num in range(self.devices_per_node):
                 devices.append(f"{self.device}:{str(device_num)}")
         if self.devices in ["CPU"] and self.devices_per_node > 1: #jp
