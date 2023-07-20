@@ -28,7 +28,7 @@ import time
 
 import pytest
 
-from smartsim.error import AllocationError
+from smartsim.error import AllocationError, SSConfigError
 from smartsim.wlm import slurm
 
 # retrieved from pytest fixtures
@@ -49,6 +49,37 @@ def test_get_release_allocation_w_options(wlmutils):
     options = {"ntasks-per-node": 1}
     account = wlmutils.get_test_account()
     alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=options, account=account)
+    time.sleep(5)  # give slurm a rest
+    slurm.release_allocation(alloc)
+
+# testing failure using reserved keywords under function parameter: options. 
+def test_get_allocation_bad_params_nodes():
+    """test get_allocation with reserved keywords as option """
+    options = {"ntasks-per-node": 1}
+   # with pytest.raises(SSConfigError):
+        # alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=time)
+    with pytest.raises(SSConfigError):
+        alloc = slurm.get_allocation(options={"time"=="TIME"})
+    time.sleep(5)  # give slurm a rest
+    slurm.release_allocation(alloc)
+
+def test_get_allocation_bad_params_time():
+    """test get_allocation with reserved keywords as options """
+    options = {"ntasks-per-node": 1}
+    #with pytest.raises(SSConfigError):
+    #alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=nodes)
+    with pytest.raises(SSConfigError):
+        alloc = slurm.get_allocation(options={"nodes"=="NODES"})
+    time.sleep(5)  # give slurm a rest
+    slurm.release_allocation(alloc)
+
+def test_get_allocation_bad_params_options():
+    """test get_allocation with reserved keywords as options  """
+    options = {"ntasks-per-node": 1}
+    #with pytest.raises(SSConfigError):
+    #alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=account)
+    with pytest.raises(SSConfigError):
+        alloc = slurm.get_allocation(options={"account"=="ACCOUNT"})
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
 

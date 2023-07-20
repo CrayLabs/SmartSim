@@ -32,7 +32,7 @@ from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinf
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
-from ..error import AllocationError, LauncherError, SmartSimError
+from ..error import AllocationError, LauncherError, SmartSimError, SSConfigError
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -253,6 +253,8 @@ def _get_alloc_cmd(nodes: int,
                     salloc_args += [prefix + opt, str(val)]
                 else:
                     salloc_args += ["=".join((prefix + opt, str(val)))]
+        else: 
+            raise SSConfigError("Expecting time, nodes, account as an argument")
 
     return salloc_args
 
