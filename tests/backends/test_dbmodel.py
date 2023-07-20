@@ -801,33 +801,33 @@ def test_inconsistent_params_add_ml_model(fileutils, wlmutils, mlutils): #jp
     exp_name = "test_add_model"
 
     # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    # test_launcher = wlmutils.get_test_launcher()
+    # test_interface = wlmutils.get_test_interface()
+    # test_port = wlmutils.get_test_port()
+    # test_device = mlutils.get_test_device()
+    # test_num_gpus = mlutils.get_test_num_gpus()
+    # test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+    exp = Experiment(exp_name)
 
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-    run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    # run_settings.set_nodes(1)
+    # run_settings.set_tasks_per_node(1)
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
+    # smartsim_model.set_path(test_dir)
 
-    # Create database
-    db = exp.create_database(port=test_port, interface=test_interface)
-    exp.generate(db)
+    # # Create database
+    # db = exp.create_database(port=test_port, interface=test_interface)
+    # exp.generate(db)
 
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
-    model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
+    # model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
     with pytest.raises(SSUnsupportedError):
     # Add ML model to the SmartSim model
