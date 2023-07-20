@@ -11,6 +11,22 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+
+Development branch
+------------------
+
+To be released at some future point in time
+
+Description
+
+- Update linting support and apply to existing errors
+
+Detailed Notes
+
+- Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
+
+.. _PR311: https://github.com/CrayLabs/SmartSim/pull/311
+
 0.5.0
 ------------------
 
