@@ -115,7 +115,7 @@ class DBObject:
         if self.device in ["GPU"] and self.devices_per_node > 1:
             for device_num in range(self.devices_per_node):
                 devices.append(f"{self.device}:{str(device_num)}")
-        if self.devices in ["CPU"] and self.devices_per_node > 1: #jp
+        if self.device in ["CPU"] and self.devices_per_node > 1: #jp
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
