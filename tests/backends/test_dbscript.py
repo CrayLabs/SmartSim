@@ -662,9 +662,10 @@ def test_add_function(fileutils, wlmutils, mlutils):
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 
     # Add script function
-    smartsim_model.add_function(
-        "test_func",
-        function=timestwo,
-        device="CPU",
-        devices_per_node=2
-    )
+    with pytest.raises(SSUnsupportedError):
+        smartsim_model.add_function(
+            "test_func",
+            function=timestwo,
+            device="CPU",
+            devices_per_node=2
+        )
