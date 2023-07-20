@@ -578,3 +578,57 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+
+#---jp
+def test_inconsistent_params_add_script(fileutils, wlmutils, mlutils):
+    """Test error when devices_per_node parameter>1 when devices is set to CPU in add_script function"""
+
+    # Set experiment name
+    exp_name = "test-add-script"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    # Create the RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    # Create the SmartSim database
+    db = exp.create_database(port=test_port, interface=test_interface)
+    exp.generate(db)
+
+    # Define the torch script string
+    torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
+
+
+    # Add script function
+    with pytest.raises(SSUnsupportedError):
+        smartsim_model.add_function(
+            "test_func",
+            function=timestwo,
+            device=test_device,
+            devices_per_node=test_num_gpus
+        )
+
+    # Launch and check successful completion
+    try:
+        exp.start(db, smartsim_model, block=True)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])  #needed? just one check? 
+    finally:
+        exp.stop(db)
