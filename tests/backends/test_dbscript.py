@@ -615,20 +615,13 @@ def test_inconsistent_params_add_script(fileutils, wlmutils, mlutils):
     # Define the torch script string
     torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
 
-
     # Add script function
     with pytest.raises(SSUnsupportedError):
-        smartsim_model.add_function(
-            "test_func",
-            function=timestwo,
-            device=test_device,
-            devices_per_node=test_num_gpus
-        )
 
-    # Launch and check successful completion
-    try:
-        exp.start(db, smartsim_model, block=True)
-        statuses = exp.get_status(smartsim_model)
-        assert all([stat == status.STATUS_COMPLETED for stat in statuses])  #needed? just one check? 
-    finally:
-        exp.stop(db)
+    # Add script via file for the Ensemble object
+        smartsim_model.add_script(
+        "test_script1",
+        script_path=torch_script,
+        device="CPU",
+        devices_per_node=2,
+        )
