@@ -32,18 +32,26 @@ from shutil import which
 from ....error import LauncherError
 from ....log import get_logger
 from ....settings import (
-    MpiexecSettings, 
-    MpirunSettings, 
-    OrterunSettings, 
-    RunSettings, 
-    SbatchSettings, 
-    SettingsBase, 
-    SrunSettings, 
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    RunSettings,
+    SbatchSettings,
+    SettingsBase,
+    SrunSettings,
 )
 from ....status import STATUS_CANCELLED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
-from ..step import LocalStep, MpiexecStep, MpirunStep, OrterunStep, SbatchStep, SrunStep, Step
+from ..step import (
+    LocalStep,
+    MpiexecStep,
+    MpirunStep,
+    OrterunStep,
+    SbatchStep,
+    SrunStep,
+    Step,
+)
 from ..stepInfo import SlurmStepInfo, StepInfo
 from .slurmCommands import sacct, scancel, sstat
 from .slurmParser import parse_sacct, parse_sstat_nodes, parse_step_id_from_sacct
@@ -133,8 +141,8 @@ class SlurmLauncher(WLMLauncher):
         # Launch a batch step with Slurm
         if isinstance(step, SbatchStep):
             # wait for batch step to submit successfully
-            rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
-            if rc != 0:
+            return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
+            if return_code != 0:
                 raise LauncherError(f"Sbatch submission failed\n {out}\n {err}")
             if out:
                 step_id = out.strip()
@@ -147,15 +155,15 @@ class SlurmLauncher(WLMLauncher):
             else:
                 # Mpirun doesn't direct output for us like srun does
                 out, err = step.get_output_files()
-                output = open(out, "w+")
-                error = open(err, "w+")
+                output = open(out, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+                error = open(err, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
                 task_id = self.task_manager.start_task(
                     cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
                 )
 
         if not step_id and step.managed:
             step_id = self._get_slurm_step_id(step)
-        
+
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         # give slurm a rest
@@ -179,7 +187,7 @@ class SlurmLauncher(WLMLauncher):
             # if that is the case, stop parent job step because
             # sub-steps cannot be stopped singularly.
             if "+" in step_id:
-                step_id = step_id.split("+")[0]
+                step_id = step_id.split("+", maxsplit=1)[0]
             scancel_rc, _, err = scancel([step_id])
             if scancel_rc != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
@@ -191,11 +199,12 @@ class SlurmLauncher(WLMLauncher):
         _, step_info = self.get_step_update([step_name])[0]
         if not step_info:
             raise LauncherError(f"Could not get step_info for job step {step_name}")
-        
+
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_slurm_step_id(self, step: Step, interval: int = 2) -> str:
+    @staticmethod
+    def _get_slurm_step_id(step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from sacct
 
         Parses sacct output by looking for the step name
@@ -221,7 +230,9 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.Optional[t.List[StepInfo]]:
+    def _get_managed_step_update(
+        self, step_ids: t.List[str]
+    ) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids
@@ -244,8 +255,9 @@ class SlurmLauncher(WLMLauncher):
             if task_id:
                 # we still check the task manager for jobs that didn't ever
                 # become a fully managed job (e.g. error in slurm arguments)
-                _, rc, out, err = self.task_manager.get_task_update(str(task_id))
-                if rc and rc != 0:
+                tid = str(task_id)
+                _, return_code, out, err = self.task_manager.get_task_update(tid)
+                if return_code and return_code != 0:
                     # tack on Popen error and output to status update.
                     info.output = out
                     info.error = err
@@ -263,7 +275,10 @@ class SlurmLauncher(WLMLauncher):
         :raises LauncherError: if no access to slurm
         """
         if not which("sbatch") and not which("sacct"):
-            error = "User attempted Slurm methods without access to Slurm at the call site.\n"
+            error = (
+                "User attempted Slurm methods without access to Slurm "
+                "at the call site.\n"
+            )
             raise LauncherError(error)
 
     def __str__(self) -> str:

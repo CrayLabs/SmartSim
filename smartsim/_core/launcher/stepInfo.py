@@ -57,22 +57,23 @@ class StepInfo:
         info_str += f" | Launcher Status {self.launcher_status}"
         info_str += f" | Returncode {str(self.returncode)}"
         return info_str
-    
+
     @property
     def mapping(self) -> t.Dict[str, str]:
         raise NotImplementedError
-    
-    def _get_smartsim_status(self, status: str, returncode: t.Optional[int] = None) -> str:
+
+    def _get_smartsim_status(
+        self, status: str, returncode: t.Optional[int] = None
+    ) -> str:
         """
         Map the status of the WLM step to a smartsim-specific status
         """
         if status in SMARTSIM_STATUS:
             return SMARTSIM_STATUS[status]
-        elif status in self.mapping:
-            if returncode is not None and returncode != 0:
-                return STATUS_FAILED
-            else:
-                return self.mapping[status]
+
+        if status in self.mapping and returncode in [None, 0]:
+            return self.mapping[status]
+
         return STATUS_FAILED
 
 
@@ -110,7 +111,6 @@ class UnmanagedStepInfo(StepInfo):
 
 
 class SlurmStepInfo(StepInfo):  # cov-slurm
-
     # see https://slurm.schedmd.com/squeue.html#lbAG
     mapping = {
         "RUNNING": STATUS_RUNNING,
@@ -153,15 +153,16 @@ class SlurmStepInfo(StepInfo):  # cov-slurm
 
 
 class PBSStepInfo(StepInfo):  # cov-pbs
-
     @property
     def mapping(self) -> t.Dict[str, str]:
+        # pylint: disable=line-too-long
         # see http://nusc.nsu.ru/wiki/lib/exe/fetch.php/doc/pbs/PBSReferenceGuide19.2.1.pdf#M11.9.90788.PBSHeading1.81.Job.States
         return {
             "R": STATUS_RUNNING,
             "B": STATUS_RUNNING,
             "H": STATUS_PAUSED,
-            "M": STATUS_PAUSED,  # Actually means that it was moved to another server, TODO: understand what this implies
+            "M": STATUS_PAUSED,  # Actually means that it was moved to another server,
+            # TODO: understand what this implies
             "Q": STATUS_PAUSED,
             "S": STATUS_PAUSED,
             "T": STATUS_PAUSED,  # This means in transition, see above for comment
@@ -232,6 +233,7 @@ class CobaltStepInfo(StepInfo):  # cov-cobalt
 class LSFBatchStepInfo(StepInfo):  # cov-lsf
     @property
     def mapping(self) -> t.Dict[str, str]:
+        # pylint: disable=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
             "RUN": STATUS_RUNNING,
@@ -265,6 +267,7 @@ class LSFBatchStepInfo(StepInfo):  # cov-lsf
 class LSFJsrunStepInfo(StepInfo):  # cov-lsf
     @property
     def mapping(self) -> t.Dict[str, str]:
+        # pylint: disable=line-too-long
         # see https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=execution-about-job-states
         return {
             "Killed": STATUS_COMPLETED,

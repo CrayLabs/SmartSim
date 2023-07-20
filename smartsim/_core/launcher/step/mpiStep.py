@@ -64,7 +64,7 @@ class _BaseMPIStep(Step):
 
     @property
     def _run_command(self) -> str:
-        return self.run_settings._run_command
+        return self.run_settings.run_command
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -125,10 +125,10 @@ class _BaseMPIStep(Step):
         """
         if self.run_settings.mpmd:
             return self._make_mpmd()
-        else:
-            exe = self.run_settings.exe
-            args = self.run_settings.exe_args
-            return exe + args
+
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+        return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""

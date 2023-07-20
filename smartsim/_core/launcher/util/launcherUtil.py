@@ -87,7 +87,7 @@ class Partition:  # cov-slurm
         if len(self.nodes) <= 0:
             return False
         for node in self.nodes:
-            if not node._is_valid_node():
+            if not node._is_valid_node():  # pylint: disable=protected-access
                 return False
 
         return True

@@ -39,7 +39,8 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
         super().__init__(**kwargs)
         if init_samples:
             self.log(
-                "PyTorch Data Generator has to be created with init_samples=False. Setting it to False automatically."
+                "PyTorch Data Generator has to be created with "
+                "init_samples=False. Setting it to False automatically."
             )
 
     def _add_samples(self, indices: t.List[int]) -> None:
@@ -101,7 +102,8 @@ class StaticDataGenerator(_TorchDataGenerationCommon):
         super().__init__(**kwargs)
         if dynamic:
             self.log(
-                "Static data generator cannot be started with dynamic=True, setting it to False"
+                "Static data generator cannot be started "
+                "with dynamic=True, setting it to False"
             )
 
 
@@ -123,7 +125,8 @@ class DynamicDataGenerator(_TorchDataGenerationCommon):
         super().__init__(**kwargs)
         if not dynamic:
             self.log(
-                "Dynamic data generator cannot be started with dynamic=False, setting it to True"
+                "Dynamic data generator cannot be started with dynamic=False, "
+                "setting it to True"
             )
 
 
@@ -139,11 +142,12 @@ def _worker_init_fn(worker_id: int) -> None:
         num_replicas=dataset.num_replicas * num_workers,
     )
     dataset.log(
-        f"Worker {worker_id+1}/{num_workers}: dataset replica {dataset.replica_rank+1}/{dataset.num_replicas}"
+        f"Worker {worker_id+1}/{num_workers}: dataset replica "
+        f"{dataset.replica_rank+1}/{dataset.num_replicas}"
     )
 
     dataset.init_samples()
-    
+
 
 class DataLoader(torch.utils.data.DataLoader):  # pragma: no cover
     """DataLoader to be used as a wrapper of StaticDataGenerator or DynamicDataGenerator

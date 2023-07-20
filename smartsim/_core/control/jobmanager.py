@@ -62,6 +62,8 @@ class JobManager:
         :param launcher: a Launcher object to manage jobs
         :type: SmartSim.Launcher
         """
+        self.monitor: t.Optional[Thread] = None
+
         # active jobs
         self.jobs: t.Dict[str, Job] = {}
         self.db_jobs: t.Dict[str, Job] = {}
@@ -96,11 +98,9 @@ class JobManager:
         logger.debug("Starting Job Manager")
         self.actively_monitoring = True
         while self.actively_monitoring:
-
             self._thread_sleep()
             self.check_jobs()  # update all job statuses at once
             for _, job in self().items():
-
                 # if the job has errors then output the report
                 # this should only output once
                 if job.returncode is not None and job.status in TERMINAL_STATUSES:
@@ -125,18 +125,15 @@ class JobManager:
         :param job: job instance we are transitioning
         :type job: Job
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             self.completed[job.ename] = job
             job.record_history()
 
             # remove from actively monitored jobs
-            if job.ename in self.db_jobs.keys():
+            if job.ename in self.db_jobs:
                 del self.db_jobs[job.ename]
-            elif job.ename in self.jobs.keys():
+            elif job.ename in self.jobs:
                 del self.jobs[job.ename]
-        finally:
-            self._lock.release()
 
     def __getitem__(self, entity_name: str) -> Job:
         """Return the job associated with the name of the entity
@@ -147,17 +144,14 @@ class JobManager:
         :returns: the Job associated with the entity_name
         :rtype: Job
         """
-        self._lock.acquire()
-        try:
-            if entity_name in self.db_jobs.keys():
+        with self._lock:
+            if entity_name in self.db_jobs:
                 return self.db_jobs[entity_name]
-            if entity_name in self.jobs.keys():
+            if entity_name in self.jobs:
                 return self.jobs[entity_name]
-            if entity_name in self.completed.keys():
+            if entity_name in self.completed:
                 return self.completed[entity_name]
             raise KeyError
-        finally:
-            self._lock.release()
 
     def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
@@ -168,7 +162,13 @@ class JobManager:
         all_jobs = {**self.jobs, **self.db_jobs}
         return all_jobs
 
-    def add_job(self, job_name: str, job_id: t.Optional[str], entity: t.Union[SmartSimEntity, EntityList], is_task: bool = True) -> None:
+    def add_job(
+        self,
+        job_name: str,
+        job_id: t.Optional[str],
+        entity: t.Union[SmartSimEntity, EntityList],
+        is_task: bool = True,
+    ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 
         :param job_name: name of the job step
@@ -196,15 +196,12 @@ class JobManager:
         :return: True if finished
         :rtype: bool
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             job = self[entity.name]  # locked operation
             if entity.name in self.completed:
                 if job.status in TERMINAL_STATUSES:
                     return True
             return False
-        finally:
-            self._lock.release()
 
     def check_jobs(self) -> None:
         """Update all jobs in jobmanager
@@ -213,8 +210,7 @@ class JobManager:
         through one call to the launcher.
 
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             jobs = self().values()
             job_name_map = {job.name: job.ename for job in jobs}
 
@@ -234,8 +230,6 @@ class JobManager:
                             error=status.error,
                             output=status.output,
                         )
-        finally:
-            self._lock.release()
 
     def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
         """Return the status of a job.
@@ -244,19 +238,18 @@ class JobManager:
         :type entity: SmartSimEntity | EntityList
         :returns: tuple of status
         """
-        self._lock.acquire()
-        try:
-            if entity.name in self.completed:
-                return self.completed[entity.name].status
+        with self._lock:
+            try:
+                if entity.name in self.completed:
+                    return self.completed[entity.name].status
 
-            job: Job = self[entity.name]  # locked
-        except KeyError:
-            raise SmartSimError(
-                f"Entity {entity.name} has not been launched in this Experiment"
-            ) from None
-        finally:
-            self._lock.release()
-        return job.status
+                job: Job = self[entity.name]  # locked
+            except KeyError:
+                raise SmartSimError(
+                    f"Entity {entity.name} has not been launched in this Experiment"
+                ) from None
+
+            return job.status
 
     def set_launcher(self, launcher: Launcher) -> None:
         """Set the launcher of the job manager to a specific launcher instance
@@ -278,7 +271,13 @@ class JobManager:
             return True
         return False
 
-    def restart_job(self, job_name: str, job_id: t.Optional[str], entity_name: str, is_task: bool = True) -> None:
+    def restart_job(
+        self,
+        job_name: str,
+        job_id: t.Optional[str],
+        entity_name: str,
+        is_task: bool = True,
+    ) -> None:
         """Function to reset a job to record history and be
         ready to launch again.
 
@@ -292,8 +291,7 @@ class JobManager:
         :type is_task: bool
 
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             job = self.completed[entity_name]
             del self.completed[entity_name]
             job.reset(job_name, job_id, is_task)
@@ -302,8 +300,6 @@ class JobManager:
                 self.db_jobs[entity_name] = job
             else:
                 self.jobs[entity_name] = job
-        finally:
-            self._lock.release()
 
     def get_db_host_addresses(self) -> t.List[str]:
         """Retrieve the list of hosts for the database
@@ -328,20 +324,19 @@ class JobManager:
         :type orchestrator: Orchestrator
         """
         # should only be called during launch in the controller
-        self._lock.acquire()
-        try:
+        with self._lock:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
                 for dbnode in orchestrator.dbnodes:
-                    if not dbnode._mpmd:
+                    if not dbnode.is_mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:
                         self.db_jobs[dbnode.name].hosts = dbnode.hosts
-        finally:
-            self._lock.release()
 
-    def signal_interrupt(self, signo: int, frame: t.Optional[FrameType]) -> None:
+    def signal_interrupt(self, signo: int, _frame: t.Optional[FrameType]) -> None:
+        if not signo:
+            logger.warning("Received SIGINT with no signal number")
         """Custom handler for whenever SIGINT is received"""
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
