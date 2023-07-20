@@ -78,8 +78,8 @@ class VersionConflictError(SetupError):
     def __init__(
         self,
         name: str,
-        current_version: str,
-        target_version: str,
+        current_version: "Version_",
+        target_version: "Version_",
         msg: t.Optional[str] = None,
     ) -> None:
         if msg is None:
@@ -172,13 +172,7 @@ def get_env(var: str, default: str) -> str:
 class RedisAIVersion(Version_):
     """A subclass of Version_ that holds the dependency sets for RedisAI
 
-    This class serves two purposes:
-
-    1. It is used to populate the [ml] ``extras_require`` of the setup.py.
-    This is because the RedisAI version will determine which ML based
-    dependencies are required.
-
-    2. Used to set the default values for PyTorch, TF, and ONNX
+    This class is used to set the default versions for PyTorch, TF, and ONNX
     given the SMARTSIM_REDISAI env var set by the user.
 
     NOTE: Torch requires additional information depending on whether
@@ -576,7 +570,7 @@ class BuildEnv:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
     @classmethod
-    def check_installed(cls, package: str, version: t.Optional[str] = None) -> bool:
+    def check_installed(cls, package: str, version: t.Optional[Version_] = None) -> bool:
         """Check if a package is installed. If version is provided, check if
         it's a compatible version. (major and minor the same)"""
         try:
@@ -584,8 +578,6 @@ class BuildEnv:
         except importlib.metadata.PackageNotFoundError:
             return False
         if version:
-            if not isinstance(version, Version_):
-                version = Version_(version)
             # detect if major or minor versions differ
             if installed.major != version.major or installed.minor != version.minor:
                 raise VersionConflictError(package, installed, version)

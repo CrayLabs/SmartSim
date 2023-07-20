@@ -258,8 +258,8 @@ def install_py_torch_version(
             raise BuildError("Unrecognized device requested")
 
     torch_packages = {
-        "torch": f"{versions.TORCH}{device_suffix}",
-        "torchvision": f"{versions.TORCHVISION}{device_suffix}",
+        "torch": Version_(f"{versions.TORCH}{device_suffix}"),
+        "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
     }
 
     _confirm_package_in_python_env(
@@ -277,8 +277,8 @@ def install_py_torch_version(
 
 def _create_torch_version_validator(
     build_env: BuildEnv, with_suffix: str
-) -> t.Callable[[str, t.Optional[str]], bool]:
-    def check_torch_version(package: str, version: t.Optional[str]) -> bool:
+) -> t.Callable[[str, t.Optional[Version_]], bool]:
+    def check_torch_version(package: str, version: t.Optional[Version_]) -> bool:
         if not build_env.check_installed(package, version):
             return False
         # Default check only looks at major/minor version numbers,
@@ -289,7 +289,7 @@ def _create_torch_version_validator(
             raise VersionConflictError(
                 package,
                 installed,
-                version or f"X.X.X{with_suffix}",
+                version or Version_(f"X.X.X{with_suffix}"),
                 msg=(
                     f"{package}=={installed} does not satisfy device "
                     f"suffix requirement: {with_suffix}"
@@ -322,10 +322,10 @@ def install_py_onnx_version(
     _confirm_package_in_python_env(
         build_env,
         {
-            "onnx": f"{versions.ONNX}",
-            "skl2onnx": f"{versions.REDISAI.skl2onnx}",
-            "onnxmltools": f"{versions.REDISAI.onnxmltools}",
-            "scikit-learn": f"{versions.REDISAI.__getattr__('scikit-learn')}",
+            "onnx": Version_(f"{versions.ONNX}"),
+            "skl2onnx": Version_(f"{versions.REDISAI.skl2onnx}"),
+            "onnxmltools": Version_(f"{versions.REDISAI.onnxmltools}"),
+            "scikit-learn": Version_(f"{versions.REDISAI.__getattr__('scikit-learn')}"),
         },
         install_on_absent=handle_conflict,
         install_on_conflict=handle_conflict,
@@ -352,11 +352,11 @@ def install_py_tf_version(
 
 def _confirm_package_in_python_env(
     build_env: BuildEnv,
-    packages: t.Mapping[str, t.Optional[str]],
+    packages: t.Mapping[str, t.Optional[Version_]],
     package_pinning: _TPinningStr = "==",
     end_point: t.Optional[str] = None,
     validate_installed_version: t.Optional[
-        t.Callable[[str, t.Optional[str]], bool]
+        t.Callable[[str, t.Optional[Version_]], bool]
     ] = None,
     install_on_absent: bool = False,
     install_on_conflict: bool = False,
@@ -395,9 +395,9 @@ def _confirm_package_in_python_env(
 
 
 def _assess_python_env(
-    packages: t.Mapping[str, t.Optional[str]],
+    packages: t.Mapping[str, t.Optional[Version_]],
     package_pinning: _TPinningStr,
-    validate_installed_version: t.Callable[[str, t.Optional[str]], bool],
+    validate_installed_version: t.Callable[[str, t.Optional[Version_]], bool],
     install_on_absent: bool,
     install_on_conflict: bool,
     verbose: bool,
@@ -459,15 +459,24 @@ def execute(args: argparse.Namespace) -> int:
             logger.info("Only installing Python packages...skipping build")
             if onnx:
                 install_py_onnx_version(
-                    build_env, versions, handle_conflict=modify_python_env
+                    build_env,
+                    versions,
+                    handle_conflict=modify_python_env,
+                    verbose=verbose,
                 )
             if tf:
                 install_py_tf_version(
-                    build_env, versions, handle_conflict=modify_python_env
+                    build_env,
+                    versions,
+                    handle_conflict=modify_python_env,
+                    verbose=verbose,
                 )
             if onnx:
                 install_py_torch_version(
-                    build_env, versions, handle_conflict=modify_python_env
+                    build_env,
+                    versions,
+                    handle_conflict=modify_python_env,
+                    verbose=verbose,
                 )
         else:
             logger.info("Checking for build tools...")
