@@ -63,9 +63,8 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status: t.Optional[
-            str
-        ] = None  # status before smartsim status mapping is applied
+        # status before smartsim status mapping is applied
+        self.raw_status: t.Optional[str] = None
         self.returncode: t.Optional[int] = None
         # output is only populated if it's system related (e.g. cmd failed immediately)
         self.output: t.Optional[str] = None
