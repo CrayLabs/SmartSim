@@ -146,13 +146,9 @@ def build_redis_ai(
     # the build however, as we use onnx and tf directly from RAI instead
     # of pip like we do PyTorch.
     if onnx:
-        install_py_onnx_version(
-            handle_conflict=modify_python_env, verbose=verbose
-        )
+        install_py_onnx_version(handle_conflict=modify_python_env, verbose=verbose)
     if tf:
-        install_py_tf_version(
-            handle_conflict=modify_python_env, verbose=verbose
-        )
+        install_py_tf_version(handle_conflict=modify_python_env, verbose=verbose)
 
     # TORCH
     if torch:
@@ -228,7 +224,7 @@ def build_redis_ai(
 def infer_torch_device() -> _TDeviceStr:
     backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
     return (
-        "cpu" if Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file() else "gpu"
+        "gpu" if Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file() else "cpu"
     )
 
 
@@ -270,7 +266,9 @@ def install_py_torch_version(
     )
 
 
-def _create_torch_version_validator(with_suffix: str) -> t.Callable[[str, t.Optional[Version_]], bool]:
+def _create_torch_version_validator(
+    with_suffix: str,
+) -> t.Callable[[str, t.Optional[Version_]], bool]:
     def check_torch_version(package: str, version: t.Optional[Version_]) -> bool:
         if not BuildEnv.check_installed(package, version):
             return False

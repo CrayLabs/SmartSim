@@ -572,7 +572,9 @@ class BuildEnv:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
     @classmethod
-    def check_installed(cls, package: str, version: t.Optional[Version_] = None) -> bool:
+    def check_installed(
+        cls, package: str, version: t.Optional[Version_] = None
+    ) -> bool:
         """Check if a package is installed. If version is provided, check if
         it's a compatible version. (major and minor the same)"""
         try:
