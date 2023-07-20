@@ -579,20 +579,13 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
-#---jp
 def test_inconsistent_params_add_script(fileutils, wlmutils, mlutils):
-    """Test error when devices_per_node parameter>1 when devices is set to CPU in add_script function"""
+    """Test error when devices_per_node>1 when devices is set to CPU in add_script function"""
 
     # Set experiment name
     exp_name = "test-add-script"
 
     # Retrieve parameters from testing environment
-    # test_launcher = wlmutils.get_test_launcher()
-    # test_interface = wlmutils.get_test_interface()
-    # test_port = wlmutils.get_test_port()
-    # test_device = mlutils.get_test_device()
-    # test_num_gpus = mlutils.get_test_num_gpus()
-    # test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -601,24 +594,13 @@ def test_inconsistent_params_add_script(fileutils, wlmutils, mlutils):
 
     # Create the RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-    # run_settings.set_nodes(1)
-    # run_settings.set_tasks_per_node(1)
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    # smartsim_model.set_path(test_dir)
 
-    # Create the SmartSim database
-    # db = exp.create_database(port=test_port, interface=test_interface)
-    # exp.generate(db)
-
-    # Define the torch script string
-    # torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
-
-    # Add script function
+    # Check that an error is raised when trying to add devices_per_node>1 
+    # when device is set to CPU
     with pytest.raises(SSUnsupportedError):
-
-    # Add script via file for the Ensemble object
         smartsim_model.add_script(
         "test_script1",
         script_path=torch_script,
@@ -627,41 +609,25 @@ def test_inconsistent_params_add_script(fileutils, wlmutils, mlutils):
         )
 
 def test_inconsistent_params_add_function(fileutils, wlmutils, mlutils):
-    """Add function should fail with CPU and devices per node >2"""
+    """Test error when devices_per_node>1 and when devices is set to CPU in add_function """
 
     # Set experiment name
     exp_name = "test-add-function"
 
     # Retrieve parameters from testing environment
-    #test_launcher = wlmutils.get_test_launcher()
-    # test_interface = wlmutils.get_test_interface()
-    # test_port = wlmutils.get_test_port()
-    # test_device = mlutils.get_test_device()
-    # test_num_gpus = mlutils.get_test_num_gpus()
-    # test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    # torch_script = fileutils.get_test_conf_path("torchscript.py")
 
     # Create the SmartSim Experiment
     exp = Experiment(exp_name)
 
     # Create the RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-    # run_settings.set_nodes(1)
-    # run_settings.set_tasks_per_node(1)
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-    # smartsim_model.set_path(test_dir)
 
-    # # Create the SmartSim database
-    # db = exp.create_database(port=test_port, interface=test_interface)
-    # exp.generate(db)
-
-    # Define the torch script string
-    # torch_script_str = "def negate(x):\n\treturn torch.neg(x)\n"
-
-    # Add script function
+    # Check that an error is raised when trying to add devices_per_node>1 
+    # when device is set to CPU
     with pytest.raises(SSUnsupportedError):
         smartsim_model.add_function(
             "test_func",

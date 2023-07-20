@@ -123,7 +123,7 @@ class DBObject:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
             msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
             raise ValueError(msg)
-        if self.device in ["CPU"] and self.devices_per_node > 1: #jp
+        if self.device in ["CPU"] and self.devices_per_node > 1:
             raise SSUnsupportedError(
                 "Cannot set devices_per_node>1 if CPU is specified under devices"
             )
