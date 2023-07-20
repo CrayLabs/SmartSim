@@ -54,6 +54,7 @@ class DBObject:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+        self._check_arguments()
 
     @property
     def is_file(self) -> bool:
@@ -108,22 +109,24 @@ class DBObject:
         :rtype: list[str]
         """
         devices = []
-        if ":" in self.device and self.devices_per_node > 1:
-            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
-            msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
-            raise ValueError(msg)
         if self.device in ["GPU"] and self.devices_per_node > 1:
             for device_num in range(self.devices_per_node):
                 devices.append(f"{self.device}:{str(device_num)}")
-        if self.device in ["CPU"] and self.devices_per_node > 1: #jp
-            raise SSUnsupportedError(
-                "Cannot set devices_per_node>1 if CPU is specified under devices"
-            )
         else:
             devices = [self.device]
 
         return devices
 
+    def _check_arguments(self):
+        devices = []
+        if ":" in self.device and self.devices_per_node > 1:
+            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
+            msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
+            raise ValueError(msg)
+        if self.device in ["CPU"] and self.devices_per_node > 1: #jp
+            raise SSUnsupportedError(
+                "Cannot set devices_per_node>1 if CPU is specified under devices"
+            )
 
 class DBScript(DBObject):
     def __init__(
