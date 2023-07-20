@@ -456,11 +456,13 @@ class BuildEnv:
         system_python = Version_(f"{sys_py.major}.{sys_py.minor}.{sys_py.micro}")
         return system_python > python_min
 
-    def is_windows(self) -> bool:
-        return self.PLATFORM in ["win32", "cygwin", "msys"]
+    @classmethod
+    def is_windows(cls) -> bool:
+        return cls.PLATFORM in ["win32", "cygwin", "msys"]
 
-    def is_macos(self) -> bool:
-        return self.PLATFORM == "darwin"
+    @classmethod
+    def is_macos(cls) -> bool:
+        return cls.PLATFORM == "darwin"
 
     @property
     def torch_cmake_path(self) -> t.Optional[str]:

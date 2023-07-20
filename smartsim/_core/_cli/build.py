@@ -147,11 +147,11 @@ def build_redis_ai(
     # of pip like we do PyTorch.
     if onnx:
         install_py_onnx_version(
-            build_env, versions, handle_conflict=modify_python_env, verbose=verbose
+            handle_conflict=modify_python_env, verbose=verbose
         )
     if tf:
         install_py_tf_version(
-            build_env, versions, handle_conflict=modify_python_env, verbose=verbose
+            handle_conflict=modify_python_env, verbose=verbose
         )
 
     # TORCH
@@ -167,8 +167,6 @@ def build_redis_ai(
             # install pytorch wheel, and get the path to the cmake dir
             # we will use in the RAI build
             install_py_torch_version(
-                build_env,
-                versions,
                 device=device,
                 handle_conflict=modify_python_env,
                 verbose=verbose,
@@ -235,8 +233,6 @@ def infer_torch_device() -> _TDeviceStr:
 
 
 def install_py_torch_version(
-    build_env: BuildEnv,
-    versions: Versioner,
     device: _TDeviceStr = "cpu",
     handle_conflict: bool = False,
     verbose: bool = False,
@@ -245,29 +241,28 @@ def install_py_torch_version(
     for SmartSim backends so we download them here.
     """
     logger.info(f"Searching for a compatible TORCH install...")
-    if build_env.is_macos():
+    if BuildEnv.is_macos():
         end_point = None
         device_suffix = ""
     else:  # linux
         end_point = "https://download.pytorch.org/whl/torch_stable.html"
         if device == "cpu":
-            device_suffix = versions.TORCH_CPU_SUFFIX
+            device_suffix = Versioner.TORCH_CPU_SUFFIX
         elif device == "gpu":
-            device_suffix = versions.TORCH_CUDA_SUFFIX
+            device_suffix = Versioner.TORCH_CUDA_SUFFIX
         else:
             raise BuildError("Unrecognized device requested")
 
     torch_packages = {
-        "torch": Version_(f"{versions.TORCH}{device_suffix}"),
-        "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
+        "torch": Version_(f"{Versioner.TORCH}{device_suffix}"),
+        "torchvision": Version_(f"{Versioner.TORCHVISION}{device_suffix}"),
     }
 
     _confirm_package_in_python_env(
-        build_env,
         torch_packages,
         end_point=end_point,
         validate_installed_version=_create_torch_version_validator(
-            build_env, with_suffix=device_suffix
+            with_suffix=device_suffix
         ),
         install_on_absent=True,
         install_on_conflict=handle_conflict,
@@ -275,15 +270,13 @@ def install_py_torch_version(
     )
 
 
-def _create_torch_version_validator(
-    build_env: BuildEnv, with_suffix: str
-) -> t.Callable[[str, t.Optional[Version_]], bool]:
+def _create_torch_version_validator(with_suffix: str) -> t.Callable[[str, t.Optional[Version_]], bool]:
     def check_torch_version(package: str, version: t.Optional[Version_]) -> bool:
-        if not build_env.check_installed(package, version):
+        if not BuildEnv.check_installed(package, version):
             return False
         # Default check only looks at major/minor version numbers,
         # Torch requires we look at the patch as well
-        installed = build_env.get_package_version(package)
+        installed = BuildEnv.get_package_version(package)
         if with_suffix and with_suffix not in installed.patch:
             # Torch requires that we compare to the patch
             raise VersionConflictError(
@@ -301,14 +294,12 @@ def _create_torch_version_validator(
 
 
 def install_py_onnx_version(
-    build_env: BuildEnv,
-    versions: Versioner,
     handle_conflict: bool = False,
     verbose: bool = False,
 ) -> None:
     """Check Python environment for a compatible ONNX installation"""
     logger.info("Searching for a compatible ONNX install...")
-    if not versions.ONNX:
+    if not Versioner.ONNX:
         py_version = sys.version_info
         msg = (
             "An onnx wheel is not available for "
@@ -320,12 +311,11 @@ def install_py_onnx_version(
         msg += "1.2.7."
         raise SetupError(msg)
     _confirm_package_in_python_env(
-        build_env,
         {
-            "onnx": Version_(f"{versions.ONNX}"),
-            "skl2onnx": Version_(f"{versions.REDISAI.skl2onnx}"),
-            "onnxmltools": Version_(f"{versions.REDISAI.onnxmltools}"),
-            "scikit-learn": Version_(f"{versions.REDISAI.__getattr__('scikit-learn')}"),
+            "onnx": Version_(f"{Versioner.ONNX}"),
+            "skl2onnx": Version_(f"{Versioner.REDISAI.skl2onnx}"),
+            "onnxmltools": Version_(f"{Versioner.REDISAI.onnxmltools}"),
+            "scikit-learn": Version_(f"{getattr(Versioner.REDISAI, 'scikit-learn')}"),
         },
         install_on_absent=handle_conflict,
         install_on_conflict=handle_conflict,
@@ -334,16 +324,13 @@ def install_py_onnx_version(
 
 
 def install_py_tf_version(
-    build_env: BuildEnv,
-    versions: Versioner,
     handle_conflict: bool = False,
     verbose: bool = False,
 ) -> None:
     """Check Python environment for a compatible TensorFlow installation"""
     logger.info(f"Searching for a compatible TF install...")
     _confirm_package_in_python_env(
-        build_env,
-        {"tensorflow": versions.TENSORFLOW},
+        {"tensorflow": Versioner.TENSORFLOW},
         install_on_absent=handle_conflict,
         install_on_conflict=handle_conflict,
         verbose=verbose,
@@ -351,7 +338,6 @@ def install_py_tf_version(
 
 
 def _confirm_package_in_python_env(
-    build_env: BuildEnv,
     packages: t.Mapping[str, t.Optional[Version_]],
     package_pinning: _TPinningStr = "==",
     end_point: t.Optional[str] = None,
@@ -365,7 +351,7 @@ def _confirm_package_in_python_env(
     # TODO: Do not like how the defualt validation function will always look for
     #       a `==` pinning. Maybe turn `BuildEnv.check_installed` into a factory
     #       that takes a pinning and an appropiate validation fn?
-    validate_installed_version = validate_installed_version or build_env.check_installed
+    validate_installed_version = validate_installed_version or BuildEnv.check_installed
     missing, conflicts, to_install, to_uninstall = _assess_python_env(
         packages,
         package_pinning,
@@ -459,22 +445,16 @@ def execute(args: argparse.Namespace) -> int:
             logger.info("Only installing Python packages...skipping build")
             if onnx:
                 install_py_onnx_version(
-                    build_env,
-                    versions,
                     handle_conflict=modify_python_env,
                     verbose=verbose,
                 )
             if tf:
                 install_py_tf_version(
-                    build_env,
-                    versions,
                     handle_conflict=modify_python_env,
                     verbose=verbose,
                 )
             if onnx:
                 install_py_torch_version(
-                    build_env,
-                    versions,
                     handle_conflict=modify_python_env,
                     verbose=verbose,
                 )
