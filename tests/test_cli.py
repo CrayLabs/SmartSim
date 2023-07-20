@@ -645,8 +645,8 @@ def test_cli_full_build_execute(capsys, monkeypatch):
         print(exp_output)
         return exp_retval
 
-    # mock out the internal get_db_path method so we don't actually do file system ops
-    monkeypatch.setattr(smartsim._core._cli.build, "install_torch", mock_operation)
+    # mock out internal build methods so we don't actually do file system ops
+    monkeypatch.setattr(smartsim._core._cli.build, "_confirm_package_in_python_env", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "tabulate", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_database", mock_operation)
     monkeypatch.setattr(smartsim._core._cli.build, "build_redis_ai", mock_operation)
