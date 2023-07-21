@@ -146,9 +146,9 @@ def build_redis_ai(
     # the build however, as we use onnx and tf directly from RAI instead
     # of pip like we do PyTorch.
     if onnx:
-        install_py_onnx_version(handle_conflict=modify_python_env, verbose=verbose)
+        install_py_onnx_version(fetch_if_missing=modify_python_env, verbose=verbose)
     if tf:
-        install_py_tf_version(handle_conflict=modify_python_env, verbose=verbose)
+        install_py_tf_version(fetch_if_missing=modify_python_env, verbose=verbose)
 
     # TORCH
     if torch:
@@ -164,7 +164,7 @@ def build_redis_ai(
             # we will use in the RAI build
             install_py_torch_version(
                 device=device,
-                handle_conflict=modify_python_env,
+                fetch_if_missing=modify_python_env,
                 verbose=verbose,
             )
             torch_dir = build_env.torch_cmake_path
@@ -230,7 +230,7 @@ def infer_torch_device() -> _TDeviceStr:
 
 def install_py_torch_version(
     device: _TDeviceStr = "cpu",
-    handle_conflict: bool = False,
+    fetch_if_missing: bool = False,
     verbose: bool = False,
 ) -> None:
     """Torch shared libraries installed by pip are used in the build
@@ -260,8 +260,8 @@ def install_py_torch_version(
         validate_installed_version=_create_torch_version_validator(
             with_suffix=device_suffix
         ),
-        install_on_absent=True,
-        install_on_conflict=handle_conflict,
+        install_on_absent=fetch_if_missing,
+        install_on_conflict=False,
         verbose=verbose,
     )
 
@@ -292,7 +292,7 @@ def _create_torch_version_validator(
 
 
 def install_py_onnx_version(
-    handle_conflict: bool = False,
+    fetch_if_missing: bool = False,
     verbose: bool = False,
 ) -> None:
     """Check Python environment for a compatible ONNX installation"""
@@ -315,22 +315,22 @@ def install_py_onnx_version(
             "onnxmltools": Version_(f"{Versioner.REDISAI.onnxmltools}"),
             "scikit-learn": Version_(f"{getattr(Versioner.REDISAI, 'scikit-learn')}"),
         },
-        install_on_absent=handle_conflict,
-        install_on_conflict=handle_conflict,
+        install_on_absent=fetch_if_missing,
+        install_on_conflict=False,
         verbose=verbose,
     )
 
 
 def install_py_tf_version(
-    handle_conflict: bool = False,
+    fetch_if_missing: bool = False,
     verbose: bool = False,
 ) -> None:
     """Check Python environment for a compatible TensorFlow installation"""
     logger.info(f"Searching for a compatible TF install...")
     _confirm_package_in_python_env(
         {"tensorflow": Versioner.TENSORFLOW},
-        install_on_absent=handle_conflict,
-        install_on_conflict=handle_conflict,
+        install_on_absent=fetch_if_missing,
+        install_on_conflict=False,
         verbose=verbose,
     )
 
@@ -443,17 +443,17 @@ def execute(args: argparse.Namespace) -> int:
             logger.info("Only installing Python packages...skipping build")
             if onnx:
                 install_py_onnx_version(
-                    handle_conflict=modify_python_env,
+                    fetch_if_missing=modify_python_env,
                     verbose=verbose,
                 )
             if tf:
                 install_py_tf_version(
-                    handle_conflict=modify_python_env,
+                    fetch_if_missing=modify_python_env,
                     verbose=verbose,
                 )
             if onnx:
                 install_py_torch_version(
-                    handle_conflict=modify_python_env,
+                    fetch_if_missing=modify_python_env,
                     verbose=verbose,
                 )
         else:
