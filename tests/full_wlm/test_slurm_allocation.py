@@ -52,37 +52,12 @@ def test_get_release_allocation_w_options(wlmutils):
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
 
-# testing failure using reserved keywords under function parameter: options. 
-def test_get_allocation_bad_params_nodes():
+@pytest.mark.parametrize("func_parameters,test_parameters", [("time","TIME"),("nodes","NODES"),("account","ACCOUNT")])
+def test_get_allocation_bad_params_nodes(func_parameters,test_parameters):
     """test get_allocation with reserved keywords as option """
     options = {"ntasks-per-node": 1}
-   # with pytest.raises(SSConfigError):
-        # alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=time]
     with pytest.raises(SSConfigError):
-        alloc = slurm.get_allocation(options={"time":"TIME"})
-  #  time.sleep(5)  # give slurm a rest
-   # slurm.release_allocation(alloc)
-
-def test_get_allocation_bad_params_time():
-    """test get_allocation with reserved keywords as options """
-    options = {"ntasks-per-node": 1}
-    #with pytest.raises(SSConfigError):
-    #alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=nodes)
-    with pytest.raises(SSConfigError):
-        alloc = slurm.get_allocation(options={"nodes":"NODES"})
-   # time.sleep(5)  # give slurm a rest
-  #  slurm.release_allocation(alloc)
-
-def test_get_allocation_bad_params_account():
-    """test get_allocation with reserved keywords as options  """
-    options = {"ntasks-per-node": 1}
-    #with pytest.raises(SSConfigError):
-    #alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=account)
-    with pytest.raises(SSConfigError):
-        alloc = slurm.get_allocation(options={"account":"ACCOUNT"})
- #   time.sleep(5)  # give slurm a rest
- #   slurm.release_allocation(alloc)
-
+       alloc = slurm.get_allocation(options={func_parameters:test_parameters})
 
 # --------- Error handling ----------------------------
 
