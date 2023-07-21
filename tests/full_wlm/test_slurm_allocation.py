@@ -53,7 +53,7 @@ def test_get_release_allocation_w_options(wlmutils):
     slurm.release_allocation(alloc)
 
 @pytest.mark.parametrize("func_parameters,test_parameters", [("time","TIME"),("nodes","NODES"),("account","ACCOUNT")])
-def test_get_allocation_bad_params_nodes(func_parameters,test_parameters):
+def test_get_allocation_bad_params(func_parameters,test_parameters):
     """test get_allocation with reserved keywords as option """
     options = {"ntasks-per-node": 1}
     with pytest.raises(SSConfigError):
