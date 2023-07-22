@@ -118,7 +118,6 @@ class PBSLauncher(WLMLauncher):
             error = open(
                 err, "w+", encoding="utf-8"
             )
-
             task_id = self.task_manager.start_task(
                 cmd_list,
                 cwd=step.cwd,

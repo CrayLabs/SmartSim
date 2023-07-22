@@ -105,13 +105,9 @@ class LocalLauncher(Launcher):
 
         out, err = step.get_output_files()
         # pylint: disable-next=consider-using-with
-        output = open(
-            out, "w+", encoding="utf-8"
-        )
+        output = open(out, "w+", encoding="utf-8")
         # pylint: disable-next=consider-using-with
-        error = open(
-            err, "w+", encoding="utf-8"
-        )
+        error = open(err, "w+", encoding="utf-8")
         cmd_list = step.get_launch_cmd()
 
         task_id = self.task_manager.start_task(
