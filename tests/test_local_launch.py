@@ -26,6 +26,7 @@
 
 import pytest
 import typing as t
+from functools import partial
 from subprocess import PIPE
 
 from smartsim import Experiment, status
@@ -65,9 +66,6 @@ def test_ensemble(fileutils):
     exp.start(ensemble, block=True, summary=True)
     statuses = exp.get_status(ensemble)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
-
-
-from functools import partial
 
 
 def mock_exec(
