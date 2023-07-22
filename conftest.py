@@ -628,30 +628,3 @@ class ColoUtils:
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
         return colo_model
-
-
-@pytest.fixture
-def monkeypatch_exp_controller(monkeypatch):
-    def _monkeypatch_exp_controller(exp):
-        entity_steps = []
-
-        def start_wo_job_manager(self, manifest, block=True, kill_on_interrupt=True):
-            self._launch(manifest)
-
-        def launch_step_nop(self, step, entity):
-            entity_steps.append((step, entity))
-
-        monkeypatch.setattr(
-            exp._control,
-            "start",
-            start_wo_job_manager.__get__(exp._control, type(exp._control)),
-        )
-        monkeypatch.setattr(
-            exp._control,
-            "_launch_step",
-            launch_step_nop.__get__(exp._control, type(exp._control)),
-        )
-
-        return entity_steps
-
-    return _monkeypatch_exp_controller
