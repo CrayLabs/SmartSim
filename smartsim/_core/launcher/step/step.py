@@ -113,6 +113,4 @@ class Step:
             if self.step_settings.env_vars:
                 env_prime = {k:v or "" for k, v in self.step_settings.env_vars.items()}
                 env.update(env_prime)
-                # todo: test that
-                # an empty env_var overwrites one in env
         return env
