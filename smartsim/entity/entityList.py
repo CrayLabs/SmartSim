@@ -27,7 +27,7 @@
 import typing as t
 
 if t.TYPE_CHECKING:
-    import smartsim
+    import smartsim  # pylint: disable=unused-import
 
 
 class EntityList:
@@ -37,6 +37,8 @@ class EntityList:
         self.name: str = name
         self.path: str = path
         self.entities: t.List["smartsim.entity.SmartSimEntity"] = []
+        self._db_models: t.List["smartsim.entity.DBModel"] = []
+        self._db_scripts: t.List["smartsim.entity.DBScript"] = []
         self._initialize_entities(**kwargs)
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:

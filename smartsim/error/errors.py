@@ -50,7 +50,8 @@ class UserStrategyError(SmartSimError):
         message = self.create_message(perm_strat)
         super().__init__(message)
 
-    def create_message(self, perm_strat: str) -> str:
+    @staticmethod
+    def create_message(perm_strat: str) -> str:
         prefix = "User provided ensemble generation strategy"
         message = "failed to generate valid parameter names and values"
         return " ".join((prefix, str(perm_strat), message))
@@ -65,11 +66,12 @@ class ParameterWriterError(SmartSimError):
         message = self.create_message(file_path, read)
         super().__init__(message)
 
-    def create_message(self, fp: str, read: bool) -> str:
+    @staticmethod
+    def create_message(file_path: str, read: bool) -> str:
         if read:
-            msg = f"Failed to read configuration file to write at {fp}"
+            msg = f"Failed to read configuration file to write at {file_path}"
         else:
-            msg = f"Failed to write configuration file to {fp}"
+            msg = f"Failed to write configuration file to {file_path}"
         return msg
 
 
@@ -99,14 +101,19 @@ class ShellError(LauncherError):
     Closely related to error from subprocess(Popen) commands"""
 
     def __init__(
-        self, message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]] = None
+        self,
+        message: str,
+        command_list: t.Union[str, t.List[str]],
+        details: t.Optional[t.Union[Exception, str]] = None,
     ) -> None:
         msg = self.create_message(message, command_list, details=details)
         super().__init__(msg)
 
     @staticmethod
     def create_message(
-        message: str, command_list: t.Union[str, t.List[str]], details: t.Optional[t.Union[Exception, str]]
+        message: str,
+        command_list: t.Union[str, t.List[str]],
+        details: t.Optional[t.Union[Exception, str]],
     ) -> str:
         if isinstance(command_list, list):
             command_list = " ".join(command_list)

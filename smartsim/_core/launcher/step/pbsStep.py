@@ -29,7 +29,6 @@ import typing as t
 from ....log import get_logger
 from .step import Step
 from ....settings import QsubBatchSettings
-from ....settings.base import BatchSettings
 
 logger = get_logger(__name__)
 
@@ -80,24 +79,25 @@ class QsubBatchStep(Step):
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            f.write(f"#PBS -o {output}\n")
-            f.write(f"#PBS -e {error}\n")
-            f.write(f"#PBS -N {self.name}\n")
-            f.write("#PBS -V \n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n\n")
+            script_file.write(f"#PBS -o {output}\n")
+            script_file.write(f"#PBS -e {error}\n")
+            script_file.write(f"#PBS -N {self.name}\n")
+            script_file.write("#PBS -V \n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
-                f.write(f"#PBS {opt}\n")
+                script_file.write(f"#PBS {opt}\n")
 
+            # pylint: disable-next=protected-access
             for cmd in self.batch_settings._preamble:
-                f.write(f"{cmd}\n")
+                script_file.write(f"{cmd}\n")
 
             for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+                script_file.write("\n")
+                script_file.write(f"{' '.join((cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         return batch_script

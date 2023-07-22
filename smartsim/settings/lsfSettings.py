@@ -44,7 +44,7 @@ class JsrunSettings(RunSettings):
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
-        **kwargs: t.Any,
+        **_kwargs: t.Any,
     ) -> None:
         """Settings to run job with ``jsrun`` command
 
@@ -97,10 +97,16 @@ class JsrunSettings(RunSettings):
         :type cpus_per_rs: int or str
         """
         if self.colocated_db_settings:
-            db_cpus = int(self.colocated_db_settings["db_cpus"])
+            db_cpus = int(self.colocated_db_settings.get("db_cpus", 0))
+            if not db_cpus:
+                raise ValueError(
+                    "db_cpus must be configured on colocated_db_settings"
+                )
+
             if cpus_per_rs < db_cpus:
                 raise ValueError(
-                    f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than db_cpus ({db_cpus})"
+                    f"Cannot set cpus_per_rs ({cpus_per_rs}) to less than "
+                    + f"db_cpus ({db_cpus})"
                 )
         if isinstance(cpus_per_rs, str):
             self.run_args["cpu_per_rs"] = cpus_per_rs
@@ -354,9 +360,11 @@ class JsrunSettings(RunSettings):
                 cpus_per_flag_set = True
                 cpu_per_rs = int(run_arg_value)
                 if cpu_per_rs < db_cpus:
-                    msg = f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, "
-                    msg += f"but colocated DB requires {db_cpus} CPUs per RS. Automatically setting "
-                    msg += f"{cpu_per_rs_flag} flag to {db_cpus}"
+                    msg = (
+                        f"{cpu_per_rs_flag} flag was set to {cpu_per_rs}, but "
+                        f"colocated DB requires {db_cpus} CPUs per RS. Automatically "
+                        f"setting {cpu_per_rs_flag} flag to {db_cpus}"
+                    )
                     logger.info(msg)
                     self.run_args[cpu_per_rs_flag] = db_cpus
         if not cpus_per_flag_set:
@@ -373,14 +381,14 @@ class JsrunSettings(RunSettings):
                 if rs_per_host != 1:
                     msg = f"{rs_per_host_flag} flag was set to {rs_per_host}, "
                     msg += (
-                        f"but colocated DB requires running ONE resource set per host. "
+                        "but colocated DB requires running ONE resource set per host. "
                     )
                     msg += f"Automatically setting {rs_per_host_flag} flag to 1"
                     logger.info(msg)
                     self.run_args[rs_per_host_flag] = "1"
         if not rs_per_host_set:
-            msg = f"Colocated DB requires one resource set per host. "
-            msg += f" Automatically setting --rs_per_host==1"
+            msg = "Colocated DB requires one resource set per host. "
+            msg += " Automatically setting --rs_per_host==1"
             logger.info(msg)
             self.set_rs_per_host(1)
 
@@ -408,6 +416,8 @@ class BsubBatchSettings(BatchSettings):
         :param smts: SMTs, defaults to 0
         :type smts: int, optional
         """
+        self.project: t.Optional[str] = None
+
         if project:
             kwargs.pop("account", None)
         else:
@@ -424,7 +434,7 @@ class BsubBatchSettings(BatchSettings):
 
         self.smts = 0
         if smts:
-            self.set_smts(smts)            
+            self.set_smts(smts)
 
         self.expert_mode = False
         self.easy_settings = ["ln_slots", "ln_mem", "cn_cu", "nnodes"]
@@ -512,7 +522,7 @@ class BsubBatchSettings(BatchSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["m"] = '"' + " ".join(host_list) + '"'
 
@@ -542,14 +552,14 @@ class BsubBatchSettings(BatchSettings):
         """
 
         if self.smts:
-            if not "alloc_flags" in self.batch_args.keys():
+            if "alloc_flags" not in self.batch_args.keys():
                 self.batch_args["alloc_flags"] = f"smt{self.smts}"
             else:
                 # Check if smt is in the flag, otherwise add it
                 flags: t.List[str] = []
                 if flags_arg := self.batch_args.get("alloc_flags", ""):
                     flags = flags_arg.strip('"').split()
-                if not any([flag.startswith("smt") for flag in flags]):
+                if not any(flag.startswith("smt") for flag in flags):
                     flags.append(f"smt{self.smts}")
                     self.batch_args["alloc_flags"] = " ".join(flags)
 

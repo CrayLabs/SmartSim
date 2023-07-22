@@ -81,6 +81,7 @@ class AprunStep(Step):
             aprun_cmd.extend([bash, launch_script_path])
 
         if self.run_settings.container:
+            # pylint: disable-next=protected-access
             aprun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         aprun_cmd += self._build_exe()
@@ -105,7 +106,8 @@ class AprunStep(Step):
         elif "COBALT_JOBID" in os.environ:
             self.alloc = os.environ["COBALT_JOBID"]
             logger.debug(
-                f"Running on Cobalt allocation {self.alloc} gleaned from user environment"
+                "Running on Cobalt allocation {} gleaned from user environment",
+                self.alloc,
             )
         else:
             raise AllocationError(
@@ -120,10 +122,10 @@ class AprunStep(Step):
         """
         if self.run_settings.mpmd:
             return self._make_mpmd()
-        else:
-            exe = self.run_settings.exe
-            args = self.run_settings.exe_args
-            return exe + args
+
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+        return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Aprun (MPMD) executable"""

@@ -58,9 +58,11 @@ class SmartCli:
         )
 
         for cmd, item in self.menu.items():
-            p = subparsers.add_parser(cmd, description=item.help, help=item.help)
+            parser = subparsers.add_parser(cmd,
+                                           description=item.description,
+                                           help=item.description)
             if item.configurator:
-                item.configurator(p)
+                item.configurator(parser)
 
     def execute(self, cli_args: t.List[str]) -> int:
         if len(cli_args) < 2:

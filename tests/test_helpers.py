@@ -25,21 +25,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from warnings import simplefilter, warn
+from smartsim._core.utils.helpers import cat_arg_and_value
 
-# pylint: disable-next=unused-import
-from .wlm.slurm import (
-    _get_alloc_cmd,
-    _get_system_partition_info,
-    get_allocation,
-    get_default_partition,
-    release_allocation,
-    validate,
-)
 
-simplefilter("once", category=DeprecationWarning)
-DEPRECATION_MSG = (
-    "`smartsim.slurm` has been deprecated and will be removed in a future release.\n"
-    "Please update your code to use `smartsim.wlm.slurm`"
-)
-warn(DEPRECATION_MSG, category=DeprecationWarning, stacklevel=2)
+def test_double_dash_concat():
+    result = cat_arg_and_value("--foo", "FOO")
+    assert result == "--foo=FOO"
+
+def test_single_dash_concat():
+    result = cat_arg_and_value("-foo", "FOO")
+    assert result == "-foo FOO"
+
+def test_single_char_concat():
+    result = cat_arg_and_value("x", "FOO")
+    assert result == "-x FOO"
+
+def test_fallthrough_concat():
+    result = cat_arg_and_value("xx", "FOO")  # <-- no dashes, > 1 char
+    assert result == "--xx=FOO"

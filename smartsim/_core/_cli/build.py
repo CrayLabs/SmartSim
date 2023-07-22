@@ -37,7 +37,7 @@ from smartsim._core._cli.utils import (
     color_bool,
     pip_install,
     pip_uninstall,
-    smart_logger_format,
+    SMART_LOGGER_FORMAT,
 )
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
@@ -54,7 +54,8 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
-logger = get_logger("Smart", fmt=smart_logger_format)
+SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
@@ -106,20 +107,20 @@ def build_database(
     )
     if not database_builder.is_built:
         logger.info(
-            f"Building {database_name} version {versions.REDIS} from {versions.REDIS_URL}"
+            f"Building {database_name} version {versions.REDIS} "
+            f"from {versions.REDIS_URL}"
         )
         database_builder.build_from_git(versions.REDIS_URL, versions.REDIS_BRANCH)
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
-
 def build_redis_ai(
     build_env: BuildEnv,
     versions: Versioner,
     device: _TDeviceStr,
-    torch: bool = True,
-    tf: bool = True,
-    onnx: bool = False,
+    use_torch: bool = True,
+    use_tf: bool = True,
+    use_onnx: bool = False,
     torch_dir: t.Union[str, Path, None] = None,
     libtf_dir: t.Union[str, Path, None] = None,
     modify_python_env: bool = False,
@@ -132,9 +133,9 @@ def build_redis_ai(
     # decide which runtimes to build
     print("\nML Backends Requested")
     backends_table = [
-        ["PyTorch", versions.TORCH, color_bool(torch)],
-        ["TensorFlow", versions.TENSORFLOW, color_bool(tf)],
-        ["ONNX", versions.ONNX or "Unavailable", color_bool(onnx)],
+        ["PyTorch", versions.TORCH, color_bool(use_torch)],
+        ["TensorFlow", versions.TENSORFLOW, color_bool(use_tf)],
+        ["ONNX", versions.ONNX or "Unavailable", color_bool(use_onnx)],
     ]
     print(tabulate(backends_table, tablefmt="fancy_outline"), end="\n\n")
     print(f"Building for GPU support: {color_bool(device == 'gpu')}\n")
@@ -146,13 +147,13 @@ def build_redis_ai(
     # to download them if they are not installed. this should not break
     # the build however, as we use onnx and tf directly from RAI instead
     # of pip like we do PyTorch.
-    if onnx:
+    if use_onnx:
         install_py_onnx_version(fetch_if_missing=modify_python_env, verbose=verbose)
-    if tf:
+    if use_tf:
         install_py_tf_version(fetch_if_missing=modify_python_env, verbose=verbose)
 
     # TORCH
-    if torch:
+    if use_torch:
         if torch_dir:
             torch_dir = Path(torch_dir).resolve()
             if not torch_dir.is_dir():
@@ -170,7 +171,7 @@ def build_redis_ai(
             )
             torch_dir = build_env.torch_cmake_path
 
-    if tf and libtf_dir:
+    if use_tf and libtf_dir:
         libtf_dir = Path(libtf_dir).resolve()
 
     build_env_dict = build_env()
@@ -179,9 +180,9 @@ def build_redis_ai(
         build_env=build_env_dict,
         torch_dir=str(torch_dir) if torch_dir else "",
         libtf_dir=str(libtf_dir) if libtf_dir else "",
-        build_torch=torch,
-        build_tf=tf,
-        build_onnx=onnx,
+        build_torch=use_torch,
+        build_tf=use_tf,
+        build_onnx=use_onnx,
         jobs=build_env.JOBS,
         verbose=verbose,
     )
@@ -428,8 +429,8 @@ def execute(args: argparse.Namespace) -> int:
     verify_install = args.verify
 
     # torch and tf build by default
-    pt = not args.no_pt
-    tf = not args.no_tf
+    pt = not args.no_pt  # pylint: disable=invalid-name
+    tf = not args.no_tf  # pylint: disable=invalid-name
     onnx = args.onnx
 
     do_checks = not args.only_python_packages
@@ -502,11 +503,9 @@ def execute(args: argparse.Namespace) -> int:
                 verbose=verbose,
             )
 
-            backends = [
-                backend.capitalize() for backend in installed_redisai_backends()
-            ]
+            backends = list(map(str.capitalize, installed_redisai_backends()))
             logger.info(
-                (", ".join(backends) if backends else "No") + " backend(s) built"
+                f"{', '.join(backends) if backends else 'No'} backend(s) built"
             )
 
     except (SetupError, BuildError) as e:
@@ -522,6 +521,7 @@ def execute(args: argparse.Namespace) -> int:
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
     """Builds the parser for the command"""
+    warn_usage = "(ONLY USE IF NEEDED)"
     parser.add_argument(
         "-v",
         action="store_true",
@@ -557,13 +557,13 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         "--torch_dir",
         default=None,
         type=str,
-        help="Path to custom <path>/torch/share/cmake/Torch/ directory (ONLY USE IF NEEDED)",
+        help=f"Path to custom <path>/torch/share/cmake/Torch/ directory {warn_usage}",
     )
     parser.add_argument(
         "--libtensorflow_dir",
         default=None,
         type=str,
-        help="Path to custom libtensorflow directory (ONLY USED IF NEEDED)",
+        help=f"Path to custom libtensorflow directory {warn_usage}",
     )
     parser.add_argument(
         "--only_python_packages",

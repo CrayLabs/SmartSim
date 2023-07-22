@@ -84,25 +84,26 @@ class SbatchStep(Step):
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            f.write(f"#SBATCH --output={output}\n")
-            f.write(f"#SBATCH --error={error}\n")
-            f.write(f"#SBATCH --job-name={self.name}\n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n\n")
+            script_file.write(f"#SBATCH --output={output}\n")
+            script_file.write(f"#SBATCH --error={error}\n")
+            script_file.write(f"#SBATCH --job-name={self.name}\n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
-                f.write(f"#SBATCH {opt}\n")
+                script_file.write(f"#SBATCH {opt}\n")
 
+            # pylint: disable-next=protected-access
             for cmd in self.batch_settings._preamble:
-                f.write(f"{cmd}\n")
+                script_file.write(f"{cmd}\n")
 
             for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+                script_file.write("\n")
+                script_file.write(f"{' '.join((cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         return batch_script
 
 
@@ -157,13 +158,13 @@ class SrunStep(Step):
         srun_cmd += self.run_settings.format_run_args()
 
         if self.run_settings.colocated_db_settings:
-            
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
 
         if self.run_settings.container:
+            # pylint: disable-next=protected-access
             srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         if compound_env:
@@ -199,10 +200,10 @@ class SrunStep(Step):
         """
         if self.run_settings.mpmd:
             return self._make_mpmd()
-        else:
-            exe = self.run_settings.exe
-            args = self.run_settings.exe_args
-            return exe + args
+
+        exe = self.run_settings.exe
+        args = self.run_settings.exe_args
+        return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""

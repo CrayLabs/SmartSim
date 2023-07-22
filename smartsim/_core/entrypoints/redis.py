@@ -48,33 +48,41 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 
 
-def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
+def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+    if not signo:
+        logger.warning("Received signal with no signo")
     cleanup()
 
 
+def build_bind_args(ip_addresses: t.List[str]) -> t.List[str]:
+    bind_arg = f"--bind {' '.join(ip_addresses)}"
+    # pin source address to avoid random selection by Redis
+    bind_src_arg = f"--bind-source-addr {ip_addresses[0]}"
+    return [bind_arg, bind_src_arg]
+
+
+def print_summary(cmd: t.List[str], ip_address: str, network_interface: str) -> None:
+    print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
+    print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
+    print(f"IPADDRESS: {ip_address}\n", flush=True)
+    print(f"NETWORK: {network_interface}\n", flush=True)
+    print("-" * 30, "\n\n", flush=True)
+    print("-" * 10, "  Output  ", "-" * 10, "\n\n", flush=True)
+
+
 def main(network_interface: str, command: t.List[str]) -> None:
-    global DBPID
+    global DBPID  # pylint: disable=global-statement
 
     try:
         ip_addresses = [current_ip(net_if) for net_if in network_interface.split(",")]
-        cmd = command + [f"--bind {' '.join(ip_addresses)}"]
+        cmd = command + build_bind_args(ip_addresses)
 
-        # pin source address to avoid random selection by Redis
-        ip_address = ip_addresses[0]
-        cmd += [f"--bind-source-addr {ip_address}"]
+        print_summary(cmd, ip_addresses[0], network_interface)
 
-        print("-" * 10, "  Running  Command  ", "-" * 10, "\n", flush=True)
-        print(f"COMMAND: {' '.join(cmd)}\n", flush=True)
-        print(f"IPADDRESS: {ip_address}\n", flush=True)
-        print(f"NETWORK: {network_interface}\n", flush=True)
-        print("-" * 30, "\n\n", flush=True)
+        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        DBPID = process.pid
 
-        print("-" * 10, "  Output  ", "-" * 10, "\n\n", flush=True)
-
-        p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-        DBPID = p.pid
-
-        for line in iter(p.stdout.readline, b""):
+        for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
     except Exception as e:
         cleanup()
@@ -82,7 +90,6 @@ def main(network_interface: str, command: t.List[str]) -> None:
 
 
 def cleanup() -> None:
-    global DBPID
     try:
         logger.debug("Cleaning up database instance")
         # attempt to stop the database process

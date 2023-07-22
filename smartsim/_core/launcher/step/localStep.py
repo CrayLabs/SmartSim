@@ -60,6 +60,7 @@ class LocalStep(Step):
             cmd.extend([bash, launch_script_path])
 
         if self.run_settings.container:
+            # pylint: disable-next=protected-access
             cmd += self.run_settings.container._container_cmds(self.cwd)
 
         # build executable
