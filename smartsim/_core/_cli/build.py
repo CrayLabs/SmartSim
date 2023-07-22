@@ -50,6 +50,7 @@ from smartsim._core._install.buildenv import (
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim._core._cli import verify
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
@@ -424,6 +425,7 @@ def execute(args: argparse.Namespace) -> int:
     verbose = args.v
     keydb = args.keydb
     device: _TDeviceStr = args.device
+    verify_install = args.verify
 
     # torch and tf build by default
     pt = not args.no_pt
@@ -511,6 +513,9 @@ def execute(args: argparse.Namespace) -> int:
         return 1
 
     logger.info("SmartSim build complete!")
+
+    if verify_install:
+        return verify.execute(args)
     return 0
 
 
@@ -570,10 +575,16 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=False,
         help=(
-            "If true, `smart` will use `pip` to attempt to modify the current "
+            "If provided, `smart` will use `pip` to attempt to modify the current "
             "python environment to satisfy the package dependencies of SmartSim "
             "and RedisAI"
         ),
+    )
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        default=False,
+        help="Automatically run `smart verify` after building SmartSim",
     )
     parser.add_argument(
         "--keydb",

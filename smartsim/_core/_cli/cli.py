@@ -36,6 +36,7 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.verify import execute as verify_execute
 from smartsim._core._cli.utils import MenuItemConfig
 
 
@@ -104,6 +105,11 @@ def default_cli() -> SmartCli:
             "clobber",
             "Remove all previous dependency installations",
             clobber_execute,
+        ),
+        MenuItemConfig(
+            "verify",
+            "Run a simple experiment to confirm ",
+            verify_execute,
         ),
     ]
 

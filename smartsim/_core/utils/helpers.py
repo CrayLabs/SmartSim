@@ -35,6 +35,8 @@ from pathlib import Path
 from shutil import which
 
 
+_TREDISAI_BACKEND = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
+
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
     lock_suffix = str(uuid.uuid4())[:7]
@@ -191,7 +193,7 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
         return "=".join(("--" + arg_name, str(value)))
 
 
-def _installed(base_path: Path, backend: str) -> bool:
+def _installed(base_path: Path, backend: _TREDISAI_BACKEND) -> bool:
     """
     Check if a backend is available for the RedisAI module.
     """
@@ -201,7 +203,7 @@ def _installed(base_path: Path, backend: str) -> bool:
     
     return backend_so.is_file()
 
-def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
+def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[_TREDISAI_BACKEND]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -220,7 +222,7 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     from ..._core.config import CONFIG
 
     base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
-    backends = ["tensorflow", "torch", "onnxruntime", "tflite"]
+    backends: t.List[_TREDISAI_BACKEND] = ["tensorflow", "torch", "onnxruntime", "tflite"]
 
     installed = [backend for backend in backends if _installed(base_path, backend)]
     return installed
