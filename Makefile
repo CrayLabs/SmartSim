@@ -188,7 +188,3 @@ test-full:
 .PHONY: test-wlm
 test-wlm:
 	@python -m pytest -vv tests/full_wlm/ tests/on_wlm
-# help: test-min                       - Run all tests
-.PHONY: test-min
-test-min:
-	@python -m pytest tests/test_local_launch.py
