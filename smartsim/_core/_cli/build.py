@@ -32,6 +32,7 @@ from pathlib import Path
 
 from tabulate import tabulate
 
+from smartsim._core._cli import verify
 from smartsim._core._cli.utils import (
     color_bool,
     pip_install,
@@ -50,7 +51,6 @@ from smartsim._core._install.buildenv import (
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
 from smartsim._core.utils.helpers import installed_redisai_backends
-from smartsim._core._cli import verify
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 

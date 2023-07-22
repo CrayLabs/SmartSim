@@ -24,62 +24,65 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
 import argparse
+import io
 import tempfile
-from pathlib import Path
-from contextlib import contextmanager, ExitStack
-from types import TracebackType
 import typing as t
+from contextlib import contextmanager
+from pathlib import Path
+from types import TracebackType
 
 import numpy as np
+from smartredis import Client
 
 from smartsim import Experiment
-from smartredis import Client
-from smartsim._core.utils.helpers import installed_redisai_backends
-
-from smartsim.log import get_logger
 from smartsim._core._cli.utils import smart_logger_format
+from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=smart_logger_format)
 
 
-class VerificationTempDir(tempfile.TemporaryDirectory):
+class _VerificationTempDir(tempfile.TemporaryDirectory):
+    """A Temporary directory to be used as a context manager that will only
+    clean itself up if no error is raised within its context
+    """
+
     def __exit__(
         self,
         exc: t.Optional[t.Type[BaseException]],
         value: t.Optional[BaseException],
         tb: t.Optional[TracebackType],
     ) -> None:
-        """Only clean up the temp dir if no error"""
         if not value:
-            super().__exit__(exc, value, tb)
+            return super().__exit__(exc, value, tb)
 
 
 def execute(_args: argparse.Namespace, /) -> int:
     backends = installed_redisai_backends()
-    try:
-        verify_install(
-            with_tf="tensorflow" in backends,
-            with_pt="torch" in backends,
-            with_onnx="onnxruntime" in backends,
-        )
-        return 0
-    except Exception as e:
-        logger.error(
-            "SmartSim failed to run a simple experiment. "
-            f"Experiment failed do to the following exception:\n{e}"
-        )
-        return 2
+    with _VerificationTempDir() as temp_dir:
+        try:
+            verify_install(
+                location=temp_dir,
+                with_tf="tensorflow" in backends,
+                with_pt="torch" in backends,
+                with_onnx="onnxruntime" in backends,
+            )
+            return 0
+        except Exception as e:
+            logger.error(
+                "SmartSim failed to run a simple experiment!\n"
+                f"Experiment failed do to the following exception:\n{e}\n"
+                f"Output files are available at `{temp_dir}`"
+            )
+            return 2
 
 
-def verify_install(with_tf: bool, with_pt: bool, with_onnx: bool) -> None:
-    with ExitStack() as ctx:
-        temp_dir = ctx.enter_context(VerificationTempDir())
-        exp = Experiment(
-            "VerificationExperiment", exp_path=str(temp_dir), launcher="local"
-        )
-        client = ctx.enter_context(_make_managed_orc(exp))
+def verify_install(
+    location: str, with_tf: bool, with_pt: bool, with_onnx: bool
+) -> None:
+    exp = Experiment("Verification", exp_path=location, launcher="local")
+    with _make_managed_orc(exp) as client:
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
         if with_tf:
@@ -98,10 +101,9 @@ def _make_managed_orc(exp: Experiment) -> t.Generator[Client, None, None]:
     orc = exp.create_database(db_nodes=1, port=8934, interface="lo")
     exp.generate(orc)
     exp.start(orc)
-    (client_addr,) = orc.get_address()
-    client = Client(address=client_addr, cluster=False)
     try:
-        yield client
+        (client_addr,) = orc.get_address()
+        yield Client(address=client_addr, cluster=False)
     finally:
         exp.stop(orc)
 
@@ -143,7 +145,7 @@ def _verify_torch_install(client: Client) -> None:
             super().__init__()
             self.conv = nn.Conv2d(1, 1, 3)
 
-        def forward(self, x: t.Any) -> None:
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.conv(x)
 
     net = Net()
@@ -160,6 +162,8 @@ def _verify_torch_install(client: Client) -> None:
 
 
 def _verify_onnx_install(client: Client) -> None:
+    # These imports will fail typecheck unless built with the `--onnx` flag,
+    # which is not available for py3.10 at the moment
     from skl2onnx import to_onnx  # type: ignore[import]
     from sklearn.cluster import KMeans  # type: ignore[import]
 

@@ -36,8 +36,8 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.verify import execute as verify_execute
 from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.verify import execute as verify_execute
 
 
 class SmartCli:
