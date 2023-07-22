@@ -111,9 +111,13 @@ class PBSLauncher(WLMLauncher):
             # aprun doesn't direct output for us.
             out, err = step.get_output_files()
             # pylint: disable-next=consider-using-with
-            output = open(out, "w+", encoding="utf-8")
+            output = open(
+                out, "w+", encoding="utf-8"
+            )
             # pylint: disable-next=consider-using-with
-            error = open(err, "w+", encoding="utf-8")
+            error = open(
+                err, "w+", encoding="utf-8"
+            )
 
             task_id = self.task_manager.start_task(
                 cmd_list,
