@@ -453,8 +453,9 @@ def execute(args: argparse.Namespace) -> int:
                     fetch_if_missing=modify_python_env,
                     verbose=verbose,
                 )
-            if onnx:
+            if pt:
                 install_py_torch_version(
+                    device=device,
                     fetch_if_missing=modify_python_env,
                     verbose=verbose,
                 )

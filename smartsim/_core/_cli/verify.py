@@ -54,28 +54,31 @@ class _VerificationTempDir(tempfile.TemporaryDirectory):
         value: t.Optional[BaseException],
         tb: t.Optional[TracebackType],
     ) -> None:
-        if not value:
-            return super().__exit__(exc, value, tb)
+        if not value:  # Yay, no error! Clean up as normal
+            super().__exit__(exc, value, tb)
+        else:  # Uh-oh! Better make sure this is not implicitly cleaned up
+            self._finalizer.detach()
 
 
 def execute(_args: argparse.Namespace, /) -> int:
     backends = installed_redisai_backends()
-    with _VerificationTempDir() as temp_dir:
-        try:
+    try:
+        with _VerificationTempDir() as temp_dir:
             verify_install(
                 location=temp_dir,
                 with_tf="tensorflow" in backends,
                 with_pt="torch" in backends,
                 with_onnx="onnxruntime" in backends,
             )
-            return 0
-        except Exception as e:
-            logger.error(
-                "SmartSim failed to run a simple experiment!\n"
-                f"Experiment failed do to the following exception:\n{e}\n"
-                f"Output files are available at `{temp_dir}`"
-            )
-            return 2
+    except Exception as e:
+        logger.error(
+            "SmartSim failed to run a simple experiment!\n"
+            f"Experiment failed do to the following exception:\n{e}\n\n"
+            f"Output files are available at `{temp_dir}`"
+        )
+        return 2
+    else:
+        return 0
 
 
 def verify_install(
