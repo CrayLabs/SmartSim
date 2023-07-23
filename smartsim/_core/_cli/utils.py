@@ -69,29 +69,14 @@ def pip_install(
     """Install a pip package to be used in the SmartSim build
     Currently only Torch shared libraries are re-used for the build
     """
-    # form pip install command
-    cmd = [sys.executable, "-m", "pip", "install"]
-
-    if end_point:
-        cmd.extend(("-f", str(end_point)))
-
     packages.sort()
-    pkg_str_list = "\n\t".join(packages)
+    end_point_args = ("-f", str(end_point)) if end_point else ()
 
+    pkg_str_list = "\n\t".join(packages)
     if verbose:
         logger.info(f"Attempting to Install Packages:\n\t{pkg_str_list}")
     for package in packages:
-        proc = subprocess.Popen(
-            cmd + [package], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        _, err = proc.communicate()
-        returncode = int(proc.returncode)
-        if returncode != 0:
-            error = (
-                f"'{package}' installation failed with exitcode {returncode}\n"
-                f"{err.decode('utf-8')}"
-            )
-            raise BuildError(error)
+        _pip("install", *end_point_args, package)
     if verbose:
         logger.info("Packages Installed Successfully")
 
@@ -101,20 +86,38 @@ def pip_uninstall(packages_to_remove: t.List[str], verbose: bool = False) -> Non
     pkg_str_list = "\n\t".join(packages_to_remove)
     if verbose:
         logger.info(f"Attempting to Uninstall Packages:\n\t{pkg_str_list}")
-    cmd = [sys.executable, "-m", "pip", "uninstall", "-y"]
     for package in packages_to_remove:
-        proc = subprocess.Popen(
-            cmd + [package], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        _, err = proc.communicate()
-        retcode = int(proc.returncode)
-        if retcode != 0:
-            raise BuildError(
-                f"'{' '.join(cmd)}' uninstall failed with exitcode {retcode}\n"
-                f"{err.decode('utf-8')}"
-            )
+        _pip("uninstall", "-y", package)
     if verbose:
         logger.info(f"Packages Uninstalled Successfully")
+
+
+def _pip(*args: str) -> None:
+    with subprocess.Popen(
+        (sys.executable, "-m", "pip") + args,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ) as proc:
+        out, err = proc.communicate()
+        retcode = int(proc.returncode)
+    if retcode != 0:
+        raise PipCommandFailureError(args, retcode, out, err)
+
+
+class PipCommandFailureError(BuildError):
+    def __init__(
+        self, args: t.Sequence[str], returncode: int, stdout: bytes, stderr: bytes
+    ):
+        super().__init__(
+            f"Subprocess Failure: `pip {' '.join(args)}` exited with "
+            f"an unexpected exit code `{returncode}`\n"
+            f"Recieved Stderr:\n{stderr.decode('utf-8')}"
+        )
+        self.args = tuple(args)
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
 
 
 def clean(core_path: Path, _all: bool = False) -> int:
