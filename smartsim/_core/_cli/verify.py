@@ -39,13 +39,13 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.log import get_logger
 
 SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
-logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)  # TODO: This
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # Many of the functions in this module will import optional
 # ML python packages only if they are needed to verify the build is working
 #
-# pylint: disable=import-error
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-error,import-outside-toplevel
+# mypy: disable-error-code="import"
 
 class _VerificationTempDir(tempfile.TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
@@ -115,7 +115,7 @@ def _make_managed_orc(exp: Experiment) -> t.Generator[Client, None, None]:
 
 
 def _verify_tf_install(client: Client) -> None:
-    from tensorflow import keras  # type: ignore[import]
+    from tensorflow import keras
 
     from smartsim.ml.tf import serialize_model
 
@@ -142,8 +142,8 @@ def _verify_tf_install(client: Client) -> None:
 
 
 def _verify_torch_install(client: Client) -> None:
-    import torch  # type: ignore[import]
-    from torch import nn  # type: ignore[import]
+    import torch
+    from torch import nn
 
     class Net(nn.Module):
         def __init__(self) -> None:
@@ -167,10 +167,8 @@ def _verify_torch_install(client: Client) -> None:
 
 
 def _verify_onnx_install(client: Client) -> None:
-    # These imports will fail typecheck unless built with the `--onnx` flag,
-    # which is not available for py3.10 at the moment
-    from skl2onnx import to_onnx  # type: ignore[import]
-    from sklearn.cluster import KMeans  # type: ignore[import]
+    from skl2onnx import to_onnx
+    from sklearn.cluster import KMeans
 
     data = np.arange(20, dtype=np.float32).reshape(10, 2)
     model = KMeans(n_clusters=2)

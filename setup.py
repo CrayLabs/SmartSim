@@ -175,7 +175,9 @@ extras_require = {
     "dev": [
         "black>=20.8b1",
         "isort>=5.6.4",
-        "pylint>=2.10.0,<2.11.0",  # TODO: Find a way to remove upper bound
+        "pylint>=2.10.0,<2.11.0",  # pylint 2.10 is the last version of pylint
+                                   # that doesn't implicitly require typing extensions
+                                   # 4.0.0 which is incompatable with TF 2.6.2
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
