@@ -427,7 +427,6 @@ def execute(args: argparse.Namespace) -> int:
     verbose = args.v
     keydb = args.keydb
     device: _TDeviceStr = args.device
-    verify_install = args.verify
 
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
@@ -444,22 +443,17 @@ def execute(args: argparse.Namespace) -> int:
     try:
         if args.only_python_packages:
             logger.info("Only installing Python packages...skipping build")
-            if onnx:
-                install_py_onnx_version(
-                    fetch_if_missing=modify_python_env,
-                    verbose=verbose,
-                )
-            if tf:
-                install_py_tf_version(
-                    fetch_if_missing=modify_python_env,
-                    verbose=verbose,
-                )
-            if pt:
-                install_py_torch_version(
-                    device=device,
-                    fetch_if_missing=modify_python_env,
-                    verbose=verbose,
-                )
+            # TODO: This fn is only used if a user supplies the
+            #       ``--only_python_packages`` flag. We should try to unify where
+            #       we install python packages to a single branch.
+            _check_python_pkgs(
+                with_onnx=onnx,
+                with_tf=tf,
+                with_pt=pt,
+                device=device,
+                fetch_if_missing=modify_python_env,
+                verbose=verbose,
+            )
         else:
             logger.info("Checking for build tools...")
 
@@ -511,10 +505,34 @@ def execute(args: argparse.Namespace) -> int:
         return 1
 
     logger.info("SmartSim build complete!")
+    return verify.execute(args) if args.verify else 0
 
-    if verify_install:
-        return verify.execute(args)
-    return 0
+
+def _check_python_pkgs(
+    with_tf: bool,
+    with_pt: bool,
+    with_onnx: bool,
+    device: _TDeviceStr,
+    fetch_if_missing: bool,
+    verbose: bool,
+) -> None:
+    """Install python ML package dependencies via pip"""
+    if with_onnx:
+        install_py_onnx_version(
+            fetch_if_missing=fetch_if_missing,
+            verbose=verbose,
+        )
+    if with_tf:
+        install_py_tf_version(
+            fetch_if_missing=fetch_if_missing,
+            verbose=verbose,
+        )
+    if with_pt:
+        install_py_torch_version(
+            device=device,
+            fetch_if_missing=fetch_if_missing,
+            verbose=verbose,
+        )
 
 
 def configure_parser(parser: argparse.ArgumentParser) -> None:
