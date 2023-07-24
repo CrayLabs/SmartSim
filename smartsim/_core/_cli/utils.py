@@ -89,7 +89,7 @@ def pip_uninstall(packages_to_remove: t.List[str], verbose: bool = False) -> Non
     for package in packages_to_remove:
         _pip("uninstall", "-y", package)
     if verbose:
-        logger.info(f"Packages Uninstalled Successfully")
+        logger.info("Packages Uninstalled Successfully")
 
 
 def _pip(*args: str) -> None:

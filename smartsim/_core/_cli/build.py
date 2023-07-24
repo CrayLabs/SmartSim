@@ -114,6 +114,7 @@ def build_database(
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
+
 def build_redis_ai(
     build_env: BuildEnv,
     versions: Versioner,
@@ -238,7 +239,7 @@ def install_py_torch_version(
     """Torch shared libraries installed by pip are used in the build
     for SmartSim backends so we download them here.
     """
-    logger.info(f"Searching for a compatible TORCH install...")
+    logger.info("Searching for a compatible TORCH install...")
     if BuildEnv.is_macos():
         end_point = None
         device_suffix = ""
@@ -328,7 +329,7 @@ def install_py_tf_version(
     verbose: bool = False,
 ) -> None:
     """Check Python environment for a compatible TensorFlow installation"""
-    logger.info(f"Searching for a compatible TF install...")
+    logger.info("Searching for a compatible TF install...")
     _confirm_package_in_python_env(
         {"tensorflow": Versioner.TENSORFLOW},
         install_on_absent=fetch_if_missing,
@@ -438,10 +439,9 @@ def execute(args: argparse.Namespace) -> int:
     build_env = BuildEnv(checks=do_checks)
     logger.info("Running SmartSim build process...")
 
+    logger.info("Checking requested versions...")
+    versions = Versioner()
     try:
-        logger.info("Checking requested versions...")
-        versions = Versioner()
-
         if args.only_python_packages:
             logger.info("Only installing Python packages...skipping build")
             if onnx:
@@ -504,9 +504,7 @@ def execute(args: argparse.Namespace) -> int:
             )
 
             backends = list(map(str.capitalize, installed_redisai_backends()))
-            logger.info(
-                f"{', '.join(backends) if backends else 'No'} backend(s) built"
-            )
+            logger.info(f"{', '.join(backends) if backends else 'No'} backend(s) built")
 
     except (SetupError, BuildError) as e:
         logger.error(str(e))

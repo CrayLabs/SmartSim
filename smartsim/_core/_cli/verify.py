@@ -29,19 +29,21 @@ import io
 import tempfile
 import typing as t
 from contextlib import contextmanager
-from pathlib import Path
 from types import TracebackType
 
 import numpy as np
 from smartredis import Client
 
 from smartsim import Experiment
-from smartsim._core._cli.utils import smart_logger_format
 from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.log import get_logger
 
-logger = get_logger("Smart", fmt=smart_logger_format)
+SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
+logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)  # TODO: This
 
+# Many of the functions in this module will import optional
+# ml python packages only if they are needed to verify the build is working
+# pylint: disable=import-outside-toplevel
 
 class _VerificationTempDir(tempfile.TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
@@ -57,7 +59,7 @@ class _VerificationTempDir(tempfile.TemporaryDirectory):
         if not value:  # Yay, no error! Clean up as normal
             super().__exit__(exc, value, tb)
         else:  # Uh-oh! Better make sure this is not implicitly cleaned up
-            self._finalizer.detach()
+            self._finalizer.detach()  # type: ignore[attr-defined]
 
 
 def execute(_args: argparse.Namespace, /) -> int:
@@ -77,8 +79,7 @@ def execute(_args: argparse.Namespace, /) -> int:
             f"Output files are available at `{temp_dir}`"
         )
         return 2
-    else:
-        return 0
+    return 0
 
 
 def verify_install(
@@ -112,7 +113,6 @@ def _make_managed_orc(exp: Experiment) -> t.Generator[Client, None, None]:
 
 
 def _verify_tf_install(client: Client) -> None:
-    import tensorflow as tf
     from tensorflow import keras
 
     from smartsim.ml.tf import serialize_model
@@ -141,7 +141,7 @@ def _verify_tf_install(client: Client) -> None:
 
 def _verify_torch_install(client: Client) -> None:
     import torch
-    import torch.nn as nn
+    from torch import nn
 
     class Net(nn.Module):
         def __init__(self) -> None:
@@ -170,11 +170,11 @@ def _verify_onnx_install(client: Client) -> None:
     from skl2onnx import to_onnx  # type: ignore[import]
     from sklearn.cluster import KMeans  # type: ignore[import]
 
-    X = np.arange(20, dtype=np.float32).reshape(10, 2)
+    data = np.arange(20, dtype=np.float32).reshape(10, 2)
     model = KMeans(n_clusters=2)
-    model.fit(X)
+    model.fit(data)
 
-    kmeans = to_onnx(model, X, target_opset=11)
+    kmeans = to_onnx(model, data, target_opset=11)
     model = kmeans.SerializeToString()
     sample = np.arange(20, dtype=np.float32).reshape(10, 2)
 

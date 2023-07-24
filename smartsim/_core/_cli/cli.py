@@ -58,9 +58,9 @@ class SmartCli:
         )
 
         for cmd, item in self.menu.items():
-            parser = subparsers.add_parser(cmd,
-                                           description=item.description,
-                                           help=item.description)
+            parser = subparsers.add_parser(
+                cmd, description=item.description, help=item.description
+            )
             if item.configurator:
                 item.configurator(parser)
 
