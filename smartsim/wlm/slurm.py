@@ -32,7 +32,7 @@ from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinf
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
-from ..error import AllocationError, LauncherError, SmartSimError, SSConfigError
+from ..error import AllocationError, LauncherError, SmartSimError
 from ..log import get_logger
 
 logger = get_logger(__name__)
