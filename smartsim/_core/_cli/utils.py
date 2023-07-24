@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import shutil
 import importlib
+import shutil
 import subprocess
+import sys
 import typing as t
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
@@ -69,19 +70,15 @@ def pip_install(
     Currently only Torch shared libraries are re-used for the build
     """
     # form pip install command
-    cmd = ["python", "-m", "pip", "install"]
+    cmd = [sys.executable, "-m", "pip", "install"]
     cmd.extend(packages)
     if end_point:
         cmd.extend(["-f", end_point])
 
-    cmd_arg = " ".join(cmd)
-
     if verbose:
         logger.info(f"Installing packages {packages}...")
     # pylint: disable-next=consider-using-with
-    proc = subprocess.Popen(
-        cmd_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, err = proc.communicate()
     returncode = int(proc.returncode)
     if returncode != 0:
