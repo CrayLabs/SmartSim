@@ -42,7 +42,9 @@ SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)  # TODO: This
 
 # Many of the functions in this module will import optional
-# ml python packages only if they are needed to verify the build is working
+# ML python packages only if they are needed to verify the build is working
+#
+# pylint: disable=import-error
 # pylint: disable=import-outside-toplevel
 
 class _VerificationTempDir(tempfile.TemporaryDirectory):
@@ -113,7 +115,7 @@ def _make_managed_orc(exp: Experiment) -> t.Generator[Client, None, None]:
 
 
 def _verify_tf_install(client: Client) -> None:
-    from tensorflow import keras
+    from tensorflow import keras  # type: ignore[import]
 
     from smartsim.ml.tf import serialize_model
 
@@ -140,8 +142,8 @@ def _verify_tf_install(client: Client) -> None:
 
 
 def _verify_torch_install(client: Client) -> None:
-    import torch
-    from torch import nn
+    import torch  # type: ignore[import]
+    from torch import nn  # type: ignore[import]
 
     class Net(nn.Module):
         def __init__(self) -> None:
