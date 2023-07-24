@@ -253,7 +253,7 @@ def _get_alloc_cmd(nodes: int,
                     salloc_args += [prefix + opt, str(val)]
                 else:
                     salloc_args += ["=".join((prefix + opt, str(val)))]
-        else: 
+        else:
             raise ValueError("Expecting time, nodes, account as an argument")
 
     return salloc_args
