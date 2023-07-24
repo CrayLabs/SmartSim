@@ -794,7 +794,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
-def test_inconsistent_params_add_ml_model(fileutils, wlmutils, mlutils): #jp
+def test_inconsistent_params_add_ml_model(fileutils, wlmutils, mlutils):
     """Test error when devices_per_node parameter>1 when devices is set to CPU in addd_ml_model function"""
 
     # Set experiment name
@@ -821,7 +821,7 @@ def test_inconsistent_params_add_ml_model(fileutils, wlmutils, mlutils): #jp
             "cnn",
             "TF",
             model=model,
-            device="CPU",  
+            device="CPU",
             devices_per_node=2,
             inputs=inputs,
             outputs=outputs,
