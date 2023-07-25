@@ -133,6 +133,21 @@ def test_redisai_valid_lib_path(fileutils, monkeypatch):
     assert config.redisai == rai_file_path
 
 
+def test_redisai_valid_lib_path_null_rai(fileutils, monkeypatch):
+    """Missing RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
+    test_dir = fileutils.make_test_dir()
+    rai_file_path: t.Optional[str] = None
+    lib_file_path = fileutils.make_test_file("redisai.so", "deps")
+
+    env = get_redisai_env(rai_file_path, lib_file_path)
+    monkeypatch.setattr(os, "environ", env)
+    
+    config = Config()
+    assert config.redisai
+    assert Path(config.redisai).is_file()
+    assert config.redisai == lib_file_path
+
+
 def test_redis_conf():
     config = Config()
     assert Path(config.database_conf).is_file()
