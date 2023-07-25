@@ -98,8 +98,7 @@ def test_redisai_valid_rai_path(fileutils, monkeypatch):
     config = Config()
     assert config.redisai
     assert Path(config.redisai).is_file()
-    assert isinstance(config.redisai, str)
-    assert config.redisai == str(rai_file_path)
+    assert config.redisai == rai_file_path
 
 
 def test_redisai_invalid_lib_path(fileutils, monkeypatch):
@@ -131,10 +130,7 @@ def test_redisai_valid_lib_path(fileutils, monkeypatch):
     config = Config()
     assert config.redisai
     assert Path(config.redisai).is_file()
-    assert isinstance(config.redisai, str)
-    assert config.redisai == str(rai_file_path)
-
-    shutil.rmtree(test_dir)
+    assert config.redisai == rai_file_path
 
 
 def test_redis_conf():
