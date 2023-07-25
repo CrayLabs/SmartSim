@@ -77,7 +77,7 @@ def execute(_args: argparse.Namespace, /) -> int:
     except Exception as e:
         logger.error(
             "SmartSim failed to run a simple experiment!\n"
-            f"Experiment failed do to the following exception:\n{e}\n\n"
+            f"Experiment failed due to the following exception:\n{e}\n\n"
             f"Output files are available at `{temp_dir}`"
         )
         return 2

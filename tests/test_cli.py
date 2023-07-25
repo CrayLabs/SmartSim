@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+from contextlib import contextmanager
 import typing as t
 
 import pytest
@@ -38,6 +39,7 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.verify import execute as verify_execute
 from smartsim._core._cli.utils import MenuItemConfig
 
 
@@ -668,3 +670,71 @@ def test_cli_full_build_execute(capsys, monkeypatch):
     
     assert exp_output in captured.out
     assert actual_retval == exp_retval
+
+
+def _good_build(*args, **kwargs):
+    print("LGTM")
+
+def _bad_build(*args, **kwargs):
+    raise Exception
+
+@contextmanager
+def _totally_real_temp_dir(*a, **kw):
+    yield "/path/to/a/real/temp/dir"
+
+@pytest.mark.parametrize(
+    "mock_verify_fn, expected_stdout, expected_retval",
+    [
+        pytest.param(
+            _good_build,
+            'LGTM',
+            0,
+            id="Good Build",
+        ),
+        pytest.param(
+            _bad_build,
+            "SmartSim failed to run a simple experiment",
+            2,
+            id="Bad Build",
+        )
+    ],
+)
+def test_cli_verify_execute(
+    capsys,
+    monkeypatch,
+    mock_verify_fn,
+    expected_stdout,
+    expected_retval,
+):
+    """Ensure the that the execute method of verify is called"""
+
+    # Mock out the verification tests/avoid file system ops
+    monkeypatch.setattr(smartsim._core._cli.verify, "verify_install", mock_verify_fn)
+    monkeypatch.setattr(
+        smartsim._core._cli.verify,
+        "_VerificationTempDir",
+        _totally_real_temp_dir,
+    )
+    # Coloredlogs doesn't play nice with capsys
+    monkeypatch.setattr(
+        smartsim._core._cli.verify.logger,
+        "error",
+        print,
+    )
+
+    command = "verify"
+    cfg = MenuItemConfig(command,
+                         f"test {command} help text",
+                         verify_execute)
+    menu = [cfg]
+    smart_cli = cli.SmartCli(menu)
+
+    captured = capsys.readouterr()  # throw away existing output
+
+    verify_args = ["smart", command]
+    actual_retval = smart_cli.execute(verify_args)
+
+    captured = capsys.readouterr()  # capture new output
+
+    assert expected_stdout in captured.out
+    assert actual_retval == expected_retval
