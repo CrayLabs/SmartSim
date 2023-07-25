@@ -34,10 +34,10 @@ from tabulate import tabulate
 
 from smartsim._core._cli import verify
 from smartsim._core._cli.utils import (
+    SMART_LOGGER_FORMAT,
     color_bool,
     pip_install,
     pip_uninstall,
-    SMART_LOGGER_FORMAT,
 )
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
@@ -54,7 +54,6 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
-SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli

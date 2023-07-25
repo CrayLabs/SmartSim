@@ -36,6 +36,7 @@ from smartredis import Client
 
 from smartsim import Experiment
 from smartsim._core.utils.helpers import installed_redisai_backends
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim.log import get_logger
 
 SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
@@ -46,6 +47,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 #
 # pylint: disable=import-error,import-outside-toplevel
 # mypy: disable-error-code="import"
+
 
 class _VerificationTempDir(tempfile.TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
@@ -70,6 +72,7 @@ def execute(_args: argparse.Namespace, /) -> int:
         with _VerificationTempDir() as temp_dir:
             verify_install(
                 location=temp_dir,
+                port=8734,  # TODO: allow users to pass as arg `--port`?
                 with_tf="tensorflow" in backends,
                 with_pt="torch" in backends,
                 with_onnx="onnxruntime" in backends,
@@ -85,10 +88,10 @@ def execute(_args: argparse.Namespace, /) -> int:
 
 
 def verify_install(
-    location: str, with_tf: bool, with_pt: bool, with_onnx: bool
+    location: str, port: int, with_tf: bool, with_pt: bool, with_onnx: bool
 ) -> None:
     exp = Experiment("Verification", exp_path=location, launcher="local")
-    with _make_managed_orc(exp) as client:
+    with _make_managed_orc(exp, port) as client:
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
         if with_tf:
@@ -103,8 +106,8 @@ def verify_install(
 
 
 @contextmanager
-def _make_managed_orc(exp: Experiment) -> t.Generator[Client, None, None]:
-    orc = exp.create_database(db_nodes=1, port=8934, interface="lo")
+def _make_managed_orc(exp: Experiment, port: int) -> t.Generator[Client, None, None]:
+    orc = exp.create_database(db_nodes=1, port=port, interface="lo")
     exp.generate(orc)
     exp.start(orc)
     try:
