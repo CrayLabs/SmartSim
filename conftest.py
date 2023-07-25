@@ -44,6 +44,7 @@ from smartsim._core.config import CONFIG
 from smartsim.error import SSConfigError
 from subprocess import run
 import sys
+import typing as t
 
 
 # Globals, yes, but its a testing file
@@ -506,7 +507,7 @@ def fileutils():
 
 class FileUtils:
     @staticmethod
-    def _test_dir_path(caller_function, caller_fspath):
+    def _test_dir_path(caller_function, caller_fspath) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
         rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
         dir_path = os.path.join(test_dir, rel_path, caller_function)
@@ -543,7 +544,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_dir(caller_function=None, caller_fspath=None, level=1):
+    def make_test_dir(caller_function=None, caller_fspath=None, level=1, sub_dir=None) -> str:
         """Create test output directory and return path to it.
 
         This function should be called without arguments from within
@@ -565,7 +566,9 @@ class FileUtils:
             caller_function = caller_frame.function
 
         dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
-        # dir_path = os.path.join(test_dir, dir_name)
+        if sub_dir:
+            dir_path = os.path.join(dir_path, sub_dir)
+
         try:
             os.makedirs(dir_path)
         except Exception:
@@ -581,6 +584,23 @@ class FileUtils:
     def get_test_dir_path(dirname):
         dir_path = os.path.join(test_path, "tests", "test_configs", dirname)
         return dir_path
+
+    @staticmethod
+    def make_test_file(file_name: str, file_dir: t.Optional[str] = None) -> str:
+        """Create a dummy file in the test output directory.
+
+        :param file_path: path relative to test output directory, e.g. "data/file.txt"
+        :type file_path: str
+        :return: String path to test ouptut file
+        :rtype: str
+        """
+        test_dir = FileUtils.make_test_dir(level=2, sub_dir=file_dir)
+        file_path = os.path.join(test_dir, file_name)
+
+        with open(file_path, "w+") as f:
+            f.write("dummy\n")
+        
+        return file_path
 
 
 @pytest.fixture
