@@ -529,7 +529,7 @@ class FileUtils:
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None
         :type caller_fspath: str or Path, optional
-        :return: String path to test ouptut directory
+        :return: String path to test output directory
         :rtype: str
         """
         if not caller_function or not caller_fspath:
@@ -557,7 +557,7 @@ class FileUtils:
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None
         :type caller_fspath: str or Path, optional
-        :return: String path to test ouptut directory
+        :return: String path to test output directory
         :rtype: str
         """
         if not caller_function or not caller_fspath:
@@ -589,9 +589,11 @@ class FileUtils:
     def make_test_file(file_name: str, file_dir: t.Optional[str] = None) -> str:
         """Create a dummy file in the test output directory.
 
-        :param file_path: path relative to test output directory, e.g. "data/file.txt"
-        :type file_path: str
-        :return: String path to test ouptut file
+        :param file_name: name of file to create, e.g. "file.txt"
+        :type file_name: str
+        :param file_dir: path relative to test output directory, e.g. "deps/libs"
+        :type file_dir: str
+        :return: String path to test output file
         :rtype: str
         """
         test_dir = FileUtils.make_test_dir(level=2, sub_dir=file_dir)
