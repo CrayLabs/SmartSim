@@ -795,7 +795,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
         colo_ensemble.add_model(colo_model)
 
 def test_inconsistent_params_add_ml_model(fileutils, wlmutils, mlutils):
-    """Test error when devices_per_node parameter>1 when devices is set to CPU in addd_ml_model function"""
+    """Test error when devices_per_node parameter>1 when devices is set to CPU in add_ml_model function"""
 
     # Set experiment name
     exp_name = "test_add_model"

@@ -44,7 +44,7 @@ class DBObject:
         name: str,
         func: t.Optional[str],
         file_path: t.Optional[str],
-        device: str,
+        device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
     ) -> None:
         self.name = name
@@ -54,7 +54,7 @@ class DBObject:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
-        self._check_arguments()
+        self._check_devices()
 
     @property
     def is_file(self) -> bool:
@@ -94,7 +94,7 @@ class DBObject:
         return file_path
 
     @staticmethod
-    def _check_device(device: str) -> str:
+    def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
         device = device.upper()
         if not device.startswith("CPU") and not device.startswith("GPU"):
             raise ValueError("Device argument must start with either CPU or GPU")
@@ -109,24 +109,24 @@ class DBObject:
         :rtype: list[str]
         """
         devices = []
-        if self.device in ["GPU"] and self.devices_per_node > 1:
-            for device_num in range(self.devices_per_node):
-                devices.append(f"{self.device}:{str(device_num)}")
+        if self.device == "GPU" and self.devices_per_node > 1:
+            devices = [f"{self.device}:{str(device_num)}" for device_num in range(self.devices_per_node)]
+    
         else:
             devices = [self.device]
 
         return devices
-
-    def _check_arguments(self):
-        devices = []
-        if ":" in self.device and self.devices_per_node > 1:
-            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
-            msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
-            raise ValueError(msg)
-        if self.device in ["CPU"] and self.devices_per_node > 1:
-            raise SSUnsupportedError(
-                "Cannot set devices_per_node>1 if CPU is specified under devices"
-            )
+ 
+    def _check_devices(self):
+        if self.devices_per_node > 1:
+            if ":" in self.device:
+                msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
+                msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
+                raise ValueError(msg)
+            if self.device == "CPU":
+                raise SSUnsupportedError(
+                    "Cannot set devices_per_node>1 if CPU is specified under devices"
+                )
 
 class DBScript(DBObject):
     def __init__(
