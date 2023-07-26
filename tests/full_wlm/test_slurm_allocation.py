@@ -28,7 +28,7 @@ import time
 
 import pytest
 
-from smartsim.error import AllocationError, SSConfigError
+from smartsim.error import AllocationError
 from smartsim.wlm import slurm
 
 # retrieved from pytest fixtures
