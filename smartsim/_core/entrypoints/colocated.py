@@ -207,15 +207,10 @@ def main(
 
     try:
         logger.debug(
-            (
-                "\n\nColocated database information\n"
-                "\n\tIP Address(es): {}"
-                "\n\tCommand: {}\n\n"
-                "\n\t# of Database CPUs: {}"
-            ),
-            ' '.join(ip_addresses + [lo_address]),
-            ' '.join(cmd),
-            db_cpus
+            "\n\nColocated database information\n"
+            f"\n\tIP Address(es): {' '.join(ip_addresses + [lo_address])}"
+            f"\n\tCommand: {' '.join(cmd)}\n\n"
+            f"\n\t# of Database CPUs: {db_cpus}"
         )
     except Exception as e:
         cleanup()
