@@ -26,14 +26,19 @@
 
 import os
 import uuid
+import pytest
 
 from smartsim import Experiment, status
 from smartsim.settings import RunSettings
 
+# retrieved from pytest fixtures
+if pytest.test_launcher != "slurm":
+    pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 """
 Test execution of local steps within the WLM
 """
+
 
 def test_local_env_pass_implicit(fileutils) -> None:
     """Ensure implicitly exported env is available to running task"""
