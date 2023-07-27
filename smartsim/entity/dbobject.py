@@ -56,8 +56,8 @@ class DBObject:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
-        self._check_devices(device,devices_per_node)
-        
+        self._check_devices(device, devices_per_node)
+
     @property
     def devices(self) -> t.List[str]:
         return self._enumerate_devices()
@@ -117,12 +117,16 @@ class DBObject:
         """
 
         if self.device == "GPU" and self.devices_per_node > 1:
-            return [f"{self.device}:{str(device_num)}" for device_num in range(self.devices_per_node)]
-    
-        return [self.device]
- 
-    def _check_devices(self, device: t.Literal["CPU", "GPU"], devices_per_node: int) -> None: # pass in devices_per_node and device  instead of self ... so has actual state we want to validate 
+            return [
+                f"{self.device}:{str(device_num)}"
+                for device_num in range(self.devices_per_node)
+            ]
 
+        return [self.device]
+
+    def _check_devices(
+        self, device: t.Literal["CPU", "GPU"], devices_per_node: int
+    ) -> None:
         if devices_per_node == 1:
             return
         else:
@@ -135,13 +139,14 @@ class DBObject:
                     "Cannot set devices_per_node>1 if CPU is specified under devices"
                 )
 
+
 class DBScript(DBObject):
     def __init__(
         self,
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device : t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ):
         """TorchScript code represenation
@@ -194,7 +199,7 @@ class DBModel(DBObject):
         backend: str,
         model: t.Optional[str] = None,
         model_file: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,

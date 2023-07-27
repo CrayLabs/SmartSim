@@ -812,4 +812,7 @@ def test_inconsistent_params_db_model():
             inputs=inputs,
             outputs=outputs,
         )
-    assert ex.value.args[0] == "Cannot set devices_per_node>1 if CPU is specified under devices"
+    assert (
+            ex.value.args[0] 
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )
