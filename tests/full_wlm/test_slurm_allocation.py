@@ -52,12 +52,12 @@ def test_get_release_allocation_w_options(wlmutils):
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
 
-@pytest.mark.parametrize("func_parameters,test_parameters", [("time","TIME"),("nodes","NODES"),("account","ACCOUNT")])
+@pytest.mark.parametrize("func_parameters,test_parameters", [("t","T"),("time","TIME"),("nodes","NODES"),("N","N"),("account","ACCOUNT"),("A", "A")])
 def test_get_allocation_bad_params(func_parameters,test_parameters):
     """test get_allocation with reserved keywords as option"""
     with pytest.raises(ValueError) as e:
        alloc = slurm.get_allocation(options={func_parameters:test_parameters})
-    assert "Expecting time, nodes, account as an argument" in e.value.args[0] #substring or regex.. could do 
+    assert "Expecting time, nodes, account as an argument" in e.value.args[0] 
 
 # --------- Error handling ----------------------------
 
