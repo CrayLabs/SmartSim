@@ -250,8 +250,8 @@ def _get_alloc_cmd(
     arguments = {key for key in options.keys()}
     invalid = {"t", "time", "N", "nodes", "A", "account"}
 
-    if valids := arguments.intersection(invalid):
-        raise ValueError("Expecting time, nodes, account as an argument. Also received: {invalids}")    
+    if valid := arguments.intersection(invalid):
+        raise ValueError(f"Expecting time, nodes, account as an argument. Also received: {valid}")    
 
     for opt, val in (options or {}).items():
         short_arg = bool(len(str(opt)) == 1)
