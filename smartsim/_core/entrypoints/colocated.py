@@ -54,7 +54,9 @@ DBPID = None
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
 
 
-def handle_signal(signo: int, frame: t.Optional[FrameType]) -> None:
+def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+    if not signo:
+        logger.warning("Received signal with no signo")
     cleanup()
 
 
@@ -105,7 +107,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             args.min_batch_size,
             args.tag,
             inputs,
-            outputs
+            outputs,
         )
     else:
         client.set_model_from_file(
@@ -117,7 +119,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             args.min_batch_size,
             args.tag,
             inputs,
-            outputs
+            outputs,
         )
 
     return args.name
@@ -153,7 +155,9 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
             client.set_script(args.name, func, args.device)
     elif args.file:
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
-            client.set_script_from_file_multigpu(args.name, args.file, 0, args.devices_per_node)
+            client.set_script_from_file_multigpu(
+                args.name, args.file, 0, args.devices_per_node
+            )
         else:
             client.set_script_from_file(args.name, args.file, args.device)
     else:
@@ -169,7 +173,7 @@ def main(
     db_models: t.List[t.List[str]],
     db_scripts: t.List[t.List[str]],
 ) -> None:
-    global DBPID
+    global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
     try:
@@ -193,8 +197,8 @@ def main(
     # we generally want to catch all exceptions here as
     # if this process dies, the application will most likely fail
     try:
-        p = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
-        DBPID = p.pid
+        process = psutil.Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        DBPID = process.pid
 
     except Exception as e:
         cleanup()
@@ -204,36 +208,42 @@ def main(
     try:
         logger.debug(
             "\n\nColocated database information\n"
-            + "\n".join(
-                (
-                    f"\tIP Address(es): {' '.join(ip_addresses + [lo_address])}",
-                    f"\tCommand: {' '.join(cmd)}\n\n",
-                    f"\t# of Database CPUs: {db_cpus}",
-                )
-            )
+            f"\n\tIP Address(es): {' '.join(ip_addresses + [lo_address])}"
+            f"\n\tCommand: {' '.join(cmd)}\n\n"
+            f"\n\t# of Database CPUs: {db_cpus}"
         )
+    except Exception as e:
+        cleanup()
+        logger.error(f"Failed to start database process: {str(e)}")
+        raise SSInternalError("Colocated process failed to start") from e
 
+    def launch_models(client: Client, db_models: t.List[t.List[str]]) -> None:
+        for i, db_model in enumerate(db_models):
+            logger.debug("Uploading model")
+            model_name = launch_db_model(client, db_model)
+            logger.debug(f"Added model {model_name} ({i+1}/{len(db_models)})")
+
+    def launch_db_scripts(client: Client, db_scripts: t.List[t.List[str]]) -> None:
+        for i, db_script in enumerate(db_scripts):
+            logger.debug("Uploading script")
+            script_name = launch_db_script(client, db_script)
+            logger.debug(f"Added script {script_name} ({i+1}/{len(db_scripts)})")
+
+    try:
         if db_models or db_scripts:
             try:
                 client = Client(cluster=False)
-                for i, db_model in enumerate(db_models):
-                    logger.debug("Uploading model")
-                    model_name = launch_db_model(client, db_model)
-                    logger.debug(f"Added model {model_name} ({i+1}/{len(db_models)})")
-                for i, db_script in enumerate(db_scripts):
-                    logger.debug("Uploading script")
-                    script_name = launch_db_script(client, db_script)
-                    logger.debug(
-                        f"Added script {script_name} ({i+1}/{len(db_scripts)})"
-                    )
-                # Make sure we don't keep this around
-                del client
-            except (RedisConnectionError, RedisReplyError):
+                launch_models(client, db_models)
+                launch_db_scripts(client, db_scripts)
+            except (RedisConnectionError, RedisReplyError) as ex:
                 raise SSInternalError(
                     "Failed to set model or script, could not connect to database"
-                )
+                ) from ex
+            finally:
+                # Make sure we don't keep this around
+                del client
 
-        for line in iter(p.stdout.readline, b""):
+        for line in iter(process.stdout.readline, b""):
             print(line.decode("utf-8").rstrip(), flush=True)
 
     except Exception as e:
@@ -243,8 +253,6 @@ def main(
 
 
 def cleanup() -> None:
-    global DBPID
-    global LOCK
     try:
         logger.debug("Cleaning up colocated database")
         # attempt to stop the database process
@@ -264,52 +272,62 @@ def cleanup() -> None:
             os.remove(LOCK.lock_file)
 
 
-if __name__ == "__main__":
-    try:
-        parser = argparse.ArgumentParser(
-            prefix_chars="+", description="SmartSim Process Launcher"
-        )
-        parser.add_argument(
-            "+ifname", type=str, help="Network Interface name", default=""
-        )
-        parser.add_argument(
-            "+lockfile", type=str, help="Filename to create for single proc per host"
-        )
-        parser.add_argument(
-            "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
-        )
-        parser.add_argument("+command", nargs="+", help="Command to run")
-        parser.add_argument(
-            "+db_model",
-            nargs="+",
-            action="append",
-            default=[],
-            help="Model to set on DB",
-        )
-        parser.add_argument(
-            "+db_script",
-            nargs="+",
-            action="append",
-            default=[],
-            help="Script to set on DB",
-        )
-        args = parser.parse_args()
+def register_signal_handlers() -> None:
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
 
-        tmp_lockfile = Path(tempfile.gettempdir()) / args.lockfile
+
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        prefix_chars="+", description="SmartSim Process Launcher"
+    )
+    arg_parser.add_argument(
+        "+ifname", type=str, help="Network Interface name", default=""
+    )
+    arg_parser.add_argument(
+        "+lockfile", type=str, help="Filename to create for single proc per host"
+    )
+    arg_parser.add_argument(
+        "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
+    )
+    arg_parser.add_argument("+command", nargs="+", help="Command to run")
+    arg_parser.add_argument(
+        "+db_model",
+        nargs="+",
+        action="append",
+        default=[],
+        help="Model to set on DB",
+    )
+    arg_parser.add_argument(
+        "+db_script",
+        nargs="+",
+        action="append",
+        default=[],
+        help="Script to set on DB",
+    )
+
+    os.environ["PYTHONUNBUFFERED"] = "1"
+
+    try:
+        parsed_args = arg_parser.parse_args()
+        tmp_lockfile = Path(tempfile.gettempdir()) / parsed_args.lockfile
 
         LOCK = filelock.FileLock(tmp_lockfile)
         LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
 
-        os.environ["PYTHONUNBUFFERED"] = "1"
-
         # make sure to register the cleanup before the start
         # the proecss so our signaller will be able to stop
         # the database process.
-        for sig in SIGNALS:
-            signal.signal(sig, handle_signal)
+        register_signal_handlers()
 
-        main(args.ifname, args.db_cpus, args.command, args.db_model, args.db_script)
+        main(
+            parsed_args.ifname,
+            parsed_args.db_cpus,
+            parsed_args.command,
+            parsed_args.db_model,
+            parsed_args.db_script,
+        )
 
     # gracefully exit the processes in the distributed application that
     # we do not want to have start a colocated process. Only one process

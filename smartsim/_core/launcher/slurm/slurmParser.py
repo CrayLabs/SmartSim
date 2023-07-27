@@ -80,8 +80,8 @@ def jobid_exact_match(parsed_id: str, job_id: str) -> bool:
     """
     if "." in job_id:
         return parsed_id == job_id
-    else:
-        return parsed_id.split(".")[0] == job_id
+
+    return parsed_id.split(".")[0] == job_id
 
 
 def parse_sacct(output: str, job_id: str) -> t.Tuple[str, t.Optional[str]]:

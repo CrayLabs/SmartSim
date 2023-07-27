@@ -29,8 +29,16 @@ import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import *
-from ....settings import SettingsBase
+from ....settings import (
+    SettingsBase,
+    AprunSettings,
+    QsubBatchSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    RunSettings,
+    PalsMpiexecSettings,
+)
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
@@ -93,8 +101,8 @@ class PBSLauncher(WLMLauncher):
         task_id: t.Optional[str] = None
         if isinstance(step, QsubBatchStep):
             # wait for batch step to submit successfully
-            rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
-            if rc != 0:
+            return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
+            if return_code != 0:
                 raise LauncherError(f"Qsub batch submission failed\n {out}\n {err}")
             if out:
                 step_id = out.strip()
@@ -102,8 +110,14 @@ class PBSLauncher(WLMLauncher):
         else:
             # aprun doesn't direct output for us.
             out, err = step.get_output_files()
-            output = open(out, "w+")
-            error = open(err, "w+")
+            # pylint: disable-next=consider-using-with
+            output = open(
+                out, "w+", encoding="utf-8"
+            )
+            # pylint: disable-next=consider-using-with
+            error = open(
+                err, "w+", encoding="utf-8"
+            )
             task_id = self.task_manager.start_task(
                 cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
             )
@@ -111,7 +125,7 @@ class PBSLauncher(WLMLauncher):
         # if batch submission did not successfully retrieve job ID
         if not step_id and step.managed:
             step_id = self._get_pbs_step_id(step)
-        
+
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
 
         return step_id
@@ -141,7 +155,8 @@ class PBSLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_pbs_step_id(self, step: Step, interval: int = 2) -> str:
+    @staticmethod
+    def _get_pbs_step_id(step: Step, interval: int = 2) -> str:
         """Get the step_id of a step from qstat (rarely used)
 
         Parses qstat JSON output by looking for the step name

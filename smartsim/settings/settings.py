@@ -29,8 +29,21 @@ import typing as t
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..wlm import detect_launcher
-from . import *
-from ..settings import base
+from ..settings import (
+    base,
+    CobaltBatchSettings,
+    QsubBatchSettings,
+    SbatchSettings,
+    BsubBatchSettings,
+    Container,
+    RunSettings,
+    AprunSettings,
+    SrunSettings,
+    MpirunSettings,
+    MpiexecSettings,
+    OrterunSettings,
+    JsrunSettings,
+)
 
 
 def create_batch_settings(
@@ -161,8 +174,11 @@ def create_run_settings(
             for cmd in by_launcher[launcher]:
                 if is_valid_cmd(cmd):
                     return cmd
-        msg = f"Could not automatically detect a run command to use for launcher {launcher}"
-        msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
+        msg = (
+            "Could not automatically detect a run command to use for launcher "
+            f"{launcher}\nSearched for and could not find the following "
+            f"commands: {by_launcher[launcher]}"
+        )
         raise SmartSimError(msg)
 
     if run_command:

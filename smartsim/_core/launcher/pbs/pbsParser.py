@@ -145,7 +145,7 @@ def load_and_clean_json(out: str) -> t.Any:
     except json.decoder.JSONDecodeError as e:
         out_arr = out.split("\n")
         new_out = ""
-        for lineno in range(len(out_arr)):
+        for lineno, line in enumerate(out_arr):
             if lineno != e.lineno - 1:
-                new_out = new_out + "\n" + out_arr[lineno]
+                new_out = new_out + "\n" + line
         return load_and_clean_json(new_out)
