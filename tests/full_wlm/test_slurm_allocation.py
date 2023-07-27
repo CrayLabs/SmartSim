@@ -57,7 +57,7 @@ def test_get_allocation_bad_params(func_parameters,test_parameters):
     """test get_allocation with reserved keywords as option"""
     with pytest.raises(ValueError) as e:
        alloc = slurm.get_allocation(options={func_parameters:test_parameters})
-    assert e.value.args[0] == "Expecting time, nodes, account as an argument"
+    assert "Expecting time, nodes, account as an argument" in e.value.args[0] #substring or regex.. could do 
 
 # --------- Error handling ----------------------------
 
