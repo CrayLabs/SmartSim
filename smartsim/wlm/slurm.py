@@ -248,7 +248,6 @@ def _get_alloc_cmd(
         salloc_args.extend(["-A", str(account)])
 
     arguments = set(options.keys() if options is not None else {})
-    print(arguments)
     invalid = {"t", "time", "N", "nodes", "A", "account"}
 
     if valid := arguments.intersection(invalid):
