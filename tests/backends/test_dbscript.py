@@ -580,72 +580,16 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
-
-def test_inconsistent_params_add_script(fileutils):
-    """Test error when devices_per_node>1 when devices is set to CPU in add_script function"""
-
-    # Set experiment name
-    exp_name = "test-add-script"
-
-    # Retrieve parameters from testing environment
-    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-    torch_script = fileutils.get_test_conf_path("torchscript.py")
-
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name)
-
-    # Create the RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-
-    # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
-
-    # Check that an error is raised when trying to add devices_per_node>1 
-    # when device is set to CPU
-    with pytest.raises(SSUnsupportedError):
-        smartsim_model.add_script(
-        "test_script1",
-        script_path=torch_script,
-        device="CPU",
-        devices_per_node=2,
-        )
-
-def test_inconsistent_params_add_function(fileutils):
-    """Test error when devices_per_node>1 and when devices is set to CPU in add_function """
-
-    # Set experiment name
-    exp_name = "test-add-function"
-
-    # Retrieve parameters from testing environment
-    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
-
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name)
-
-    # Create the RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-
-    # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
-
-    # Check that an error is raised when trying to add devices_per_node>1 
-    # when device is set to CPU
-    with pytest.raises(SSUnsupportedError):
-        smartsim_model.add_function(
-            "test_func",
-            function=timestwo,
-            device="CPU",
-            devices_per_node=2
-        )
     
 def test_inconsistent_params_db_script(fileutils):
     """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
 
     torch_script = fileutils.get_test_conf_path("torchscript.py")
-    with pytest.raises(SSUnsupportedError):
+    with pytest.raises(SSUnsupportedError) as ex:
         db_script = DBScript(
             name="test_script_db",
             script_path = torch_script,
             device="CPU",
             devices_per_node=2,
         )
+    assert ex.value.args[0] == "Cannot set devices_per_node>1 if CPU is specified under devices"

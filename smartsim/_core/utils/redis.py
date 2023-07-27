@@ -158,9 +158,8 @@ def db_is_active(hosts: t.List[str], ports: t.List[int], num_shards: int) -> boo
 
 def set_ml_model(db_model: DBModel, client: Client) -> None:
     logger.debug(f"Adding DBModel named {db_model.name}")
-    devices = db_model._enumerate_devices()  # pylint: disable=protected-access
 
-    for device in devices:
+    for device in db_model.devices:
         try:
             if db_model.is_file:
                 client.set_model_from_file(
@@ -194,9 +193,7 @@ def set_ml_model(db_model: DBModel, client: Client) -> None:
 def set_script(db_script: DBScript, client: Client) -> None:
     logger.debug(f"Adding DBScript named {db_script.name}")
 
-    devices = db_script._enumerate_devices()  # pylint: disable=protected-access
-
-    for device in devices:
+    for device in db_script.devices:
         try:
             if db_script.is_file:
                 client.set_script_from_file(

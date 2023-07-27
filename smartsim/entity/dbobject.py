@@ -56,7 +56,11 @@ class DBObject:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
-        self._check_devices()
+        self._check_devices(device,devices_per_node)
+        
+    @property
+    def devices(self) -> t.List[str]:
+        return self._enumerate_devices()
 
     @property
     def is_file(self) -> bool:
@@ -98,7 +102,7 @@ class DBObject:
 
     @staticmethod
     def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
-        device = device.upper()
+        device = t.cast(t.Literal["CPU", "GPU"], device.upper())
         if not device.startswith("CPU") and not device.startswith("GPU"):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
@@ -111,22 +115,22 @@ class DBObject:
         :return: list of device names
         :rtype: list[str]
         """
-        devices = []
-        if self.device == "GPU" and self.devices_per_node > 1:
-            devices = [f"{self.device}:{str(device_num)}" for device_num in range(self.devices_per_node)]
-    
-        else:
-            devices = [self.device]
 
-        return devices
+        if self.device == "GPU" and self.devices_per_node > 1:
+            return [f"{self.device}:{str(device_num)}" for device_num in range(self.devices_per_node)]
+    
+        return [self.device]
  
-    def _check_devices(self):
-        if self.devices_per_node > 1:
-            if ":" in self.device:
+    def _check_devices(self, device: t.Literal["CPU", "GPU"], devices_per_node: int) -> None: # pass in devices_per_node and device  instead of self ... so has actual state we want to validate 
+
+        if devices_per_node == 1:
+            return
+        else:
+            if ":" in device:
                 msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
-                msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
+                msg += f"the device was set to {device} and devices_per_node=={devices_per_node}"
                 raise ValueError(msg)
-            if self.device == "CPU":
+            if device == "CPU":
                 raise SSUnsupportedError(
                     "Cannot set devices_per_node>1 if CPU is specified under devices"
                 )
@@ -137,7 +141,7 @@ class DBScript(DBObject):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device : t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
     ):
         """TorchScript code represenation
@@ -190,7 +194,7 @@ class DBModel(DBObject):
         backend: str,
         model: t.Optional[str] = None,
         model_file: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,

@@ -796,46 +796,12 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
-def test_inconsistent_params_add_ml_model(fileutils):
-    """Test error when devices_per_node parameter>1 when devices is set to CPU in add_ml_model function"""
-
-    # Set experiment name
-    exp_name = "test_add_model"
-
-    # Retrieve parameters from testing environment
-    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
-
-    # Create the SmartSim Experiment
-    exp = Experiment(exp_name)
-
-    # Create RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-
-    # Create Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
-
-    # Create and save ML model to filesystem
-    model, inputs, outputs = create_tf_cnn()
-
-    # Add ML model to the SmartSim model
-    with pytest.raises(SSUnsupportedError):
-        smartsim_model.add_ml_model(
-            "cnn",
-            "TF",
-            model=model,
-            device="CPU",
-            devices_per_node=2,
-            inputs=inputs,
-            outputs=outputs,
-            tag="test",
-        )
-
 def test_inconsistent_params_db_model():
     """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""
     
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
-    with pytest.raises(SSUnsupportedError):
+    with pytest.raises(SSUnsupportedError) as ex:
         db_model = DBModel(
             "cnn",
             "TF",
@@ -846,3 +812,4 @@ def test_inconsistent_params_db_model():
             inputs=inputs,
             outputs=outputs,
         )
+    assert ex.value.args[0] == "Cannot set devices_per_node>1 if CPU is specified under devices"
