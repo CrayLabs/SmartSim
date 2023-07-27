@@ -105,7 +105,8 @@ class Config:
         redisai = Path(os.environ.get("RAI_PATH", rai_path)).resolve()
         if not redisai.is_file():
             raise SSConfigError(
-                "RedisAI dependency not found. Build with `smart` cli or specify RAI_PATH"
+                "RedisAI dependency not found. Build with `smart` cli "
+                "or specify RAI_PATH"
             )
         return str(redisai)
 
@@ -179,13 +180,13 @@ class Config:
         net_if_addrs = psutil.net_if_addrs()
         if "ipogif0" in net_if_addrs:
             return ["ipogif0"]
-        elif "hsn0" in net_if_addrs:
+        if "hsn0" in net_if_addrs:
             return [
                 net_if_addr
                 for net_if_addr in net_if_addrs
                 if net_if_addr.startswith("hsn")
             ]
-        elif "ib0" in net_if_addrs:
+        if "ib0" in net_if_addrs:
             return ["ib0"]
         # default to aries network
         return ["lo"]

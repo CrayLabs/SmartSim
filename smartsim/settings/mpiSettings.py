@@ -89,8 +89,7 @@ class _BaseMPISettings(RunSettings):
             )
             if fail_if_missing_exec:
                 raise LauncherError(msg)
-            else:
-                logger.warning(msg)
+            logger.warning(msg)
 
     reserved_run_args = {"wd", "wdir"}
 
@@ -175,7 +174,7 @@ class _BaseMPISettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
 
@@ -341,7 +340,7 @@ class MpiexecSettings(_BaseMPISettings):
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
-            [self._run_command, "--help"], capture_output=True
+            [self._run_command, "--help"], capture_output=True, check=False
         )
         help_statement = completed_process.stdout.decode()
         if "mpiexec.slurm" in help_statement:

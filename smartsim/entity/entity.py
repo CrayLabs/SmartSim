@@ -25,8 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import smartsim.settings.base
 
+
 class SmartSimEntity:
-    def __init__(self, name: str, path: str, run_settings: smartsim.settings.base.RunSettings) -> None:
+    def __init__(
+        self, name: str, path: str, run_settings: smartsim.settings.base.RunSettings
+    ) -> None:
         """Initialize a SmartSim entity.
 
         Each entity must have a name, path, and

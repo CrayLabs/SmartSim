@@ -29,6 +29,6 @@ import argparse
 from smartsim._core._cli.utils import get_install_path
 
 
-def execute(args: argparse.Namespace) -> int:
+def execute(_args: argparse.Namespace) -> int:
     print(get_install_path())
     return 0

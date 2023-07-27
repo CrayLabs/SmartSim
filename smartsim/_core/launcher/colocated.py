@@ -28,13 +28,15 @@ import sys
 import typing as t
 
 
-
 from ...error import SSInternalError
 from ..config import CONFIG
 from ..utils.helpers import create_lockfile_name
 from ...entity.dbobject import DBModel, DBScript
 
-def write_colocated_launch_script(file_name: str, db_log: str, colocated_settings: t.Dict[str, t.Any]) -> None:
+
+def write_colocated_launch_script(
+    file_name: str, db_log: str, colocated_settings: t.Dict[str, t.Any]
+) -> None:
     """Write the colocated launch script
 
     This file will be written into the cwd of the step that
@@ -50,28 +52,28 @@ def write_colocated_launch_script(file_name: str, db_log: str, colocated_setting
 
     colocated_cmd = _build_colocated_wrapper_cmd(db_log, **colocated_settings)
 
-    with open(file_name, "w") as f:
-        f.write("#!/bin/bash\n")
-        f.write("set -e\n\n")
+    with open(file_name, "w", encoding="utf-8") as script_file:
+        script_file.write("#!/bin/bash\n")
+        script_file.write("set -e\n\n")
 
-        f.write("Cleanup () {\n")
-        f.write("if ps -p $DBPID > /dev/null; then\n")
-        f.write("\tkill -15 $DBPID\n")
-        f.write("fi\n}\n\n")
+        script_file.write("Cleanup () {\n")
+        script_file.write("if ps -p $DBPID > /dev/null; then\n")
+        script_file.write("\tkill -15 $DBPID\n")
+        script_file.write("fi\n}\n\n")
 
         # run cleanup after all exitcodes
-        f.write("trap Cleanup exit\n\n")
+        script_file.write("trap Cleanup exit\n\n")
 
         # force entrypoint to write some debug information to the
         # STDOUT of the job
         if colocated_settings["debug"]:
-            f.write("export SMARTSIM_LOG_LEVEL=debug\n")
+            script_file.write("export SMARTSIM_LOG_LEVEL=debug\n")
 
-        f.write(f"{colocated_cmd}\n")
-        f.write(f"DBPID=$!\n\n")
+        script_file.write(f"{colocated_cmd}\n")
+        script_file.write("DBPID=$!\n\n")
 
         # Write the actual launch command for the app
-        f.write(f"$@\n\n")
+        script_file.write("$@\n\n")
 
 
 def _build_colocated_wrapper_cmd(
@@ -103,6 +105,7 @@ def _build_colocated_wrapper_cmd(
     :return: the command to run
     :rtype: str
     """
+    # pylint: disable=too-many-locals
 
     # create unique lockfile name to avoid symlink vulnerability
     # this is the lockfile all the processes in the distributed

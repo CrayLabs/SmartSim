@@ -38,8 +38,8 @@ def create_all_permutations(
 ) -> t.List[t.Dict[str, str]]:
     perms = list(product(*param_values))
     all_permutations = []
-    for p in perms:
-        temp_model = dict(zip(param_names, p))
+    for permutation in perms:
+        temp_model = dict(zip(param_names, permutation))
         all_permutations.append(temp_model)
     return all_permutations
 
@@ -48,8 +48,8 @@ def step_values(
     param_names: t.List[str], param_values: t.List[t.List[str]], _n_models: int = 0
 ) -> t.List[t.Dict[str, str]]:
     permutations = []
-    for p in zip(*param_values):
-        permutations.append(dict(zip(param_names, p)))
+    for param_value in zip(*param_values):
+        permutations.append(dict(zip(param_names, param_value)))
     return permutations
 
 

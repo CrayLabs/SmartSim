@@ -34,7 +34,9 @@ from tensorflow.python.framework.convert_to_constants import (
 )
 
 
-def freeze_model(model: keras.Model, output_dir: str, file_name: str) -> t.Tuple[str, t.List[str], t.List[str]]:
+def freeze_model(
+    model: keras.Model, output_dir: str, file_name: str
+) -> t.Tuple[str, t.List[str], t.List[str]]:
     """Freeze a Keras or TensorFlow Graph
 
     to use a Keras or TensorFlow model in SmartSim, the model
@@ -59,7 +61,7 @@ def freeze_model(model: keras.Model, output_dir: str, file_name: str) -> t.Tuple
     if not file_name.endswith(".pb"):
         file_name = file_name + ".pb"
 
-    full_model = tf.function(lambda x: model(x))
+    full_model = tf.function(model)
     full_model = full_model.get_concrete_function(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )
@@ -96,7 +98,7 @@ def serialize_model(model: keras.Model) -> t.Tuple[str, t.List[str], t.List[str]
     :rtype: str, list[str], list[str]
     """
 
-    full_model = tf.function(lambda x: model(x))
+    full_model = tf.function(model)
     full_model = full_model.get_concrete_function(
         tf.TensorSpec(model.inputs[0].shape, model.inputs[0].dtype)
     )

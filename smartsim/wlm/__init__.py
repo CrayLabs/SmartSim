@@ -39,28 +39,30 @@ def detect_launcher() -> str:
     # Precedence: PBS, Cobalt, LSF, Slurm, local
     if which("qsub") and which("qstat") and which("qdel"):
         qsub_version = run(
-            ["qsub", "--version"], shell=False, capture_output=True, encoding="utf-8"
+            ["qsub", "--version"],
+            shell=False,
+            capture_output=True,
+            encoding="utf-8",
+            check=False,
         )
         if "pbs" in (qsub_version.stdout).lower():
             return "pbs"
         if "cobalt" in (qsub_version.stdout).lower():
             return "cobalt"
-    if (
-        which("bsub")
-        and which("jsrun")
-        and which("jslist")
-        and which("bjobs")
-        and which("bkill")
+    if all(
+        [which("bsub"), which("jsrun"), which("jslist"), which("bjobs"), which("bkill")]
     ):
         return "lsf"
-    if (
-        which("sacct")
-        and which("srun")
-        and which("salloc")
-        and which("sbatch")
-        and which("scancel")
-        and which("sstat")
-        and which("sinfo")
+    if all(
+        [
+            which("sacct"),
+            which("srun"),
+            which("salloc"),
+            which("sbatch"),
+            which("scancel"),
+            which("sstat"),
+            which("sinfo"),
+        ]
     ):
         return "slurm"
     # Systems like ThetaGPU don't have

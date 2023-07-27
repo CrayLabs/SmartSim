@@ -41,13 +41,17 @@ try:
 
 except ImportError:  # pragma: no cover
     raise ModuleNotFoundError(
-        f"TensorFlow {TF_VERSION} is not installed. Please install it to use smartsim.tf"
+        f"TensorFlow {TF_VERSION} is not installed. "
+        "Please install it to use smartsim.tf"
     ) from None
 except AssertionError:  # pragma: no cover
-    raise SmartSimError(
-        f"TensorFlow >= {TF_VERSION} is required for smartsim.tf, you have {tf.__version__}"
-    ) from None
+    msg = (
+        f"TensorFlow >= {TF_VERSION} is required for smartsim. "
+        f"tf, you have {tf.__version__}"
+    )
+    raise SmartSimError() from None
 
 
+# pylint: disable=wrong-import-position
 from .data import DynamicDataGenerator, StaticDataGenerator
 from .utils import freeze_model, serialize_model
