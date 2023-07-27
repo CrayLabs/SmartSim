@@ -129,15 +129,16 @@ class DBObject:
     ) -> None:
         if devices_per_node == 1:
             return
-        else:
-            if ":" in device:
-                msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
-                msg += f"the device was set to {device} and devices_per_node=={devices_per_node}"
-                raise ValueError(msg)
-            if device == "CPU":
-                raise SSUnsupportedError(
-                    "Cannot set devices_per_node>1 if CPU is specified under devices"
-                )
+
+        if ":" in device:
+            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
+            msg += f"the device was set to {device} and \
+                devices_per_node=={devices_per_node}"
+            raise ValueError(msg)
+        if device == "CPU":
+            raise SSUnsupportedError(
+                "Cannot set devices_per_node>1 if CPU is specified under devices"
+            )
 
 
 class DBScript(DBObject):
