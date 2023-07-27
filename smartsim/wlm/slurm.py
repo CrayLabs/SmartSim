@@ -250,11 +250,10 @@ def _get_alloc_cmd(
     arguments = {key for key in options.keys()}
     invalid = {"t", "time", "N", "nodes", "A", "account"}
 
-    if valids := arguments.intersect(invalid):
+    if valids := arguments.intersection(invalid):
         raise ValueError("Expecting time, nodes, account as an argument. Also received: {invalids}")    
 
     for opt, val in (options or {}).items():
-      #  if opt not in ["t", "time", "N", "nodes", "A", "account"]:  # make sure ! 
         short_arg = bool(len(str(opt)) == 1)
         prefix = "-" if short_arg else "--"
         if not val:
@@ -264,9 +263,6 @@ def _get_alloc_cmd(
                 salloc_args += [prefix + opt, str(val)]
             else:
                 salloc_args += ["=".join((prefix + opt, str(val)))]
-      #  else:
-         #   raise ValueError("Expecting time, nodes, account as an argument")
-
     return salloc_args
 
 
