@@ -124,8 +124,9 @@ class DBObject:
 
         return [self.device]
 
+    @staticmethod
     def _check_devices(
-        self, device: t.Literal["CPU", "GPU"], devices_per_node: int
+        device: t.Literal["CPU", "GPU"], devices_per_node: int
     ) -> None:
         if devices_per_node == 1:
             return
