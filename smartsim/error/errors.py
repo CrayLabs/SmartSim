@@ -122,6 +122,7 @@ class ShellError(LauncherError):
         if details:
             msg += f"\nError from shell: {details}"
         return msg
-    
+
+
 class SSReservedKeywordError(SSInternalError):
     """Raised when a Reserved Keyword is used incorrectly"""
