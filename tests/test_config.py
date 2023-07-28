@@ -55,6 +55,14 @@ def test_all_config_defaults():
 
 
 def get_redisai_env(rai_path: t.Optional[str], lib_path: t.Optional[str]) -> t.Dict[str, str]:
+    """Convenience method to create a set of environment variables 
+    that include RedisAI-specific variables
+    :param rai_path: The path to the RedisAI library
+    :type: str (optional)
+    :param lib_path: The path to the SMARTSIM_DEP_INSTALL_PATH
+    :type: str (optional)
+    :return: A dictionary containing an updated set of environment variables
+    """
     env = os.environ.copy()
     if rai_path:
         env["RAI_PATH"] = rai_path
