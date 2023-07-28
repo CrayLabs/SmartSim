@@ -241,7 +241,6 @@ def _get_alloc_cmd(
         "-J",
         "SmartSim",
     ]
-    # TODO check format here
     if time:
         salloc_args.extend(["-t", time])
     if account:
