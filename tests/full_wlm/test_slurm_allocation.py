@@ -28,7 +28,7 @@ import time
 
 import pytest
 
-from smartsim.error import AllocationError
+from smartsim.error import AllocationError, SSReservedKeywordError
 from smartsim.wlm import slurm
 
 # retrieved from pytest fixtures
@@ -68,7 +68,7 @@ def test_get_release_allocation_w_options(wlmutils):
 )
 def test_get_allocation_bad_params(func_parameters, test_parameters):
     """test get_allocation with reserved keywords as option"""
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(SSReservedKeywordError) as e:
         alloc = slurm.get_allocation(options={func_parameters: test_parameters})
     assert "Expecting time, nodes, account as an argument" in e.value.args[0]
 
