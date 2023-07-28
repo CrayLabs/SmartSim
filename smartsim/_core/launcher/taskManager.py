@@ -118,7 +118,7 @@ class TaskManager:
         :param cwd: current working directory
         :type cwd: str
         :param env: environment to launch with
-        :type env: dict[str, str], optional
+        :type env: dict[str, str], optional. If None, calling environment is inherited
         :param out: output file, defaults to PIPE
         :type out: file, optional
         :param err: error file, defaults to PIPE
