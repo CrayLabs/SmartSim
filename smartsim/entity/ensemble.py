@@ -335,7 +335,7 @@ class Ensemble(EntityList):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -395,7 +395,7 @@ class Ensemble(EntityList):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
@@ -439,7 +439,7 @@ class Ensemble(EntityList):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble

@@ -33,6 +33,8 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
+from smartsim.entity.dbobject import DBScript
+
 logger = get_logger(__name__)
 
 should_run = True
@@ -578,3 +580,19 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+    
+def test_inconsistent_params_db_script(fileutils):
+    """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
+
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+    with pytest.raises(SSUnsupportedError) as ex:
+        db_script = DBScript(
+            name="test_script_db",
+            script_path = torch_script,
+            device="CPU",
+            devices_per_node=2,
+        )
+    assert (
+            ex.value.args[0] 
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )

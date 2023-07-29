@@ -36,6 +36,8 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
+from smartsim.entity.dbobject import DBModel
+
 logger = get_logger(__name__)
 
 should_run_tf = True
@@ -793,3 +795,24 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+
+def test_inconsistent_params_db_model():
+    """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""
+    
+    # Create and save ML model to filesystem
+    model, inputs, outputs = create_tf_cnn()
+    with pytest.raises(SSUnsupportedError) as ex:
+        db_model = DBModel(
+            "cnn",
+            "TF",
+            model=model,
+            device="CPU",
+            devices_per_node=2,
+            tag="test",
+            inputs=inputs,
+            outputs=outputs,
+        )
+    assert (
+            ex.value.args[0] 
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )
