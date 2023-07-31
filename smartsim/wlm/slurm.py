@@ -32,7 +32,12 @@ from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinf
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
-from ..error import AllocationError, LauncherError, SmartSimError
+from ..error import (
+    AllocationError,
+    LauncherError,
+    SmartSimError,
+    SSReservedKeywordError,
+)
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -241,24 +246,29 @@ def _get_alloc_cmd(
         "-J",
         "SmartSim",
     ]
-    # TODO check format here
     if time:
         salloc_args.extend(["-t", time])
     if account:
         salloc_args.extend(["-A", str(account)])
 
-    for opt, val in (options or {}).items():
-        if opt not in ["t", "time", "N", "nodes", "A", "account"]:
-            short_arg = bool(len(str(opt)) == 1)
-            prefix = "-" if short_arg else "--"
-            if not val:
-                salloc_args += [prefix + opt]
-            else:
-                if short_arg:
-                    salloc_args += [prefix + opt, str(val)]
-                else:
-                    salloc_args += ["=".join((prefix + opt, str(val)))]
+    arguments = set(options.keys() if options is not None else {})
+    invalid = {"t", "time", "N", "nodes", "A", "account"}
 
+    if valid := arguments.intersection(invalid):
+        raise SSReservedKeywordError(
+            f"Expecting time, nodes, account as an argument. Also received: {valid}"
+        )
+
+    for opt, val in (options or {}).items():
+        short_arg = bool(len(str(opt)) == 1)
+        prefix = "-" if short_arg else "--"
+        if not val:
+            salloc_args += [prefix + opt]
+        else:
+            if short_arg:
+                salloc_args += [prefix + opt, str(val)]
+            else:
+                salloc_args += ["=".join((prefix + opt, str(val)))]
     return salloc_args
 
 

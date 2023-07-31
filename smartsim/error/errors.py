@@ -75,6 +75,10 @@ class ParameterWriterError(SmartSimError):
         return msg
 
 
+class SSReservedKeywordError(SmartSimError):
+    """Raised when a Reserved Keyword is used incorrectly"""
+
+
 # Internal Exceptions
 
 
