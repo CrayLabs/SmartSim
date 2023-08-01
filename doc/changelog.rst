@@ -25,10 +25,11 @@ Description
 
 Detailed Notes
 
-- Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_)
+- Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
 - Fix incorrectly formatted positional arguments in log format strings (PR330_)
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
 
+.. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
 .. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
 .. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
 .. _PR311: https://github.com/CrayLabs/SmartSim/pull/311
