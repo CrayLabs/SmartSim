@@ -369,7 +369,7 @@ class Controller:
                     create_cluster(orchestrator.hosts, orchestrator.ports)
                     check_cluster_status(orchestrator.hosts, orchestrator.ports)
                     num_shards = orchestrator.num_shards
-                    logger.info("Database cluster created with {} shards", num_shards)
+                    logger.info(f"Database cluster created with {num_shards} shards")
                     cluster_created = True
                 except SSInternalError:
                     if num_trials > 0:
