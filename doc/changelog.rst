@@ -19,14 +19,18 @@ To be released at some future point in time
 
 Description
 
+- Log ignored error messages from `sacct`
 - Fix malformed logging format strings
 - Update linting support and apply to existing errors
 
 Detailed Notes
 
+- Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
 - Fix incorrectly formatted positional arguments in log format strings (PR330_)
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
 
+.. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
+.. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
 .. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
 .. _PR311: https://github.com/CrayLabs/SmartSim/pull/311
 
