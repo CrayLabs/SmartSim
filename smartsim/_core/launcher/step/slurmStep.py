@@ -136,6 +136,9 @@ class SrunStep(Step):
         :rtype: list[str]
         """
         srun = self.run_settings.run_command
+        if not srun:
+            raise ValueError("No srun command found in PATH")
+
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
