@@ -26,6 +26,7 @@
 
 # pylint: disable=invalid-name
 
+import itertools
 import os
 import platform
 import site
@@ -252,6 +253,7 @@ class Versioner:
     all set here. Setting a default version for RedisAI also dictates
     default versions of the machine learning libraries.
     """
+
     # compatible Python version
     PYTHON_MIN = Version_("3.8.0")
 
@@ -312,18 +314,39 @@ class Versioner:
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
-    def ml_extras_required(self) -> t.List[str]:
+    def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
 
         The defaults are based on the RedisAI version
         """
         ml_defaults = self.REDISAI.get_defaults()
 
-        # remove torch-related fields as they will be installed
-        # by the cli process for use in the RAI build. We don't install
-        # them here as the user needs to decide between GPU/CPU. All other
-        # libraries work on both devices. The correct versions and suffixes
-        # were scraped from https://pytorch.org/get-started/previous-versions/
+        def _format_custom_linux_torch_deps(
+            torchv: str, torchvisionv: str, arc: str
+        ) -> t.Tuple[str, ...]:
+            # The correct versions and suffixes were scraped from
+            # https://pytorch.org/get-started/previous-versions/
+            supported_py_versions = ("3.8", "3.9", "3.10")
+            return tuple(
+                itertools.chain.from_iterable(
+                    (
+                        "torch"
+                        # pylint: disable-next=line-too-long
+                        f"  @ https://download.pytorch.org/whl/{arc}/torch-{torchv}%2B{arc}-cp{pyv_no_dot}-cp{pyv_no_dot}-linux_x86_64.whl"
+                        f'  ; python_version == "{pyv}" and sys_platform != "darwin"',
+                        "torchvision"
+                        # pylint: disable-next=line-too-long
+                        f"  @ https://download.pytorch.org/whl/{arc}/torchvision-{torchvisionv}%2B{arc}-cp{pyv_no_dot}-cp{pyv_no_dot}-linux_x86_64.whl"
+                        f'  ; python_version == "{pyv}" and sys_platform != "darwin"',
+                    )
+                    for pyv_no_dot, pyv in (
+                        (pyv_.replace(".", ""), pyv_) for pyv_ in supported_py_versions
+                    )
+                )
+            )
+
+        # remove torch-related fields as they are subject to change
+        # by having the user set env vars
         _torch_fields = [
             "torch",
             "torchvision",
@@ -333,7 +356,26 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
+        common = tuple(f"{lib}=={vers}" for lib, vers in ml_defaults.items())
+        return {
+            "ml-cpu": [
+                *common,
+                # osx
+                f'torch=={self.TORCH} ; sys_platform == "darwin"',
+                f'torchvision=={self.TORCHVISION} ; sys_platform == "darwin"',
+                # linux
+                *_format_custom_linux_torch_deps(
+                    self.TORCH, self.TORCHVISION, self.TORCH_CPU_SUFFIX.lstrip("+")
+                ),
+            ],
+            "ml-cuda": [
+                *common,
+                # linux
+                *_format_custom_linux_torch_deps(
+                    self.TORCH, self.TORCHVISION, self.TORCH_CUDA_SUFFIX.lstrip("+")
+                ),
+            ],
+        }
 
     @staticmethod
     def get_sha(setup_py_dir: Path) -> str:
