@@ -30,6 +30,7 @@ import typing as t
 
 from .step import Step
 from ....settings.base import RunSettings
+from ....settings import Singularity
 
 
 class LocalStep(Step):
@@ -39,7 +40,9 @@ class LocalStep(Step):
 
     @property
     def run_settings(self) -> RunSettings:
-        return self.step_settings
+        if isinstance(self.step_settings, RunSettings):
+            return self.step_settings
+        raise TypeError("Run settings must be of type RunSettings")
 
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []
@@ -59,9 +62,10 @@ class LocalStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
 
-        if self.run_settings.container:
+        container = self.run_settings.container
+        if container and isinstance(container, Singularity):
             # pylint: disable-next=protected-access
-            cmd += self.run_settings.container._container_cmds(self.cwd)
+            cmd += container._container_cmds(self.cwd)
 
         # build executable
         cmd.extend(self.run_settings.exe)
@@ -73,5 +77,5 @@ class LocalStep(Step):
         env = os.environ.copy()
         if self.run_settings.env_vars:
             for k, v in self.run_settings.env_vars.items():
-                env[k] = v
+                env[k] = v or ""
         return env
