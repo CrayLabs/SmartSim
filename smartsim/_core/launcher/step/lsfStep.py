@@ -31,7 +31,7 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import BsubBatchSettings
+from ....settings import BsubBatchSettings, JsrunSettings
 from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ class BsubBatchStep(Step):
         :type batch_settings: BsubBatchSettings
         """
         super().__init__(name, cwd, batch_settings)
-        self.step_cmds = []
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
 
     @property
@@ -123,7 +123,7 @@ class JsrunStep(Step):
         :type run_settings: RunSettings
         """
         super().__init__(name, cwd, run_settings)
-        self.alloc = None
+        self.alloc: t.Optional[str] = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()

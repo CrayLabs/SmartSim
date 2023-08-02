@@ -99,9 +99,9 @@ class CobaltBatchStep(Step):
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
-            for i, cmd in enumerate(self.step_cmds):
+            for i, step_cmd in enumerate(self.step_cmds):
                 script_file.write("\n")
-                script_file.write(f"{' '.join((cmd))} &\n")
+                script_file.write(f"{' '.join((step_cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
                     script_file.write("\n")
                     script_file.write("wait\n")

@@ -52,7 +52,7 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd, run_settings)
 
-        self.alloc = None
+        self.alloc: t.Optional[str] = None
         if not self.run_settings.in_batch:
             self._set_alloc()
 

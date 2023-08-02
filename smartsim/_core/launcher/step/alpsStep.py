@@ -32,7 +32,7 @@ from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import AprunSettings
+from ....settings import AprunSettings, Singularity
 
 logger = get_logger(__name__)
 
@@ -49,7 +49,7 @@ class AprunStep(Step):
         :type run_settings: AprunSettings
         """
         super().__init__(name, cwd, run_settings)
-        self.alloc = None
+        self.alloc: t.Optional[str] = None
         if not self.run_settings.in_batch:
             self._set_alloc()
 
