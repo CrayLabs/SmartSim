@@ -32,7 +32,7 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import SrunSettings, SbatchSettings
+from ....settings import SrunSettings, SbatchSettings, Singularity
 
 logger = get_logger(__name__)
 
@@ -49,12 +49,14 @@ class SbatchStep(Step):
         :type batch_settings: SbatchSettings
         """
         super().__init__(name, cwd, batch_settings)
-        self.step_cmds = []
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
 
     @property
     def batch_settings(self) -> SbatchSettings:
-        return self.step_settings
+        if isinstance(self.step_settings, SbatchSettings):
+            return self.step_settings
+        raise TypeError("Batch settings must be of type SbatchSettings")
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -118,7 +120,7 @@ class SrunStep(Step):
         :type run_settings: SrunSettings
         """
         super().__init__(name, cwd, run_settings)
-        self.alloc = None
+        self.alloc: t.Optional[str] = None
         self.managed = True
         if not self.run_settings.in_batch:
             self._set_alloc()
