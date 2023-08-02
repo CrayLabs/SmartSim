@@ -161,6 +161,8 @@ class SrunStep(Step):
         if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
+            if not bash:
+                raise RuntimeError("Could not find bash in PATH")
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
 
