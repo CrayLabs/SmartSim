@@ -29,7 +29,7 @@ import shutil
 from shlex import split as sh_split
 import typing as t
 
-from ....error import AllocationError
+from ....error import AllocationError, SmartSimError
 from ....log import get_logger
 from .step import Step
 from ....settings import MpirunSettings, MpiexecSettings, OrterunSettings
@@ -62,17 +62,17 @@ class _BaseMPIStep(Step):
 
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 
-    @property
-    def _run_command(self) -> str:
-        return self.run_settings.run_command
-
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
         :rtype: list[str]
         """
-        mpi_cmd = [self._run_command, "--wdir", self.cwd]
+        run_cmd = self.run_settings.run_command
+        if not run_cmd:
+            raise SmartSimError("No run command specified")
+
+        mpi_cmd = [run_cmd, "--wdir", self.cwd]
         # add env vars to mpi command
         mpi_cmd.extend(self.run_settings.format_env_vars())
 
