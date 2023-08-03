@@ -27,14 +27,25 @@
 # pylint: disable=invalid-name
 
 import itertools
+import importlib.metadata
 import os
 import platform
-import site
 import subprocess
 import sys
 import typing as t
 from pathlib import Path
 from typing import Iterable
+
+# NOTE: This will be imported by setup.py and hence no
+#       smartsim related items or non-standand library
+#       items should be imported here.
+
+# TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
+#       packaging implementation, as we cannot assume a user will have `packaging`
+#       prior to `pip install` time. We really only use pkg_resources for their
+#       vendored version of `packaging.version.Version` so we should probably try
+#       to remove
+# https://setuptools.pypa.io/en/latest/pkg_resources.html
 
 import pkg_resources
 from pkg_resources import packaging  # type: ignore
@@ -42,10 +53,6 @@ from pkg_resources import packaging  # type: ignore
 Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
 DbEngine = t.Literal["REDIS", "KEYDB"]
-
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items or non-standand library
-#       items should be imported here.
 
 
 class SetupError(Exception):
@@ -61,6 +68,30 @@ class SetupError(Exception):
 
     See setup.py for more
     """
+
+
+class VersionConflictError(SetupError):
+    """An error for when version numbers of some library/package/program/etc
+    do not match and build may not be able to continue
+    """
+
+    def __init__(
+        self,
+        name: str,
+        current_version: "Version_",
+        target_version: "Version_",
+        msg: t.Optional[str] = None,
+    ) -> None:
+        if msg is None:
+            msg = (
+                f"Incompatible version for {name} detected: "
+                f"{name} {target_version} requested but {name} {current_version} "
+                "installed."
+            )
+        super().__init__(msg)
+        self.name = name
+        self.current_version = current_version
+        self.target_version = target_version
 
 
 # so as to not conflict with pkg_resources.packaging.version.Version
@@ -504,52 +535,13 @@ class BuildEnv:
         system_python = Version_(f"{sys_py.major}.{sys_py.minor}.{sys_py.micro}")
         return system_python > python_min
 
-    def is_windows(self) -> bool:
-        return self.PLATFORM in ["win32", "cygwin", "msys"]
+    @classmethod
+    def is_windows(cls) -> bool:
+        return cls.PLATFORM in ["win32", "cygwin", "msys"]
 
-    def is_macos(self) -> bool:
-        return self.PLATFORM == "darwin"
-
-    @property
-    def torch_cmake_path(self) -> t.Optional[str]:
-        """Find the path to the cmake directory within a
-        pip installed pytorch package"""
-
-        def _torch_import_path() -> t.Optional[Path]:
-            """Find through importing torch"""
-            try:
-                # pylint: disable=import-outside-toplevel
-                import torch
-
-                torch_paths = [Path(p) for p in torch.__path__]
-                for _path in torch_paths:
-                    torch_path = _path / "share/cmake/Torch"
-                    if torch_path.is_dir():
-                        return torch_path
-                return None
-            except ModuleNotFoundError:
-                return None
-
-        def _torch_site_path() -> t.Optional[Path]:
-            """find torch through site packages"""
-            site_paths = [Path(p) for p in site.getsitepackages()]
-
-            # check user site (~/.local/lib)
-            if site.USER_SITE and Path(site.USER_SITE).is_dir():
-                site_paths.append(Path(site.USER_SITE))
-
-            for _path in site_paths:
-                torch_path = _path / "torch/share/cmake/Torch"
-                if torch_path.is_dir():
-                    return torch_path
-            return None
-
-        torch_path = _torch_import_path()
-        if not torch_path:
-            torch_path = _torch_site_path()
-        if not torch_path:
-            raise SetupError("Could not locate torch cmake path")
-        return str(torch_path)
+    @classmethod
+    def is_macos(cls) -> bool:
+        return cls.PLATFORM == "darwin"
 
     @staticmethod
     def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
@@ -603,20 +595,23 @@ class BuildEnv:
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
-    @staticmethod
-    def check_installed(package: str, version: t.Optional[Version_] = None) -> bool:
+    @classmethod
+    def check_installed(
+        cls, package: str, version: t.Optional[Version_] = None
+    ) -> bool:
         """Check if a package is installed. If version is provided, check if
-        it's a compatible version. (major and minor the same)"""
+        it's a compatible version. (major and minor the same)
+        """
         try:
-            installed = Version_(pkg_resources.get_distribution(package).version)
-            if version:
-                # detect if major or minor versions differ
-                if installed.major != version.major or installed.minor != version.minor:
-                    msg = (
-                        f"Incompatible version for {package} detected.\n{package} "
-                        f"{version} requested but {package} {installed} installed."
-                    )
-                    raise SetupError(msg)
-            return True
-        except pkg_resources.DistributionNotFound:
+            installed = cls.get_py_package_version(package)
+        except importlib.metadata.PackageNotFoundError:
             return False
+        if version:
+            # detect if major or minor versions differ
+            if installed.major != version.major or installed.minor != version.minor:
+                raise VersionConflictError(package, installed, version)
+        return True
+
+    @staticmethod
+    def get_py_package_version(package: str) -> Version_:
+        return Version_(importlib.metadata.version(package))

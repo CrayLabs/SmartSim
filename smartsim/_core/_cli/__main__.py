@@ -28,6 +28,7 @@ import sys
 
 from smartsim._core._cli.cli import default_cli
 
+
 def main() -> int:
     smart_cli = default_cli()
     return smart_cli.execute(sys.argv)

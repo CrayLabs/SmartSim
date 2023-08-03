@@ -30,11 +30,9 @@ import sys
 import typing as t
 from pathlib import Path
 
-import pkg_resources
 from tabulate import tabulate
 
-from smartsim._core._cli.utils import (color_bool, pip_install,
-                                       SMART_LOGGER_FORMAT)
+from smartsim._core._cli.utils import color_bool, SMART_LOGGER_FORMAT
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
@@ -42,6 +40,7 @@ from smartsim._core._install.buildenv import (
     Version_,
     Versioner,
     DbEngine,
+    VersionConflictError,
 )
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
@@ -49,43 +48,17 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.error import SSConfigError
 from smartsim.log import get_logger
 
-SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # NOTE: all smartsim modules need full paths as the smart cli
 #       may be installed into a different directory.
 
 
-def _install_torch_from_pip(
-    versions: Versioner, device: str = "cpu", verbose: bool = False
-) -> None:
-    packages = []
-    end_point = None
-    device_suffix = ""
-
-    if sys.platform == "darwin":
-        if device == "gpu":
-            logger.warning("GPU support is not available on Mac OS X")
-        # The following is deliberately left blank as there is no
-        # alternative package available on Mac OS X
-        device_suffix = ""
-        end_point = None
-
-    # if we are on linux cpu, either CUDA or CPU must be installed
-    elif sys.platform == "linux":
-        end_point = "https://download.pytorch.org/whl/torch_stable.html"
-        if device in ["gpu", "cuda"]:
-            device_suffix = versions.TORCH_CUDA_SUFFIX
-        elif device == "cpu":
-            device_suffix = versions.TORCH_CPU_SUFFIX
-
-    packages.append(f"torch=={versions.TORCH}{device_suffix}")
-    packages.append(f"torchvision=={versions.TORCHVISION}{device_suffix}")
-
-    pip_install(packages, end_point=end_point, verbose=verbose)
+_TDeviceStr = t.Literal["cpu", "gpu"]
+_TPinningStr = t.Literal["==", "!=", ">=", ">", "<=", "<", "~="]
 
 
-def check_onnx_install(build_env: BuildEnv, versions: Versioner) -> None:
+def check_py_onnx_version(versions: Versioner) -> None:
     """Check Python environment for ONNX installation"""
     if not versions.ONNX:
         py_version = sys.version_info
@@ -98,36 +71,19 @@ def check_onnx_install(build_env: BuildEnv, versions: Versioner) -> None:
             msg += "1.2.5 or "
         msg += "1.2.7."
         raise SetupError(msg)
-    try:
-        if not build_env.check_installed("onnx", versions.ONNX):
-            msg = (
-                f"ONNX {versions.ONNX} not installed in python environment. "
-                f"Consider installing onnx=={versions.ONNX} with pip"
-            )
-            logger.warning(msg)
-        else:
-            logger.info(f"ONNX {versions.ONNX} installed in Python environment")
-    except SetupError as e:
-        logger.warning(str(e))
+    _check_packages_in_python_env(
+        {
+            "onnx": Version_(versions.ONNX),
+            "skl2onnx": Version_(versions.REDISAI.skl2onnx),
+            "onnxmltools": Version_(versions.REDISAI.onnxmltools),
+            "scikit-learn": Version_(getattr(versions.REDISAI, "scikit-learn")),
+        },
+    )
 
 
-def check_tf_install(build_env: BuildEnv, versions: Versioner) -> None:
+def check_py_tf_version(versions: Versioner) -> None:
     """Check Python environment for TensorFlow installation"""
-
-    try:
-        if not build_env.check_installed("tensorflow", versions.TENSORFLOW):
-            msg = (
-                f"TensorFlow {versions.TENSORFLOW} not installed in Python "
-                "environment. Consider installing tensorflow=="
-                f"{versions.TENSORFLOW} with pip"
-            )
-            logger.warning(msg)
-        else:
-            logger.info(
-                f"TensorFlow {versions.TENSORFLOW} installed in Python environment"
-            )
-    except SetupError as e:
-        logger.warning(str(e))
+    _check_packages_in_python_env({"tensorflow": Version_(versions.TENSORFLOW)})
 
 
 def check_backends_install() -> bool:
@@ -179,10 +135,11 @@ def build_database(
         database_builder.cleanup()
     logger.info(f"{database_name} build complete!")
 
+
 def build_redis_ai(
     build_env: BuildEnv,
     versions: Versioner,
-    device: str,
+    device: _TDeviceStr,
     use_torch: bool = True,
     use_tf: bool = True,
     use_onnx: bool = False,
@@ -190,7 +147,6 @@ def build_redis_ai(
     libtf_dir: t.Union[str, Path, None] = None,
     verbose: bool = False,
 ) -> None:
-
     # make sure user isn't trying to do something silly on MacOS
     if build_env.PLATFORM == "darwin" and device == "gpu":
         raise BuildError("SmartSim does not support GPU on MacOS")
@@ -208,33 +164,17 @@ def build_redis_ai(
     if not check_backends_install():
         sys.exit(1)
 
-    # Check for onnx and tf in user python environemnt and prompt user
-    # to download them if they are not installed. this should not break
-    # the build however, as we use onnx and tf directly from RAI instead
-    # of pip like we do PyTorch.
-    if use_onnx:
-        check_onnx_install(build_env, versions)
-    if use_tf:
-        check_tf_install(build_env, versions)
-
     # TORCH
-    if use_torch:
-        if torch_dir:
-            torch_dir = Path(torch_dir).resolve()
-            if not torch_dir.is_dir():
-                # we will always be able to find a torch version downloaded by
-                # pip so if we can't find it we know the user suggested a torch
-                # installation path that doesn't exist
-                logger.error("Could not find requested user Torch installation")
-                sys.exit(1)
-        else:
-            # install pytorch wheel, and get the path to the cmake dir
-            # we will use in the RAI build
-            install_torch(build_env, versions, device=device)
-            torch_dir = build_env.torch_cmake_path
+    if use_torch and torch_dir:
+        torch_dir = Path(torch_dir).resolve()
+        if not torch_dir.is_dir():
+            raise SetupError("Could not find requested user Torch installation")
 
+    # TF
     if use_tf and libtf_dir:
         libtf_dir = Path(libtf_dir).resolve()
+        if not libtf_dir.is_dir():
+            raise SetupError("Could not find requested user TF installation")
 
     build_env_dict = build_env()
 
@@ -285,123 +225,178 @@ def build_redis_ai(
         logger.info("ML Backends and RedisAI build complete!")
 
 
-def infer_torch_device() -> str:
-    backend_torch_path = f"{CONFIG.lib_path}/backends/redisai_torch"
-    device = "cpu"
-    if Path(f"{backend_torch_path}/lib/libtorch_cuda.so").is_file():
-        device = "gpu"
-    return device
+def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> None:
+    """Check Python environment for TensorFlow installation"""
+
+    if BuildEnv.is_macos():
+        device_suffix = ""
+    else:  # linux
+        if device == "cpu":
+            device_suffix = versions.TORCH_CPU_SUFFIX
+        elif device == "gpu":
+            device_suffix = versions.TORCH_CUDA_SUFFIX
+        else:
+            raise BuildError("Unrecognized device requested")
+
+    _check_packages_in_python_env(
+        {
+            "torch": Version_(f"{versions.TORCH}{device_suffix}"),
+            "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
+        },
+        validate_installed_version=_create_torch_version_validator(
+            with_suffix=device_suffix
+        ),
+    )
 
 
-def install_torch(
-    build_env: BuildEnv, versions: Versioner, device: str = "cpu", verbose: bool = False
+def _create_torch_version_validator(
+    with_suffix: str,
+) -> t.Callable[[str, t.Optional[Version_]], bool]:
+    def check_torch_version(package: str, version: t.Optional[Version_]) -> bool:
+        if not BuildEnv.check_installed(package, version):
+            return False
+        # Default check only looks at major/minor version numbers,
+        # Torch requires we look at the patch as well
+        installed = BuildEnv.get_py_package_version(package)
+        if with_suffix and with_suffix not in installed.patch:
+            raise VersionConflictError(
+                package,
+                installed,
+                version or Version_(f"X.X.X{with_suffix}"),
+                msg=(
+                    f"{package}=={installed} does not satisfy device "
+                    f"suffix requirement: {with_suffix}"
+                ),
+            )
+        return True
+
+    return check_torch_version
+
+
+def _check_packages_in_python_env(
+    packages: t.Mapping[str, t.Optional[Version_]],
+    package_pinning: _TPinningStr = "==",
+    validate_installed_version: t.Optional[
+        t.Callable[[str, t.Optional[Version_]], bool]
+    ] = None,
 ) -> None:
-    """Torch shared libraries installed by pip are used in the build
-    for SmartSim backends so we download them here.
-    """
+    # TODO: Do not like how the default validation function will always look for
+    #       a `==` pinning. Maybe turn `BuildEnv.check_installed` into a factory
+    #       that takes a pinning and returns an appropriate validation fn?
+    validate_installed_version = validate_installed_version or BuildEnv.check_installed
+    missing, conflicts = _assess_python_env(
+        packages,
+        package_pinning,
+        validate_installed_version,
+    )
 
-    if not build_env.check_installed("torch", versions.TORCH):
-        inferred_device = infer_torch_device()
-        if (inferred_device == "gpu") and (device == "cpu"):
-            logger.warning("CPU requested, but GPU backend is available")
-        _install_torch_from_pip(versions, device, verbose)
-    # if torch already installed, check the versions to make sure correct
-    # torch version is downloaded for that particular device
-    else:
-        installed = Version_(pkg_resources.get_distribution("torch").version)
-        if device == "gpu":
-            # if torch version is x.x.x+cpu
-            if "cpu" in installed.patch:
-                msg = (
-                    "Torch CPU is currently installed but torch GPU requested. "
-                    "Uninstall all torch packages and run the `smart build` command "
-                    "again to obtain Torch GPU libraries"
-                )
-                logger.warning(msg)
+    if missing or conflicts:
+        indent = "\n\t"
+        fmt_list: t.Callable = lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+        missing_str = fmt_list("Missing", missing)
+        conflict_str = fmt_list("Conflicting", conflicts)
+        sep = "\n" if missing_str and conflict_str else ""
+        logger.warning(
+            "Python Env Status Warning!\n"
+            "Requested Packages are Missing or Conflicting:\n\n"
+            f"{missing_str}{sep}{conflict_str}"
+            "\n\nConsider installing packages at the requested versions via "
+            "`pip` or installing SmartSim with optional ML dependencies"
+        )
 
-        elif device == "cpu":
-            # if torch version if x.x.x then we need to install the cpu version
-            if "cpu" not in installed.patch and not build_env.is_macos():
-                msg = (
-                    "Torch GPU installed in python environment but requested Torch CPU."
-                    " Run `pip uninstall torch torchvision` and run `smart build` again"
-                )
-                logger.error(msg)  # error because this is usually fatal
-        logger.info(f"Torch {versions.TORCH} installed in Python environment")
+
+def _assess_python_env(
+    packages: t.Mapping[str, t.Optional[Version_]],
+    package_pinning: _TPinningStr,
+    validate_installed_version: t.Callable[[str, t.Optional[Version_]], bool],
+) -> t.Tuple[t.List[str], t.List[str]]:
+    missing: t.List[str] = []
+    conflicts: t.List[str] = []
+
+    for name, version in packages.items():
+        spec = f"{name}{package_pinning}{version}" if version else name
+        try:
+            if not validate_installed_version(name, version):
+                # Not installed!
+                missing.append(spec)
+        except VersionConflictError:
+            # Incompatible version found
+            conflicts.append(spec)
+
+    return missing, conflicts
 
 
 def execute(args: argparse.Namespace) -> int:
     verbose = args.v
     keydb = args.keydb
-    device = str(args.device)
+    device: _TDeviceStr = args.device
 
     # torch and tf build by default
     pt = not args.no_pt  # pylint: disable=invalid-name
     tf = not args.no_tf  # pylint: disable=invalid-name
     onnx = args.onnx
 
-    do_checks = not args.only_python_packages
-    build_env = BuildEnv(checks=do_checks)
+    build_env = BuildEnv(checks=True)
     logger.info("Running SmartSim build process...")
 
+    logger.info("Checking requested versions...")
+    versions = Versioner()
+
+    logger.info("Checking for build tools...")
+
+    if verbose:
+        logger.info("Build Environment:")
+        env = build_env.as_dict()
+        env_vars = list(env.keys())
+        print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
+
+    if keydb:
+        versions.REDIS = Version_("6.2.0")
+        versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
+        versions.REDIS_BRANCH = "v6.2.0"
+        CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
+        if not CONFIG.conf_path.resolve().is_file():
+            raise SSConfigError(
+                "Database configuration file at REDIS_CONF could not be found"
+            )
+
+    if verbose:
+        db_name: DbEngine = "KEYDB" if keydb else "REDIS"
+        logger.info("Version Information:")
+        vers = versions.as_dict(db_name=db_name)
+        version_names = list(vers.keys())
+        print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
+
     try:
-        logger.info("Checking requested versions...")
-        versions = Versioner()
+        # REDIS/KeyDB
+        build_database(build_env, versions, keydb, verbose)
 
-        if args.only_python_packages:
-            logger.info("Only installing Python packages...skipping build")
-            if pt:
-                install_torch(build_env, versions, device=device, verbose=verbose)
-        else:
-            logger.info("Checking for build tools...")
-
-            if verbose:
-                logger.info("Build Environment:")
-                env = build_env.as_dict()
-                env_vars = list(env.keys())
-                print(tabulate(env, headers=env_vars, tablefmt="github"), "\n")
-
-            if keydb:
-                versions.REDIS = Version_("6.2.0")
-                versions.REDIS_URL = "https://github.com/EQ-Alpha/KeyDB"
-                versions.REDIS_BRANCH = "v6.2.0"
-                CONFIG.conf_path = Path(CONFIG.core_path, "config", "keydb.conf")
-                if not CONFIG.conf_path.resolve().is_file():
-                    raise SSConfigError(
-                        "Database configuration file at REDIS_CONF could not be found"
-                    )
-
-            if verbose:
-                db_name: DbEngine = "KEYDB" if keydb else "REDIS"
-                logger.info("Version Information:")
-                vers = versions.as_dict(db_name=db_name)
-                version_names = list(vers.keys())
-                print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
-
-            # REDIS/KeyDB
-            build_database(build_env, versions, keydb, verbose)
-
-            # REDISAI
-            build_redis_ai(
-                build_env,
-                versions,
-                device,
-                pt,
-                tf,
-                onnx,
-                args.torch_dir,
-                args.libtensorflow_dir,
-                verbose=verbose,
-            )
-
-            backends = list(map(str.capitalize, installed_redisai_backends()))
-            logger.info(
-                f"{', '.join(backends) if backends else 'No'} backend(s) built"
-            )
-
+        # REDISAI
+        build_redis_ai(
+            build_env,
+            versions,
+            device,
+            pt,
+            tf,
+            onnx,
+            args.torch_dir,
+            args.libtensorflow_dir,
+            verbose=verbose,
+        )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
         return 1
+
+    backends = installed_redisai_backends()
+    backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
+    logger.info(f"{backends_str} backend(s) built")
+
+    if "torch" in backends:
+        check_py_torch_version(versions, device)
+    if "tensorflow" in backends:
+        check_py_tf_version(versions)
+    if "onnxruntime" in backends:
+        check_py_onnx_version(versions)
 
     logger.info("SmartSim build complete!")
     return 0
@@ -452,12 +447,6 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default=None,
         type=str,
         help=f"Path to custom libtensorflow directory {warn_usage}",
-    )
-    parser.add_argument(
-        "--only_python_packages",
-        action="store_true",
-        default=False,
-        help="If true, only install the python packages (i.e. skip backend builds)",
     )
     parser.add_argument(
         "--keydb",

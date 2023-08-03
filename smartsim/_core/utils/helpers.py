@@ -34,6 +34,8 @@ from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
+_TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
+
 
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
@@ -212,11 +214,14 @@ def _installed(base_path: Path, backend: str) -> bool:
 def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
     # pylint: disable-next=import-outside-toplevel
     from ..._core.config import CONFIG
+
     base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
     return base_path
 
 
-def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
+def installed_redisai_backends(
+    backends_path: t.Optional[str] = None,
+) -> t.Set[_TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -229,11 +234,15 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     :param backends_path: path containing backends, defaults to None
     :type backends_path: str, optional
     :return: list of installed RedisAI backends
-    :rtype: list[str]
+    :rtype: set[str]
     """
     # import here to avoid circular import
     base_path = redis_install_base(backends_path)
-    backends = ["tensorflow", "torch", "onnxruntime", "tflite"]
+    backends: t.Set[_TRedisAIBackendStr] = {
+        "tensorflow",
+        "torch",
+        "onnxruntime",
+        "tflite",
+    }
 
-    installed = [backend for backend in backends if _installed(base_path, backend)]
-    return installed
+    return {backend for backend in backends if _installed(base_path, backend)}

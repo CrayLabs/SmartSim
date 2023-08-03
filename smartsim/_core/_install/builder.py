@@ -42,6 +42,8 @@ from subprocess import SubprocessError
 # TODO:
 #   - check cmake version and use system if possible to avoid conflicts
 
+_TBoolInt = t.Literal[0, 1]
+
 
 def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
@@ -309,9 +311,9 @@ class RedisAIBuilder(Builder):
         self.rai_install_path: t.Optional[Path] = None
 
         # convert to int for RAI build script
-        self.torch = 1 if build_torch else 0
-        self.tf = 1 if build_tf else 0   # pylint: disable=invalid-name
-        self.onnx = 1 if build_onnx else 0
+        self.torch: _TBoolInt = 1 if build_torch else 0
+        self.tf: _TBoolInt = 1 if build_tf else 0  # pylint: disable=invalid-name
+        self.onnx: _TBoolInt = 1 if build_onnx else 0
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
@@ -324,6 +326,18 @@ class RedisAIBuilder(Builder):
         server = self.lib_path.joinpath("backends").is_dir()
         cli = self.lib_path.joinpath("redisai.so").is_file()
         return server and cli
+
+    @property
+    def fetch_tf(self) -> _TBoolInt:
+        return 1 if self.tf and not self.libtf_dir else 0
+
+    @property
+    def fetch_pt(self) -> _TBoolInt:
+        return 1 if self.torch and not self.torch_dir else 0
+
+    @property
+    def fetch_onnx(self) -> _TBoolInt:
+        return self.onnx
 
     def copy_tf_cmake(self) -> None:
         """Copy the FindTensorFlow.cmake file to the build directory
@@ -397,6 +411,7 @@ class RedisAIBuilder(Builder):
 
     def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
         """Build RedisAI from git
+
         :param git_url: url from which to retrieve RedisAI
         :type git_url: str
         :param branch: branch to checkout
@@ -455,10 +470,10 @@ class RedisAIBuilder(Builder):
         # get RedisAI dependencies
         dep_cmd = [
             self.binary_path("env"),
-            "WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
-            f"WITH_TF={1 if self.tf and not self.libtf_dir else 0}",
+            f"WITH_PT={self.fetch_pt}",
+            f"WITH_TF={self.fetch_tf}",
             "WITH_TFLITE=0",  # never build with TF lite (for now)
-            f"WITH_ORT={self.onnx}",
+            f"WITH_ORT={self.fetch_onnx}",
             "VERBOSE=1",
             self.binary_path("bash"),
             str(self.rai_build_path / "get_deps.sh"),
@@ -476,7 +491,7 @@ class RedisAIBuilder(Builder):
 
         build_cmd = [
             self.binary_path("env"),
-            f"WITH_PT={self.torch}",  # but we built it in if the user specified it
+            f"WITH_PT={self.torch}",
             f"WITH_TF={self.tf}",
             "WITH_TFLITE=0",  # never build TF Lite
             f"WITH_ORT={self.onnx}",
@@ -504,7 +519,9 @@ class RedisAIBuilder(Builder):
         self.run_command(build_cmd, cwd=self.rai_build_path)
 
         self._install_backends(device)
-        if self.torch:
+        if self.torch and self.torch_dir:
+            # torch was built, but with an external lib, not through RAI
+            # gotta manually move the libs
             self._move_torch_libs()
         self.cleanup()
 
@@ -529,7 +546,6 @@ class RedisAIBuilder(Builder):
         RedisAI, we need to move them into the LD_runpath of redisai.so
         in the smartsim/_core/lib directory.
         """
-
         ss_rai_torch_path = self.lib_path / "backends" / "redisai_torch"
         ss_rai_torch_lib_path = ss_rai_torch_path / "lib"
 
