@@ -32,7 +32,7 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import SrunSettings, SbatchSettings, Singularity
+from ....settings import SrunSettings, SbatchSettings
 
 logger = get_logger(__name__)
 
