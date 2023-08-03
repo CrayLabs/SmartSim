@@ -163,6 +163,9 @@ class JsrunStep(Step):
         :rtype: list[str]
         """
         jsrun = self.run_settings.run_command
+        if not jsrun:
+            logger.warning("jsrun not found in PATH")
+            raise RuntimeError("Could not find jsrun in PATH")
 
         output, error = self.get_output_files()
 

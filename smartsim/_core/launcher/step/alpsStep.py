@@ -64,6 +64,10 @@ class AprunStep(Step):
         :rtype: list[str]
         """
         aprun = self.run_settings.run_command
+        if not aprun:
+            logger.warning("aprun not found in PATH")
+            raise RuntimeError("Could not find aprun in PATH")
+
         aprun_cmd = [aprun, "--wdir", self.cwd]
 
         # add env vars and run settings
