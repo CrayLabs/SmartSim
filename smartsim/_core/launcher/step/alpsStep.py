@@ -32,7 +32,7 @@ from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import AprunSettings
+from ....settings import AprunSettings, RunSettings, Singularity
 
 logger = get_logger(__name__)
 
@@ -54,8 +54,24 @@ class AprunStep(Step):
             self._set_alloc()
 
     @property
-    def run_settings(self) -> AprunSettings:
-        return self.step_settings
+    def run_settings(self) -> RunSettings:
+        if isinstance(self.step_settings, RunSettings):
+            return self.step_settings
+        raise TypeError("Run settings must be of type RunSettings")
+
+    def _aprun_settings(self, ignore: bool = False) -> t.Optional[AprunSettings]:
+        if isinstance(self.step_settings, AprunSettings):
+            return self.step_settings
+        if not ignore:
+            raise TypeError("Run settings must be of type AprunSettings")
+        return None
+
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """temporary convenience function to return a typed list 
+        of attached RunSettings"""
+        if srs := self._aprun_settings(ignore=True):
+            return srs.mpmd
+        return []
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -86,7 +102,7 @@ class AprunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             aprun_cmd.extend([bash, launch_script_path])
 
-        if self.run_settings.container:
+        if isinstance(self.run_settings.container, Singularity):
             # pylint: disable-next=protected-access
             aprun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
@@ -126,7 +142,7 @@ class AprunStep(Step):
         :return: executable list
         :rtype: list[str]
         """
-        if self.run_settings.mpmd:
+        if self._get_mpmd():
             return self._make_mpmd()
 
         exe = self.run_settings.exe
@@ -140,7 +156,7 @@ class AprunStep(Step):
         exe_args = self.run_settings._exe_args  # pylint: disable=protected-access
         cmd = exe + exe_args
 
-        for mpmd in self.run_settings.mpmd:
+        for mpmd in self._get_mpmd():
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += mpmd.exe

@@ -32,7 +32,7 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import SrunSettings, SbatchSettings
+from ....settings import SrunSettings, SbatchSettings, RunSettings, Singularity
 
 logger = get_logger(__name__)
 
@@ -126,8 +126,17 @@ class SrunStep(Step):
             self._set_alloc()
 
     @property
-    def run_settings(self) -> SrunSettings:
-        return self.step_settings
+    def run_settings(self) -> RunSettings:
+        if isinstance(self.step_settings, RunSettings):
+            return self.step_settings
+        raise TypeError("Run settings must be of type RunSettings")
+
+    def _srun_settings(self, ignore: bool = False) -> t.Optional[SrunSettings]:
+        if isinstance(self.step_settings, SrunSettings):
+            return self.step_settings
+        if not ignore:
+            raise TypeError("Run settings must be of type SrunSettings")
+        return None
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -148,16 +157,14 @@ class SrunStep(Step):
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            (
-                env_var_str,
-                comma_separated_env_vars,
-            ) = self.run_settings.format_comma_sep_env_vars()
+            if srs := self._srun_settings():
+                env_vars, csv_env_vars = srs.format_comma_sep_env_vars()
 
-            if len(env_var_str) > 0:
-                srun_cmd += ["--export", f"ALL,{env_var_str}"]
+                if len(env_vars) > 0:
+                    srun_cmd += ["--export", f"ALL,{env_vars}"]
 
-            if comma_separated_env_vars:
-                compound_env = compound_env.union(comma_separated_env_vars)
+                if csv_env_vars:
+                    compound_env = compound_env.union(csv_env_vars)
 
         srun_cmd += self.run_settings.format_run_args()
 
@@ -169,7 +176,7 @@ class SrunStep(Step):
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
 
-        if self.run_settings.container:
+        if isinstance(self.run_settings.container, Singularity):
             # pylint: disable-next=protected-access
             srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
@@ -185,8 +192,8 @@ class SrunStep(Step):
 
         :raises AllocationError: allocation not listed or found
         """
-        if self.run_settings.alloc:
-            self.alloc = str(self.run_settings.alloc)
+        if srs := self._srun_settings(ignore=True):
+            self.alloc = srs.alloc
         else:
             if "SLURM_JOB_ID" in os.environ:
                 self.alloc = os.environ["SLURM_JOB_ID"]
@@ -198,14 +205,22 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """temporary convenience function to return a typed list 
+        of attached RunSettings"""
+        if srs := self._srun_settings(ignore=True):
+            return srs.mpmd
+        return []
+
     def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
         :rtype: list[str]
         """
-        if self.run_settings.mpmd:
-            return self._make_mpmd()
+        if srs := self._srun_settings(ignore=True):
+            if srs.mpmd:
+                return self._make_mpmd()
 
         exe = self.run_settings.exe
         args = self.run_settings._exe_args  # pylint: disable=protected-access
@@ -218,18 +233,19 @@ class SrunStep(Step):
         cmd = exe + args
 
         compound_env_vars = []
-        for mpmd in self.run_settings.mpmd:
+        for mpmd_rs in self._get_mpmd():
             cmd += [" : "]
-            cmd += mpmd.format_run_args()
+            cmd += mpmd_rs.format_run_args()
             cmd += ["--job-name", self.name]
 
-            (env_var_str, csv_env_vars) = mpmd.format_comma_sep_env_vars()
-            if len(env_var_str) > 0:
-                cmd += ["--export", f"ALL,{env_var_str}"]
-            if csv_env_vars:
-                compound_env_vars.extend(csv_env_vars)
-            cmd += mpmd.exe
-            cmd += mpmd._exe_args  # pylint: disable=protected-access
+            if isinstance(mpmd_rs, SrunSettings):
+                (env_var_str, csv_env_vars) = mpmd_rs.format_comma_sep_env_vars()
+                if len(env_var_str) > 0:
+                    cmd += ["--export", f"ALL,{env_var_str}"]
+                if csv_env_vars:
+                    compound_env_vars.extend(csv_env_vars)
+            cmd += mpmd_rs.exe
+            cmd += mpmd_rs._exe_args  # pylint: disable=protected-access
 
         cmd = sh_split(" ".join(cmd))
         return cmd

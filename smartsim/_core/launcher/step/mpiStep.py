@@ -58,7 +58,9 @@ class _BaseMPIStep(Step):
 
     @property
     def run_settings(self) -> RunSettings:
-        return self.step_settings
+        if isinstance(self.step_settings, RunSettings):
+            return self.step_settings
+        raise TypeError("Run settings must be of type RunSettings")
 
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 
@@ -119,13 +121,20 @@ class _BaseMPIStep(Step):
             "No allocation specified or found and not running in batch"
         )
 
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """temporary convenience function to return a typed list 
+        of attached RunSettings"""
+        if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
+            return self.run_settings.mpmd
+        return []
+
     def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
         :rtype: list[str]
         """
-        if self.run_settings.mpmd:
+        if self._get_mpmd():
             return self._make_mpmd()
 
         exe = self.run_settings.exe
@@ -137,7 +146,8 @@ class _BaseMPIStep(Step):
         exe = self.run_settings.exe
         args = self.run_settings._exe_args  # pylint: disable=protected-access
         cmd = exe + args
-        for mpmd in self.run_settings.mpmd:
+
+        for mpmd in self._get_mpmd():
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += mpmd.format_env_vars()

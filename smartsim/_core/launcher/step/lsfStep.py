@@ -31,8 +31,8 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import BsubBatchSettings
-from ....settings.base import RunSettings
+from ....settings import BsubBatchSettings, JsrunSettings
+from ....settings.base import RunSettings, BatchSettings
 
 logger = get_logger(__name__)
 
@@ -53,8 +53,17 @@ class BsubBatchStep(Step):
         self.managed = True
 
     @property
-    def batch_settings(self) -> BsubBatchSettings:
-        return self.step_settings
+    def batch_settings(self) -> BatchSettings:
+        if isinstance(self.step_settings, BatchSettings):
+            return self.step_settings
+        raise TypeError("Batch settings must be subtype of BatchSettings")
+
+    def _bsub_settings(self, ignore: bool = False) -> t.Optional[BsubBatchSettings]:
+        if isinstance(self.step_settings, BsubBatchSettings):
+            return self.step_settings
+        if not ignore:
+            raise TypeError("Run settings must be of type BsubBatchSettings")
+        return None
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -84,16 +93,18 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        self.batch_settings._format_alloc_flags()  # pylint: disable=protected-access
+        if bsub_rs := self._bsub_settings(ignore=True):
+            bsub_rs._format_alloc_flags()  # pylint: disable=protected-access
 
         opts = self.batch_settings.format_batch_args()
 
         with open(batch_script, "w", encoding="utf-8") as script_file:
             script_file.write("#!/bin/bash\n\n")
-            if self.batch_settings.walltime:
-                script_file.write(f"#BSUB -W {self.batch_settings.walltime}\n")
-            if self.batch_settings.project:
-                script_file.write(f"#BSUB -P {self.batch_settings.project}\n")
+            if bsub_rs := self._bsub_settings(ignore=True):
+                if bsub_rs.walltime:
+                    script_file.write(f"#BSUB -W {bsub_rs.walltime}\n")
+                if bsub_rs.project:
+                    script_file.write(f"#BSUB -P {bsub_rs.project}\n")
             script_file.write(f"#BSUB -J {self.name}\n")
             script_file.write(f"#BSUB -o {output}\n")
             script_file.write(f"#BSUB -e {error}\n")
@@ -130,7 +141,9 @@ class JsrunStep(Step):
 
     @property
     def run_settings(self) -> RunSettings:
-        return self.step_settings
+        if isinstance(self.step_settings, RunSettings):
+            return self.step_settings
+        raise TypeError("Run settings must be of type RunSettings")
 
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
@@ -144,13 +157,14 @@ class JsrunStep(Step):
         # --stdio_stdout (similarly for error). This in turn, will be processed
         # by jsrun, replacing each occurrence of "%t" with the task number and
         # writing output to "entity_name_0.out", "entity_name_1.out"...
-        if self.run_settings.individual_suffix:
+        _rs = self.run_settings
+        if isinstance(_rs, JsrunSettings) and _rs.individual_suffix:
             partitioned_output = output.rpartition(".")
-            output_prefix = partitioned_output[0] + self.run_settings.individual_suffix
+            output_prefix = partitioned_output[0] + _rs.individual_suffix
             output_suffix = partitioned_output[-1]
             output = ".".join([output_prefix, output_suffix])
             partitioned_error = error.rpartition(".")
-            error_prefix = partitioned_error[0] + self.run_settings.individual_suffix
+            error_prefix = partitioned_error[0] + _rs.individual_suffix
             error_suffix = partitioned_error[-1]
             error = ".".join([error_prefix, error_suffix])
 
@@ -216,6 +230,13 @@ class JsrunStep(Step):
                 "No allocation specified or found and not running in batch"
             )
 
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """temporary convenience function to return a typed list 
+        of attached RunSettings"""
+        if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
+            return self.run_settings.mpmd
+        return []
+
     def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
@@ -223,8 +244,9 @@ class JsrunStep(Step):
         :rtype: list[str]
         """
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
-        if self.run_settings.mpmd:
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
+
+        if self._get_mpmd():
             erf_file = self.get_step_file(ending=".mpmd")
             self._make_mpmd()
             mp_cmd = ["--erf_input", erf_file]
@@ -233,25 +255,33 @@ class JsrunStep(Step):
         cmd = exe + args
         return cmd
 
+    # pylint: disable=too-many-statements
     def _make_mpmd(self) -> None:
         """Build LSF's Explicit Resource File"""
         erf_file_path = self.get_step_file(ending=".mpmd")
 
+        distr_line: str = ""
+        preamble_lines: t.List[str] = []
+        all_preamble_lines: t.List[str] = []
+
         # Find launch_distribution command
-        preamble_lines = self.run_settings.mpmd_preamble_lines.copy()
-        distr_line = None
-        for line in self.run_settings.mpmd_preamble_lines:
+        if hasattr(self.run_settings, "mpmd_preamble_lines"):
+            preamble_lines = self.run_settings.mpmd_preamble_lines.copy()
+            all_preamble_lines = self.run_settings.mpmd_preamble_lines.copy()
+
+        for line in all_preamble_lines:
             if line.lstrip(" ").startswith("launch_distribution"):
                 distr_line = line
                 preamble_lines.remove(line)
+
         if not distr_line:
-            for jrs in self.run_settings.mpmd:
+            for jrs in self._get_mpmd():
                 if "launch_distribution" in jrs.run_args.keys():
                     distr_line = (
-                        "launch_distribution : " + jrs.run_args["launch_distribution"]
+                        f"launch_distribution : {jrs.run_args['launch_distribution']}"
                     )
                 elif "d" in jrs.run_args.keys():
-                    distr_line = "launch_distribution : " + jrs.run_args["d"]
+                    distr_line = f"launch_distribution : {jrs.run_args['d']}"
                 if distr_line:
                     break
         if not distr_line:
@@ -264,41 +294,48 @@ class JsrunStep(Step):
             erf_file.write("\n")
 
             # First we list the apps
-            for app_id, jrs in enumerate(self.run_settings.mpmd):
-                job_rs = " ".join(jrs.exe + jrs.exe_args)
-                erf_file.write(f"app {app_id} : {job_rs}\n")
+            if self._get_mpmd():
+                for app_id, jrs in enumerate(self._get_mpmd()):
+                    # pylint: disable-next=protected-access
+                    job_rs = " ".join(jrs.exe + jrs._exe_args)
+                    erf_file.write(f"app {app_id} : {job_rs}\n")
             erf_file.write("\n")
 
             # Then we list the resources
-            for app_id, jrs in enumerate(self.run_settings.mpmd):
-                rs_line = ""
-                if "rank" in jrs.erf_sets.keys():
-                    rs_line += "rank: " + jrs.erf_sets["rank"] + ": "
-                elif "rank_count" in jrs.erf_sets.keys():
-                    rs_line += jrs.erf_sets["rank_count"] + ": "
-                else:
-                    rs_line += "1 : "
+            if self._get_mpmd():
+                for app_id, jrs in enumerate(self._get_mpmd()):
+                    rs_line = ""
 
-                rs_line += "{ "
-                if "host" in jrs.erf_sets.keys():
-                    rs_line += "host: " + jrs.erf_sets["host"] + "; "
-                else:
-                    rs_line += "host: *;"
+                    if not isinstance(jrs, JsrunSettings):
+                        continue
 
-                if "cpu" in jrs.erf_sets.keys():
-                    rs_line += "cpu: " + jrs.erf_sets["cpu"]
-                else:
-                    rs_line += "cpu: * "
+                    if "rank" in jrs.erf_sets.keys():
+                        rs_line += "rank: " + jrs.erf_sets["rank"] + ": "
+                    elif "rank_count" in jrs.erf_sets.keys():
+                        rs_line += jrs.erf_sets["rank_count"] + ": "
+                    else:
+                        rs_line += "1 : "
 
-                if "gpu" in jrs.erf_sets.keys():
-                    rs_line += "; gpu: " + jrs.erf_sets["gpu"]
+                    rs_line += "{ "
+                    if "host" in jrs.erf_sets.keys():
+                        rs_line += "host: " + jrs.erf_sets["host"] + "; "
+                    else:
+                        rs_line += "host: *;"
 
-                if "memory" in jrs.erf_sets.keys():
-                    rs_line += "; memory: " + jrs.erf_sets["memory"]
+                    if "cpu" in jrs.erf_sets.keys():
+                        rs_line += "cpu: " + jrs.erf_sets["cpu"]
+                    else:
+                        rs_line += "cpu: * "
 
-                rs_line += "}: app " + str(app_id) + "\n"
+                    if "gpu" in jrs.erf_sets.keys():
+                        rs_line += "; gpu: " + jrs.erf_sets["gpu"]
 
-                erf_file.write(rs_line)
+                    if "memory" in jrs.erf_sets.keys():
+                        rs_line += "; memory: " + jrs.erf_sets["memory"]
+
+                    rs_line += "}: app " + str(app_id) + "\n"
+
+                    erf_file.write(rs_line)
 
         with open(erf_file_path, encoding="utf-8") as erf_file:
             erf_file.flush()
