@@ -142,7 +142,7 @@ class _BaseMPIStep(Step):
             cmd += mpmd.format_run_args()
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
-            cmd += mpmd._exe_args
+            cmd += mpmd._exe_args  # pylint: disable=protected-access
 
         cmd = sh_split(" ".join(cmd))
         return cmd

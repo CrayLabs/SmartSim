@@ -32,7 +32,7 @@ from shlex import split as sh_split
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import AprunSettings, Singularity
+from ....settings import AprunSettings
 
 logger = get_logger(__name__)
 

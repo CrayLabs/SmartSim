@@ -31,7 +31,7 @@ import typing as t
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
-from ....settings import BsubBatchSettings, JsrunSettings
+from ....settings import BsubBatchSettings
 from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
