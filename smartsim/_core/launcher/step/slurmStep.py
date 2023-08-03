@@ -208,13 +208,13 @@ class SrunStep(Step):
             return self._make_mpmd()
 
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         cmd = exe + args
 
         compound_env_vars = []
@@ -229,7 +229,7 @@ class SrunStep(Step):
             if csv_env_vars:
                 compound_env_vars.extend(csv_env_vars)
             cmd += mpmd.exe
-            cmd += mpmd.exe_args
+            cmd += mpmd._exe_args  # pylint: disable=protected-access
 
         cmd = sh_split(" ".join(cmd))
         return cmd

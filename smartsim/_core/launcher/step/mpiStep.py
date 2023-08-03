@@ -129,20 +129,20 @@ class _BaseMPIStep(Step):
             return self._make_mpmd()
 
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         cmd = exe + args
         for mpmd in self.run_settings.mpmd:
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
-            cmd += mpmd.exe_args
+            cmd += mpmd._exe_args
 
         cmd = sh_split(" ".join(cmd))
         return cmd
