@@ -64,12 +64,12 @@ def get_redisai_env(rai_path: t.Optional[str], lib_path: t.Optional[str]) -> t.D
     :return: A dictionary containing an updated set of environment variables
     """
     env = os.environ.copy()
-    if rai_path:
+    if rai_path is not None:
         env["RAI_PATH"] = rai_path
     else:
         env.pop("RAI_PATH", None)
     
-    if lib_path:
+    if lib_path is not None:
         env["SMARTSIM_DEP_INSTALL_PATH"] = lib_path
     else:
         env.pop("SMARTSIM_DEP_INSTALL_PATH", None)
