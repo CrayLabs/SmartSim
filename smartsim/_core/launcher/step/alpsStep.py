@@ -67,7 +67,7 @@ class AprunStep(Step):
         return None
 
     def _get_mpmd(self) -> t.List[RunSettings]:
-        """temporary convenience function to return a typed list 
+        """temporary convenience function to return a typed list
         of attached RunSettings"""
         if srs := self._aprun_settings(ignore=True):
             return srs.mpmd
