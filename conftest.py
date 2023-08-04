@@ -575,6 +575,11 @@ class FileUtils:
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None
         :type caller_fspath: str or Path, optional
+        :param level: indicate depth in the call stack relative to test method. 
+        :type level: int, optional 
+        :param sub_dir: a relative path to create in the test directory
+        :type sub_dir: str or Path, optional
+
         :return: String path to test output directory
         :rtype: str
         """
