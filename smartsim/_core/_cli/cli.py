@@ -36,6 +36,7 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.test import execute as test_execute
 from smartsim._core._cli.utils import MenuItemConfig
 
 
@@ -57,9 +58,9 @@ class SmartCli:
         )
 
         for cmd, item in self.menu.items():
-            parser = subparsers.add_parser(cmd,
-                                           description=item.description,
-                                           help=item.description)
+            parser = subparsers.add_parser(
+                cmd, description=item.description, help=item.description
+            )
             if item.configurator:
                 item.configurator(parser)
 
@@ -95,16 +96,22 @@ def default_cli() -> SmartCli:
         MenuItemConfig(
             "dbcli",
             "Print the path to the redis-cli binary",
-            dbcli_execute
+            dbcli_execute,
         ),
         MenuItemConfig(
             "site",
             "Print the installation site of SmartSim",
-            site_execute),
+            site_execute,
+        ),
         MenuItemConfig(
             "clobber",
             "Remove all previous dependency installations",
-            clobber_execute
+            clobber_execute,
+        ),
+        MenuItemConfig(
+            "test",
+            "Run a simple SmartSim experiment to cofirm that it is built correctly",
+            test_execute,
         ),
     ]
 
