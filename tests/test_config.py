@@ -114,7 +114,6 @@ def test_redisai_invalid_lib_path(fileutils, monkeypatch):
     """Invalid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should fail"""
     test_dir = fileutils.make_test_dir()
     rai_file_path = f"{test_dir}/railib/redisai.so"
-    _ = f"{test_dir}/lib/redisai.so"
 
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
@@ -131,7 +130,6 @@ def test_redisai_valid_lib_path(fileutils, monkeypatch):
     """Valid RAI_PATH and invalid SMARTSIM_DEP_INSTALL_PATH should succeed"""
     test_dir = fileutils.make_test_dir()
     rai_file_path = fileutils.make_test_file("mock-redisai.so", "lib")
-    _ = f"{test_dir}/lib/redisai.so"
 
     env = get_redisai_env(rai_file_path, test_dir)
     monkeypatch.setattr(os, "environ", env)
