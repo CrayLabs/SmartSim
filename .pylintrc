@@ -341,3 +341,10 @@ max-try-statements=7
 
 # Maximum level of inheritance, bumping up to account for db mixins
 max-parents=25
+
+
+[TYPECHECK]
+
+# Pylint is kinda rough at determining what is and is not an attr in C extensions
+# leave this work to mypy, which tends to be more reliable
+ignored-modules=torch

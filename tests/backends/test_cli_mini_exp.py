@@ -33,7 +33,7 @@ import smartsim._core._cli.test
 from smartsim._core.utils.helpers import installed_redisai_backends
 
 
-def test_cli_miniexp_doesnt_error_out_with_dev_build(
+def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
     fileutils,
     monkeypatch,
@@ -57,7 +57,7 @@ def test_cli_miniexp_doesnt_error_out_with_dev_build(
     db_port ,= local_db.ports
 
     smartsim._core._cli.test.test_install(
-        # Shouldn't matter bc making the managed is stubbed
+        # Shouldn't matter bc we are stubbing creation of orc
         # but best to give it "correct" vals for safety
         location=fileutils.get_test_dir(),
         port=db_port,
