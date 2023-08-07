@@ -122,7 +122,7 @@ def parse_step_id_from_qstat(output: str, step_name: str) -> t.Optional[str]:
     :return: the step_id
     :rtype: str
     """
-    step_id = None
+    step_id: t.Optional[str] = None
     out_json = load_and_clean_json(output)
 
     if "Jobs" not in out_json:

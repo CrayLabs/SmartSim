@@ -618,7 +618,7 @@ class Controller:
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
 
-            return orc
+            return orc # type: ignore # noqa: no-any-return
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:

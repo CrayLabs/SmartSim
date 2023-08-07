@@ -35,6 +35,7 @@ from smartredis.error import RedisReplyError
 from ..error import SSInternalError
 from ..log import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -205,7 +206,9 @@ class TrainingDataUploader:
         self._info.publish(self.client)
 
     def put_batch(
-        self, samples: np.ndarray, targets: t.Optional[np.ndarray] = None
+        self,
+        samples: np.ndarray,  # type: ignore[type-arg]
+        targets: t.Optional[np.ndarray] = None,  # type: ignore[type-arg]
     ) -> None:
         batch_ds_name = form_name("training_samples", self.rank, self.batch_idx)
         batch_ds = Dataset(batch_ds_name)
@@ -381,10 +384,12 @@ class DataDownloader:
         length = int(np.floor(self.num_samples / self.batch_size))
         return length
 
-    def _calc_indices(self, index: int) -> np.ndarray:
+    def _calc_indices(self, index: int) -> np.ndarray:  # type: ignore[type-arg]
         return self.indices[index * self.batch_size : (index + 1) * self.batch_size]
 
-    def __iter__(self) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:
+    def __iter__(
+        self,
+    ) -> t.Iterator[t.Tuple[np.ndarray, np.ndarray]]:  # type: ignore[type-arg]
         self.update_data()
         # Generate data
         if len(self) < 1:
@@ -426,11 +431,11 @@ class DataDownloader:
 
     def _data_exists(self, batch_name: str, target_name: str) -> bool:
         if self.need_targets:
-            return self.client.tensor_exists(batch_name) and self.client.tensor_exists(
-                target_name
+            return all(
+                self.client.tensor_exists(datum) for datum in [batch_name, target_name]
             )
 
-        return self.client.tensor_exists(batch_name)
+        return bool(self.client.tensor_exists(batch_name))
 
     def _add_samples(self, indices: t.List[int]) -> None:
         datasets: t.List[Dataset] = []
@@ -491,7 +496,9 @@ class DataDownloader:
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:
+    def _data_generation(
+        self, indices: np.ndarray  # type: ignore[type-arg]# type: ignore
+    ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         # Initialization
         if self.samples is None:
             raise ValueError("Samples have not been initialized")

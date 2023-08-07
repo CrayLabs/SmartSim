@@ -81,7 +81,7 @@ def get_base_36_repr(positive_int: int) -> str:
 def init_default(
     default: t.Any,
     init_value: t.Any,
-    expected_type: t.Optional[t.Union[t.Type, t.Tuple]] = None,
+    expected_type: t.Union[t.Type[t.Any], t.Tuple[t.Type[t.Any], ...], None] = None,
 ) -> t.Any:
     if init_value is None:
         return default

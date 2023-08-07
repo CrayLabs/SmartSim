@@ -77,7 +77,7 @@ def create_batch_settings(
     :raises SmartSimError: if batch creation fails
     """
     # all supported batch class implementations
-    by_launcher = {
+    by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
         "cobalt": CobaltBatchSettings,
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
@@ -144,7 +144,7 @@ def create_run_settings(
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
     # all supported RunSettings child classes
-    supported = {
+    supported: t.Dict[str, t.Callable[..., RunSettings]] = {
         "aprun": AprunSettings,
         "srun": SrunSettings,
         "mpirun": MpirunSettings,

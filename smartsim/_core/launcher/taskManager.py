@@ -290,7 +290,10 @@ class Task:
         :rtype: int
         """
         if self.owned and isinstance(self.process, psutil.Popen):
-            return self.process.poll()
+            poll_result = self.process.poll()
+            if poll_result is not None:
+                return int(poll_result)
+            return None
         # we can't manage Processed we don't own
         # have to rely on .kill() to stop.
         return self.returncode
@@ -363,7 +366,9 @@ class Task:
     @property
     def returncode(self) -> t.Optional[int]:
         if self.owned and isinstance(self.process, psutil.Popen):
-            return self.process.returncode
+            if self.process.returncode is not None:
+                return int(self.process.returncode)
+            return None
         if self.is_alive:
             return None
         return 0

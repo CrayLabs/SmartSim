@@ -73,8 +73,12 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = []
-ignore_errors=false
+plugins = ["numpy.typing.mypy_plugin"]
+ignore_errors = false
+
+# Dynamic typing
+disallow_any_generics = true
+warn_return_any = true
 
 # Strict fn defs
 disallow_untyped_calls = true
@@ -84,7 +88,9 @@ disallow_untyped_decorators = true
 
 # Safety/Upgrading Mypy
 warn_unused_ignores = true
-# warn_redundant_casts = true # not a per-module setting?
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
 
 [[tool.mypy.overrides]]
 # Ignore packages that are not used or not typed
