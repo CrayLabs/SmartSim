@@ -497,7 +497,7 @@ class DataDownloader:
             np.random.shuffle(self.indices)
 
     def _data_generation(
-        self, indices: np.ndarray  # type: ignore[type-arg]# type: ignore
+        self, indices: np.ndarray  # type: ignore[type-arg]
     ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         # Initialization
         if self.samples is None:
