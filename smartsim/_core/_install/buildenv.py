@@ -105,41 +105,31 @@ class Version_(str):
 
     def __gt__(self, cmp: t.Any) -> bool:
         try:
-            if Version(self).__gt__(self._convert_to_version(cmp)):
-                return True
-            return False
+            return bool(Version(self).__gt__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__gt__(cmp)
 
     def __lt__(self, cmp: t.Any) -> bool:
         try:
-            if Version(self).__lt__(self._convert_to_version(cmp)):
-                return True
-            return False
+            return bool(Version(self).__lt__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__lt__(cmp)
 
     def __eq__(self, cmp: t.Any) -> bool:
         try:
-            if Version(self).__eq__(self._convert_to_version(cmp)):
-                return True
-            return False
+            return bool(Version(self).__eq__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__eq__(cmp)
 
     def __ge__(self, cmp: t.Any) -> bool:
         try:
-            if Version(self).__ge__(self._convert_to_version(cmp)):
-                return True
-            return False
+            return bool(Version(self).__ge__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__ge__(cmp)
 
     def __le__(self, cmp: t.Any) -> bool:
         try:
-            if Version(self).__le__(self._convert_to_version(cmp)):
-                return True
-            return False
+            return bool(Version(self).__le__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__le__(cmp)
 
