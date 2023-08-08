@@ -73,7 +73,7 @@ namespace_packages = true
 files = [
   "smartsim"
 ]
-plugins = ["numpy.typing.mypy_plugin"]
+plugins = []
 ignore_errors = false
 
 # Dynamic typing
