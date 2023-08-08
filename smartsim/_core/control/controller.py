@@ -600,7 +600,7 @@ class Controller:
                 raise SmartSimError(
                     err_message + "Could not find database job objects."
                 )
-            orc = db_config["db"]
+            orc: Orchestrator = db_config["db"]
 
             # TODO check that each db_object is running
 
@@ -618,7 +618,7 @@ class Controller:
             if not self._jobs.actively_monitoring:
                 self._jobs.start()
 
-            return orc # type: ignore # noqa: no-any-return
+            return orc
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
