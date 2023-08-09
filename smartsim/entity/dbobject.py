@@ -28,6 +28,7 @@ import typing as t
 
 from pathlib import Path
 from .._core.utils import init_default
+from ..error import SSUnsupportedError
 
 
 __all__ = ["DBObject", "DBModel", "DBScript"]
@@ -43,16 +44,23 @@ class DBObject:
         name: str,
         func: t.Optional[str],
         file_path: t.Optional[str],
-        device: str,
+        device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
     ) -> None:
         self.name = name
         self.func = func
-        self.file: t.Optional[Path] = None  # Need to have this explicitly to check on it
+        self.file: t.Optional[
+            Path
+        ] = None  # Need to have this explicitly to check on it
         if file_path:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
+        self._check_devices(device, devices_per_node)
+
+    @property
+    def devices(self) -> t.List[str]:
+        return self._enumerate_devices()
 
     @property
     def is_file(self) -> bool:
@@ -62,7 +70,8 @@ class DBObject:
 
     @staticmethod
     def _check_tensor_args(
-        inputs: t.Union[str, t.Optional[t.List[str]]], outputs: t.Union[str, t.Optional[t.List[str]]]
+        inputs: t.Union[str, t.Optional[t.List[str]]],
+        outputs: t.Union[str, t.Optional[t.List[str]]],
     ) -> t.Tuple[t.List[str], t.List[str]]:
         inputs = init_default([], inputs, (list, str))
         outputs = init_default([], outputs, (list, str))
@@ -79,10 +88,10 @@ class DBObject:
         all_backends = ["TF", "TORCH", "ONNX"]
         if backend in all_backends:
             return backend
-        else:
-            raise ValueError(
-                f"Backend type {backend} unsupported. Options are {all_backends}"
-            )
+
+        raise ValueError(
+            f"Backend type {backend} unsupported. Options are {all_backends}"
+        )
 
     @staticmethod
     def _check_filepath(file: str) -> Path:
@@ -92,8 +101,8 @@ class DBObject:
         return file_path
 
     @staticmethod
-    def _check_device(device: str) -> str:
-        device = device.upper()
+    def _check_device(device: t.Literal["CPU", "GPU"]) -> str:
+        device = t.cast(t.Literal["CPU", "GPU"], device.upper())
         if not device.startswith("CPU") and not device.startswith("GPU"):
             raise ValueError("Device argument must start with either CPU or GPU")
         return device
@@ -106,18 +115,31 @@ class DBObject:
         :return: list of device names
         :rtype: list[str]
         """
-        devices = []
-        if ":" in self.device and self.devices_per_node > 1:
-            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
-            msg += f"the device was set to {self.device} and devices_per_node=={self.devices_per_node}"
-            raise ValueError(msg)
-        if self.device in ["CPU", "GPU"] and self.devices_per_node > 1:
-            for device_num in range(self.devices_per_node):
-                devices.append(f"{self.device}:{str(device_num)}")
-        else:
-            devices = [self.device]
 
-        return devices
+        if self.device == "GPU" and self.devices_per_node > 1:
+            return [
+                f"{self.device}:{str(device_num)}"
+                for device_num in range(self.devices_per_node)
+            ]
+
+        return [self.device]
+
+    @staticmethod
+    def _check_devices(
+        device: t.Literal["CPU", "GPU"], devices_per_node: int
+    ) -> None:
+        if devices_per_node == 1:
+            return
+
+        if ":" in device:
+            msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
+            msg += f"the device was set to {device} and \
+                devices_per_node=={devices_per_node}"
+            raise ValueError(msg)
+        if device == "CPU":
+            raise SSUnsupportedError(
+                "Cannot set devices_per_node>1 if CPU is specified under devices"
+            )
 
 
 class DBScript(DBObject):
@@ -126,7 +148,7 @@ class DBScript(DBObject):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ):
         """TorchScript code represenation
@@ -179,7 +201,7 @@ class DBModel(DBObject):
         backend: str,
         model: t.Optional[str] = None,
         model_file: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,

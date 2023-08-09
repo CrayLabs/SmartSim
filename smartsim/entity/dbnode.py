@@ -47,7 +47,14 @@ class DBNode(SmartSimEntity):
     into the smartsimdb.conf.
     """
 
-    def __init__(self, name: str, path: str, run_settings: RunSettings, ports: t.List[int], output_files: t.List[str]) -> None:
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        run_settings: RunSettings,
+        ports: t.List[int],
+        output_files: t.List[str],
+    ) -> None:
         """Initialize a database node within an orchestrator."""
         self.ports = ports
         self._host: t.Optional[str] = None
@@ -59,10 +66,18 @@ class DBNode(SmartSimEntity):
         if not output_files:
             raise ValueError("output_files cannot be empty")
         if not isinstance(output_files, list) or not all(
-            [isinstance(item, str) for item in output_files]
+            isinstance(item, str) for item in output_files
         ):
             raise ValueError("output_files must be of type list[str]")
         self._output_files = output_files
+
+    @property
+    def num_shards(self) -> int:
+        return self._num_shards
+
+    @num_shards.setter
+    def num_shards(self, value: int) -> None:
+        self._num_shards = value
 
     @property
     def host(self) -> str:
@@ -75,6 +90,14 @@ class DBNode(SmartSimEntity):
         if not self._hosts:
             self._hosts = self._parse_db_hosts()
         return self._hosts
+
+    @property
+    def is_mpmd(self) -> bool:
+        return self._mpmd
+
+    @is_mpmd.setter
+    def is_mpmd(self, value: bool) -> None:
+        self._mpmd = value
 
     def set_host(self, host: str) -> None:
         self._host = str(host)
@@ -140,10 +163,11 @@ class DBNode(SmartSimEntity):
             for shard_id in range(self._num_shards)
         ]
 
-    def _parse_ips(self, filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
+    @staticmethod
+    def _parse_ips(filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
         ips = []
-        with open(filepath, "r") as f:
-            lines = f.readlines()
+        with open(filepath, "r", encoding="utf-8") as dbnode_file:
+            lines = dbnode_file.readlines()
             for line in lines:
                 content = line.split()
                 if "IPADDRESS:" in content:
@@ -168,27 +192,28 @@ class DBNode(SmartSimEntity):
         if not filepath:
             filepath = osp.join(self.path, self._output_files[0])
         trials = 5
-        ip = None
+        ip_address = None
 
         # try a few times to give the database files time to
         # populate on busy systems.
-        while not ip and trials > 0:
+        while not ip_address and trials > 0:
             try:
-                ip = self._parse_ips(filepath, 1)[0]
+                if ip_addresses := self._parse_ips(filepath, 1):
+                    ip_address = ip_addresses[0]
             # suppress error
             except FileNotFoundError:
                 pass
 
             logger.debug("Waiting for Redis output files to populate...")
-            if not ip:
+            if not ip_address:
                 time.sleep(1)
                 trials -= 1
 
-        if not ip:
+        if not ip_address:
             logger.error(f"IP address lookup strategy failed for file {filepath}.")
             raise SmartSimError("Failed to obtain database hostname")
 
-        return ip
+        return ip_address
 
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
@@ -216,8 +241,8 @@ class DBNode(SmartSimEntity):
             while len(ips) < self._num_shards and trials > 0:
                 ips = []
                 try:
-                    ip = self._parse_ips(filepath, self._num_shards)
-                    ips.extend(ip)
+                    ip_address = self._parse_ips(filepath, self._num_shards)
+                    ips.extend(ip_address)
 
                 # suppress error
                 except FileNotFoundError:

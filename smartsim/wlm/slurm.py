@@ -32,16 +32,23 @@ from .._core.launcher.slurm.slurmCommands import salloc, scancel, scontrol, sinf
 from .._core.launcher.slurm.slurmParser import parse_salloc, parse_salloc_error
 from .._core.launcher.util.launcherUtil import ComputeNode, Partition
 from .._core.utils.helpers import init_default
-from ..error import AllocationError, LauncherError, SmartSimError
+from ..error import (
+    AllocationError,
+    LauncherError,
+    SmartSimError,
+    SSReservedKeywordError,
+)
 from ..log import get_logger
 
 logger = get_logger(__name__)
 
 
-def get_allocation(nodes: int = 1, 
-                   time: t.Optional[str] = None, 
-                   account: t.Optional[str] = None, 
-                   options: t.Optional[t.Dict[str, str]] = None) -> str:
+def get_allocation(
+    nodes: int = 1,
+    time: t.Optional[str] = None,
+    account: t.Optional[str] = None,
+    options: t.Optional[t.Dict[str, str]] = None,
+) -> str:
     """Request an allocation
 
     This function requests an allocation with the specified arguments.
@@ -114,7 +121,8 @@ def release_allocation(alloc_id: str) -> None:
     if returncode != 0:
         logger.error(f"Unable to revoke your allocation for jobid {str(alloc_id)}")
         logger.error(
-            "The job may have already timed out, or you may need to cancel the job manually"
+            "The job may have already timed out, or you may "
+            "need to cancel the job manually"
         )
         raise AllocationError(
             f"Unable to revoke your allocation for jobid  {str(alloc_id)}"
@@ -222,10 +230,12 @@ def _get_system_partition_info() -> t.Dict[str, Partition]:
     return partitions
 
 
-def _get_alloc_cmd(nodes: int, 
-                   time: t.Optional[str] = None, 
-                   account: t.Optional[str] = None, 
-                   options: t.Optional[t.Dict[str, str]] = None) -> t.List[str]:
+def _get_alloc_cmd(
+    nodes: int,
+    time: t.Optional[str] = None,
+    account: t.Optional[str] = None,
+    options: t.Optional[t.Dict[str, str]] = None,
+) -> t.List[str]:
     """Return the command to request an allocation from Slurm with
     the class variables as the slurm options."""
 
@@ -236,24 +246,29 @@ def _get_alloc_cmd(nodes: int,
         "-J",
         "SmartSim",
     ]
-    # TODO check format here
     if time:
         salloc_args.extend(["-t", time])
     if account:
         salloc_args.extend(["-A", str(account)])
 
-    for opt, val in (options or {}).items():
-        if opt not in ["t", "time", "N", "nodes", "A", "account"]:
-            short_arg = bool(len(str(opt)) == 1)
-            prefix = "-" if short_arg else "--"
-            if not val:
-                salloc_args += [prefix + opt]
-            else:
-                if short_arg:
-                    salloc_args += [prefix + opt, str(val)]
-                else:
-                    salloc_args += ["=".join((prefix + opt, str(val)))]
+    arguments = set(options.keys() if options is not None else {})
+    invalid = {"t", "time", "N", "nodes", "A", "account"}
 
+    if valid := arguments.intersection(invalid):
+        raise SSReservedKeywordError(
+            f"Expecting time, nodes, account as an argument. Also received: {valid}"
+        )
+
+    for opt, val in (options or {}).items():
+        short_arg = bool(len(str(opt)) == 1)
+        prefix = "-" if short_arg else "--"
+        if not val:
+            salloc_args += [prefix + opt]
+        else:
+            if short_arg:
+                salloc_args += [prefix + opt, str(val)]
+            else:
+                salloc_args += ["=".join((prefix + opt, str(val)))]
     return salloc_args
 
 

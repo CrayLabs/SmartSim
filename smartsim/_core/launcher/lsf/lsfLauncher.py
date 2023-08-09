@@ -29,8 +29,15 @@ import typing as t
 
 from ....error import LauncherError
 from ....log import get_logger
-from ....settings import *
-from ....settings import SettingsBase
+from ....settings import (
+    SettingsBase,
+    BsubBatchSettings,
+    JsrunSettings,
+    MpiexecSettings,
+    MpirunSettings,
+    OrterunSettings,
+    RunSettings,
+)
 from ....status import STATUS_CANCELLED, STATUS_COMPLETED
 from ...config import CONFIG
 from ..launcher import WLMLauncher
@@ -97,8 +104,8 @@ class LSFLauncher(WLMLauncher):
         task_id = None
         if isinstance(step, BsubBatchStep):
             # wait for batch step to submit successfully
-            rc, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
-            if rc != 0:
+            return_code, out, err = self.task_manager.start_and_wait(cmd_list, step.cwd)
+            if return_code != 0:
                 raise LauncherError(f"Bsub batch submission failed\n {out}\n {err}")
             if out:
                 step_id = parse_bsub(out)
@@ -109,12 +116,18 @@ class LSFLauncher(WLMLauncher):
             step_id = self._get_lsf_step_id(step)
             logger.debug(f"Gleaned jsrun step id: {step_id} for {step.name}")
         else:  # isinstance(step, MpirunStep) or isinstance(step, LocalStep)
-            out, err = step.get_output_files()
             # mpirun and local launch don't direct output for us
-            output = open(out, "w+")
-            error = open(err, "w+")
+            out, err = step.get_output_files()
+
+            # LocalStep.run_command omits env, include it here
+            passed_env = step.env if isinstance(step, LocalStep) else None
+
+            # pylint: disable-next=consider-using-with
+            output = open(out, "w+", encoding="utf-8")
+            # pylint: disable-next=consider-using-with
+            error = open(err, "w+", encoding="utf-8")
             task_id = self.task_manager.start_task(
-                cmd_list, step.cwd, out=output.fileno(), err=error.fileno()
+                cmd_list, step.cwd, passed_env, out=output.fileno(), err=error.fileno()
             )
 
         self.step_mapping.add(step.name, step_id, task_id, step.managed)
@@ -131,10 +144,10 @@ class LSFLauncher(WLMLauncher):
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
             if stepmap.step_id and "." in stepmap.step_id:
-                rc, _, err = jskill([stepmap.step_id.rpartition(".")[-1]])
+                return_code, _, err = jskill([stepmap.step_id.rpartition(".")[-1]])
             else:
-                rc, _, err = bkill([str(stepmap.step_id)])
-            if rc != 0:
+                return_code, _, err = bkill([str(stepmap.step_id)])
+            if return_code != 0:
                 logger.warning(f"Unable to cancel job step {step_name}\n {err}")
             if stepmap.task_id:
                 self.task_manager.remove_task(str(stepmap.task_id))
@@ -148,7 +161,8 @@ class LSFLauncher(WLMLauncher):
         step_info.status = STATUS_CANCELLED  # set status to cancelled instead of failed
         return step_info
 
-    def _get_lsf_step_id(self, step: Step, interval: int = 2) -> str:
+    @staticmethod
+    def _get_lsf_step_id(step: Step, interval: int = 2) -> str:
         """Get the step_id of last launched step from jslist"""
         time.sleep(interval)
         step_id: t.Optional[str] = None

@@ -35,8 +35,6 @@ coloredlogs.DEFAULT_DATE_FORMAT = "%H:%M:%S"
 coloredlogs.DEFAULT_LOG_FORMAT = (
     "%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s"
 )
-# optional thread name logging for debugging
-# coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(threadName)s] %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s'
 
 
 def _get_log_level() -> str:
@@ -123,4 +121,5 @@ def log_to_file(filename: str, log_level: str = "debug") -> None:
     :type log_level: int | str
     """
     logger = logging.getLogger("SmartSim")
-    coloredlogs.install(stream=open(filename, "w+"), logger=logger, level=log_level)
+    stream = open(filename, "w+", encoding="utf-8")  # pylint: disable=consider-using-with
+    coloredlogs.install(stream=stream, logger=logger, level=log_level)

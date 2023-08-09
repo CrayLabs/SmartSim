@@ -11,6 +11,35 @@ Jump to :ref:`SmartRedis Changelog <changelog>`
 SmartSim
 ========
 
+
+Development branch
+------------------
+
+To be released at some future point in time
+
+Description
+
+- Log ignored error messages from `sacct`
+- Fix malformed logging format strings
+- Fix bug when user specify CPU and devices greater than 1
+- Fix bug when get_allocation called with reserved keywords
+- Update linting support and apply to existing errors
+
+Detailed Notes
+
+- Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
+- Fix incorrectly formatted positional arguments in log format strings (PR330_)
+- Add error if user calls get_allocation with reserved keywords in slurm get_allocation (PR325_)
+- Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script (PR324_)
+- Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
+
+.. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
+.. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
+.. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
+.. _PR325: https://github.com/CrayLabs/SmartSim/pull/325
+.. _PR324: https://github.com/CrayLabs/SmartSim/pull/324
+.. _PR311: https://github.com/CrayLabs/SmartSim/pull/311
+
 0.5.0
 ------------------
 

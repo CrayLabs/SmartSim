@@ -25,12 +25,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os.path as osp
-import time
 import typing as t
 from os import getcwd
 
 from tabulate import tabulate
-from tqdm import trange
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
@@ -109,7 +107,8 @@ class Experiment:
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
                          "cobalt", "lsf", or "local". If set to "auto",
-                         an attempt will be made to find an available launcher on the system.
+                         an attempt will be made to find an available launcher
+                         on the system.
                          Defaults to "local"
         :type launcher: str, optional
         """
@@ -347,7 +346,8 @@ class Experiment:
         .. code-block:: python
 
             statuses = exp.get_status(model, ensemble, orchestrator)
-            assert all([status == smartsim.status.STATUS_COMPLETED for status in statuses])
+            complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
+            assert all(complete)
 
         :returns: status of the instances passed as arguments
         :rtype: list[str]
@@ -365,8 +365,8 @@ class Experiment:
             logger.error(e)
             raise
 
+    @staticmethod
     def create_ensemble(
-        self,
         name: str,
         params: t.Optional[t.Dict[str, t.Any]] = None,
         batch_settings: t.Optional[base.BatchSettings] = None,
@@ -439,8 +439,8 @@ class Experiment:
             logger.error(e)
             raise
 
+    @staticmethod
     def create_model(
-        self,
         name: str,
         run_settings: base.RunSettings,
         params: t.Optional[t.Dict[str, t.Any]] = None,
@@ -535,7 +535,7 @@ class Experiment:
         :rtype: Model
         """
         path = init_default(getcwd(), path, str)
-        
+
         # mcb
         if path is None:
             path = getcwd()
@@ -718,7 +718,8 @@ class Experiment:
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None
         :type hosts: list[str], optional
-        :param run_command: specify launch binary or detect automatically, defaults to "auto"
+        :param run_command: specify launch binary or detect automatically,
+            defaults to "auto"
         :type run_command: str, optional
         :param interface: Network interface, defaults to "ipogif0"
         :type interface: str, optional
@@ -731,7 +732,8 @@ class Experiment:
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
         :raises SmartSimError: if detection of launcher or of run command fails
-        :raises SmartSimError: if user indicated an incompatible run command for the launcher
+        :raises SmartSimError: if user indicated an incompatible run command
+            for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
@@ -770,6 +772,7 @@ class Experiment:
             logger.error(e)
             raise
 
+    # pylint: disable-next=redefined-builtin
     def summary(self, format: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
@@ -807,15 +810,14 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        else:
-            return tabulate(
-                values,
-                headers,
-                showindex=True,
-                tablefmt=format,
-                missingval="None",
-                disable_numparse=True,
-            )
+        return tabulate(
+            values,
+            headers,
+            showindex=True,
+            tablefmt=format,
+            missingval="None",
+            disable_numparse=True,
+        )
 
     def _launch_summary(self, manifest: Manifest) -> None:
         """Experiment pre-launch summary of entities that will be launched
@@ -832,11 +834,11 @@ class Experiment:
             summary += f"Models: {len(manifest.models)}\n"
 
         if self._control.orchestrator_active:
-            summary += f"Database Status: active\n"
+            summary += "Database Status: active\n"
         elif manifest.db:
-            summary += f"Database Status: launching\n"
+            summary += "Database Status: launching\n"
         else:
-            summary += f"Database Status: inactive\n"
+            summary += "Database Status: inactive\n"
 
         summary += f"\n{str(manifest)}"
 

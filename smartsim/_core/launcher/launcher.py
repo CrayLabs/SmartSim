@@ -43,6 +43,7 @@ class Launcher(abc.ABC):  # pragma: no cover
     in SmartSim should implement the methods in this class to
     be fully compatible.
     """
+
     step_mapping: StepMapping
     task_manager: TaskManager
 
@@ -56,7 +57,9 @@ class Launcher(abc.ABC):  # pragma: no cover
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:
+    def get_step_update(
+        self, step_names: t.List[str]
+    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -85,7 +88,9 @@ class WLMLauncher(Launcher):  # cov-wlm
 
     # every launcher utilizing this interface must have a map
     # of supported RunSettings types (see slurmLauncher.py for ex)
-    def create_step(self, name: str, cwd: str, step_settings: SettingsBase) -> Step:  # cov-wlm
+    def create_step(
+        self, name: str, cwd: str, step_settings: SettingsBase
+    ) -> Step:  # cov-wlm
         """Create a WLM job step
 
         :param name: name of the entity to be launched
@@ -114,7 +119,9 @@ class WLMLauncher(Launcher):  # cov-wlm
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.
 
-    def get_step_nodes(self, step_names: t.List[str]) -> t.List[t.List[str]]:  # pragma: no cover
+    def get_step_nodes(
+        self, step_names: t.List[str]
+    ) -> t.List[t.List[str]]:  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
 
     def run(self, step: Step) -> t.Optional[str]:  # pragma: no cover
@@ -123,7 +130,9 @@ class WLMLauncher(Launcher):  # cov-wlm
     def stop(self, step_name: str) -> StepInfo:  # pragma: no cover
         raise NotImplementedError
 
-    def get_step_update(self, step_names: t.List[str]) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:  # cov-wlm
+    def get_step_update(
+        self, step_names: t.List[str]
+    ) -> t.List[t.Tuple[str, t.Union[StepInfo, None]]]:  # cov-wlm
         """Get update for a list of job steps
 
         :param step_names: list of job steps to get updates for
@@ -140,7 +149,7 @@ class WLMLauncher(Launcher):  # cov-wlm
             _step_ids = [str(sid) for sid in step_ids]
             s_statuses = self._get_managed_step_update(_step_ids)
             if s_statuses:
-                _updates = [(name, stat) for name, stat in zip(s_names, s_statuses)]
+                _updates = list(zip(s_names, s_statuses))
                 updates.extend(_updates)
 
         # get updates of unmanaged jobs (Aprun, mpirun, etc)
@@ -149,12 +158,14 @@ class WLMLauncher(Launcher):  # cov-wlm
         if len(task_ids) > 0:
             _task_ids = [str(tid) for tid in task_ids]
             t_statuses = self._get_unmanaged_step_update(_task_ids)
-            _updates = [(name, stat) for name, stat in zip(t_names, t_statuses)]
+            _updates = list(zip(t_names, t_statuses))
             updates.extend(_updates)
 
         return updates
 
-    def _get_unmanaged_step_update(self, task_ids: t.List[str]) -> t.List[UnmanagedStepInfo]:  # cov-wlm
+    def _get_unmanaged_step_update(
+        self, task_ids: t.List[str]
+    ) -> t.List[UnmanagedStepInfo]:  # cov-wlm
         """Get step updates for Popen managed jobs
 
         :param task_ids: task id to check
@@ -164,10 +175,14 @@ class WLMLauncher(Launcher):  # cov-wlm
         """
         updates = []
         for task_id in task_ids:
-            stat, rc, out, err = self.task_manager.get_task_update(task_id)
-            update = UnmanagedStepInfo(stat, rc, out, err)
+            stat, return_code, out, err = self.task_manager.get_task_update(task_id)
+            update = UnmanagedStepInfo(stat, return_code, out, err)
             updates.append(update)
         return updates
 
-    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.Optional[t.List[StepInfo]]:  # pragma: no cover
-        return None
+    # pylint: disable-next=no-self-use
+    def _get_managed_step_update(
+        self,
+        step_ids: t.List[str], # pylint: disable=unused-argument
+    ) -> t.List[StepInfo]:  # pragma: no cover
+        return []

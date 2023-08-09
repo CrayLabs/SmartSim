@@ -28,7 +28,7 @@ import pathlib
 import shutil
 import typing as t
 
-from distutils import dir_util
+from distutils import dir_util  # pylint: disable=deprecated-module
 from os import mkdir, path, symlink
 
 from ...entity import Model, TaggedFilesHierarchy
@@ -236,9 +236,13 @@ class Generator:
                     shutil.copyfile(file, dst_path)
                     to_write.append(dst_path)
 
-                for dir in tagged.dirs:
-                    mkdir(path.join(entity.path, tagged.base, path.basename(dir.base)))
-                    _build_tagged_files(dir)
+                for tagged_dir in tagged.dirs:
+                    mkdir(
+                        path.join(
+                            entity.path, tagged.base, path.basename(tagged_dir.base)
+                        )
+                    )
+                    _build_tagged_files(tagged_dir)
 
             if entity.files.tagged_hierarchy:
                 _build_tagged_files(entity.files.tagged_hierarchy)
@@ -250,7 +254,8 @@ class Generator:
                 )
                 self._writer.configure_tagged_model_files(to_write, entity.params)
 
-    def _copy_entity_files(self, entity: Model) -> None:
+    @staticmethod
+    def _copy_entity_files(entity: Model) -> None:
         """Copy the entity files and directories attached to this entity.
 
         :param entity: Model
@@ -264,7 +269,8 @@ class Generator:
                 else:
                     shutil.copyfile(to_copy, dst_path)
 
-    def _link_entity_files(self, entity: Model) -> None:
+    @staticmethod
+    def _link_entity_files(entity: Model) -> None:
         """Symlink the entity files attached to this entity.
 
         :param entity: Model

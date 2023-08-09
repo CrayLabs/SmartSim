@@ -24,22 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 
-from warnings import simplefilter, warn
+from smartsim._core._cli.utils import get_db_path
 
-# pylint: disable-next=unused-import
-from .wlm.slurm import (
-    _get_alloc_cmd,
-    _get_system_partition_info,
-    get_allocation,
-    get_default_partition,
-    release_allocation,
-    validate,
-)
 
-simplefilter("once", category=DeprecationWarning)
-DEPRECATION_MSG = (
-    "`smartsim.slurm` has been deprecated and will be removed in a future release.\n"
-    "Please update your code to use `smartsim.wlm.slurm`"
-)
-warn(DEPRECATION_MSG, category=DeprecationWarning, stacklevel=2)
+def execute(_args: argparse.Namespace) -> int:
+    if db_path := get_db_path():
+        print(db_path)
+        return 0
+    print("Database (Redis or KeyDB) dependencies not found")
+    return 1
