@@ -34,8 +34,7 @@ from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
-_TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
-
+from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
 
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
