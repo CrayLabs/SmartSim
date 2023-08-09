@@ -600,7 +600,7 @@ class Controller:
                 raise SmartSimError(
                     err_message + "Could not find database job objects."
                 )
-            orc = db_config["db"]
+            orc: Orchestrator = db_config["db"]
 
             # TODO check that each db_object is running
 

@@ -94,11 +94,12 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     if args.outputs:
         outputs = list(args.outputs)
 
-    # devices_per_node being greater than one only applies
-    # to GPU devices
+    name = str(args.name)
+
+    # devices_per_node being greater than one only applies to GPU devices
     if args.devices_per_node > 1 and args.device.lower() == "gpu":
         client.set_model_from_file_multigpu(
-            args.name,
+            name,
             args.file,
             args.backend,
             0,
@@ -111,7 +112,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
         )
     else:
         client.set_model_from_file(
-            args.name,
+            name,
             args.file,
             args.backend,
             args.device,
@@ -122,7 +123,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             outputs,
         )
 
-    return args.name
+    return name
 
 
 def launch_db_script(client: Client, db_script: t.List[str]) -> str:
@@ -163,7 +164,7 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     else:
         raise ValueError("No file or func provided.")
 
-    return args.name
+    return str(args.name)
 
 
 def main(

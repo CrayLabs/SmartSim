@@ -671,7 +671,7 @@ class Orchestrator(EntityList):
         return erf_rs
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
-        self.db_nodes = kwargs.get("db_nodes", 1)
+        self.db_nodes = int(kwargs.get("db_nodes", 1))
         single_cmd = kwargs.get("single_cmd", True)
 
         if int(self.db_nodes) == 2:
