@@ -68,8 +68,6 @@ def test_jsrun_prep(fileutils, coloutils, monkeypatch):
             colo_settings = run_settings,
         )
 
-    assert ex
-
 
 def test_non_js_run_prep(fileutils, coloutils, monkeypatch):
     """Ensure that RunSettings does not attempt to call a prep method"""    
