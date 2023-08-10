@@ -50,7 +50,13 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 # mypy: disable-error-code="import"
 
 
-class _VerificationTempDir(tempfile.TemporaryDirectory[t.AnyStr]):
+if t.TYPE_CHECKING:
+    _TemporaryDirectory = tempfile.TemporaryDirectory[str]
+else:
+    _TemporaryDirectory = tempfile.TemporaryDirectory
+
+
+class _VerificationTempDir(_TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
     clean itself up if no error is raised within its context
     """
