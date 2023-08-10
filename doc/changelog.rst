@@ -28,14 +28,14 @@ Description
 
 Detailed Notes
 
-- Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check (PR507_)
+- Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check (PR339_)
 - Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
 - Fix incorrectly formatted positional arguments in log format strings (PR330_)
 - Add error if user calls get_allocation with reserved keywords in slurm get_allocation (PR325_)
 - Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script (PR324_)
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
 
-.. _PR507: https://github.com/CrayLabs/SmartSim/pull/507
+.. _PR339: https://github.com/CrayLabs/SmartSim/pull/339
 .. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
 .. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
 .. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
