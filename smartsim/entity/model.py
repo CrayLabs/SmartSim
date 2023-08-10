@@ -295,6 +295,7 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
+            # pylint: disable-next=protected-access
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
         if "limit_app_cpus" in kwargs:
