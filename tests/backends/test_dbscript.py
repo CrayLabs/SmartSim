@@ -596,3 +596,527 @@ def test_inconsistent_params_db_script(fileutils):
             ex.value.args[0] 
             == "Cannot set devices_per_node>1 if CPU is specified under devices"
         )
+
+
+# start of julia tests 
+#TODOjp: include environment variable setting checks once I set the environment variable 
+
+def test_db_identifier_create_database_then_colocated_db_model_tcp(fileutils, wlmutils, mlutils):
+    """ Test create_database then colocate_db_tcp db_identifier uniqueness """
+   
+    # Set experiment name
+    exp_name = "test_db_identifier_create_database_then_colocated_db_model_tcp"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    assert exp.dbs_in_use() == set()  # attr exists, is empty set[str]
+
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+
+    exp.generate(orc)
+    assert orc.db_identifier == "my_cluster_db"  
+    assert exp.dbs_in_use() == {'my_cluster_db'}
+
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db" 
+    )
+
+    #TODOjp: maybe should be a check for standard and colo but .. this pathway will work tho
+    
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db"  #idk why im putting it in extra_db_args? is that right? 
+   
+    exp.start(orc, colo_model, block=False)
+
+
+def test_db_identifier_create_database_then_colocate_db_uds(fileutils, wlmutils, mlutils):
+    """ Test db_identifier uniqueness with create_database then colocate_db_uds """
+
+    # Set experiment name
+    exp_name = "test_db_identifier_create_database_then_colocate_db_uds"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    assert exp.dbs_in_use() == set()  # attr exists, is empty set[str]
+
+    #CREATE DATABASE
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+
+    exp.generate(orc)
+    assert orc.db_identifier == "my_cluster_db"  # attr exists
+
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    # COLOCATE_DB_UDS
+    colo_model.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db" 
+    )
+
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db"  # key exists
+
+    exp.start(orc, colo_model, block=False)
+
+def test_db_identifier_colocate_db_tcp_then_create_database(fileutils, wlmutils, mlutils):
+    """ Test colocate_db_tcp db then create_database db_identifier uniqueness """
+
+    # use this test to create the pathway to check db_identifiers in model --> in experiment
+   
+    # Set experiment name
+    exp_name = "test-colocated-db-tcp-model_jp"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+#ASSERT THAT THIS IS A REAL THING I ADDED AND IT IS EMPTY 
+    assert exp.dbs_in_use() == set()  # attr exists, is empty set[str]
+
+      # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db" 
+    )
+    
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db"  #idk why im putting it in extra_db_args? is that right? 
+   
+# CREATE DATABASE with attribute 
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+
+    exp.generate(orc)
+    assert orc.db_identifier == "my_cluster_db"  
+    
+    assert exp.dbs_in_use() == {'my_cluster_db'}
+
+    #exp.start(orc, block=False)
+    #exp.start(colo_model, block=False)  #make sure for uniqueness testing, both ways for starting experiment work
+
+    exp.start(orc, colo_model, block=False) 
+   
+    
+
+  
+
+#test db_identifier uniqueness when colocate_db_uds then create_database 
+def test_db_identifier_colocate_db_uds_then_create_database(fileutils, wlmutils, mlutils):
+    """ Test db_identifier uniqueness with colocate_db_uds then create_database """
+
+    # Set experiment name
+    exp_name = "test_db_identifier_colocate_db_uds_then_create_database"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+  # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    assert exp.dbs_in_use() == set()  # attr exists, is empty set[str]
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+# call colocate db uds first 
+    # COLOCATE_DB_UDS 
+    colo_model.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db" 
+    )
+
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db"  # key exists
+
+# call create_database afterwards 
+    #CREATE DATABASE
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+
+    exp.generate(orc)
+    assert orc.db_identifier == "my_cluster_db"  # attr exists
+
+    exp.start(orc, colo_model, block=False)
+
+
+    
+
+#Test db_identifier uniqueness with multiple calls to colocate_db_tcp
+def test_db_identifier_multiple_colocate_db_tcp(fileutils, wlmutils, mlutils):
+    """ Test uniqueness after multiple calls to colocate_db_tcp """
+   
+    # Set experiment name
+    exp_name = "test_colocated_db_model_tcp_multiple_calls"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_tcp" 
+    )
+
+    #will probably overwrite and ill only get one 
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_tcp"  #idk why im putting it in extra_db_args? is that right? 
+
+
+   # exp.start(colo_model, block=False)
+
+    #---
+    colo_model2 = exp.create_model("colocated_model2", colo_settings)
+    colo_model2.set_path(test_dir)
+    colo_model2.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_tcp2" 
+    )
+    
+    assert colo_model2.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_tcp2"  #idk why im putting it in extra_db_args? is that right? 
+   
+    exp.start(colo_model, colo_model2, block=False)
+
+    #colocate
+
+#TODOjp: parameterized the tests : just swap out tcp and  uds ...  Test db_identifier uniqueness with multiple calls to colocate_db_uds
+def test_db_identifier_multiple_colocate_db_uds(fileutils, wlmutils, mlutils):
+    """test for unique db_identifer after mutliple calls to colocate_db_uds
+        where the db_identifiers are unique """
+    # Set experiment name
+    exp_name = "test_db_identifier_multiple_colocate_db_uds"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db1" 
+    )
+
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db1"  # key exists
+
+#-- Second model 
+
+    colo_model2 = exp.create_model("colocated_model2", colo_settings)
+    colo_model2.set_path(test_dir)
+   
+    colo_model2.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db2" 
+    )
+
+    assert colo_model2.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db2"  # key exists
+   
+    exp.start(colo_model, colo_model2, block=False)
+
+
+
+def test_db_identifier_multiple_create_database(fileutils, wlmutils, mlutils):
+    """ Test uniqueness of db_identifier several calls to create_database, with unique names"""
+
+    # Set experiment name
+    exp_name = "test_db_identifier_multiple_create_database"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    exp.dbs_in_use()
+    assert exp.dbs_in_use() == set()
+
+    # CREATE DATABASE with db_identifier 
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    exp.generate(orc)
+   
+    assert orc.db_identifier == "my_cluster_db"  # attr exists
+   # assert exp.dbs_in_use() == {'my_cluster_db'}
+
+    # CREATE DATABASE with db_identifier
+    orc2 = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db_2")
+    exp.generate(orc2)
+
+    assert orc2.db_identifier == "my_cluster_db_2"  
+    print("DBS_ IN _ USE ",exp.dbs_in_use())
+    assert exp.dbs_in_use() == {'my_cluster_db','my_cluster_db_2'}
+
+    # if you start , will error out.. 
+    exp.start(orc, orc2, block=False)
+
+    # this fails: smartsim.error.errors.SmartSimError: User provided two entities with the same name
+    #/smartsim/smartsim/_core/control/manifest.py
+
+ 
+
+
+# EXTRAS ---------------> for testing error 
+# Should raise a (to be implemented) "DBIDConflict" error eventually 
+
+def test_db_identifier_multiple_colocate_db_uds_not_unique(fileutils, wlmutils, mlutils):
+    """test for unique db_identifer after mutliple calls to colocate_db_uds
+        where the db_identifiers are not unique """
+
+     # Set experiment name
+    exp_name = "test_db_identifier_multiple_colocate_db_uds_not_unique"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_E" 
+    )
+
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_E"  # key exists
+    
+
+# Run a Second one with the same name ! Should Implement error - raise error here  
+
+    colo_model2 = exp.create_model("colocated_model2", colo_settings)
+    colo_model2.set_path(test_dir)
+   
+    colo_model2.colocate_db_uds(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_E" 
+    )
+
+    assert colo_model2.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_E" 
+
+    # assert exp.dbs_in_use() == {'my_colo_db_E','my_colo_db_E'}  #implement for colo 
+   
+    exp.start(colo_model, colo_model2, block=False)
+
+
+   #NOT UNIQUE 
+def test_db_identifier_multiple_colocate_db_tcp_not_unique(fileutils, wlmutils, mlutils):
+    """test for unique db_identifer after mutliple calls to colocate_db_tcp
+        where the db_identifiers are not unique """
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create COLOCATED SmartSim Model
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+   
+    colo_model.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_E" 
+    )
+
+    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_E"  # key exist
+    
+
+# Run a Second one with the same name ! Should Implement error - raise error here  
+
+    colo_model2 = exp.create_model("colocated_model2", colo_settings)
+    colo_model2.set_path(test_dir)
+   
+    colo_model2.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface,
+        db_identifier="my_colo_db_E" 
+    )
+
+    assert colo_model2.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_E" 
+  
+   # assert exp.dbs_in_use() == {'my_colo_db_E','my_colo_db_E'}  # add this for colocated 
+    
+    exp.start(colo_model, colo_model2, block=False)
+
+
+#NOT UNIQUE 
+def test_db_identifier_multiple_create_database_not_unique(fileutils, wlmutils, mlutils):
+    """ Test uniqueness of db_identifier several calls to create_database, with non unique names"""
+#smartsim.error.errors.SmartSimError: User provided two entities with the same name ... 
+    # Set experiment name
+    exp_name = "est_db_identifier_multiple_create_database_not_unique"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+   # exp.dbs_in_use()
+    assert exp.dbs_in_use() == set()  # attr exists, is empty set[str]
+
+    # CREATE DATABASE with db_identifier 
+    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    exp.generate(orc)
+   
+
+    assert orc.db_identifier == "my_cluster_db"  # attr exists
+    assert exp.dbs_in_use() == {'my_cluster_db'}
+
+    # CREATE DATABASE with db_identifier
+    orc2 = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db_2")
+    exp.generate(orc2)
+
+    assert orc2.db_identifier == "my_cluster_db_2"  
+    assert exp.dbs_in_use() == {'my_cluster_db','my_cluster_db_2'}
+
+    exp.start(orc, orc2, block=False) 
