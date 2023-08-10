@@ -258,6 +258,7 @@ class Controller:
         launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
+            "pals": PBSLauncher,
             "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
@@ -387,7 +388,7 @@ class Controller:
     def _launch_step(
         self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]
     ) -> None:
-        """Use the launcher to launch a job stop
+        """Use the launcher to launch a job step
 
         :param job_step: a job step instance
         :type job_step: Step
