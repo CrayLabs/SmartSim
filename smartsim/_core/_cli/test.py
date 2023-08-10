@@ -50,7 +50,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 # mypy: disable-error-code="import"
 
 
-class _VerificationTempDir(tempfile.TemporaryDirectory):
+class _VerificationTempDir(tempfile.TemporaryDirectory[t.AnyStr]):
     """A Temporary directory to be used as a context manager that will only
     clean itself up if no error is raised within its context
     """
@@ -132,7 +132,7 @@ def _find_free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("0.0.0.0", 0))
         _, port = sock.getsockname()
-        return port
+        return t.cast(int, port)
 
 
 def _test_tf_install(client: Client) -> None:
@@ -169,7 +169,7 @@ def _test_torch_install(client: Client) -> None:
     class Net(nn.Module):
         def __init__(self) -> None:
             super().__init__()
-            self.conv = nn.Conv2d(1, 1, 3)
+            self.conv: t.Callable[..., torch.Tensor] = nn.Conv2d(1, 1, 3)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.conv(x)

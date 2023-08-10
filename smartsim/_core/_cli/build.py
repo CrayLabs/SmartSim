@@ -292,7 +292,9 @@ def _check_packages_in_python_env(
 
     if missing or conflicts:
         indent = "\n\t"
-        fmt_list: t.Callable = lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+        fmt_list: t.Callable[[str, t.List[str]], str] = (
+            lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+        )
         missing_str = fmt_list("Missing", missing)
         conflict_str = fmt_list("Conflicting", conflicts)
         sep = "\n" if missing_str and conflict_str else ""
