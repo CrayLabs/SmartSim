@@ -89,7 +89,7 @@ def print_test_configuration() -> None:
 
 def pytest_configure() -> None:
     pytest.test_launcher = test_launcher
-    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf"]
+    pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf", "pals"]
     account = get_account()
     pytest.test_account = account
 
@@ -144,9 +144,7 @@ def get_hostlist() -> t.Optional[t.List[str]]:
                 cobalt_fp = os.environ["COBALT_NODEFILE"]
                 with open(cobalt_fp, "r", encoding="utf-8") as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = list(
-                        dict.fromkeys([line.strip() for line in lines])
-                    )
+                    test_hostlist = list({line.strip() for line in lines})
             except Exception:
                 return None
         elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
@@ -154,9 +152,7 @@ def get_hostlist() -> t.Optional[t.List[str]]:
                 pbs_fp = os.environ["PBS_NODEFILE"]
                 with open(pbs_fp, "r", encoding="utf-8") as nodefile:
                     lines = nodefile.readlines()
-                    test_hostlist = list(
-                        dict.fromkeys([line.strip() for line in lines])
-                    )
+                    test_hostlist = list({line.strip() for line in lines})
             except Exception:
                 return None
         elif "SLURM_JOB_NODELIST" in os.environ:
@@ -245,6 +241,11 @@ class WLMUtils:
                 exe, args, run_command=run_command, run_args=run_args
             )
             return settings
+        if test_launcher == "pals":
+            host_file = os.environ["PBS_NODEFILE"]
+            run_args = {"--np": ntasks, "--hostfile": host_file}
+            run_args.update(kwargs)
+            return RunSettings(exe, args, run_command="mpiexec", run_args=run_args)
         if test_launcher == "cobalt":
             if shutil.which("aprun"):
                 run_command = "aprun"
@@ -291,7 +292,11 @@ class WLMUtils:
             run_args = {"n": ntasks, "hostfile": host_file}
             run_args.update(kwargs)
             return MpirunSettings(exe, args, run_args=run_args)
-
+        if test_launcher == "pals":
+            host_file = os.environ["PBS_NODEFILE"]
+            run_args = {"np": ntasks, "hostfile": host_file}
+            run_args.update(kwargs)
+            return PalsMpiexecSettings(exe, args, run_args=run_args)
         # TODO allow user to pick aprun vs MPIrun
         if test_launcher == "cobalt":
             if shutil.which("aprun"):
@@ -316,7 +321,7 @@ class WLMUtils:
 
     @staticmethod
     def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
-        if test_launcher in ["pbs", "cobalt"]:
+        if test_launcher in ["pbs", "cobalt", "pals"]:
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
             else:
