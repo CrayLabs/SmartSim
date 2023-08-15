@@ -214,7 +214,7 @@ class SrunStep(Step):
 
     @staticmethod
     def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
-        """Convenience function to encapsulate checking the 
+        """Convenience function to encapsulate checking the
         runsettings.exe_args type to always return a list"""
         exe_args = run_setting.exe_args
         args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
