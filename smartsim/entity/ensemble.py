@@ -103,7 +103,7 @@ class Ensemble(EntityList):
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.List[Model]:
+    def models(self) -> t.Iterable[Model]:
         """
         Helper property to cast self.entities to Model type for type correctness
         """
@@ -474,16 +474,19 @@ class Ensemble(EntityList):
 
     @staticmethod
     def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
-        # pylint: disable=protected-access
-        entity_db_models = [db_model.name for db_model in model._db_models]
+        # todo: create ticket to fix the bug allowing dupes (since current_models
+        # is before for-loop, any dupes in input::db_models will propagate)
+        entity_db_models = [db_model.name for db_model in model.db_models]
+
         for db_model in db_models:
-            if not db_model.name in entity_db_models:
-                model._append_db_model(db_model)
+            if db_model.name not in entity_db_models:
+                model.add_ml_model_object(db_model)
 
     @staticmethod
     def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
-        # pylint: disable=protected-access
-        entity_db_scripts = [db_script.name for db_script in model._db_scripts]
+        # todo: create ticket to fix the bug allowing dupes (since current_scripts
+        # is before for-loop, any dupes in input::db_scripts will propagate)
+        entity_db_scripts = [db_script.name for db_script in model.db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
-                model._append_db_script(db_script)
+                model.add_script_object(db_script)
