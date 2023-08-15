@@ -201,7 +201,7 @@ class Experiment:
                 self.my_list_after_start.append(args[index].__dict__["db_identifier"])
 
         # Check if unqiue
-        if not self.check_db_identifier_unique():  # self.my_list
+        if not self.check_db_identifier_unique("after"):  # self.my_list
             raise DBIDConflictError(
                 "Already database identifier existing with the same name"
             )
@@ -712,7 +712,7 @@ class Experiment:
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
         db_identifier: t.Set[str] = None,
-       # my_list: [t.List[str]] = None,
+        # my_list: [t.List[str]] = None,
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -762,11 +762,10 @@ class Experiment:
         :rtype: Orchestrator or derived class
         """
 
-        # Before start experiment check of db_identifier uniqueness
         self.dbs_list(db_identifier)
 
         # Check if unqiue
-        if not self.check_db_identifier_unique():  # mylist
+        if not self.check_db_identifier_unique("before"):  # mylist
             raise DBIDConflictError(
                 "Already database identifier existing with the same name"
             )
@@ -898,6 +897,10 @@ class Experiment:
         self.my_list_after_start.append(db_identifier)
         return self.my_list
 
-    def check_db_identifier_unique(self):
-        """check that db_identifiers are unique"""
-        return len(set(self.my_list)) == len(self.my_list)
+    def check_db_identifier_unique(self, flag):
+        """check that db_identifiers are unique
+        Doing this a weird way?"""
+
+        if flag == "before":
+            return len(set(self.my_list)) == len(self.my_list)
+        return len(set(self.my_list_after_start)) == len(self.my_list_after_start)

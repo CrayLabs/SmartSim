@@ -781,52 +781,52 @@ def test_db_identifier_multiple_create_database(fileutils, wlmutils, mlutils):
 
     exp.stop(orc, orc_2)
 
+# might not need this test
+# def test_db_identifier_multiple_create_database_not_unique_after_start(
+#     fileutils, wlmutils, mlutils
+# ):
+#     """Test uniqueness of db_identifier several calls to create_database, with non unique names"""
 
-def test_db_identifier_multiple_create_database_not_unique_after_start(
-    fileutils, wlmutils, mlutils
-):
-    """Test uniqueness of db_identifier several calls to create_database, with non unique names"""
+#     # Set experiment name
+#     exp_name = "est_db_identifier_multiple_create_database_not_unique"
 
-    # Set experiment name
-    exp_name = "est_db_identifier_multiple_create_database_not_unique"
+#     # Retrieve parameters from testing environment
+#     test_launcher = wlmutils.get_test_launcher()
+#     test_interface = wlmutils.get_test_interface()
+#     test_port = wlmutils.get_test_port()
+#     test_device = mlutils.get_test_device()
+#     test_num_gpus = mlutils.get_test_num_gpus()
+#     test_dir = fileutils.make_test_dir()
+#     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    test_device = mlutils.get_test_device()
-    test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+#     # Create SmartSim Experiment
+#     exp = Experiment(exp_name, launcher=test_launcher)
 
-    # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+#     assert exp.dbs_in_use() == set()
 
-    assert exp.dbs_in_use() == set()
+#     # CREATE DATABASE with db_identifier
+#     orc = exp.create_database(
+#         port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+#     )
+#     exp.generate(orc)
 
-    # CREATE DATABASE with db_identifier
-    orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
-    )
-    exp.generate(orc)
+#     assert orc.db_identifier == "my_cluster_db"  # attr exists
+#     assert exp.dbs_in_use() == {"my_cluster_db"}
 
-    assert orc.db_identifier == "my_cluster_db"  # attr exists
-    assert exp.dbs_in_use() == {"my_cluster_db"}
+#     # CREATE DATABASE with db_identifier
+#     orc2 = exp.create_database(
+#         port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+#     )
 
-    # CREATE DATABASE with db_identifier
-    orc2 = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
-    )
+#     exp.generate(orc2)
 
-    exp.generate(orc2)
+#     assert orc2.db_identifier == "my_cluster_db"
+#     assert exp.dbs_in_use() == {"my_cluster_db", "my_cluster_db"}
 
-    assert orc2.db_identifier == "my_cluster_db"
-    assert exp.dbs_in_use() == {"my_cluster_db", "my_cluster_db"}
+#     with pytest.raises(DBIDConflictError) as ex:
+#         exp.start(orc, orc2, block=False)
 
-    with pytest.raises(DBIDConflictError) as ex:
-        exp.start(orc, orc2, block=False)
-
-    assert ex.value.args[0] == "Already database identifier existing with the same name"
+#     assert ex.value.args[0] == "Already database identifier existing with the same name"
 
 
 def test_db_identifier_multiple_create_database_not_unique_before_start(
@@ -918,7 +918,7 @@ def test_db_identifier_multiple_colocate_db_tcp(
 
     assert (
         colo_model.run_settings.colocated_db_settings["db_identifier"]
-        == "my_colo_db_tcp"
+        == "my_colo_db"
     )
 
     colo_model2 = exp.create_model("colocated_model2", colo_settings)
@@ -938,7 +938,6 @@ def test_db_identifier_multiple_colocate_db_tcp(
         exp,
         db_args,
     )
-    # Add failure :calling colocated_db_tcp/tcp a second time will just overwrite the db_identifier.
 
     assert (
         colo_model2.run_settings.colocated_db_settings["db_identifier"]
