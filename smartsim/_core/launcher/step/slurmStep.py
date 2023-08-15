@@ -212,6 +212,14 @@ class SrunStep(Step):
             return srs.mpmd
         return []
 
+    @staticmethod
+    def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
+        """Convenience function to encapsulate checking the 
+        runsettings.exe_args type to always return a list"""
+        exe_args = run_setting.exe_args
+        args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
+        return args
+
     def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
@@ -222,13 +230,13 @@ class SrunStep(Step):
             return self._make_mpmd()
 
         exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        args = self._get_exe_args_list(self.run_settings)
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
-        args = self.run_settings._exe_args  # pylint: disable=protected-access
+        args = self._get_exe_args_list(self.run_settings)
         cmd = exe + args
 
         compound_env_vars = []
@@ -244,7 +252,7 @@ class SrunStep(Step):
                 if csv_env_vars:
                     compound_env_vars.extend(csv_env_vars)
             cmd += mpmd_rs.exe
-            cmd += mpmd_rs._exe_args  # pylint: disable=protected-access
+            cmd += self._get_exe_args_list(mpmd_rs)
 
         cmd = sh_split(" ".join(cmd))
         return cmd
