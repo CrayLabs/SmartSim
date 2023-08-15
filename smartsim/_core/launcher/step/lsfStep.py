@@ -145,6 +145,13 @@ class JsrunStep(Step):
             return self.step_settings
         raise TypeError("Run settings must be of type RunSettings")
 
+    def _jsrun_settings(self, ignore: bool = False) -> t.Optional[JsrunSettings]:
+        if isinstance(self.step_settings, JsrunSettings):
+            return self.step_settings
+        if not ignore:
+            raise TypeError("Run settings must be of type JsrunSettings")
+        return None
+
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
         output = self.get_step_file(ending=".out")
@@ -233,8 +240,8 @@ class JsrunStep(Step):
     def _get_mpmd(self) -> t.List[RunSettings]:
         """temporary convenience function to return a typed list
         of attached RunSettings"""
-        if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
-            return self.run_settings.mpmd
+        if jsrs := self._jsrun_settings(ignore=True):
+            return jsrs.mpmd
         return []
 
     def _build_exe(self) -> t.List[str]:
