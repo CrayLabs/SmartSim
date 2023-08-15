@@ -294,8 +294,9 @@ class Model(SmartSimEntity):
                 "Models colocated with databases cannot be run as a mpmd workload"
             )
 
-        if hasattr(self.run_settings, "prep_colocated_db"):
-            self.run_settings.prep_colocated_db(common_options["cpus"])
+        if hasattr(self.run_settings, "_prep_colocated_db"):
+            # pylint: disable-next=protected-access
+            self.run_settings._prep_colocated_db(common_options["cpus"])
 
         if "limit_app_cpus" in kwargs:
             raise SSUnsupportedError(
