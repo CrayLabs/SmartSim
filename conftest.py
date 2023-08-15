@@ -655,6 +655,7 @@ class ColoUtils:
         db_type: str,
         exp: Experiment,
         db_args: t.Dict[str, t.Any],
+        colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> Model:
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
@@ -662,9 +663,10 @@ class ColoUtils:
         sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
 
         # Create an app with a colo_db which uses 1 db_cpu
-        colo_settings = exp.create_run_settings(
-            exe=sys.executable, exe_args=[sr_test_script]
-        )
+        if colo_settings is None:
+            colo_settings = exp.create_run_settings(
+                exe=sys.executable, exe_args=[sr_test_script]
+            )
         colo_model = exp.create_model("colocated_model", colo_settings)
         colo_model.set_path(test_dir)
 
