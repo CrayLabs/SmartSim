@@ -62,7 +62,13 @@ class Experiment:
     """
 
     def __init__(
-        self, name: str, exp_path: t.Optional[str] = None, db_identifier: t.Set[str] = set(), my_list: [t.List[str]] = [], my_list_after_start: [t.List[str]] = [], launcher: str = "local"
+        self,
+        name: str,
+        exp_path: t.Optional[str] = None,
+        db_identifier: t.Set[str] = None,
+        # my_list: [t.List[str]] = [],
+        # my_list_after_start: [t.List[str]] = [],
+        launcher: str = "local",
     ):
         """Initialize an Experiment instance
 
@@ -126,7 +132,7 @@ class Experiment:
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
-        self.db_identifier = db_identifier 
+        self.db_identifier = db_identifier
         self.my_list: [t.List[str]] = []
         self.my_list_after_start: [t.List[str]] = []
 
@@ -188,15 +194,18 @@ class Experiment:
         :type kill_on_interrupt: bool, optional
         """
 
-        #Check that entity started is a database and add the db identifier 
+        # Check that entity started is a database and add the db identifier
+
         for index, item in enumerate(args):
             if isinstance(item, (Orchestrator, Model, Ensemble)):
                 self.my_list_after_start.append(args[index].__dict__["db_identifier"])
 
-        # Check if unqiue 
-        if not self.check_db_identifier_unique(self.my_list_after_start):  
-           raise DBIDConflictError("Already database identifier existing with the same name")
-       
+        # Check if unqiue
+        if not self.check_db_identifier_unique():  # self.my_list
+            raise DBIDConflictError(
+                "Already database identifier existing with the same name"
+            )
+
         start_manifest = Manifest(*args)
         try:
             if summary:
@@ -702,8 +711,8 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
-        db_identifier: t.Set[str] = set(),
-        my_list: [t.List[str]] = [],
+        db_identifier: t.Set[str] = None,
+       # my_list: [t.List[str]] = None,
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -752,14 +761,16 @@ class Experiment:
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
-     
-        # Before start experiment check of db_identifier uniqueness         
-        self.dbs_list(my_list,db_identifier)
 
-        # Check if unqiue 
-        if not self.check_db_identifier_unique(my_list):  
-           raise DBIDConflictError("Already database identifier existing with the same name")      
-        
+        # Before start experiment check of db_identifier uniqueness
+        self.dbs_list(db_identifier)
+
+        # Check if unqiue
+        if not self.check_db_identifier_unique():  # mylist
+            raise DBIDConflictError(
+                "Already database identifier existing with the same name"
+            )
+
         return Orchestrator(
             port=port,
             db_nodes=db_nodes,
@@ -871,25 +882,22 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
- 
     def dbs_in_use(self) -> set():
         return set(self.my_list)
 
-    def dbs_in_use_after_start(self)-> set():
+    def dbs_in_use_after_start(self) -> set():
         return set(self.my_list_after_start)
 
-    
-    def dbs_list(self, my_list, db_identifier):
-        self.my_list.append(db_identifier) 
+    def dbs_list(self, db_identifier):
+        # check that using list matters
+        self.my_list.append(db_identifier)
         return self.my_list
 
-
-    def dbs_list_after_start(self, my_list_after_start, db_identifier):
-
-        self.my_list_after_start.append(db_identifier) 
+    def dbs_list_after_start(self, db_identifier):
+        # either use self or dont use self..
+        self.my_list_after_start.append(db_identifier)
         return self.my_list
 
-
-    def check_db_identifier_unique(self, my_list):
+    def check_db_identifier_unique(self):
         """check that db_identifiers are unique"""
-        return((len(set(my_list)) == len(my_list)))
+        return len(set(self.my_list)) == len(self.my_list)

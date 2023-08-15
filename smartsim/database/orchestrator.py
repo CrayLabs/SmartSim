@@ -149,7 +149,7 @@ class Orchestrator(EntityList):
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
-        db_identifier: t.Set[str] = set(),
+        db_identifier: t.Set[str] = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch

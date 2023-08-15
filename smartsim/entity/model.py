@@ -41,6 +41,7 @@ from ..log import get_logger
 
 logger = get_logger(__name__)
 
+
 class Model(SmartSimEntity):
     def __init__(
         self,
@@ -50,8 +51,8 @@ class Model(SmartSimEntity):
         run_settings: RunSettings,
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
-        db_identifier: t.Set[str] = set(),
-        my_list_m: [t.List[str]] = [],
+        db_identifier: t.Set[str] = None,
+       # my_list_m: [t.List[str]] = [],
     ):
         """Initialize a ``Model``
 
@@ -164,7 +165,8 @@ class Model(SmartSimEntity):
             (
                 "`colocate_db` has been deprecated and will be removed in a \n"
                 "future release. Please use `colocate_db_tcp` or `colocate_db_uds`."
-            ), FutureWarning
+            ),
+            FutureWarning,
         )
         self.colocate_db_tcp(*args, **kwargs)
 
@@ -175,8 +177,8 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: t.Set[str] = set(),
-        my_list_m: [t.List[str]] = [],
+        db_identifier: t.Set[str] = None,
+       # my_list_m: [t.List[str]] = [],
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
@@ -216,7 +218,7 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
         """
 
-        self.dbs_list_m(my_list_m, db_identifier)
+        self.dbs_list_m(db_identifier)
 
         self.db_identifier = db_identifier
 
@@ -241,8 +243,8 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: t.Set[str] = set(),
-        my_list_m: [t.List[str]] = [],
+        db_identifier: t.Set[str] = None,
+      #  my_list_m: [t.List[str]] = [],
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
@@ -283,8 +285,8 @@ class Model(SmartSimEntity):
 
         """
         self.db_identifier = db_identifier
-        
-        self.dbs_list_m(my_list_m, db_identifier)
+
+        self.dbs_list_m(db_identifier)
 
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
@@ -323,8 +325,7 @@ class Model(SmartSimEntity):
 
         # TODO list which db settings can be extras
         common_options["custom_pinning"] = self._create_pinning_string(
-            common_options["custom_pinning"],
-            common_options["cpus"]
+            common_options["custom_pinning"], common_options["cpus"]
         )
 
         colo_db_config = {}
@@ -348,13 +349,13 @@ class Model(SmartSimEntity):
 
     @staticmethod
     def _create_pinning_string(
-        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]],
-        cpus: int
-        ) -> t.Optional[str]:
+        pin_ids: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]], cpus: int
+    ) -> t.Optional[str]:
         """Create a comma-separated string CPU ids. By default, None returns
         0,1,...,cpus-1; an empty iterable will disable pinning altogether,
         and an iterable constructs a comma separate string (e.g. 0,2,5)
         """
+
         def _stringify_id(_id: int) -> str:
             """Return the cPU id as a string if an int, otherwise raise a ValueError"""
             if isinstance(_id, int):
@@ -379,14 +380,14 @@ class Model(SmartSimEntity):
                 warnings.warn(
                     "CPU pinning is not supported on MacOSX. Ignoring pinning "
                     "specification.",
-                    RuntimeWarning
+                    RuntimeWarning,
                 )
                 return None
             raise TypeError(_invalid_input_message)
         # Flatten the iterable into a list and check to make sure that the resulting
         # elements are all ints
         if pin_ids is None:
-            return ','.join(_stringify_id(i) for i in range(cpus))
+            return ",".join(_stringify_id(i) for i in range(cpus))
         if not pin_ids:
             return None
         if isinstance(pin_ids, collections.abc.Iterable):
@@ -396,7 +397,7 @@ class Model(SmartSimEntity):
                     pin_list.extend([_stringify_id(j) for j in pin_id])
                 else:
                     pin_list.append(_stringify_id(pin_id))
-            return ','.join(sorted(set(pin_list)))
+            return ",".join(sorted(set(pin_list)))
         raise TypeError(_invalid_input_message)
 
     def params_to_args(self) -> None:
@@ -423,7 +424,7 @@ class Model(SmartSimEntity):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -485,7 +486,7 @@ class Model(SmartSimEntity):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with this Model instance
@@ -529,7 +530,7 @@ class Model(SmartSimEntity):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with this Model instance
@@ -627,11 +628,9 @@ class Model(SmartSimEntity):
                     )
                     raise SSUnsupportedError(err_msg)
 
-# Unneeded? 
-    def dbs_list_m(self,my_list_m, db_identifier):
-        
+    def dbs_list_m(self, db_identifier):
         self.my_list_m.append(db_identifier)
         return self.my_list_m
 
-    def dbs_in_use_m(self)-> set():
+    def dbs_in_use_m(self) -> set():
         return self.my_list_m

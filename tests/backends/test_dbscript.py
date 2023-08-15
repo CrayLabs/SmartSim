@@ -582,7 +582,8 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
-    
+
+
 def test_inconsistent_params_db_script(fileutils):
     """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
 
@@ -590,22 +591,24 @@ def test_inconsistent_params_db_script(fileutils):
     with pytest.raises(SSUnsupportedError) as ex:
         db_script = DBScript(
             name="test_script_db",
-            script_path = torch_script,
+            script_path=torch_script,
             device="CPU",
             devices_per_node=2,
         )
     assert (
-            ex.value.args[0] 
-            == "Cannot set devices_per_node>1 if CPU is specified under devices"
-        )
+        ex.value.args[0]
+        == "Cannot set devices_per_node>1 if CPU is specified under devices"
+    )
 
 
-#TODOjp: include environment variable setting checks once I set the environment variable 
+# TODOjp: include environment variable setting checks once I set the environment variable
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_create_database_then_colocated_db_model(fileutils, wlmutils, mlutils, coloutils, db_type): # done
-    """ Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
-    with unique db_identifiers """
-   
+def test_db_identifier_create_database_then_colocated_db_model(
+    fileutils, wlmutils, mlutils, coloutils, db_type
+):  # done
+    """Test that it is possible to create_database then colocate_db_uds/colocate_db_tcp
+    with unique db_identifiers"""
+
     # Set experiment name
     exp_name = "test_db_identifier_create_database_then_colocated_db_model_tcp"
 
@@ -623,13 +626,15 @@ def test_db_identifier_create_database_then_colocated_db_model(fileutils, wlmuti
 
     assert exp.dbs_in_use() == set()
 
-    # create regular database fist 
-    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_db")
+    # create regular database fist
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_db"
+    )
 
     exp.generate(orc)
-    
-    assert orc.db_identifier == "my_db"  
-    assert exp.dbs_in_use() == {'my_db'}
+
+    assert orc.db_identifier == "my_db"
+    assert exp.dbs_in_use() == {"my_db"}
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -641,11 +646,11 @@ def test_db_identifier_create_database_then_colocated_db_model(fileutils, wlmuti
     colo_model.set_path(test_dir)
 
     db_args = {
-        "port":test_port,
-        "db_cpus":1,
+        "port": test_port,
+        "db_cpus": 1,
         "debug": True,
-        "ifname":test_interface,
-        "db_identifier":"my_db_diff" 
+        "ifname": test_interface,
+        "db_identifier": "my_db",
     }
 
     colo_model = coloutils.setup_test_colo(
@@ -654,21 +659,20 @@ def test_db_identifier_create_database_then_colocated_db_model(fileutils, wlmuti
         exp,
         db_args,
     )
-    
-    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_db_diff"  #idk why im putting it in extra_db_args? is that right? 
-   
+
+    assert colo_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
+
     with pytest.raises(DBIDConflictError) as ex:
         exp.start(orc, colo_model, block=False)
-   
-    assert (
-        ex.value.args[0] 
-        == "Already database identifier existing with the same name"
-        )
+
+    assert ex.value.args[0] == "Already database identifier existing with the same name"
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_colocate_db_then_create_database(fileutils, wlmutils, mlutils,coloutils, db_type):
-    """ Test colocate_db_uds/colocate_db_tcp then create_database db_identifier uniqueness """
+def test_db_identifier_colocate_db_then_create_database(
+    fileutils, wlmutils, mlutils, coloutils, db_type
+):
+    """Test colocate_db_uds/colocate_db_tcp then create_database db_identifier uniqueness"""
 
     # Set experiment name
     exp_name = f"test-colocate model then create_database model_jp"
@@ -697,11 +701,11 @@ def test_db_identifier_colocate_db_then_create_database(fileutils, wlmutils, mlu
     colo_model.set_path(test_dir)
 
     db_args = {
-        "port":test_port,
-        "db_cpus":1,
+        "port": test_port,
+        "db_cpus": 1,
         "debug": True,
-        "ifname":test_interface,
-        "db_identifier":"my_db" 
+        "ifname": test_interface,
+        "db_identifier": "my_db",
     }
 
     colo_model = coloutils.setup_test_colo(
@@ -711,29 +715,30 @@ def test_db_identifier_colocate_db_then_create_database(fileutils, wlmutils, mlu
         db_args,
     )
 
-    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_db"  #idk why im putting it in extra_db_args? is that right? 
+    assert (
+        colo_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
+    )  # idk why im putting it in extra_db_args? is that right?
 
-    # Create Database 
-    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_db")
+    # Create Database
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_db"
+    )
 
     exp.generate(orc)
-    assert orc.db_identifier == "my_db"   
-    
-    assert exp.dbs_in_use() == {'my_db'}
-    
+    assert orc.db_identifier == "my_db"
+
+    assert exp.dbs_in_use() == {"my_db"}
+
     with pytest.raises(DBIDConflictError) as ex:
-        exp.start(orc, colo_model, block=False) 
-   
-    assert (
-        ex.value.args[0] 
-        == "Already database identifier existing with the same name"
-        )
+        exp.start(orc, colo_model, block=False)
+
+    assert ex.value.args[0] == "Already database identifier existing with the same name"
 
 
-#TODOjp test functionality once multidb implementation is complete 
+# TODOjp test functionality once multidb implementation is complete
 def test_db_identifier_multiple_create_database(fileutils, wlmutils, mlutils):
-    """ Test multiple calls to create database with unique db_identifiers"""
-    # Test will fail. Functionality for this test has not been added yet 
+    """Test multiple calls to create database with unique db_identifiers"""
+    # Test will fail. Functionality for this test has not been added yet
 
     # Set experiment name
     exp_name = "test_db_identifier_multiple_create_database_jp"
@@ -753,28 +758,34 @@ def test_db_identifier_multiple_create_database(fileutils, wlmutils, mlutils):
     exp.dbs_in_use()
     assert exp.dbs_in_use() == set()
 
-    # CREATE DATABASE with db_identifier 
-    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    # CREATE DATABASE with db_identifier
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+    )
     exp.generate(orc)
-   
+
     assert orc.db_identifier == "my_cluster_db"  # attr exists
-    assert exp.dbs_in_use() == {'my_cluster_db'}
+    assert exp.dbs_in_use() == {"my_cluster_db"}
 
     # CREATE DATABASE with db_identifier
-    orc_2 = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db_2")
+    orc_2 = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db_2"
+    )
     exp.generate(orc_2)
 
-    assert orc_2.db_identifier == "my_cluster_db_2"  
-    assert exp.dbs_in_use() == {'my_cluster_db','my_cluster_db_2'}
+    assert orc_2.db_identifier == "my_cluster_db_2"
+    assert exp.dbs_in_use() == {"my_cluster_db", "my_cluster_db_2"}
 
     # Will cause error. Functionality for this test hasn't been added yet
     exp.start(orc, orc_2, block=False)
-    
+
     exp.stop(orc, orc_2)
 
 
-def test_db_identifier_multiple_create_database_not_unique_after_start(fileutils, wlmutils, mlutils):
-    """ Test uniqueness of db_identifier several calls to create_database, with non unique names"""
+def test_db_identifier_multiple_create_database_not_unique_after_start(
+    fileutils, wlmutils, mlutils
+):
+    """Test uniqueness of db_identifier several calls to create_database, with non unique names"""
 
     # Set experiment name
     exp_name = "est_db_identifier_multiple_create_database_not_unique"
@@ -793,32 +804,35 @@ def test_db_identifier_multiple_create_database_not_unique_after_start(fileutils
 
     assert exp.dbs_in_use() == set()
 
-    # CREATE DATABASE with db_identifier 
-    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    # CREATE DATABASE with db_identifier
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+    )
     exp.generate(orc)
-   
+
     assert orc.db_identifier == "my_cluster_db"  # attr exists
-    assert exp.dbs_in_use() == {'my_cluster_db'}
+    assert exp.dbs_in_use() == {"my_cluster_db"}
 
     # CREATE DATABASE with db_identifier
-    orc2 = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    orc2 = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+    )
 
     exp.generate(orc2)
 
-    assert orc2.db_identifier == "my_cluster_db"  
-    assert exp.dbs_in_use() == {'my_cluster_db','my_cluster_db'}
+    assert orc2.db_identifier == "my_cluster_db"
+    assert exp.dbs_in_use() == {"my_cluster_db", "my_cluster_db"}
 
     with pytest.raises(DBIDConflictError) as ex:
         exp.start(orc, orc2, block=False)
-   
-    assert (
-        ex.value.args[0] 
-        == "Already database identifier existing with the same name"
-        )
+
+    assert ex.value.args[0] == "Already database identifier existing with the same name"
 
 
-def test_db_identifier_multiple_create_database_not_unique_before_start(fileutils, wlmutils, mlutils):
-    """ Test uniqueness of db_identifier several calls to create_database, with non unique names, 
+def test_db_identifier_multiple_create_database_not_unique_before_start(
+    fileutils, wlmutils, mlutils
+):
+    """Test uniqueness of db_identifier several calls to create_database, with non unique names,
     checking error is raised before exp start"""
 
     # Set experiment name
@@ -838,28 +852,31 @@ def test_db_identifier_multiple_create_database_not_unique_before_start(fileutil
 
     assert exp.dbs_in_use() == set()
 
-    # CREATE DATABASE with db_identifier 
-    orc = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
+    # CREATE DATABASE with db_identifier
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+    )
     exp.generate(orc)
 
-    assert orc.db_identifier == "my_cluster_db"  
-    assert exp.dbs_in_use() == {'my_cluster_db'}
+    assert orc.db_identifier == "my_cluster_db"
+    assert exp.dbs_in_use() == {"my_cluster_db"}
 
     # CREATE DATABASE with db_identifier
     with pytest.raises(DBIDConflictError) as ex:
-        orc2 = exp.create_database(port=test_port, interface=test_interface, db_identifier="my_cluster_db")
-    assert (
-        ex.value.args[0] 
-        == "Already database identifier existing with the same name"
+        orc2 = exp.create_database(
+            port=test_port, interface=test_interface, db_identifier="my_cluster_db"
         )
+    assert ex.value.args[0] == "Already database identifier existing with the same name"
 
 
-#TODOjp
+# TODOjp
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_multiple_colocate_db_tcp(fileutils, wlmutils, mlutils, coloutils, db_type):
-    """ Test uniqueness after multiple calls to colocate_db_uds/tcp """
+def test_db_identifier_multiple_colocate_db_tcp(
+    fileutils, wlmutils, mlutils, coloutils, db_type
+):
+    """Test uniqueness after multiple calls to colocate_db_uds/tcp"""
     # Error should be implemented. No functionality for multiple calls to colocate_db_tcp/uds
-   
+
     # Set experiment name
     exp_name = "test_colocated_db_model_tcp_multiple_calls"
 
@@ -885,11 +902,11 @@ def test_db_identifier_multiple_colocate_db_tcp(fileutils, wlmutils, mlutils, co
     colo_model.set_path(test_dir)
 
     db_args = {
-        "port":test_port,
-        "db_cpus":1,
+        "port": test_port,
+        "db_cpus": 1,
         "debug": True,
-        "ifname":test_interface,
-        "db_identifier":"my_colo_db" 
+        "ifname": test_interface,
+        "db_identifier": "my_colo_db",
     }
 
     colo_model = coloutils.setup_test_colo(
@@ -899,28 +916,34 @@ def test_db_identifier_multiple_colocate_db_tcp(fileutils, wlmutils, mlutils, co
         db_args,
     )
 
-    assert colo_model.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_tcp"
+    assert (
+        colo_model.run_settings.colocated_db_settings["db_identifier"]
+        == "my_colo_db_tcp"
+    )
 
     colo_model2 = exp.create_model("colocated_model2", colo_settings)
     colo_model2.set_path(test_dir)
 
     db_args = {
-        "port":test_port,
-        "db_cpus":1,
+        "port": test_port,
+        "db_cpus": 1,
         "debug": True,
-        "ifname":test_interface,
-        "db_identifier":"my_colo_db_2" 
+        "ifname": test_interface,
+        "db_identifier": "my_colo_db_2",
     }
 
     colo_model2 = coloutils.setup_test_colo(
         fileutils,
-        db_type,  #tcp or uds 
+        db_type,  # tcp or uds
         exp,
         db_args,
     )
-    # Add failure :calling colocated_db_tcp/tcp a second time will just overwrite the db_identifier. 
+    # Add failure :calling colocated_db_tcp/tcp a second time will just overwrite the db_identifier.
 
-    assert colo_model2.run_settings.colocated_db_settings['db_identifier'] == "my_colo_db_2" 
-   
+    assert (
+        colo_model2.run_settings.colocated_db_settings["db_identifier"]
+        == "my_colo_db_2"
+    )
+
     exp.start(colo_model, colo_model2, block=False)
     exp.stop(colo_model, colo_model2)
