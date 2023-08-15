@@ -50,6 +50,8 @@ class Model(SmartSimEntity):
         run_settings: RunSettings,
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
+        db_identifier: t.Set[str] = set(),
+        my_list_m: [t.List[str]] = [],
     ):
         """Initialize a ``Model``
 
@@ -79,6 +81,8 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
+        self.db_identifier = db_identifier
+        self.my_list_m: [t.List[str]] = []
 
     @property
     def colocated(self) -> bool:
@@ -171,6 +175,8 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: t.Set[str] = set(),
+        my_list_m: [t.List[str]] = [],
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
@@ -210,6 +216,10 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
         """
 
+        self.dbs_list_m(my_list_m, db_identifier)
+
+        self.db_identifier = db_identifier
+
         uds_options = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
@@ -220,6 +230,7 @@ class Model(SmartSimEntity):
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
 
@@ -230,6 +241,8 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: t.Set[str] = set(),
+        my_list_m: [t.List[str]] = [],
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
@@ -269,12 +282,16 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
 
         """
+        self.db_identifier = db_identifier
+        
+        self.dbs_list_m(my_list_m, db_identifier)
 
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
@@ -609,3 +626,12 @@ class Model(SmartSimEntity):
                         "file and add it to the SmartSim Model with add_script."
                     )
                     raise SSUnsupportedError(err_msg)
+
+# Unneeded? 
+    def dbs_list_m(self,my_list_m, db_identifier):
+        
+        self.my_list_m.append(db_identifier)
+        return self.my_list_m
+
+    def dbs_in_use_m(self)-> set():
+        return self.my_list_m

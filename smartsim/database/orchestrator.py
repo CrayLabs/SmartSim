@@ -149,6 +149,7 @@ class Orchestrator(EntityList):
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
+        db_identifier: t.Set[str] = set(),
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -179,6 +180,7 @@ class Orchestrator(EntityList):
         self.launcher = launcher
         self.run_command = run_command
 
+        self.db_identifier = db_identifier
         self.ports: t.List[int] = []
         self.path = getcwd()
         self._hosts: t.List[str] = []
@@ -209,6 +211,7 @@ class Orchestrator(EntityList):
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
             cpus_per_shard=cpus_per_shard,
+            db_identifier=db_identifier,
             **kwargs,
         )
 
@@ -247,6 +250,7 @@ class Orchestrator(EntityList):
             self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
+        self.db_identifier=db_identifier
 
     @property
     def num_shards(self) -> int:

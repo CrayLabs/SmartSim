@@ -36,5 +36,6 @@ from .errors import (
     SSUnsupportedError,
     UserStrategyError,
     SSReservedKeywordError,
+    DBIDConflictError,
 
 )

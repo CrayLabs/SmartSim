@@ -462,6 +462,7 @@ class Controller:
         :param entity: The entity to retrieve connections from
         :type entity:  Model
         """
+        #NOTEjp this is where I need to modify 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         addresses = self._jobs.get_db_host_addresses()
         if addresses:
