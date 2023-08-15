@@ -206,7 +206,7 @@ class SrunStep(Step):
                 )
 
     def _get_mpmd(self) -> t.List[RunSettings]:
-        """temporary convenience function to return a typed list
+        """Temporary convenience function to return a typed list
         of attached RunSettings"""
         if srs := self._srun_settings(ignore=True):
             return srs.mpmd
@@ -218,9 +218,8 @@ class SrunStep(Step):
         :return: executable list
         :rtype: list[str]
         """
-        if srs := self._srun_settings(ignore=True):
-            if srs.mpmd:
-                return self._make_mpmd()
+        if self._get_mpmd():
+            return self._make_mpmd()
 
         exe = self.run_settings.exe
         args = self.run_settings._exe_args  # pylint: disable=protected-access
