@@ -52,13 +52,13 @@ def step_values(param_names, param_values, n_models = 0):
     return permutations
 
 
-# bad permuation strategy that doesnt return
+# bad permutation strategy that doesn't return
 # a list of dictionaries
 def bad_strategy(names, values, n_models = 0):
     return -1
 
 
-# test bad perm strat that returns a list but of lists
+# test bad perm strategy that returns a list but of lists
 # not dictionaries
 def bad_strategy_2(names, values, n_models = 0):
     return [values]

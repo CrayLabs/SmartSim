@@ -227,14 +227,14 @@ class Ensemble(EntityList):
             model.register_incoming_entity(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
-        """If called, all models within this ensemble will prefix their keys with its
+        """If called, each model within this ensemble will prefix its key with its
         own model name.
         """
         for model in self.models:
             model.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether each model within the ensemble will prefix its keys
+        """Inquire as to whether each model within the ensemble will prefix their keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: bool
