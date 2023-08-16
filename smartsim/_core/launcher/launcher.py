@@ -105,16 +105,14 @@ class WLMLauncher(Launcher):  # cov-wlm
         :rtype: Step
         """
         try:
-            settings_class = step_settings.__class__
-            if settings_class in self.supported_rs:
-                step_class = self.supported_rs[settings_class]
-                step = step_class(name, cwd, step_settings)
-                return step
+            step_class = self.supported_rs[type(step_settings)]
+        except KeyError:
             raise SSUnsupportedError(
                 f"RunSettings type {type(step_settings)} not supported by this launcher"
-            )
+            ) from None
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
+        return step_class(name, cwd, step_settings)
 
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.
@@ -123,12 +121,6 @@ class WLMLauncher(Launcher):  # cov-wlm
         self, step_names: t.List[str]
     ) -> t.List[t.List[str]]:  # pragma: no cover
         raise SSUnsupportedError("Node acquisition not supported for this launcher")
-
-    def run(self, step: Step) -> t.Optional[str]:  # pragma: no cover
-        raise NotImplementedError
-
-    def stop(self, step_name: str) -> StepInfo:  # pragma: no cover
-        raise NotImplementedError
 
     def get_step_update(
         self, step_names: t.List[str]
