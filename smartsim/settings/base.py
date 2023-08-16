@@ -657,6 +657,7 @@ class BatchSettings(SettingsBase):
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
+    @property
     def preamble(self) -> t.Iterable[str]:
         """Return an iterable of preamble clauses to be prepended to the batch file"""
         return (clause for clause in self._preamble)
