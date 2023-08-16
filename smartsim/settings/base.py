@@ -657,6 +657,10 @@ class BatchSettings(SettingsBase):
         else:
             raise TypeError("Expected str or List[str] for lines argument")
 
+    def preamble(self) -> t.Iterable[str]:
+        """Return an iterable of preamble clauses to be prepended to the batch file"""
+        return (clause for clause in self._preamble)
+
     def __str__(self) -> str:  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"
         if self.batch_args:
