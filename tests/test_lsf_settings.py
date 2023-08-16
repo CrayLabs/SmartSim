@@ -229,7 +229,7 @@ def test_bsub_batch_manual():
     assert formatted == result
     sbatch.add_preamble("module load gcc")
     sbatch.add_preamble(["module load openmpi", "conda activate smartsim"])
-    assert sbatch._preamble == [
+    assert sbatch.preamble == [
         "module load gcc",
         "module load openmpi",
         "conda activate smartsim",
