@@ -58,6 +58,7 @@ class _BaseMPIStep(Step):
 
     @property
     def run_settings(self) -> RunSettings:
+        """Get the run settings attached to this step"""
         if isinstance(self.step_settings, RunSettings):
             return self.step_settings
         raise TypeError("Run settings must be of type RunSettings")
