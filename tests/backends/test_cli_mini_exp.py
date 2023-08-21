@@ -29,7 +29,7 @@ from contextlib import contextmanager
 
 import smartredis
 
-import smartsim._core._cli.test
+import smartsim._core._cli.validate
 from smartsim._core.utils.helpers import installed_redisai_backends
 
 
@@ -49,14 +49,14 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         yield smartredis.Client(address=client_addr, cluster=False)
 
     monkeypatch.setattr(
-        smartsim._core._cli.test,
+        smartsim._core._cli.validate,
         "_make_managed_local_orc",
         _mock_make_managed_local_orc,
     )
     backends = installed_redisai_backends()
     db_port ,= local_db.ports
 
-    smartsim._core._cli.test.test_install(
+    smartsim._core._cli.validate.test_install(
         # Shouldn't matter bc we are stubbing creation of orc
         # but best to give it "correct" vals for safety
         location=fileutils.get_test_dir(),

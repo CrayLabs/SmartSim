@@ -168,13 +168,17 @@ def build_redis_ai(
     if use_torch and torch_dir:
         torch_dir = Path(torch_dir).resolve()
         if not torch_dir.is_dir():
-            raise SetupError("Could not find requested user Torch installation")
+            raise SetupError(
+                f"Could not find requested user Torch installation: {torch_dir}"
+            )
 
     # TF
     if use_tf and libtf_dir:
         libtf_dir = Path(libtf_dir).resolve()
         if not libtf_dir.is_dir():
-            raise SetupError("Could not find requested user TF installation")
+            raise SetupError(
+                f"Could not find requested user TF installation: {libtf_dir}"
+            )
 
     build_env_dict = build_env()
 
@@ -229,6 +233,8 @@ def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> 
     """Check Python environment for TensorFlow installation"""
 
     if BuildEnv.is_macos():
+        if device == "gpu":
+            raise BuildError("SmartSim does not support GPU on MacOS")
         device_suffix = ""
     else:  # linux
         if device == "cpu":

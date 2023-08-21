@@ -40,7 +40,6 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
 from smartsim.log import get_logger
 
-SMART_LOGGER_FORMAT = "[%(name)s] %(levelname)s %(message)s"
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 # Many of the functions in this module will import optional

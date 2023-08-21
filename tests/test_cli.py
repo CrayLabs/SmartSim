@@ -39,8 +39,8 @@ from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
-from smartsim._core._cli.test import execute as _test_execute
 from smartsim._core._cli.utils import MenuItemConfig
+from smartsim._core._cli.validate import execute as validate_execute
 
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
@@ -681,8 +681,8 @@ def _bad_build(*args, **kwargs):
 
 
 @contextmanager
-def _totally_real_temp_dir(*a, **kw):
-    yield "/path/to/a/real/temp/dir"
+def _mock_temp_dir(*a, **kw):
+    yield "/a/mock/path/to/a/mock/temp/dir"
 
 
 @pytest.mark.parametrize(
@@ -711,15 +711,15 @@ def test_cli_build_test_execute(
     """
 
     # Mock out the verification tests/avoid file system ops
-    monkeypatch.setattr(smartsim._core._cli.test, "test_install", mock_verify_fn)
+    monkeypatch.setattr(smartsim._core._cli.validate, "test_install", mock_verify_fn)
     monkeypatch.setattr(
-        smartsim._core._cli.test,
+        smartsim._core._cli.validate,
         "_VerificationTempDir",
-        _totally_real_temp_dir,
+        _mock_temp_dir,
     )
     # Coloredlogs doesn't play nice with capsys
     monkeypatch.setattr(
-        smartsim._core._cli.test.logger,
+        smartsim._core._cli.validate.logger,
         "error",
         print,
     )
@@ -727,7 +727,7 @@ def test_cli_build_test_execute(
     command = "test"
     cfg = MenuItemConfig(command,
                          f"test {command} help text",
-                         _test_execute)
+                         validate_execute)
     menu = [cfg]
     smart_cli = cli.SmartCli(menu)
 
