@@ -132,10 +132,15 @@ class SrunStep(Step):
             return self.step_settings
         raise TypeError("Run settings must be of type RunSettings")
 
-    def _srun_settings(self, ignore: bool = False) -> t.Optional[SrunSettings]:
+    def _srun_settings(
+        self, ignore_type_mismatch: bool = False
+    ) -> t.Optional[SrunSettings]:
+        """Get attached run settings if they are of type SrunSettings.
+        Raise an exception on incorrect run settings type, unless
+        ignore_type_mismatch is True"""
         if isinstance(self.step_settings, SrunSettings):
             return self.step_settings
-        if not ignore:
+        if not ignore_type_mismatch:
             raise TypeError("Run settings must be of type SrunSettings")
         return None
 
@@ -193,7 +198,7 @@ class SrunStep(Step):
 
         :raises AllocationError: allocation not listed or found
         """
-        if srs := self._srun_settings(ignore=True):
+        if srs := self._srun_settings(ignore_type_mismatch=True):
             self.alloc = srs.alloc
         else:
             if "SLURM_JOB_ID" in os.environ:
@@ -209,7 +214,7 @@ class SrunStep(Step):
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if srs := self._srun_settings(ignore=True):
+        if srs := self._srun_settings(ignore_type_mismatch=True):
             return srs.mpmd
         return []
 

@@ -58,10 +58,15 @@ class BsubBatchStep(Step):
             return self.step_settings
         raise TypeError("Batch settings must be subtype of BatchSettings")
 
-    def _bsub_settings(self, ignore: bool = False) -> t.Optional[BsubBatchSettings]:
+    def _bsub_settings(
+        self, ignore_type_mismatch: bool = False
+    ) -> t.Optional[BsubBatchSettings]:
+        """Get attached run settings if they are of type BsubBatchSettings.
+        Raise an exception on incorrect run settings type, unless
+        ignore_type_mismatch is True"""
         if isinstance(self.step_settings, BsubBatchSettings):
             return self.step_settings
-        if not ignore:
+        if not ignore_type_mismatch:
             raise TypeError("Run settings must be of type BsubBatchSettings")
         return None
 
@@ -93,14 +98,14 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        if bsub_rs := self._bsub_settings(ignore=True):
+        if bsub_rs := self._bsub_settings(ignore_type_mismatch=True):
             bsub_rs._format_alloc_flags()  # pylint: disable=protected-access
 
         opts = self.batch_settings.format_batch_args()
 
         with open(batch_script, "w", encoding="utf-8") as script_file:
             script_file.write("#!/bin/bash\n\n")
-            if bsub_rs := self._bsub_settings(ignore=True):
+            if bsub_rs := self._bsub_settings(ignore_type_mismatch=True):
                 if bsub_rs.walltime:
                     script_file.write(f"#BSUB -W {bsub_rs.walltime}\n")
                 if bsub_rs.project:
@@ -146,10 +151,15 @@ class JsrunStep(Step):
             return self.step_settings
         raise TypeError("Run settings must be of type RunSettings")
 
-    def _jsrun_settings(self, ignore: bool = False) -> t.Optional[JsrunSettings]:
+    def _jsrun_settings(
+        self, ignore_type_mismatch: bool = False
+    ) -> t.Optional[JsrunSettings]:
+        """Get attached run settings if they are of type JsrunSettings.
+        Raise an exception on incorrect run settings type, unless
+        ignore_type_mismatch is True"""
         if isinstance(self.step_settings, JsrunSettings):
             return self.step_settings
-        if not ignore:
+        if not ignore_type_mismatch:
             raise TypeError("Run settings must be of type JsrunSettings")
         return None
 
@@ -241,7 +251,7 @@ class JsrunStep(Step):
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if jsrs := self._jsrun_settings(ignore=True):
+        if jsrs := self._jsrun_settings(ignore_type_mismatch=True):
             return jsrs.mpmd
         return []
 

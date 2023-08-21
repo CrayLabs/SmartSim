@@ -60,17 +60,22 @@ class AprunStep(Step):
             return self.step_settings
         raise TypeError("Run settings must be of type RunSettings")
 
-    def _aprun_settings(self, ignore: bool = False) -> t.Optional[AprunSettings]:
+    def _aprun_settings(
+        self, ignore_type_mismatch: bool = False
+    ) -> t.Optional[AprunSettings]:
+        """Get attached run settings if they are of type AprunSettings.
+        Raise an exception on incorrect run settings type, unless
+        ignore_type_mismatch is True"""
         if isinstance(self.step_settings, AprunSettings):
             return self.step_settings
-        if not ignore:
+        if not ignore_type_mismatch:
             raise TypeError("Run settings must be of type AprunSettings")
         return None
 
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if srs := self._aprun_settings(ignore=True):
+        if srs := self._aprun_settings(ignore_type_mismatch=True):
             return srs.mpmd
         return []
 
