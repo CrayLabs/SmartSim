@@ -123,7 +123,7 @@ class _BaseMPIStep(Step):
         )
 
     def _get_mpmd(self) -> t.List[RunSettings]:
-        """temporary convenience function to return a typed list
+        """Temporary convenience function to return a typed list
         of attached RunSettings"""
         if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
             rs_mpmd: t.List[RunSettings] = self.run_settings.mpmd

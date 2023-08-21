@@ -239,7 +239,7 @@ class JsrunStep(Step):
             )
 
     def _get_mpmd(self) -> t.List[RunSettings]:
-        """temporary convenience function to return a typed list
+        """Temporary convenience function to return a typed list
         of attached RunSettings"""
         if jsrs := self._jsrun_settings(ignore=True):
             return jsrs.mpmd
