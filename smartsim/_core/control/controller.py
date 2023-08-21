@@ -283,52 +283,59 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
-        orchestrator = manifest.db
-        if orchestrator:
-            if orchestrator.num_shards > 1 and isinstance(
-                self._launcher, LocalLauncher
-            ):
-                raise SmartSimError(
-                    "Local launcher does not support multi-host orchestrators"
-                )
-            if self.orchestrator_active:
-                msg = "Attempted to launch a second Orchestrator instance. "
-                msg += "Only 1 Orchestrator can be active at a time"
-                raise SmartSimError(msg)
-            self._launch_orchestrator(orchestrator)
+        # orchestrator = manifest.db
+        if manifest.db:
+            # JPNOTE: Loop over deployables to launch 
+            for orchestrator in manifest.db:
 
-        if self.orchestrator_active:
-            self._set_dbobjects(manifest)
+                if orchestrator:
+                    if orchestrator.num_shards > 1 and isinstance(
+                        self._launcher, LocalLauncher
+                    ):
+                        raise SmartSimError(
+                            "Local launcher does not support multi-host orchestrators"
+                        )
+                # jpnote suppressing this error
+                    # if self.orchestrator_active:
+                    #     msg = "Attempted to launch a second Orchestrator instance. "
+                    #     msg += "Only 1 Orchestrator can be active at a time"
+                    #     raise SmartSimError(msg)
+                    self._launch_orchestrator(orchestrator)
 
-        # create all steps prior to launch
-        steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
-        all_entity_lists = manifest.ensembles
-        for elist in all_entity_lists:
-            if elist.batch:
-                batch_step = self._create_batch_job_step(elist)
-                steps.append((batch_step, elist))
-            else:
-                # if ensemble is to be run as separate job steps, aka not in a batch
-                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
-                steps.extend(job_steps)
+                if self.orchestrator_active:
+                    self._set_dbobjects(manifest)
 
-        # models themselves cannot be batch steps. If batch settings are
-        # attached, wrap them in an anonymous batch job step
-        for model in manifest.models:
-            if model.batch_settings:
-                anon_entity_list = _AnonymousBatchJob(
-                    model.name, model.path, model.batch_settings
-                )
-                anon_entity_list.entities.append(model)
-                batch_step = self._create_batch_job_step(anon_entity_list)
-                steps.append((batch_step, model))
-            else:
-                job_step = self._create_job_step(model)
-                steps.append((job_step, model))
+                # create all steps prior to launch
+                steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
+                all_entity_lists = manifest.ensembles
+                for elist in all_entity_lists:
+                    if elist.batch:
+                        batch_step = self._create_batch_job_step(elist)
+                        steps.append((batch_step, elist))
+                    else:
+                        # if ensemble is to be run as separate job steps, aka not in a batch
+                        job_steps = [
+                            (self._create_job_step(e), e) for e in elist.entities
+                        ]
+                        steps.extend(job_steps)
 
-        # launch steps
-        for step, entity in steps:
-            self._launch_step(step, entity)
+                # models themselves cannot be batch steps. If batch settings are
+                # attached, wrap them in an anonymous batch job step
+                for model in manifest.models:
+                    if model.batch_settings:
+                        anon_entity_list = _AnonymousBatchJob(
+                            model.name, model.path, model.batch_settings
+                        )
+                        anon_entity_list.entities.append(model)
+                        batch_step = self._create_batch_job_step(anon_entity_list)
+                        steps.append((batch_step, model))
+                    else:
+                        job_step = self._create_job_step(model)
+                        steps.append((job_step, model))
+
+                # launch steps
+                for step, entity in steps:
+                    self._launch_step(step, entity)
 
     def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Launch an Orchestrator instance
@@ -341,7 +348,7 @@ class Controller:
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
-
+        print("launch orchestrator", orchestrator.name)
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
@@ -462,24 +469,35 @@ class Controller:
         :param entity: The entity to retrieve connections from
         :type entity:  Model
         """
-        # NOTEjp this is where I need to modify
+        #NOTEjp
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        addresses = self._jobs.get_db_host_addresses()
-        if addresses:
-            if len(addresses) <= 128:
-                client_env["SSDB"] = ",".join(addresses)
-            else:
-                # Cap max length of SSDB
-                client_env["SSDB"] = ",".join(addresses[:128])
-            if entity.incoming_entities:
-                client_env["SSKEYIN"] = ",".join(
-                    [in_entity.name for in_entity in entity.incoming_entities]
-                )
-            if entity.query_key_prefixing():
-                client_env["SSKEYOUT"] = entity.name
+        
+        addy, a_dict = self._jobs.get_db_host_addresses()
+        #addresses = self._jobs.get_db_host_addresses()
+        for db_id, addresses in a_dict.items():
+            db_name = "_".join(db_id.split("_")[:-1]) + "_"
+            
+            # if db_identifier exists ..
+            #otherwise "" prepend nothing? 
+
+            if addresses:
+                if len(addresses) <= 128:
+                    client_env[f"{db_name}SSDB"] = ",".join(addresses)
+                else:
+                    # Cap max length of SSDB
+                    client_env[f"{db_name}SSDB"] = ",".join(addresses[:128])
+                if entity.incoming_entities:
+                    client_env[f"{db_name}SSKEYIN"] = ",".join(
+                        [in_entity.name for in_entity in entity.incoming_entities]
+                    )
+                if entity.query_key_prefixing():
+                    client_env[f"{db_name}SSKEYOUT"] = entity.name
 
         # Set address to local if it's a colocated model
         if entity.colocated:
+            db_name_colo = (
+                entity.run_settings.colocated_db_settings["db_identifier"] + "_"
+            )
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)
@@ -488,9 +506,9 @@ class Controller:
                         "Co-located was configured for both TCP/IP and UDS"
                     )
                 if port:
-                    client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+                    client_env[f"{db_name_colo}SSDB"] = f"127.0.0.1:{str(port)}"
                 elif socket:
-                    client_env["SSDB"] = f"unix://{socket}"
+                    client_env[f"{db_name_colo}SSDB"] = f"unix://{socket}"
                 else:
                     raise SSInternalError(
                         "Colocated database was not configured for either TCP or UDS"
@@ -624,8 +642,14 @@ class Controller:
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
             return
+        #db_addresses = self._jobs.get_db_host_addresses()
+        db_addresses, a_dict = self._jobs.get_db_host_addresses()
+        #loop through list of addresses? 
+        
+        #for db_id, addresses in a_dict.items():
+       
+        
 
-        db_addresses = self._jobs.get_db_host_addresses()
 
         hosts = list({address.split(":")[0] for address in db_addresses})
         ports = list({int(address.split(":")[-1]) for address in db_addresses})

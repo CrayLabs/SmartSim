@@ -71,6 +71,9 @@ class JobManager:
         # completed jobs
         self.completed: t.Dict[str, Job] = {}
 
+        # for storing db_identifiers and address after mulitple calls to 
+        self.address_dict: t.Dict[str,str] = {}
+
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
         self._lock = lock  # thread lock
@@ -308,25 +311,30 @@ class JobManager:
         :rtype: list[str]
         """
         addresses = []
-        for db_job in self.db_jobs.values():
+        for db_id, db_job in self.db_jobs.items():
+       # for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
+                for combine in itertools.product(db_job.hosts, db_entity.ports):   
+                    ip_addr = get_ip_from_host(combine[0]) 
+                    addresses.append(":".join((ip_addr, str(combine[1]))))  
+            self.address_dict.update({db_id:addresses})
+     # return the dict 
+        return addresses, self.address_dict
 
-                for combine in itertools.product(db_job.hosts, db_entity.ports):
-                    ip_addr = get_ip_from_host(combine[0])
-                    addresses.append(":".join((ip_addr, str(combine[1]))))
-        return addresses
-
-    def set_db_hosts(self, orchestrator: Orchestrator) -> None:
+    def set_db_hosts(self, orchestrator: Orchestrator) -> None:  
         """Set the DB hosts in db_jobs so future entities can query this
 
         :param orchestrator: orchestrator instance
         :type orchestrator: Orchestrator
         """
         # should only be called during launch in the controller
+
+        # jpnote: this will get called twice, make sure it is looping 
         with self._lock:
             if orchestrator.batch:
-                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts 
+                
             else:
                 for dbnode in orchestrator.dbnodes:
                     if not dbnode.is_mpmd:

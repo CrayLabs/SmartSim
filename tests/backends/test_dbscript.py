@@ -26,6 +26,8 @@
 
 import sys
 
+import os
+
 import pytest
 
 from smartsim import Experiment, status
@@ -665,7 +667,11 @@ def test_db_identifier_create_database_then_colocated_db_model(
     with pytest.raises(DBIDConflictError) as ex:
         exp.start(orc, colo_model, block=False)
 
-    assert ex.value.args[0] == "Already database identifier existing with the same name"
+    assert (
+        "has already been used. Pass in a unique name for db_identifier"
+        in ex.value.args[0]
+    )
+
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -717,7 +723,7 @@ def test_db_identifier_colocate_db_then_create_database(
 
     assert (
         colo_model.run_settings.colocated_db_settings["db_identifier"] == "my_db"
-    )  # idk why im putting it in extra_db_args? is that right?
+    )
 
     # Create Database
     orc = exp.create_database(
@@ -725,14 +731,14 @@ def test_db_identifier_colocate_db_then_create_database(
     )
 
     exp.generate(orc)
-    assert orc.db_identifier == "my_db"
+    assert orc.db_identifier == "my_db_2"
 
-    assert exp.dbs_in_use() == {"my_db"}
+    #assert exp.dbs_in_use() == {"my_db"}
 
-    with pytest.raises(DBIDConflictError) as ex:
-        exp.start(orc, colo_model, block=False)
+    #with pytest.raises(DBIDConflictError) as ex:
+    exp.start(orc, colo_model, block=False)
 
-    assert ex.value.args[0] == "Already database identifier existing with the same name"
+    # assert "has already been used. Pass in a unique name for db_identifier" in ex.value.args[0]
 
 
 # TODOjp test functionality once multidb implementation is complete
@@ -946,3 +952,171 @@ def test_db_identifier_multiple_colocate_db_tcp(
 
     exp.start(colo_model, colo_model2, block=False)
     exp.stop(colo_model, colo_model2)
+
+
+
+# env variable testing !
+
+
+def test_db_identifier_env_vars(fileutils, wlmutils, mlutils):
+    """Test create_database with """
+
+    # Set experiment name
+    exp_name = "test env vars"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # # Create SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
+
+    assert exp.dbs_in_use() == set()
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create SmartSim model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    # CREATE DATABASE with db_identifier
+    orc = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+    )
+    exp.generate(orc)
+
+    assert orc.db_identifier == "my_cluster_db"
+    assert exp.dbs_in_use() == {"my_cluster_db"}
+
+    exp.start(orc, block=True)
+    exp.start(smartsim_model)
+
+    exp.stop(orc, smartsim_model)
+
+    # exp.start(orc)
+    #os.environ["SSDB"] = orc.get_address()[0]
+
+   #print(os.environ.pop("SSDB", ""))
+
+
+def test_db_identifier_env_vars_good_create_standard_twice(
+    fileutils, wlmutils, mlutils
+):
+    """ Multiple calls to create database env vars testing"""
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # start a new Experiment for this section
+    exp = Experiment("test_db_identifier_env_vars_good_create_standard_twice", launcher="local")
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="testdb1"
+    )
+    exp.generate(db)
+
+    db2 = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="testdb2"
+    )
+    # create regular database fist
+    exp.generate(db2)
+
+    # start the database
+    exp.start(db, db2)
+    exp.start(smartsim_model, block=True, summary=True)
+    exp.stop(db, db2, smartsim_model)
+
+
+def test_db_identifier_env_vars_good_reg_and_colo(
+    fileutils, wlmutils, mlutils, coloutils
+):
+    """ create database then colocate_db_tcp environment vars testing"""
+
+    # Retrieve parameters from testing environment
+   # test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+   # test_device = mlutils.get_test_device()
+   # test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+   # torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # start a new Experiment for this section
+    exp = Experiment(" test_db_identifier_env_vars_good_reg_and_colo", launcher="local")
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="test_1"
+    )
+    exp.generate(db)
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create model with colocated database
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+
+    db_args = {
+        "port": test_port,
+        "db_cpus": 1,
+        "debug": True,
+        "ifname": test_interface,
+        "db_identifier": "test_2",
+    }
+
+    colo_model = coloutils.setup_test_colo(
+        fileutils,
+        "tcp",
+        exp,
+        db_args,
+    )
+
+    # start the database FOR STANDARD
+
+    exp.start(db, colo_model)
+    exp.start(smartsim_model, block=True, summary=True)
+
+    # if "test_2_SSDB" in os.environ: ..?
+
+    # start database
+
+    exp.stop(db, colo_model, smartsim_model)

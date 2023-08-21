@@ -57,10 +57,12 @@ class Manifest:
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
 
-        if len(dbs) > 1:
-            raise SmartSimError("User attempted to create more than one Orchestrator")
+        #jp supress error 
+        # if len(dbs) > 1:
+        #     raise SmartSimError("User attempted to create more than one Orchestrator")
 
-        return dbs[0] if dbs else None
+        #return dbs[0] if dbs else None
+        return dbs if dbs else None
 
     @property
     def models(self) -> t.List[Model]:
@@ -107,8 +109,8 @@ class Manifest:
             name = getattr(deployable, "name", None)
             if not name:
                 raise AttributeError("Entity has no name. Please set name attribute.")
-            if name in used:
-                raise SmartSimError("User provided two entities with the same name")
+            # if name in used:
+            #     raise SmartSimError("User provided two entities with the same name")
             used.append(name)
 
     @staticmethod

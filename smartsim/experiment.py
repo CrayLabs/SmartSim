@@ -65,9 +65,6 @@ class Experiment:
         self,
         name: str,
         exp_path: t.Optional[str] = None,
-        db_identifier: t.Set[str] = None,
-        # my_list: [t.List[str]] = [],
-        # my_list_after_start: [t.List[str]] = [],
         launcher: str = "local",
     ):
         """Initialize an Experiment instance
@@ -132,9 +129,7 @@ class Experiment:
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
-        self.db_identifier = db_identifier
-        self.my_list: [t.List[str]] = []
-        self.my_list_after_start: [t.List[str]] = []
+        self.db_identifiers: t.Set[str] = set()
 
     def start(
         self,
@@ -197,14 +192,11 @@ class Experiment:
         # Check that entity started is a database and add the db identifier
 
         for index, item in enumerate(args):
-            if isinstance(item, (Orchestrator, Model, Ensemble)):
-                self.my_list_after_start.append(args[index].__dict__["db_identifier"])
-
-        # Check if unqiue
-        if not self.check_db_identifier_unique("after"):  # self.my_list
-            raise DBIDConflictError(
-                "Already database identifier existing with the same name"
-            )
+            if isinstance(item, Model):  #jpnote: if instance ensemble? 
+                if item.colocated:
+                    self.append_to_db_identifier_list(
+                        args[index].run_settings.colocated_db_settings["db_identifier"]
+                    )
 
         start_manifest = Manifest(*args)
         try:
@@ -711,8 +703,7 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
-        db_identifier: t.Set[str] = None,
-        # my_list: [t.List[str]] = None,
+        db_identifier: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -762,13 +753,7 @@ class Experiment:
         :rtype: Orchestrator or derived class
         """
 
-        self.dbs_list(db_identifier)
-
-        # Check if unqiue
-        if not self.check_db_identifier_unique("before"):  # mylist
-            raise DBIDConflictError(
-                "Already database identifier existing with the same name"
-            )
+        self.append_to_db_identifier_list(db_identifier)
 
         return Orchestrator(
             port=port,
@@ -882,25 +867,13 @@ class Experiment:
         return self.name
 
     def dbs_in_use(self) -> set():
-        return set(self.my_list)
+        return set(self.db_identifiers)
 
-    def dbs_in_use_after_start(self) -> set():
-        return set(self.my_list_after_start)
-
-    def dbs_list(self, db_identifier):
-        # check that using list matters
-        self.my_list.append(db_identifier)
-        return self.my_list
-
-    def dbs_list_after_start(self, db_identifier):
-        # either use self or dont use self..
-        self.my_list_after_start.append(db_identifier)
-        return self.my_list
-
-    def check_db_identifier_unique(self, flag):
-        """check that db_identifiers are unique
-        Doing this a weird way?"""
-
-        if flag == "before":
-            return len(set(self.my_list)) == len(self.my_list)
-        return len(set(self.my_list_after_start)) == len(self.my_list_after_start)
+    def append_to_db_identifier_list(self, db_identifier):
+        # Check if db_identifier already exists
+        if db_identifier in self.db_identifiers:
+            raise DBIDConflictError(
+                f"Database identifier {db_identifier} has already been used. Pass in a unique name for db_identifier"
+            )
+        # Otherwise, add
+        self.db_identifiers.add(db_identifier)

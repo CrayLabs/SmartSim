@@ -149,7 +149,7 @@ class Orchestrator(EntityList):
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
-        db_identifier: t.Set[str] = None,
+        db_identifier: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -180,7 +180,6 @@ class Orchestrator(EntityList):
         self.launcher = launcher
         self.run_command = run_command
 
-        self.db_identifier = db_identifier
         self.ports: t.List[int] = []
         self.path = getcwd()
         self._hosts: t.List[str] = []
@@ -199,7 +198,7 @@ class Orchestrator(EntityList):
             cpus_per_shard = None
 
         super().__init__(
-            "orchestrator",
+            db_identifier, #"orchestrator",
             self.path,
             port=port,
             interface=interface,
@@ -211,7 +210,6 @@ class Orchestrator(EntityList):
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
             cpus_per_shard=cpus_per_shard,
-            db_identifier=db_identifier,
             **kwargs,
         )
 
@@ -250,7 +248,6 @@ class Orchestrator(EntityList):
             self._reserved_run_args: t.Dict[t.Type[RunSettings], t.List[str]] = {}
             self._reserved_batch_args: t.Dict[t.Type[BatchSettings], t.List[str]] = {}
             self._fill_reserved()
-        self.db_identifier=db_identifier
 
     @property
     def num_shards(self) -> int:
@@ -816,6 +813,11 @@ class Orchestrator(EntityList):
                     "networks, if so, ignore this."
                 )
                 logger.warning(f"Found network interfaces are: {available}")
+    
+    @property
+    def db_identifier(self):
+        return self.name
+
 
     def _fill_reserved(self) -> None:
         """Fill the reserved batch and run arguments dictionaries"""

@@ -51,8 +51,6 @@ class Model(SmartSimEntity):
         run_settings: RunSettings,
         params_as_args: t.Optional[t.List[str]] = None,
         batch_settings: t.Optional[BatchSettings] = None,
-        db_identifier: t.Set[str] = None,
-       # my_list_m: [t.List[str]] = [],
     ):
         """Initialize a ``Model``
 
@@ -82,8 +80,6 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
-        self.db_identifier = db_identifier
-        self.my_list_m: [t.List[str]] = []
 
     @property
     def colocated(self) -> bool:
@@ -177,8 +173,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: t.Set[str] = None,
-       # my_list_m: [t.List[str]] = [],
+        db_identifier: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
@@ -218,10 +213,6 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
         """
 
-        self.dbs_list_m(db_identifier)
-
-        self.db_identifier = db_identifier
-
         uds_options = {
             "unix_socket": unix_socket,
             "socket_permissions": socket_permissions,
@@ -243,8 +234,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
-        db_identifier: t.Set[str] = None,
-      #  my_list_m: [t.List[str]] = [],
+        db_identifier: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
@@ -284,9 +274,6 @@ class Model(SmartSimEntity):
         :type kwargs: dict, optional
 
         """
-        self.db_identifier = db_identifier
-
-        self.dbs_list_m(db_identifier)
 
         tcp_options = {"port": port, "ifname": ifname}
         common_options = {
@@ -627,10 +614,3 @@ class Model(SmartSimEntity):
                         "file and add it to the SmartSim Model with add_script."
                     )
                     raise SSUnsupportedError(err_msg)
-
-    def dbs_list_m(self, db_identifier):
-        self.my_list_m.append(db_identifier)
-        return self.my_list_m
-
-    def dbs_in_use_m(self) -> set():
-        return self.my_list_m

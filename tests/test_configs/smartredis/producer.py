@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     # get model and set into database
     model = create_torch_cnn()
-    #NOTEjp
+    #NOTEjp: c = Client(False, db_identifier)
     c = Client(False)
     c.set_model("torch_cnn", model, "TORCH")
 

@@ -87,10 +87,13 @@ class Generator:
 
         """
         generator_manifest = Manifest(*args)
-        self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.db)
-        self._gen_entity_list_dir(generator_manifest.ensembles)
-        self._gen_entity_dirs(generator_manifest.models)
+
+        for item in generator_manifest.db:
+            self._gen_exp_dir()
+            #self._gen_orc_dir(generator_manifest.db)
+            self._gen_orc_dir(item)
+            self._gen_entity_list_dir(generator_manifest.ensembles)  # item.ensembles ?
+            self._gen_entity_dirs(generator_manifest.models)    # item.models ? 
 
     def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag used for tagging input files
