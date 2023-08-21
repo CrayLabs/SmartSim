@@ -1120,3 +1120,43 @@ def test_db_identifier_env_vars_good_reg_and_colo(
     # start database
 
     exp.stop(db, colo_model, smartsim_model)
+
+def test_db_identifier_env_vars_good_create_standard(fileutils, wlmutils, mlutils):
+    """One call to create database env vars testing"""
+
+    # Retrieve parameters from testing environment
+    # test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    # test_device = mlutils.get_test_device()
+    # test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    # torch_script = fileutils.get_test_conf_path("torchscript.py")
+
+    # start a new Experiment for this section
+    exp = Experiment(
+        "test_db_identifier_env_vars_good_create_standard", launcher="local"
+    )
+
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create the SmartSim Model
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
+    smartsim_model.set_path(test_dir)
+
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="testdb1"
+    )
+    exp.generate(db)
+
+    # create regular database fist
+
+    # start the database
+    exp.start(db)
+    exp.start(smartsim_model, block=True, summary=True)
+    exp.stop(db, smartsim_model)

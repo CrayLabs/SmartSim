@@ -149,7 +149,7 @@ class Orchestrator(EntityList):
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
-        db_identifier: t.Optional[str] = None,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -198,7 +198,7 @@ class Orchestrator(EntityList):
             cpus_per_shard = None
 
         super().__init__(
-            db_identifier, #"orchestrator",
+            df"orchestrator_{db_identifier}",
             self.path,
             port=port,
             interface=interface,
@@ -813,11 +813,6 @@ class Orchestrator(EntityList):
                     "networks, if so, ignore this."
                 )
                 logger.warning(f"Found network interfaces are: {available}")
-    
-    @property
-    def db_identifier(self):
-        return self.name
-
 
     def _fill_reserved(self) -> None:
         """Fill the reserved batch and run arguments dictionaries"""
