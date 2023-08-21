@@ -57,7 +57,8 @@ class CobaltBatchStep(Step):
     def batch_settings(self) -> BatchSettings:
         if isinstance(self.step_settings, BatchSettings):
             return self.step_settings
-        raise TypeError("Batch settings must be subtype of BatchSettings")
+        raise TypeError("Batch settings must be subtype of BatchSettings. Actual"
+                        f"type: {type(self.step_settings)}")
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
