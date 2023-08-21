@@ -474,8 +474,6 @@ class Ensemble(EntityList):
 
     @staticmethod
     def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
-        # todo: create ticket to fix the bug allowing dupes (since current_models
-        # is before for-loop, any dupes in input::db_models will propagate)
         entity_db_models = [db_model.name for db_model in model.db_models]
 
         for db_model in db_models:
@@ -484,8 +482,6 @@ class Ensemble(EntityList):
 
     @staticmethod
     def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
-        # todo: create ticket to fix the bug allowing dupes (since current_scripts
-        # is before for-loop, any dupes in input::db_scripts will propagate)
         entity_db_scripts = [db_script.name for db_script in model.db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
