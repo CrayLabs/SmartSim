@@ -51,12 +51,7 @@ class SbatchStep(Step):
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
-
-    @property
-    def batch_settings(self) -> SbatchSettings:
-        if isinstance(self.step_settings, SbatchSettings):
-            return self.step_settings
-        raise TypeError("Batch settings must be of type SbatchSettings")
+        self.batch_settings = batch_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch

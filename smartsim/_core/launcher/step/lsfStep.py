@@ -32,7 +32,7 @@ from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
 from ....settings import BsubBatchSettings, JsrunSettings
-from ....settings.base import RunSettings, BatchSettings
+from ....settings.base import RunSettings
 
 logger = get_logger(__name__)
 
@@ -51,25 +51,7 @@ class BsubBatchStep(Step):
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
-
-    @property
-    def batch_settings(self) -> BatchSettings:
-        if isinstance(self.step_settings, BatchSettings):
-            return self.step_settings
-        raise TypeError("Batch settings must be subtype of BatchSettings. Actual"
-                        f"type: {type(self.step_settings)}")
-
-    def _bsub_settings(
-        self, ignore_type_mismatch: bool = False
-    ) -> t.Optional[BsubBatchSettings]:
-        """Get attached run settings if they are of type BsubBatchSettings.
-        Raise an exception on incorrect run settings type, unless
-        ignore_type_mismatch is True"""
-        if isinstance(self.step_settings, BsubBatchSettings):
-            return self.step_settings
-        if not ignore_type_mismatch:
-            raise TypeError("Run settings must be of type BsubBatchSettings")
-        return None
+        self.batch_settings = batch_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -99,18 +81,16 @@ class BsubBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
 
-        if bsub_rs := self._bsub_settings(ignore_type_mismatch=True):
-            bsub_rs._format_alloc_flags()  # pylint: disable=protected-access
+        self.batch_settings._format_alloc_flags()  # pylint: disable=protected-access
 
         opts = self.batch_settings.format_batch_args()
 
         with open(batch_script, "w", encoding="utf-8") as script_file:
             script_file.write("#!/bin/bash\n\n")
-            if bsub_rs := self._bsub_settings(ignore_type_mismatch=True):
-                if bsub_rs.walltime:
-                    script_file.write(f"#BSUB -W {bsub_rs.walltime}\n")
-                if bsub_rs.project:
-                    script_file.write(f"#BSUB -P {bsub_rs.project}\n")
+            if self.batch_settings.walltime:
+                script_file.write(f"#BSUB -W {self.batch_settings.walltime}\n")
+            if self.batch_settings.project:
+                script_file.write(f"#BSUB -P {self.batch_settings.project}\n")
             script_file.write(f"#BSUB -J {self.name}\n")
             script_file.write(f"#BSUB -o {output}\n")
             script_file.write(f"#BSUB -e {error}\n")

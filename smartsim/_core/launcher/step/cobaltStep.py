@@ -30,7 +30,6 @@ import typing as t
 
 from ....log import get_logger
 from ....settings import CobaltBatchSettings
-from ....settings.base import BatchSettings
 from .step import Step
 
 logger = get_logger(__name__)
@@ -52,13 +51,7 @@ class CobaltBatchStep(Step):
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
-
-    @property
-    def batch_settings(self) -> BatchSettings:
-        if isinstance(self.step_settings, BatchSettings):
-            return self.step_settings
-        raise TypeError("Batch settings must be subtype of BatchSettings. Actual"
-                        f"type: {type(self.step_settings)}")
+        self.batch_settings = batch_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch

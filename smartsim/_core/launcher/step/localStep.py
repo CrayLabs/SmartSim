@@ -36,14 +36,8 @@ from ....settings import Singularity
 class LocalStep(Step):
     def __init__(self, name: str, cwd: str, run_settings: RunSettings):
         super().__init__(name, cwd, run_settings)
-        self.env = self._set_env()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        """Get the run settings attached to this step"""
-        if isinstance(self.step_settings, RunSettings):
-            return self.step_settings
-        raise TypeError("Run settings must be of type RunSettings")
+        self.run_settings = run_settings
+        self.env = self._set_env()        
 
     def get_launch_cmd(self) -> t.List[str]:
         cmd = []

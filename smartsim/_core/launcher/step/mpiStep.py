@@ -53,15 +53,9 @@ class _BaseMPIStep(Step):
         super().__init__(name, cwd, run_settings)
 
         self.alloc: t.Optional[str] = None
-        if not self.run_settings.in_batch:
+        if not run_settings.in_batch:
             self._set_alloc()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        """Get the run settings attached to this step"""
-        if isinstance(self.step_settings, RunSettings):
-            return self.step_settings
-        raise TypeError("Run settings must be of type RunSettings")
+        self.run_settings = run_settings
 
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
 

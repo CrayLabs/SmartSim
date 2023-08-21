@@ -50,34 +50,14 @@ class AprunStep(Step):
         """
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
-        if not self.run_settings.in_batch:
+        if not run_settings.in_batch:
             self._set_alloc()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        """Get the run settings attached to this step"""
-        if isinstance(self.step_settings, RunSettings):
-            return self.step_settings
-        raise TypeError("Run settings must be of type RunSettings")
-
-    def _aprun_settings(
-        self, ignore_type_mismatch: bool = False
-    ) -> t.Optional[AprunSettings]:
-        """Get attached run settings if they are of type AprunSettings.
-        Raise an exception on incorrect run settings type, unless
-        ignore_type_mismatch is True"""
-        if isinstance(self.step_settings, AprunSettings):
-            return self.step_settings
-        if not ignore_type_mismatch:
-            raise TypeError("Run settings must be of type AprunSettings")
-        return None
+        self.run_settings = run_settings
 
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if srs := self._aprun_settings(ignore_type_mismatch=True):
-            return srs.mpmd
-        return []
+        return self.run_settings.mpmd
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
