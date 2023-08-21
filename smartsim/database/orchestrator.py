@@ -198,7 +198,7 @@ class Orchestrator(EntityList):
             cpus_per_shard = None
 
         super().__init__(
-            df"orchestrator_{db_identifier}",
+            f"orchestrator_{db_identifier}",
             self.path,
             port=port,
             interface=interface,
