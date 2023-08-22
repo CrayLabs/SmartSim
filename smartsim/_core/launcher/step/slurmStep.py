@@ -193,8 +193,8 @@ class SrunStep(Step):
 
         :raises AllocationError: allocation not listed or found
         """
-        if srs := self._srun_settings(ignore_type_mismatch=True):
-            self.alloc = srs.alloc
+        if self.run_settings.alloc:
+            self.alloc = self.run_settings.alloc
         else:
             if "SLURM_JOB_ID" in os.environ:
                 self.alloc = os.environ["SLURM_JOB_ID"]
