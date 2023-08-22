@@ -47,10 +47,7 @@ class QsubBatchStep(Step):
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
-
-    @property
-    def batch_settings(self) -> QsubBatchSettings:
-        return self.step_settings
+        self.batch_settings = batch_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -93,9 +90,9 @@ class QsubBatchStep(Step):
             for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
-            for i, cmd in enumerate(self.step_cmds):
+            for i, step_cmd in enumerate(self.step_cmds):
                 script_file.write("\n")
-                script_file.write(f"{' '.join((cmd))} &\n")
+                script_file.write(f"{' '.join((step_cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
                     script_file.write("\n")
                     script_file.write("wait\n")

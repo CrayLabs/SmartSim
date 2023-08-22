@@ -101,7 +101,6 @@ module = [
   "redis.cluster",
   "keras",
   "torch",
-  "smartsim._core.launcher.step.*", # hints incomplete
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
 ]
 ignore_missing_imports = true
