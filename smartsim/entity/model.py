@@ -39,6 +39,7 @@ from .files import EntityFiles
 from ..settings.base import BatchSettings, RunSettings
 from ..log import get_logger
 
+
 logger = get_logger(__name__)
 
 class Model(SmartSimEntity):
@@ -79,6 +80,16 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
+
+    @property
+    def db_models(self) -> t.Iterable[DBModel]:
+        """Return an immutable collection of attached models"""
+        return (model for model in self._db_models)
+
+    @property
+    def db_scripts(self) -> t.Iterable[DBScript]:
+        """Return an immutable collection attached of scripts"""
+        return (script for script in self._db_scripts)
 
     @property
     def colocated(self) -> bool:
@@ -461,7 +472,7 @@ class Model(SmartSimEntity):
             inputs=inputs,
             outputs=outputs,
         )
-        self._append_db_model(db_model)
+        self.add_ml_model_object(db_model)
 
     def add_script(
         self,
@@ -506,7 +517,7 @@ class Model(SmartSimEntity):
             device=device,
             devices_per_node=devices_per_node,
         )
-        self._append_db_script(db_script)
+        self.add_script_object(db_script)
 
     def add_function(
         self,
@@ -543,7 +554,7 @@ class Model(SmartSimEntity):
         db_script = DBScript(
             name=name, script=function, device=device, devices_per_node=devices_per_node
         )
-        self._append_db_script(db_script)
+        self.add_script_object(db_script)
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -566,7 +577,7 @@ class Model(SmartSimEntity):
             entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
 
-    def _append_db_model(self, db_model: DBModel) -> None:
+    def add_ml_model_object(self, db_model: DBModel) -> None:
         if not db_model.is_file and self.colocated:
             err_msg = "ML model can not be set from memory for colocated databases.\n"
             err_msg += (
@@ -577,7 +588,7 @@ class Model(SmartSimEntity):
 
         self._db_models.append(db_model)
 
-    def _append_db_script(self, db_script: DBScript) -> None:
+    def add_script_object(self, db_script: DBScript) -> None:
         if db_script.func and self.colocated:
             if not isinstance(db_script.func, str):
                 err_msg = (

@@ -94,8 +94,7 @@ class SbatchStep(Step):
             for opt in self.batch_settings.format_batch_args():
                 script_file.write(f"#SBATCH {opt}\n")
 
-            # pylint: disable-next=protected-access
-            for cmd in self.batch_settings._preamble:
+            for cmd in self.batch_settings.preamble:
                 script_file.write(f"{cmd}\n")
 
             for i, cmd in enumerate(self.step_cmds):
