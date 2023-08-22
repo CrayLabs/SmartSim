@@ -4,13 +4,25 @@ Code of Conduct
 
 .. _conduct:
 
-Like the technical community as a whole, the SmartSim team and community is made up of a mixture of professionals and volunteers from all over the world, working on every aspect of the mission - including mentorship, teaching and connecting people.
+Like the technical community as a whole, the SmartSim team and community is made
+up of a mixture of professionals and volunteers from all over the world, working
+on every aspect of the mission - including mentorship, teaching and connecting
+people.
 
-Diversity is one of our huge strengths, but it can also lead to communication issues and unhappiness. To that end, we have a few ground rules that we ask people to adhere to when they are participating within this community and project. These rules apply equally to founders, mentors and those seeking help and guidance.
+Diversity is one of our huge strengths, but it can also lead to communication
+issues and unhappiness. To that end, we have a few ground rules that we ask
+people to adhere to when they are participating within this community and
+project. These rules apply equally to founders, mentors and those seeking help
+and guidance.
 
-This is not an exhaustive list of things that you cannot do. Rather, take it in the spirit in which it is intended - a guide to make it easier to enrich all of us, the technical community and the conferences and usergroups we hope to guide new speakers to.
+This is not an exhaustive list of things that you cannot do. Rather, take it in
+the spirit in which it is intended - a guide to make it easier to enrich all of
+us, the technical community and the conferences and usergroups we hope to guide
+new speakers to.
 
-This code of conduct applies to all communication. This includes: Slack, GitHub Issues, StackOverflow issues, and other forums such as Zoom, Skype, Google+ Hangouts, etc.
+This code of conduct applies to all communication. This includes: Slack, GitHub
+Issues, StackOverflow issues, and other forums such as Zoom, Skype, Google+
+Hangouts, etc.
 
 * **Be welcoming, friendly, and patient.**
 * **Be considerate.** Your work will be used by other people, and you in turn will depend on the work of others. Any decision you make will affect users and colleagues, and you should take those consequences into account when making decisions.

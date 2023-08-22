@@ -3,8 +3,10 @@
 Developer
 *********
 
-This section details common practices and tips for contributors
-to SmartSim and SmartRedis.
+.. _developer_guide:
+
+This section details common practices and tips for contributors to SmartSim and
+SmartRedis.
 
 ==========================
 Building the Documentation
