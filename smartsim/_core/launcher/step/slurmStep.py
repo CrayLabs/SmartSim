@@ -117,27 +117,9 @@ class SrunStep(Step):
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
         self.managed = True
+        self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        """Get the run settings attached to this step"""
-        if isinstance(self.step_settings, RunSettings):
-            return self.step_settings
-        raise TypeError("Run settings must be of type RunSettings")
-
-    def _srun_settings(
-        self, ignore_type_mismatch: bool = False
-    ) -> t.Optional[SrunSettings]:
-        """Get attached run settings if they are of type SrunSettings.
-        Raise an exception on incorrect run settings type, unless
-        ignore_type_mismatch is True"""
-        if isinstance(self.step_settings, SrunSettings):
-            return self.step_settings
-        if not ignore_type_mismatch:
-            raise TypeError("Run settings must be of type SrunSettings")
-        return None
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -158,14 +140,13 @@ class SrunStep(Step):
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            if srs := self._srun_settings():
-                env_vars, csv_env_vars = srs.format_comma_sep_env_vars()
+            env_vars, csv_env_vars = self.run_settings.format_comma_sep_env_vars()
 
-                if len(env_vars) > 0:
-                    srun_cmd += ["--export", f"ALL,{env_vars}"]
+            if len(env_vars) > 0:
+                srun_cmd += ["--export", f"ALL,{env_vars}"]
 
-                if csv_env_vars:
-                    compound_env = compound_env.union(csv_env_vars)
+            if csv_env_vars:
+                compound_env = compound_env.union(csv_env_vars)
 
         srun_cmd += self.run_settings.format_run_args()
 
@@ -209,9 +190,7 @@ class SrunStep(Step):
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if srs := self._srun_settings(ignore_type_mismatch=True):
-            return srs.mpmd
-        return []
+        return self.run_settings.mpmd
 
     @staticmethod
     def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:

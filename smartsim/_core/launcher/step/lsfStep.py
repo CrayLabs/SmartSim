@@ -122,27 +122,9 @@ class JsrunStep(Step):
         super().__init__(name, cwd, run_settings)
         self.alloc: t.Optional[str] = None
         self.managed = True
+        self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        """Get the run settings attached to this step"""
-        if isinstance(self.step_settings, RunSettings):
-            return self.step_settings
-        raise TypeError("Run settings must be of type RunSettings")
-
-    def _jsrun_settings(
-        self, ignore_type_mismatch: bool = False
-    ) -> t.Optional[JsrunSettings]:
-        """Get attached run settings if they are of type JsrunSettings.
-        Raise an exception on incorrect run settings type, unless
-        ignore_type_mismatch is True"""
-        if isinstance(self.step_settings, JsrunSettings):
-            return self.step_settings
-        if not ignore_type_mismatch:
-            raise TypeError("Run settings must be of type JsrunSettings")
-        return None
 
     def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
@@ -232,8 +214,8 @@ class JsrunStep(Step):
     def _get_mpmd(self) -> t.List[RunSettings]:
         """Temporary convenience function to return a typed list
         of attached RunSettings"""
-        if jsrs := self._jsrun_settings(ignore_type_mismatch=True):
-            return jsrs.mpmd
+        if isinstance(self.step_settings, JsrunSettings):
+            return self.step_settings.mpmd
         return []
 
     def _build_exe(self) -> t.List[str]:
