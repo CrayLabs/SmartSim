@@ -26,18 +26,20 @@
 
 import argparse
 import io
+import multiprocessing as mp
+import os
+import socket
 import tempfile
 import typing as t
 from contextlib import contextmanager
-import socket
 from types import TracebackType
 
 import numpy as np
 from smartredis import Client
 
 from smartsim import Experiment
-from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim._core._cli.utils import SMART_LOGGER_FORMAT
+from smartsim._core.utils.helpers import installed_redisai_backends
 from smartsim.log import get_logger
 
 logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
@@ -83,7 +85,7 @@ def execute(args: argparse.Namespace, /) -> int:
     """
     backends = installed_redisai_backends()
     try:
-        with _VerificationTempDir() as temp_dir:
+        with _VerificationTempDir(dir=os.getcwd()) as temp_dir:
             test_install(
                 location=temp_dir,
                 port=args.port,
@@ -132,7 +134,7 @@ def test_install(
     with_pt: bool,
     with_onnx: bool,
 ) -> None:
-    exp = Experiment("TestExperiment", exp_path=location, launcher="local")
+    exp = Experiment("ValidationExperiment", exp_path=location, launcher="local")
     port = _find_free_port() if port is None else port
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
@@ -140,7 +142,7 @@ def test_install(
         client.get_tensor("plain-tensor")
         if with_tf:
             logger.info("Verifying TensorFlow Backend")
-            _test_tf_install(client, device)
+            _test_tf_install(client, location, device)
         if with_pt:
             logger.info("Verifying Torch Backend")
             _test_torch_install(client, device)
@@ -172,10 +174,35 @@ def _find_free_port() -> int:
         return int(port)
 
 
-def _test_tf_install(client: Client, device: _TCapitalDeviceStr) -> None:
+def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -> None:
+    recv_conn, send_conn = mp.Pipe(duplex=False)
+    # Build the model in a subproc so that keras does not hog the gpu
+    proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
+    proc.start()
+    proc.join(timeout=120)
+    if proc.is_alive():
+        proc.terminate()
+        raise Exception("Failed to build a simple keras model within 2 minutes")
+    try:
+        model_path, inputs, outputs = recv_conn.recv()
+    except EOFError as e:
+        raise Exception(
+            "Failed to recieve serialized model from subprocess. "
+            "Is the `tensorflow` python package installed?"
+        ) from e
+
+    client.set_model_from_file(
+        "keras-fcn", model_path, "TF", device=device, inputs=inputs, outputs=outputs
+    )
+    client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
+    client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
+    client.get_tensor("keras-output")
+
+
+def _build_tf_frozen_model(conn: mp.connection.Connection, tmp_dir: str) -> None:
     from tensorflow import keras
 
-    from smartsim.ml.tf import serialize_model
+    from smartsim.ml.tf import freeze_model
 
     fcn = keras.Sequential(
         layers=[
@@ -189,14 +216,8 @@ def _test_tf_install(client: Client, device: _TCapitalDeviceStr) -> None:
     fcn.compile(
         optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
-    model, inputs, outputs = serialize_model(fcn)
-
-    client.set_model(
-        "keras-fcn", model, "TF", device=device, inputs=inputs, outputs=outputs
-    )
-    client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
-    client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
-    client.get_tensor("keras-output")
+    model_path, inputs, outputs = freeze_model(fcn, tmp_dir, "keras_model.pb")
+    conn.send((model_path, inputs, outputs))
 
 
 def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
