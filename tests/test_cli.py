@@ -40,8 +40,10 @@ from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
 from smartsim._core._cli.site import execute as site_execute
 from smartsim._core._cli.utils import MenuItemConfig
-from smartsim._core._cli.validate import execute as validate_execute
-
+from smartsim._core._cli.validate import (
+    execute as validate_execute,
+    configure_parser as validate_parser,
+)
 
 def mock_execute_custom(msg: str = None, good: bool = True) -> int:
     retval = 0 if good else 1
@@ -336,6 +338,7 @@ def test_cli_default_cli(capsys):
         pytest.param("dbcli", "dbcli_execute", "mocked-dbcli", id="ensure dbcli action is executed"),
         pytest.param("site", "site_execute", "mocked-site", id="ensure site action is executed"),
         pytest.param("clobber", "clobber_execute", "mocked-clobber", id="ensure clobber action is executed"),
+        pytest.param("validate", "validate_execute", "mocked-validate", id="ensure validate action is executed"),
     ]
 )
 def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
@@ -374,6 +377,11 @@ def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
         pytest.param("build", "build_execute", "bad-torch-dir mocked-build", "--torch_dir", False, "error: argument --torch_dir", "", "", id="set torch dir, no path"),
         pytest.param("build", "build_execute", "keydb mocked-build", "--keydb", True, "", "keydb", True, id="keydb on"),
         pytest.param("clean", "clean_execute", "clobbering mocked-clean", "--clobber", True, "", "clobber", True, id="clean w/clobber"),
+        pytest.param("validate", "validate_execute", "port mocked-validate", "--port=12345", True, "", "port", 12345, id="validate w/ manual port"),
+        pytest.param("validate", "validate_execute", "abbrv port mocked-validate", "-p 12345", True, "", "port", 12345, id="validate w/ manual abbreviated port"),
+        pytest.param("validate", "validate_execute", "cpu mocked-validate", "--device=cpu", True, "", "device", "cpu", id="validate: device 'cpu'"),
+        pytest.param("validate", "validate_execute", "gpu mocked-validate", "--device=gpu", True, "", "device", "gpu", id="validate: device 'gpu'"),
+        pytest.param("validate", "validate_execute", "gpuX mocked-validate", "--device=gpux", False, "invalid choice: 'gpux'", "", "", id="validate: set bad device 'gpuX'"),
     ]
 )
 def test_cli_optional_args(capsys,
@@ -425,6 +433,7 @@ def test_cli_optional_args(capsys,
         pytest.param("clobber", "clean_execute", "helpful mocked-clobber", "usage: smart clobber", id="clobber"),
         pytest.param("dbcli", "clean_execute", "helpful mocked-dbcli", "usage: smart dbcli", id="dbcli"),
         pytest.param("site", "clean_execute", "helpful mocked-site", "usage: smart site", id="site"),
+        pytest.param("validate", "validate_execute", "helpful mocked-validate", "usage: smart validate", id="validate"),
     ]
 )
 def test_cli_help_support(capsys,
@@ -462,6 +471,7 @@ def test_cli_help_support(capsys,
         pytest.param("clobber", "clobber_execute", "verbose mocked-clobber", id="clobber"),
         pytest.param("dbcli", "dbcli_execute", "verbose mocked-dbcli", id="dbcli"),
         pytest.param("site", "site_execute", "verbose mocked-site", id="site"),
+        pytest.param("validate", "validate_execute", "verbose mocked-validate", id="validate"),
     ]
 )
 def test_cli_invalid_optional_args(capsys,
@@ -724,10 +734,11 @@ def test_cli_build_test_execute(
         print,
     )
 
-    command = "test"
+    command = "validate"
     cfg = MenuItemConfig(command,
                          f"test {command} help text",
-                         validate_execute)
+                         validate_execute,
+                         validate_parser)
     menu = [cfg]
     smart_cli = cli.SmartCli(menu)
 

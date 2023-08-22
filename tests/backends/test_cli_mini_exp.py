@@ -35,6 +35,7 @@ from smartsim._core.utils.helpers import installed_redisai_backends
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
+    mlutils,
     fileutils,
     monkeypatch,
 ):
@@ -61,6 +62,8 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         # but best to give it "correct" vals for safety
         location=fileutils.get_test_dir(),
         port=db_port,
+        # Test on the appropriate hardware
+        device=mlutils.get_test_device(),
         # Test the backends the dev has installed
         with_tf="tensorflow" in backends,
         with_pt="torch" in backends,

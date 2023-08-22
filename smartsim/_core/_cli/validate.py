@@ -57,6 +57,9 @@ else:
     _TemporaryDirectory = tempfile.TemporaryDirectory
 
 
+_TCapitalDeviceStr = t.Literal["CPU", "GPU"]
+
+
 class _VerificationTempDir(_TemporaryDirectory):
     """A Temporary directory to be used as a context manager that will only
     clean itself up if no error is raised within its context
@@ -74,13 +77,17 @@ class _VerificationTempDir(_TemporaryDirectory):
             self._finalizer.detach()  # type: ignore[attr-defined]
 
 
-def execute(_args: argparse.Namespace, /) -> int:
+def execute(args: argparse.Namespace, /) -> int:
+    """Validate the SmartSim installation works as expected given a
+    simple experiment
+    """
     backends = installed_redisai_backends()
     try:
         with _VerificationTempDir() as temp_dir:
             test_install(
                 location=temp_dir,
-                port=None,  # TODO: allow users to pass as arg `--port`?
+                port=args.port,
+                device=args.device.upper(),
                 with_tf="tensorflow" in backends,
                 with_pt="torch" in backends,
                 with_onnx="onnxruntime" in backends,
@@ -95,28 +102,51 @@ def execute(_args: argparse.Namespace, /) -> int:
     return 0
 
 
+def configure_parser(parser: argparse.ArgumentParser) -> None:
+    """Build the parser for the command"""
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        default=None,
+        help=(
+            "The port on which to run the orchestrator for the mini experiment. "
+            "If not provided, `smart` will attempt to automatically select an "
+            "open port"
+        ),
+    )
+    parser.add_argument(
+        "--device",
+        type=str.lower,
+        default="cpu",
+        choices=["cpu", "gpu"],
+        help="Device to test the ML backends against",
+    )
+
+
 def test_install(
     location: str,
     port: t.Optional[int],
+    device: _TCapitalDeviceStr,
     with_tf: bool,
     with_pt: bool,
     with_onnx: bool,
 ) -> None:
     exp = Experiment("TestExperiment", exp_path=location, launcher="local")
-    port = port or _find_free_port()
+    port = _find_free_port() if port is None else port
     with _make_managed_local_orc(exp, port) as client:
         logger.info("Verifying Tensor Transfer")
         client.put_tensor("plain-tensor", np.ones((1, 1, 3, 3)))
         client.get_tensor("plain-tensor")
         if with_tf:
             logger.info("Verifying TensorFlow Backend")
-            _test_tf_install(client)
+            _test_tf_install(client, device)
         if with_pt:
             logger.info("Verifying Torch Backend")
-            _test_torch_install(client)
+            _test_torch_install(client, device)
         if with_onnx:
             logger.info("Verifying ONNX Backend")
-            _test_onnx_install(client)
+            _test_onnx_install(client, device)
 
 
 @contextmanager
@@ -139,10 +169,10 @@ def _find_free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("0.0.0.0", 0))
         _, port = sock.getsockname()
-        return t.cast(int, port)
+        return int(port)
 
 
-def _test_tf_install(client: Client) -> None:
+def _test_tf_install(client: Client, device: _TCapitalDeviceStr) -> None:
     from tensorflow import keras
 
     from smartsim.ml.tf import serialize_model
@@ -162,14 +192,14 @@ def _test_tf_install(client: Client) -> None:
     model, inputs, outputs = serialize_model(fcn)
 
     client.set_model(
-        "keras-fcn", model, "TF", device="CPU", inputs=inputs, outputs=outputs
+        "keras-fcn", model, "TF", device=device, inputs=inputs, outputs=outputs
     )
     client.put_tensor("keras-input", np.random.rand(1, 28, 28).astype(np.float32))
     client.run_model("keras-fcn", inputs=["keras-input"], outputs=["keras-output"])
     client.get_tensor("keras-output")
 
 
-def _test_torch_install(client: Client) -> None:
+def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
     import torch
     from torch import nn
 
@@ -188,13 +218,13 @@ def _test_torch_install(client: Client) -> None:
     torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
-    client.set_model("torch-nn", model, backend="TORCH", device="CPU")
+    client.set_model("torch-nn", model, backend="TORCH", device=device)
     client.put_tensor("torch-in", torch.rand(1, 1, 3, 3).numpy())
     client.run_model("torch-nn", inputs=["torch-in"], outputs=["torch-out"])
     client.get_tensor("torch-out")
 
 
-def _test_onnx_install(client: Client) -> None:
+def _test_onnx_install(client: Client, device: _TCapitalDeviceStr) -> None:
     from skl2onnx import to_onnx
     from sklearn.cluster import KMeans
 
@@ -207,7 +237,7 @@ def _test_onnx_install(client: Client) -> None:
     sample = np.arange(20, dtype=np.float32).reshape(10, 2)
 
     client.put_tensor("onnx-input", sample)
-    client.set_model("onnx-kmeans", model, "ONNX", device="CPU")
+    client.set_model("onnx-kmeans", model, "ONNX", device=device)
     client.run_model(
         "onnx-kmeans", inputs=["onnx-input"], outputs=["onnx-labels", "onnx-transform"]
     )
