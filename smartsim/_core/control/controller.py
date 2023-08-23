@@ -190,18 +190,18 @@ class Controller:
                 )
                 self._jobs.move_to_completed(job)
 
-    def stop_entity_list(self, entity_lists: EntityList) -> None:
+    def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
         :type entity_list: EntityList
         """
-        for entity_list in entity_lists:
-            if entity_list.batch:
-                self.stop_entity(entity_list)
-            else:
-                for entity in entity_list.entities:
-                    self.stop_entity(entity)
+        # for entity_list in entity_lists:
+        if entity_list.batch:
+            self.stop_entity(entity_list)
+        else:
+            for entity in entity_list.entities:
+                self.stop_entity(entity)
 
     def get_jobs(self) -> t.Dict[str, Job]:
         """Return a dictionary of completed job data
@@ -287,9 +287,8 @@ class Controller:
         """
 
         if manifest.db:
-            # Loop over deployables to launch 
+            # Loop over deployables to launch
             for orchestrator in manifest.db:
-
                 if orchestrator:
                     if orchestrator.num_shards > 1 and isinstance(
                         self._launcher, LocalLauncher
@@ -314,7 +313,8 @@ class Controller:
                         batch_step = self._create_batch_job_step(elist)
                         steps.append((batch_step, elist))
                     else:
-                        # if ensemble is to be run as separate job steps, aka not in a batch
+                        # if ensemble is to be run as separate job steps,
+                        # aka not in a batch
                         job_steps = [
                             (self._create_job_step(e), e) for e in elist.entities
                         ]
@@ -474,7 +474,7 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        
+
         addy, a_dict = self._jobs.get_db_host_addresses()
 
         # Retrieve num_shards to append to client env
@@ -485,9 +485,7 @@ class Controller:
             client_env["SR_DB_TYPE"] = "standalone"
 
         for db_id, addresses in a_dict.items():
-            db_name =  "_" + "_".join(db_id.split("_")[:-1])
-            
-
+            db_name = "_" + "_".join(db_id.split("_")[:-1])
 
             if addresses:
                 if len(addresses) <= 128:
@@ -505,7 +503,7 @@ class Controller:
         # Set address to local if it's a colocated model
         if entity.colocated:
             db_name_colo = (
-                "_" + entity.run_settings.colocated_db_settings["db_identifier"] 
+                "_" + entity.run_settings.colocated_db_settings["db_identifier"]
             )
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
@@ -529,7 +527,6 @@ class Controller:
 
     def get_shard_env_var(self):
         return self.nums
-
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Save the orchestrator object via pickle
@@ -659,7 +656,7 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        db_addresses, a_dict = self._jobs.get_db_host_addresses() 
+        db_addresses, a_dict = self._jobs.get_db_host_addresses()
 
         hosts = list({address.split(":")[0] for address in db_addresses})
         ports = list({int(address.split(":")[-1]) for address in db_addresses})

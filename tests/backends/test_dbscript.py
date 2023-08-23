@@ -98,7 +98,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add script via string
@@ -106,7 +106,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add script function
@@ -114,7 +114,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Assert we have all three scripts
@@ -176,7 +176,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add script via string for each ensemble entity
@@ -186,7 +186,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
             "test_script2",
             script=torch_script_str,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
         )
 
     # Add script via function
@@ -194,7 +194,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add an additional ensemble member and attach a script to the new member
@@ -203,7 +203,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Assert we have added both models to the ensemble
@@ -263,14 +263,14 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
     # Add script via string
     colo_model.add_script(
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Assert we have added both models
@@ -339,7 +339,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
             "test_script1",
             script_path=torch_script,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
         )
 
     # Colocate a db with the non-ensemble Model
@@ -356,7 +356,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add the third SmartSim model to the ensemble
@@ -367,7 +367,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Assert we have added one model to the ensemble
@@ -428,7 +428,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Add a colocated database to the ensemble members
@@ -446,7 +446,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
             "test_script1",
             script_path=torch_script,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
         )
 
     # Add a colocated database to the non-ensemble SmartSim Model
@@ -454,7 +454,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         debug=True,
-        ifname=test_interface
+        ifname=test_interface,
     )
 
     # Add the non-ensemble SmartSim Model to the Ensemble
@@ -464,7 +464,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Assert we have added one model to the ensemble
@@ -525,7 +525,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             "test_func",
             function=timestwo,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
         )
 
     # Create ensemble with two identical SmartSim Model entities
@@ -551,7 +551,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             "test_func",
             function=timestwo,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
         )
 
     # Create an ensemble with two identical SmartSim Model entities
@@ -566,7 +566,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
     )
 
     # Check that an error is raised when trying to add
@@ -603,7 +603,6 @@ def test_inconsistent_params_db_script(fileutils):
         ex.value.args[0]
         == "Cannot set devices_per_node>1 if CPU is specified under devices"
     )
-
 
 
 # TODOjp: include environment variable setting checks once I set the environment variable
@@ -1059,7 +1058,7 @@ def test_db_identifier_env_vars_good_reg_and_colo(
     # stopdatabase
     exp.stop(db, smartsim_model)
 
-    
+
 def test_db_identifier_env_vars_good_create_standard(fileutils, wlmutils, mlutils):
     """One call to create databasem making sure pathway still works"""
 
@@ -1102,9 +1101,7 @@ def test_new(fileutils, wlmutils, coloutils, db_type):
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
 
-    exp = Experiment(
-        "smartredis_ensemble_consumer", exp_path=test_dir, launcher="local"
-    )
+    exp = Experiment("testnew", exp_path=test_dir, launcher="local")
 
     # create and start a database
 
@@ -1150,9 +1147,3 @@ def test_new(fileutils, wlmutils, coloutils, db_type):
     exp.stop(orc)
 
     print(exp.summary())
-
-
-# exp.create_model( name, runsettings) exp.start.. exp.get status .. completed
-
-# .. clone repo, grab bill's branch
-# install smartredis from that directory .. THEN TEST

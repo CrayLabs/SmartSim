@@ -71,8 +71,8 @@ class JobManager:
         # completed jobs
         self.completed: t.Dict[str, Job] = {}
 
-        # for storing db_identifiers and address after mulitple calls to 
-        self.address_dict: t.Dict[str,str] = {}
+        # for storing db_identifiers and address after mulitple calls to
+        self.address_dict: t.Dict[str, str] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -307,7 +307,7 @@ class JobManager:
     def get_db_host_addresses(self) -> t.List[str]:
         """Retrieve the list of hosts for the database
 
-        :return: list of host ip addresses, 
+        :return: list of host ip addresses,
         and dict of db_identifier: and list of addresses
         :rtype: list[str]
         """
@@ -315,14 +315,14 @@ class JobManager:
         for db_id, db_job in self.db_jobs.items():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
-                for combine in itertools.product(db_job.hosts, db_entity.ports):   
-                    ip_addr = get_ip_from_host(combine[0]) 
-                    addresses.append(":".join((ip_addr, str(combine[1]))))  
-        self.address_dict.update({db_id:addresses})
+                for combine in itertools.product(db_job.hosts, db_entity.ports):
+                    ip_addr = get_ip_from_host(combine[0])
+                    addresses.append(":".join((ip_addr, str(combine[1]))))
+            self.address_dict.update({db_id: addresses})
 
         return addresses, self.address_dict
 
-    def set_db_hosts(self, orchestrator: Orchestrator) -> None:  
+    def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
 
         :param orchestrator: orchestrator instance
@@ -330,11 +330,11 @@ class JobManager:
         """
         # should only be called during launch in the controller
 
-        # jpnote: this will get called twice, make sure it is looping 
+        # jpnote: this will get called twice, make sure it is looping
         with self._lock:
             if orchestrator.batch:
-                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts 
-                
+                self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+
             else:
                 for dbnode in orchestrator.dbnodes:
                     if not dbnode.is_mpmd:
