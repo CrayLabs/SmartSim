@@ -28,7 +28,7 @@ import typing as t
 
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity, Model, Ensemble
-from ...error import SmartSimError
+#from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
 
@@ -57,7 +57,6 @@ class Manifest:
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
 
-        #jp supress error 
         # if len(dbs) > 1:
         #     raise SmartSimError("User attempted to create more than one Orchestrator")
 

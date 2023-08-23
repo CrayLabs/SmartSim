@@ -189,10 +189,9 @@ class Experiment:
         :type kill_on_interrupt: bool, optional
         """
 
-        # Check that entity started is a database and add the db identifier
-
+        # Check that entity started is a database and add the db_identifier
         for index, item in enumerate(args):
-            if isinstance(item, Model):  #jpnote: if instance ensemble? 
+            if isinstance(item, Model):
                 if item.colocated:
                     self.append_to_db_identifier_list(
                         args[index].run_settings.colocated_db_settings["db_identifier"]

@@ -88,12 +88,10 @@ class Generator:
         """
         generator_manifest = Manifest(*args)
 
-        for item in generator_manifest.db:
-            self._gen_exp_dir()
-            #self._gen_orc_dir(generator_manifest.db)
-            self._gen_orc_dir(item)
-            self._gen_entity_list_dir(generator_manifest.ensembles)  # item.ensembles ?
-            self._gen_entity_dirs(generator_manifest.models)    # item.models ? 
+        self._gen_exp_dir()
+        self._gen_orc_dir(generator_manifest.db)
+        self._gen_entity_list_dir(generator_manifest.ensembles)
+        self._gen_entity_dirs(generator_manifest.models)
 
     def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag used for tagging input files
@@ -134,24 +132,25 @@ class Generator:
         else:
             logger.info("Working in previously created experiment")
 
-    def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
+    def _gen_orc_dir(self, orchestrator_list) -> None:  #orchestrator: t.Optional[Orchestrator]
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
         :param orchestrator: Orchestrator instance
         :type orchestrator: Orchestrator | None
         """
+        
+        for orchestrator in orchestrator_list:
+            if not orchestrator:
+                return
 
-        if not orchestrator:
-            return
+            orc_path = path.join(self.gen_path, "database")
+            orchestrator.set_path(orc_path)
 
-        orc_path = path.join(self.gen_path, "database")
-        orchestrator.set_path(orc_path)
-
-        # Always remove orchestrator files if present.
-        if path.isdir(orc_path):
-            shutil.rmtree(orc_path, ignore_errors=True)
-        pathlib.Path(orc_path).mkdir(exist_ok=True)
+            # Always remove orchestrator files if present.
+            if path.isdir(orc_path):
+                shutil.rmtree(orc_path, ignore_errors=True)
+            pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for EntityList instances

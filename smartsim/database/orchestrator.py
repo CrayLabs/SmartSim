@@ -198,7 +198,7 @@ class Orchestrator(EntityList):
             cpus_per_shard = None
 
         super().__init__(
-            f"orchestrator_{db_identifier}",
+            db_identifier if db_identifier else "orchestrator",
             self.path,
             port=port,
             interface=interface,

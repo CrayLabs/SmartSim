@@ -78,6 +78,7 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
+        self.nums = None
 
     def start(
         self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
@@ -189,17 +190,18 @@ class Controller:
                 )
                 self._jobs.move_to_completed(job)
 
-    def stop_entity_list(self, entity_list: EntityList) -> None:
+    def stop_entity_list(self, entity_lists: EntityList) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
         :type entity_list: EntityList
         """
-        if entity_list.batch:
-            self.stop_entity(entity_list)
-        else:
-            for entity in entity_list.entities:
-                self.stop_entity(entity)
+        for entity_list in entity_lists:
+            if entity_list.batch:
+                self.stop_entity(entity_list)
+            else:
+                for entity in entity_list.entities:
+                    self.stop_entity(entity)
 
     def get_jobs(self) -> t.Dict[str, Job]:
         """Return a dictionary of completed job data
@@ -283,9 +285,9 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
-        # orchestrator = manifest.db
+
         if manifest.db:
-            # JPNOTE: Loop over deployables to launch 
+            # Loop over deployables to launch 
             for orchestrator in manifest.db:
 
                 if orchestrator:
@@ -295,7 +297,6 @@ class Controller:
                         raise SmartSimError(
                             "Local launcher does not support multi-host orchestrators"
                         )
-                # jpnote suppressing this error
                     # if self.orchestrator_active:
                     #     msg = "Attempted to launch a second Orchestrator instance. "
                     #     msg += "Only 1 Orchestrator can be active at a time"
@@ -348,7 +349,6 @@ class Controller:
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
-        print("launch orchestrator", orchestrator.name)
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
@@ -366,6 +366,9 @@ class Controller:
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
         self._jobs.set_db_hosts(orchestrator)
+
+        # set shards, so that they can be retrieved later for env vars
+        self.set_shard_env_var(orchestrator.num_shards)
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -469,34 +472,40 @@ class Controller:
         :param entity: The entity to retrieve connections from
         :type entity:  Model
         """
-        #NOTEjp
+
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         
         addy, a_dict = self._jobs.get_db_host_addresses()
-        #addresses = self._jobs.get_db_host_addresses()
+
+        # Retrieve num_shards to append to client env
+        num_shards = self.get_shard_env_var()
+        if num_shards > 2:
+            client_env["SR_DB_TYPE"] = "clustered"
+        else:
+            client_env["SR_DB_TYPE"] = "standalone"
+
         for db_id, addresses in a_dict.items():
-            db_name = "_".join(db_id.split("_")[:-1]) + "_"
+            db_name =  "_" + "_".join(db_id.split("_")[:-1])
             
-            # if db_identifier exists ..
-            #otherwise "" prepend nothing? 
+
 
             if addresses:
                 if len(addresses) <= 128:
-                    client_env[f"{db_name}SSDB"] = ",".join(addresses)
+                    client_env[f"SSDB{db_name}"] = ",".join(addresses)
                 else:
                     # Cap max length of SSDB
-                    client_env[f"{db_name}SSDB"] = ",".join(addresses[:128])
+                    client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
                 if entity.incoming_entities:
-                    client_env[f"{db_name}SSKEYIN"] = ",".join(
+                    client_env[f"SSKEYIN{db_name}"] = ",".join(
                         [in_entity.name for in_entity in entity.incoming_entities]
                     )
                 if entity.query_key_prefixing():
-                    client_env[f"{db_name}SSKEYOUT"] = entity.name
+                    client_env[f"SSKEYOUT{db_name}"] = entity.name
 
         # Set address to local if it's a colocated model
         if entity.colocated:
             db_name_colo = (
-                entity.run_settings.colocated_db_settings["db_identifier"] + "_"
+                "_" + entity.run_settings.colocated_db_settings["db_identifier"] 
             )
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
@@ -506,14 +515,21 @@ class Controller:
                         "Co-located was configured for both TCP/IP and UDS"
                     )
                 if port:
-                    client_env[f"{db_name_colo}SSDB"] = f"127.0.0.1:{str(port)}"
+                    client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
                 elif socket:
-                    client_env[f"{db_name_colo}SSDB"] = f"unix://{socket}"
+                    client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
                 else:
                     raise SSInternalError(
                         "Colocated database was not configured for either TCP or UDS"
                     )
         entity.run_settings.update_env(client_env)
+
+    def set_shard_env_var(self, num_shards):
+        self.nums = num_shards
+
+    def get_shard_env_var(self):
+        return self.nums
+
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Save the orchestrator object via pickle
@@ -642,14 +658,8 @@ class Controller:
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:
             return
-        #db_addresses = self._jobs.get_db_host_addresses()
-        db_addresses, a_dict = self._jobs.get_db_host_addresses()
-        #loop through list of addresses? 
-        
-        #for db_id, addresses in a_dict.items():
-       
-        
 
+        db_addresses, a_dict = self._jobs.get_db_host_addresses() 
 
         hosts = list({address.split(":")[0] for address in db_addresses})
         ports = list({int(address.split(":")[-1]) for address in db_addresses})

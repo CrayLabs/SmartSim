@@ -307,19 +307,19 @@ class JobManager:
     def get_db_host_addresses(self) -> t.List[str]:
         """Retrieve the list of hosts for the database
 
-        :return: list of host ip addresses
+        :return: list of host ip addresses, 
+        and dict of db_identifier: and list of addresses
         :rtype: list[str]
         """
         addresses = []
         for db_id, db_job in self.db_jobs.items():
-       # for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
                 for combine in itertools.product(db_job.hosts, db_entity.ports):   
                     ip_addr = get_ip_from_host(combine[0]) 
                     addresses.append(":".join((ip_addr, str(combine[1]))))  
-            self.address_dict.update({db_id:addresses})
-     # return the dict 
+        self.address_dict.update({db_id:addresses})
+
         return addresses, self.address_dict
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:  
