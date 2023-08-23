@@ -19,7 +19,10 @@ To be released at some future point in time
 
 Description
 
+- Mitigated additional suppressed pylint errors
 - Fix colocated db preparation bug when using `JsrunSettings`
+- Enabled additional mypy checks
+- Additional typehints
 - Log ignored error messages from `sacct`
 - Fix malformed logging format strings
 - Fix bug when user specify CPU and devices greater than 1
@@ -28,14 +31,20 @@ Description
 
 Detailed Notes
 
+- Created public proprties where appropriate to mitigate `protected-access` errors (PR341_)
 - Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check (PR339_)
+- Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any` (PR338_)
+- Add typehints to `smartsim._core.launcher.step.*` (PR334_)
 - Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
 - Fix incorrectly formatted positional arguments in log format strings (PR330_)
 - Add error if user calls get_allocation with reserved keywords in slurm get_allocation (PR325_)
 - Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script (PR324_)
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
 
+.. _PR341: https://github.com/CrayLabs/SmartSim/pull/341
 .. _PR339: https://github.com/CrayLabs/SmartSim/pull/339
+.. _PR338: https://github.com/CrayLabs/SmartSim/pull/338
+.. _PR334: https://github.com/CrayLabs/SmartSim/pull/334
 .. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
 .. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
 .. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
