@@ -52,6 +52,7 @@ logger = get_logger("Smart", fmt=SMART_LOGGER_FORMAT)
 
 
 if t.TYPE_CHECKING:
+    from multiprocessing.connection import Connection
     # Pylint disable needed for old version of pylint w/ TF 2.6.2
     # pylint: disable-next=unsubscriptable-object
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
@@ -199,7 +200,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -
     client.get_tensor("keras-output")
 
 
-def _build_tf_frozen_model(conn: mp.connection.Connection, tmp_dir: str) -> None:
+def _build_tf_frozen_model(conn: "Connection", tmp_dir: str) -> None:
     from tensorflow import keras
 
     from smartsim.ml.tf import freeze_model
