@@ -4,15 +4,16 @@ Community
 *********
 
 Thanks for you interest in joining the SmartSim community. While SmartSim is
-developed by a team of engineers at Hewlett Packard Enterprise, we benefit
-greatly from community contributions and discussions. Please feel free to reach
-out; we are always open to hearing about your science and engineering questions.
+primarily developed by a team of engineers at Hewlett Packard Enterprise, we
+benefit greatly from community contributions and discussions. Please feel free
+to reach out; we are always open to hearing about your science and engineering
+questions.
 
-How to Behave?
---------------
-We believe it is important for all users and contributors to SmartSim to have a
-great experience. Please review our :ref:`Code of Conduct <conduct>` for
-community guidelines and expectations.
+Code of Conduct
+---------------
+All users, contributors, and developers of SmartSim are expected to treat each
+other fairly and with respect. Please review our :ref:`Code of Conduct
+<conduct>` which highlights what this expectation means for the community.
 
 Need Help?
 ----------
@@ -20,15 +21,15 @@ We encourage and welcome usage questions and bug reports from all users,
 especially those who are new to SmartSim. There are a few things you can do to
 improve the likelihood of quickly getting a good answer.
 
-1. **It is important to ask questions in the right place.** We strongly prefer
-the use of Stack Overflow or GitHub issues over Slack chat. GitHub and Stack
-Overflow are more easily searchable by future users, and therefore is more
-efficient for everyone’s time. Slack chat should be reserved for developer and
-community discussion. If you have a general question about how something should
-work or want best practices then use Stack Overflow. If you think you have found
-a bug or suggest a new feature then use GitHub.
+1. **It is important to ask questions in the right place.**
+While we understand people's desires for privacy, we strongly prefer the use of
+GitHub issues (feature requests, bug reports or Stack Overflow posts (usage
+questions, best practices) due to their discoverability by future users as
+opposed to private communications like Slack or email. Slack chat should be
+reserved for developer and community discussion. Email is preferred for more
+sensitive items.
 
-2. **Please ask only in one place.** Please restrict yourself to posting your
+1. **Please ask only in one place.** Please restrict yourself to posting your
 question in only one place (likely Stack Overflow or GitHub) and don’t post in
 both.
 
@@ -44,14 +45,14 @@ likelihood of being answered.
 
 How to contribute
 -----------------
-We welcome contributions and examples from the community. These generally fall
-under two categories:
+We welcome contributions from the broader community. These generally fall under
+two categories:
 
 - Developments to the main codebases: These contributions directly modify the
 SmartSim and SmartRedis repositories to fix bugs in the code, improve
 the documentation, or add new features. Before embarking on major development,
 please contact the developers first to make sure that your proposal aligns
-with the internal development by opening an issue or reach out to us.  Please
+with the internal development by opening an issue or reach out to us. Please
 follow the :ref:`Developer Guidelines <developer_guide>`.
 
 - Applications of SmartSim: Many of our users build scientific/engineering
@@ -65,7 +66,7 @@ rejecting your contribution
 
 - If we accept your contribution, a SmartSim developer will be assigned to help
 bring your contribution into the codebases by testing it across a variety off
-platforms.
+platforms and ensuring code quality.
 
 - You will be credited as a co-author when the contribution is merged
 
