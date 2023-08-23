@@ -105,6 +105,10 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
+        if os.getenv("SLURM_HET_SIZE") is not None:
+            raise ValueError(
+                "Slurm does not support MPMD workloads in heterogeneous jobs."
+            )
         self.mpmd.append(settings)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
