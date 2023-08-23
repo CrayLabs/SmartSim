@@ -276,7 +276,7 @@ class SrunSettings(RunSettings):
 
     def set_het_group(self, het_group: int) -> None:
         """Set the heterogeneous group for this job
-        
+
         :param het_group: heterogeneous group
         :type het_group: int
         """
