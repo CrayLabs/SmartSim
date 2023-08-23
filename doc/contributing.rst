@@ -1,7 +1,7 @@
 
 *********
-Community
-*********
+Contributing Guide
+******************
 
 Thanks for you interest in joining the SmartSim community. While SmartSim is
 primarily developed by a team of engineers at Hewlett Packard Enterprise, we
