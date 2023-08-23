@@ -29,7 +29,7 @@ opposed to private communications like Slack or email. Slack chat should be
 reserved for developer and community discussion. Email is preferred for more
 sensitive items.
 
-1. **Please ask only in one place.** Please restrict yourself to posting your
+2. **Please ask only in one place.** Please restrict yourself to posting your
 question in only one place (likely Stack Overflow or GitHub) and don’t post in
 both.
 
