@@ -24,9 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import time
 import typing as t
-
 from shutil import which
 
 from ....error import LauncherError
@@ -188,14 +188,29 @@ class SlurmLauncher(WLMLauncher):
         stepmap = self.step_mapping[step_name]
         if stepmap.managed:
             step_id = str(stepmap.step_id)
-            # Check if step_id is part of colon-separated run
-            # if that is the case, stop parent job step because
+            # Check if step_id is part of colon-separated run,
+            # this is reflected in a '+' in the step id,
+            # so that the format becomes 12345+1.0.
+            # If we find it it can mean two things:
+            # a MPMD srun command, or a heterogeneous job.
+            # If it is a MPMD srun, then stop parent step because
             # sub-steps cannot be stopped singularly.
-            if "+" in step_id:
+            sub_step = "+" in step_id
+            het_job = os.getenv("SLURM_HET_SIZE") is not None
+            # If it is a het job, we can stop
+            # them like this. Slurm will throw an error, but
+            # will actually kill steps correctly.
+            if sub_step and not het_job:
                 step_id = step_id.split("+", maxsplit=1)[0]
             scancel_rc, _, err = scancel([step_id])
             if scancel_rc != 0:
-                logger.warning(f"Unable to cancel job step {step_name}\n {err}")
+                msg = ""
+                if het_job:
+                    msg += "The following error might be internal to Slurm\n"
+                    msg += "and the heterogeneous job step could have been correctly canceled.\n"
+                    msg += "SmartSim will consider it canceled and continue execution.\n"
+                msg += f"Unable to cancel job step {step_name}\n{err}"
+                logger.warning(msg)
             if stepmap.task_id:
                 self.task_manager.remove_task(str(stepmap.task_id))
         else:
@@ -238,9 +253,7 @@ class SlurmLauncher(WLMLauncher):
             raise LauncherError("Could not find id of launched job step")
         return step_id
 
-    def _get_managed_step_update(
-        self, step_ids: t.List[str]
-    ) -> t.List[StepInfo]:
+    def _get_managed_step_update(self, step_ids: t.List[str]) -> t.List[StepInfo]:
         """Get step updates for WLM managed jobs
 
         :param step_ids: list of job step ids

@@ -270,6 +270,17 @@ class SrunSettings(RunSettings):
         """
         self.run_args["time"] = str(walltime)
 
+    def set_het_group(self, het_group: int) -> None:
+        """Set the heterogeneous group for this job
+        
+        :param het_group: heterogeneous group
+        :type het_group: int
+        """
+        msg = "Support for heterogeneous groups is an experimental feature, "
+        msg += "please report any unexpected behavior to SmartSim developers"
+        logger.warning(msg)
+        self.run_args["het-group"] = str(het_group)
+
     def format_run_args(self) -> t.List[str]:
         """Return a list of slurm formatted run arguments
 
