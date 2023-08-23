@@ -208,7 +208,7 @@ class SlurmLauncher(WLMLauncher):
                 if het_job:
                     msg += "The following error might be internal to Slurm\n"
                     msg += "and the heterogeneous job step could have been correctly canceled.\n"
-                    msg += "SmartSim will consider it canceled and continue execution.\n"
+                    msg += "SmartSim will consider it canceled.\n"
                 msg += f"Unable to cancel job step {step_name}\n{err}"
                 logger.warning(msg)
             if stepmap.task_id:
