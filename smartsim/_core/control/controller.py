@@ -368,7 +368,7 @@ class Controller:
         self._jobs.set_db_hosts(orchestrator)
 
         # set shards, so that they can be retrieved later for env vars
-        self.set_shard_env_var(orchestrator.num_shards)
+        self.num = orchestrator.num_shards
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -478,7 +478,7 @@ class Controller:
         addy, a_dict = self._jobs.get_db_host_addresses()
 
         # Retrieve num_shards to append to client env
-        num_shards = self.get_shard_env_var()
+        num_shards = self.num
         if num_shards > 2:
             client_env["SR_DB_TYPE"] = "clustered"
         else:
@@ -522,11 +522,6 @@ class Controller:
                     )
         entity.run_settings.update_env(client_env)
 
-    def set_shard_env_var(self, num_shards):
-        self.nums = num_shards
-
-    def get_shard_env_var(self):
-        return self.nums
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Save the orchestrator object via pickle
