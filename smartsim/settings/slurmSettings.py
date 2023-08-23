@@ -280,6 +280,10 @@ class SrunSettings(RunSettings):
         :param het_group: heterogeneous group
         :type het_group: int
         """
+        if self.mpmd:
+            msg = ("Slurm does not support MPMD workloads "
+                  + "in heterogeneous jobs\n")
+            raise ValueError(msg)
         msg = "Support for heterogeneous groups is an experimental feature, "
         msg += "please report any unexpected behavior to SmartSim developers"
         logger.warning(msg)
