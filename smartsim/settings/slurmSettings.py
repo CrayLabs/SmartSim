@@ -286,8 +286,8 @@ class SrunSettings(RunSettings):
         if het_size_env is None:
             msg = "Requested to set het group, but the allocation is not a het job"
             raise ValueError(msg)
-        else:
-            het_size = int(het_size_env)
+
+        het_size = int(het_size_env)
         if self.mpmd:
             msg = "Slurm does not support MPMD workloads in heterogeneous jobs\n"
             raise ValueError(msg)
