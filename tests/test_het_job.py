@@ -29,12 +29,7 @@ import pytest
 from smartsim import Experiment
 from smartsim.settings import SrunSettings
 
-# retrieved from pytest fixtures
-if pytest.test_launcher not in pytest.wlm_options:
-    pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
-
-@pytest.mark.skipif(pytest.test_launcher != "slurm", reason="Test needs Slurm to run")
 def test_mpmd_errors(monkeypatch):
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-het-job-errors"
@@ -50,7 +45,6 @@ def test_mpmd_errors(monkeypatch):
         rs.set_het_group(1)
 
 
-@pytest.mark.skipif(pytest.test_launcher != "slurm", reason="Test needs Slurm to run")
 def test_set_het_group(monkeypatch):
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-set-het-group"
@@ -60,7 +54,6 @@ def test_set_het_group(monkeypatch):
     assert rs.run_args["het-group"] == "23"
 
 
-@pytest.mark.skipif(pytest.test_launcher != "slurm", reason="Test needs Slurm to run")
 def test_orch_single_cmd(monkeypatch, wlmutils):
     """Test that single cmd is rejected in a heterogeneous job"""
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
