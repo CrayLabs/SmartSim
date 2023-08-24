@@ -30,6 +30,10 @@ from smartsim import Experiment
 from smartsim.settings import SrunSettings
 
 
+# retrieved from pytest fixtures
+if pytest.test_launcher != "slurm":
+    pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
+
 def test_mpmd_errors(monkeypatch):
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-het-job-errors"
