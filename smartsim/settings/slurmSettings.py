@@ -294,7 +294,7 @@ class SrunSettings(RunSettings):
             "please report any unexpected behavior to SmartSim developers "
             "by opening an issue on https://github.com/CrayLabs/SmartSim/issues"
         )
-        het_size = int(het_size)
+        het_size = t.cast(int, het_size)
         if any(group >= het_size for group in het_group):
             msg = (
                 f"Het group {max(het_group)} requested, "
