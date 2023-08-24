@@ -141,19 +141,13 @@ def get_hostlist() -> t.Optional[t.List[str]]:
     if not test_hostlist:
         if "COBALT_NODEFILE" in os.environ:
             try:
-                cobalt_fp = os.environ["COBALT_NODEFILE"]
-                with open(cobalt_fp, "r", encoding="utf-8") as nodefile:
-                    lines = nodefile.readlines()
-                    test_hostlist = list({line.strip() for line in lines})
-            except Exception:
+                return _parse_hostlist_file(os.environ["COBALT_NODEFILE"])
+            except FileNotFoundError:
                 return None
         elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
             try:
-                pbs_fp = os.environ["PBS_NODEFILE"]
-                with open(pbs_fp, "r", encoding="utf-8") as nodefile:
-                    lines = nodefile.readlines()
-                    test_hostlist = list({line.strip() for line in lines})
-            except Exception:
+                return _parse_hostlist_file(os.environ["PBS_NODEFILE"])
+            except FileNotFoundError:
                 return None
         elif "SLURM_JOB_NODELIST" in os.environ:
             try:
@@ -167,6 +161,11 @@ def get_hostlist() -> t.Optional[t.List[str]]:
             except Exception:
                 return None
     return test_hostlist
+
+
+def _parse_hostlist_file(path: str) -> t.List[str]:
+    with open(path, "r", encoding="utf-8") as nodefile:
+        return list({line.strip() for line in nodefile.readlines()})
 
 
 @pytest.fixture(scope="session")
