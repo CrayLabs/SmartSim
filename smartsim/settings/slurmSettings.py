@@ -274,20 +274,23 @@ class SrunSettings(RunSettings):
         """
         self.run_args["time"] = str(walltime)
 
-    def set_het_group(self, het_group: int) -> None:
+    def set_het_group(self, het_group: t.Iterable[int]) -> None:
         """Set the heterogeneous group for this job
 
-        :param het_group: heterogeneous group
-        :type het_group: int
+        this sets `--het-group`
+        
+        :param het_group: list of heterogeneous groups
+        :type het_group: int or iterable of ints
         """
         if self.mpmd:
             msg = ("Slurm does not support MPMD workloads "
-                  + "in heterogeneous jobs\n")
+                   "in heterogeneous jobs\n")
             raise ValueError(msg)
         msg = ("Support for heterogeneous groups is an experimental feature, "
-               "please report any unexpected behavior to SmartSim developers")
+               "please report any unexpected behavior to SmartSim developers "
+               "by opening an issue on https://github.com/CrayLabs/SmartSim/issues")
         logger.warning(msg)
-        self.run_args["het-group"] = str(het_group)
+        self.run_args["het-group"] = ",".join(str(group) for group in het_group)
 
     def format_run_args(self) -> t.List[str]:
         """Return a list of slurm formatted run arguments

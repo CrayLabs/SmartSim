@@ -45,13 +45,17 @@ def test_mpmd_errors(monkeypatch):
         rs.set_het_group(1)
 
 
-def test_set_het_group(monkeypatch):
+def test_set_het_groups(monkeypatch):
+    """Test ability to set one or more het groups to run setting
+    """
     monkeypatch.setenv("SLURM_HET_SIZE", "1")
     exp_name = "test-set-het-group"
     exp = Experiment(exp_name, launcher="slurm")
     rs: SrunSettings = exp.create_run_settings("sleep", "1", run_command="srun")
-    rs.set_het_group(23)
+    rs.set_het_group([23])
     assert rs.run_args["het-group"] == "23"
+    rs.set_het_group([3,2])
+    assert rs.run_args["het-group"] == "3,2"
 
 
 def test_orch_single_cmd(monkeypatch, wlmutils):
