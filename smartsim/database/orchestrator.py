@@ -110,7 +110,7 @@ def _check_run_command(launcher: str, run_command: str) -> None:
 def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
     if not single_cmd:
         return single_cmd
-    
+
     if run_command == "srun" and getenv("SLURM_HET_SIZE") is not None:
         msg = (
             "srun can not launch an orchestrator with single_cmd=True in "

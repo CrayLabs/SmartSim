@@ -283,7 +283,7 @@ class SrunSettings(RunSettings):
         :type het_group: int or iterable of ints
         """
         if self.mpmd:
-            msg = "Slurm does not support MPMD workloads " "in heterogeneous jobs\n"
+            msg = "Slurm does not support MPMD workloads in heterogeneous jobs\n"
             raise ValueError(msg)
         msg = (
             "Support for heterogeneous groups is an experimental feature, "
