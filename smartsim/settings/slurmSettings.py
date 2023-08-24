@@ -282,6 +282,10 @@ class SrunSettings(RunSettings):
         :param het_group: list of heterogeneous groups
         :type het_group: int or iterable of ints
         """
+        het_size = os.getenv("SLURM_HET_SIZE")
+        if het_size is None:
+            msg = "Requested to set het group, but the allocation is not a het job"
+            raise ValueError(msg)
         if self.mpmd:
             msg = "Slurm does not support MPMD workloads in heterogeneous jobs\n"
             raise ValueError(msg)
@@ -290,6 +294,13 @@ class SrunSettings(RunSettings):
             "please report any unexpected behavior to SmartSim developers "
             "by opening an issue on https://github.com/CrayLabs/SmartSim/issues"
         )
+        het_size = int(het_size)
+        if any(group >= het_size for group in het_group):
+            msg = (
+                f"Het group {max(het_group)} requested, "
+                f"but max het group in allocation is {het_size-1}"
+            )
+            raise ValueError(msg)
         logger.warning(msg)
         self.run_args["het-group"] = ",".join(str(group) for group in het_group)
 
