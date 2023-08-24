@@ -110,9 +110,10 @@ class WLMLauncher(Launcher):  # cov-wlm
             raise SSUnsupportedError(
                 f"RunSettings type {type(step_settings)} not supported by this launcher"
             ) from None
+        try:
+            return step_class(name, cwd, step_settings)
         except AllocationError as e:
             raise LauncherError("Step creation failed") from e
-        return step_class(name, cwd, step_settings)
 
     # these methods are implemented in WLM launchers and
     # don't need to be covered here.
