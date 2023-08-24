@@ -204,14 +204,16 @@ class SlurmLauncher(WLMLauncher):
                 step_id = step_id.split("+", maxsplit=1)[0]
             scancel_rc, _, err = scancel([step_id])
             if scancel_rc != 0:
-                msg = ""
                 if het_job:
-                    msg += (
+                    msg = (
+                        "SmartSim received a non-zero exit code while canceling"
+                        f" a heterogeneous job step {step_name}!\n"
                         "The following error might be internal to Slurm\n"
-                        + "and the heterogeneous job step could have been correctly"
-                        + " canceled.\nSmartSim will consider it canceled.\n"
+                        "and the heterogeneous job step could have been correctly"
+                        " canceled.\nSmartSim will consider it canceled.\n"
                     )
-                msg += f"Unable to cancel job step {step_name}\n{err}"
+                else:
+                    msg = f"Unable to cancel job step {step_name}\n{err}"
                 logger.warning(msg)
             if stepmap.task_id:
                 self.task_manager.remove_task(str(stepmap.task_id))
