@@ -29,7 +29,7 @@ import shutil
 from shlex import split as sh_split
 import typing as t
 
-from ....error import AllocationError
+from ....error import AllocationError, SmartSimError
 from ....log import get_logger
 from .step import Step
 from ....settings import MpirunSettings, MpiexecSettings, OrterunSettings
@@ -52,19 +52,12 @@ class _BaseMPIStep(Step):
 
         super().__init__(name, cwd, run_settings)
 
-        self.alloc = None
-        if not self.run_settings.in_batch:
+        self.alloc: t.Optional[str] = None
+        if not run_settings.in_batch:
             self._set_alloc()
-
-    @property
-    def run_settings(self) -> RunSettings:
-        return self.step_settings
+        self.run_settings = run_settings
 
     _supported_launchers = ["PBS", "COBALT", "SLURM", "LSB"]
-
-    @property
-    def _run_command(self) -> str:
-        return self.run_settings.run_command
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
@@ -72,7 +65,11 @@ class _BaseMPIStep(Step):
         :return: launch command
         :rtype: list[str]
         """
-        mpi_cmd = [self._run_command, "--wdir", self.cwd]
+        run_cmd = self.run_settings.run_command
+        if not run_cmd:
+            raise SmartSimError("No run command specified")
+
+        mpi_cmd = [run_cmd, "--wdir", self.cwd]
         # add env vars to mpi command
         mpi_cmd.extend(self.run_settings.format_env_vars())
 
@@ -86,6 +83,8 @@ class _BaseMPIStep(Step):
 
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
+            if not bash:
+                raise RuntimeError("Could not find bash in PATH")
             launch_script_path = self.get_colocated_launch_script()
             mpi_cmd += [bash, launch_script_path]
 
@@ -117,30 +116,39 @@ class _BaseMPIStep(Step):
             "No allocation specified or found and not running in batch"
         )
 
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """Temporary convenience function to return a typed list
+        of attached RunSettings"""
+        if hasattr(self.run_settings, "mpmd") and self.run_settings.mpmd:
+            rs_mpmd: t.List[RunSettings] = self.run_settings.mpmd
+            return rs_mpmd
+        return []
+
     def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
         :rtype: list[str]
         """
-        if self.run_settings.mpmd:
+        if self._get_mpmd():
             return self._make_mpmd()
 
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         return exe + args
 
     def _make_mpmd(self) -> t.List[str]:
         """Build mpiexec (MPMD) executable"""
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self.run_settings._exe_args  # pylint: disable=protected-access
         cmd = exe + args
-        for mpmd in self.run_settings.mpmd:
+
+        for mpmd in self._get_mpmd():
             cmd += [" : "]
             cmd += mpmd.format_run_args()
             cmd += mpmd.format_env_vars()
             cmd += mpmd.exe
-            cmd += mpmd.exe_args
+            cmd += mpmd._exe_args  # pylint: disable=protected-access
 
         cmd = sh_split(" ".join(cmd))
         return cmd
