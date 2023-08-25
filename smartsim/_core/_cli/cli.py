@@ -35,6 +35,7 @@ from smartsim._core._cli.clean import configure_parser as clean_parser
 from smartsim._core._cli.clean import execute as clean_execute
 from smartsim._core._cli.clean import execute_all as clobber_execute
 from smartsim._core._cli.dbcli import execute as dbcli_execute
+from smartsim._core._cli.info import execute as info_execute
 from smartsim._core._cli.site import execute as site_execute
 from smartsim._core._cli.validate import (
     execute as validate_execute,
@@ -116,6 +117,11 @@ def default_cli() -> SmartCli:
             "Run a simple SmartSim experiment to confirm that it is built correctly",
             validate_execute,
             validate_parser,
+        ),
+        MenuItemConfig(
+            "info",
+            "Display information about the current SmartSim installation",
+            info_execute,
         ),
     ]
 
