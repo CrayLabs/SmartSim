@@ -35,7 +35,7 @@ from ...entity import Model, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
-#from ...database import Orchestrator
+from ...database import Orchestrator
 from ...entity import Ensemble
 
 
@@ -132,9 +132,8 @@ class Generator:
         else:
             logger.info("Working in previously created experiment")
 
-    def _gen_orc_dir(
-        self, orchestrator_list
-    ) -> None:  # orchestrator: t.Optional[Orchestrator]
+    def _gen_orc_dir(self, orchestrator_list) -> None:
+        # orchestrator: t.Optional[Orchestrator]
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
@@ -149,10 +148,10 @@ class Generator:
             orc_path = path.join(self.gen_path, "database")
             orchestrator.set_path(orc_path)
 
-            # Always remove orchestrator files if present.
-            if path.isdir(orc_path):
-                shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=True)
+        # Always remove orchestrator files if present.
+        if path.isdir(orc_path):
+            shutil.rmtree(orc_path, ignore_errors=True)
+        pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for EntityList instances

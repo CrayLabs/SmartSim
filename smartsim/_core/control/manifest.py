@@ -28,7 +28,7 @@ import typing as t
 
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity, Model, Ensemble
-#from ...error import SmartSimError
+from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
 
@@ -56,11 +56,13 @@ class Manifest:
         :rtype: Orchestrator | None
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
+        # print("DBS", dbs)  # list of orchestrators now
+        # [<smartsim.database.orchestrator.Orchestrator object at 0x7fbe3337a790>, <smartsim.database.orchestrator.Orchestrator object at 0x7fbe3337ad60>]
 
         # if len(dbs) > 1:
         #     raise SmartSimError("User attempted to create more than one Orchestrator")
 
-        #return dbs[0] if dbs else None
+        # return dbs[0] if dbs else None
         return dbs if dbs else None
 
     @property
@@ -108,8 +110,8 @@ class Manifest:
             name = getattr(deployable, "name", None)
             if not name:
                 raise AttributeError("Entity has no name. Please set name attribute.")
-            # if name in used:
-            #     raise SmartSimError("User provided two entities with the same name")
+            if name in used:
+                raise SmartSimError("User provided two entities with the same name")
             used.append(name)
 
     @staticmethod
@@ -157,13 +159,15 @@ class Manifest:
             output += "\n"
 
         if self.db:
-            output += db_header
-            output += f"Shards: {self.db.num_shards}\n"
-            output += f"Port: {str(self.db.ports[0])}\n"
-            output += f"Network: {self.db._interfaces}\n"
-            output += f"Batch Launch: {self.db.batch}\n"
-            if self.db.batch:
-                output += f"{str(self.db.batch_settings)}\n"
+            # jpnote looping
+            for adb in self.db:
+                output += db_header
+                output += f"Shards: {adb.num_shards}\n"
+                output += f"Port: {str(adb.ports[0])}\n"
+                output += f"Network: {adb._interfaces}\n"
+                output += f"Batch Launch: {adb.batch}\n"
+                if adb.batch:
+                    output += f"{str(adb.batch_settings)}\n"
 
         output += "\n"
         return output

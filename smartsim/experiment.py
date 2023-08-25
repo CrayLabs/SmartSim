@@ -872,8 +872,8 @@ class Experiment:
         # Check if db_identifier already exists
         if db_identifier in self.db_identifiers:
             raise DBIDConflictError(
-                f"Database identifier {db_identifier} has" \
-                "already been used. Pass in a unique name for db_identifier"
+                f"Database identifier {db_identifier}"
+                " has already been used. Pass in a unique name for db_identifier"
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)

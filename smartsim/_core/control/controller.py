@@ -78,7 +78,7 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
-        self.nums = None
+        self.num: int = 0
 
     def start(
         self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
@@ -196,7 +196,10 @@ class Controller:
         :param entity_list: entity list to be stopped
         :type entity_list: EntityList
         """
-        # for entity_list in entity_lists:
+        # jpnote -- sometimes is a list, and sometimes is a string
+        if isinstance(entity_list, list):
+            entity_list = entity_list[0]
+
         if entity_list.batch:
             self.stop_entity(entity_list)
         else:
@@ -474,18 +477,11 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-
-        addy, a_dict = self._jobs.get_db_host_addresses()
-
-        # Retrieve num_shards to append to client env
-        num_shards = self.num
-        if num_shards > 2:
-            client_env["SR_DB_TYPE"] = "clustered"
-        else:
-            client_env["SR_DB_TYPE"] = "standalone"
-
-        for db_id, addresses in a_dict.items():
+        addresses, address_dict = self._jobs.get_db_host_addresses()
+        for db_id, addresses in address_dict.items():
             db_name = "_" + "_".join(db_id.split("_")[:-1])
+            if db_name == "_orchestrator":
+                db_name = ""
 
             if addresses:
                 if len(addresses) <= 128:
@@ -500,26 +496,42 @@ class Controller:
                 if entity.query_key_prefixing():
                     client_env[f"SSKEYOUT{db_name}"] = entity.name
 
-        # Set address to local if it's a colocated model
-        if entity.colocated:
-            db_name_colo = (
-                "_" + entity.run_settings.colocated_db_settings["db_identifier"]
-            )
-            if colo_cfg := entity.run_settings.colocated_db_settings:
-                port = colo_cfg.get("port", None)
-                socket = colo_cfg.get("unix_socket", None)
-                if socket and port:
-                    raise SSInternalError(
-                        "Co-located was configured for both TCP/IP and UDS"
-                    )
-                if port:
-                    client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
-                elif socket:
-                    client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
+            # Retrieve num_shards to append to client env
+            num_shards = self.num
+            if num_shards > 2:
+                client_env[f"SR_DB_TYPE{db_name}"] = "Clustered"
+            else:
+                client_env[f"SR_DB_TYPE{db_name}"] = "Standalone"
+
+            # Set address to local if it's a colocated model
+            if entity.colocated:
+                db_name_colo = (
+                    "_" + entity.run_settings.colocated_db_settings["db_identifier"]
+                )
+                if len(db_name_colo) == 1:
+                    db_name_colo = ""
+                if colo_cfg := entity.run_settings.colocated_db_settings:
+                    port = colo_cfg.get("port", None)
+                    socket = colo_cfg.get("unix_socket", None)
+                    if socket and port:
+                        raise SSInternalError(
+                            "Co-located was configured for both TCP/IP and UDS"
+                        )
+                    if port:
+                        client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
+                    elif socket:
+                        client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
+                    else:
+                        raise SSInternalError(
+                            "Colocated database was not configured for either TCP or UDS"
+                        )
+                # Retrieve num_shards to append to client env
+                num_shards = self.num
+                if num_shards > 2:
+                    client_env[f"SR_DB_TYPE{db_name_colo}"] = "Clustered"
                 else:
-                    raise SSInternalError(
-                        "Colocated database was not configured for either TCP or UDS"
-                    )
+                    client_env[f"SR_DB_TYPE{db_name_colo}"] = "Standalone"
+
         entity.run_settings.update_env(client_env)
 
 
@@ -651,41 +663,42 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        db_addresses, a_dict = self._jobs.get_db_host_addresses()
+        db_address, address_dict = self._jobs.get_db_host_addresses()
 
-        hosts = list({address.split(":")[0] for address in db_addresses})
-        ports = list({int(address.split(":")[-1]) for address in db_addresses})
+        for db_addresses in address_dict.values():
+            hosts = list({address.split(":")[0] for address in db_addresses})
+            ports = list({int(address.split(":")[-1]) for address in db_addresses})
 
-        if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
-            raise SSInternalError("Cannot set DB Objects, DB is not running")
+            if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
+                raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-        client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+            client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
 
-        for model in manifest.models:
-            if not model.colocated:
+            for model in manifest.models:
+                if not model.colocated:
+                    # pylint: disable=protected-access
+                    for db_model in model._db_models:
+                        set_ml_model(db_model, client)
+                    for db_script in model._db_scripts:
+                        set_script(db_script, client)
+
+            for ensemble in manifest.ensembles:
                 # pylint: disable=protected-access
-                for db_model in model._db_models:
+                for db_model in ensemble._db_models:
                     set_ml_model(db_model, client)
-                for db_script in model._db_scripts:
+                for db_script in ensemble._db_scripts:
                     set_script(db_script, client)
-
-        for ensemble in manifest.ensembles:
-            # pylint: disable=protected-access
-            for db_model in ensemble._db_models:
-                set_ml_model(db_model, client)
-            for db_script in ensemble._db_scripts:
-                set_script(db_script, client)
-            for entity in ensemble.models:
-                if not entity.colocated:
-                    # Set models which could belong only
-                    # to the entities and not to the ensemble
-                    # but avoid duplicates
-                    for db_model in entity._db_models:
-                        if db_model not in ensemble._db_models:
-                            set_ml_model(db_model, client)
-                    for db_script in entity._db_scripts:
-                        if db_script not in ensemble._db_scripts:
-                            set_script(db_script, client)
+                for entity in ensemble.models:
+                    if not entity.colocated:
+                        # Set models which could belong only
+                        # to the entities and not to the ensemble
+                        # but avoid duplicates
+                        for db_model in entity._db_models:
+                            if db_model not in ensemble._db_models:
+                                set_ml_model(db_model, client)
+                        for db_script in entity._db_scripts:
+                            if db_script not in ensemble._db_scripts:
+                                set_script(db_script, client)
 
 
 class _AnonymousBatchJob(EntityList):

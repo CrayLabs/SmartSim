@@ -318,9 +318,10 @@ class JobManager:
                 for combine in itertools.product(db_job.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
-            self.address_dict.update({db_id: addresses})
 
-        return addresses, self.address_dict
+        self.address_dict.update({db_id: addresses})
+        # print(self.address_dict)  # want it to return a dict
+        return addresses, self.address_dict  # returns a list of addresses
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
@@ -330,7 +331,6 @@ class JobManager:
         """
         # should only be called during launch in the controller
 
-        # jpnote: this will get called twice, make sure it is looping
         with self._lock:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
