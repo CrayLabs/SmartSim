@@ -369,8 +369,6 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
-    exp.generate(colo_ensemble, overwrite=True)
-
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -386,7 +384,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     script to the ensemble, then colocating the DB"""
 
     # Set Experiment name
-    exp_name = "test-colocated-db-script"
+    exp_name = "test-colocated-db-script-reord"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -465,8 +463,6 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     assert len(colo_ensemble._db_scripts) == 1
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
-
-    exp.generate(colo_ensemble, overwrite=True)
 
     # Launch and check successful completion
     try:
