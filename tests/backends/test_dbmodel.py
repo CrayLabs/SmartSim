@@ -585,8 +585,6 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
         outputs=outputs2,
     )
 
-    exp.generate(colo_ensemble, overwrite=True)
-
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -687,8 +685,6 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         inputs=inputs2,
         outputs=outputs2,
     )
-
-    exp.generate(colo_ensemble, overwrite=True)
 
     # Launch and check successful completion
     try:
