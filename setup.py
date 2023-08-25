@@ -191,7 +191,7 @@ extras_require = {
         "types-setuptools",
     ],
     # see smartsim/_core/_install/buildenv.py for more details
-    "ml": versions.ml_extras_required(),
+    **versions.ml_extras_required()
 }
 
 

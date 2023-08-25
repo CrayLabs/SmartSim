@@ -42,6 +42,8 @@ from subprocess import SubprocessError
 # TODO:
 #   - check cmake version and use system if possible to avoid conflicts
 
+TRedisAIBackendStr = t.Literal["tensorflow", "torch", "onnxruntime", "tflite"]
+
 
 def expand_exe_path(exe: str) -> str:
     """Takes an executable and returns the full path to that executable
@@ -309,9 +311,9 @@ class RedisAIBuilder(Builder):
         self.rai_install_path: t.Optional[Path] = None
 
         # convert to int for RAI build script
-        self.torch = 1 if build_torch else 0
-        self.tf = 1 if build_tf else 0   # pylint: disable=invalid-name
-        self.onnx = 1 if build_onnx else 0
+        self._torch = build_torch
+        self._tf = build_tf
+        self._onnx = build_onnx
         self.libtf_dir = libtf_dir
         self.torch_dir = torch_dir
 
@@ -324,6 +326,30 @@ class RedisAIBuilder(Builder):
         server = self.lib_path.joinpath("backends").is_dir()
         cli = self.lib_path.joinpath("redisai.so").is_file()
         return server and cli
+
+    @property
+    def build_torch(self) -> bool:
+        return self._torch
+
+    @property
+    def fetch_torch(self) -> bool:
+        return self.build_torch and not self.torch_dir
+
+    @property
+    def build_tf(self) -> bool:
+        return self._tf
+
+    @property
+    def fetch_tf(self) -> bool:
+        return self.build_tf and not self.libtf_dir
+
+    @property
+    def build_onnx(self) -> bool:
+        return self._onnx
+
+    @property
+    def fetch_onnx(self) -> bool:
+        return self.build_onnx
 
     def copy_tf_cmake(self) -> None:
         """Copy the FindTensorFlow.cmake file to the build directory
@@ -397,6 +423,7 @@ class RedisAIBuilder(Builder):
 
     def build_from_git(self, git_url: str, branch: str, device: str = "cpu") -> None:
         """Build RedisAI from git
+
         :param git_url: url from which to retrieve RedisAI
         :type git_url: str
         :param branch: branch to checkout
@@ -426,7 +453,7 @@ class RedisAIBuilder(Builder):
 
         # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
         # TODO: Look for a better way to do this or wait for RAI patch
-        if sys.platform == "darwin" and branch == "v1.2.7" and self.onnx:
+        if sys.platform == "darwin" and branch == "v1.2.7" and self.build_onnx:
             # Clone RAI patch commit for OSX
             clone_cmd += ["RedisAI"]
             checkout_osx_fix = [
@@ -453,17 +480,20 @@ class RedisAIBuilder(Builder):
         self.copy_tf_cmake()
 
         # get RedisAI dependencies
-        dep_cmd = [
-            self.binary_path("env"),
-            "WITH_PT=0",  # torch is always 0 because we never use the torch from RAI
-            f"WITH_TF={1 if self.tf and not self.libtf_dir else 0}",
-            "WITH_TFLITE=0",  # never build with TF lite (for now)
-            f"WITH_ORT={self.onnx}",
-            "VERBOSE=1",
-            self.binary_path("bash"),
-            str(self.rai_build_path / "get_deps.sh"),
-            str(device),
-        ]
+        dep_cmd = self._rai_build_env_prefix(
+            with_pt=self.build_torch,
+            with_tf=self.build_tf,
+            with_ort=self.build_onnx,
+            extra_env={"VERBOSE": "1"},
+        )
+
+        dep_cmd.extend(
+            [
+                self.binary_path("bash"),
+                str(self.rai_build_path / "get_deps.sh"),
+                str(device),
+            ]
+        )
 
         self.run_command(
             dep_cmd,
@@ -474,19 +504,12 @@ class RedisAIBuilder(Builder):
         if self.libtf_dir and device:
             self.symlink_libtf(device)
 
-        build_cmd = [
-            self.binary_path("env"),
-            f"WITH_PT={self.torch}",  # but we built it in if the user specified it
-            f"WITH_TF={self.tf}",
-            "WITH_TFLITE=0",  # never build TF Lite
-            f"WITH_ORT={self.onnx}",
-            "WITH_UNIT_TESTS=0",
-        ]
-
-        if device == "gpu":
-            build_cmd.append("GPU=1")
-        else:
-            build_cmd.append("GPU=0")
+        build_cmd = self._rai_build_env_prefix(
+            with_pt=self.build_torch,
+            with_tf=self.build_tf,
+            with_ort=self.build_onnx,
+            extra_env={"GPU": "1" if device == "gpu" else "0"},
+        )
 
         if self.torch_dir:
             self.env["Torch_DIR"] = str(self.torch_dir)
@@ -504,9 +527,37 @@ class RedisAIBuilder(Builder):
         self.run_command(build_cmd, cwd=self.rai_build_path)
 
         self._install_backends(device)
-        if self.torch:
+        if self.user_supplied_backend("torch"):
             self._move_torch_libs()
         self.cleanup()
+
+    def user_supplied_backend(self, backend: TRedisAIBackendStr) -> bool:
+        if backend == "torch":
+            return bool(self.build_torch and not self.fetch_torch)
+        if backend == "tensorflow":
+            return bool(self.build_tf and not self.fetch_tf)
+        if backend == "onnxruntime":
+            return bool(self.build_onnx and not self.fetch_onnx)
+        if backend == "tflite":
+            return False
+        raise BuildError(f"Unrecognized backend requested {backend}")
+
+    def _rai_build_env_prefix(
+        self,
+        with_tf: bool,
+        with_pt: bool,
+        with_ort: bool,
+        extra_env: t.Optional[t.Dict[str, str]] = None,
+    ) -> t.List[str]:
+        extra_env = extra_env or {}
+        return [
+            self.binary_path("env"),
+            f"WITH_PT={1 if with_pt else 0}",
+            f"WITH_TF={1 if with_tf else 0}",
+            "WITH_TFLITE=0",  # never use TF Lite (for now)
+            f"WITH_ORT={1 if with_ort else 0}",
+            *(f"{key}={val}" for key, val in extra_env.items()),
+        ]
 
     def _install_backends(self, device: str) -> None:
         """Move backend libraries to smartsim/_core/lib/
@@ -529,7 +580,6 @@ class RedisAIBuilder(Builder):
         RedisAI, we need to move them into the LD_runpath of redisai.so
         in the smartsim/_core/lib directory.
         """
-
         ss_rai_torch_path = self.lib_path / "backends" / "redisai_torch"
         ss_rai_torch_lib_path = ss_rai_torch_path / "lib"
 

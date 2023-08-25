@@ -8,7 +8,7 @@ if these instructions do not work).
 .. code-block:: bash
 
     module use -a /lus/scratch/smartsim/local/modulefiles
-    module load cudatoolkit/11.4 cudnn git-lfs
+    module load cudatoolkit/11.8 cudnn git-lfs
 
     module unload PrgEnv-cray PrgEnv-intel PrgEnv-gcc
     module load PrgEnv-gnu
