@@ -339,6 +339,7 @@ def test_cli_default_cli(capsys):
         pytest.param("site", "site_execute", "mocked-site", id="ensure site action is executed"),
         pytest.param("clobber", "clobber_execute", "mocked-clobber", id="ensure clobber action is executed"),
         pytest.param("validate", "validate_execute", "mocked-validate", id="ensure validate action is executed"),
+        pytest.param("info", "info_execute", "mocked-validate", id="ensure info action is executed"),
     ]
 )
 def test_cli_action(capsys, monkeypatch, command, mock_location, exp_output):
@@ -434,6 +435,7 @@ def test_cli_optional_args(capsys,
         pytest.param("dbcli", "clean_execute", "helpful mocked-dbcli", "usage: smart dbcli", id="dbcli"),
         pytest.param("site", "clean_execute", "helpful mocked-site", "usage: smart site", id="site"),
         pytest.param("validate", "validate_execute", "helpful mocked-validate", "usage: smart validate", id="validate"),
+        pytest.param("info", "info_execute", "helpful mocked-validate", "usage: smart info", id="info"),
     ]
 )
 def test_cli_help_support(capsys,
@@ -472,6 +474,7 @@ def test_cli_help_support(capsys,
         pytest.param("dbcli", "dbcli_execute", "verbose mocked-dbcli", id="dbcli"),
         pytest.param("site", "site_execute", "verbose mocked-site", id="site"),
         pytest.param("validate", "validate_execute", "verbose mocked-validate", id="validate"),
+        pytest.param("info", "info_execute", "verbose mocked-validate", id="validate"),
     ]
 )
 def test_cli_invalid_optional_args(capsys,
@@ -508,6 +511,8 @@ def test_cli_invalid_optional_args(capsys,
         pytest.param("clobber", id="clobber"),
         pytest.param("dbcli", id="dbcli"),
         pytest.param("site", id="site"),
+        pytest.param("validate", id="validate"),
+        pytest.param("info", id="info"),
     ]
 )
 def test_cli_invalid_optional_args(capsys, command):
