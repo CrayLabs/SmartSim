@@ -1,4 +1,6 @@
+import argparse
 import importlib.metadata
+import pathlib
 import typing as t
 
 from tabulate import tabulate
@@ -7,14 +9,10 @@ import smartsim._core._cli.utils as _utils
 import smartsim._core.utils.helpers as _helpers
 from smartsim._core._install.buildenv import BuildEnv as _BuildEnv
 
-if t.TYPE_CHECKING:
-    import argparse
-    import pathlib
-
 _MISSING_DEP = _helpers.colorize("Not Installed", "red")
 
 
-def execute(_args: "argparse.Namespace", /) -> int:
+def execute(_args: argparse.Namespace, /) -> int:
     print("\nSmart Python Packages:")
     print(
         tabulate(
@@ -71,14 +69,14 @@ def execute(_args: "argparse.Namespace", /) -> int:
     return 0
 
 
-def _fmt_installed_db(db_path: "t.Optional[pathlib.Path]") -> str:
+def _fmt_installed_db(db_path: t.Optional[pathlib.Path]) -> str:
     if db_path is None:
         return _MISSING_DEP
     db_name, _ = db_path.name.split("-", 1)
     return _helpers.colorize(db_name.upper(), "green")
 
 
-def _fmt_installed_redis_ai(rai_path: "pathlib.Path") -> str:
+def _fmt_installed_redis_ai(rai_path: pathlib.Path) -> str:
     if not rai_path.is_file():
         return _MISSING_DEP
     return _helpers.colorize("Installed", "green")
