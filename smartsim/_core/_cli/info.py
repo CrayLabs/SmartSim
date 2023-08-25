@@ -35,7 +35,7 @@ def execute(_args: argparse.Namespace, /) -> int:
 
     print("Redis AI Configuration:")
     rai_path = _helpers.redis_install_base().parent / "redisai.so"
-    rai_table = [["Is Installed", _fmt_installed_redis_ai(rai_path)]]
+    rai_table = [["Status", _fmt_installed_redis_ai(rai_path)]]
     if rai_path.is_file():
         rai_table.append(["Location", str(rai_path)])
     print(tabulate(rai_table, tablefmt="fancy_outline"), end="\n\n")
