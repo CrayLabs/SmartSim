@@ -64,6 +64,7 @@ logger = get_logger(__name__)
 by_launcher: t.Dict[str, t.List[str]] = {
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
+    "pals": ["mpiexec"],
     "cobalt": ["aprun", "mpirun", "mpiexec"],
     "lsf": ["jsrun"],
     "local": [""],

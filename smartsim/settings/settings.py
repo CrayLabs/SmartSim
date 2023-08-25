@@ -43,7 +43,10 @@ from ..settings import (
     MpiexecSettings,
     OrterunSettings,
     JsrunSettings,
+    PalsMpiexecSettings,
 )
+
+_TRunSettingsSelector = t.Callable[[str], t.Callable[..., RunSettings]]
 
 
 def create_batch_settings(
@@ -144,13 +147,15 @@ def create_run_settings(
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
     # all supported RunSettings child classes
-    supported: t.Dict[str, t.Callable[..., RunSettings]] = {
-        "aprun": AprunSettings,
-        "srun": SrunSettings,
-        "mpirun": MpirunSettings,
-        "mpiexec": MpiexecSettings,
-        "orterun": OrterunSettings,
-        "jsrun": JsrunSettings,
+    supported: t.Dict[str, _TRunSettingsSelector] = {
+        "aprun": lambda launcher: AprunSettings,
+        "srun": lambda launcher: SrunSettings,
+        "mpirun": lambda launcher: MpirunSettings,
+        "mpiexec": lambda launcher: (
+            MpiexecSettings if launcher != "pals" else PalsMpiexecSettings
+        ),
+        "orterun": lambda launcher: OrterunSettings,
+        "jsrun": lambda launcher: JsrunSettings,
     }
 
     # run commands supported by each launcher
@@ -158,6 +163,7 @@ def create_run_settings(
     by_launcher = {
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
+        "pals": ["mpiexec"],
         "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
         "local": [""],
@@ -192,7 +198,7 @@ def create_run_settings(
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
-        return supported[run_command](
+        return supported[run_command](launcher)(
             exe, exe_args, run_args, env_vars, container=container, **kwargs
         )
 
