@@ -55,6 +55,7 @@ if t.TYPE_CHECKING:
     # Pylint disables needed for old version of pylint w/ TF 2.6.2
     # pylint: disable-next=unused-import
     from multiprocessing.connection import Connection
+
     # pylint: disable-next=unsubscriptable-object
     _TemporaryDirectory = tempfile.TemporaryDirectory[str]
 else:
@@ -181,6 +182,10 @@ def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -
     # Build the model in a subproc so that keras does not hog the gpu
     proc = mp.Process(target=_build_tf_frozen_model, args=(send_conn, tmp_dir))
     proc.start()
+
+    # do not need the sending connection in this proc anymore
+    send_conn.close()
+
     proc.join(timeout=120)
     if proc.is_alive():
         proc.terminate()
