@@ -277,7 +277,7 @@ class Ensemble(EntityList):
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
-    def print_attached_files(self):
+    def print_attached_files(self) -> None:
         """Print a table with information about attached files
 
         :returns: Table representation of attached files
