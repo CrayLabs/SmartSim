@@ -29,6 +29,8 @@ import typing as t
 from copy import deepcopy
 from os import getcwd
 
+from tabulate import tabulate
+
 from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
@@ -275,6 +277,29 @@ class Ensemble(EntityList):
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
+    def print_attached_files(self):
+        """Print a table with information about attached files
+
+        :returns: Table representation of attached files
+        :rtype: str
+        """
+        if not self.models:
+            print("The ensemble is empty, no files to show.")
+            return
+
+        values = []
+        for model in self.models:
+            if not model.files:
+                files = "No file attached to this model."
+            else:
+                files = str(model.files)
+
+            values.append([model.name, files])
+
+        table = tabulate(values, headers=["Model name", "Files"], tablefmt="grid")
+
+        print(table)
+
     @staticmethod
     def _set_strategy(strategy: str) -> StrategyFunction:
         """Set the permutation strategy for generating models within
@@ -335,7 +360,7 @@ class Ensemble(EntityList):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -395,7 +420,7 @@ class Ensemble(EntityList):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
@@ -439,7 +464,7 @@ class Ensemble(EntityList):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble
