@@ -154,7 +154,7 @@ class EntityFiles:
         if not values:
             return "No file attached to this entity."
 
-        return tabulate(values, headers=["Strategy", "File"], tablefmt="grid")
+        return tabulate(values, headers=["Strategy", "Files"], tablefmt="grid")
 
 
 class TaggedFilesHierarchy:

@@ -223,7 +223,7 @@ def test_print_files(fileutils, capsys):
             ["Symlink", symlink_dir],
             ["Configure", f"{gen_dir}\n{copy_dir}"],
         ],
-        headers=["Strategy", "File"],
+        headers=["Strategy", "Files"],
         tablefmt="grid",
     )
 
@@ -282,7 +282,6 @@ def test_config_dir(fileutils):
 
     assert osp.isdir(osp.join(test_dir, "test"))
 
-    # assert False
     def _check_generated(test_num, param_0, param_1):
         conf_test_dir = osp.join(test_dir, "test", f"test_{test_num}")
         assert osp.isdir(conf_test_dir)

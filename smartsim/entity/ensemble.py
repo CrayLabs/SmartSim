@@ -280,8 +280,6 @@ class Ensemble(EntityList):
     def print_attached_files(self) -> None:
         """Print a table with information about attached files
 
-        :returns: Table representation of attached files
-        :rtype: str
         """
         if not self.models:
             print("The ensemble is empty, no files to show.")
