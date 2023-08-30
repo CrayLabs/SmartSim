@@ -277,26 +277,29 @@ class Ensemble(EntityList):
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
-    def print_attached_files(self) -> None:
-        """Print a table with information about attached files
+    @property
+    def attached_files_table(self) -> str:
+        """Return a plain-text table with information about files
+        attached to models belonging to this ensemble.
 
+        :returns: A table of all files attached to all models
+        :rtype: str
         """
         if not self.models:
-            print("The ensemble is empty, no files to show.")
-            return
+            return "The ensemble is empty, no files to show."
 
         values = []
         for model in self.models:
-            if not model.files:
-                files = "No file attached to this model."
-            else:
-                files = str(model.files)
-
-            values.append([model.name, files])
+            values.append([model.name, model.attached_files_table])
 
         table = tabulate(values, headers=["Model name", "Files"], tablefmt="grid")
 
-        print(table)
+        return table
+
+    def print_attached_files(self) -> None:
+        """Print table of attached files to std out
+        """
+        print(self.attached_files_table)
 
     @staticmethod
     def _set_strategy(strategy: str) -> StrategyFunction:
