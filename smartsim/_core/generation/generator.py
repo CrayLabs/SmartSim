@@ -29,7 +29,10 @@ import shutil
 import typing as t
 
 from distutils import dir_util  # pylint: disable=deprecated-module
+from logging import INFO, DEBUG
 from os import mkdir, path, symlink
+from os.path import join, relpath
+from tabulate import tabulate
 
 from ...entity import Model, TaggedFilesHierarchy
 from ...log import get_logger
@@ -49,7 +52,9 @@ class Generator:
     and writing into configuration files as well.
     """
 
-    def __init__(self, gen_path: str, overwrite: bool = False) -> None:
+    def __init__(
+        self, gen_path: str, overwrite: bool = False, verbose: bool = False
+    ) -> None:
         """Initialize a generator object
 
         if overwrite is true, replace any existing
@@ -59,12 +64,18 @@ class Generator:
         is false, raises EntityExistsError when there is a name
         collision between entities.
 
+        :param gen_path: Path in which files need to be generated
+        :type gen_path: str
         :param overwrite: toggle entity replacement, defaults to False
         :type overwrite: bool, optional
+        :param verbose: Whether generation information should be logged to std out
+        :type verbose: bool, optional
         """
         self._writer = ModelWriter()
         self.gen_path = gen_path
+        self.log_file = join(gen_path, "param_settings.txt")
         self.overwrite = overwrite
+        self.log_level = DEBUG if not verbose else INFO
 
     def generate_experiment(self, *args: t.Any) -> None:
         """Run ensemble and experiment file structure generation
@@ -129,7 +140,9 @@ class Generator:
             # keep exists ok for race conditions on NFS
             pathlib.Path(self.gen_path).mkdir(exist_ok=True)
         else:
-            logger.info("Working in previously created experiment")
+            logger.log(
+                level=self.log_level, msg="Working in previously created experiment"
+            )
 
     def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
@@ -249,10 +262,50 @@ class Generator:
 
             # write in changes to configurations
             if isinstance(entity, Model):
-                logger.debug(
-                    f"Configuring model {entity.name} with params {entity.params}"
+                files_to_params = self._writer.configure_tagged_model_files(
+                    to_write, entity.params
                 )
-                self._writer.configure_tagged_model_files(to_write, entity.params)
+                self._log_params(entity, files_to_params)
+
+    def _log_params(
+        self, entity: Model, files_to_params: t.Dict[str, t.Dict[str, str]]
+    ) -> None:
+        """Log which files were modified during generation
+         
+        and what values were set to the parameters
+
+        :param entity: the model being generated
+        :type entity: Model
+        :param files_to_params: a dict connecting each file to its parameter settings
+        :type files_to_params: t.Dict[str, t.Dict[str, str]]
+        """
+        used_params: t.Dict[str, str] = {}
+        file_to_tables: t.Dict[str, str] = {}
+        for file, params in files_to_params.items():
+            used_params.update(params)
+            table = tabulate([[param, value] for param, value in params.items()])
+            file_to_tables[relpath(file, self.gen_path)] = table
+
+        if used_params:
+            used_params_str = ", ".join(
+                [f"{name}={value}" for name, value in used_params.items()]
+            )
+            logger.log(
+                level=self.log_level,
+                msg=f"Configured model {entity.name} with params {used_params_str}",
+            )
+            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
+                logfile.write(f"Model name: {entity.name}" + "\n")
+                file_table = tabulate(
+                    [[file, table] for file, table in file_to_tables.items()],
+                    headers=["File name", "Parameters"],
+                )
+                logfile.write(file_table + "\n\n")
+        else:
+            logger.log(
+                level=self.log_level,
+                msg=f"Configured model {entity.name} with no parameters",
+            )
 
     @staticmethod
     def _copy_entity_files(entity: Model) -> None:

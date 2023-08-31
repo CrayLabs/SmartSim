@@ -1,0 +1,32 @@
+Model name: dir_test_0
+File name                   Parameters
+--------------------------  ------------
+dir_test/dir_test_0/in.atm  ------  --
+                            THERMO  10
+                            STEPS   10
+                            ------  --
+
+Model name: dir_test_1
+File name                   Parameters
+--------------------------  ------------
+dir_test/dir_test_1/in.atm  ------  --
+                            THERMO  10
+                            STEPS   20
+                            ------  --
+
+Model name: dir_test_2
+File name                   Parameters
+--------------------------  ------------
+dir_test/dir_test_2/in.atm  ------  --
+                            THERMO  20
+                            STEPS   10
+                            ------  --
+
+Model name: dir_test_3
+File name                   Parameters
+--------------------------  ------------
+dir_test/dir_test_3/in.atm  ------  --
+                            THERMO  20
+                            STEPS   20
+                            ------  --
+

@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import filecmp
 from os import path as osp
 
 import pytest
@@ -108,7 +109,6 @@ def test_ensemble_overwrite_error(fileutils):
 
 
 def test_full_exp(fileutils, wlmutils):
-
     test_dir = fileutils.make_test_dir()
     exp = Experiment("gen-test", test_dir, launcher="local")
 
@@ -182,6 +182,24 @@ def test_multiple_tags(fileutils):
         )
 
 
+def test_generation_log(fileutils):
+    """Test that an error is issued when a tag is unused and make_fatal is True"""
+
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment("gen-log-test", test_dir, launcher="local")
+
+    params = {"THERMO": [10, 20], "STEPS": [10, 20]}
+    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
+    conf_file = fileutils.get_test_dir_path("in.atm")
+    ensemble.attach_generator_files(to_configure=conf_file)
+
+    exp.generate(ensemble, verbose=True)
+    assert filecmp.cmp(
+        osp.join(test_dir, "param_settings.txt"),
+        fileutils.get_test_dir_path("log_params_truth.txt"),
+    )
+
+
 def test_config_dir(fileutils):
     """Test the generation and configuration of models with
     tagged files that are directories with subdirectories and files
@@ -198,6 +216,7 @@ def test_config_dir(fileutils):
     gen.generate_experiment(ensemble)
 
     assert osp.isdir(osp.join(test_dir, "test"))
+
     # assert False
     def _check_generated(test_num, param_0, param_1):
         conf_test_dir = osp.join(test_dir, "test", f"test_{test_num}")

@@ -231,7 +231,11 @@ class Experiment:
             raise
 
     def generate(
-        self, *args: t.Any, tag: t.Optional[str] = None, overwrite: bool = False
+        self,
+        *args: t.Any,
+        tag: t.Optional[str] = None,
+        overwrite: bool = False,
+        verbose: bool = False,
     ) -> None:
         """Generate the file structure for an ``Experiment``
 
@@ -251,9 +255,11 @@ class Experiment:
         :param overwrite: overwrite existing folders and contents,
                defaults to False
         :type overwrite: bool, optional
+        :param verbose: log parameter settings to std out
+        :type verbose: bool
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite)
+            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
             if tag:
                 generator.set_tag(tag)
             generator.generate_experiment(*args)

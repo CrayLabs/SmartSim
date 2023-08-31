@@ -32,14 +32,13 @@ from os import path
 import pytest
 
 from smartsim._core.generation.modelwriter import ModelWriter
-from smartsim.error.errors import ParameterWriterError
+from smartsim.error.errors import ParameterWriterError, SmartSimError
 from smartsim.settings import RunSettings
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
 
 def test_write_easy_configs(fileutils):
-
     test_dir = fileutils.make_test_dir()
 
     param_dict = {
@@ -69,7 +68,6 @@ def test_write_easy_configs(fileutils):
 
 
 def test_write_med_configs(fileutils):
-
     test_dir = fileutils.make_test_dir()
 
     param_dict = {
@@ -144,3 +142,24 @@ def test_mw_error_2():
     writer = ModelWriter()
     with pytest.raises(ParameterWriterError):
         writer._write_changes("[not/a/path]")
+
+
+def test_write_mw_error_3(fileutils):
+    test_dir = fileutils.make_test_dir()
+
+    param_dict = {
+        "5": 10,  # MOM_input
+    }
+
+    conf_path = fileutils.get_test_dir_path("easy/marked/")
+    correct_path = fileutils.get_test_dir_path("easy/correct/")
+    # copy confs to gen directory
+    dir_util.copy_tree(conf_path, test_dir)
+    assert path.isdir(test_dir)
+
+    # init modelwriter
+    writer = ModelWriter()
+    with pytest.raises(SmartSimError):
+        writer.configure_tagged_model_files(
+            glob(test_dir + "/*"), param_dict, make_missing_tags_fatal=True
+        )
