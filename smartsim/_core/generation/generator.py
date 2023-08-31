@@ -53,7 +53,7 @@ class Generator:
     """
 
     def __init__(
-        self, gen_path: str, overwrite: bool = False, verbose: bool = False
+        self, gen_path: str, overwrite: bool = False, verbose: bool = True
     ) -> None:
         """Initialize a generator object
 
@@ -271,7 +271,7 @@ class Generator:
         self, entity: Model, files_to_params: t.Dict[str, t.Dict[str, str]]
     ) -> None:
         """Log which files were modified during generation
-         
+
         and what values were set to the parameters
 
         :param entity: the model being generated
