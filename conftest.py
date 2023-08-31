@@ -630,7 +630,7 @@ class FileUtils:
         return dir_path
 
     @staticmethod
-    def make_test_file(file_name: str, file_dir: t.Optional[str] = None) -> str:
+    def make_test_file(file_name: str, file_dir: t.Optional[str] = None, file_content: t.Optional[str] = None) -> str:
         """Create a dummy file in the test output directory.
 
         :param file_name: name of file to create, e.g. "file.txt"
@@ -644,7 +644,10 @@ class FileUtils:
         file_path = os.path.join(test_dir, file_name)
 
         with open(file_path, "w+", encoding="utf-8") as dummy_file:
-            dummy_file.write("dummy\n")
+            if not file_content:
+                dummy_file.write("dummy\n")
+            else:
+                dummy_file.write(file_content)
 
         return file_path
 

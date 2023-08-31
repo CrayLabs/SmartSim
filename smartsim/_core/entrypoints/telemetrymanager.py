@@ -44,6 +44,9 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
+# from smartsim._core.launcher.launcher import Launcher
+# from smartsim.wlm import detect_launcher
+
 logging.basicConfig(level=logging.INFO)
 
 """
@@ -115,9 +118,26 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
         self._logger = logger
-        # self._runs: t.Dict[int, t.Any] = {}
-        # self._runs: t.List[int] = []
-        self._tracked: t.List[int] = []
+        self._tracked_runs: t.List[int] = []
+        self._tracked_jobs: t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]] = {}
+        self._completed_jobs: t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]] = {}
+        self._launcher: str = ""
+
+    @property
+    def tracked_runs(self) -> t.List[int]:
+        return self._tracked_runs
+
+    @property
+    def tracked_jobs(self) -> t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]]:
+        return self._tracked_jobs
+
+    @property
+    def completed_jobs(self) -> t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]]:
+        return self._completed_jobs
+
+    @property
+    def launcher(self) -> str:
+        return self._launcher
 
     def on_modified(self, event: FileModifiedEvent) -> None:
         """Called when a file or directory is modified.
@@ -132,8 +152,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         # load items to process from manifest
         manifest = load_manifest(event.src_path)
         raw_runs = manifest.get("runs", [])
+        self._launcher = manifest["experiment"].get("launcher", "no-launcher-found")
 
-        raw_runs = filter_new(raw_runs, self._tracked)
+        raw_runs = filter_new(raw_runs, self._tracked_runs)
         runs = reshape_run(raw_runs)
 
         # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
@@ -142,8 +163,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         for ts, data in runs.items():
             for _type, entities in data.items():
                 for entity in entities:
-                    track_event(ts, _type, entity, "start", exp_dir)
-            self._tracked.append(ts)
+                    jid, tid = entity.get("job_id", ""), entity.get("step_id", "")
+                    if (jid, tid) not in self._tracked_jobs:
+                        self._tracked_jobs[(jid, tid)] = entity
+                        track_event(ts, _type, entity, "start", exp_dir)
+            self._tracked_runs.append(ts)
 
     def on_created(self, event: FileCreatedEvent) -> None:
         """Called when a file or directory is created.
@@ -159,7 +183,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         manifest = load_manifest(event.src_path)
         raw_runs = manifest.get("runs", [])
 
-        raw_runs = filter_new(raw_runs, self._tracked)
+        raw_runs = filter_new(raw_runs, self._tracked_runs)
         runs = reshape_run(raw_runs)
 
         # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
@@ -169,8 +193,21 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for _type, entities in data.items():
                 for entity in entities:
                     track_event(ts, _type, entity, "start", exp_dir)
-            self._tracked.append(ts)
+            self._tracked_runs.append(ts)
 
+
+def on_timestep(action_handler: ManifestEventHandler) -> None:
+    # todo: update the completed jobs set in the manifest event handler when req'd
+    entity_names: t.Set[str] = {entity["name"] for entity in action_handler.tracked_jobs.values()}
+
+    launcher = None
+    if action_handler.launcher in ["local", "slurm"]:
+        # launcher = detect_launcher()
+        launcher = None
+
+    if launcher and entity_names:
+        entity_statuses = launcher.get_step_update(entity_names)
+        print(entity_statuses)
 
 async def main(
     frequency: t.Union[int, float], experiment_dir: pathlib.Path, logger: logging.Logger
@@ -195,6 +232,7 @@ async def main(
 
         while observer.is_alive():
             logger.debug(f"Telemetry timestep: {datetime.timestamp(datetime.now())}")
+            on_timestep(action_handler)
             await asyncio.sleep(frequency)
     except Exception as ex:
         logger.error(ex)

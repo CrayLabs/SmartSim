@@ -1,0 +1,63 @@
+
+{
+    "schema info" : {
+        "schema_name" : "entity manifest",
+        "version" : "1.0.0"
+    },
+    "experiment" : {
+        "name" : "my-little-experiment",
+        "path" : "string",
+        "launcher" : "local"
+    },
+    "runs": [
+        {
+            "applications" : [
+                {
+                    "name" : "string",
+                    "path" : "string",
+                    "exec_args" : ["string"],
+                    "batch_settings" : {"string" : "Any"},
+                    "run_settings" : {"exe" : "echo"},
+                    "parameters" : {"string" : "Any"},
+                    "files" : {"string" : "Any"},
+                    "colo_db" : {"string" : "Any"},
+                    "loaded_entities" : [{"string" : "Any"}],
+                    "env_vars": {"mykey": "avalue"},
+                    "job_id": "111",
+                    "step_id": 111
+                }
+            ],
+            "orchestrators" : [
+                {
+                    "name": "orchestrator_0",
+                    "launcher" : "local",
+                    "port" : "12345",
+                    "interface" : "lo",
+                    "db_hosts" : ["string"]
+                }
+            ],
+            "ensembles" : [
+                {
+                    "name" : "string",
+                    "perm_strategy" : "string",
+                    "batch_settings" : {"string" : "Any"},
+                    "parameters" : {"string" : "Any"},
+                    "members" : [
+                        {
+                            "name" : "ensemble_0",
+                            "path" : "string",
+                            "exec_args" : ["string"],
+                            "batch_settings" : {"string" : "Any"},
+                            "run_settings" : {"exe" : "echo"},
+                            "parameters" : {"string" : "Any"},
+                            "files" : {"string" : "Any"},
+                            "colo_db" : {"string" : "Any"},
+                            "loaded_entities" : [{"string" : "Any"}]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
