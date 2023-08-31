@@ -288,17 +288,16 @@ class Ensemble(EntityList):
         if not self.models:
             return "The ensemble is empty, no files to show."
 
-        values = []
-        for model in self.models:
-            values.append([model.name, model.attached_files_table])
-
-        table = tabulate(values, headers=["Model name", "Files"], tablefmt="grid")
+        table = tabulate(
+            [[model.name, model.attached_files_table] for model in self.models],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
 
         return table
 
     def print_attached_files(self) -> None:
-        """Print table of attached files to std out
-        """
+        """Print table of attached files to std out"""
         print(self.attached_files_table)
 
     @staticmethod
