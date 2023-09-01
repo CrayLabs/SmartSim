@@ -165,6 +165,22 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
+    @property
+    def attached_files_table(self) -> str:
+        """Return a list of attached files as a plain text table
+
+        :returns: String version of table
+        :rtype: str
+        """
+        if not self.files:
+            return "No file attached to this model."
+        return str(self.files)
+
+    def print_attached_files(self) -> None:
+        """Print a table of the attached files on std out
+        """
+        print(self.attached_files_table)
+
     def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
         """An alias for ``Model.colocate_db_tcp``"""
         warnings.warn(

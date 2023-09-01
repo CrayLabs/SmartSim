@@ -27,6 +27,7 @@ import os
 import typing as t
 
 from os import path
+from tabulate import tabulate
 
 
 class EntityFiles:
@@ -138,6 +139,22 @@ class EntityFiles:
         if path.isdir(full_path):
             return full_path
         raise FileNotFoundError(f"File or Directory {file_path} not found")
+
+    def __str__(self) -> str:
+        """Return table summarizing attached files."""
+        values = []
+
+        if self.copy:
+            values.append(["Copy", "\n".join(self.copy)])
+        if self.link:
+            values.append(["Symlink", "\n".join(self.link)])
+        if self.tagged:
+            values.append(["Configure", "\n".join(self.tagged)])
+
+        if not values:
+            return "No file attached to this entity."
+
+        return tabulate(values, headers=["Strategy", "Files"], tablefmt="grid")
 
 
 class TaggedFilesHierarchy:
