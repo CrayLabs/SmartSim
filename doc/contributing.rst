@@ -70,6 +70,12 @@ platforms and ensuring code quality.
 
 - You will be credited as a co-author when the contribution is merged
 
+.. note::
+    The last point serves as a `Developer Certificate of Origin<https://developercertificate.org/>`_.
+    More specifically, we will ask contributors to signoff on the final state
+    of the PR before merging. This signoff will then be propagated into the
+    final squash merge commit.
+
 How to Connect?
 ---------------
 Questions and discussion about SmartSim should be directed to the following:
