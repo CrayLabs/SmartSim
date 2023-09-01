@@ -56,13 +56,6 @@ class Manifest:
         :rtype: Orchestrator | None
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
-        # print("DBS", dbs)  # list of orchestrators now
-        # [<smartsim.database.orchestrator.Orchestrator object at 0x7fbe3337a790>, <smartsim.database.orchestrator.Orchestrator object at 0x7fbe3337ad60>]
-
-        # if len(dbs) > 1:
-        #     raise SmartSimError("User attempted to create more than one Orchestrator")
-
-        # return dbs[0] if dbs else None
         return dbs if dbs else None
 
     @property
@@ -98,8 +91,10 @@ class Manifest:
         _all_entity_lists.extend(self.ensembles)
 
         db = self.db
+
         if db is not None:
-            _all_entity_lists.append(db)
+            for a_db in db:
+                _all_entity_lists.append(a_db)
 
         return _all_entity_lists
 

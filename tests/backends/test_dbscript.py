@@ -249,10 +249,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface,
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create string for script creation
@@ -605,7 +602,6 @@ def test_inconsistent_params_db_script(fileutils):
     )
 
 
-# jpstart::
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_create_database_then_colocated_db_model(
     fileutils, wlmutils, coloutils, db_type
@@ -680,7 +676,7 @@ def test_db_identifier_colocate_db_then_create_database(
     """Test colocate_db_uds/colocate_db_tcp then create_database db_identifier uniqueness"""
 
     # Set experiment name
-    exp_name = f"test-colocate model then create_database model_jp"
+    exp_name = "test_db_identifier_colocate_db_then_create_database"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -746,7 +742,7 @@ def test_db_identifier_multiple_create_database_not_unique(
     checking error is raised before exp start is called"""
 
     # Set experiment name
-    exp_name = "est_db_identifier_multiple_create_database_not_unique"
+    exp_name = "test_db_identifier_multiple_create_database_not_unique"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -760,17 +756,17 @@ def test_db_identifier_multiple_create_database_not_unique(
 
     # CREATE DATABASE with db_identifier
     orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+        port=test_port, interface=test_interface, db_identifier="my_db"
     )
     exp.generate(orc)
 
-    assert orc.name == "my_cluster_db"
-    assert exp.dbs_in_use() == {"my_cluster_db"}
+    assert orc.name == "my_db"
+    assert exp.dbs_in_use() == {"my_db"}
 
     # CREATE DATABASE with db_identifier
     with pytest.raises(DBIDConflictError) as ex:
         orc2 = exp.create_database(
-            port=test_port, interface=test_interface, db_identifier="my_cluster_db"
+            port=test_port, interface=test_interface, db_identifier="my_db"
         )
     assert (
         "has already been used. Pass in a unique name for db_identifier"
@@ -778,87 +774,11 @@ def test_db_identifier_multiple_create_database_not_unique(
     )
 
 
-# TODOjp ERROR
-@pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_multiple_colocate_db_tcp(
-    fileutils, wlmutils, mlutils, coloutils, db_type
-):
-    """Test uniqueness after multiple calls to colocate_db_uds/tcp"""
-    # Error should be implemented. No functionality for multiple calls to colocate_db_tcp/uds
-
-    # Set experiment name
-    exp_name = "test_colocated_db_model_tcp_multiple_calls"
-
-    # Retrieve parameters from testing environment
-    test_launcher = wlmutils.get_test_launcher()
-    test_interface = wlmutils.get_test_interface()
-    test_port = wlmutils.get_test_port()
-    test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
-
-    # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
-
-    # Create colocated RunSettings
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-    colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
-
-    # Create COLOCATED SmartSim Model
-    colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
-
-    db_args = {
-        "port": test_port,
-        "db_cpus": 1,
-        "debug": True,
-        "ifname": test_interface,
-        "db_identifier": "my_colo_db",
-    }
-
-    colo_model = coloutils.setup_test_colo(
-        fileutils,
-        db_type,
-        exp,
-        db_args,
-    )
-
-    assert (
-        colo_model.run_settings.colocated_db_settings["db_identifier"] == "my_colo_db"
-    )
-
-    colo_model2 = exp.create_model("colocated_model2", colo_settings)
-    colo_model2.set_path(test_dir)
-
-    db_args = {
-        "port": test_port,
-        "db_cpus": 1,
-        "debug": True,
-        "ifname": test_interface,
-        "db_identifier": "my_colo_db_2",
-    }
-
-    colo_model2 = coloutils.setup_test_colo(
-        fileutils,
-        db_type,  # tcp or uds
-        exp,
-        db_args,
-    )
-
-    assert (
-        colo_model2.run_settings.colocated_db_settings["db_identifier"]
-        == "my_colo_db_2"
-    )
-
-    exp.start(colo_model, colo_model2, block=False)
-    exp.stop(colo_model, colo_model2)
-
-
 def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, mlutils):
-    """One call to create database making sure pathway still works - nothing special, should pass"""
+    """One call to create database with a database identifier"""
 
     # Set experiment name
-    exp_name = "test-db-script_co"
+    exp_name = "test_db_identifier_env_vars_good_create_standard_once"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -868,68 +788,28 @@ def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, m
 
     # Create the SmartSim Experiment
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
-    print("\ntest_launcher", test_launcher)
-    print("\nexp._launcher", exp._launcher)
 
     # Create the RunSettings
-    run_settings = exp.create_run_settings(
-        exe=sys.executable, exe_args=["-c", """'print("hello")'"""]
-    )
+    run_settings = exp.create_run_settings("python", "smartredis/multidb2.py")
     run_settings.set_tasks_per_node(1)
 
-    # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model_co", run_settings)
-    smartsim_model.set_path(test_dir)
-
     # Create the SmartSim database
-    db = exp.create_database(port=test_port, db_nodes=1, interface=test_interface)
+    db = exp.create_database(
+        port=test_port, db_nodes=1, interface=test_interface, db_identifier="testdb1"
+    )
     exp.generate(db)
 
-    exp.start(db, smartsim_model, block=True)
+    try:
+        exp.start(db)
 
-    assert status.STATUS_COMPLETED
-    # finally:
-    exp.stop(db)
+    finally:
+        exp.stop(db)
 
-    # # Retrieve parameters from testing environment
-    # test_interface = wlmutils.get_test_interface()
-    # test_port = wlmutils.get_test_port()
-    # test_dir = fileutils.make_test_dir()
-    # test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
-
-    # # start a new Experiment for this section
-    # exp = Experiment(
-    #     "test_db_identifier_env_vars_good_create_standard_", launcher="local"
-    # )
-
-    # # create database
-    # db = exp.create_database(
-    #     port=test_port, interface=test_interface, db_identifier="testdb1"
-    # )
-
-    # # # Create RunSettings
-    # # rs_new = exp.create_run_settings("python", "multidb.py")  # modify to new.py
-    # #  # Create the RunSettings
-    # run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
-    # run_settings.set_nodes(1)
-    # run_settings.set_tasks_per_node(1)
-
-    # # Create the SmartSim Model
-    # smartsim_model = exp.create_model("smartsim_model", run_settings)
-    # smartsim_model.set_path(test_dir)
-
-    # exp.generate(db)
-
-    # # start the database
-    # exp.start(db, smartsim_model, block=True, summary=True)
-
-    # exp.stop(db)
+    print(exp.summary())
 
 
 def test_db_identifier_env_vars_good_create_database_twice(fileutils, wlmutils):
-    """Multiple calls to create database end to end with unique db_identifiers"""
-
-    # TEST MY DBS LIST !
+    """Multiple calls to create database with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_interface = wlmutils.get_test_interface()
@@ -941,66 +821,55 @@ def test_db_identifier_env_vars_good_create_database_twice(fileutils, wlmutils):
         "test_db_identifier_env_vars_good_create_standard_twice", launcher="local"
     )
 
-    # Create RunSettings
-    run_settings = exp.create_run_settings(
-        "python", "smartredis/multidb.py"
-    )  # modify to new.py
-
-    # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", run_settings)
-    smartsim_model.set_path(test_dir)
-
     # create and start an instance of the Orchestrator database
     db = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="testdb1"
+        port=test_port, interface=test_interface, db_identifier="testdb_reg"
     )
     exp.generate(db)
 
+    # create databse
     db2 = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="testdb2"
+        port=test_port + 1, interface=test_interface, db_identifier="testdb_colo"
     )
     # create regular database fist
     exp.generate(db2)
 
-    # Start the model
-    exp.start(smartsim_model, block=True, summary=True)
-    # start the database
-    exp.start(db, db2)
-    exp.stop(db, db2, smartsim_model)
+    # launch
+    try:
+        exp.start(db, db2)
+    finally:
+        exp.stop(db, db2)
+    print(exp.summary())
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
-    """create colocate_db_tcp/uds  the standard database with different db_identifiers
-    end to end. Should return complete"""
+def test_db_identifier_colo_once(fileutils, wlmutils, coloutils, db_type):
+    """create one model with colocated database with db_identifier"""
 
-    test_interface = wlmutils.get_test_interface()
+    # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("smartredis/multidb2.py")
 
-    exp = Experiment(
-        "test_db_identifier_colo_then_standard", exp_path=test_dir, launcher="local"
-    )
-
-    exp.generate(orc)
-    # Start the database
-    exp.start(orc, block=False)
+    # start a new Experiment for this section
+    exp = Experiment("test_db_identifier_colo_once", launcher="local")
 
     # create run settings
-    rs_new = exp.create_run_settings("python", "multidb.py")
+    run_settings = exp.create_run_settings("python", test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
 
     # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", rs_new)
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
     smartsim_model.set_path(test_dir)
 
     db_args = {
-        "port": test_port,
+        "port": test_port + 1,
         "db_cpus": 1,
         "debug": True,
-        "ifname": test_interface,
-        "db_identifier": "test_2",
+        "db_identifier": "testdb_colo",
     }
-
+    # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
@@ -1008,79 +877,48 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
         db_args,
     )
 
-    exp.start(smartsim_model)
-
-    # create and start a database
-    orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_db"
-    )
-
-    # get and confirm statuses
-    statuses = exp.get_status(smartsim_model)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
-        assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())
+    try:
+        exp.start(smartsim_model)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(smartsim_model)
+        print(exp.summary())
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
-    """create standard database then colocate_db_tcp/uds with different db_identifiers
-    end to end. Should return complete"""
+    """Create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
-    # FAILED est_db_identifier_standard_then_colo[uds] - smartsim.error.errors.SmartSimError: Entity colocated_model has not been launched in this Experiment
-    # FAILED test_db_identifier_standard_then_colo[tcp] - smartsim.error.errors.SmartSimError: Orchestrator failed during startup See /home/users/putko/scratch/test/smartsim/tests/test_output/backends/te...
-
-    test_interface = wlmutils.get_test_interface()
+    # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("smartredis/multidb.py")
 
-    exp = Experiment(
-        "test_db_identifier_standard_then_colo", exp_path=test_dir, launcher="local"
-    )
-
-    print("m1")
-
-    # create and start a database
-
-    orc = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="my_db"
-    )
-
-    print("m2")
-
-    exp.generate(orc)
-    # Start the database
-    # exp.start(orc, block=False)
-
-    print("m3")
+    # start a new Experiment for this section
+    exp = Experiment("test_db_identifier_standard_then_colo", launcher="local")
 
     # create run settings
-    rs_new = exp.create_run_settings("python", "multidb.py")
+    run_settings = exp.create_run_settings("python", test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
 
-    print("m4")
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(port=test_port, db_identifier="testdb_reg")
+    # interface=test_interface,
+    exp.generate(db)
 
     # Create the SmartSim Model
-    smartsim_model = exp.create_model("smartsim_model", rs_new)
-
-    print("m5")
+    smartsim_model = exp.create_model("smartsim_model", run_settings)
     smartsim_model.set_path(test_dir)
 
-    print("m6")
-
     db_args = {
-        "port": test_port,
+        "port": test_port + 1,
         "db_cpus": 1,
         "debug": True,
-        "ifname": test_interface,
-        "db_identifier": "test_2",
+        "db_identifier": "testdb_colo",
     }
-
-    print("m7")
+    # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
@@ -1088,77 +926,63 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
         db_args,
     )
 
-    print("m8")
-
-    exp.start(orc, smartsim_model)
-
-    print("m9")
-
-    # get and confirm statuses
-    statuses = exp.get_status(smartsim_model)
-
-    print("m10")
-
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
-        exp.stop(orc)
-        assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())
+    try:
+        exp.start(db, smartsim_model)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(db, smartsim_model)
+        print(exp.summary())
 
 
-# might not be a useful test because above
-def test_db_identifier_standard_then_colo_diff_run_settings(
-    fileutils, wlmutils, coloutils
-):
-    """create regular database then colocate_db_tcp/uds regular run settings?"""
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
+    """create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
-    test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
+    test_script = fileutils.get_test_conf_path("smartredis/multidb.py")
 
-    # start a new Experiment for this section
+    # start a new Experiment
     exp = Experiment(
-        "test_db_identifier_standard_then_colo_diff_run_settings", launcher="local"
+        "test_db_identifier_colo_then_standard", exp_path=test_dir, launcher="local"
     )
 
-    # Create RunSettings
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    # create run settings
+    run_settings = exp.create_run_settings("python", test_script)
     run_settings.set_nodes(1)
     run_settings.set_tasks_per_node(1)
 
-    # create and start an instance of the Orchestrator database
-    db = exp.create_database(
-        port=test_port, interface=test_interface, db_identifier="test_1"
-    )
-    exp.generate(db)
-
-    # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
-
     smartsim_model.set_path(test_dir)
 
     db_args = {
         "port": test_port,
         "db_cpus": 1,
         "debug": True,
-        "ifname": test_interface,
-        "db_identifier": "test_2",
+        "db_identifier": "testdb_colo",
     }
-    # add colocated db to model
+
+    # Create model with colocated database
     smartsim_model = coloutils.setup_test_colo(
         fileutils,
-        "tcp",
+        db_type,
         exp,
         db_args,
     )
 
-    # start the database
-    exp.start(db, smartsim_model, block=True, summary=True)
+    smartsim_model.set_path(test_dir)
 
-    # stopdatabase
-    exp.stop(db, smartsim_model)
+    # create and start an instance of the Orchestrator database
+    db = exp.create_database(port=test_port + 1, db_identifier="testdb_reg")
+    exp.generate(db)
+
+    try:
+        exp.start(db, smartsim_model)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(smartsim_model)
+        exp.stop(db)
+        print(exp.summary())

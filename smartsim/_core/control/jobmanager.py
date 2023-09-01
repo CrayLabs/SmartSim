@@ -311,6 +311,7 @@ class JobManager:
         and dict of db_identifier: and list of addresses
         :rtype: list[str]
         """
+        db_id = ""
         addresses = []
         for db_id, db_job in self.db_jobs.items():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
@@ -320,8 +321,8 @@ class JobManager:
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
         self.address_dict.update({db_id: addresses})
-        # print(self.address_dict)  # want it to return a dict
-        return addresses, self.address_dict  # returns a list of addresses
+
+        return self.address_dict  # returns a list of addresses #addresses,
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this

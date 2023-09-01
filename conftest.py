@@ -461,7 +461,7 @@ class DBUtils:
             ],
             "maxclients": [
                 "-3",  # number clients must be positive
-                str(2**65),  # number of clients is too large
+                str(2 ** 65),  # number of clients is too large
                 "2.9",  # number of clients must be an integer
             ],
             "proto-max-bulk-len": [
@@ -575,8 +575,8 @@ class FileUtils:
         :type caller_function: str, optional
         :param caller_fspath: absolute path to file containing caller, defaults to None
         :type caller_fspath: str or Path, optional
-        :param level: indicate depth in the call stack relative to test method. 
-        :type level: int, optional 
+        :param level: indicate depth in the call stack relative to test method.
+        :type level: int, optional
         :param sub_dir: a relative path to create in the test directory
         :type sub_dir: str or Path, optional
 
@@ -660,7 +660,17 @@ class ColoUtils:
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
         test_dir = fileutils.make_test_dir(level=2)
-        sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+
+        # Jpnote
+        if db_args["db_identifier"]:
+            sr_test_script = fileutils.get_test_conf_path(
+                "send_data_local_smartredis_with_dbid.py"
+            )
+            print("yes", db_args["db_identifier"])
+        else:
+            sr_test_script = fileutils.get_test_conf_path(
+                "send_data_local_smartredis.py"
+            )
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:
@@ -679,6 +689,7 @@ class ColoUtils:
             "deprecated": colo_model.colocate_db,
             "uds": colo_model.colocate_db_uds,
         }
+
         colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
         assert colo_model.colocated

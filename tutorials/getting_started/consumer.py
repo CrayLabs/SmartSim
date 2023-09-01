@@ -1,13 +1,16 @@
 import argparse
 import os
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 
 parser = argparse.ArgumentParser(description="SmartRedis ensemble consumer process.")
 parser.add_argument("--redis-port")
 args = parser.parse_args()
 
 # get model and set into database
-c = Client(address="127.0.0.1:"+str(args.redis_port), cluster=False)
+address = "127.0.0.1:" + str(args.redis_port)
+os.environ["SSDB"] = address
+c = Client(None, logger_name="SmartSim")  # cluster=False
+
 
 # Incoming entity prefixes are stored as a comma-separated list
 # in the env variable SSKEYIN

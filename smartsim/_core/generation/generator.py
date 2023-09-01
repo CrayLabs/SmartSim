@@ -35,7 +35,6 @@ from ...entity import Model, TaggedFilesHierarchy
 from ...log import get_logger
 from ..control import Manifest
 from .modelwriter import ModelWriter
-from ...database import Orchestrator
 from ...entity import Ensemble
 
 
@@ -140,18 +139,18 @@ class Generator:
         :param orchestrator: Orchestrator instance
         :type orchestrator: Orchestrator | None
         """
-
+        # No orchestrators
+        if not orchestrator_list:
+            return
+        # Loop through orchestrators
         for orchestrator in orchestrator_list:
-            if not orchestrator:
-                return
 
             orc_path = path.join(self.gen_path, "database")
             orchestrator.set_path(orc_path)
-
-        # Always remove orchestrator files if present.
-        if path.isdir(orc_path):
-            shutil.rmtree(orc_path, ignore_errors=True)
-        pathlib.Path(orc_path).mkdir(exist_ok=True)
+            # Always remove orchestrator files if present.
+            if path.isdir(orc_path):
+                shutil.rmtree(orc_path, ignore_errors=True)
+            pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for EntityList instances

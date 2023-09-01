@@ -39,7 +39,7 @@ from types import FrameType
 
 import filelock
 import psutil
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 from smartredis.error import RedisConnectionError, RedisReplyError
 
 from smartsim._core.utils.network import current_ip
@@ -173,6 +173,7 @@ def main(
     command: t.List[str],
     db_models: t.List[t.List[str]],
     db_scripts: t.List[t.List[str]],
+    db_identifier: str,
 ) -> None:
     global DBPID  # pylint: disable=global-statement
 
@@ -212,6 +213,7 @@ def main(
             f"\n\tIP Address(es): {' '.join(ip_addresses + [lo_address])}"
             f"\n\tCommand: {' '.join(cmd)}\n\n"
             f"\n\t# of Database CPUs: {db_cpus}"
+            f"\n\tDatabase Identifier: {db_identifier}"
         )
     except Exception as e:
         cleanup()
@@ -232,8 +234,16 @@ def main(
 
     try:
         if db_models or db_scripts:
+            options = ConfigOptions.create_from_environment(db_identifier)
+            client = Client(options, logger_name="SmartSim")
             try:
-                client = Client(cluster=False)
+                # if db_identifier:
+                options = ConfigOptions.create_from_environment(db_identifier)
+                client = Client(options, logger_name="SmartSim")
+
+                # else:
+                # client = Client(None, logger_name="SmartSim")  # cluster=False
+
                 launch_models(client, db_models)
                 launch_db_scripts(client, db_scripts)
             except (RedisConnectionError, RedisReplyError) as ex:
@@ -291,6 +301,9 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
     )
+
+    arg_parser.add_argument("+db_identifier", type=str, default="", help="db_id")
+
     arg_parser.add_argument("+command", nargs="+", help="Command to run")
     arg_parser.add_argument(
         "+db_model",
@@ -328,6 +341,7 @@ if __name__ == "__main__":
             parsed_args.command,
             parsed_args.db_model,
             parsed_args.db_script,
+            parsed_args.db_identifier,
         )
 
     # gracefully exit the processes in the distributed application that

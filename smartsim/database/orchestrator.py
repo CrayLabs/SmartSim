@@ -28,10 +28,10 @@ import psutil
 import sys
 import typing as t
 
-from os import getcwd
+from os import getcwd, environ
 from shlex import split as sh_split
 
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
@@ -545,8 +545,26 @@ class Orchestrator(EntityList):
                     address = ":".join([get_ip_from_host(host), str(port)])
                     addresses.append(address)
 
-            is_cluster = self.num_shards > 2
-            client = Client(address=addresses[0], cluster=is_cluster)
+            flag = ""
+            db_name = self.db_identifier
+
+            if db_name == "orchestrator":
+                db_name = ""
+                flag = "blank"
+
+            db_without = db_name
+            if not flag == "blank":
+                db_name = "_" + db_name
+
+            environ[f"SSDB{db_name}"] = addresses[0]
+            if self.num_shards > 2:
+                environ[f"SR_DB_TYPE{db_name}"] = "Clustered"
+            else:
+                environ[f"SR_DB_TYPE{db_name}"] = "Standalone"
+
+            options = ConfigOptions.create_from_environment(db_without)
+            client = Client(options, logger_name="SmartSim")
+
             try:
                 for address in addresses:
                     client.config_set(key, value, address)

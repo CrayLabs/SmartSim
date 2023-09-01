@@ -27,13 +27,14 @@
 from __future__ import annotations
 
 import os.path as osp
+from os import environ
 import pickle
 import signal
 import threading
 import time
 import typing as t
 
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
@@ -196,9 +197,6 @@ class Controller:
         :param entity_list: entity list to be stopped
         :type entity_list: EntityList
         """
-        # jpnote -- sometimes is a list, and sometimes is a string
-        if isinstance(entity_list, list):
-            entity_list = entity_list[0]
 
         if entity_list.batch:
             self.stop_entity(entity_list)
@@ -289,9 +287,10 @@ class Controller:
         :type manifest: Manifest
         """
 
-        if manifest.db:
-            # Loop over deployables to launch
-            for orchestrator in manifest.db:
+        orchestrators = manifest.db
+        if orchestrators:
+            # Loop over deployables to launch and launch multiple orchestrators
+            for orchestrator in orchestrators:
                 if orchestrator:
                     if orchestrator.num_shards > 1 and isinstance(
                         self._launcher, LocalLauncher
@@ -305,41 +304,39 @@ class Controller:
                     #     raise SmartSimError(msg)
                     self._launch_orchestrator(orchestrator)
 
-                if self.orchestrator_active:
-                    self._set_dbobjects(manifest)
+        if self.orchestrator_active:
+            self._set_dbobjects(manifest)
 
-                # create all steps prior to launch
-                steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
-                all_entity_lists = manifest.ensembles
-                for elist in all_entity_lists:
-                    if elist.batch:
-                        batch_step = self._create_batch_job_step(elist)
-                        steps.append((batch_step, elist))
-                    else:
-                        # if ensemble is to be run as separate job steps,
-                        # aka not in a batch
-                        job_steps = [
-                            (self._create_job_step(e), e) for e in elist.entities
-                        ]
-                        steps.extend(job_steps)
+        # create all steps prior to launch
+        steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
 
-                # models themselves cannot be batch steps. If batch settings are
-                # attached, wrap them in an anonymous batch job step
-                for model in manifest.models:
-                    if model.batch_settings:
-                        anon_entity_list = _AnonymousBatchJob(
-                            model.name, model.path, model.batch_settings
-                        )
-                        anon_entity_list.entities.append(model)
-                        batch_step = self._create_batch_job_step(anon_entity_list)
-                        steps.append((batch_step, model))
-                    else:
-                        job_step = self._create_job_step(model)
-                        steps.append((job_step, model))
+        all_entity_lists = manifest.ensembles
+        for elist in all_entity_lists:
+            if elist.batch:
+                batch_step = self._create_batch_job_step(elist)
+                steps.append((batch_step, elist))
+            else:
+                # if ensemble is to be run as separate job steps,
+                # aka not in a batch
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
+                steps.extend(job_steps)
+        # models themselves cannot be batch steps. If batch settings are
+        # attached, wrap them in an anonymous batch job step
+        for model in manifest.models:
+            if model.batch_settings:
+                anon_entity_list = _AnonymousBatchJob(
+                    model.name, model.path, model.batch_settings
+                )
+                anon_entity_list.entities.append(model)
+                batch_step = self._create_batch_job_step(anon_entity_list)
+                steps.append((batch_step, model))
+            else:
+                job_step = self._create_job_step(model)
+                steps.append((job_step, model))
 
-                # launch steps
-                for step, entity in steps:
-                    self._launch_step(step, entity)
+        # launch steps
+        for step, entity in steps:
+            self._launch_step(step, entity)
 
     def _launch_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Launch an Orchestrator instance
@@ -369,9 +366,6 @@ class Controller:
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
         self._jobs.set_db_hosts(orchestrator)
-
-        # set shards, so that they can be retrieved later for env vars
-        self.num = orchestrator.num_shards
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -477,11 +471,18 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        addresses, address_dict = self._jobs.get_db_host_addresses()
+        # addresses, address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._jobs.get_db_host_addresses()
+        flag = ""
         for db_id, addresses in address_dict.items():
-            db_name = "_" + "_".join(db_id.split("_")[:-1])
-            if db_name == "_orchestrator":
+
+            db_name = "_".join(db_id.split("_")[:-1])
+            if db_name == "orchestrator":
                 db_name = ""
+                flag = "blank"
+
+            if not flag == "blank":
+                db_name = "_" + db_name
 
             if addresses:
                 if len(addresses) <= 128:
@@ -497,43 +498,38 @@ class Controller:
                     client_env[f"SSKEYOUT{db_name}"] = entity.name
 
             # Retrieve num_shards to append to client env
-            num_shards = self.num
-            if num_shards > 2:
+            if len(addresses) > 1:
                 client_env[f"SR_DB_TYPE{db_name}"] = "Clustered"
             else:
                 client_env[f"SR_DB_TYPE{db_name}"] = "Standalone"
 
-            # Set address to local if it's a colocated model
-            if entity.colocated:
-                db_name_colo = (
-                    "_" + entity.run_settings.colocated_db_settings["db_identifier"]
-                )
-                if len(db_name_colo) == 1:
-                    db_name_colo = ""
-                if colo_cfg := entity.run_settings.colocated_db_settings:
-                    port = colo_cfg.get("port", None)
-                    socket = colo_cfg.get("unix_socket", None)
-                    if socket and port:
-                        raise SSInternalError(
-                            "Co-located was configured for both TCP/IP and UDS"
-                        )
-                    if port:
-                        client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
-                    elif socket:
-                        client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
-                    else:
-                        raise SSInternalError(
-                            "Colocated database was not configured for either TCP or UDS"
-                        )
-                # Retrieve num_shards to append to client env
-                num_shards = self.num
-                if num_shards > 2:
-                    client_env[f"SR_DB_TYPE{db_name_colo}"] = "Clustered"
+        # Set address to local if it's a colocated model
+        if entity.colocated:
+            db_name_colo = (
+                "_" + entity.run_settings.colocated_db_settings["db_identifier"]
+            )
+            if len(db_name_colo) == 1:
+                db_name_colo = ""
+
+            if colo_cfg := entity.run_settings.colocated_db_settings:
+
+                port = colo_cfg.get("port", None)
+                socket = colo_cfg.get("unix_socket", None)
+                if socket and port:
+                    raise SSInternalError(
+                        "Co-located was configured for both TCP/IP and UDS"
+                    )
+                if port:
+                    client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
+                elif socket:
+                    client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
                 else:
-                    client_env[f"SR_DB_TYPE{db_name_colo}"] = "Standalone"
+                    raise SSInternalError(
+                        "Colocated database was not configured for either TCP or UDS"
+                    )
+                client_env[f"SR_DB_TYPE{db_name_colo}"] = "Standalone"
 
         entity.run_settings.update_env(client_env)
-
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
         """Save the orchestrator object via pickle
@@ -596,6 +592,7 @@ class Controller:
                     logger.debug("Waiting for orchestrator instances to spin up...")
             except KeyboardInterrupt:
                 logger.info("Orchestrator launch cancelled - requesting to stop")
+                # self.stop_entity_list_orchestrator(orchestrator)
                 self.stop_entity_list(orchestrator)
 
                 # re-raise keyboard interrupt so the job manager will display
@@ -663,16 +660,42 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        db_address, address_dict = self._jobs.get_db_host_addresses()
+        address_dict = self._jobs.get_db_host_addresses()
+        # db_address, address_dict = self._jobs.get_db_host_addresses()
+        flag = ""
+        for (
+            db_id,
+            db_addresses,
+        ) in address_dict.items():
+            print(db_id, db_addresses)
+            db_name = "_".join(db_id.split("_")[:-1])
 
-        for db_addresses in address_dict.values():
+            if db_name == "orchestrator":
+                db_name = ""
+                flag = "blank"
+
+            db_without = db_name
+            if not flag == "blank":
+                db_name = "_" + db_name
+
             hosts = list({address.split(":")[0] for address in db_addresses})
             ports = list({int(address.split(":")[-1]) for address in db_addresses})
 
             if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
                 raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-            client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+            # set env SSDB to
+            environ[f"SSDB{db_name}"] = db_addresses[0]
+
+            options = ConfigOptions.create_from_environment(db_without)
+
+            # client = Client(options, cluster=len(db_addresses) > 1)
+            if len(db_addresses) > 1:
+                environ[f"SR_DB_TYPE{db_name}"] = "Clustered"
+            else:
+                environ[f"SR_DB_TYPE{db_name}"] = "Standalone"
+
+            client = Client(options, logger_name="SmartSim")
 
             for model in manifest.models:
                 if not model.colocated:
@@ -681,7 +704,6 @@ class Controller:
                         set_ml_model(db_model, client)
                     for db_script in model._db_scripts:
                         set_script(db_script, client)
-
             for ensemble in manifest.ensembles:
                 # pylint: disable=protected-access
                 for db_model in ensemble._db_models:
