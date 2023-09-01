@@ -172,7 +172,7 @@ class Generator:
                 mkdir(elist_dir)
             elist.path = elist_dir
 
-            self._gen_entity_dirs(elist.models, entity_list=elist)
+            self._gen_entity_dirs(list(elist.models), entity_list=elist)
 
     def _gen_entity_dirs(
         self,

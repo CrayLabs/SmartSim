@@ -79,7 +79,7 @@ class Step:
 
         db_settings: t.Dict[str, str] = {}
         if isinstance(self.step_settings, RunSettings):
-            db_settings = self.step_settings.colocated_db_settings
+            db_settings = self.step_settings.colocated_db_settings or {}
 
         # db log file causes write contention and kills performance so by
         # default we turn off logging unless user specified debug=True

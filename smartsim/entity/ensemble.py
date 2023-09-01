@@ -29,6 +29,8 @@ import typing as t
 from copy import deepcopy
 from os import getcwd
 
+from tabulate import tabulate
+
 from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
@@ -103,7 +105,7 @@ class Ensemble(EntityList):
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.List[Model]:
+    def models(self) -> t.Iterable[Model]:
         """
         Helper property to cast self.entities to Model type for type correctness
         """
@@ -227,14 +229,14 @@ class Ensemble(EntityList):
             model.register_incoming_entity(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
-        """If called, all models within this ensemble will prefix their keys with its
+        """If called, each model within this ensemble will prefix its key with its
         own model name.
         """
         for model in self.models:
             model.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether each model within the ensemble will prefix its keys
+        """Inquire as to whether each model within the ensemble will prefix their keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: bool
@@ -274,6 +276,29 @@ class Ensemble(EntityList):
             model.attach_generator_files(
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
+
+    @property
+    def attached_files_table(self) -> str:
+        """Return a plain-text table with information about files
+        attached to models belonging to this ensemble.
+
+        :returns: A table of all files attached to all models
+        :rtype: str
+        """
+        if not self.models:
+            return "The ensemble is empty, no files to show."
+
+        table = tabulate(
+            [[model.name, model.attached_files_table] for model in self.models],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
+
+        return table
+
+    def print_attached_files(self) -> None:
+        """Print table of attached files to std out"""
+        print(self.attached_files_table)
 
     @staticmethod
     def _set_strategy(strategy: str) -> StrategyFunction:
@@ -335,7 +360,7 @@ class Ensemble(EntityList):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -395,7 +420,7 @@ class Ensemble(EntityList):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
@@ -439,7 +464,7 @@ class Ensemble(EntityList):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: t.Literal["CPU","GPU"] = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble
@@ -474,16 +499,15 @@ class Ensemble(EntityList):
 
     @staticmethod
     def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
-        # pylint: disable=protected-access
-        entity_db_models = [db_model.name for db_model in model._db_models]
+        entity_db_models = [db_model.name for db_model in model.db_models]
+
         for db_model in db_models:
-            if not db_model.name in entity_db_models:
-                model._append_db_model(db_model)
+            if db_model.name not in entity_db_models:
+                model.add_ml_model_object(db_model)
 
     @staticmethod
     def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
-        # pylint: disable=protected-access
-        entity_db_scripts = [db_script.name for db_script in model._db_scripts]
+        entity_db_scripts = [db_script.name for db_script in model.db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
-                model._append_db_script(db_script)
+                model.add_script_object(db_script)

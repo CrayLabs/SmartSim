@@ -58,7 +58,6 @@ class PalsMpiexecSettings(_BaseMPISettings):
         self,
         exe: str,
         exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
-        run_command: str = "mpiexec",
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         fail_if_missing_exec: bool = True,
@@ -89,7 +88,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         super().__init__(
             exe,
             exe_args,
-            run_command=run_command,
+            run_command="mpiexec",
             run_args=run_args,
             env_vars=env_vars,
             fail_if_missing_exec=fail_if_missing_exec,

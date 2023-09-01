@@ -26,14 +26,11 @@
 
 import importlib
 import shutil
-import subprocess
-import sys
 import typing as t
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
-from smartsim._core._install.builder import BuildError
 from smartsim._core.utils import colorize
 from smartsim.log import get_logger
 
@@ -63,32 +60,6 @@ def color_bool(trigger: bool = True) -> str:
     return colorize(str(trigger), color=_color)
 
 
-def pip_install(
-    packages: t.List[str], end_point: t.Optional[str] = None, verbose: bool = False
-) -> None:
-    """Install a pip package to be used in the SmartSim build
-    Currently only Torch shared libraries are re-used for the build
-    """
-    # form pip install command
-    cmd = [sys.executable, "-m", "pip", "install"]
-    cmd.extend(packages)
-    if end_point:
-        cmd.extend(["-f", end_point])
-
-    if verbose:
-        logger.info(f"Installing packages {packages}...")
-    # pylint: disable-next=consider-using-with
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, err = proc.communicate()
-    returncode = int(proc.returncode)
-    if returncode != 0:
-        error = f"{packages} installation failed with exitcode {returncode}\n"
-        error += err.decode("utf-8")
-        raise BuildError(error)
-    if verbose:
-        logger.info(f"{packages} installed successfully")
-
-
 def clean(core_path: Path, _all: bool = False) -> int:
     """Remove pre existing installations of ML runtimes
 
@@ -102,7 +73,6 @@ def clean(core_path: Path, _all: bool = False) -> int:
 
     lib_path = core_path / "lib"
     if lib_path.is_dir():
-
         # remove RedisAI
         rai_path = lib_path / "redisai.so"
         if rai_path.is_file():

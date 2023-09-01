@@ -105,6 +105,10 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
+        if os.getenv("SLURM_HET_SIZE") is not None:
+            raise ValueError(
+                "Slurm does not support MPMD workloads in heterogeneous jobs."
+            )
         self.mpmd.append(settings)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -269,6 +273,37 @@ class SrunSettings(RunSettings):
         :type walltime: str
         """
         self.run_args["time"] = str(walltime)
+
+    def set_het_group(self, het_group: t.Iterable[int]) -> None:
+        """Set the heterogeneous group for this job
+
+        this sets `--het-group`
+
+        :param het_group: list of heterogeneous groups
+        :type het_group: int or iterable of ints
+        """
+        het_size_env = os.getenv("SLURM_HET_SIZE")
+        if het_size_env is None:
+            msg = "Requested to set het group, but the allocation is not a het job"
+            raise ValueError(msg)
+
+        het_size = int(het_size_env)
+        if self.mpmd:
+            msg = "Slurm does not support MPMD workloads in heterogeneous jobs\n"
+            raise ValueError(msg)
+        msg = (
+            "Support for heterogeneous groups is an experimental feature, "
+            "please report any unexpected behavior to SmartSim developers "
+            "by opening an issue on https://github.com/CrayLabs/SmartSim/issues"
+        )
+        if any(group >= het_size for group in het_group):
+            msg = (
+                f"Het group {max(het_group)} requested, "
+                f"but max het group in allocation is {het_size-1}"
+            )
+            raise ValueError(msg)
+        logger.warning(msg)
+        self.run_args["het-group"] = ",".join(str(group) for group in het_group)
 
     def format_run_args(self) -> t.List[str]:
         """Return a list of slurm formatted run arguments

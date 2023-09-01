@@ -38,8 +38,10 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         help="Remove all SmartSim non-python dependencies as well",
     )
 
+
 def execute(args: argparse.Namespace) -> int:
     return clean(get_install_path() / "_core", _all=args.clobber)
+
 
 def execute_all(args: argparse.Namespace) -> int:
     args.clobber = True

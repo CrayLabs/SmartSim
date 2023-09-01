@@ -261,6 +261,7 @@ class Controller:
         launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
+            "pals": PBSLauncher,
             "cobalt": CobaltLauncher,
             "lsf": LSFLauncher,
             "local": LocalLauncher,
@@ -394,7 +395,7 @@ class Controller:
     def _launch_step(
         self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]
     ) -> None:
-        """Use the launcher to launch a job stop
+        """Use the launcher to launch a job step
 
         :param job_step: a job step instance
         :type job_step: Step
@@ -663,11 +664,7 @@ class Controller:
         address_dict = self._jobs.get_db_host_addresses()
         # db_address, address_dict = self._jobs.get_db_host_addresses()
         flag = ""
-        for (
-            db_id,
-            db_addresses,
-        ) in address_dict.items():
-            print(db_id, db_addresses)
+        for (db_id,db_addresses,) in address_dict.items():
             db_name = "_".join(db_id.split("_")[:-1])
 
             if db_name == "orchestrator":
@@ -699,27 +696,27 @@ class Controller:
 
             for model in manifest.models:
                 if not model.colocated:
-                    # pylint: disable=protected-access
+
                     for db_model in model._db_models:
                         set_ml_model(db_model, client)
                     for db_script in model._db_scripts:
                         set_script(db_script, client)
+
             for ensemble in manifest.ensembles:
-                # pylint: disable=protected-access
-                for db_model in ensemble._db_models:
+                for db_model in ensemble.db_models: #_db_models
                     set_ml_model(db_model, client)
-                for db_script in ensemble._db_scripts:
+                for db_script in ensemble.db_scripts:
                     set_script(db_script, client)
                 for entity in ensemble.models:
                     if not entity.colocated:
                         # Set models which could belong only
                         # to the entities and not to the ensemble
                         # but avoid duplicates
-                        for db_model in entity._db_models:
-                            if db_model not in ensemble._db_models:
+                        for db_model in entity.db_models: #_db_models
+                            if db_model not in ensemble.db_models:
                                 set_ml_model(db_model, client)
-                        for db_script in entity._db_scripts:
-                            if db_script not in ensemble._db_scripts:
+                        for db_script in entity.db_scripts: #_db_scripts
+                            if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
 
 

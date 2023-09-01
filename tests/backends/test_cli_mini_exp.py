@@ -24,15 +24,47 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 
-from smartsim._core._cli.cli import default_cli
+from contextlib import contextmanager
+
+import smartredis
+
+import smartsim._core._cli.validate
+from smartsim._core.utils.helpers import installed_redisai_backends
 
 
-def main() -> int:
-    smart_cli = default_cli()
-    return smart_cli.execute(sys.argv)
+def test_cli_mini_exp_doesnt_error_out_with_dev_build(
+    local_db,
+    fileutils,
+    monkeypatch,
+):
+    """Presumably devs running the test suite have built SS correctly.
+    This test runs the "mini-exp" shipped users through the CLI
+    to ensure that it does not accidentally report false positive/negatives
+    """
 
+    @contextmanager
+    def _mock_make_managed_local_orc(*a, **kw):
+        client_addr ,= local_db.get_address()
+        yield smartredis.Client(address=client_addr, cluster=False)
 
-if __name__ == "__main__":
-    main()
+    monkeypatch.setattr(
+        smartsim._core._cli.validate,
+        "_make_managed_local_orc",
+        _mock_make_managed_local_orc,
+    )
+    backends = installed_redisai_backends()
+    db_port ,= local_db.ports
+
+    smartsim._core._cli.validate.test_install(
+        # Shouldn't matter bc we are stubbing creation of orc
+        # but best to give it "correct" vals for safety
+        location=fileutils.get_test_dir(),
+        port=db_port,
+        # Always test on CPU, heads don't always have GPU
+        device="CPU",
+        # Test the backends the dev has installed
+        with_tf="tensorflow" in backends,
+        with_pt="torch" in backends,
+        with_onnx="onnxruntime" in backends,
+    )

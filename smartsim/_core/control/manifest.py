@@ -172,12 +172,10 @@ class Manifest:
         """Check if any entity has DBObjects to set"""
 
         def has_db_models(entity: t.Union[EntityList, Model]) -> bool:
-            # pylint: disable=protected-access
-            return len(entity._db_models) > 0
+            return len(list(entity.db_models)) > 0
 
         def has_db_scripts(entity: t.Union[EntityList, Model]) -> bool:
-            # pylint: disable=protected-access
-            return len(entity._db_scripts) > 0
+            return len(list(entity.db_scripts)) > 0
 
         has_db_objects = False
         for model in self.models:

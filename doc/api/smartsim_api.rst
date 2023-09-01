@@ -450,6 +450,8 @@ Model
 Ensemble
 ========
 
+.. _ensemble_api:
+
 .. currentmodule:: smartsim.entity.ensemble
 
 .. autosummary::

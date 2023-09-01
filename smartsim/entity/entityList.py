@@ -27,7 +27,8 @@
 import typing as t
 
 if t.TYPE_CHECKING:
-    import smartsim  # pylint: disable=unused-import
+    # pylint: disable=unused-import
+    import smartsim
 
 
 class EntityList:
@@ -44,6 +45,16 @@ class EntityList:
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         """Initialize the SmartSimEntity objects in the container"""
         raise NotImplementedError
+
+    @property
+    def db_models(self) -> t.Iterable["smartsim.entity.DBModel"]:
+        """Return an immutable collection of attached models"""
+        return (model for model in self._db_models)
+
+    @property
+    def db_scripts(self) -> t.Iterable["smartsim.entity.DBScript"]:
+        """Return an immutable collection of attached scripts"""
+        return (script for script in self._db_scripts)
 
     @property
     def batch(self) -> bool:

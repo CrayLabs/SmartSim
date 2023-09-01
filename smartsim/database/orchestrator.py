@@ -28,7 +28,7 @@ import psutil
 import sys
 import typing as t
 
-from os import getcwd, environ
+from os import getcwd, getenv, environ
 from shlex import split as sh_split
 
 from smartredis import Client, ConfigOptions
@@ -64,6 +64,7 @@ logger = get_logger(__name__)
 by_launcher: t.Dict[str, t.List[str]] = {
     "slurm": ["srun", "mpirun", "mpiexec"],
     "pbs": ["aprun", "mpirun", "mpiexec"],
+    "pals": ["mpiexec"],
     "cobalt": ["aprun", "mpirun", "mpiexec"],
     "lsf": ["jsrun"],
     "local": [""],
@@ -108,7 +109,18 @@ def _check_run_command(launcher: str, run_command: str) -> None:
 
 
 def _get_single_command(run_command: str, batch: bool, single_cmd: bool) -> bool:
-    if not batch or not single_cmd:
+    if not single_cmd:
+        return single_cmd
+
+    if run_command == "srun" and getenv("SLURM_HET_SIZE") is not None:
+        msg = (
+            "srun can not launch an orchestrator with single_cmd=True in "
+            + "a hetereogeneous job. Automatically switching to single_cmd=False."
+        )
+        logger.info(msg)
+        return False
+
+    if not batch:
         return single_cmd
 
     if run_command == "aprun":
