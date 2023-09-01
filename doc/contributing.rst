@@ -65,7 +65,7 @@ In both cases, contributors can expect the following:
 rejecting your contribution
 
 - If we accept your contribution, a SmartSim developer will be assigned to help
-bring your contribution into the codebases by testing it across a variety off
+bring your contribution into the codebases by testing it across a variety of
 platforms and ensuring code quality.
 
 - You will be credited as a co-author when the contribution is merged
