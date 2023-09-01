@@ -33,6 +33,9 @@ from smartsim import Experiment
 from smartsim._core.generation import Generator
 from smartsim.database import Orchestrator
 from smartsim.settings import RunSettings
+from tabulate import tabulate
+
+from smartsim.settings import SbatchSettings
 
 rs = RunSettings("python", exe_args="sleep.py")
 
@@ -148,7 +151,7 @@ def test_dir_files(fileutils):
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
     conf_dir = fileutils.get_test_dir_path("test_dir")
-    ensemble.attach_generator_files(to_copy=conf_dir)
+    ensemble.attach_generator_files(to_configure=conf_dir)
 
     exp.generate(ensemble)
 
@@ -158,6 +161,87 @@ def test_dir_files(fileutils):
         assert osp.isdir(model_path)
         assert osp.isdir(osp.join(model_path, "test_dir_1"))
         assert osp.isfile(osp.join(model_path, "test.py"))
+
+
+def test_print_files(fileutils, capsys):
+    """Test the stdout print of files attached to an ensemble"""
+
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment("print-attached-files-test", test_dir, launcher="local")
+
+    ensemble = exp.create_ensemble("dir_test", replicas=1, run_settings=rs)
+    ensemble.entities = []
+
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    assert captured.out == "The ensemble is empty, no files to show.\n"
+
+    params = {"THERMO": [10, 20], "STEPS": [20, 30]}
+    ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
+    gen_dir = fileutils.get_test_dir_path("test_dir")
+    symlink_dir = fileutils.get_test_dir_path("to_symlink_dir")
+    copy_dir = fileutils.get_test_dir_path("to_copy_dir")
+
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    expected_out = (
+        tabulate(
+            [
+                [model.name, "No file attached to this model."]
+                for model in ensemble.models
+            ],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
+
+    assert captured.out == expected_out
+
+    ensemble.attach_generator_files()
+    ensemble.print_attached_files()
+    captured = capsys.readouterr()
+    expected_out = (
+        tabulate(
+            [
+                [model.name, "No file attached to this entity."]
+                for model in ensemble.models
+            ],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
+    assert captured.out == expected_out
+
+    ensemble.attach_generator_files(
+        to_configure=[gen_dir, copy_dir], to_copy=copy_dir, to_symlink=symlink_dir
+    )
+
+    expected_out = tabulate(
+        [
+            ["Copy", copy_dir],
+            ["Symlink", symlink_dir],
+            ["Configure", f"{gen_dir}\n{copy_dir}"],
+        ],
+        headers=["Strategy", "Files"],
+        tablefmt="grid",
+    )
+
+    assert all(str(model.files) == expected_out for model in ensemble.models)
+
+    expected_out_multi = (
+        tabulate(
+            [[model.name, expected_out] for model in ensemble.models],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
+        + "\n"
+    )
+    ensemble.print_attached_files()
+
+    captured = capsys.readouterr()
+    assert captured.out == expected_out_multi
 
 
 def test_multiple_tags(fileutils):
@@ -217,7 +301,6 @@ def test_config_dir(fileutils):
 
     assert osp.isdir(osp.join(test_dir, "test"))
 
-    # assert False
     def _check_generated(test_num, param_0, param_1):
         conf_test_dir = osp.join(test_dir, "test", f"test_{test_num}")
         assert osp.isdir(conf_test_dir)
