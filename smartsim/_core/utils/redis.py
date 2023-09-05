@@ -218,7 +218,7 @@ def set_script(db_script: DBScript, client: Client) -> None:
 
 def shutdown_db(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     """Send shutdown signal to cluster instances.
-    
+
     Should only be used in the case where cluster deallocation
     needs to occur manually. Usually, the SmartSim task manager
     will take care of this automatically.
