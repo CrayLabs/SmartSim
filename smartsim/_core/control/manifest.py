@@ -48,12 +48,12 @@ class Manifest:
         self._check_entity_lists_nonempty()
 
     @property
-    def db(self) -> t.Optional[Orchestrator]:
-        """Return Orchestrator instances in Manifest
+    def dbs(self) -> t.Optional[list]:
+        """Return a list of Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
-        :return: orchestrator instances
-        :rtype: Orchestrator | None
+        :return: List of orchestrator instances
+        :rtype: list[Orchestrator] | None
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
         return dbs if dbs else None
@@ -90,10 +90,10 @@ class Manifest:
         _all_entity_lists: t.List[EntityList] = []
         _all_entity_lists.extend(self.ensembles)
 
-        db = self.db
+        dbs = self.dbs
 
-        if db is not None:
-            for a_db in db:
+        if dbs is not None:
+            for a_db in dbs:
                 _all_entity_lists.append(a_db)
 
         return _all_entity_lists
@@ -153,9 +153,8 @@ class Manifest:
                     output += f"Parameters: \n{fmt_dict(model.params)}\n"
             output += "\n"
 
-        if self.db:
-            # jpnote looping
-            for adb in self.db:
+        if self.dbs:
+            for adb in self.dbs:
                 output += db_header
                 output += f"Shards: {adb.num_shards}\n"
                 output += f"Port: {str(adb.ports[0])}\n"

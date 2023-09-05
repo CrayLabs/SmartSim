@@ -665,16 +665,14 @@ class ColoUtils:
         # get test setup
         test_dir = fileutils.make_test_dir(level=2)
 
-        # Jpnote
+        # jpnote - ask if this is okay 
+        # python filename if db identifier is present
         if db_args["db_identifier"]:
-            sr_test_script = fileutils.get_test_conf_path(
-                "send_data_local_smartredis_with_dbid.py"
-            )
-            print("yes", db_args["db_identifier"])
+            f_name = "send_data_local_smartredis_with_dbid.py"
         else:
-            sr_test_script = fileutils.get_test_conf_path(
-                "send_data_local_smartredis.py"
-            )
+            f_name = "send_data_local_smartredis.py"
+
+        sr_test_script = fileutils.get_test_conf_path(f_name)
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:

@@ -88,7 +88,7 @@ class Generator:
         generator_manifest = Manifest(*args)
 
         self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.db)
+        self._gen_orc_dir(generator_manifest.dbs)
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
 

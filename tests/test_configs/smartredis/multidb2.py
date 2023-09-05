@@ -26,57 +26,24 @@
 
 import argparse
 
-# import io
 import os
 
-# from smartsim.error.errors import
 from smartredis import ConfigOptions, Client
 
-
-# # taken from https://pytorch.org/docs/master/generated/torch.jit.trace.html
-# class Net(nn.Module):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv = nn.Conv2d(1, 1, 3)
-
-#     def forward(self, x):
-#         return self.conv(x)
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="SmartRedis ensemble producer process."
-    )
+    parser = argparse.ArgumentParser(description="SmartRedis")
     parser.add_argument("--exchange", action="store_true")
     args = parser.parse_args()
 
     opts1 = ConfigOptions.create_from_environment("testdb_colo")
 
-    client = Client(opts1, logger_name="SmartSim")  
+    client = Client(opts1, logger_name="SmartSim")
 
+env_vars = [
+    "SSKEYIN_testdb_colo",
+    "SSKEYOUT_testdb_colo",
+    "SSDB_testdb_colo",
+    "SR_DB_TYPE_testdb_colo",
+]
 
-
-# jpTODO: add warning/error?
-
-# if "SSKEYIN_testdb_reg" not in os.environ:
-#     print("no env var found")
-#     # raise EnvError(
-#     #     "No env var found"
-#     # )
-
-# if "SSKEYOUT_testdb_reg" not in os.environ:
-#     print("no env var found")
-#     # raise EnvError(
-#     #     "No env var found"
-#     # )
-
-# if "SSDB_testdb_reg" not in os.environ:
-#     print("no env var found")
-#     # raise EnvError(
-#     #     "No env var found"
-#     # )
-
-# if "SR_DB_TYPE_testdb_reg" not in os.environ:
-#     print("no env var found")
-#     # raise EnvError(
-#     #     "No env var found"
-#     # )
+assert all([var in os.environ for var in env_vars])

@@ -791,7 +791,10 @@ def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, m
 
     # Create the SmartSim database
     db = exp.create_database(
-        port=test_port, db_nodes=1, interface=test_interface, db_identifier="testdb1"
+        port=test_port,
+        db_nodes=1,
+        interface=test_interface,
+        db_identifier="testdb_colo",
     )
     exp.generate(db)
 

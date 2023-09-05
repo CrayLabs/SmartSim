@@ -853,7 +853,7 @@ class Experiment:
 
         if self._control.orchestrator_active:
             summary += "Database Status: active\n"
-        elif manifest.db:
+        elif manifest.dbs:
             summary += "Database Status: launching\n"
         else:
             summary += "Database Status: inactive\n"

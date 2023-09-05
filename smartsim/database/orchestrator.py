@@ -569,10 +569,10 @@ class Orchestrator(EntityList):
                 db_name = "_" + db_name
 
             environ[f"SSDB{db_name}"] = addresses[0]
-            if self.num_shards > 2:
-                environ[f"SR_DB_TYPE{db_name}"] = "Clustered"
-            else:
-                environ[f"SR_DB_TYPE{db_name}"] = "Standalone"
+
+            environ[f"SR_DB_TYPE{db_name}"] = (
+                "Clustered" if self.num_shards > 2 else "Standalone"
+            )
 
             options = ConfigOptions.create_from_environment(db_without)
             client = Client(options, logger_name="SmartSim")

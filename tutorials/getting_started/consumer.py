@@ -9,7 +9,7 @@ args = parser.parse_args()
 # get model and set into database
 address = "127.0.0.1:" + str(args.redis_port)
 os.environ["SSDB"] = address
-c = Client(None, logger_name="SmartSim")  # cluster=False
+c = Client(None, logger_name="SmartSim")
 
 
 # Incoming entity prefixes are stored as a comma-separated list

@@ -234,16 +234,9 @@ def main(
 
     try:
         if db_models or db_scripts:
-            options = ConfigOptions.create_from_environment(db_identifier)
-            client = Client(options, logger_name="SmartSim")
             try:
-                # if db_identifier:
                 options = ConfigOptions.create_from_environment(db_identifier)
                 client = Client(options, logger_name="SmartSim")
-
-                # else:
-                # client = Client(None, logger_name="SmartSim")  # cluster=False
-
                 launch_models(client, db_models)
                 launch_db_scripts(client, db_scripts)
             except (RedisConnectionError, RedisReplyError) as ex:

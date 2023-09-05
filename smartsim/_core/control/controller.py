@@ -288,7 +288,7 @@ class Controller:
         :type manifest: Manifest
         """
 
-        orchestrators = manifest.db
+        orchestrators = manifest.dbs
         if orchestrators:
             # Loop over deployables to launch and launch multiple orchestrators
             for orchestrator in orchestrators:
@@ -299,6 +299,8 @@ class Controller:
                         raise SmartSimError(
                             "Local launcher does not support multi-host orchestrators"
                         )
+                    # jpnote: Should this code be modified to see if we're attempting to
+                    # launch a second orchestrator with the same db_id?
                     # if self.orchestrator_active:
                     #     msg = "Attempted to launch a second Orchestrator instance. "
                     #     msg += "Only 1 Orchestrator can be active at a time"
@@ -499,10 +501,9 @@ class Controller:
                     client_env[f"SSKEYOUT{db_name}"] = entity.name
 
             # Retrieve num_shards to append to client env
-            if len(addresses) > 1:
-                client_env[f"SR_DB_TYPE{db_name}"] = "Clustered"
-            else:
-                client_env[f"SR_DB_TYPE{db_name}"] = "Standalone"
+            client_env[f"SR_DB_TYPE{db_name}"] = (
+                "Clustered" if len(addresses) > 1 else "Standalone"
+            )
 
         # Set address to local if it's a colocated model
         if entity.colocated:
@@ -664,7 +665,10 @@ class Controller:
         address_dict = self._jobs.get_db_host_addresses()
         # db_address, address_dict = self._jobs.get_db_host_addresses()
         flag = ""
-        for (db_id,db_addresses,) in address_dict.items():
+        for (
+            db_id,
+            db_addresses,
+        ) in address_dict.items():
             db_name = "_".join(db_id.split("_")[:-1])
 
             if db_name == "orchestrator":
@@ -681,29 +685,26 @@ class Controller:
             if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
                 raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-            # set env SSDB to
             environ[f"SSDB{db_name}"] = db_addresses[0]
 
             options = ConfigOptions.create_from_environment(db_without)
 
-            # client = Client(options, cluster=len(db_addresses) > 1)
-            if len(db_addresses) > 1:
-                environ[f"SR_DB_TYPE{db_name}"] = "Clustered"
-            else:
-                environ[f"SR_DB_TYPE{db_name}"] = "Standalone"
+            environ[f"SR_DB_TYPE{db_name}"] = (
+                "Clustered" if len(db_addresses) > 1 else "Standalone"
+            )
 
             client = Client(options, logger_name="SmartSim")
 
             for model in manifest.models:
                 if not model.colocated:
 
-                    for db_model in model._db_models:
+                    for db_model in model.db_models:
                         set_ml_model(db_model, client)
-                    for db_script in model._db_scripts:
+                    for db_script in model.db_scripts:
                         set_script(db_script, client)
 
             for ensemble in manifest.ensembles:
-                for db_model in ensemble.db_models: #_db_models
+                for db_model in ensemble.db_models:
                     set_ml_model(db_model, client)
                 for db_script in ensemble.db_scripts:
                     set_script(db_script, client)
@@ -712,10 +713,10 @@ class Controller:
                         # Set models which could belong only
                         # to the entities and not to the ensemble
                         # but avoid duplicates
-                        for db_model in entity.db_models: #_db_models
+                        for db_model in entity.db_models:
                             if db_model not in ensemble.db_models:
                                 set_ml_model(db_model, client)
-                        for db_script in entity.db_scripts: #_db_scripts
+                        for db_script in entity.db_scripts:
                             if db_script not in ensemble.db_scripts:
                                 set_script(db_script, client)
 

@@ -304,13 +304,13 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.List[str]:
+    def get_db_host_addresses(self) -> t.Dict[str, list]:
         """Retrieve the list of hosts for the database
 
-        :return: list of host ip addresses,
-        and dict of db_identifier: and list of addresses
-        :rtype: list[str]
-        """
+        :return:  dictionary of db_identifiers for each database
+        and their corresponding list of host ip addresses
+        :rtype: Dict[str, list]"""
+
         db_id = ""
         addresses = []
         for db_id, db_job in self.db_jobs.items():
@@ -322,7 +322,7 @@ class JobManager:
 
         self.address_dict.update({db_id: addresses})
 
-        return self.address_dict  # returns a list of addresses #addresses,
+        return self.address_dict
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
