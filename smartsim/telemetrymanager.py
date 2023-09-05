@@ -27,6 +27,7 @@
 import argparse
 from dataclasses import dataclass, field
 import json
+from multiprocessing import RLock
 import os
 import pathlib
 import signal
@@ -43,6 +44,15 @@ from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
+from smartsim._core.control.jobmanager import JobManager
+from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
+
+from smartsim._core.launcher.launcher import Launcher
+from smartsim._core.launcher.local.local import LocalLauncher
+from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
+from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
+from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim.status import TERMINAL_STATUSES
 
 # from smartsim._core.launcher.launcher import Launcher
 # from smartsim.wlm import detect_launcher
@@ -171,7 +181,7 @@ def track_event(
     persist = EntityEvent(
         entity.entity_type, entity.name, entity.job_id, entity.step_id, run.timestamp
     )
-    tgt_path.write_text(json.dumps(persist))
+    tgt_path.write_text(json.dumps(persist.__dict__))
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -190,7 +200,51 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._tracked_runs: t.Dict[int, Run] = {}
         self._tracked_jobs: t.Dict[_JobKey, PersistableEntity] = {}
         self._completed_jobs: t.Dict[_JobKey, PersistableEntity] = {}
-        self._launcher: str = ""
+        self._launcher_type: str = ""
+        self._launcher: t.Optional[Launcher] = None
+        self._jm: JobManager = JobManager(RLock())
+
+    def init_launcher(self, launcher: str) -> None:
+        """Initialize the controller with a specific type of launcher.
+        SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
+        and local launching
+
+        :param launcher: which launcher to initialize
+        :type launcher: str
+        :raises SSUnsupportedError: if a string is passed that is not
+                                    a supported launcher
+        :raises TypeError: if no launcher argument is provided.
+        """
+        launcher_map: t.Dict[str, t.Type[Launcher]] = {
+            "slurm": SlurmLauncher,
+            "pbs": PBSLauncher,
+            "cobalt": CobaltLauncher,
+            "lsf": LSFLauncher,
+            "local": LocalLauncher,
+        }
+
+        if launcher is not None:
+            launcher = launcher.lower()
+            if launcher in launcher_map:
+                # create new instance of the launcher
+                # self._launcher = launcher_map[launcher]()
+                # self._jm = JobManager(RLock(), self._launcher)
+                return launcher_map[launcher]()
+            else:
+                # raise SSUnsupportedError("Launcher type not supported: " + launcher)
+                raise ValueError("Launcher type not supported: " + launcher)
+        else:
+            raise TypeError("Must provide a 'launcher' argument")
+
+    def set_launcher(self, launcher_type: str) -> None:
+        if launcher_type != self._launcher_type:
+            # if self._launcher:
+            #     self._jm
+            self._launcher_type = launcher_type
+            self._launcher = self.init_launcher(launcher_type) # stolen from controller...
+            self._jm.set_launcher(self._launcher)
+            self._jm.start()
+            # self._jm.run()
 
     @property
     def tracked_runs(self) -> t.Dict[int, Run]:
@@ -205,7 +259,15 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         return self._completed_jobs
 
     @property
-    def launcher(self) -> str:
+    def launcher(self) -> Launcher:
+        if not self._launcher:
+            ... # todo: build it...
+            # self._launcher = SlurmLauncher()
+            self._launcher = LocalLauncher()
+        
+        # if not self._launcher:
+        #     raise ValueError("Launcher failed to instantiate properly")
+        
         return self._launcher
 
     def on_modified(self, event: FileModifiedEvent) -> None:
@@ -220,7 +282,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         # load items to process from manifest
         manifest = load_manifest(event.src_path)
-        self._launcher = manifest.launcher
+        self.set_launcher(manifest.launcher)
 
         runs = [run for run in manifest.runs if run.timestamp not in self.tracked_runs]
 
@@ -234,6 +296,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 # if entity.key not in self._tracked_jobs:
                 self._tracked_jobs[entity.key] = entity
                 track_event(run, entity, "start", exp_dir)
+                self._jm.add_job(entity.name, entity.job_id, entity, True)  # todo: is_task=True must be fixed
             self._tracked_runs[run.timestamp] = run
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -245,38 +308,34 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
         """
         super().on_created(event)  # type: ignore
+        # todo: same as on_modified?
 
-        # # load items to process from manifest
-        # manifest = load_manifest(event.src_path)
-        # self._launcher = manifest.launcher
-        # runs = [run for run in manifest.runs if run.timestamp not in self.tracked_runs]
+    def to_completed(self, entity: PersistableEntity, exp_dir: pathlib.Path) -> None:
+        inactive_entity = self._tracked_jobs.pop(entity.key)
+        if entity.key not in self._completed_jobs:
+            self._completed_jobs[entity.key] = inactive_entity
+        # self._jm.add_job(entity.name, entity.job_id, entity, True)  # todo: is_task=True must be fixed
+        job = self._jm[entity.name]
+        self._jm.move_to_completed(job)
+        track_event(Run(), inactive_entity, "stop", exp_dir)
+        
 
-        # # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
-        # exp_dir = pathlib.Path(event.src_path).parent.parent
+    def on_timestep(self, exp_dir: pathlib.Path) -> None:
+        # todo: update the completed jobs set in the manifest event handler when req'd
+        
+        launcher = self.launcher
+        entity_map = self.tracked_jobs
 
-        # for run in runs:
-        #     for entity in run.flatten(
-        #         filter_fn=lambda e: e.key not in self._tracked_jobs
-        #     ):
-        #         if entity.key not in self._tracked_jobs:
-        #             self._tracked_jobs[entity.key] = entity
-        #             track_event(run, entity, "start", exp_dir)
-        #     self._tracked_runs[run.timestamp] = run
+        names = {entity.name: entity for entity in entity_map.values()}
 
+        if launcher and names:
+            step_updates = launcher.get_step_update(list(names.keys()))
+            # print(entity_statuses)
 
-def on_timestep(action_handler: ManifestEventHandler) -> None:
-    # todo: update the completed jobs set in the manifest event handler when req'd
-    # entity_names = {entity.name for entity in action_handler.tracked_jobs.values()}
-
-    # launcher = None
-    if action_handler.launcher in ["local", "slurm"]:
-        # launcher = detect_launcher()
-        # launcher = None
-        ...
-
-    # if launcher and entity_names:
-    #     entity_statuses = launcher.get_step_update(entity_names)
-    #     print(entity_statuses)
+            for step_name, step_info in step_updates:
+                if step_info.status in TERMINAL_STATUSES:
+                    completed_entity = names[step_name]
+                    self.to_completed(completed_entity, exp_dir)
 
 
 async def main(
@@ -302,7 +361,7 @@ async def main(
 
         while observer.is_alive():
             logger.debug(f"Telemetry timestep: {datetime.timestamp(datetime.now())}")
-            on_timestep(action_handler)
+            action_handler.on_timestep(action_handler, experiment_dir)
             await asyncio.sleep(frequency)
     except Exception as ex:
         logger.error(ex)
@@ -333,7 +392,8 @@ if __name__ == "__main__":
         type=str,
         help="Experiment root directory",
         # required=True,
-        default="/Users/chris.mcbride/code/ss/smartsim/_core/entrypoints",
+        # default="/Users/chris.mcbride/code/ss/smartsim/_core/entrypoints",
+        default="/Users/chris.mcbride/code/ss",
     )
 
     args = parser.parse_args()
