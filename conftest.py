@@ -41,6 +41,7 @@ from smartsim.settings import (
     AprunSettings,
     JsrunSettings,
     MpirunSettings,
+    PalsMpiexecSettings,
     RunSettings,
 )
 from smartsim._core.config import CONFIG
@@ -83,8 +84,7 @@ def print_test_configuration() -> None:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print("TEST_PORT", test_port)
-    print("TEST_PORT + 1", test_port + 1)
+    print("TEST_PORTS", ", ".join(str(port) for port in range(test_port, test_port+3)))
 
 
 def pytest_configure() -> None:
@@ -92,6 +92,7 @@ def pytest_configure() -> None:
     pytest.wlm_options = ["slurm", "pbs", "cobalt", "lsf", "pals"]
     account = get_account()
     pytest.test_account = account
+    pytest.test_device = test_device
 
 
 def pytest_sessionstart(
@@ -142,6 +143,12 @@ def get_hostlist() -> t.Optional[t.List[str]]:
         if "COBALT_NODEFILE" in os.environ:
             try:
                 return _parse_hostlist_file(os.environ["COBALT_NODEFILE"])
+            except FileNotFoundError:
+                return None
+        elif "PBS_NODEFILE" in os.environ and test_launcher=="pals":
+            # with PALS, we need a hostfile even if `aprun` is available
+            try:
+                return _parse_hostlist_file(os.environ["PBS_NODEFILE"])
             except FileNotFoundError:
                 return None
         elif "PBS_NODEFILE" in os.environ and not shutil.which("aprun"):
@@ -320,11 +327,21 @@ class WLMUtils:
 
     @staticmethod
     def get_orchestrator(nodes: int = 1, batch: bool = False) -> Orchestrator:
-        if test_launcher in ["pbs", "cobalt", "pals"]:
+        if test_launcher in ["pbs", "cobalt"]:
             if not shutil.which("aprun"):
                 hostlist = get_hostlist()
             else:
                 hostlist = None
+            return Orchestrator(
+                db_nodes=nodes,
+                port=test_port,
+                batch=batch,
+                interface=test_nic,
+                launcher=test_launcher,
+                hosts=hostlist,
+            )
+        if test_launcher == "pals":
+            hostlist = get_hostlist()
             return Orchestrator(
                 db_nodes=nodes,
                 port=test_port,

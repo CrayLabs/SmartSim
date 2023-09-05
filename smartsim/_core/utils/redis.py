@@ -214,3 +214,35 @@ def set_script(db_script: DBScript, client: Client) -> None:
         except RedisReplyError as error:  # pragma: no cover
             logger.error("Error while setting model on orchestrator.")
             raise error
+
+
+def shutdown_db(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
+    """Send shutdown signal to cluster instances.
+    
+    Should only be used in the case where cluster deallocation
+    needs to occur manually. Usually, the SmartSim task manager
+    will take care of this automatically.
+
+    :param hosts: List of hostnames to connect to
+    :type hosts: List[str]
+    :param ports: List of ports for each hostname
+    :type ports: List[int]
+    :raises SmartSimError: if cluster creation fails
+    """
+    for host in hosts:
+        host_ip = get_ip_from_host(host)
+        for port in ports:
+            # call cluster command
+            redis_cli = CONFIG.database_cli
+            cmd = [redis_cli]
+            cmd += ["-h", host_ip, "-p", str(port)]
+            cmd += ["shutdown"]
+            returncode, out, err = execute_cmd(
+                cmd, proc_input="yes", shell=False, timeout=10
+            )
+
+            if returncode != 0:
+                logger.error(out)
+                logger.error(err)
+
+            logger.debug(out)

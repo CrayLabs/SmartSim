@@ -407,6 +407,13 @@ class Orchestrator(EntityList):
         if self.launcher == "lsf":
             for db in self.dbnodes:
                 db.set_hosts(host_list)
+        elif (self.launcher == "pals"
+              and isinstance(self.dbnodes[0].run_settings, PalsMpiexecSettings)
+              and self.dbnodes[0].is_mpmd
+              and hasattr(self.dbnodes[0].run_settings, "mpmd")):
+            # In this case, --hosts is a global option, we only set it to the
+            # first run command
+            self.dbnodes[0].run_settings.set_hostlist(host_list)
         else:
             for host, db in zip(host_list, self.dbnodes):
                 if isinstance(db.run_settings, AprunSettings):
