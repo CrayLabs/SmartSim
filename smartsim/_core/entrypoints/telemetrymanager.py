@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import copy
+from dataclasses import dataclass, field
 import json
 import os
 import pathlib
@@ -55,54 +55,123 @@ Telemetry Monitor entrypoint
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
+_EventClass = t.Literal["start", "stop", "timestep"]
+_ManifestKey = t.Literal["timestamp", "applications", "orchestrators", "ensembles"]
+_JobKey = t.Tuple[str, str]
 
 
-def load_manifest(file_path: str) -> t.Dict[str, t.Any]:
+@dataclass
+class PersistableEntity:
+    entity_type: str
+    name: str
+    job_id: str
+    step_id: str
+
+    @property
+    def key(self) -> _JobKey:
+        return (self.job_id, self.step_id)
+
+
+_FilterFn = t.Callable[[PersistableEntity], bool]
+
+
+@dataclass
+class EntityEvent(PersistableEntity):
+    timestamp: int
+
+
+@dataclass
+class Run:
+    timestamp: int
+    applications: t.List[PersistableEntity]
+    orchestrators: t.List[PersistableEntity]
+    ensembles: t.List[PersistableEntity]
+
+    def flatten(
+        self, filter_fn: t.Optional[_FilterFn] = None
+    ) -> t.List[PersistableEntity]:
+        """Flatten runs into a list of SmartSimEntity run events"""
+        entities = self.applications + self.orchestrators + self.ensembles
+        if filter_fn:
+            entities = [entity for entity in entities if filter_fn(entity)]
+        return entities
+
+
+@dataclass
+class ExperimentManifest:
+    name: str
+    path: pathlib.Path
+    launcher: str
+    runs: t.List[Run] = field(default_factory=list)
+
+
+def hydrate_persistable(
+    entity_type: str, persisted_entity: t.Dict[str, t.Any]
+) -> PersistableEntity:
+    return PersistableEntity(
+        entity_type=entity_type,
+        name=persisted_entity["name"],
+        job_id=persisted_entity.get("job_id", ""),
+        step_id=persisted_entity.get("step_id", ""),
+    )
+
+
+def hydrate_persistables(
+    entity_type: _ManifestKey, run: t.Dict[_ManifestKey, t.Any]
+) -> t.List[PersistableEntity]:
+    return [hydrate_persistable(entity_type, item) for item in run[entity_type]]
+
+
+def hydrate_runs(persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]]) -> t.List[Run]:
+    runs = [
+        Run(
+            timestamp=instance["timestamp"],
+            applications=hydrate_persistables("applications", instance),
+            orchestrators=hydrate_persistables("orchestrators", instance),
+            ensembles=hydrate_persistables("ensembles", instance),
+        )
+        for instance in persisted_runs
+    ]
+    return runs
+
+
+def load_manifest(file_path: str) -> ExperimentManifest:
+    """Load a persisted manifest and return the content"""
     source = pathlib.Path(file_path)
     text = source.read_text(encoding="utf-8")
-    manifest = json.loads(text)
+    manifest_dict = json.loads(text)
+
+    manifest = ExperimentManifest(
+        name=manifest_dict["experiment"]["name"],
+        path=manifest_dict["experiment"]["path"],
+        launcher=manifest_dict["experiment"]["launcher"],
+        runs=hydrate_runs(manifest_dict["runs"]),
+    )
     return manifest
 
 
-def filter_new(
-    runs: t.List[t.Dict[str, t.Dict[str, t.Any]]], tracked: t.List[int]
-) -> t.List[t.Dict[str, t.Dict[str, t.Any]]]:
-    # filter out items that are already in the list of tracked runs
-    result = [run for run in runs if run["timestamp"] not in tracked]
-    return result
-
-
-def reshape_run(
-    runs: t.List[t.Dict[str, t.Dict[str, t.Any]]]
-) -> t.Dict[int, t.Dict[str, t.Any]]:
-    # remove the non-entity keys
-    return {
-        run["timestamp"]: {
-            "applications": run["applications"],
-            "orchestrators": run["orchestrators"],
-            "ensembles": run["ensembles"],
-        }
-        for run in runs
-    }
-
-
 def track_event(
-    timestamp: float, entity_type: str, entity: t.Dict[str, t.Any], action: str, exp_dir: pathlib.Path
+    run: Run, entity: PersistableEntity, action: _EventClass, exp_dir: pathlib.Path
 ) -> None:
-    job_id = entity.get("job_id", "no job id")
-    task_id = entity.get("step_id", "no task id")
-    print(f"mocked tracking {entity_type} event w/jid: {job_id}, tid: {task_id}, ts: {timestamp}")
+    """
+    Persist a tracking event for an entity
+    """
+    job_id = entity.job_id or "missing_job_id"
+    step_id = entity.step_id or "missing_step_id"
+    entity_type = entity.entity_type or "missing_entity_type"
+    print(
+        f"mocked tracking {entity_type} event w/jid: {job_id}, "
+        f"tid: {step_id}, ts: {run.timestamp}"
+    )
 
-    name: str = entity.get("name", "entity-name-not-found")
+    name: str = entity.name or "entity-name-not-found"
     tgt_path = exp_dir / "manifest" / entity_type / name / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
-    body = {
-        "timestamp": timestamp,  # datetime.timestamp(datetime.now()),
-        "job_id": job_id or "",
-        "task_id": task_id or "",
-    }
-    tgt_path.write_text(json.dumps(body))
+    persist = EntityEvent(
+        entity.entity_type, entity.name, entity.job_id, entity.step_id, run.timestamp
+    )
+    tgt_path.write_text(json.dumps(persist))
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -118,21 +187,21 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             [pattern], ignore_patterns, ignore_directories, case_sensitive
         )  # type: ignore
         self._logger = logger
-        self._tracked_runs: t.List[int] = []
-        self._tracked_jobs: t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]] = {}
-        self._completed_jobs: t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]] = {}
+        self._tracked_runs: t.Dict[int, Run] = {}
+        self._tracked_jobs: t.Dict[_JobKey, PersistableEntity] = {}
+        self._completed_jobs: t.Dict[_JobKey, PersistableEntity] = {}
         self._launcher: str = ""
 
     @property
-    def tracked_runs(self) -> t.List[int]:
+    def tracked_runs(self) -> t.Dict[int, Run]:
         return self._tracked_runs
 
     @property
-    def tracked_jobs(self) -> t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]]:
+    def tracked_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
         return self._tracked_jobs
 
     @property
-    def completed_jobs(self) -> t.Dict[t.Tuple[str, str], t.Dict[str, t.Any]]:
+    def completed_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
         return self._completed_jobs
 
     @property
@@ -151,23 +220,21 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         # load items to process from manifest
         manifest = load_manifest(event.src_path)
-        raw_runs = manifest.get("runs", [])
-        self._launcher = manifest["experiment"].get("launcher", "no-launcher-found")
+        self._launcher = manifest.launcher
 
-        raw_runs = filter_new(raw_runs, self._tracked_runs)
-        runs = reshape_run(raw_runs)
+        runs = [run for run in manifest.runs if run.timestamp not in self.tracked_runs]
 
         # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
         exp_dir = pathlib.Path(event.src_path).parent.parent
 
-        for ts, data in runs.items():
-            for _type, entities in data.items():
-                for entity in entities:
-                    jid, tid = entity.get("job_id", ""), entity.get("step_id", "")
-                    if (jid, tid) not in self._tracked_jobs:
-                        self._tracked_jobs[(jid, tid)] = entity
-                        track_event(ts, _type, entity, "start", exp_dir)
-            self._tracked_runs.append(ts)
+        for run in runs:
+            for entity in run.flatten(
+                filter_fn=lambda e: e.key not in self._tracked_jobs
+            ):
+                # if entity.key not in self._tracked_jobs:
+                self._tracked_jobs[entity.key] = entity
+                track_event(run, entity, "start", exp_dir)
+            self._tracked_runs[run.timestamp] = run
 
     def on_created(self, event: FileCreatedEvent) -> None:
         """Called when a file or directory is created.
@@ -179,35 +246,38 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         """
         super().on_created(event)  # type: ignore
 
-        # load items to process from manifest
-        manifest = load_manifest(event.src_path)
-        raw_runs = manifest.get("runs", [])
+        # # load items to process from manifest
+        # manifest = load_manifest(event.src_path)
+        # self._launcher = manifest.launcher
+        # runs = [run for run in manifest.runs if run.timestamp not in self.tracked_runs]
 
-        raw_runs = filter_new(raw_runs, self._tracked_runs)
-        runs = reshape_run(raw_runs)
+        # # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
+        # exp_dir = pathlib.Path(event.src_path).parent.parent
 
-        # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
-        exp_dir = pathlib.Path(event.src_path).parent.parent
-
-        for ts, data in runs.items():
-            for _type, entities in data.items():
-                for entity in entities:
-                    track_event(ts, _type, entity, "start", exp_dir)
-            self._tracked_runs.append(ts)
+        # for run in runs:
+        #     for entity in run.flatten(
+        #         filter_fn=lambda e: e.key not in self._tracked_jobs
+        #     ):
+        #         if entity.key not in self._tracked_jobs:
+        #             self._tracked_jobs[entity.key] = entity
+        #             track_event(run, entity, "start", exp_dir)
+        #     self._tracked_runs[run.timestamp] = run
 
 
 def on_timestep(action_handler: ManifestEventHandler) -> None:
     # todo: update the completed jobs set in the manifest event handler when req'd
-    entity_names: t.Set[str] = {entity["name"] for entity in action_handler.tracked_jobs.values()}
+    # entity_names = {entity.name for entity in action_handler.tracked_jobs.values()}
 
-    launcher = None
+    # launcher = None
     if action_handler.launcher in ["local", "slurm"]:
         # launcher = detect_launcher()
-        launcher = None
+        # launcher = None
+        ...
 
-    if launcher and entity_names:
-        entity_statuses = launcher.get_step_update(entity_names)
-        print(entity_statuses)
+    # if launcher and entity_names:
+    #     entity_statuses = launcher.get_step_update(entity_names)
+    #     print(entity_statuses)
+
 
 async def main(
     frequency: t.Union[int, float], experiment_dir: pathlib.Path, logger: logging.Logger

@@ -102,6 +102,7 @@ module = [
   "keras",
   "torch",
   "smartsim.ml.torch.*",            # must solve/ignore inheritance issues
+  "watchdog",
 ]
 ignore_missing_imports = true
 ignore_errors = true
