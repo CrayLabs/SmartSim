@@ -665,9 +665,8 @@ class ColoUtils:
         # get test setup
         test_dir = fileutils.make_test_dir(level=2)
 
-        # jpnote - ask if this is okay 
         # python filename if db identifier is present
-        if db_args["db_identifier"]:
+        if "db_identifier" in db_args:
             f_name = "send_data_local_smartredis_with_dbid.py"
         else:
             f_name = "send_data_local_smartredis.py"
