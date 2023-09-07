@@ -37,6 +37,8 @@ from smartsim.settings import RunSettings
 
 mw_run_settings = RunSettings("python", exe_args="sleep.py")
 
+def get_gen_file(fileutils, filename):
+    return fileutils.get_test_conf_path(path.join("generator_files", filename))
 
 def test_write_easy_configs(fileutils):
     test_dir = fileutils.make_test_dir()
@@ -50,8 +52,8 @@ def test_write_easy_configs(fileutils):
         "1200": "120",  # input.nml
     }
 
-    conf_path = fileutils.get_test_dir_path("easy/marked/")
-    correct_path = fileutils.get_test_dir_path("easy/correct/")
+    conf_path = get_gen_file(fileutils, "easy/marked/")
+    correct_path = get_gen_file(fileutils, "easy/correct/")
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
@@ -79,8 +81,8 @@ def test_write_med_configs(fileutils):
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    conf_path = fileutils.get_test_dir_path("med/marked/")
-    correct_path = fileutils.get_test_dir_path("med/correct/")
+    conf_path = get_gen_file(fileutils, "med/marked/")
+    correct_path = get_gen_file(fileutils, "med/correct/")
 
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
@@ -113,8 +115,8 @@ def test_write_new_tag_configs(fileutils):
         "3*12.0": "3*14.0",  # MOM_input
     }
 
-    conf_path = fileutils.get_test_dir_path("new-tag/marked/")
-    correct_path = fileutils.get_test_dir_path("new-tag/correct/")
+    conf_path = get_gen_file(fileutils, "new-tag/marked/")
+    correct_path = get_gen_file(fileutils, "new-tag/correct/")
 
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
@@ -151,8 +153,8 @@ def test_write_mw_error_3(fileutils):
         "5": 10,  # MOM_input
     }
 
-    conf_path = fileutils.get_test_dir_path("easy/marked/")
-    correct_path = fileutils.get_test_dir_path("easy/correct/")
+    conf_path = get_gen_file(fileutils, "easy/marked/")
+
     # copy confs to gen directory
     dir_util.copy_tree(conf_path, test_dir)
     assert path.isdir(test_dir)
