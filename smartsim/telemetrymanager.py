@@ -217,11 +217,13 @@ def track_completed(job: Job) -> None:
 
     track_event(timestamp, inactive_entity, "stop", exp_dir, detail=detail)
 
-# def track_started(job: Job) -> None:
-#     timestamp = datetime.timestamp(datetime.now())
-#     inactive_entity = job.entity
 
-#     track_event(timestamp, inactive_entity, "start", job.entity.path)
+def track_started(job: Job) -> None:
+    timestamp = datetime.timestamp(datetime.now())
+    inactive_entity = job.entity
+
+    track_event(timestamp, inactive_entity, "start", job.entity.path)
+
 
 class ManifestEventHandler(PatternMatchingEventHandler):
     def __init__(
@@ -284,8 +286,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 launcher_type
             )  # stolen from controller...
             self._jm.set_launcher(self._launcher)
-
-            self._jm.add_on_complete_hook(track_completed)
+            self._jm.add_job_onstart_callback(track_started)
+            self._jm.add_job_onstop_callback(track_completed)
             self._jm.start()
             # self._jm.run()
 

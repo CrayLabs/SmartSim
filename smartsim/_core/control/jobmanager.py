@@ -77,6 +77,7 @@ class JobManager:
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
         self.on_complete_hook: t.List[t.Callable[[Job, str], None]] = []
+        self.on_start_hook: t.List[t.Callable[[Job, str], None]] = []
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -191,8 +192,15 @@ class JobManager:
 
         else:
             self.jobs[entity.name] = job
+
+        for hook in self.on_start_hook:
+            hook(job)
     
-    def add_on_complete_hook(self, hook: t.Callable[[Job, str], None]) -> None:
+    def add_job_onstart_callback(self, hook: t.Callable[[Job, str], None]) -> None:
+        if not hook in self.on_start_hook:
+            self.on_start_hook.append(hook)
+    
+    def add_job_onstop_callback(self, hook: t.Callable[[Job, str], None]) -> None:
         if not hook in self.on_complete_hook:
             self.on_complete_hook.append(hook)
 
