@@ -1,0 +1,583 @@
+{
+    "schema info": {
+        "schema_name": "entity manifest",
+        "version": "1.0.0"
+    },
+    "experiment": {
+        "name": "my-experiment",
+        "path": "experiment/path",
+        "launcher": "local"
+    },
+    "runs": [
+        {
+            "timestep": 1,
+            "applications": [
+                {
+                    "name": "app1",
+                    "path": "app/1/path",
+                    "exe_args": ["string"],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "string": "Any"
+                    },
+                    "files": {
+                        "Symlink": ["file1", "file2"],
+                        "Configure": ["file3"],
+                        "Copy": ["file4", "file5"]
+                    },
+                    "colocated_db_settings": {
+                        "protocol": "TCP/IP",
+                        "port": 1111,
+                        "interface": "lo",
+                        "db_cpus": 1,
+                        "limit_app_cpus": "True",
+                        "debug": "False"
+                    },
+                    "db_scripts": [
+                        {
+                            "script1": {
+                                "backend": "script1_torch",
+                                "device": "script1_cpu"
+                            }
+                        },
+                        {
+                            "script2": {
+                                "backend": "script2_torch",
+                                "device": "script2_gpu"
+                            }
+                        }
+                    ],
+                    "db_models": [
+                        {
+                            "model1": {
+                                "backend": "model1_tf",
+                                "device": "model1_cpu"
+                            }
+                        },
+                        {
+                            "model2": {
+                                "backend": "model2_tf",
+                                "device": "model2_cpu"
+                            }
+                        }
+                    ],
+                    "job_id": "111",
+                    "step_id": 111
+                },
+                {
+                    "name": "app2",
+                    "path": "app/2/path",
+                    "exe_args": ["string"],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "string": "Any"
+                    },
+                    "files": {
+                        "Symlink": ["file1", "file2"],
+                        "Configure": ["file3"],
+                        "Copy": ["file4", "file5"]
+                    },
+                    "colocated_db_settings": {
+                        "protocol": "TCP/IP",
+                        "port": 1111,
+                        "interface": "lo",
+                        "db_cpus": 1,
+                        "limit_app_cpus": "True",
+                        "debug": "False"
+                    },
+                    "db_scripts": [
+                        {
+                            "script1": {
+                                "backend": "script1_torch",
+                                "device": "script1_cpu"
+                            }
+                        },
+                        {
+                            "script2": {
+                                "backend": "script2_torch",
+                                "device": "script2_gpu"
+                            }
+                        }
+                    ],
+                    "db_models": [
+                        {
+                            "model1": {
+                                "backend": "model1_tf",
+                                "device": "model1_cpu"
+                            }
+                        },
+                        {
+                            "model2": {
+                                "backend": "model2_tf",
+                                "device": "model2_cpu"
+                            }
+                        }
+                    ],
+                    "job_id": "111",
+                    "step_id": 111
+                }
+            ],
+            "orchestrators": [
+                {
+                    "name": "orchestrator_0",
+                    "launcher": "local",
+                    "port": "11111",
+                    "interface": ["lo", "lo2"],
+                    "db_hosts": ["string"]
+                },
+                {
+                    "name": "orchestrator_1",
+                    "launcher": "local",
+                    "port": "12345",
+                    "interface": "lo",
+                    "db_hosts": ["string"]
+                }
+            ],
+            "ensembles": [
+                {
+                    "name": "ensemble_1",
+                    "perm_strat": "string0",
+                    "batch_settings": {
+                        "string": "Any0"
+                    },
+                    "params": {
+                        "string": ["Any1", "Any3"]
+                    },
+                    "members": [
+                        {
+                            "name": "ensemble_1_member_1",
+                            "path": "string",
+                            "exe_args": ["string"],
+                            "batch_settings": {
+                                "batch_cmd": "command",
+                                "batch_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "run_settings": {
+                                "exe": "echo",
+                                "run_command": "srun",
+                                "run_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "params": {
+                                "string": "Any"
+                            },
+                            "files": {
+                                "Symlink": ["file1", "file2"],
+                                "Configure": ["file3"],
+                                "Copy": ["file4", "file5"]
+                            },
+                            "colocated_db_settings": {
+                                "protocol": "TCP/IP",
+                                "port": 1111,
+                                "interface": "lo",
+                                "db_cpus": 1,
+                                "limit_app_cpus": "True",
+                                "debug": "False"
+                            },
+                            "db_scripts": [
+                                {
+                                    "script1": {
+                                        "backend": "script1_torch",
+                                        "device": "script1_cpu"
+                                    }
+                                },
+                                {
+                                    "script2": {
+                                        "backend": "script2_torch",
+                                        "device": "script2_gpu"
+                                    }
+                                }
+                            ],
+                            "db_models": [
+                                {
+                                    "model1": {
+                                        "backend": "model1_tf",
+                                        "device": "model1_cpu"
+                                    }
+                                },
+                                {
+                                    "model2": {
+                                        "backend": "model2_tf",
+                                        "device": "model2_cpu"
+                                    }
+                                }
+                            ],
+                            "job_id": "111",
+                            "step_id": 111
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "timestep": "int",
+            "applications": [
+                {
+                    "name": "app3",
+                    "path": "app/3/path",
+                    "exe_args": ["string"],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "string": "Any"
+                    },
+                    "files": {
+                        "Symlink": ["file1", "file2"],
+                        "Configure": ["file3"],
+                        "Copy": ["file4", "file5"]
+                    },
+                    "colocated_db_settings": {
+                        "protocol": "TCP/IP",
+                        "port": 1111,
+                        "interface": "lo",
+                        "db_cpus": 1,
+                        "limit_app_cpus": "True",
+                        "debug": "False"
+                    },
+                    "db_scripts": [],
+                    "db_models": [
+                        {
+                            "model1": {
+                                "backend": "model1_tf",
+                                "device": "model1_cpu"
+                            }
+                        },
+                        {
+                            "model2": {
+                                "backend": "model2_tf",
+                                "device": "model2_cpu"
+                            }
+                        }
+                    ],
+                    "job_id": "111",
+                    "step_id": 111
+                },
+                {
+                    "name": "app4",
+                    "path": "app/4/path",
+                    "exe_args": ["string"],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "string": "Any"
+                    },
+                    "files": {
+                        "Symlink": ["file1", "file2"],
+                        "Configure": ["file3"],
+                        "Copy": ["file4", "file5"]
+                    },
+                    "colocated_db_settings": {
+                        "protocol": "TCP/IP",
+                        "port": 1111,
+                        "interface": "lo",
+                        "db_cpus": 1,
+                        "limit_app_cpus": "True",
+                        "debug": "False"
+                    },
+                    "db_scripts": [
+                        {
+                            "script1": {
+                                "backend": "script1_torch",
+                                "device": "script1_cpu"
+                            }
+                        },
+                        {
+                            "script2": {
+                                "backend": "script2_torch",
+                                "device": "script2_gpu"
+                            }
+                        }
+                    ],
+                    "db_models": [
+                        {
+                            "model1": {
+                                "backend": "model1_tf",
+                                "device": "model1_cpu"
+                            }
+                        },
+                        {
+                            "model2": {
+                                "backend": "model2_tf",
+                                "device": "model2_cpu"
+                            }
+                        }
+                    ],
+                    "job_id": "111",
+                    "step_id": 111
+                }
+            ],
+            "orchestrators": [
+                {
+                    "name": "orchestrator_2",
+                    "launcher": "local",
+                    "port": 22222,
+                    "interface": ["lo"],
+                    "db_hosts": ["string"]
+                },
+                {
+                    "name": "orchestrator_3",
+                    "launcher": "local",
+                    "port": "12345",
+                    "interface": "lo",
+                    "db_hosts": ["host1", "host2", "host3"]
+                }
+            ],
+            "ensembles": [
+                {
+                    "name": "ensemble_2",
+                    "perm_strat": "all-perm",
+                    "batch_settings": {
+                        "string": "Any1"
+                    },
+                    "params": {
+                        "string": ["Any1", "Any2", "Any3"]
+                    },
+                    "members": [
+                        {
+                            "name": "ensemble_2_member_1",
+                            "path": "string",
+                            "exe_args": ["string"],
+                            "batch_settings": {
+                                "batch_cmd": "command",
+                                "batch_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "run_settings": {
+                                "exe": "echo",
+                                "run_command": "srun",
+                                "run_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "params": {
+                                "string": "Any"
+                            },
+                            "files": {
+                                "Symlink": ["file1", "file2"],
+                                "Configure": ["file3"],
+                                "Copy": ["file4", "file5"]
+                            },
+                            "colocated_db_settings": {
+                                "protocol": "TCP/IP",
+                                "port": 1111,
+                                "interface": "lo",
+                                "db_cpus": 1,
+                                "limit_app_cpus": "True",
+                                "debug": "False"
+                            },
+                            "db_scripts": [],
+                            "db_models": [],
+                            "job_id": "111",
+                            "step_id": 111
+                        }
+                    ]
+                },
+                {
+                    "name": "ensemble_3",
+                    "perm_strat": "string2",
+                    "batch_settings": {
+                        "string": "Any1"
+                    },
+                    "params": {
+                        "string": ["Any1", "Any2", "Any3"]
+                    },
+                    "members": [
+                        {
+                            "name": "ensemble_3_member_1",
+                            "path": "member 1 path",
+                            "exe_args": ["string"],
+                            "batch_settings": {
+                                "batch_cmd": "command",
+                                "batch_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "run_settings": {
+                                "exe": "echo",
+                                "run_command": "srun",
+                                "run_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "params": {
+                                "string": "Any"
+                            },
+                            "files": {
+                                "Symlink": ["file1", "file2"],
+                                "Configure": ["file3"],
+                                "Copy": ["file4", "file5"]
+                            },
+                            "colocated_db_settings": {
+                                "protocol": "TCP/IP",
+                                "port": 1111,
+                                "interface": "lo",
+                                "db_cpus": 1,
+                                "limit_app_cpus": "True",
+                                "debug": "False"
+                            },
+                            "db_scripts": [
+                                {
+                                    "script1": {
+                                        "backend": "script1_torch",
+                                        "device": "script1_cpu"
+                                    }
+                                },
+                                {
+                                    "script2": {
+                                        "backend": "script2_torch",
+                                        "device": "script2_gpu"
+                                    }
+                                }
+                            ],
+                            "db_models": [
+                                {
+                                    "model1": {
+                                        "backend": "model1_tf",
+                                        "device": "model1_cpu"
+                                    }
+                                },
+                                {
+                                    "model2": {
+                                        "backend": "model2_tf",
+                                        "device": "model2_cpu"
+                                    }
+                                }
+                            ],
+                            "job_id": "111",
+                            "step_id": 111
+                        },
+                        {
+                            "name": "ensemble_3_member_2",
+                            "path": "member 2 path",
+                            "exe_args": ["string"],
+                            "batch_settings": {
+                                "batch_cmd": "command",
+                                "batch_args": {
+                                    "arg1": "string1"
+                                }
+                            },
+                            "run_settings": {
+                                "exe": "echo",
+                                "run_command": "srun",
+                                "run_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "params": {
+                                "string": "Any"
+                            },
+                            "files": {
+                                "Symlink": ["file1", "file2"],
+                                "Configure": ["file3"],
+                                "Copy": ["file4", "file5"]
+                            },
+                            "colocated_db_settings": {
+                                "protocol": "TCP/IP",
+                                "port": 1111,
+                                "interface": "lo",
+                                "db_cpus": 1,
+                                "limit_app_cpus": "True",
+                                "debug": "False"
+                            },
+                            "db_scripts": [
+                                {
+                                    "script1": {
+                                        "backend": "script1_torch",
+                                        "device": "script1_cpu"
+                                    }
+                                },
+                                {
+                                    "script2": {
+                                        "backend": "script2_torch",
+                                        "device": "script2_gpu"
+                                    }
+                                }
+                            ],
+                            "db_models": [
+                                {
+                                    "model1": {
+                                        "backend": "model1_tf",
+                                        "device": "model1_cpu"
+                                    }
+                                },
+                                {
+                                    "model2": {
+                                        "backend": "model2_tf",
+                                        "device": "model2_cpu"
+                                    }
+                                }
+                            ],
+                            "job_id": "111",
+                            "step_id": 111
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

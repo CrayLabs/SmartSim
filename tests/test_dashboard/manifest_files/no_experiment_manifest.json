@@ -1,0 +1,8 @@
+{
+    "schema info" : {
+        "schema_name" : "entity manifest",
+        "version" : "1.0.0"
+    },
+    "experiment" : {},
+    "runs": []
+}

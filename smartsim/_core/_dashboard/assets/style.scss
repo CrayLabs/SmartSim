@@ -1,0 +1,24 @@
+/* change font of expander label */
+div[data-testid="stExpander"] div[role="button"] p {
+    font-family: "Source Sans Pro", sans-serif;
+    font-weight: 600;
+    color: var(--primary-text-color);
+    letter-spacing: -0.005em;
+    padding: 0.5rem 0px 0.5rem;
+    margin: 0px;
+    line-height: 1.2;
+    font-size: 1rem;
+}
+
+/* add logo above tabs */
+[data-testid="stSidebarNav"] {
+    background-image: url(https://www.craylabs.org/docs/_images/SmartSim_Large.png);
+    background-repeat: no-repeat;
+    padding-top: 50px;
+    background-position: 25px 40px;
+    background-size: 300px;
+}
+
+
+/* remove "Made by Streamlit" footer */
+footer {visibility: hidden;}
