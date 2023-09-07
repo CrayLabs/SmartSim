@@ -283,7 +283,8 @@ class Generator:
         file_to_tables: t.Dict[str, str] = {}
         for file, params in files_to_params.items():
             used_params.update(params)
-            table = tabulate([[param, value] for param, value in params.items()])
+            table = tabulate([[param, value] for param, value in params.items()],
+                             headers=["Name", "Value"])
             file_to_tables[relpath(file, self.gen_path)] = table
 
         if used_params:
@@ -294,13 +295,18 @@ class Generator:
                 level=self.log_level,
                 msg=f"Configured model {entity.name} with params {used_params_str}",
             )
-            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
-                logfile.write(f"Model name: {entity.name}" + "\n")
-                file_table = tabulate(
+            file_table = tabulate(
                     [[file, table] for file, table in file_to_tables.items()],
                     headers=["File name", "Parameters"],
                 )
-                logfile.write(file_table + "\n\n")
+            log_entry = f"Model name: {entity.name}" + "\n" + file_table + "\n\n"
+            with open(self.log_file, mode="a", encoding="utf-8") as logfile:
+                logfile.write(log_entry)
+            with open(join(entity.path, "param_settings.txt"),
+                      mode="a",
+                      encoding="utf-8") as local_logfile:
+                local_logfile.write(log_entry)
+
         else:
             logger.log(
                 level=self.log_level,

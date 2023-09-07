@@ -35,8 +35,6 @@ from smartsim.database import Orchestrator
 from smartsim.settings import RunSettings
 from tabulate import tabulate
 
-from smartsim.settings import SbatchSettings
-
 rs = RunSettings("python", exe_args="sleep.py")
 
 
@@ -50,6 +48,9 @@ TODO
 
 """
 
+def get_gen_file(fileutils, filename):
+    return fileutils.get_test_conf_path(osp.join("generator_files", filename))
+
 
 def test_ensemble(fileutils):
     exp = Experiment("gen-test", launcher="local")
@@ -59,7 +60,7 @@ def test_ensemble(fileutils):
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=config)
     gen.generate_experiment(ensemble)
 
@@ -77,12 +78,12 @@ def test_ensemble_overwrite(fileutils):
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=[config])
     gen.generate_experiment(ensemble)
 
     # re generate without overwrite
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=[config])
     gen.generate_experiment(ensemble)
 
@@ -100,12 +101,12 @@ def test_ensemble_overwrite_error(fileutils):
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=[config])
     gen.generate_experiment(ensemble)
 
     # re generate without overwrite
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=[config])
     with pytest.raises(FileExistsError):
         gen.generate_experiment(ensemble)
@@ -123,7 +124,7 @@ def test_full_exp(fileutils, wlmutils):
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test_ens", params=params, run_settings=rs)
 
-    config = fileutils.get_test_conf_path("in.atm")
+    config = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=config)
     exp.generate(orc, ensemble, model)
 
@@ -150,7 +151,7 @@ def test_dir_files(fileutils):
 
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    conf_dir = fileutils.get_test_dir_path("test_dir")
+    conf_dir = get_gen_file(fileutils, "test_dir")
     ensemble.attach_generator_files(to_configure=conf_dir)
 
     exp.generate(ensemble)
@@ -178,9 +179,9 @@ def test_print_files(fileutils, capsys):
 
     params = {"THERMO": [10, 20], "STEPS": [20, 30]}
     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    gen_dir = fileutils.get_test_dir_path("test_dir")
-    symlink_dir = fileutils.get_test_dir_path("to_symlink_dir")
-    copy_dir = fileutils.get_test_dir_path("to_copy_dir")
+    gen_dir = get_gen_file(fileutils, "test_dir")
+    symlink_dir = get_gen_file(fileutils, "to_symlink_dir")
+    copy_dir = get_gen_file(fileutils, "to_copy_dir")
 
     ensemble.print_attached_files()
     captured = capsys.readouterr()
@@ -254,7 +255,7 @@ def test_multiple_tags(fileutils):
     parameterized_model = exp.create_model(
         "multi-tags", run_settings=model_settings, params=model_params
     )
-    config = fileutils.get_test_conf_path("multi_tags_template.sh")
+    config = get_gen_file(fileutils, "multi_tags_template.sh")
     parameterized_model.attach_generator_files(to_configure=[config])
     exp.generate(parameterized_model, overwrite=True)
     exp.start(parameterized_model, block=True)
@@ -274,13 +275,19 @@ def test_generation_log(fileutils):
 
     params = {"THERMO": [10, 20], "STEPS": [10, 20]}
     ensemble = exp.create_ensemble("dir_test", params=params, run_settings=rs)
-    conf_file = fileutils.get_test_dir_path("in.atm")
+    conf_file = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=conf_file)
 
     exp.generate(ensemble, verbose=True)
     assert filecmp.cmp(
         osp.join(test_dir, "param_settings.txt"),
-        fileutils.get_test_dir_path("log_params_truth.txt"),
+        get_gen_file(fileutils, osp.join("log_params", "param_settings.txt")),
+    )
+
+    for entity in ensemble:
+        assert filecmp.cmp(
+        osp.join(entity.path, "param_settings.txt"),
+        get_gen_file(fileutils, osp.join("log_params", "dir_test", entity.name, "param_settings.txt")),
     )
 
 
@@ -295,7 +302,7 @@ def test_config_dir(fileutils):
     params = {"PARAM0": [0, 1], "PARAM1": [2, 3]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
-    config = fileutils.get_test_conf_path("tag_dir_template")
+    config = get_gen_file(fileutils, "tag_dir_template")
     ensemble.attach_generator_files(to_configure=config)
     gen.generate_experiment(ensemble)
 
@@ -327,7 +334,7 @@ def test_no_gen_if_file_not_exist(fileutils):
     """
     exp = Experiment("file-not-found", launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-    config = fileutils.get_test_conf_path("path_not_exist")
+    config = get_gen_file(fileutils, "path_not_exist")
     with pytest.raises(FileNotFoundError):
         ensemble.attach_generator_files(to_configure=config)
 
@@ -339,6 +346,6 @@ def test_no_gen_if_symlink_to_dir(fileutils):
     """
     exp = Experiment("circular-config-files", launcher="local")
     ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
-    config = fileutils.get_test_conf_path("circular_config")
+    config = get_gen_file(fileutils, "circular_config")
     with pytest.raises(ValueError):
         ensemble.attach_generator_files(to_configure=config)
