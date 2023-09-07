@@ -289,18 +289,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._jm.start()
             # self._jm.run()
 
-    # @property
-    # def tracked_runs(self) -> t.Dict[int, Run]:
-    #     return self._tracked_runs
-
-    # @property
-    # def tracked_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
-    #     return self._tracked_jobs
-
-    # @property
-    # def completed_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
-    #     return self._completed_jobs
-
     @property
     def launcher(self) -> Launcher:
         if not self._launcher:
@@ -354,37 +342,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
         """
         super().on_modified(event)  # type: ignore
-
-        # # load items to process from manifest
-        # manifest = load_manifest(event.src_path)
-        # self.set_launcher(manifest.launcher)
-
-        # runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
-
-        # # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
-        # exp_dir = pathlib.Path(event.src_path).parent.parent
-
-        # for run in runs:
-        #     for entity in run.flatten(
-        #         filter_fn=lambda e: e.key not in self._tracked_jobs
-        #     ):
-        #         entity.path = str(exp_dir)
-
-        #         self._tracked_jobs[entity.key] = entity
-        #         track_event(run.timestamp, entity, "start", exp_dir)
-        #         # is_task = entity.is_managed
-        #         # is_orch = entity.is_orch
-        #         self._jm.add_telemetry_job(
-        #             entity.name,
-        #             entity.job_id,
-        #             entity,
-        #             is_task=entity.is_managed,
-        #             is_orch=entity.is_orch,
-        #         ) 
-        #         self._jm._launcher.step_mapping.add(
-        #             entity.name, entity.step_id, entity.step_id, entity.is_managed
-        #         )
-        #     self._tracked_runs[run.timestamp] = run
         self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
