@@ -44,7 +44,9 @@ from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
+from smartsim._core.control.job import Job
 from smartsim._core.control.jobmanager import JobManager
+from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
 
 from smartsim._core.launcher.launcher import Launcher
@@ -52,6 +54,7 @@ from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim.experiment import Experiment
 from smartsim.status import TERMINAL_STATUSES
 
 # from smartsim._core.launcher.launcher import Launcher
@@ -76,18 +79,24 @@ class PersistableEntity:
     name: str
     job_id: str
     step_id: str
+    timestamp: int
+    path: str
 
     @property
     def key(self) -> _JobKey:
         return (self.job_id, self.step_id)
 
+    @property
+    def is_orch(self) -> bool:
+        return self.entity_type == "orchestrators"
+
+    @property
+    def is_managed(self) -> bool:
+        return True if self.step_id else False
+
 
 _FilterFn = t.Callable[[PersistableEntity], bool]
 
-
-@dataclass
-class EntityEvent(PersistableEntity):
-    timestamp: int
 
 
 @dataclass
@@ -116,29 +125,36 @@ class ExperimentManifest:
 
 
 def hydrate_persistable(
-    entity_type: str, persisted_entity: t.Dict[str, t.Any]
+    entity_type: str, persisted_entity: t.Dict[str, t.Any], timestamp: int, exp_dir: pathlib.Path,
 ) -> PersistableEntity:
     return PersistableEntity(
         entity_type=entity_type,
         name=persisted_entity["name"],
         job_id=persisted_entity.get("job_id", ""),
         step_id=persisted_entity.get("step_id", ""),
+        timestamp=timestamp,
+        path=str(exp_dir),
     )
 
 
 def hydrate_persistables(
-    entity_type: _ManifestKey, run: t.Dict[_ManifestKey, t.Any]
+    entity_type: _ManifestKey, run: t.Dict[_ManifestKey, t.Any], exp_dir: pathlib.Path,
 ) -> t.List[PersistableEntity]:
-    return [hydrate_persistable(entity_type, item) for item in run[entity_type]]
+    # exp_dir = pathlib.Path(run["experiment"]["path"])
+    ts = run["timestamp"]
+
+    return [
+        hydrate_persistable(entity_type, item, ts, exp_dir) for item in run[entity_type]
+    ]
 
 
-def hydrate_runs(persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]]) -> t.List[Run]:
+def hydrate_runs(persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]], exp_dir: pathlib.Path) -> t.List[Run]:
     runs = [
         Run(
             timestamp=instance["timestamp"],
-            applications=hydrate_persistables("applications", instance),
-            orchestrators=hydrate_persistables("orchestrators", instance),
-            ensembles=hydrate_persistables("ensembles", instance),
+            applications=hydrate_persistables("applications", instance, exp_dir),
+            orchestrators=hydrate_persistables("orchestrators", instance, exp_dir),
+            ensembles=hydrate_persistables("ensembles", instance, exp_dir),
         )
         for instance in persisted_runs
     ]
@@ -151,38 +167,61 @@ def load_manifest(file_path: str) -> ExperimentManifest:
     text = source.read_text(encoding="utf-8")
     manifest_dict = json.loads(text)
 
+    exp_dir = pathlib.Path(manifest_dict["experiment"]["path"])
+
     manifest = ExperimentManifest(
         name=manifest_dict["experiment"]["name"],
-        path=manifest_dict["experiment"]["path"],
+        path=exp_dir,
         launcher=manifest_dict["experiment"]["launcher"],
-        runs=hydrate_runs(manifest_dict["runs"]),
+        runs=hydrate_runs(manifest_dict["runs"], exp_dir),
     )
     return manifest
 
 
 def track_event(
-    run: Run, entity: PersistableEntity, action: _EventClass, exp_dir: pathlib.Path
+    timestamp: int,
+    entity: PersistableEntity,
+    action: _EventClass,
+    exp_dir: pathlib.Path,
+    detail: str = "",
 ) -> None:
     """
     Persist a tracking event for an entity
     """
-    job_id = entity.job_id or "missing_job_id"
-    step_id = entity.step_id or "missing_step_id"
+    job_id = entity.job_id or ""
+    step_id = entity.step_id or ""
     entity_type = entity.entity_type or "missing_entity_type"
     print(
         f"mocked tracking {entity_type} event w/jid: {job_id}, "
-        f"tid: {step_id}, ts: {run.timestamp}"
+        f"tid: {step_id}, ts: {timestamp}"
     )
 
     name: str = entity.name or "entity-name-not-found"
     tgt_path = exp_dir / "manifest" / entity_type / name / f"{action}.json"
     tgt_path.parent.mkdir(parents=True, exist_ok=True)
 
-    persist = EntityEvent(
-        entity.entity_type, entity.name, entity.job_id, entity.step_id, run.timestamp
-    )
-    tgt_path.write_text(json.dumps(persist.__dict__))
+    try:
+        entity_dict = {**entity.__dict__}
+        entity_dict.pop("path", None)
+        entity_dict["detail"] = detail
+        tgt_path.write_text(json.dumps(entity_dict))
+    except Exception as ex:
+        print(ex)    
 
+
+def track_completed(job: Job) -> None:
+    timestamp = datetime.timestamp(datetime.now())
+    inactive_entity = job.entity
+    detail = job.status
+    exp_dir = pathlib.Path(job.entity.path)
+
+    track_event(timestamp, inactive_entity, "stop", exp_dir, detail=detail)
+
+# def track_started(job: Job) -> None:
+#     timestamp = datetime.timestamp(datetime.now())
+#     inactive_entity = job.entity
+
+#     track_event(timestamp, inactive_entity, "start", job.entity.path)
 
 class ManifestEventHandler(PatternMatchingEventHandler):
     def __init__(
@@ -241,33 +280,37 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             # if self._launcher:
             #     self._jm
             self._launcher_type = launcher_type
-            self._launcher = self.init_launcher(launcher_type) # stolen from controller...
+            self._launcher = self.init_launcher(
+                launcher_type
+            )  # stolen from controller...
             self._jm.set_launcher(self._launcher)
+
+            self._jm.add_on_complete_hook(track_completed)
             self._jm.start()
             # self._jm.run()
 
-    @property
-    def tracked_runs(self) -> t.Dict[int, Run]:
-        return self._tracked_runs
+    # @property
+    # def tracked_runs(self) -> t.Dict[int, Run]:
+    #     return self._tracked_runs
 
-    @property
-    def tracked_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
-        return self._tracked_jobs
+    # @property
+    # def tracked_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
+    #     return self._tracked_jobs
 
-    @property
-    def completed_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
-        return self._completed_jobs
+    # @property
+    # def completed_jobs(self) -> t.Dict[_JobKey, PersistableEntity]:
+    #     return self._completed_jobs
 
     @property
     def launcher(self) -> Launcher:
         if not self._launcher:
-            ... # todo: build it...
+            ...  # todo: build it...
             # self._launcher = SlurmLauncher()
             self._launcher = LocalLauncher()
-        
+
         # if not self._launcher:
         #     raise ValueError("Launcher failed to instantiate properly")
-        
+
         return self._launcher
 
     def on_modified(self, event: FileModifiedEvent) -> None:
@@ -284,7 +327,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         manifest = load_manifest(event.src_path)
         self.set_launcher(manifest.launcher)
 
-        runs = [run for run in manifest.runs if run.timestamp not in self.tracked_runs]
+        runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
 
         # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
         exp_dir = pathlib.Path(event.src_path).parent.parent
@@ -293,10 +336,22 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for entity in run.flatten(
                 filter_fn=lambda e: e.key not in self._tracked_jobs
             ):
-                # if entity.key not in self._tracked_jobs:
+                entity.path = str(exp_dir)
+
                 self._tracked_jobs[entity.key] = entity
-                track_event(run, entity, "start", exp_dir)
-                self._jm.add_job(entity.name, entity.job_id, entity, True)  # todo: is_task=True must be fixed
+                track_event(run.timestamp, entity, "start", exp_dir)
+                # is_task = entity.is_managed
+                # is_orch = entity.is_orch
+                self._jm.add_telemetry_job(
+                    entity.name,
+                    entity.job_id,
+                    entity,
+                    is_task=entity.is_managed,
+                    is_orch=entity.is_orch,
+                ) 
+                self._jm._launcher.step_mapping.add(
+                    entity.name, entity.step_id, entity.step_id, entity.is_managed
+                )
             self._tracked_runs[run.timestamp] = run
 
     def on_created(self, event: FileCreatedEvent) -> None:
@@ -310,23 +365,27 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         super().on_created(event)  # type: ignore
         # todo: same as on_modified?
 
-    def to_completed(self, entity: PersistableEntity, exp_dir: pathlib.Path) -> None:
+    def to_completed(
+        self, timestamp: int, entity: PersistableEntity, exp_dir: pathlib.Path, step_info: StepInfo
+    ) -> None:
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
             self._completed_jobs[entity.key] = inactive_entity
         # self._jm.add_job(entity.name, entity.job_id, entity, True)  # todo: is_task=True must be fixed
         job = self._jm[entity.name]
         self._jm.move_to_completed(job)
-        track_event(Run(), inactive_entity, "stop", exp_dir)
-        
+        # track_event(timestamp, inactive_entity, "stop", exp_dir, detail=step_info.status)
+
+
 
     def on_timestep(self, exp_dir: pathlib.Path) -> None:
         # todo: update the completed jobs set in the manifest event handler when req'd
-        
+
         launcher = self.launcher
-        entity_map = self.tracked_jobs
+        entity_map = self._tracked_jobs
 
         names = {entity.name: entity for entity in entity_map.values()}
+        timestamp = datetime.timestamp(datetime.now())
 
         if launcher and names:
             step_updates = launcher.get_step_update(list(names.keys()))
@@ -335,7 +394,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             for step_name, step_info in step_updates:
                 if step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
-                    self.to_completed(completed_entity, exp_dir)
+                    self.to_completed(timestamp, completed_entity, exp_dir, step_info)
 
 
 async def main(
@@ -361,7 +420,7 @@ async def main(
 
         while observer.is_alive():
             logger.debug(f"Telemetry timestep: {datetime.timestamp(datetime.now())}")
-            action_handler.on_timestep(action_handler, experiment_dir)
+            action_handler.on_timestep(experiment_dir)
             await asyncio.sleep(frequency)
     except Exception as ex:
         logger.error(ex)
@@ -371,7 +430,6 @@ async def main(
 
 
 if __name__ == "__main__":
-
     def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
         if not signo:
             logger = logging.getLogger()
@@ -393,7 +451,8 @@ if __name__ == "__main__":
         help="Experiment root directory",
         # required=True,
         # default="/Users/chris.mcbride/code/ss/smartsim/_core/entrypoints",
-        default="/Users/chris.mcbride/code/ss",
+        # default="/Users/chris.mcbride/code/ss",
+        default="/lus/cls01029/mcbridch/ss/smartsim",
     )
 
     args = parser.parse_args()

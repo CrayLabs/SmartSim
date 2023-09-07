@@ -31,6 +31,44 @@ from ...entity import SmartSimEntity, EntitySequence
 from ...status import STATUS_NEW
 
 
+class EntityBase:
+    """
+    Minimum entity API required for Job to do what it does...
+    """
+    @property
+    def is_db(self) -> bool:
+        return False
+
+    @property
+    def is_managed(self) -> bool:
+        return False
+
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.job_id: str = ""
+        self.step_id: str = ""
+        self.type: str = ""
+        self.path: str = ""
+
+    ### PROBLEM: see JobManager.get_db_host_addresses
+    # def get_db_host_addresses(self) -> t.List[str]:
+    #     """Retrieve the list of hosts for the database
+
+    #     :return: list of host ip addresses
+    #     :rtype: list[str]
+    #     """
+    #     addresses = []
+    #     for db_job in self.db_jobs.values():
+    #         if isinstance(db_job.entity, (DBNode, Orchestrator)):
+    #             db_entity = db_job.entity
+
+    #             for combine in itertools.product(db_job.hosts, db_entity.ports):
+    #                 ip_addr = get_ip_from_host(combine[0])
+    #                 addresses.append(":".join((ip_addr, str(combine[1]))))
+    #     return addresses
+    
+
+
 class Job:
     """Keep track of various information for the controller.
     In doing so, continuously add various fields of information
@@ -43,6 +81,7 @@ class Job:
         job_name: str,
         job_id: t.Optional[str],
         entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        # entity: EntityBase,
         launcher: str,
         is_task: bool,
     ) -> None:

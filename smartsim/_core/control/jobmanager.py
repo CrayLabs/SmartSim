@@ -76,6 +76,7 @@ class JobManager:
         self._lock = lock  # thread lock
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
+        self.on_complete_hook: t.List[t.Callable[[Job, str], None]] = []
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -127,6 +128,8 @@ class JobManager:
         """
         with self._lock:
             self.completed[job.ename] = job
+            for hook in self.on_complete_hook:
+                hook(job)
             job.record_history()
 
             # remove from actively monitored jobs
@@ -186,6 +189,37 @@ class JobManager:
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
 
+        else:
+            self.jobs[entity.name] = job
+    
+    def add_on_complete_hook(self, hook: t.Callable[[Job, str], None]) -> None:
+        if not hook in self.on_complete_hook:
+            self.on_complete_hook.append(hook)
+
+    def add_telemetry_job(
+        self,
+        job_name: str,
+        job_id: t.Optional[str],
+        entity: t.Union[SmartSimEntity, EntityList],
+        is_task: bool = True,
+        is_orch: bool = False
+    ) -> None:
+        """Add a job to the job manager which holds specific jobs by type.
+
+        :param job_name: name of the job step
+        :type job_name: str
+        :param job_id: job step id created by launcher
+        :type job_id: str
+        :param entity: entity that was launched on job step
+        :type entity: SmartSimEntity | EntityList
+        :param is_task: process monitored by TaskManager (True) or the WLM (True)
+        :type is_task: bool
+        """
+        launcher = str(self._launcher)
+        # all operations here should be atomic
+        job = Job(job_name, job_id, entity, launcher, is_task)
+        if isinstance(entity, (DBNode, Orchestrator)) or is_orch:
+            self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
 
