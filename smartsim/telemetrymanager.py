@@ -192,7 +192,7 @@ def track_event(
     step_id = entity.step_id or ""
     entity_type = entity.entity_type or "missing_entity_type"
     print(
-        f"mocked tracking {entity_type} event w/jid: {job_id}, "
+        f"mocked tracking `{entity_type}.{action}` event w/jid: {job_id}, "
         f"tid: {step_id}, ts: {timestamp}"
     )
 
@@ -221,8 +221,18 @@ def track_completed(job: Job) -> None:
 def track_started(job: Job) -> None:
     timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
+    exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, "start", job.entity.path)
+    track_event(timestamp, inactive_entity, "start", exp_dir)
+
+
+def track_timestep(job: Job) -> None:
+    timestamp = datetime.timestamp(datetime.now())
+    inactive_entity = job.entity
+    timestamp_suffix = str(int(timestamp)) # drop floating point part before stringify
+    exp_dir = pathlib.Path(job.entity.path)
+
+    track_event(timestamp, inactive_entity, f"step_{timestamp_suffix}", exp_dir)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -279,8 +289,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
     def set_launcher(self, launcher_type: str) -> None:
         if launcher_type != self._launcher_type:
-            # if self._launcher:
-            #     self._jm
             self._launcher_type = launcher_type
             self._launcher = self.init_launcher(
                 launcher_type
@@ -288,8 +296,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._jm.set_launcher(self._launcher)
             self._jm.add_job_onstart_callback(track_started)
             self._jm.add_job_onstop_callback(track_completed)
+            self._jm.add_job_onstep_callback(track_timestep)
             self._jm.start()
-            # self._jm.run()
 
     @property
     def launcher(self) -> Launcher:
@@ -321,8 +329,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
                 self._tracked_jobs[entity.key] = entity
                 track_event(run.timestamp, entity, "start", exp_dir)
-                # is_task = entity.is_managed
-                # is_orch = entity.is_orch
+
                 self._jm.add_telemetry_job(
                     entity.name,
                     entity.job_id,
@@ -355,7 +362,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
         """
         super().on_created(event)  # type: ignore
-        # todo: same as on_modified?
+        self.process_manifest(event.src_path)
 
     def to_completed(
         self, timestamp: int, entity: PersistableEntity, exp_dir: pathlib.Path, step_info: StepInfo
@@ -366,13 +373,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         # self._jm.add_job(entity.name, entity.job_id, entity, True)  # todo: is_task=True must be fixed
         job = self._jm[entity.name]
         self._jm.move_to_completed(job)
-        # track_event(timestamp, inactive_entity, "stop", exp_dir, detail=step_info.status)
-
-
 
     def on_timestep(self, exp_dir: pathlib.Path) -> None:
-        # todo: update the completed jobs set in the manifest event handler when req'd
-
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
@@ -381,7 +383,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         if launcher and names:
             step_updates = launcher.get_step_update(list(names.keys()))
-            # print(entity_statuses)
 
             for step_name, step_info in step_updates:
                 if step_info.status in TERMINAL_STATUSES:
@@ -421,8 +422,8 @@ async def main(
     except Exception as ex:
         logger.error(ex)
     finally:
-        observer.stop()  # type: ignore
         observer.join()
+        observer.stop()  # type: ignore
 
 
 if __name__ == "__main__":
@@ -446,7 +447,6 @@ if __name__ == "__main__":
         type=str,
         help="Experiment root directory",
         # required=True,
-        # default="/Users/chris.mcbride/code/ss/smartsim/_core/entrypoints",
         # default="/Users/chris.mcbride/code/ss",
         default="/lus/cls01029/mcbridch/ss/smartsim",
     )

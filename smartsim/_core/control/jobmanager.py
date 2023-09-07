@@ -78,6 +78,7 @@ class JobManager:
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
         self.on_complete_hook: t.List[t.Callable[[Job, str], None]] = []
         self.on_start_hook: t.List[t.Callable[[Job, str], None]] = []
+        self.on_timestep_hook: t.List[t.Callable[[Job, str], None]] = []
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -204,6 +205,10 @@ class JobManager:
         if not hook in self.on_complete_hook:
             self.on_complete_hook.append(hook)
 
+    def add_job_onstep_callback(self, hook: t.Callable[[Job, str], None]) -> None:
+        if not hook in self.on_timestep_hook:
+            self.on_timestep_hook.append(hook)
+
     def add_telemetry_job(
         self,
         job_name: str,
@@ -284,6 +289,9 @@ class JobManager:
         :type entity: SmartSimEntity | EntitySequence
         :returns: tuple of status
         """
+        for hook in self.on_timestep_hook:
+            hook(job)
+
         with self._lock:
             try:
                 if entity.name in self.completed:
