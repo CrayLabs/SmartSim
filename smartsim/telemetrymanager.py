@@ -313,24 +313,15 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         return self._launcher
 
-    def on_modified(self, event: FileModifiedEvent) -> None:
-        """Called when a file or directory is modified.
-
-        :param event:
-            Event representing file/directory modification.
-        :type event:
-            :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
-        """
-        super().on_modified(event)  # type: ignore
-
+    def process_manifest(self, manifest_path: str) -> None:
         # load items to process from manifest
-        manifest = load_manifest(event.src_path)
+        manifest = load_manifest(manifest_path)
         self.set_launcher(manifest.launcher)
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
 
         # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
-        exp_dir = pathlib.Path(event.src_path).parent.parent
+        exp_dir = pathlib.Path(manifest_path).parent.parent
 
         for run in runs:
             for entity in run.flatten(
@@ -353,6 +344,48 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
                 )
             self._tracked_runs[run.timestamp] = run
+
+    def on_modified(self, event: FileModifiedEvent) -> None:
+        """Called when a file or directory is modified.
+
+        :param event:
+            Event representing file/directory modification.
+        :type event:
+            :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
+        """
+        super().on_modified(event)  # type: ignore
+
+        # # load items to process from manifest
+        # manifest = load_manifest(event.src_path)
+        # self.set_launcher(manifest.launcher)
+
+        # runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
+
+        # # Find exp root assuming event path `{exp_root}/manifest/manifest.json`
+        # exp_dir = pathlib.Path(event.src_path).parent.parent
+
+        # for run in runs:
+        #     for entity in run.flatten(
+        #         filter_fn=lambda e: e.key not in self._tracked_jobs
+        #     ):
+        #         entity.path = str(exp_dir)
+
+        #         self._tracked_jobs[entity.key] = entity
+        #         track_event(run.timestamp, entity, "start", exp_dir)
+        #         # is_task = entity.is_managed
+        #         # is_orch = entity.is_orch
+        #         self._jm.add_telemetry_job(
+        #             entity.name,
+        #             entity.job_id,
+        #             entity,
+        #             is_task=entity.is_managed,
+        #             is_orch=entity.is_orch,
+        #         ) 
+        #         self._jm._launcher.step_mapping.add(
+        #             entity.name, entity.step_id, entity.step_id, entity.is_managed
+        #         )
+        #     self._tracked_runs[run.timestamp] = run
+        self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
         """Called when a file or directory is created.
@@ -405,6 +438,7 @@ async def main(
         f", on target directory: {experiment_dir}"
     )
 
+    manifest_path = experiment_dir / "manifest" / "manifest.json"
     manifest_dir = str(experiment_dir / "manifest")
     logger.debug(f"Monitoring manifest changes at: {manifest_dir}")
 
@@ -414,6 +448,9 @@ async def main(
     observer = Observer()
 
     try:
+        if manifest_path.exists():
+            action_handler.process_manifest(str(manifest_path))
+
         observer.schedule(log_handler, manifest_dir)  # type: ignore
         observer.schedule(action_handler, manifest_dir)  # type: ignore
         observer.start()  # type: ignore
