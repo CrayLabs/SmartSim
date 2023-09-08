@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import logging
 import redis
 import time
@@ -229,20 +230,18 @@ def shutdown_db(hosts: t.List[str], ports: t.List[int]) -> None:  # cov-wlm
     :type ports: List[int]
     :raises SmartSimError: if cluster creation fails
     """
-    for host in hosts:
-        host_ip = get_ip_from_host(host)
-        for port in ports:
-            # call cluster command
-            redis_cli = CONFIG.database_cli
-            cmd = [redis_cli]
-            cmd += ["-h", host_ip, "-p", str(port)]
-            cmd += ["shutdown"]
-            returncode, out, err = execute_cmd(
-                cmd, proc_input="yes", shell=False, timeout=10
-            )
+    for host_ip, port in itertools.product(
+        (get_ip_from_host(host) for host in hosts), ports
+    ):
+        # call cluster command
+        redis_cli = CONFIG.database_cli
+        cmd = [redis_cli, "-h", host_ip, "-p", str(port), "shutdown"]
+        returncode, out, err = execute_cmd(
+            cmd, proc_input="yes", shell=False, timeout=10
+        )
 
-            if returncode != 0:
-                logger.error(out)
-                logger.error(err)
-
+        if returncode != 0:
+            logger.error(out)
+            logger.error(err)
+        else:
             logger.debug(out)

@@ -223,7 +223,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         return formatted
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
-        """Set the hostlist for the PALS ``mpirun`` command
+        """Set the hostlist for the PALS ``mpiexec`` command
 
         This sets ``--hosts``
 

@@ -31,12 +31,11 @@ import pytest
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.entity import ensemble
+from smartsim.entity import Ensemble
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
 from smartsim.entity.dbobject import DBModel
-from smartsim.settings.palsSettings import PalsMpiexecSettings
 
 logger = get_logger(__name__)
 
@@ -529,7 +528,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     colo_settings.set_tasks_per_node(1)
 
     # Create ensemble of two identical models
-    colo_ensemble: ensemble.Ensemble = exp.create_ensemble(
+    colo_ensemble: Ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
     colo_ensemble.set_path(test_dir)
