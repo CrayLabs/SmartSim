@@ -19,6 +19,7 @@ To be released at some future point in time
 
 Description
 
+- Added support for multiple databases
 - Mitigated additional suppressed pylint errors
 - Fix colocated db preparation bug when using `JsrunSettings`
 - Enabled additional mypy checks
@@ -31,6 +32,7 @@ Description
 
 Detailed Notes
 
+- Adjusted pathways to allow for multiple databses with unique database identifiers
 - Created public proprties where appropriate to mitigate `protected-access` errors (PR341_)
 - Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check (PR339_)
 - Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any` (PR338_)
@@ -41,6 +43,7 @@ Detailed Notes
 - Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script (PR324_)
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
 
+.. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
 .. _PR341: https://github.com/CrayLabs/SmartSim/pull/341
 .. _PR339: https://github.com/CrayLabs/SmartSim/pull/339
 .. _PR338: https://github.com/CrayLabs/SmartSim/pull/338

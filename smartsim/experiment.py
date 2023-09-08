@@ -702,7 +702,7 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
-        db_identifier: t.Optional[str] = None,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -865,10 +865,10 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
-    def dbs_in_use(self) -> set():
+    def dbs_in_use(self) -> set[str]:
         return set(self.db_identifiers)
 
-    def append_to_db_identifier_list(self, db_identifier):
+    def append_to_db_identifier_list(self, db_identifier: str) -> None:
         # Check if db_identifier already exists
         if db_identifier in self.db_identifiers:
             raise DBIDConflictError(

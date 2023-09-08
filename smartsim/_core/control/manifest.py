@@ -41,22 +41,22 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(self, *args: SmartSimEntity) -> None:
+    def __init__(self, *args: t.Union[SmartSimEntity, EntityList]) -> None:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
         self._check_entity_lists_nonempty()
 
     @property
-    def dbs(self) -> t.Optional[list]:
+    def dbs(self) -> t.List[Orchestrator]:
         """Return a list of Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
         :return: List of orchestrator instances
-        :rtype: list[Orchestrator] | None
+        :rtype: list[Orchestrator]
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
-        return dbs if dbs else None
+        return dbs
 
     @property
     def models(self) -> t.List[Model]:

@@ -36,6 +36,28 @@ from shutil import which
 
 from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
 
+
+def get_db_identifier_suffix(db_id: str) -> tuple[str, str]:
+    """Create database identifier suffix for regular database"""
+
+    # remove shard id (_0) from dbnode name
+    db_name = "_".join(db_id.split("_")[:-1])
+    db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
+    # if pathway without db_identifier?
+    # if db_name == "orchestrator":
+    #     db_name_suffix = ""
+    #     db_name = ""
+    # else:
+    #     db_name = "_" + db_name
+    return db_name_suffix, db_name
+
+
+def get_colo_db_identfifier_suffix(db_name: str) -> str:
+    """Create database identifier suffix for colocated database"""
+
+    return "_" + db_name if db_name else ""
+
+
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
     lock_suffix = str(uuid.uuid4())[:7]
