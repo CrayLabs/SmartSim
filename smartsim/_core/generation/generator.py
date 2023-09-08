@@ -149,7 +149,7 @@ class Generator:
         # this is to avoid gigantic files in case the user repeats
         # generation several times. The information is anyhow
         # redundant, as it is also written in each entity's dir
-        with open(self.log_file, mode= 'w') as log_file:
+        with open(self.log_file, mode= 'w', encoding='utf-8') as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write("Generation start date and time: " + dt_string + "\n")
 
