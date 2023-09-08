@@ -665,11 +665,8 @@ class Controller:
                 "Clustered" if len(db_addresses) > 1 else "Standalone"
             )
 
-            if name == "orchestrator":
-                client = Client(None, logger_name="SmartSim")
-            else:
-                options = ConfigOptions.create_from_environment(name)
-                client = Client(options, logger_name="SmartSim")
+            options = ConfigOptions.create_from_environment(name)
+            client = Client(options, logger_name="SmartSim")
 
             for model in manifest.models:
                 if not model.colocated:

@@ -991,3 +991,42 @@ def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
         exp.stop(smartsim_model)
         exp.stop(db)
         print(exp.summary())
+
+
+@pytest.mark.skipif(
+    pytest.test_launcher not in pytest.wlm_options,
+    reason="Not testing WLM integrations",
+)
+def test_launch_cluster_orc_single_dbidentifier(fileutils, wlmutils):
+    """test clustered 3-node orchestrator with single command with a database identifier"""
+    # TODO detect number of nodes in allocation and skip if not sufficent
+
+    exp_name = "test-launch-auto-cluster-orc-single-dbid"
+    launcher = wlmutils.get_test_launcher()
+    exp = Experiment(exp_name, launcher=launcher)
+    test_dir = fileutils.make_test_dir()
+
+    # batch = False to launch on existing allocation
+    network_interface = wlmutils.get_test_interface()
+    orc = exp.create_database(
+        wlmutils.get_test_port(),
+        db_nodes=3,
+        batch=False,
+        interface=network_interface,
+        single_cmd=True,
+        hosts=wlmutils.get_test_hostlist(),
+        db_identifier="testdb_reg",
+    )
+    orc.set_path(test_dir)
+
+    exp.start(orc, block=True)
+    statuses = exp.get_status(orc)
+
+    # don't use assert so that orc we don't leave an orphan process
+    if status.STATUS_FAILED in statuses:
+        exp.stop(orc)
+        assert False
+
+    exp.stop(orc)
+    statuses = exp.get_status(orc)
+    assert all([stat == status.STATUS_CANCELLED for stat in statuses])
