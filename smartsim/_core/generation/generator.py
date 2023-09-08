@@ -28,6 +28,7 @@ import pathlib
 import shutil
 import typing as t
 
+from datetime import datetime
 from distutils import dir_util  # pylint: disable=deprecated-module
 from logging import INFO, DEBUG
 from os import mkdir, path, symlink
@@ -143,6 +144,14 @@ class Generator:
             logger.log(
                 level=self.log_level, msg="Working in previously created experiment"
             )
+
+        # The log_file only keeps track of the last generation
+        # this is to avoid gigantic files in case the user repeats
+        # generation several times. The information is anyhow
+        # redundant, as it is also written in each entity's dir
+        with open(self.log_file, mode= 'w') as log_file:
+            dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            log_file.write("Generation start date and time: " + dt_string + "\n")
 
     def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
@@ -303,7 +312,7 @@ class Generator:
             with open(self.log_file, mode="a", encoding="utf-8") as logfile:
                 logfile.write(log_entry)
             with open(join(entity.path, "param_settings.txt"),
-                      mode="a",
+                      mode="w",
                       encoding="utf-8") as local_logfile:
                 local_logfile.write(log_entry)
 

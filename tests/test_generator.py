@@ -48,6 +48,7 @@ TODO
 
 """
 
+
 def get_gen_file(fileutils, filename):
     return fileutils.get_test_conf_path(osp.join("generator_files", filename))
 
@@ -56,7 +57,6 @@ def test_ensemble(fileutils):
     exp = Experiment("gen-test", launcher="local")
     test_dir = fileutils.get_test_dir()
     gen = Generator(test_dir)
-
     params = {"THERMO": [10, 20, 30], "STEPS": [10, 20, 30]}
     ensemble = exp.create_ensemble("test", params=params, run_settings=rs)
 
@@ -154,7 +154,7 @@ def test_dir_files(fileutils):
     conf_dir = get_gen_file(fileutils, "test_dir")
     ensemble.attach_generator_files(to_configure=conf_dir)
 
-    exp.generate(ensemble)
+    exp.generate(ensemble, tag="@")
 
     assert osp.isdir(osp.join(test_dir, "dir_test/"))
     for i in range(9):
@@ -278,18 +278,31 @@ def test_generation_log(fileutils):
     conf_file = get_gen_file(fileutils, "in.atm")
     ensemble.attach_generator_files(to_configure=conf_file)
 
+    def not_header(line):
+        """you can add other general checks in here"""
+        if line.startswith("Generation start date and time:"):
+            return False  # ignore it
+        return True
+
     exp.generate(ensemble, verbose=True)
-    assert filecmp.cmp(
-        osp.join(test_dir, "param_settings.txt"),
-        get_gen_file(fileutils, osp.join("log_params", "param_settings.txt")),
-    )
+
+    log_file = osp.join(test_dir, "param_settings.txt")
+    ground_truth = get_gen_file(fileutils, osp.join("log_params", "param_settings.txt"))
+
+    with open(log_file) as f1, open(ground_truth) as f2:
+        assert(not not_header(f1.readline()))
+        f1 = filter(not_header, f1)
+        f2 = filter(not_header, f2)
+        assert all(x == y for x, y in zip(f1, f2))
 
     for entity in ensemble:
         assert filecmp.cmp(
-        osp.join(entity.path, "param_settings.txt"),
-        get_gen_file(fileutils, osp.join("log_params", "dir_test", entity.name, "param_settings.txt")),
-    )
-
+            osp.join(entity.path, "param_settings.txt"),
+            get_gen_file(
+                fileutils,
+                osp.join("log_params", "dir_test", entity.name, "param_settings.txt"),
+            ),
+        )
 
 def test_config_dir(fileutils):
     """Test the generation and configuration of models with
