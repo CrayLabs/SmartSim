@@ -37,7 +37,7 @@ from shutil import which
 from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
 
 
-def get_db_identifier_suffix(db_id: str) -> tuple[str, str]:
+def get_db_identifier_suffix(db_id: str) -> t.Tuple[str, str]:
     """Create database identifier suffix for regular database"""
 
     # remove shard id (_0) from dbnode name
