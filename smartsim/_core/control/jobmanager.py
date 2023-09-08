@@ -71,8 +71,8 @@ class JobManager:
         # completed jobs
         self.completed: t.Dict[str, Job] = {}
 
-        # for storing db_identifiers and address after mulitple calls to
-        self.address_dict: t.Dict[str, str] = {}
+        # for storing db_identifiers and addresses
+        self.address_dict: t.Dict[str, list[str]] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -304,7 +304,7 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.Dict[str, list]:
+    def get_db_host_addresses(self) -> t.Dict[str, list[str]]:
         """Retrieve the list of hosts for the database
 
         :return:  dictionary of db_identifiers for each database

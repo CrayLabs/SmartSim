@@ -33,7 +33,6 @@ def main():
     # address should be set as we are launching through
     # SmartSim.
 
-    # client = Client(cluster=False)
     opts1 = ConfigOptions.create_from_environment("testdb_colo")
     client = Client(opts1, logger_name="SmartSim")
 

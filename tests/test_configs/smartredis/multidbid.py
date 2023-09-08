@@ -33,27 +33,29 @@ from smartredis import ConfigOptions, Client
 
 
 if __name__ == "__main__":
+    """For inclusion in test with two unique database identifiers with multiple databases"""
+
     parser = argparse.ArgumentParser(description="SmartRedis")
     parser.add_argument("--exchange", action="store_true")
     args = parser.parse_args()
 
+    env_vars = [
+        "SSKEYIN_testdb_reg",
+        "SSKEYOUT_testdb_reg",
+        "SSDB_testdb_reg",
+        "SR_DB_TYPE_testdb_reg",
+        "SSKEYIN_testdb_colo",
+        "SSKEYOUT_testdb_colo",
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
+
+    assert all([var in os.environ for var in env_vars])
+
     opts1 = ConfigOptions.create_from_environment("testdb_reg")
     opts2 = ConfigOptions.create_from_environment("testdb_colo")
-    opts3 = ConfigOptions.create_from_environment("another")
 
     c1 = Client(opts1, logger_name="SmartSim")
     c2 = Client(opts2, logger_name="SmartSim")
-    c3 = Client(opts3, logger_name="SmartSim")
 
-env_vars = [
-    "SSKEYIN_testdb_reg",
-    "SSKEYOUT_testdb_reg",
-    "SSDB_testdb_reg",
-    "SR_DB_TYPE_testdb_reg",
-    "SSKEYIN_testdb_colo",
-    "SSKEYOUT_testdb_colo",
-    "SSDB_testdb_colo",
-    "SR_DB_TYPE_testdb_colo",
-]
-
-assert all([var in os.environ for var in env_vars])
+  

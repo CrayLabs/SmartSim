@@ -465,7 +465,7 @@ class DBUtils:
             ],
             "maxclients": [
                 "-3",  # number clients must be positive
-                str(2 ** 65),  # number of clients is too large
+                str(2**65),  # number of clients is too large
                 "2.9",  # number of clients must be an integer
             ],
             "proto-max-bulk-len": [
@@ -658,6 +658,7 @@ class ColoUtils:
         fileutils: t.Type[FileUtils],
         db_type: str,
         exp: Experiment,
+        application_file: str,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> Model:
@@ -665,14 +666,7 @@ class ColoUtils:
         # get test setup
         test_dir = fileutils.make_test_dir(level=2)
 
-        # jpnote - ask if this is okay 
-        # python filename if db identifier is present
-        if db_args["db_identifier"]:
-            f_name = "send_data_local_smartredis_with_dbid.py"
-        else:
-            f_name = "send_data_local_smartredis.py"
-
-        sr_test_script = fileutils.get_test_conf_path(f_name)
+        sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:

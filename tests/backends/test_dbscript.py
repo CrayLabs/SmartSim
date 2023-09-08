@@ -651,6 +651,7 @@ def test_db_identifier_create_database_then_colocated_db_model(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
 
@@ -707,6 +708,7 @@ def test_db_identifier_colocate_db_then_create_database(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis_with_dbid.py",
         db_args,
     )
 
@@ -770,7 +772,7 @@ def test_db_identifier_multiple_create_database_not_unique(
     )
 
 
-def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, mlutils):
+def test_db_identifier_create_standard_once(fileutils, wlmutils, mlutils):
     """One call to create database with a database identifier"""
 
     # Set experiment name
@@ -786,7 +788,7 @@ def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, m
     exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
     # Create the RunSettings
-    run_settings = exp.create_run_settings("python", "smartredis/multidb2.py")
+    run_settings = exp.create_run_settings("python", "smartredis/dbid.py")
     run_settings.set_tasks_per_node(1)
 
     # Create the SmartSim database
@@ -807,7 +809,7 @@ def test_db_identifier_env_vars_good_create_standard_once(fileutils, wlmutils, m
     print(exp.summary())
 
 
-def test_db_identifier_env_vars_good_create_database_twice(fileutils, wlmutils):
+def test_multidb_create_standard_twice(fileutils, wlmutils):
     """Multiple calls to create database with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
@@ -842,13 +844,13 @@ def test_db_identifier_env_vars_good_create_database_twice(fileutils, wlmutils):
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_colo_once(fileutils, wlmutils, coloutils, db_type):
+def test_multidb_colo_once(fileutils, wlmutils, coloutils, db_type):
     """create one model with colocated database with db_identifier"""
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("smartredis/multidb2.py")
+    test_script = fileutils.get_test_conf_path("smartredis/dbid.py")
 
     # start a new Experiment for this section
     exp = Experiment("test_db_identifier_colo_once", launcher="local")
@@ -869,10 +871,12 @@ def test_db_identifier_colo_once(fileutils, wlmutils, coloutils, db_type):
         "db_identifier": "testdb_colo",
     }
     # Create model with colocated database
+
     smartsim_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis_with_dbid.py",
         db_args,
     )
 
@@ -886,13 +890,13 @@ def test_db_identifier_colo_once(fileutils, wlmutils, coloutils, db_type):
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
+def test_multidb_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
     """Create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("smartredis/multidb.py")
+    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
 
     # start a new Experiment for this section
     exp = Experiment("test_db_identifier_standard_then_colo", launcher="local")
@@ -922,6 +926,7 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis_with_dbid.py",
         db_args,
     )
 
@@ -935,13 +940,13 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
-def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
+def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
     """create regular database then colocate_db_tcp/uds with unique db_identifiers"""
 
     # Retrieve parameters from testing environment
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
-    test_script = fileutils.get_test_conf_path("smartredis/multidb.py")
+    test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
 
     # start a new Experiment
     exp = Experiment(
@@ -968,6 +973,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis_with_dbid.py",
         db_args,
     )
 

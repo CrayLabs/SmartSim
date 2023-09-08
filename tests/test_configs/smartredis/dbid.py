@@ -31,19 +31,26 @@ import os
 from smartredis import ConfigOptions, Client
 
 if __name__ == "__main__":
+    """For inclusion in test with single database identifier in a single Client
+    constructor"""
+
     parser = argparse.ArgumentParser(description="SmartRedis")
     parser.add_argument("--exchange", action="store_true")
     args = parser.parse_args()
+
+    env_vars = [
+        "SSKEYIN_testdb_colo",
+        "SSKEYOUT_testdb_colo",
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
+
+    assert all([var in os.environ for var in env_vars])
 
     opts1 = ConfigOptions.create_from_environment("testdb_colo")
 
     client = Client(opts1, logger_name="SmartSim")
 
-env_vars = [
-    "SSKEYIN_testdb_colo",
-    "SSKEYOUT_testdb_colo",
-    "SSDB_testdb_colo",
-    "SR_DB_TYPE_testdb_colo",
-]
 
-assert all([var in os.environ for var in env_vars])
+
+    

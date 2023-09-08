@@ -38,6 +38,10 @@ from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script
+from ..._core.utils.helpers import (
+    get_db_identifier_suffix,
+    get_colo_db_identfifier_suffix,
+)
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity, Model, Ensemble
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
@@ -79,7 +83,6 @@ class Controller:
         """
         self._jobs = JobManager(JM_LOCK)
         self.init_launcher(launcher)
-        self.num: int = 0
 
     def start(
         self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
@@ -289,23 +292,15 @@ class Controller:
         """
 
         orchestrators = manifest.dbs
-        if orchestrators:
-            # Loop over deployables to launch and launch multiple orchestrators
-            for orchestrator in orchestrators:
-                if orchestrator:
-                    if orchestrator.num_shards > 1 and isinstance(
-                        self._launcher, LocalLauncher
-                    ):
-                        raise SmartSimError(
-                            "Local launcher does not support multi-host orchestrators"
-                        )
-                    # jpnote: Should this code be modified to see if we're attempting to
-                    # launch a second orchestrator with the same db_id?
-                    # if self.orchestrator_active:
-                    #     msg = "Attempted to launch a second Orchestrator instance. "
-                    #     msg += "Only 1 Orchestrator can be active at a time"
-                    #     raise SmartSimError(msg)
-                    self._launch_orchestrator(orchestrator)
+        # Loop over deployables to launch and launch multiple orchestrators
+        for orchestrator in orchestrators:
+            if orchestrator.num_shards > 1 and isinstance(
+                self._launcher, LocalLauncher
+            ):
+                raise SmartSimError(
+                    "Local launcher does not support multi-host orchestrators"
+                )
+            self._launch_orchestrator(orchestrator)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -476,16 +471,9 @@ class Controller:
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
         # addresses, address_dict = self._jobs.get_db_host_addresses()
         address_dict = self._jobs.get_db_host_addresses()
-        flag = ""
+
         for db_id, addresses in address_dict.items():
-
-            db_name = "_".join(db_id.split("_")[:-1])
-            if db_name == "orchestrator":
-                db_name = ""
-                flag = "blank"
-
-            if not flag == "blank":
-                db_name = "_" + db_name
+            db_name, _ = get_db_identifier_suffix(db_id)
 
             if addresses:
                 if len(addresses) <= 128:
@@ -506,15 +494,12 @@ class Controller:
             )
 
         # Set address to local if it's a colocated model
-        if entity.colocated:
-            db_name_colo = (
-                "_" + entity.run_settings.colocated_db_settings["db_identifier"]
+        if entity.colocated and entity.run_settings.colocated_db_settings is not None:
+            db_name_colo = get_colo_db_identfifier_suffix(
+                entity.run_settings.colocated_db_settings["db_identifier"]
             )
-            if len(db_name_colo) == 1:
-                db_name_colo = ""
 
             if colo_cfg := entity.run_settings.colocated_db_settings:
-
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)
                 if socket and port:
@@ -594,7 +579,6 @@ class Controller:
                     logger.debug("Waiting for orchestrator instances to spin up...")
             except KeyboardInterrupt:
                 logger.info("Orchestrator launch cancelled - requesting to stop")
-                # self.stop_entity_list_orchestrator(orchestrator)
                 self.stop_entity_list(orchestrator)
 
                 # re-raise keyboard interrupt so the job manager will display
@@ -663,21 +647,11 @@ class Controller:
             return
 
         address_dict = self._jobs.get_db_host_addresses()
-        # db_address, address_dict = self._jobs.get_db_host_addresses()
-        flag = ""
         for (
             db_id,
             db_addresses,
         ) in address_dict.items():
-            db_name = "_".join(db_id.split("_")[:-1])
-
-            if db_name == "orchestrator":
-                db_name = ""
-                flag = "blank"
-
-            db_without = db_name
-            if not flag == "blank":
-                db_name = "_" + db_name
+            db_name, name = get_db_identifier_suffix(db_id)
 
             hosts = list({address.split(":")[0] for address in db_addresses})
             ports = list({int(address.split(":")[-1]) for address in db_addresses})
@@ -687,17 +661,18 @@ class Controller:
 
             environ[f"SSDB{db_name}"] = db_addresses[0]
 
-            options = ConfigOptions.create_from_environment(db_without)
-
             environ[f"SR_DB_TYPE{db_name}"] = (
                 "Clustered" if len(db_addresses) > 1 else "Standalone"
             )
 
-            client = Client(options, logger_name="SmartSim")
+            if name == "orchestrator":
+                client = Client(None, logger_name="SmartSim")
+            else:
+                options = ConfigOptions.create_from_environment(name)
+                client = Client(options, logger_name="SmartSim")
 
             for model in manifest.models:
                 if not model.colocated:
-
                     for db_model in model.db_models:
                         set_ml_model(db_model, client)
                     for db_script in model.db_scripts:
