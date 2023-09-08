@@ -304,7 +304,7 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.Dict[str, list[str]]:
+    def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
 
         :return:  dictionary of db_identifiers for each database
