@@ -399,12 +399,16 @@ def execute(args: argparse.Namespace) -> int:
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
 
-    if "torch" in backends:
-        check_py_torch_version(versions, device)
-    if "tensorflow" in backends:
-        check_py_tf_version(versions)
-    if "onnxruntime" in backends:
-        check_py_onnx_version(versions)
+    try:
+        if "torch" in backends:
+            check_py_torch_version(versions, device)
+        if "tensorflow" in backends:
+            check_py_tf_version(versions)
+        if "onnxruntime" in backends:
+            check_py_onnx_version(versions)
+    except SetupError as e:
+        logger.error(str(e))
+        return 1
 
     logger.info("SmartSim build complete!")
     return 0
