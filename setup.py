@@ -184,6 +184,7 @@ extras_require = {
     ],
     "mypy": [
         "mypy>=1.3.0",
+        "pandas-stubs",
         "types-Pillow",
         "types-psutil",
         "types-redis",
