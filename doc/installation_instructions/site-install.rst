@@ -12,4 +12,3 @@ from source with the following steps replacing ``COMPILER_VERSION`` and
     module use -a /lus/scratch/smartsim/local/modulefiles
     module load cudatoolkit/11.8 cudnn smartsim-deps/COMPILER_VERSION/SMARTSIM_VERSION
     pip install smartsim[ml-cuda]
-    smart build --only_python_packages --device gpu [--onnx]
