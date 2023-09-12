@@ -865,7 +865,7 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
-    def dbs_in_use(self) -> set[str]:
+    def dbs_in_use(self) -> t.Set[str]:
         return set(self.db_identifiers)
 
     def append_to_db_identifier_list(self, db_identifier: str) -> None:

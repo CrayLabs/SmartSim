@@ -295,7 +295,7 @@ if __name__ == "__main__":
         "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
     )
 
-    arg_parser.add_argument("+db_identifier", type=str, default="", help="db_id")
+    arg_parser.add_argument("+db_identifier", type=str, default="", help="Database Identifier name")
 
     arg_parser.add_argument("+command", nargs="+", help="Command to run")
     arg_parser.add_argument(
