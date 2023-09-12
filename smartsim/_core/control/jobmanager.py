@@ -72,7 +72,7 @@ class JobManager:
         self.completed: t.Dict[str, Job] = {}
 
         # for storing db_identifiers and addresses
-        self.address_dict: t.Dict[str, list[str]] = {}
+        self.address_dict: t.Dict[str, t.List[str]] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
