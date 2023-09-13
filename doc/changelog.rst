@@ -12,50 +12,84 @@ SmartSim
 ========
 
 
-Development branch
-------------------
+0.5.1
+-----
 
-To be released at some future point in time
+Released on 13 September, 2023
 
 Description
 
-- Mitigated additional suppressed pylint errors
-- Fix colocated db preparation bug when using `JsrunSettings`
-- Enabled additional mypy checks
-- Additional typehints
+- Add typehints throughout the SmartSim codebase
+- Provide support for Slurm heterogeneous jobs
+- Provide better support for `PalsMpiexecSettings`
+- Allow for easier inspection of SmartSim entities
 - Log ignored error messages from `sacct`
-- Fix malformed logging format strings
+- Fix colocated db preparation bug when using `JsrunSettings`
 - Fix bug when user specify CPU and devices greater than 1
 - Fix bug when get_allocation called with reserved keywords
+- Enabled mypy in CI for better type safety
+- Mitigate additional suppressed pylint errors
 - Update linting support and apply to existing errors
+- Various improvements to the `smart` CLI
+- Various documentation improvements
+- Various test suite improvements
 
 Detailed Notes
 
-- Created public proprties where appropriate to mitigate `protected-access` errors (PR341_)
-- Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check (PR339_)
-- Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any` (PR338_)
-- Add typehints to `smartsim._core.launcher.step.*` (PR334_)
-- Log errors reported from slurm WLM when attempts to retrieve status fail (PR331_, PR332_)
-- Fix incorrectly formatted positional arguments in log format strings (PR330_)
-- Add error if user calls get_allocation with reserved keywords in slurm get_allocation (PR325_)
-- Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script (PR324_)
-- Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks (PR311_)
+- Add methods to allow users to inspect files attached to models and ensembles. (PR352_)
+- Add a `smart info` target to provide rudimentary information about the SmartSim installation. (PR350_)
+- Remove unnecessary generation producing unexpected directories in the test suite. (PR349_)
+- Add support for heterogeneous jobs to `SrunSettings` by allowing users to set the `--het-group` parameter. (PR346_)
+- Provide clearer guidelines on how to contribute to SmartSim. (PR344_)
+- Integrate `PalsMpiexecSettings` into the `Experiment` factory methods when using the `"pals"` launcher. (PR343_)
+- Create public properties where appropriate to mitigate `protected-access` errors. (PR341_)
+- Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check. (PR339_)
+- Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any`. (PR338_)
+- Move installation of all optional SmartSim Python ML dependencies to `pip install` time. (PR336_)
+- Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (PR336_, PR351_)
+- Add typehints to `smartsim._core.launcher.step.*`. (PR334_)
+- Log errors reported from slurm WLM when attempts to retrieve status fail. (PR331_, PR332_)
+- Fix incorrectly formatted positional arguments in log format strings. (PR330_)
+- Ensure that launchers pass environment variables to unmanaged job steps. (PR329_)
+- Add additional tests surrounding the `RAI_PATH` configuration environment variable. (PR328_)
+- Remove unnecessary execution of unescaped shell commands. (PR327_)
+- Add error if user calls get_allocation with reserved keywords in slurm get_allocation. (PR325_)
+- Add error when user requests CPU with devices greater than 1 within add_ml_model and add_script. (PR324_)
+- Update documentation surrounding ensemble key prefixing. (PR322_)
+- Fix formatting of the Frontier site installation. (PR321_)
+- Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks. (PR311_)
+- Refactor the `smart` CLI to use subparsers for better documentation and extension. (PR308_)
 
+.. _PR352: https://github.com/CrayLabs/SmartSim/pull/352
+.. _PR351: https://github.com/CrayLabs/SmartSim/pull/351
+.. _PR350: https://github.com/CrayLabs/SmartSim/pull/350
+.. _PR349: https://github.com/CrayLabs/SmartSim/pull/349
+.. _PR346: https://github.com/CrayLabs/SmartSim/pull/346
+.. _PR344: https://github.com/CrayLabs/SmartSim/pull/344
+.. _PR343: https://github.com/CrayLabs/SmartSim/pull/343
 .. _PR341: https://github.com/CrayLabs/SmartSim/pull/341
 .. _PR339: https://github.com/CrayLabs/SmartSim/pull/339
 .. _PR338: https://github.com/CrayLabs/SmartSim/pull/338
+.. _PR336: https://github.com/CrayLabs/SmartSim/pull/336
 .. _PR334: https://github.com/CrayLabs/SmartSim/pull/334
 .. _PR332: https://github.com/CrayLabs/SmartSim/pull/332
 .. _PR331: https://github.com/CrayLabs/SmartSim/pull/331
 .. _PR330: https://github.com/CrayLabs/SmartSim/pull/330
+.. _PR329: https://github.com/CrayLabs/SmartSim/pull/329
+.. _PR328: https://github.com/CrayLabs/SmartSim/pull/328
+.. _PR327: https://github.com/CrayLabs/SmartSim/pull/327
 .. _PR325: https://github.com/CrayLabs/SmartSim/pull/325
 .. _PR324: https://github.com/CrayLabs/SmartSim/pull/324
+.. _PR322: https://github.com/CrayLabs/SmartSim/pull/322
+.. _PR321: https://github.com/CrayLabs/SmartSim/pull/321
 .. _PR311: https://github.com/CrayLabs/SmartSim/pull/311
+.. _PR308: https://github.com/CrayLabs/SmartSim/pull/308
+
 
 0.5.0
-------------------
+-----
 
-Released on 6 July 2023
+Released on 6 July, 2023
 
 Description
 
