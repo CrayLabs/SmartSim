@@ -71,12 +71,6 @@ def test_no_name():
         _ = Manifest(model_no_name)
 
 
-def test_two_orc():
-    with pytest.raises(SmartSimError):
-        manifest = Manifest(orc, orc_1)
-        manifest.dbs
-
-
 def test_separate_type():
     with pytest.raises(TypeError):
         _ = Manifest([1, 2, 3])

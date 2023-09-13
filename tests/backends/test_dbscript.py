@@ -987,6 +987,8 @@ def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
         exp.start(db, smartsim_model)
         statuses = exp.get_status(smartsim_model)
         assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+        # check that model can be restarted
+        exp.start(smartsim_model)
     finally:
         exp.stop(smartsim_model)
         exp.stop(db)

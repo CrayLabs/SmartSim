@@ -130,6 +130,7 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
+        self.db_dict: t.Dict[str, t.Any] = {}
 
     def start(
         self,
@@ -193,9 +194,17 @@ class Experiment:
         for index, item in enumerate(args):
             if isinstance(item, Model):
                 if item.colocated:
-                    self.append_to_db_identifier_list(
-                        args[index].run_settings.colocated_db_settings["db_identifier"]
-                    )
+                    db_id = args[index].run_settings.colocated_db_settings[
+                        "db_identifier"
+                    ]
+
+                    for job in self._control.get_jobs().values():
+                        for run in range(job.history.runs + 1):
+                            if job.history.statuses[run] == "Completed":
+                                del self.db_dict[db_id]
+                                self.db_identifiers.remove(db_id)
+
+                    self.append_to_db_identifier_list(db_id, Model)
 
         start_manifest = Manifest(*args)
         try:
@@ -752,7 +761,7 @@ class Experiment:
         :rtype: Orchestrator or derived class
         """
 
-        self.append_to_db_identifier_list(db_identifier)
+        self.append_to_db_identifier_list(db_identifier, Orchestrator)
 
         return Orchestrator(
             port=port,
@@ -868,7 +877,7 @@ class Experiment:
     def dbs_in_use(self) -> t.Set[str]:
         return set(self.db_identifiers)
 
-    def append_to_db_identifier_list(self, db_identifier: str) -> None:
+    def append_to_db_identifier_list(self, db_identifier: str, *entity: t.Any) -> None:
         # Check if db_identifier already exists
         if db_identifier in self.db_identifiers:
             raise DBIDConflictError(
@@ -877,3 +886,4 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
+        self.db_dict[db_identifier] = entity
