@@ -59,8 +59,8 @@ def test_model_failure(fileutils):
 
 
 def test_orchestrator_relaunch(fileutils, wlmutils):
-    """Test error when users try to launch second orchestrator"""
-    exp_name = "test-orc-error-on-relaunch"
+    """Test when users try to launch second orchestrator"""
+    exp_name = "test-orc-on-relaunch"
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
 
@@ -70,7 +70,7 @@ def test_orchestrator_relaunch(fileutils, wlmutils):
     orc_1.set_path(test_dir)
 
     exp.start(orc)
-    with pytest.raises(SmartSimError):
-        exp.start(orc_1)
+
+    exp.start(orc_1)
 
     exp.stop(orc)

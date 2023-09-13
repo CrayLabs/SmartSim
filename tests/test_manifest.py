@@ -63,7 +63,7 @@ def test_separate():
     assert len(manifest.models) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
-    assert manifest.dbs == orc
+    assert manifest.dbs[0] == orc
 
 
 def test_no_name():
