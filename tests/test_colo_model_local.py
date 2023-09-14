@@ -49,7 +49,7 @@ def test_macosx_warning(fileutils, coloutils):
         RuntimeWarning,
         match="CPU pinning is not supported on MacOSX. Ignoring pinning specification."
     ):
-        colo_model = coloutils.setup_test_colo(
+        _ = coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -62,7 +62,7 @@ def test_unsupported_limit_app(fileutils, coloutils):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(SSUnsupportedError):
-        colo_model = coloutils.setup_test_colo(
+        _ = coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -77,7 +77,7 @@ def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(TypeError):
-        colo_model = coloutils.setup_test_colo(
+        _ = coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
