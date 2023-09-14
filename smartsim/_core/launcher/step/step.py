@@ -48,6 +48,7 @@ class Step:
         self.cwd = cwd
         self.managed = False
         self.step_settings = step_settings
+        self.meta: t.Dict[str, str] = {}
 
     def get_launch_cmd(self) -> t.List[str]:
         raise NotImplementedError
