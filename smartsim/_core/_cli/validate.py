@@ -194,7 +194,7 @@ def _test_tf_install(client: Client, tmp_dir: str, device: _TCapitalDeviceStr) -
         model_path, inputs, outputs = recv_conn.recv()
     except EOFError as e:
         raise Exception(
-            "Failed to recieve serialized model from subprocess. "
+            "Failed to receive serialized model from subprocess. "
             "Is the `tensorflow` python package installed?"
         ) from e
 

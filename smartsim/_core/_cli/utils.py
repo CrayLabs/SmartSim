@@ -26,11 +26,14 @@
 
 import importlib
 import shutil
+import subprocess as sp
+import sys
 import typing as t
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from smartsim._core._install.buildenv import SetupError
+from smartsim._core._install.builder import BuildError
 from smartsim._core.utils import colorize
 from smartsim.log import get_logger
 
@@ -58,6 +61,16 @@ def get_install_path() -> Path:
 def color_bool(trigger: bool = True) -> str:
     _color = "green" if trigger else "red"
     return colorize(str(trigger), color=_color)
+
+
+def pip(*args: str) -> None:
+    cmd = (sys.executable, "-m", "pip") + args
+    with sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE) as proc:
+        _, err = proc.communicate()
+        if int(proc.returncode) != 0:
+            raise BuildError(
+                f"`pip` returned with a non-zero exit code:\n{err.decode('utf-8')}"
+            )
 
 
 def clean(core_path: Path, _all: bool = False) -> int:
