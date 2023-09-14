@@ -675,7 +675,7 @@ class ColoUtils:
         colo_model.set_path(test_dir)
 
         if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = 6780
+            db_args["port"] = test_port
             db_args["ifname"] = "lo"
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
