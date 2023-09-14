@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import os
 import psutil
 import time
 import typing as t
@@ -105,8 +106,8 @@ class TaskManager:
         cmd_list: t.List[str],
         cwd: str,
         env: t.Optional[t.Dict[str, str]] = None,
-        out: int = PIPE,
-        err: int = PIPE,
+        out: t.Union[int, os.PathLike] = PIPE,
+        err: t.Union[int, os.PathLike] = PIPE,
     ) -> str:
         """Start a task managed by the TaskManager
 
