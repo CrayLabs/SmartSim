@@ -100,7 +100,6 @@ def main(
 
     except Exception as e:
         logger.error(f"Failed to execute step: {e}")
-        cleanup()        
     
     return 1
 
