@@ -25,9 +25,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import dataclasses
 import logging
 import os
 import pathlib
+from tabnanny import check
 import psutil
 import shlex
 import signal
@@ -123,7 +125,7 @@ def register_signal_handlers() -> None:
         signal.signal(sig, handle_signal)
 
 
-if __name__ == "__main__":
+def get_parser() -> argparse.ArgumentParser:
     # NOTE: plus prefix avoids passing param incorrectly to python interpreter, 
     # e.g. python receives params - `python -m smartsim._core.entrypoints.indirect -c ... -t ...`
     arg_parser = argparse.ArgumentParser(
@@ -141,11 +143,34 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "+d", type=str, help="The experiment root directory"
     )
+    return arg_parser
 
+
+@dataclasses.dataclass
+class ParameterContext:
+    cmd: str
+    entity_type: str
+    step_name: str
+    exp_dir: pathlib.Path
+
+
+def load_args(ns: argparse.Namespace) -> ParameterContext:
+    return ParameterContext(
+        cmd=parsed_args.c,
+        entity_type=parsed_args.t,
+        step_name=parsed_args.n,
+        exp_dir=parsed_args.d,
+    )
+
+
+if __name__ == "__main__":
+    arg_parser = get_parser()
     os.environ["PYTHONUNBUFFERED"] = "1"
 
     try:
         parsed_args = arg_parser.parse_args()
+        ctx = load_args(parsed_args)
+
         logger.debug("Starting indirect step execution")
 
         # make sure to register the cleanup before the start the process
@@ -153,10 +178,10 @@ if __name__ == "__main__":
         register_signal_handlers()
 
         rc = main(
-            cmd=parsed_args.c,
-            etype=parsed_args.t,
-            step_name=parsed_args.n,
-            exp_dir=parsed_args.d,
+            cmd=ctx.cmd,
+            etype=ctx.entity_type,
+            step_name=ctx.step_name,
+            exp_dir=ctx.exp_dir,
         )
         sys.exit(rc)
 

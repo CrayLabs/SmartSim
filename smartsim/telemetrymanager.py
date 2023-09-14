@@ -26,6 +26,7 @@
 
 import argparse
 from dataclasses import dataclass, field
+import dataclasses
 import json
 from multiprocessing import RLock
 import os
@@ -124,7 +125,10 @@ class ExperimentManifest:
 
 
 def hydrate_persistable(
-    entity_type: str, persisted_entity: t.Dict[str, t.Any], timestamp: int, exp_dir: pathlib.Path,
+    entity_type: str,
+    persisted_entity: t.Dict[str, t.Any],
+    timestamp: int,
+    exp_dir: pathlib.Path,
 ) -> PersistableEntity:
     return PersistableEntity(
         entity_type=entity_type,
@@ -137,7 +141,9 @@ def hydrate_persistable(
 
 
 def hydrate_persistables(
-    entity_type: _ManifestKey, run: t.Dict[_ManifestKey, t.Any], exp_dir: pathlib.Path,
+    entity_type: _ManifestKey,
+    run: t.Dict[_ManifestKey, t.Any],
+    exp_dir: pathlib.Path,
 ) -> t.List[PersistableEntity]:
     # exp_dir = pathlib.Path(run["experiment"]["path"])
     ts = run["timestamp"]
@@ -147,7 +153,9 @@ def hydrate_persistables(
     ]
 
 
-def hydrate_runs(persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]], exp_dir: pathlib.Path) -> t.List[Run]:
+def hydrate_runs(
+    persisted_runs: t.List[t.Dict[_ManifestKey, t.Any]], exp_dir: pathlib.Path
+) -> t.List[Run]:
     runs = [
         Run(
             timestamp=instance["timestamp"],
@@ -212,7 +220,7 @@ def track_event(
         entity_dict["detail"] = detail
         tgt_path.write_text(json.dumps(entity_dict))
     except Exception as ex:
-        print(ex)    
+        print(ex)
 
 
 def track_completed(job: Job, logger: logging.Logger) -> None:
@@ -235,7 +243,7 @@ def track_started(job: Job, logger: logging.Logger) -> None:
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
-    timestamp_suffix = str(int(timestamp)) # drop floating point part before stringify
+    timestamp_suffix = str(int(timestamp))  # drop floating point part before stringify
     exp_dir = pathlib.Path(job.entity.path)
 
     track_event(timestamp, inactive_entity, f"step_{timestamp_suffix}", exp_dir, logger)
@@ -342,7 +350,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity,
                     is_task=entity.is_managed,
                     is_orch=entity.is_orch,
-                ) 
+                )
                 self._jm._launcher.step_mapping.add(
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
                 )
@@ -371,7 +379,11 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self.process_manifest(event.src_path)
 
     def to_completed(
-        self, timestamp: int, entity: PersistableEntity, exp_dir: pathlib.Path, step_info: StepInfo
+        self,
+        timestamp: int,
+        entity: PersistableEntity,
+        exp_dir: pathlib.Path,
+        step_info: StepInfo,
     ) -> None:
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
@@ -432,18 +444,22 @@ async def main(
         observer.stop()  # type: ignore
 
 
-if __name__ == "__main__":
-    def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
-        if not signo:
-            logger = logging.getLogger()
-            logger.warning("Received signal with no signo")
+def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+    if not signo:
+        logger = logging.getLogger()
+        logger.warning("Received signal with no signo")
 
-        loop = asyncio.get_event_loop()
-        for task in asyncio.all_tasks(loop):
-            task.cancel()
+    loop = asyncio.get_event_loop()
+    for task in asyncio.all_tasks(loop):
+        task.cancel()
 
-    os.environ["PYTHONUNBUFFERED"] = "1"
 
+def register_signal_handlers() -> None:
+    for sig in SIGNALS:
+        signal.signal(sig, handle_signal)
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     parser.add_argument(
         "-f", type=str, help="Frequency of telemetry updates", default=5
@@ -453,17 +469,32 @@ if __name__ == "__main__":
         type=str,
         help="Experiment root directory",
         # required=True,
-        # default="/Users/chris.mcbride/code/ss",
         default="/lus/cls01029/mcbridch/ss/smartsim",
     )
+    return parser
 
+@dataclasses.dataclass
+class ParameterContext:
+    freq: int
+    exp_dir: pathlib.Path
+
+
+def load_args(ns: argparse.Namespace) -> ParameterContext:
+    return ParameterContext(freq=int(ns.f), exp_dir=pathlib.Path(ns.d))
+
+
+if __name__ == "__main__":
+    os.environ["PYTHONUNBUFFERED"] = "1"
+
+    parser = build_arg_parser()
     args = parser.parse_args()
+    ctx = load_args(args)
 
     # Register the cleanup before the main loop is running
-    for sig in SIGNALS:
-        signal.signal(sig, handle_signal)
+    register_signal_handlers()
 
     try:
-        asyncio.run(main(int(args.f), pathlib.Path(args.d), logging.getLogger()))
+        logger = logging.getLogger()
+        asyncio.run(main(ctx.freq, ctx.exp_dir, logger))
     except asyncio.CancelledError:
-        print("Shutting down telemetry monitor...")
+        logger.exception("Shutting down telemetry monitor due to CancelledError")
