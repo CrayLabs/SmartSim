@@ -75,7 +75,9 @@ class Step:
 
     def get_colocated_launch_script(self) -> str:
         # prep step for colocated launch if specifed in run settings
-        script_path = self.get_step_file(script_name=".colocated_launcher.sh")
+        script_path = self.get_step_file(
+            script_name=f".colocated_launcher_{self.entity_name}.sh"
+        )
 
         db_settings: t.Dict[str, str] = {}
         if isinstance(self.step_settings, RunSettings):

@@ -26,11 +26,9 @@
 
 
 import sys
-import time
 
 import pytest
 
-import smartsim
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
@@ -795,11 +793,11 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
 def test_inconsistent_params_db_model():
     """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""
-    
+
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     with pytest.raises(SSUnsupportedError) as ex:
-        db_model = DBModel(
+        _ = DBModel(
             "cnn",
             "TF",
             model=model,
@@ -810,6 +808,6 @@ def test_inconsistent_params_db_model():
             outputs=outputs,
         )
     assert (
-            ex.value.args[0] 
+            ex.value.args[0]
             == "Cannot set devices_per_node>1 if CPU is specified under devices"
         )

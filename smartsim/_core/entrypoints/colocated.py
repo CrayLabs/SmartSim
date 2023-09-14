@@ -177,14 +177,14 @@ def main(
     global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
-    try:
-        ip_addresses = [
-            current_ip(interface) for interface in network_interface.split(",")
-        ]
-
-    except ValueError as e:
-        logger.warning(e)
-        ip_addresses = []
+    ip_addresses = []
+    if network_interface:
+        try:
+            ip_addresses = [
+                current_ip(interface) for interface in network_interface.split(",")
+            ]
+        except ValueError as e:
+            logger.warning(e)
 
     if all(lo_address == ip_address for ip_address in ip_addresses) or not ip_addresses:
         cmd = command + [f"--bind {lo_address}"]
@@ -317,7 +317,7 @@ if __name__ == "__main__":
         LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
 
-        # make sure to register the cleanup before the start
+        # make sure to register the cleanup before we start
         # the proecss so our signaller will be able to stop
         # the database process.
         register_signal_handlers()
