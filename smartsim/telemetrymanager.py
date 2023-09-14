@@ -98,7 +98,6 @@ class PersistableEntity:
 _FilterFn = t.Callable[[PersistableEntity], bool]
 
 
-
 @dataclass
 class Run:
     timestamp: int
@@ -182,19 +181,26 @@ def track_event(
     timestamp: int,
     entity: PersistableEntity,
     action: _EventClass,
-    exp_dir: pathlib.Path,
+    exp_dir: os.PathLike,
+    logger: logging.Logger,
     detail: str = "",
 ) -> None:
     """
     Persist a tracking event for an entity
     """
+
     job_id = entity.job_id or ""
     step_id = entity.step_id or ""
     entity_type = entity.entity_type or "missing_entity_type"
-    print(
+    logger.info(
         f"mocked tracking `{entity_type}.{action}` event w/jid: {job_id}, "
         f"tid: {step_id}, ts: {timestamp}"
     )
+
+    if isinstance(exp_dir, pathlib.Path):
+        exp_path = exp_dir
+    else:
+        exp_path = pathlib.Path(exp_dir)
 
     name: str = entity.name or "entity-name-not-found"
     tgt_path = exp_dir / "manifest" / entity_type / name / f"{action}.json"
@@ -209,30 +215,30 @@ def track_event(
         print(ex)    
 
 
-def track_completed(job: Job) -> None:
+def track_completed(job: Job, logger: logging.Logger) -> None:
     timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
     detail = job.status
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, "stop", exp_dir, detail=detail)
+    track_event(timestamp, inactive_entity, "stop", exp_dir, logger, detail=detail)
 
 
-def track_started(job: Job) -> None:
+def track_started(job: Job, logger: logging.Logger) -> None:
     timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, "start", exp_dir)
+    track_event(timestamp, inactive_entity, "start", exp_dir, logger)
 
 
-def track_timestep(job: Job) -> None:
+def track_timestep(job: Job, logger: logging.Logger) -> None:
     timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
     timestamp_suffix = str(int(timestamp)) # drop floating point part before stringify
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, f"step_{timestamp_suffix}", exp_dir)
+    track_event(timestamp, inactive_entity, f"step_{timestamp_suffix}", exp_dir, logger)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -311,7 +317,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         return self._launcher
 
-    def process_manifest(self, manifest_path: str) -> None:
+    def process_manifest(self, manifest_path: str, logger: logging.Logger) -> None:
         # load items to process from manifest
         manifest = load_manifest(manifest_path)
         self.set_launcher(manifest.launcher)
@@ -328,7 +334,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 entity.path = str(exp_dir)
 
                 self._tracked_jobs[entity.key] = entity
-                track_event(run.timestamp, entity, "start", exp_dir)
+                track_event(run.timestamp, entity, "start", exp_dir, logger)
 
                 self._jm.add_telemetry_job(
                     entity.name,
