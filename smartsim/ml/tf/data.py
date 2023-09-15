@@ -32,21 +32,24 @@ from smartsim.ml import DataDownloader
 
 
 class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
-    def __getitem__(self, index: int) -> t.Tuple[np.ndarray, np.ndarray]:
+    def __getitem__(
+        self, index: int
+    ) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         if len(self) < 1:
-            msg = "Not enough samples in generator for one batch. "
-            msg += "Please run init_samples() or initialize generator with init_samples=True"
-            raise ValueError(msg)
+            raise ValueError(
+                "Not enough samples in generator for one batch. Please "
+                "run init_samples() or initialize generator with init_samples=True"
+            )
         # Generate indices of the batch
         indices = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
 
         # Generate data
-        x, y = self._data_generation(indices)
+        xval, yval = self._data_generation(indices)
 
-        if y is not None:
-            return x, y
-        else:
-            return x
+        if yval is not None:
+            return xval, yval
+
+        return xval
 
     def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch
@@ -56,23 +59,23 @@ class _TFDataGenerationCommon(DataDownloader, keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indices)
 
-    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:
+    def _data_generation(self, indices: np.ndarray) -> t.Tuple[np.ndarray, np.ndarray]:  # type: ignore[type-arg]
         # Initialization
         if self.samples is None:
             raise ValueError("No samples loaded for data generation")
-            
-        x = self.samples[indices]
+
+        xval = self.samples[indices]
 
         if self.need_targets:
-            y = self.targets[indices]
+            yval = self.targets[indices]
             if self.num_classes is not None:
-                y = keras.utils.to_categorical(y, num_classes=self.num_classes)
+                yval = keras.utils.to_categorical(yval, num_classes=self.num_classes)
         elif self.autoencoding:
-            y = x
+            yval = xval
         else:
-            return x
+            return xval
 
-        return x, y
+        return xval, yval
 
 
 class StaticDataGenerator(_TFDataGenerationCommon):
@@ -88,9 +91,11 @@ class StaticDataGenerator(_TFDataGenerationCommon):
         kwargs["dynamic"] = False
         super().__init__(**kwargs)
         if dynamic:
-            self.log(
-                "Static data generator cannot be started with dynamic=True, setting it to False"
+            msg = (
+                "Static data generator cannot be started with dynamic=True, "
+                "setting it to False"
             )
+            self.log(msg)
 
 
 class DynamicDataGenerator(_TFDataGenerationCommon):
@@ -106,9 +111,11 @@ class DynamicDataGenerator(_TFDataGenerationCommon):
         kwargs["dynamic"] = True
         super().__init__(**kwargs)
         if not dynamic:
-            self.log(
-                "Dynamic data generator cannot be started with dynamic=False, setting it to True"
+            msg = (
+                "Dynamic data generator cannot be started with dynamic=False,"
+                " setting it to True"
             )
+            self.log(msg)
 
     def on_epoch_end(self) -> None:
         """Callback called at the end of each training epoch

@@ -17,6 +17,12 @@ _build
 
 smartredis
 
+# Envs
+venv/
+.venv/
+env/
+.env/
+
 # written upon install
 smartsim/version.py
 

@@ -105,6 +105,10 @@ class SrunSettings(RunSettings):
             raise SSUnsupportedError(
                 "Containerized MPMD workloads are not yet supported."
             )
+        if os.getenv("SLURM_HET_SIZE") is not None:
+            raise ValueError(
+                "Slurm does not support MPMD workloads in heterogeneous jobs."
+            )
         self.mpmd.append(settings)
 
     def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
@@ -120,7 +124,7 @@ class SrunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["nodelist"] = ",".join(host_list)
 
@@ -145,7 +149,7 @@ class SrunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude"] = ",".join(host_list)
 
@@ -239,7 +243,8 @@ class SrunSettings(RunSettings):
         """
         self.run_args["bcast"] = dest_path
 
-    def _fmt_walltime(self, hours: int, minutes: int, seconds: int) -> str:
+    @staticmethod
+    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
 
         Converts time to format HH:MM:SS
@@ -268,6 +273,37 @@ class SrunSettings(RunSettings):
         :type walltime: str
         """
         self.run_args["time"] = str(walltime)
+
+    def set_het_group(self, het_group: t.Iterable[int]) -> None:
+        """Set the heterogeneous group for this job
+
+        this sets `--het-group`
+
+        :param het_group: list of heterogeneous groups
+        :type het_group: int or iterable of ints
+        """
+        het_size_env = os.getenv("SLURM_HET_SIZE")
+        if het_size_env is None:
+            msg = "Requested to set het group, but the allocation is not a het job"
+            raise ValueError(msg)
+
+        het_size = int(het_size_env)
+        if self.mpmd:
+            msg = "Slurm does not support MPMD workloads in heterogeneous jobs\n"
+            raise ValueError(msg)
+        msg = (
+            "Support for heterogeneous groups is an experimental feature, "
+            "please report any unexpected behavior to SmartSim developers "
+            "by opening an issue on https://github.com/CrayLabs/SmartSim/issues"
+        )
+        if any(group >= het_size for group in het_group):
+            msg = (
+                f"Het group {max(het_group)} requested, "
+                f"but max het group in allocation is {het_size-1}"
+            )
+            raise ValueError(msg)
+        logger.warning(msg)
+        self.run_args["het-group"] = ",".join(str(group) for group in het_group)
 
     def format_run_args(self) -> t.List[str]:
         """Return a list of slurm formatted run arguments
@@ -301,9 +337,13 @@ class SrunSettings(RunSettings):
                 # we warn the user
                 preexisting_var = os.environ.get(k, None)
                 if preexisting_var is not None:
-                    msg = f"Variable {k} is set to {preexisting_var} in current environment. "
-                    msg += f"If the job is running in an interactive allocation, the value {v} will not be set. "
-                    msg += "Please consider removing the variable from the environment and re-run the experiment."
+                    msg = (
+                        f"Variable {k} is set to {preexisting_var} in current "
+                        "environment. If the job is running in an interactive "
+                        f"allocation, the value {v} will not be set. Please "
+                        "consider removing the variable from the environment "
+                        "and re-run the experiment."
+                    )
                     logger.warning(msg)
 
     def format_env_vars(self) -> t.List[str]:
@@ -341,7 +381,9 @@ class SrunSettings(RunSettings):
         fmt_exported_env = ",".join(v for v in exportable_env + key_only)
 
         for mpmd in self.mpmd:
-            compound_mpmd_env = {k: v for k, v in mpmd.env_vars.items() if "," in str(v)}
+            compound_mpmd_env = {
+                k: v for k, v in mpmd.env_vars.items() if "," in str(v)
+            }
             compound_mpmd_fmt = {f"{k}={v}" for k, v in compound_mpmd_env.items()}
             compound_env.extend(compound_mpmd_fmt)
 
@@ -456,7 +498,7 @@ class SbatchSettings(BatchSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.batch_args["nodelist"] = ",".join(host_list)
 

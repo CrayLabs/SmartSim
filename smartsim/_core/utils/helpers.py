@@ -34,6 +34,7 @@ from functools import lru_cache
 from pathlib import Path
 from shutil import which
 
+from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
 
 def create_lockfile_name() -> str:
     """Generate a unique lock filename using UUID"""
@@ -52,11 +53,11 @@ def check_dev_log_level() -> bool:
         return False
 
 
-def fmt_dict(d: t.Dict[str, t.Any]) -> str:
+def fmt_dict(value: t.Dict[str, t.Any]) -> str:
     fmt_str = ""
-    for k, v in d.items():
+    for k, v in value.items():
         fmt_str += "\t" + str(k) + " = " + str(v)
-        fmt_str += "\n" if k != list(d.keys())[-1] else ""
+        fmt_str += "\n" if k != list(value.keys())[-1] else ""
     return fmt_str
 
 
@@ -77,7 +78,12 @@ def get_base_36_repr(positive_int: int) -> str:
 
     return "".join(reversed(result))
 
-def init_default(default: t.Any, init_value: t.Any, expected_type: t.Optional[t.Union[t.Type, t.Tuple]] = None) -> t.Any:
+
+def init_default(
+    default: t.Any,
+    init_value: t.Any,
+    expected_type: t.Union[t.Type[t.Any], t.Tuple[t.Type[t.Any], ...], None] = None,
+) -> t.Any:
     if init_value is None:
         return default
     if expected_type is not None and not isinstance(init_value, expected_type):
@@ -116,20 +122,22 @@ def is_valid_cmd(command: t.Union[str, None]) -> bool:
     return False
 
 
-color2num = dict(
-    gray=30,
-    red=31,
-    green=32,
-    yellow=33,
-    blue=34,
-    magenta=35,
-    cyan=36,
-    white=37,
-    crimson=38,
-)
+color2num = {
+    "gray": 30,
+    "red": 31,
+    "green": 32,
+    "yellow": 33,
+    "blue": 34,
+    "magenta": 35,
+    "cyan": 36,
+    "white": 37,
+    "crimson": 38,
+}
 
 
-def colorize(string: str, color: str, bold: bool = False, highlight: bool = False) -> str:
+def colorize(
+    string: str, color: str, bold: bool = False, highlight: bool = False
+) -> str:
     """
     Colorize a string.
     This function was originally written by John Schulman.
@@ -143,7 +151,7 @@ def colorize(string: str, color: str, bold: bool = False, highlight: bool = Fals
     attr.append(str(num))
     if bold:
         attr.append("1")
-    return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
+    return f"\x1b[{';'.join(attr)}m{string}\x1b[0m"
 
 
 def delete_elements(dictionary: t.Dict[str, t.Any], key_list: t.List[str]) -> None:
@@ -182,13 +190,13 @@ def cat_arg_and_value(arg_name: str, value: str) -> str:
     """
 
     if arg_name.startswith("--"):
-        return "=".join((arg_name, str(value)))
-    elif arg_name.startswith("-"):
-        return " ".join((arg_name, str(value)))
-    elif len(arg_name) == 1:
-        return " ".join(("-" + arg_name, str(value)))
-    else:
-        return "=".join(("--" + arg_name, str(value)))
+        return f"{arg_name}={value}"
+    if arg_name.startswith("-"):
+        return f"{arg_name} {value}"
+    if len(arg_name) == 1:
+        return f"-{arg_name} {value}"
+
+    return f"--{arg_name}={value}"
 
 
 def _installed(base_path: Path, backend: str) -> bool:
@@ -198,10 +206,21 @@ def _installed(base_path: Path, backend: str) -> bool:
     backend_key = f"redisai_{backend}"
     backend_path = base_path / backend_key / f"{backend_key}.so"
     backend_so = Path(os.environ.get("RAI_PATH", backend_path)).resolve()
-    
+
     return backend_so.is_file()
 
-def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[str]:
+
+def redis_install_base(backends_path: t.Optional[str] = None) -> Path:
+    # pylint: disable-next=import-outside-toplevel
+    from ..._core.config import CONFIG
+
+    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
+    return base_path
+
+
+def installed_redisai_backends(
+    backends_path: t.Optional[str] = None,
+) -> t.Set[_TRedisAIBackendStr]:
     """Check which ML backends are available for the RedisAI module.
 
     The optional argument ``backends_path`` is needed if the backends
@@ -214,13 +233,15 @@ def installed_redisai_backends(backends_path: t.Optional[str] = None) -> t.List[
     :param backends_path: path containing backends, defaults to None
     :type backends_path: str, optional
     :return: list of installed RedisAI backends
-    :rtype: list[str]
+    :rtype: set[str]
     """
     # import here to avoid circular import
-    from ..._core.config import CONFIG
+    base_path = redis_install_base(backends_path)
+    backends: t.Set[_TRedisAIBackendStr] = {
+        "tensorflow",
+        "torch",
+        "onnxruntime",
+        "tflite",
+    }
 
-    base_path = Path(backends_path) if backends_path else CONFIG.lib_path / "backends"
-    backends = ["tensorflow", "torch", "onnxruntime", "tflite"]
-
-    installed = [backend for backend in backends if _installed(base_path, backend)]
-    return installed
+    return {backend for backend in backends if _installed(base_path, backend)}

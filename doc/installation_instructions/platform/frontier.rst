@@ -75,7 +75,7 @@ Then continue with the install:
 Next to finish the compilation, we need to manually modify one of the auxiliary
 cmake files that comes packaged with Torch
 
-.. code::bash
+.. code:: bash
 
    export TORCH_CMAKE_DIR=$(python -c 'import torch;print(torch.utils.cmake_prefix_path)')
    # Manual step: modify all references to the 'rocm' directory to rocm-4.5.2

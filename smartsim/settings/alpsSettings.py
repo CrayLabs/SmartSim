@@ -124,7 +124,7 @@ class AprunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["node-list"] = ",".join(host_list)
 
@@ -149,7 +149,7 @@ class AprunSettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["exclude-node-list"] = ",".join(host_list)
 

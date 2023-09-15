@@ -39,6 +39,7 @@ from .files import EntityFiles
 from ..settings.base import BatchSettings, RunSettings
 from ..log import get_logger
 
+
 logger = get_logger(__name__)
 
 class Model(SmartSimEntity):
@@ -79,6 +80,16 @@ class Model(SmartSimEntity):
         self._db_models: t.List[DBModel] = []
         self._db_scripts: t.List[DBScript] = []
         self.files: t.Optional[EntityFiles] = None
+
+    @property
+    def db_models(self) -> t.Iterable[DBModel]:
+        """Return an immutable collection of attached models"""
+        return (model for model in self._db_models)
+
+    @property
+    def db_scripts(self) -> t.Iterable[DBScript]:
+        """Return an immutable collection attached of scripts"""
+        return (script for script in self._db_scripts)
 
     @property
     def colocated(self) -> bool:
@@ -154,6 +165,22 @@ class Model(SmartSimEntity):
         to_configure = init_default([], to_configure, (list, str))
         self.files = EntityFiles(to_configure, to_copy, to_symlink)
 
+    @property
+    def attached_files_table(self) -> str:
+        """Return a list of attached files as a plain text table
+
+        :returns: String version of table
+        :rtype: str
+        """
+        if not self.files:
+            return "No file attached to this model."
+        return str(self.files)
+
+    def print_attached_files(self) -> None:
+        """Print a table of the attached files on std out
+        """
+        print(self.attached_files_table)
+
     def colocate_db(self, *args: t.Any, **kwargs: t.Any) -> None:
         """An alias for ``Model.colocate_db_tcp``"""
         warnings.warn(
@@ -201,8 +228,8 @@ class Model(SmartSimEntity):
         :type socket_permissions: int, optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
-                               disables pinning
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
+                               iterable disables pinning
         :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
@@ -260,8 +287,8 @@ class Model(SmartSimEntity):
         :type ifname: str | list[str], optional
         :param db_cpus: number of cpus to use for orchestrator, defaults to 1
         :type db_cpus: int, optional
-        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty iterable
-                               disables pinning
+        :param custom_pinning: CPUs to pin the orchestrator to. Passing an empty
+                               iterable disables pinning
         :type custom_pinning: iterable of ints or iterable of ints, optional
         :param debug: launch Model with extra debug information about the colocated db
         :type debug: bool, optional
@@ -295,12 +322,13 @@ class Model(SmartSimEntity):
             )
 
         if hasattr(self.run_settings, "_prep_colocated_db"):
+            # pylint: disable-next=protected-access
             self.run_settings._prep_colocated_db(common_options["cpus"])
 
         if "limit_app_cpus" in kwargs:
             raise SSUnsupportedError(
-                "Pinning of app CPUs via limit_app_cpus is no supported. Modify RunSettings "
-                "instead using the correct binding option for your launcher."
+                "Pinning app CPUs via limit_app_cpus is not supported. Modify "
+                "RunSettings using the correct binding option for your launcher."
             )
 
         # TODO list which db settings can be extras
@@ -318,13 +346,9 @@ class Model(SmartSimEntity):
             "inter_op_parallelism": kwargs.get("inter_op_parallelism", None),
             "intra_op_parallelism": kwargs.get("intra_op_parallelism", None),
         }
-        colo_db_config["extra_db_args"] = dict(
-            [
-                (k, str(v))
-                for k, v in kwargs.items()
-                if k not in colo_db_config["rai_args"]
-            ]
-        )
+        colo_db_config["extra_db_args"] = {
+            k: str(v) for k, v in kwargs.items() if k not in colo_db_config["rai_args"]
+        }
 
         self._check_db_objects_colo()
         colo_db_config["db_models"] = self._db_models
@@ -341,15 +365,14 @@ class Model(SmartSimEntity):
         0,1,...,cpus-1; an empty iterable will disable pinning altogether,
         and an iterable constructs a comma separate string (e.g. 0,2,5)
         """
-        def _stringify_id(id: int) -> str:
+        def _stringify_id(_id: int) -> str:
             """Return the cPU id as a string if an int, otherwise raise a ValueError"""
-            if isinstance(id, int):
-                if id < 0:
+            if isinstance(_id, int):
+                if _id < 0:
                     raise ValueError("CPU id must be a nonnegative number")
-                else:
-                    return str(id)
-            else:
-                raise TypeError(f"Argument is of type '{type(id)}' not 'int'")
+                return str(_id)
+
+            raise TypeError(f"Argument is of type '{type(_id)}' not 'int'")
 
         _invalid_input_message = (
             "Expected a cpu pinning specification of type iterable of ints or "
@@ -358,25 +381,25 @@ class Model(SmartSimEntity):
 
         # Deal with MacOSX limitations first. The "None" (default) disables pinning
         # and is equivalent to []. The only invalid option is an iterable
-        if "darwin" == sys.platform:
+        if sys.platform == "darwin":
             if pin_ids is None or not pin_ids:
                 return None
-            elif isinstance(pin_ids, collections.abc.Iterable):
+
+            if isinstance(pin_ids, collections.abc.Iterable):
                 warnings.warn(
                     "CPU pinning is not supported on MacOSX. Ignoring pinning "
                     "specification.",
                     RuntimeWarning
                 )
                 return None
-            else:
-                raise TypeError(_invalid_input_message)
+            raise TypeError(_invalid_input_message)
         # Flatten the iterable into a list and check to make sure that the resulting
         # elements are all ints
         if pin_ids is None:
             return ','.join(_stringify_id(i) for i in range(cpus))
-        elif not pin_ids:
+        if not pin_ids:
             return None
-        elif isinstance(pin_ids, collections.abc.Iterable):
+        if isinstance(pin_ids, collections.abc.Iterable):
             pin_list = []
             for pin_id in pin_ids:
                 if isinstance(pin_id, collections.abc.Iterable):
@@ -384,8 +407,7 @@ class Model(SmartSimEntity):
                 else:
                     pin_list.append(_stringify_id(pin_id))
             return ','.join(sorted(set(pin_list)))
-        else:
-            raise TypeError(_invalid_input_message)
+        raise TypeError(_invalid_input_message)
 
     def params_to_args(self) -> None:
         """Convert parameters to command line arguments and update run settings."""
@@ -393,15 +415,17 @@ class Model(SmartSimEntity):
             for param in self.params_as_args:
                 if not param in self.params:
                     raise ValueError(
-                        f"Tried to convert {param} to command line argument "
-                        + f"for Model {self.name}, but its value was not found in model params"
+                        f"Tried to convert {param} to command line argument for Model "
+                        f"{self.name}, but its value was not found in model params"
                     )
                 if self.run_settings is None:
                     raise ValueError(
-                        f"Tried to configure command line parameter for Model {self.name}, "
-                        + "but no RunSettings are set."
+                        "Tried to configure command line parameter for Model "
+                        f"{self.name}, but no RunSettings are set."
                     )
-                self.run_settings.add_exe_args(cat_arg_and_value(param, self.params[param]))
+                self.run_settings.add_exe_args(
+                    cat_arg_and_value(param, self.params[param])
+                )
 
     def add_ml_model(
         self,
@@ -409,7 +433,7 @@ class Model(SmartSimEntity):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -464,14 +488,14 @@ class Model(SmartSimEntity):
             inputs=inputs,
             outputs=outputs,
         )
-        self._append_db_model(db_model)
+        self.add_ml_model_object(db_model)
 
     def add_script(
         self,
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with this Model instance
@@ -509,13 +533,13 @@ class Model(SmartSimEntity):
             device=device,
             devices_per_node=devices_per_node,
         )
-        self._append_db_script(db_script)
+        self.add_script_object(db_script)
 
     def add_function(
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU","GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with this Model instance
@@ -546,7 +570,10 @@ class Model(SmartSimEntity):
         db_script = DBScript(
             name=name, script=function, device=device, devices_per_node=devices_per_node
         )
-        self._append_db_script(db_script)
+        self.add_script_object(db_script)
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Model):
@@ -566,7 +593,7 @@ class Model(SmartSimEntity):
             entity_str += "DB Scripts: \n" + str(len(self._db_scripts)) + "\n"
         return entity_str
 
-    def _append_db_model(self, db_model: DBModel) -> None:
+    def add_ml_model_object(self, db_model: DBModel) -> None:
         if not db_model.is_file and self.colocated:
             err_msg = "ML model can not be set from memory for colocated databases.\n"
             err_msg += (
@@ -577,14 +604,15 @@ class Model(SmartSimEntity):
 
         self._db_models.append(db_model)
 
-    def _append_db_script(self, db_script: DBScript) -> None:
+    def add_script_object(self, db_script: DBScript) -> None:
         if db_script.func and self.colocated:
             if not isinstance(db_script.func, str):
                 err_msg = (
                     "Functions can not be set from memory for colocated databases.\n"
+                    f"Please convert the function named {db_script.name} "
+                    "to a string or store it as a text file and add it to the "
+                    "SmartSim Model with add_script."
                 )
-                err_msg += f"Please convert the function named {db_script.name} to a string or store "
-                err_msg += "it as a text file and add it to the SmartSim Model with add_script."
                 raise SSUnsupportedError(err_msg)
         self._db_scripts.append(db_script)
 
@@ -593,17 +621,18 @@ class Model(SmartSimEntity):
             if not db_model.is_file:
                 err_msg = (
                     "ML model can not be set from memory for colocated databases.\n"
+                    f"Please store the ML model named {db_model.name} in binary "
+                    "format and add it to the SmartSim Model as file."
                 )
-                err_msg += (
-                    f"Please store the ML model named {db_model.name} in binary format "
-                )
-                err_msg += "and add it to the SmartSim Model as file."
                 raise SSUnsupportedError(err_msg)
 
         for db_script in self._db_scripts:
             if db_script.func:
                 if not isinstance(db_script.func, str):
-                    err_msg = "Functions can not be set from memory for colocated databases.\n"
-                    err_msg += f"Please convert the function named {db_script.name} to a string or store it "
-                    err_msg += "as a text file and add it to the SmartSim Model with add_script."
+                    err_msg = (
+                        "Functions can not be set from memory for colocated "
+                        "databases.\nPlease convert the function named "
+                        f"{db_script.name} to a string or store it as a text"
+                        "file and add it to the SmartSim Model with add_script."
+                    )
                     raise SSUnsupportedError(err_msg)

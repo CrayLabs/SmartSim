@@ -33,6 +33,8 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
+from smartsim.entity.dbobject import DBScript
+
 logger = get_logger(__name__)
 
 should_run = True
@@ -367,8 +369,6 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
 
-    exp.generate(colo_ensemble, overwrite=True)
-
     # Launch and check successful completion
     try:
         exp.start(colo_ensemble, block=True)
@@ -384,7 +384,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     script to the ensemble, then colocating the DB"""
 
     # Set Experiment name
-    exp_name = "test-colocated-db-script"
+    exp_name = "test-colocated-db-script-reord"
 
     # Retrieve parameters from testing environment
     test_launcher = wlmutils.get_test_launcher()
@@ -463,8 +463,6 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     assert len(colo_ensemble._db_scripts) == 1
     # Assert we have added both models to each entity
     assert all([len(entity._db_scripts) == 2 for entity in colo_ensemble])
-
-    exp.generate(colo_ensemble, overwrite=True)
 
     # Launch and check successful completion
     try:
@@ -578,3 +576,19 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # an in-memory script
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+    
+def test_inconsistent_params_db_script(fileutils):
+    """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
+
+    torch_script = fileutils.get_test_conf_path("torchscript.py")
+    with pytest.raises(SSUnsupportedError) as ex:
+        db_script = DBScript(
+            name="test_script_db",
+            script_path = torch_script,
+            device="CPU",
+            devices_per_node=2,
+        )
+    assert (
+            ex.value.args[0] 
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )

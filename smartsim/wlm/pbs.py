@@ -43,9 +43,9 @@ def get_hosts() -> t.List[str]:
     """
     hosts = []
     if "PBS_NODEFILE" in os.environ:
-        node_file = os.environ["PBS_NODEFILE"]
-        with open(node_file, "r") as f:
-            for line in f.readlines():
+        node_file_path = os.environ["PBS_NODEFILE"]
+        with open(node_file_path, "r", encoding="utf-8") as node_file:
+            for line in node_file.readlines():
                 host = line.split(".")[0].strip()
                 hosts.append(host)
         # account for repeats in PBS_NODEFILE
@@ -83,12 +83,9 @@ def get_tasks() -> int:
     if "PBS_JOBID" in os.environ:
         if not which("qstat"):
             raise LauncherError(
-                (
-                    "Attempted PBS function without access to "
-                    "PBS(qstat) at the call site"
-                )
+                "Attempted PBS function without access to PBS(qstat) at the call site"
             )
-        
+
         if job_id := os.environ.get("PBS_JOBID"):
             job_info_str, _ = qstat(["-f", "-F", "json", job_id])
             job_info = json.loads(job_info_str)

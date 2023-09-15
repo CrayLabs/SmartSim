@@ -36,7 +36,9 @@ logger = get_logger(__name__)
 
 
 class CobaltBatchStep(Step):
-    def __init__(self, name: str, cwd: str, batch_settings: CobaltBatchSettings) -> None:
+    def __init__(
+        self, name: str, cwd: str, batch_settings: CobaltBatchSettings
+    ) -> None:
         """Initialize a Cobalt qsub step
 
         :param name: name of the entity to launch
@@ -49,10 +51,7 @@ class CobaltBatchStep(Step):
         super().__init__(name, cwd, batch_settings)
         self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
-
-    @property
-    def batch_settings(self) -> CobaltBatchSettings:
-        return self.step_settings
+        self.batch_settings = batch_settings
 
     def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
@@ -82,26 +81,26 @@ class CobaltBatchStep(Step):
         batch_script = self.get_step_file(ending=".sh")
         cobalt_debug = self.get_step_file(ending=".cobalt-debug")
         output, error = self.get_output_files()
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n")
-            f.write(f"#COBALT -o {output}\n")
-            f.write(f"#COBALT -e {error}\n")
-            f.write(f"#COBALT --cwd {self.cwd}\n")
-            f.write(f"#COBALT --jobname {self.name}\n")
-            f.write(f"#COBALT --debuglog {cobalt_debug}\n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n")
+            script_file.write(f"#COBALT -o {output}\n")
+            script_file.write(f"#COBALT -e {error}\n")
+            script_file.write(f"#COBALT --cwd {self.cwd}\n")
+            script_file.write(f"#COBALT --jobname {self.name}\n")
+            script_file.write(f"#COBALT --debuglog {cobalt_debug}\n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
-                f.write(f"#COBALT {opt}\n")
+                script_file.write(f"#COBALT {opt}\n")
 
-            for cmd in self.batch_settings._preamble:
-                f.write(f"{cmd}\n")
+            for cmd in self.batch_settings.preamble:
+                script_file.write(f"{cmd}\n")
 
-            for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+            for i, step_cmd in enumerate(self.step_cmds):
+                script_file.write("\n")
+                script_file.write(f"{' '.join((step_cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         os.chmod(batch_script, stat.S_IXUSR | stat.S_IWUSR | stat.S_IRUSR)
         return batch_script

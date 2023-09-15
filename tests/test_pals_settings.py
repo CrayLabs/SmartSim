@@ -25,12 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import os.path as osp
+import shutil
 import sys
 
 import pytest
 
 from smartsim.error import SSUnsupportedError
 from smartsim.settings import PalsMpiexecSettings
+from smartsim._core.launcher import PBSLauncher
+from smartsim._core.launcher.step.mpiStep import MpiexecStep
 
 default_exe = sys.executable
 default_kwargs = {"fail_if_missing_exec": False}
@@ -77,3 +81,107 @@ def test_format_env_vars():
     formatted = " ".join(settings.format_env_vars())
     expected = "--env FOO_VERSION=3.14 --envlist PATH,LD_LIBRARY_PATH"
     assert formatted == expected
+
+
+@pytest.fixture
+def mock_mpiexec(monkeypatch, fileutils):
+    stub_path = fileutils.get_test_dir_path(osp.join("mpi_impl_stubs", "pals"))
+    monkeypatch.setenv("PATH", stub_path, prepend=":")
+    yield osp.join(stub_path, "mpiexec")
+
+
+def set_env_var_to_inherit(rs):
+    rs.env_vars["SPAM"] = None
+
+
+@pytest.mark.parametrize(
+    "rs_mutation, run_args",
+    [
+        pytest.param(
+            lambda rs: rs.set_tasks(3),
+            ["--np", "3"],
+            id="set run args",
+        ),
+        pytest.param(
+            set_env_var_to_inherit,
+            ["--envlist", "SPAM"],
+            id="env var [inherit from env]",
+        ),
+        pytest.param(
+            lambda rs: rs.update_env({"SPAM": "EGGS"}),
+            ["--env", "SPAM=EGGS"],
+            id="env var [w/ val]",
+        ),
+    ],
+)
+def test_pbs_can_make_step_from_pals_settings_fmt_cmd(
+    monkeypatch, mock_mpiexec, fileutils, rs_mutation, run_args
+):
+    # Setup run settings
+    exe_args = ["-c", """'print("Hello")'"""]
+    rs = PalsMpiexecSettings(sys.executable, exe_args)
+    rs_mutation(rs)
+
+    # setup a launcher and pretend we are in an alloc
+    launcher = PBSLauncher()
+    monkeypatch.setenv(f"PBS_JOBID", "mock-job")
+
+    wdir = fileutils.make_test_dir()
+    step = launcher.create_step("my_step", wdir, rs)
+    assert isinstance(step, MpiexecStep)
+    assert step.get_launch_cmd() == [
+        mock_mpiexec,
+        "--wdir",
+        wdir,
+        *run_args,
+        sys.executable,
+        *exe_args,
+    ]
+
+
+def test_pals_settings_can_be_correctly_made_mpmd(monkeypatch, fileutils, mock_mpiexec):
+    # Setup run settings
+    def make_rs(exe, exe_args):
+        return PalsMpiexecSettings(exe, exe_args), [exe] + exe_args
+
+    echo = shutil.which("echo")
+    rs_1, expected_exe_1 = make_rs(echo, ["spam"])
+    rs_2, expected_exe_2 = make_rs(echo, ["and"])
+    rs_3, expected_exe_3 = make_rs(echo, ["eggs"])
+
+    # modify run args
+    def set_tasks(rs, num):
+        rs.set_tasks(num)
+        return rs, ["--np", str(num)]
+
+    rs_1, expected_rs_1 = set_tasks(rs_1, 5)
+    rs_2, expected_rs_2 = set_tasks(rs_2, 2)
+    rs_3, expected_rs_3 = set_tasks(rs_3, 8)
+
+    # MPMD it up
+    rs_1.make_mpmd(rs_2)
+    rs_1.make_mpmd(rs_3)
+
+    # setup a launcher and pretend we are in an alloc
+    launcher = PBSLauncher()
+    monkeypatch.setenv(f"PBS_JOBID", "mock-job")
+
+    wdir = fileutils.make_test_dir()
+    step = launcher.create_step("my_step", wdir, rs_1)
+    assert isinstance(step, MpiexecStep)
+    assert step.get_launch_cmd() == [
+        mock_mpiexec,
+        "--wdir",
+        wdir,
+        # rs 1
+        *expected_rs_1,
+        *expected_exe_1,
+        ":",
+        # rs 2
+        *expected_rs_2,
+        *expected_exe_2,
+        ":",
+        # rs 3
+        *expected_rs_3,
+        *expected_exe_3,
+    ]

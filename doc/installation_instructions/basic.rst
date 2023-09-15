@@ -18,7 +18,7 @@ Basic
 
 The base prerequisites to install SmartSim and SmartRedis are:
 
-  - Python 3.7-3.9
+  - Python 3.8-3.10
   - Pip
   - Cmake 3.13.x (or later)
   - C compiler
@@ -41,7 +41,7 @@ GPU Support
 The machine-learning backends have additional requirements in order to
 use GPUs for inference
 
-  - `CUDA Toolkit 11 (11.4 recommended) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
+  - `CUDA Toolkit 11 (tested with 11.8) <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html>`_
   - `cuDNN 8 (tested with 8.2.1 and 8.4.0) <https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#download>`_
   - OS: Linux
   - GPU: Nvidia
@@ -66,11 +66,11 @@ Supported Versions
    * - MacOS
      - x86_64
      - Not supported
-     - 3.7 - 3.9
+     - 3.8 - 3.10
    * - Linux
      - x86_64
      - Nvidia
-     - 3.7 - 3.9
+     - 3.8 - 3.10
 
 
 .. note::
@@ -81,7 +81,7 @@ Supported Versions
 
 Native support for various machine learning libraries and their
 versions is dictated by our dependency on RedisAI_ 1.2.7. Users
-can also select RedisAI 1.2.3 or 1.2.5 (though that also limits
+can also select RedisAI 1.2.5 (though that also limits
 the version of the ML libraries).
 
 +------------------+----------+-------------+---------------+
@@ -90,8 +90,6 @@ the version of the ML libraries).
 | 1.2.7 (default)  | 1.11.0   | 2.8.0       | 1.11.1        |
 +------------------+----------+-------------+---------------+
 | 1.2.5            | 1.9.0    | 2.6.0       | 1.9.0         |
-+------------------+----------+-------------+---------------+
-| 1.2.3            | 1.7.0    | 2.5.2       | 1.9.0         |
 +------------------+----------+-------------+---------------+
 
 TensorFlow_ 2.0 and Keras_ are supported through `graph freezing`_.
@@ -116,10 +114,10 @@ MacOS-only
 ==========
 
 We recommend users and contributors install brew_ for managing installed
-packages.  For contributors, the following brew packages can be helpful:
+packages. For contributors, the following brew packages can be helpful:
 
 - openmpi_ for building and running parallel SmartRedis examples
-- doxygen_ for building the documention
+- doxygen_ for building the documentation
 - cmake_ for building SmartSim and SmartRedis from source
 
 .. _brew: https://brew.sh/
@@ -146,7 +144,8 @@ There are two stages for the installation of SmartSim.
 Step 1: Install Python Package
 ==============================
 
-We first recommend creating a new virtual environment:
+We first recommend creating a new
+`virtual environment <https://docs.python.org/3/library/venv.html>`_:
 
 .. code-block:: bash
 
@@ -159,15 +158,16 @@ and install SmartSim from PyPI with the following command:
 
     pip install smartsim
 
-If you would like SmartSim to also install Machine Learning libraries that
-can be used outside SmartSim to build SmartSim-compatible models, you
-can request their installation through the ``ml`` flag as follows:
+If you would like SmartSim to also install python machine learning libraries
+that can be used outside SmartSim to build SmartSim-compatible models, you
+can request their installation through the ``[ml]`` optional dependencies,
+as follows:
 
 .. code-block:: bash
 
     # For bash
     pip install smartsim[ml]
-    # or if using ZSH
+    # For zsh
     pip install smartsim\[ml\]
 
 At this point, SmartSim is installed and can be used for more basic features.
@@ -187,7 +187,7 @@ To see all the installation options:
 
 .. code-block:: bash
 
-    smart
+    smart --help
 
 CPU Install
 -----------
@@ -198,7 +198,7 @@ To install the default ML backends for CPU, run
 
     # run one of the following
     smart build --device cpu          # install PT and TF for cpu
-    smart build --device cpu --onnx   # install all backends (PT, TF, ONNX) on gpu
+    smart build --device cpu --onnx   # install all backends (PT, TF, ONNX) on cpu
 
 By default, ``smart`` will install PyTorch and TensorFlow backends
 for use in SmartSim.
@@ -247,9 +247,9 @@ SmartSim does.
    * - Platform
      - Python Versions
    * - MacOS
-     - 3.7 - 3.9
+     - 3.7 - 3.10
    * - Linux
-     - 3.7 - 3.9
+     - 3.7 - 3.10
 
 The Python client for SmartRedis is installed through ``pip`` as follows:
 
@@ -265,9 +265,9 @@ From Source
 ===========
 
 This section will be geared towards contributors who want to install SmartSim
-and SmartRedis from source. If you are installing from source for other reasons,
-follow the steps below but use the distribution provided hosted on GitHub or
-PyPI.
+and SmartRedis from source for development purposes. If you are installing
+from source for other reasons, follow the steps below but use the source
+distributions provided on GitHub or PyPI.
 
 .. _from-source:
 
@@ -281,14 +281,14 @@ First, clone SmartSim.
   git clone https://github.com/CrayLabs/SmartSim smartsim
 
 And then install SmartSim with pip in *editable* mode. This way, SmartSim is
-installed in your virtual environment and available in PYTHONPATH, but the
+installed in your virtual environment and available on `sys.path`, but the
 source remains at the site of the clone instead of in site-packages.
 
 .. code-block:: bash
 
   cd smartsim
-  pip install -e .[dev,ml]   # for bash users
-  pip install -e .\[dev,ml\] # for zsh users
+  pip install -e .[dev,ml]    # for bash users
+  pip install -e .\[dev,ml\]  # for zsh users
 
 Use the now installed ``smart`` cli to install the machine learning runtimes.
 
@@ -304,6 +304,5 @@ Build the SmartRedis library
 ============================
 
 .. include:: ../../smartredis/doc/install/lib.rst
-
 
 

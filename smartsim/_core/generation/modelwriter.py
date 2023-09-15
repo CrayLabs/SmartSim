@@ -59,7 +59,10 @@ class ModelWriter:
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
     def configure_tagged_model_files(
-        self, tagged_files: t.List[str], params: t.Dict[str, str], make_missing_tags_fatal: bool = False
+        self,
+        tagged_files: t.List[str],
+        params: t.Dict[str, str],
+        make_missing_tags_fatal: bool = False,
     ) -> None:
         """Read, write and configure tagged files attached to a Model
            instance.
@@ -84,9 +87,8 @@ class ModelWriter:
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
-            fp = open(file_path, "r+")
-            self.lines = fp.readlines()
-            fp.close()
+            with open(file_path, "r+", encoding="utf-8") as file_stream:
+                self.lines = file_stream.readlines()
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path) from e
 
@@ -96,10 +98,9 @@ class ModelWriter:
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
-            fp = open(file_path, "w+")
-            for line in self.lines:
-                fp.write(line)
-            fp.close()
+            with open(file_path, "w+", encoding="utf-8") as file_stream:
+                for line in self.lines:
+                    file_stream.write(line)
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
@@ -109,7 +110,8 @@ class ModelWriter:
 
         :param model: The model instance
         :type model: Model
-        :param make_fatal: (Optional) Set to True to force a fatal error if a tag is not matched
+        :param make_fatal: (Optional) Set to True to force a fatal error
+            if a tag is not matched
         :type make_fatal: bool
         """
         edited = []
@@ -140,17 +142,18 @@ class ModelWriter:
                         search = None  # Move on to the next tag
             else:
                 edited.append(line)
-        for tag in unused_tags:
+        for tag, value in unused_tags.items():
             missing_tag_message = (
-                f"Unused tag {tag} on line(s): {str(unused_tags[tag])}"
+                f"Unused tag {tag} on line(s): {str(value)}"
             )
             if make_fatal:
                 raise SmartSimError(missing_tag_message)
-            else:
-                logger.warning(missing_tag_message)
+            logger.warning(missing_tag_message)
         self.lines = edited
 
-    def _is_ensemble_spec(self, tagged_line: str, model_params: t.Dict[str, str]) -> bool:
+    def _is_ensemble_spec(
+        self, tagged_line: str, model_params: t.Dict[str, str]
+    ) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():

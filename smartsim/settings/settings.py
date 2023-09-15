@@ -29,8 +29,24 @@ import typing as t
 from .._core.utils.helpers import is_valid_cmd
 from ..error import SmartSimError
 from ..wlm import detect_launcher
-from . import *
-from ..settings import base
+from ..settings import (
+    base,
+    CobaltBatchSettings,
+    QsubBatchSettings,
+    SbatchSettings,
+    BsubBatchSettings,
+    Container,
+    RunSettings,
+    AprunSettings,
+    SrunSettings,
+    MpirunSettings,
+    MpiexecSettings,
+    OrterunSettings,
+    JsrunSettings,
+    PalsMpiexecSettings,
+)
+
+_TRunSettingsSelector = t.Callable[[str], t.Callable[..., RunSettings]]
 
 
 def create_batch_settings(
@@ -64,7 +80,7 @@ def create_batch_settings(
     :raises SmartSimError: if batch creation fails
     """
     # all supported batch class implementations
-    by_launcher = {
+    by_launcher: t.Dict[str, t.Callable[..., base.BatchSettings]] = {
         "cobalt": CobaltBatchSettings,
         "pbs": QsubBatchSettings,
         "slurm": SbatchSettings,
@@ -131,13 +147,15 @@ def create_run_settings(
     :raises SmartSimError: if run_command=="auto" and detection fails
     """
     # all supported RunSettings child classes
-    supported = {
-        "aprun": AprunSettings,
-        "srun": SrunSettings,
-        "mpirun": MpirunSettings,
-        "mpiexec": MpiexecSettings,
-        "orterun": OrterunSettings,
-        "jsrun": JsrunSettings,
+    supported: t.Dict[str, _TRunSettingsSelector] = {
+        "aprun": lambda launcher: AprunSettings,
+        "srun": lambda launcher: SrunSettings,
+        "mpirun": lambda launcher: MpirunSettings,
+        "mpiexec": lambda launcher: (
+            MpiexecSettings if launcher != "pals" else PalsMpiexecSettings
+        ),
+        "orterun": lambda launcher: OrterunSettings,
+        "jsrun": lambda launcher: JsrunSettings,
     }
 
     # run commands supported by each launcher
@@ -145,6 +163,7 @@ def create_run_settings(
     by_launcher = {
         "slurm": ["srun", "mpirun", "mpiexec"],
         "pbs": ["aprun", "mpirun", "mpiexec"],
+        "pals": ["mpiexec"],
         "cobalt": ["aprun", "mpirun", "mpiexec"],
         "lsf": ["jsrun", "mpirun", "mpiexec"],
         "local": [""],
@@ -161,8 +180,11 @@ def create_run_settings(
             for cmd in by_launcher[launcher]:
                 if is_valid_cmd(cmd):
                     return cmd
-        msg = f"Could not automatically detect a run command to use for launcher {launcher}"
-        msg += f"\nSearched for and could not find the following commands: {by_launcher[launcher]}"
+        msg = (
+            "Could not automatically detect a run command to use for launcher "
+            f"{launcher}\nSearched for and could not find the following "
+            f"commands: {by_launcher[launcher]}"
+        )
         raise SmartSimError(msg)
 
     if run_command:
@@ -176,7 +198,7 @@ def create_run_settings(
 
     # if user specified and supported or auto detection worked
     if run_command and run_command in supported:
-        return supported[run_command](
+        return supported[run_command](launcher)(
             exe, exe_args, run_args, env_vars, container=container, **kwargs
         )
 

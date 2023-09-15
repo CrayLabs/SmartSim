@@ -29,7 +29,7 @@ import typing as t
 
 from smartsim.settings.containers import Container
 
-from .._core.utils.helpers import expand_exe_path, fmt_dict, init_default, is_valid_cmd
+from .._core.utils.helpers import expand_exe_path, fmt_dict, is_valid_cmd
 from ..log import get_logger
 
 logger = get_logger(__name__)
@@ -38,7 +38,10 @@ logger = get_logger(__name__)
 class SettingsBase:
     ...
 
+# pylint: disable=too-many-public-methods
 class RunSettings(SettingsBase):
+    # pylint: disable=unused-argument
+
     def __init__(
         self,
         exe: str,
@@ -47,7 +50,7 @@ class RunSettings(SettingsBase):
         run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
         env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
         container: t.Optional[Container] = None,
-        **kwargs: t.Any,
+        **_kwargs: t.Any,
     ) -> None:
         """Run parameters for a ``Model``
 
@@ -74,11 +77,13 @@ class RunSettings(SettingsBase):
         :type exe_args: str | list[str], optional
         :param run_command: launch binary (e.g. "srun"), defaults to empty str
         :type run_command: str, optional
-        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`), defaults to None
+        :param run_args: arguments for run command (e.g. `-np` for `mpiexec`),
+            defaults to None
         :type run_args: dict[str, str], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
-        :param container: container type for workload (e.g. "singularity"), defaults to None
+        :param container: container type for workload (e.g. "singularity"),
+            defaults to None
         :type container: Container, optional
         """
         # Do not expand executable if running within a container
@@ -102,7 +107,7 @@ class RunSettings(SettingsBase):
     @property
     def run_args(self) -> t.Dict[str, t.Union[int, str, float, None]]:
         return self._run_args
-    
+
     @run_args.setter
     def run_args(self, value: t.Dict[str, t.Union[int, str, float, None]]) -> None:
         self._run_args = copy.deepcopy(value)
@@ -110,11 +115,11 @@ class RunSettings(SettingsBase):
     @property
     def env_vars(self) -> t.Dict[str, t.Optional[str]]:
         return self._env_vars
-    
+
     @env_vars.setter
     def env_vars(self, value: t.Dict[str, t.Optional[str]]) -> None:
         self._env_vars = copy.deepcopy(value)
-    
+
     # To be overwritten by subclasses. Set of reserved args a user cannot change
     reserved_run_args = set()  # type: set[str]
 
@@ -301,7 +306,8 @@ class RunSettings(SettingsBase):
             self._fmt_walltime(int(hours), int(minutes), int(seconds))
         )
 
-    def _fmt_walltime(self, hours: int, minutes: int, seconds: int) -> str:
+    @staticmethod
+    def _fmt_walltime(hours: int, minutes: int, seconds: int) -> str:
         """Convert hours, minutes, and seconds into valid walltime format
 
         By defualt the formatted wall time is the total number of seconds.
@@ -413,8 +419,8 @@ class RunSettings(SettingsBase):
                 raise TypeError(
                     f"env_vars[{env}] was of type {type(val)}, not {val_types}"
                 )
-            else:
-                self.env_vars[env] = str(val)
+
+            self.env_vars[env] = str(val)
 
     def add_exe_args(self, args: t.Union[str, t.List[str]]) -> None:
         """Add executable arguments to executable
@@ -425,14 +431,16 @@ class RunSettings(SettingsBase):
         """
         if isinstance(args, str):
             args = args.split()
-        
+
         for arg in args:
             if not isinstance(arg, str):
                 raise TypeError("Executable arguments should be a list of str")
 
         self._exe_args.extend(args)
 
-    def set(self, arg: str, value: t.Optional[str] = None, condition: bool = True) -> None:
+    def set(
+        self, arg: str, value: t.Optional[str] = None, condition: bool = True
+    ) -> None:
         """Allows users to set individual run arguments.
 
         A method that allows users to set run arguments after object
@@ -471,7 +479,8 @@ class RunSettings(SettingsBase):
                    condition=socket.gethostname()=="testing-system")
 
             rs.format_run_args()
-            # returns ["exclusive", "None", "partition", "debug"] iff socket.gethostname()=="testing-system"
+            # returns ["exclusive", "None", "partition", "debug"] iff
+              socket.gethostname()=="testing-system"
             # otherwise returns ["exclusive", "None"]
 
         :param arg: name of the argument
@@ -511,24 +520,20 @@ class RunSettings(SettingsBase):
                 return exe_args.split()
             if isinstance(exe_args, list):
                 exe_args = copy.deepcopy(exe_args)
-                plain_type = all([isinstance(arg, (str)) for arg in exe_args])
+                plain_type = all(isinstance(arg, (str)) for arg in exe_args)
                 if not plain_type:
                     nested_type = all(
-                        [
-                            all([isinstance(arg, (str)) for arg in exe_args_list])
-                            for exe_args_list in exe_args
-                        ]
+                        all(isinstance(arg, (str)) for arg in exe_args_list)
+                        for exe_args_list in exe_args
                     )
                     if not nested_type:
                         raise TypeError(
                             "Executable arguments were not list of str or str"
                         )
-                    else:
-                        return exe_args
+                    return exe_args
                 return exe_args
             raise TypeError("Executable arguments were not list of str or str")
-        else:
-            return []
+        return []
 
     def format_run_args(self) -> t.List[str]:
         """Return formatted run arguments
@@ -563,7 +568,7 @@ class RunSettings(SettingsBase):
         string = f"Executable: {self.exe[0]}\n"
         string += f"Executable Arguments: {' '.join((self.exe_args))}"
         if self.run_command:
-            string += f"\nRun Command: {self._run_command}"
+            string += f"\nRun Command: {self.run_command}"
         if self.run_args:
             string += f"\nRun Arguments:\n{fmt_dict(self.run_args)}"
         if self.colocated_db_settings:
@@ -599,13 +604,13 @@ class BatchSettings(SettingsBase):
         """
         if is_valid_cmd(self._batch_cmd):
             return expand_exe_path(self._batch_cmd)
-        else:
-            return self._batch_cmd
+
+        return self._batch_cmd
 
     @property
     def batch_args(self) -> t.Dict[str, t.Optional[str]]:
         return self._batch_args
-    
+
     @batch_args.setter
     def batch_args(self, value: t.Dict[str, t.Optional[str]]) -> None:
         self._batch_args = copy.deepcopy(value) if value else {}
@@ -651,6 +656,11 @@ class BatchSettings(SettingsBase):
             self._preamble += lines
         else:
             raise TypeError("Expected str or List[str] for lines argument")
+
+    @property
+    def preamble(self) -> t.Iterable[str]:
+        """Return an iterable of preamble clauses to be prepended to the batch file"""
+        return (clause for clause in self._preamble)
 
     def __str__(self) -> str:  # pragma: no-cover
         string = f"Batch Command: {self._batch_cmd}"

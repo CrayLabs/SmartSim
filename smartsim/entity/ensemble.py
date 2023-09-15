@@ -29,6 +29,8 @@ import typing as t
 from copy import deepcopy
 from os import getcwd
 
+from tabulate import tabulate
+
 from .._core.utils.helpers import init_default
 from ..error import (
     EntityExistsError,
@@ -46,7 +48,10 @@ from .strategies import create_all_permutations, random_permutations, step_value
 
 logger = get_logger(__name__)
 
-StrategyFunction = t.Callable[[t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]]
+StrategyFunction = t.Callable[
+    [t.List[str], t.List[t.List[str]], int], t.List[t.Dict[str, str]]
+]
+
 
 class Ensemble(EntityList):
     """``Ensemble`` is a group of ``Model`` instances that can
@@ -72,15 +77,16 @@ class Ensemble(EntityList):
         :type name: str
         :param params: parameters to expand into ``Model`` members
         :type params: dict[str, Any]
-        :param params_as_args: list of params which should be used as command line arguments
-                               to the ``Model`` member executables and not written to generator
-                               files
+        :param params_as_args: list of params that should be used as command
+            line arguments to the ``Model`` member executables and not written
+            to generator files
         :type params_as_args: list[str]
         :param batch_settings: describes settings for ``Ensemble`` as batch workload
         :type batch_settings: BatchSettings, optional
         :param run_settings: describes how each ``Model`` should be executed
         :type run_settings: RunSettings, optional
-        :param replicas: number of ``Model`` replicas to create - a keyword argument of kwargs
+        :param replicas: number of ``Model`` replicas to create - a keyword
+            argument of kwargs
         :type replicas: int, optional
         :param perm_strategy: strategy for expanding ``params`` into
                              ``Model`` instances from params argument
@@ -95,13 +101,11 @@ class Ensemble(EntityList):
         self._key_prefixing_enabled = True
         self.batch_settings = init_default({}, batch_settings, BatchSettings)
         self.run_settings = init_default({}, run_settings, RunSettings)
-        
-        self._db_models: t.List[DBModel] = []
-        self._db_scripts: t.List[DBScript] = []
+
         super().__init__(name, getcwd(), perm_strat=perm_strat, **kwargs)
 
     @property
-    def models(self) -> t.List[Model]:
+    def models(self) -> t.Iterable[Model]:
         """
         Helper property to cast self.entities to Model type for type correctness
         """
@@ -151,7 +155,8 @@ class Ensemble(EntityList):
             # cannot generate models without run settings
             else:
                 raise SmartSimError(
-                    "Ensembles without 'params' or 'replicas' argument to expand into members cannot be given run settings"
+                    "Ensembles without 'params' or 'replicas' argument to "
+                    "expand into members cannot be given run settings"
                 )
         else:
             if self.run_settings:
@@ -171,7 +176,8 @@ class Ensemble(EntityList):
                         self.add_model(model)
                 else:
                     raise SmartSimError(
-                        "Ensembles without 'params' or 'replicas' argument to expand into members cannot be given run settings"
+                        "Ensembles without 'params' or 'replicas' argument to "
+                        "expand into members cannot be given run settings"
                     )
             # if no params, no run settings and no batch settings, error because we
             # don't know how to run the ensemble
@@ -223,19 +229,19 @@ class Ensemble(EntityList):
             model.register_incoming_entity(incoming_entity)
 
     def enable_key_prefixing(self) -> None:
-        """If called, all models within this ensemble will prefix their keys with its
+        """If called, each model within this ensemble will prefix its key with its
         own model name.
         """
         for model in self.models:
             model.enable_key_prefixing()
 
     def query_key_prefixing(self) -> bool:
-        """Inquire as to whether each model within the ensemble will prefix its keys
+        """Inquire as to whether each model within the ensemble will prefix their keys
 
         :returns: True if all models have key prefixing enabled, False otherwise
         :rtype: bool
         """
-        return all([model.query_key_prefixing() for model in self.models])
+        return all(model.query_key_prefixing() for model in self.models)
 
     def attach_generator_files(
         self,
@@ -271,9 +277,31 @@ class Ensemble(EntityList):
                 to_copy=to_copy, to_symlink=to_symlink, to_configure=to_configure
             )
 
-    def _set_strategy(
-        self, strategy: str
-    ) -> StrategyFunction:
+    @property
+    def attached_files_table(self) -> str:
+        """Return a plain-text table with information about files
+        attached to models belonging to this ensemble.
+
+        :returns: A table of all files attached to all models
+        :rtype: str
+        """
+        if not self.models:
+            return "The ensemble is empty, no files to show."
+
+        table = tabulate(
+            [[model.name, model.attached_files_table] for model in self.models],
+            headers=["Model name", "Files"],
+            tablefmt="grid",
+        )
+
+        return table
+
+    def print_attached_files(self) -> None:
+        """Print table of attached files to std out"""
+        print(self.attached_files_table)
+
+    @staticmethod
+    def _set_strategy(strategy: str) -> StrategyFunction:
         """Set the permutation strategy for generating models within
         the ensemble
 
@@ -332,7 +360,7 @@ class Ensemble(EntityList):
         backend: str,
         model: t.Optional[str] = None,
         model_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
@@ -392,7 +420,7 @@ class Ensemble(EntityList):
         name: str,
         script: t.Optional[str] = None,
         script_path: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
@@ -436,7 +464,7 @@ class Ensemble(EntityList):
         self,
         name: str,
         function: t.Optional[str] = None,
-        device: str = "CPU",
+        device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
     ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble
@@ -469,18 +497,17 @@ class Ensemble(EntityList):
         for entity in self.models:
             self._extend_entity_db_scripts(entity, [db_script])
 
-    def _extend_entity_db_models(
-        self, model: Model, db_models: t.List[DBModel]
-    ) -> None:
-        entity_db_models = [db_model.name for db_model in model._db_models]
-        for db_model in db_models:
-            if not db_model.name in entity_db_models:
-                model._append_db_model(db_model)
+    @staticmethod
+    def _extend_entity_db_models(model: Model, db_models: t.List[DBModel]) -> None:
+        entity_db_models = [db_model.name for db_model in model.db_models]
 
-    def _extend_entity_db_scripts(
-        self, model: Model, db_scripts: t.List[DBScript]
-    ) -> None:
-        entity_db_scripts = [db_script.name for db_script in model._db_scripts]
+        for db_model in db_models:
+            if db_model.name not in entity_db_models:
+                model.add_ml_model_object(db_model)
+
+    @staticmethod
+    def _extend_entity_db_scripts(model: Model, db_scripts: t.List[DBScript]) -> None:
+        entity_db_scripts = [db_script.name for db_script in model.db_scripts]
         for db_script in db_scripts:
             if not db_script.name in entity_db_scripts:
-                model._append_db_script(db_script)
+                model.add_script_object(db_script)

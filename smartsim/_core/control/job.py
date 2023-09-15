@@ -63,9 +63,11 @@ class Job:
         self.jid = job_id
         self.entity = entity
         self.status = STATUS_NEW
-        self.raw_status: t.Optional[str] = None  # status before smartsim status mapping is applied
+        # status before smartsim status mapping is applied
+        self.raw_status: t.Optional[str] = None
         self.returncode: t.Optional[int] = None
-        self.output: t.Optional[str] = None  # only populated if it's system related (e.g. a command failed immediately)
+        # output is only populated if it's system related (e.g. cmd failed immediately)
+        self.output: t.Optional[str] = None
         self.error: t.Optional[str] = None  # same as output
         self.hosts: t.List[str] = []  # currently only used for DB jobs
         self.launched_with = launcher
@@ -107,7 +109,9 @@ class Job:
         """Record the launching history of a job."""
         self.history.record(self.jid, self.status, self.returncode, self.elapsed)
 
-    def reset(self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool) -> None:
+    def reset(
+        self, new_job_name: str, new_job_id: t.Optional[str], is_task: bool
+    ) -> None:
         """Reset the job in order to be able to restart it.
 
         :param new_job_name: name of the new job step
@@ -157,9 +161,9 @@ class Job:
         if self.jid:
             job = "{}({}): {}"
             return job.format(self.ename, self.jid, self.status)
-        else:
-            job = "{}: {}"
-            return job.format(self.ename, self.status)
+
+        job = "{}: {}"
+        return job.format(self.ename, self.status)
 
 
 class History:
@@ -174,12 +178,18 @@ class History:
         :type runs: int, optional
         """
         self.runs = runs
-        self.jids: t.Dict[int, t.Optional[str]] = dict()
-        self.statuses: t.Dict[int, str] = dict()
-        self.returns: t.Dict[int, t.Optional[int]] = dict()
-        self.job_times: t.Dict[int, float] = dict()
+        self.jids: t.Dict[int, t.Optional[str]] = {}
+        self.statuses: t.Dict[int, str] = {}
+        self.returns: t.Dict[int, t.Optional[int]] = {}
+        self.job_times: t.Dict[int, float] = {}
 
-    def record(self, job_id: t.Optional[str], status: str, returncode: t.Optional[int], job_time: float) -> None:
+    def record(
+        self,
+        job_id: t.Optional[str],
+        status: str,
+        returncode: t.Optional[int],
+        job_time: float,
+    ) -> None:
         """record the history of a job"""
         self.jids[self.runs] = job_id
         self.statuses[self.runs] = status

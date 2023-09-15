@@ -24,14 +24,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# pylint: disable=invalid-name
+
+import importlib.metadata
 import os
 import platform
-import site
 import subprocess
 import sys
 import typing as t
 from pathlib import Path
 from typing import Iterable
+
+# NOTE: This will be imported by setup.py and hence no
+#       smartsim related items or non-standand library
+#       items should be imported here.
+
+# TODO: pkg_resources has been deprecated by PyPA. Currently we use it for its
+#       packaging implementation, as we cannot assume a user will have `packaging`
+#       prior to `pip install` time. We really only use pkg_resources for their
+#       vendored version of `packaging.version.Version` so we should probably try
+#       to remove
+# https://setuptools.pypa.io/en/latest/pkg_resources.html
 
 import pkg_resources
 from pkg_resources import packaging  # type: ignore
@@ -40,9 +53,6 @@ Version = packaging.version.Version
 InvalidVersion = packaging.version.InvalidVersion
 DbEngine = t.Literal["REDIS", "KEYDB"]
 
-# NOTE: This will be imported by setup.py and hence no
-#       smartsim related items or non-standand library
-#       items should be imported here.
 
 class SetupError(Exception):
     """A simple exception class for errors in _install.buildenv file.
@@ -58,24 +68,52 @@ class SetupError(Exception):
     See setup.py for more
     """
 
-    pass
+
+class VersionConflictError(SetupError):
+    """An error for when version numbers of some library/package/program/etc
+    do not match and build may not be able to continue
+    """
+
+    def __init__(
+        self,
+        name: str,
+        current_version: "Version_",
+        target_version: "Version_",
+        msg: t.Optional[str] = None,
+    ) -> None:
+        if msg is None:
+            msg = (
+                f"Incompatible version for {name} detected: "
+                f"{name} {target_version} requested but {name} {current_version} "
+                "installed."
+            )
+        super().__init__(msg)
+        self.name = name
+        self.current_version = current_version
+        self.target_version = target_version
 
 
 # so as to not conflict with pkg_resources.packaging.version.Version
+# pylint: disable-next=invalid-name
 class Version_(str):
     """A subclass of pkg_resources.packaging.version.Version that
     includes some helper methods for comparing versions.
     """
 
-    def _convert_to_version(self, vers: t.Union[str, Iterable[packaging.version.Version], packaging.version.Version]) -> t.Any:
+    @staticmethod
+    def _convert_to_version(
+        vers: t.Union[
+            str, Iterable[packaging.version.Version], packaging.version.Version
+        ],
+    ) -> t.Any:
         if isinstance(vers, Version):
             return vers
-        elif isinstance(vers, str):
+        if isinstance(vers, str):
             return Version(vers)
-        elif isinstance(vers, Iterable):
+        if isinstance(vers, Iterable):
             return Version(".".join((str(item) for item in vers)))
-        else:
-            raise InvalidVersion(vers)
+
+        raise InvalidVersion(vers)
 
     @property
     def major(self) -> int:
@@ -98,33 +136,36 @@ class Version_(str):
 
     def __gt__(self, cmp: t.Any) -> bool:
         try:
-            return Version(self).__gt__(self._convert_to_version(cmp))
+            return bool(Version(self).__gt__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__gt__(cmp)
 
     def __lt__(self, cmp: t.Any) -> bool:
         try:
-            return Version(self).__lt__(self._convert_to_version(cmp))
+            return bool(Version(self).__lt__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__lt__(cmp)
 
     def __eq__(self, cmp: t.Any) -> bool:
         try:
-            return Version(self).__eq__(self._convert_to_version(cmp))
+            return bool(Version(self).__eq__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__eq__(cmp)
 
     def __ge__(self, cmp: t.Any) -> bool:
         try:
-            return Version(self).__ge__(self._convert_to_version(cmp))
+            return bool(Version(self).__ge__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__ge__(cmp)
 
     def __le__(self, cmp: t.Any) -> bool:
         try:
-            return Version(self).__le__(self._convert_to_version(cmp))
+            return bool(Version(self).__le__(self._convert_to_version(cmp)))
         except InvalidVersion:
             return super().__le__(cmp)
+
+    def __hash__(self) -> int:
+        return hash(Version(self))
 
 
 def get_env(var: str, default: str) -> str:
@@ -182,7 +223,7 @@ class RedisAIVersion(Version_):
     if sys.platform == "darwin":
         defaults.pop("1.2.5", None)
 
-    def __init__(self, vers: str) -> None:
+    def __init__(self, vers: str) -> None:  # pylint: disable=super-init-not-called
         min_rai_version = min(Version_(ver) for ver in self.defaults)
         if min_rai_version > vers:
             raise SetupError(
@@ -195,7 +236,10 @@ class RedisAIVersion(Version_):
                 self.version = "1.2.7"
             else:
                 raise SetupError(
-                    f"Invalid RedisAI version {vers}. Options are {self.defaults.keys()}"
+                    (
+                        f"Invalid RedisAI version {vers}. Options are "
+                        f"{self.defaults.keys()}"
+                    )
                 )
         else:
             self.version = vers
@@ -244,8 +288,8 @@ class Versioner:
     PYTHON_MIN = Version_("3.8.0")
 
     # Versions
-    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.5.0"))
-    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.4.1"))
+    SMARTSIM = Version_(get_env("SMARTSIM_VERSION", "0.5.1"))
+    SMARTREDIS = Version_(get_env("SMARTREDIS_VERSION", "0.4.2"))
     SMARTSIM_SUFFIX = get_env("SMARTSIM_SUFFIX", "")
 
     # Redis
@@ -300,18 +344,15 @@ class Versioner:
         vers = {"Packages": packages, "Versions": versions}
         return vers
 
-    def ml_extras_required(self) -> t.List[str]:
+    def ml_extras_required(self) -> t.Dict[str, t.List[str]]:
         """Optional ML/DL dependencies we suggest for the user.
 
         The defaults are based on the RedisAI version
         """
         ml_defaults = self.REDISAI.get_defaults()
 
-        # remove torch-related fields as they will be installed
-        # by the cli process for use in the RAI build. We don't install
-        # them here as the user needs to decide between GPU/CPU. All other
-        # libraries work on both devices. The correct versions and suffixes
-        # were scraped from https://pytorch.org/get-started/previous-versions/
+        # remove torch-related fields as they are subject to change
+        # by having the user change hardware (cpu/gpu)
         _torch_fields = [
             "torch",
             "torchvision",
@@ -321,9 +362,12 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        return [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
+        return {
+            "ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
+        }
 
-    def get_sha(self, setup_py_dir: Path) -> str:
+    @staticmethod
+    def get_sha(setup_py_dir: Path) -> str:
         """Get the git sha of the current branch"""
         try:
             rev_cmd = ["git", "rev-parse", "HEAD"]
@@ -350,12 +394,12 @@ class Versioner:
             if git_sha := self.get_sha(setup_py_dir):
                 version += f".{git_sha}"
 
-        version_file = setup_py_dir / "smartsim" / "version.py"
-        with open(version_file, "w") as f:
-            f.write("# This file is automatically generated by setup.py\n")
-            f.write("# do not edit this file manually.\n\n")
+        version_file_path = setup_py_dir / "smartsim" / "version.py"
+        with open(version_file_path, "w", encoding="utf-8") as version_file:
+            version_file.write("# This file is automatically generated by setup.py\n")
+            version_file.write("# do not edit this file manually.\n\n")
 
-            f.write(f"__version__ = '{version}'\n")
+            version_file.write(f"__version__ = '{version}'\n")
         return version
 
 
@@ -442,57 +486,20 @@ class BuildEnv:
     def python_version(self) -> str:
         return platform.python_version()
 
-    def is_compatible_python(self, python_min: float) -> bool:
+    @staticmethod
+    def is_compatible_python(python_min: float) -> bool:
         """Detect if system Python is too old"""
         sys_py = sys.version_info
         system_python = Version_(f"{sys_py.major}.{sys_py.minor}.{sys_py.micro}")
         return system_python > python_min
 
-    def is_windows(self) -> bool:
-        return self.PLATFORM in ["win32", "cygwin", "msys"]
+    @classmethod
+    def is_windows(cls) -> bool:
+        return cls.PLATFORM in ["win32", "cygwin", "msys"]
 
-    def is_macos(self) -> bool:
-        return self.PLATFORM == "darwin"
-
-    @property
-    def torch_cmake_path(self) -> t.Optional[str]:
-        """Find the path to the cmake directory within a
-        pip installed pytorch package"""
-
-        def _torch_import_path() -> t.Optional[Path]:
-            """Find through importing torch"""
-            try:
-                import torch as t
-
-                torch_paths = [Path(p) for p in t.__path__]
-                for _path in torch_paths:
-                    torch_path = _path / "share/cmake/Torch"
-                    if torch_path.is_dir():
-                        return torch_path
-                return None
-            except ModuleNotFoundError:
-                return None
-
-        def _torch_site_path() -> t.Optional[Path]:
-            """find torch through site packages"""
-            site_paths = [Path(p) for p in site.getsitepackages()]
-
-            # check user site (~/.local/lib)
-            if site.USER_SITE and Path(site.USER_SITE).is_dir():
-                site_paths.append(Path(site.USER_SITE))
-
-            for _path in site_paths:
-                torch_path = _path / "torch/share/cmake/Torch"
-                if torch_path.is_dir():
-                    return torch_path
-            return None
-
-        torch_path = _torch_import_path()
-        if not torch_path:
-            torch_path = _torch_site_path()
-        if not torch_path:
-            raise SetupError("Could not locate torch cmake path")
-        return str(torch_path)
+    @classmethod
+    def is_macos(cls) -> bool:
+        return cls.PLATFORM == "darwin"
 
     @staticmethod
     def get_cudnn_env() -> t.Optional[t.Dict[str, str]]:
@@ -506,15 +513,21 @@ class BuildEnv:
         """
         env = {
             "CUDNN_LIBRARY": os.environ.get("CUDNN_LIBRARY", "env-var-not-found"),
-            "CUDNN_INCLUDE_DIR": os.environ.get("CUDNN_INCLUDE_DIR", "env-var-not-found"),
-            "CUDNN_LIBRARY_PATH": os.environ.get("CUDNN_LIBRARY_PATH", "env-var-not-found"),
-            "CUDNN_INCLUDE_PATH": os.environ.get("CUDNN_INCLUDE_PATH", "env-var-not-found"),
+            "CUDNN_INCLUDE_DIR": os.environ.get(
+                "CUDNN_INCLUDE_DIR", "env-var-not-found"
+            ),
+            "CUDNN_LIBRARY_PATH": os.environ.get(
+                "CUDNN_LIBRARY_PATH", "env-var-not-found"
+            ),
+            "CUDNN_INCLUDE_PATH": os.environ.get(
+                "CUDNN_INCLUDE_PATH", "env-var-not-found"
+            ),
         }
         torch_cudnn_vars = ["CUDNN_LIBRARY", "CUDNN_INCLUDE_DIR"]
         caffe_cudnn_vars = ["CUDNN_INCLUDE_PATH", "CUDNN_LIBRARY_PATH"]
 
-        torch_set = all([var in os.environ for var in torch_cudnn_vars])
-        caffe_set = all([var in os.environ for var in caffe_cudnn_vars])
+        torch_set = all(var in os.environ for var in torch_cudnn_vars)
+        caffe_set = all(var in os.environ for var in caffe_cudnn_vars)
 
         # check for both sets, if only one exists, set the other
         # this handles older versions which use different env vars
@@ -528,7 +541,8 @@ class BuildEnv:
             env["CUDNN_LIBRARY"] = env["CUDNN_LIBRARY_PATH"]
         return env
 
-    def check_build_dependency(self, command: str) -> None:
+    @staticmethod
+    def check_build_dependency(command: str) -> None:
         # TODO expand this to parse and check versions.
         try:
             subprocess.check_call(
@@ -539,20 +553,23 @@ class BuildEnv:
         except OSError:
             raise SetupError(f"{command} must be installed to build SmartSim") from None
 
-    @staticmethod
-    def check_installed(package: str, version: t.Optional[Version_] = None) -> bool:
+    @classmethod
+    def check_installed(
+        cls, package: str, version: t.Optional[Version_] = None
+    ) -> bool:
         """Check if a package is installed. If version is provided, check if
-        it's a compatible version. (major and minor the same)"""
+        it's a compatible version. (major and minor the same)
+        """
         try:
-            installed = Version_(pkg_resources.get_distribution(package).version)
-            if version:
-                # detect if major or minor versions differ
-                if installed.major != version.major or installed.minor != version.minor:
-                    msg = (
-                        f"Incompatible version for {package} detected.\n"
-                        + f"{package} {version} requested but {package} {installed} installed."
-                    )
-                    raise SetupError(msg)
-            return True
-        except pkg_resources.DistributionNotFound:
+            installed = cls.get_py_package_version(package)
+        except importlib.metadata.PackageNotFoundError:
             return False
+        if version:
+            # detect if major or minor versions differ
+            if installed.major != version.major or installed.minor != version.minor:
+                raise VersionConflictError(package, installed, version)
+        return True
+
+    @staticmethod
+    def get_py_package_version(package: str) -> Version_:
+        return Version_(importlib.metadata.version(package))
