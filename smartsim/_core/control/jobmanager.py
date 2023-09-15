@@ -311,16 +311,15 @@ class JobManager:
         and their corresponding list of host ip addresses
         :rtype: Dict[str, list]"""
 
-        db_id = ""
         addresses = []
-        for db_id, db_job in self.db_jobs.items():
+        for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
                 for combine in itertools.product(db_job.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-        self.address_dict.update({db_id: addresses})
+            self.address_dict.update({db_entity.name: addresses})
 
         return self.address_dict
 

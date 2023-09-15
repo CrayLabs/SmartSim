@@ -54,6 +54,7 @@ class DBNode(SmartSimEntity):
         run_settings: RunSettings,
         ports: t.List[int],
         output_files: t.List[str],
+        db_identifier: str = "",
     ) -> None:
         """Initialize a database node within an orchestrator."""
         self.ports = ports
@@ -70,6 +71,7 @@ class DBNode(SmartSimEntity):
         ):
             raise ValueError("output_files must be of type list[str]")
         self._output_files = output_files
+        self.db_identifier = db_identifier
 
     @property
     def num_shards(self) -> int:
