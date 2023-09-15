@@ -932,11 +932,13 @@ def test_multidb_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
     )
 
     #try:
-    exp.start(db, smartsim_model)
-    #statuses = exp.get_status(smartsim_model)
-    #assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    exp.start(db)
+    exp.start(smartsim_model)
+    statuses = exp.get_status(smartsim_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
     #finally:
-    exp.stop(db, smartsim_model)
+    exp.stop(db)
+    exp.stop(smartsim_model)
     print(exp.summary())
 
 

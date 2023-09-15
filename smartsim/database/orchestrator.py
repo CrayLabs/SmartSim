@@ -567,8 +567,11 @@ class Orchestrator(EntityList):
                 "Clustered" if self.num_shards > 2 else "Standalone"
             )
 
-            options = ConfigOptions.create_from_environment(name)
-            client = Client(options, logger_name="SmartSim")
+            if name: 
+                options = ConfigOptions.create_from_environment(name)
+                client = Client(options)
+            else: 
+                client = Client(None, logger_name="SmartSim")
 
             try:
                 for address in addresses:
