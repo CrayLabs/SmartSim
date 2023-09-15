@@ -24,7 +24,7 @@ try:
     import smartsim
     version = smartsim.__version__
 except ImportError:
-    version = "0.4.1"
+    version = "0.5.1"
 
 # The full version, including alpha/beta/rc tags
 release = version

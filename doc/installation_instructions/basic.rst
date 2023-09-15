@@ -160,15 +160,15 @@ and install SmartSim from PyPI with the following command:
 
 If you would like SmartSim to also install python machine learning libraries
 that can be used outside SmartSim to build SmartSim-compatible models, you
-can request their installation through the ``ml-*`` optional dependencies,
+can request their installation through the ``[ml]`` optional dependencies,
 as follows:
 
 .. code-block:: bash
 
-    # For CPU based models
-    pip install smartsim[ml-cpu]
-    # For CPU and CUDA based models
-    pip install smartsim[ml-cuda]
+    # For bash
+    pip install smartsim[ml]
+    # For zsh
+    pip install smartsim\[ml\]
 
 At this point, SmartSim is installed and can be used for more basic features.
 If you want to use the machine learning features of SmartSim, you will need
@@ -287,9 +287,8 @@ source remains at the site of the clone instead of in site-packages.
 .. code-block:: bash
 
   cd smartsim
-  pip install -e .[dev,ml-cpu]   # for CPU only
-  # OR
-  pip install -e .[dev,ml-cuda]  # for CUDA support
+  pip install -e .[dev,ml]    # for bash users
+  pip install -e .\[dev,ml\]  # for zsh users
 
 Use the now installed ``smart`` cli to install the machine learning runtimes.
 

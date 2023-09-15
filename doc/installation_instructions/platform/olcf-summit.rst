@@ -14,7 +14,7 @@ directory from which these instructions are executed.
 .. code-block:: bash
 
   # setup Python and build environment
-  export ENV_NAME=smartsim-0.5.0
+  export ENV_NAME=smartsim-0.5.1
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
   conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.4.1/
