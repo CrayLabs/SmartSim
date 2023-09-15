@@ -815,7 +815,6 @@ def test_multidb_create_standard_twice(fileutils, wlmutils):
     # Retrieve parameters from testing environment
     test_interface = wlmutils.get_test_interface()
     test_port = wlmutils.get_test_port()
-    test_dir = fileutils.make_test_dir()
 
     # start a new Experiment for this section
     exp = Experiment(
@@ -897,6 +896,7 @@ def test_multidb_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_interface = wlmutils.get_test_interface()
 
     # start a new Experiment for this section
     exp = Experiment("test_db_identifier_standard_then_colo", launcher="local")
@@ -907,8 +907,9 @@ def test_multidb_standard_then_colo(fileutils, wlmutils, coloutils, db_type):
     run_settings.set_tasks_per_node(1)
 
     # create and start an instance of the Orchestrator database
-    db = exp.create_database(port=test_port, db_identifier="testdb_reg")
-    # interface=test_interface,
+    db = exp.create_database(
+        port=test_port, interface=test_interface, db_identifier="testdb_reg"
+    )
     exp.generate(db)
 
     # Create the SmartSim Model
@@ -947,6 +948,7 @@ def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
     test_port = wlmutils.get_test_port()
     test_dir = fileutils.make_test_dir()
     test_script = fileutils.get_test_conf_path("smartredis/multidbid.py")
+    test_interface = wlmutils.get_test_interface()
 
     # start a new Experiment
     exp = Experiment(
@@ -980,7 +982,9 @@ def test_multidb_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
     smartsim_model.set_path(test_dir)
 
     # create and start an instance of the Orchestrator database
-    db = exp.create_database(port=test_port + 1, db_identifier="testdb_reg")
+    db = exp.create_database(
+        port=test_port + 1, interface=test_interface, db_identifier="testdb_reg"
+    )
     exp.generate(db)
 
     try:

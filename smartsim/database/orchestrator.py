@@ -735,6 +735,7 @@ class Orchestrator(EntityList):
                     run_settings,
                     [port],
                     [db_node_name + ".out"],
+                    self.name,
                 )
                 self.entities.append(node)
 
@@ -775,7 +776,9 @@ class Orchestrator(EntityList):
         if not run_settings:
             raise ValueError(f"Could not build run settings for {self.launcher}")
 
-        node = DBNode(self.name, self.path, run_settings, [port], output_files)
+        node = DBNode(
+            self.name, self.path, run_settings, [port], output_files, self.name
+        )
         node.is_mpmd = True
         node.num_shards = self.db_nodes
         self.entities.append(node)

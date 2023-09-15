@@ -469,7 +469,6 @@ class Controller:
         """
 
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        # addresses, address_dict = self._jobs.get_db_host_addresses()
         address_dict = self._jobs.get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
