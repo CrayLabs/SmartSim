@@ -26,7 +26,6 @@
 
 # pylint: disable=invalid-name
 
-import itertools
 import importlib.metadata
 import os
 import platform
@@ -262,30 +261,6 @@ class RedisAIVersion(Version_):
         return self.defaults[self.version].copy()
 
 
-def _format_linux_torch_py_package_req(
-    arch: str, python_version: str, torch_version: str
-) -> str:
-    pyv_no_dot = python_version.replace(".", "")
-    return (
-        "torch"
-        # pylint: disable-next=line-too-long
-        f"  @ https://download.pytorch.org/whl/{arch}/torch-{torch_version}%2B{arch}-cp{pyv_no_dot}-cp{pyv_no_dot}-linux_x86_64.whl"
-        f'  ; python_version == "{python_version}" and sys_platform != "darwin"'
-    )
-
-
-def _format_linux_torchvision_py_package_req(
-    arch: str, python_version: str, torchvision_version: str
-) -> str:
-    pyv_no_dot = python_version.replace(".", "")
-    return (
-        "torchvision"
-        # pylint: disable-next=line-too-long
-        f"  @ https://download.pytorch.org/whl/{arch}/torchvision-{torchvision_version}%2B{arch}-cp{pyv_no_dot}-cp{pyv_no_dot}-linux_x86_64.whl"
-        f'  ; python_version == "{python_version}" and sys_platform != "darwin"'
-    )
-
-
 class Versioner:
     """Versioner is responsible for managing all the versions
     within SmartSim including SmartSim itself.
@@ -376,26 +351,8 @@ class Versioner:
         """
         ml_defaults = self.REDISAI.get_defaults()
 
-        def _format_custom_linux_torch_deps(
-            torchv: str, torchvisionv: str, arch: str
-        ) -> t.Tuple[str, ...]:
-            # The correct versions and suffixes were scraped from
-            # https://pytorch.org/get-started/previous-versions/
-            supported_py_versions = ("3.8", "3.9", "3.10")
-            return tuple(
-                itertools.chain.from_iterable(
-                    (
-                        _format_linux_torch_py_package_req(arch, pyv, torchv),
-                        _format_linux_torchvision_py_package_req(
-                            arch, pyv, torchvisionv
-                        ),
-                    )
-                    for pyv in supported_py_versions
-                )
-            )
-
         # remove torch-related fields as they are subject to change
-        # by having the user set env vars
+        # by having the user change hardware (cpu/gpu)
         _torch_fields = [
             "torch",
             "torchvision",
@@ -405,25 +362,8 @@ class Versioner:
         for field in _torch_fields:
             ml_defaults.pop(field)
 
-        common = tuple(f"{lib}=={vers}" for lib, vers in ml_defaults.items())
         return {
-            "ml-cpu": [
-                *common,
-                # osx
-                f'torch=={self.TORCH} ; sys_platform == "darwin"',
-                f'torchvision=={self.TORCHVISION} ; sys_platform == "darwin"',
-                # linux
-                *_format_custom_linux_torch_deps(
-                    self.TORCH, self.TORCHVISION, self.TORCH_CPU_SUFFIX.lstrip("+")
-                ),
-            ],
-            "ml-cuda": [
-                *common,
-                # linux
-                *_format_custom_linux_torch_deps(
-                    self.TORCH, self.TORCHVISION, self.TORCH_CUDA_SUFFIX.lstrip("+")
-                ),
-            ],
+            "ml": [f"{lib}=={vers}" for lib, vers in ml_defaults.items()]
         }
 
     @staticmethod

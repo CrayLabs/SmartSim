@@ -107,8 +107,10 @@ jobs:
       # on developments of the client are brought in.
       - name: Install SmartSim (with ML backends)
         run: |
+
           python -m pip install git+https://github.com/billschereriii/smartredis.git@multidb
-          python -m pip install .[dev,ml-cpu]
+          python -m pip install .[dev,ml]
+
 
       - name: Install ML Runtimes with Smart (with pt, tf, and onnx support)
         if: (matrix.py_v != '3.10')

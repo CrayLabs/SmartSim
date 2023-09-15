@@ -15,7 +15,7 @@ SmartSim
 0.5.1
 -----
 
-Released on 13 September, 2023
+Released on 14 September, 2023
 
 Description
 
@@ -45,7 +45,6 @@ Detailed Notes
 - Create public properties where appropriate to mitigate `protected-access` errors. (PR341_)
 - Fix a failure to execute `_prep_colocated_db` due to incorrect named attr check. (PR339_)
 - Enabled and mitigated mypy `disallow_any_generics` and `warn_return_any`. (PR338_)
-- Move installation of all optional SmartSim Python ML dependencies to `pip install` time. (PR336_)
 - Add a `smart validate` target to provide a simple smoke test to assess a SmartSim build. (PR336_, PR351_)
 - Add typehints to `smartsim._core.launcher.step.*`. (PR334_)
 - Log errors reported from slurm WLM when attempts to retrieve status fail. (PR331_, PR332_)
