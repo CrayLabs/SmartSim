@@ -13,8 +13,8 @@
    overview
    installation_instructions/basic
    installation_instructions/platform
-   community
-   contributing_examples
+   contributing
+   smartsim_zoo
 
 .. toctree::
    :maxdepth: 2

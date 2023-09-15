@@ -32,15 +32,15 @@ from pathlib import Path
 
 from tabulate import tabulate
 
-from smartsim._core._cli.utils import color_bool, SMART_LOGGER_FORMAT
+from smartsim._core._cli.utils import SMART_LOGGER_FORMAT, color_bool, pip
 from smartsim._core._install import builder
 from smartsim._core._install.buildenv import (
     BuildEnv,
+    DbEngine,
     SetupError,
     Version_,
-    Versioner,
-    DbEngine,
     VersionConflictError,
+    Versioner,
 )
 from smartsim._core._install.builder import BuildError
 from smartsim._core.config import CONFIG
@@ -244,15 +244,33 @@ def check_py_torch_version(versions: Versioner, device: _TDeviceStr = "cpu") -> 
         else:
             raise BuildError("Unrecognized device requested")
 
-    _check_packages_in_python_env(
-        {
-            "torch": Version_(f"{versions.TORCH}{device_suffix}"),
-            "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
-        },
+    torch_deps = {
+        "torch": Version_(f"{versions.TORCH}{device_suffix}"),
+        "torchvision": Version_(f"{versions.TORCHVISION}{device_suffix}"),
+    }
+    missing, conflicts = _assess_python_env(
+        torch_deps,
+        package_pinning="==",
         validate_installed_version=_create_torch_version_validator(
             with_suffix=device_suffix
         ),
     )
+
+    if len(missing) == len(torch_deps) and not conflicts:
+        # All PyTorch deps are not installed and there are no conflicting
+        # python packages. We can try to install torch deps into the current env.
+        logger.info(
+            "Torch version not found in python environment. "
+            "Attempting to install via `pip`"
+        )
+        pip(
+            "install",
+            "-f",
+            "https://download.pytorch.org/whl/torch_stable.html",
+            *(f"{package}=={version}" for package, version in torch_deps.items()),
+        )
+    elif missing or conflicts:
+        logger.warning(_format_incompatible_python_env_message(missing, conflicts))
 
 
 def _create_torch_version_validator(
@@ -297,20 +315,7 @@ def _check_packages_in_python_env(
     )
 
     if missing or conflicts:
-        indent = "\n\t"
-        fmt_list: t.Callable[[str, t.List[str]], str] = (
-            lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
-        )
-        missing_str = fmt_list("Missing", missing)
-        conflict_str = fmt_list("Conflicting", conflicts)
-        sep = "\n" if missing_str and conflict_str else ""
-        logger.warning(
-            "Python Env Status Warning!\n"
-            "Requested Packages are Missing or Conflicting:\n\n"
-            f"{missing_str}{sep}{conflict_str}"
-            "\n\nConsider installing packages at the requested versions via "
-            "`pip` or installing SmartSim with optional ML dependencies"
-        )
+        logger.warning(_format_incompatible_python_env_message(missing, conflicts))
 
 
 def _assess_python_env(
@@ -332,6 +337,26 @@ def _assess_python_env(
             conflicts.append(spec)
 
     return missing, conflicts
+
+
+def _format_incompatible_python_env_message(
+    missing: t.Iterable[str], conflicting: t.Iterable[str]
+) -> str:
+    indent = "\n\t"
+    fmt_list: t.Callable[[str, t.Iterable[str]], str] = (
+        lambda n, l: f"{n}:{indent}{indent.join(l)}" if l else ""
+    )
+    missing_str = fmt_list("Missing", missing)
+    conflict_str = fmt_list("Conflicting", conflicting)
+    sep = "\n" if missing_str and conflict_str else ""
+    return (
+        "Python Env Status Warning!\n"
+        "Requested Packages are Missing or Conflicting:\n\n"
+        f"{missing_str}{sep}{conflict_str}\n\n"
+        "Consider installing packages at the requested versions via `pip` or "
+        "uninstalling them, installing SmartSim with optional ML dependencies "
+        "(`pip install smartsim[ml]`), and running `smart clean && smart build ...`"
+    )
 
 
 def execute(args: argparse.Namespace) -> int:
@@ -376,21 +401,22 @@ def execute(args: argparse.Namespace) -> int:
         print(tabulate(vers, headers=version_names, tablefmt="github"), "\n")
 
     try:
-        # REDIS/KeyDB
-        build_database(build_env, versions, keydb, verbose)
+        if not args.only_python_packages:
+            # REDIS/KeyDB
+            build_database(build_env, versions, keydb, verbose)
 
-        # REDISAI
-        build_redis_ai(
-            build_env,
-            versions,
-            device,
-            pt,
-            tf,
-            onnx,
-            args.torch_dir,
-            args.libtensorflow_dir,
-            verbose=verbose,
-        )
+            # REDISAI
+            build_redis_ai(
+                build_env,
+                versions,
+                device,
+                pt,
+                tf,
+                onnx,
+                args.torch_dir,
+                args.libtensorflow_dir,
+                verbose=verbose,
+            )
     except (SetupError, BuildError) as e:
         logger.error(str(e))
         return 1
@@ -399,12 +425,16 @@ def execute(args: argparse.Namespace) -> int:
     backends_str = ", ".join(s.capitalize() for s in backends) if backends else "No"
     logger.info(f"{backends_str} backend(s) built")
 
-    if "torch" in backends:
-        check_py_torch_version(versions, device)
-    if "tensorflow" in backends:
-        check_py_tf_version(versions)
-    if "onnxruntime" in backends:
-        check_py_onnx_version(versions)
+    try:
+        if "torch" in backends:
+            check_py_torch_version(versions, device)
+        if "tensorflow" in backends:
+            check_py_tf_version(versions)
+        if "onnxruntime" in backends:
+            check_py_onnx_version(versions)
+    except (SetupError, BuildError) as e:
+        logger.error(str(e))
+        return 1
 
     logger.info("SmartSim build complete!")
     return 0
@@ -425,6 +455,12 @@ def configure_parser(parser: argparse.ArgumentParser) -> None:
         default="cpu",
         choices=["cpu", "gpu"],
         help="Device to build ML runtimes for",
+    )
+    parser.add_argument(
+        "--only_python_packages",
+        action="store_true",
+        default=False,
+        help="Only evaluate the python packages (i.e. skip building backends)",
     )
     parser.add_argument(
         "--no_pt",
