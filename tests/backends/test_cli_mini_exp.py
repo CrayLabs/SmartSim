@@ -46,7 +46,7 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     @contextmanager
     def _mock_make_managed_local_orc(*a, **kw):
         client_addr ,= local_db.get_address()
-        yield smartredis.Client(address=client_addr, cluster=False)
+        yield smartredis.Client(False, address=client_addr)
 
     monkeypatch.setattr(
         smartsim._core._cli.validate,
