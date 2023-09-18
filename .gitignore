@@ -7,7 +7,7 @@ __pycache__
 htmlcov
 smartsim.egg-info
 tests/test_output
-docs/*
+.DS_Store
 
 # Dependencies
 smartsim/_core/.third-party
