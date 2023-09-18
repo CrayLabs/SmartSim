@@ -242,12 +242,15 @@ class Experiment:
         :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
+        stop_manifest = Manifest(*args)
         try:
-            stop_manifest = Manifest(*args)
             for entity in stop_manifest.models:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.all_entity_lists:
+            for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
+            db = stop_manifest.db
+            if db:
+                self._control.stop_db(db)
         except SmartSimError as e:
             logger.error(e)
             raise
