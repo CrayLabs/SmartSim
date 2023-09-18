@@ -248,8 +248,8 @@ class Experiment:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
-            db = stop_manifest.db
-            if db:
+            dbs = stop_manifest.dbs
+            for db in dbs:
                 self._control.stop_db(db)
         except SmartSimError as e:
             logger.error(e)
