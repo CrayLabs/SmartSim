@@ -26,13 +26,12 @@
 
 
 import sys
-import time
 
 import pytest
 
-import smartsim
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
+from smartsim.entity import Ensemble
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
@@ -45,8 +44,10 @@ should_run_pt = True
 
 # Check TensorFlow is available for tests
 try:
-    import tensorflow.keras as keras
+    from tensorflow import keras
+    import tensorflow as tf
     from tensorflow.keras.layers import Conv2D, Input
+
 except ImportError:
     should_run_tf = False
 else:
@@ -59,7 +60,14 @@ else:
         def call(self, x):
             y = self.conv(x)
             return y
-
+    if pytest.test_device == "GPU":
+        try:
+            physical_devices = tf.config.list_physical_devices('GPU')
+            tf.config.set_logical_device_configuration(
+                physical_devices[0],
+                [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+        except:
+            logger.warning("Could not set TF max memory limit for GPU")
 
 should_run_tf &= "tensorflow" in installed_redisai_backends()
 
@@ -342,7 +350,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     smartsim_ensemble.add_model(smartsim_model)
 
     # Add the second ML model to the newly added entity.  This is
-    # because the test script run both ML models for all entities.
+    # because the test script runs both ML models for all entities.
     smartsim_model.add_ml_model(
         "cnn2",
         "TF",
@@ -520,7 +528,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     colo_settings.set_tasks_per_node(1)
 
     # Create ensemble of two identical models
-    colo_ensemble = exp.create_ensemble(
+    colo_ensemble: Ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
     colo_ensemble.set_path(test_dir)
@@ -795,7 +803,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
 def test_inconsistent_params_db_model():
     """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""
-    
+
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     with pytest.raises(SSUnsupportedError) as ex:
@@ -810,6 +818,6 @@ def test_inconsistent_params_db_model():
             outputs=outputs,
         )
     assert (
-            ex.value.args[0] 
+            ex.value.args[0]
             == "Cannot set devices_per_node>1 if CPU is specified under devices"
         )

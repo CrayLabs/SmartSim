@@ -221,3 +221,20 @@ class PalsMpiexecSettings(_BaseMPISettings):
             formatted += ["--envlist", ",".join(export_vars)]
 
         return formatted
+
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+        """Set the hostlist for the PALS ``mpiexec`` command
+
+        This sets ``--hosts``
+
+        :param host_list: list of host names
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all(isinstance(host, str) for host in host_list):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["hosts"] = ",".join(host_list)
