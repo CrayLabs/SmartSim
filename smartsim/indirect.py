@@ -41,7 +41,7 @@ from subprocess import PIPE  #, STDOUT
 from types import FrameType
 
 from smartsim.log import get_logger
-from smartsim.telemetrymanager import track_event, PersistableEntity
+from smartsim.telemetrymonitor import track_event, PersistableEntity
 
 
 STEP_PID = None
@@ -49,13 +49,6 @@ logger: t.Optional[logging.Logger] = get_logger(__name__)
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
-
-
-def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
-    """Helper function to ensure clean process termination"""
-    if not signo:
-        logger.warning("Received signal with no signo")
-    cleanup()
 
 
 def get_ts() -> int:
@@ -80,7 +73,10 @@ def main(
         logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
 
         cleaned_cmd = shlex.split(cmd)
-        process = psutil.Popen(cleaned_cmd, stdout=sys.stdout, stderr=sys.stderr)
+        if not cleaned_cmd:
+            raise ValueError(f"Invalid cmd supplied: {cmd}")
+        
+        process = psutil.Popen(cleaned_cmd, stdout=PIPE, stderr=PIPE)
         STEP_PID = process.pid
         job_id = "" # unmanaged jobs have no job ID, only step ID (the pid)
 
@@ -97,7 +93,7 @@ def main(
         rc = process.wait()
 
         logger.debug(f"persisting step end for name: {step_name} w/return code: {rc}")
-        track_event(persistable.timestamp, persistable, "stop", exp_path, logger)
+        track_event(get_ts(), persistable, "stop", exp_path, logger)
         return rc
 
     except Exception as e:
@@ -107,11 +103,12 @@ def main(
 
 
 def cleanup() -> None:
+    """Perform cleanup required for clean termination"""
     try:
         logger.debug("Cleaning up step executor")
         # attempt to stop the subprocess performing step-execution
-        step_proc = psutil.Process(STEP_PID)
-        step_proc.terminate()
+        process = psutil.Process(STEP_PID)
+        process.terminate()
 
     except psutil.NoSuchProcess:
         logger.warning("Unable to find step executor process to kill.")
@@ -120,7 +117,16 @@ def cleanup() -> None:
         logger.warning(f"Failed to clean up step executor gracefully: {e}")
 
 
+def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
+    """Helper function to ensure clean process termination"""
+    if not signo:
+        logger.warning("Received signal with no signo")
+
+    cleanup()
+
+
 def register_signal_handlers() -> None:
+    """Register a signal handling function for all termination events"""
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
@@ -135,32 +141,15 @@ def get_parser() -> argparse.ArgumentParser:
         "+c", type=str, help="The command to execute", required=True
     )
     arg_parser.add_argument(
-        "+t", type=str, help="The type of entity related to the step"
+        "+t", type=str, help="The type of entity related to the step", required=True
     )
     arg_parser.add_argument(
-        "+n", type=str, help="The step name being executed"
+        "+n", type=str, help="The step name being executed", required=True
     )
     arg_parser.add_argument(
-        "+d", type=str, help="The experiment root directory"
+        "+d", type=str, help="The experiment root directory", required=True
     )
     return arg_parser
-
-
-@dataclasses.dataclass
-class ParameterContext:
-    cmd: str
-    entity_type: str
-    step_name: str
-    exp_dir: pathlib.Path
-
-
-def load_args(ns: argparse.Namespace) -> ParameterContext:
-    return ParameterContext(
-        cmd=parsed_args.c,
-        entity_type=parsed_args.t,
-        step_name=parsed_args.n,
-        exp_dir=parsed_args.d,
-    )
 
 
 if __name__ == "__main__":
@@ -169,8 +158,6 @@ if __name__ == "__main__":
 
     try:
         parsed_args = arg_parser.parse_args()
-        ctx = load_args(parsed_args)
-
         logger.debug("Starting indirect step execution")
 
         # make sure to register the cleanup before the start the process
@@ -178,10 +165,10 @@ if __name__ == "__main__":
         register_signal_handlers()
 
         rc = main(
-            cmd=ctx.cmd,
-            etype=ctx.entity_type,
-            step_name=ctx.step_name,
-            exp_dir=ctx.exp_dir,
+            cmd=parsed_args.c,
+            etype=parsed_args.t,
+            step_name=parsed_args.n,
+            exp_dir=parsed_args.d,
         )
         sys.exit(rc)
 

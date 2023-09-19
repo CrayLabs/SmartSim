@@ -26,23 +26,22 @@
 
 import argparse
 import asyncio
-from dataclasses import dataclass, field
 import json
 import logging
-from multiprocessing import RLock
 import os
 import pathlib
 import signal
 import typing as t
 
-
+from dataclasses import dataclass, field
 from datetime import datetime
+from multiprocessing import RLock
 from types import FrameType
-
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
+
 from smartsim._core.control.job import Job
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
@@ -66,7 +65,7 @@ Telemetry Monitor entrypoint
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
-_ManifestKey = t.Literal["timestamp", "applications", "orchestrators", "ensembles"]
+_ManifestKey = t.Literal["timestamp", "application", "orchestrator", "ensemble"]
 _JobKey = t.Tuple[str, str]
 
 
@@ -92,9 +91,6 @@ class PersistableEntity:
         return True if self.step_id else False
 
 
-_FilterFn = t.Callable[[PersistableEntity], bool]
-
-
 @dataclass
 class Run:
     timestamp: int
@@ -103,7 +99,7 @@ class Run:
     ensembles: t.List[PersistableEntity]
 
     def flatten(
-        self, filter_fn: t.Optional[_FilterFn] = None
+        self, filter_fn: t.Optional[t.Callable[[PersistableEntity], bool]] = None
     ) -> t.List[PersistableEntity]:
         """Flatten runs into a list of SmartSimEntity run events"""
         entities = self.applications + self.orchestrators + self.ensembles
@@ -118,6 +114,11 @@ class ExperimentManifest:
     path: pathlib.Path
     launcher: str
     runs: t.List[Run] = field(default_factory=list)
+
+
+def get_ts() -> int:
+    """Helper function to ensure all timestamps are converted to integers"""
+    return int(datetime.timestamp(datetime.now()))
 
 
 def hydrate_persistable(
@@ -156,9 +157,9 @@ def hydrate_runs(
     runs = [
         Run(
             timestamp=instance["timestamp"],
-            applications=hydrate_persistables("applications", instance, exp_dir),
-            orchestrators=hydrate_persistables("orchestrators", instance, exp_dir),
-            ensembles=hydrate_persistables("ensembles", instance, exp_dir),
+            applications=hydrate_persistables("application", instance, exp_dir),
+            orchestrators=hydrate_persistables("orchestrator", instance, exp_dir),
+            ensembles=hydrate_persistables("ensemble", instance, exp_dir),
         )
         for instance in persisted_runs
     ]
@@ -172,7 +173,6 @@ def load_manifest(file_path: str) -> ExperimentManifest:
 
     text = source.read_text(encoding="utf-8")
     manifest_dict = json.loads(text)
-
     exp_dir = pathlib.Path(manifest_dict["experiment"]["path"])
 
     manifest = ExperimentManifest(
@@ -213,36 +213,33 @@ def track_event(
         entity_dict["detail"] = detail
         tgt_path.write_text(json.dumps(entity_dict))
     except Exception as ex:
-        print(ex)
+        logger.error(ex)
 
 
 def track_completed(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the end of job"""
-    timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
     detail = job.status
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, "stop", exp_dir, logger, detail=detail)
+    track_event(get_ts(), inactive_entity, "stop", exp_dir, logger, detail=detail)
 
 
 def track_started(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the start of job"""
-    timestamp = datetime.timestamp(datetime.now())
     inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, "start", exp_dir, logger)
+    track_event(get_ts(), inactive_entity, "start", exp_dir, logger)
 
 
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
-    timestamp = datetime.timestamp(datetime.now())
+    timestamp = get_ts()
     inactive_entity = job.entity
-    timestamp_suffix = str(int(timestamp))  # drop floating point part before stringify
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(timestamp, inactive_entity, f"step_{timestamp_suffix}", exp_dir, logger)
+    track_event(get_ts(), inactive_entity, f"step_{timestamp}", exp_dir, logger)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -399,13 +396,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         detail = f"status: {step_info.status}, error: {step_info.error}"
         track_event(timestamp, entity, "stop", exp_dir, logger, detail=detail)
 
-    def on_timestep(self, exp_dir: pathlib.Path) -> None:
+    def on_timestep(self, timestamp: int, exp_dir: pathlib.Path) -> None:
         """Called at polling frequency to request status updates on monitored entities"""
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
         names = {entity.name: entity for entity in entity_map.values()}
-        timestamp = datetime.timestamp(datetime.now())
 
         if launcher and names:
             step_updates = launcher.get_step_update(list(names.keys()))
@@ -444,8 +440,9 @@ async def main(
         observer.start()  # type: ignore
 
         while observer.is_alive():
-            logger.debug(f"Telemetry timestep: {datetime.timestamp(datetime.now())}")
-            action_handler.on_timestep(experiment_dir)
+            timestamp = get_ts()
+            logger.debug(f"Telemetry timestep: {timestamp}")
+            action_handler.on_timestep(timestamp, experiment_dir)
             await asyncio.sleep(frequency)
     except Exception as ex:
         logger.error(ex)
@@ -454,8 +451,9 @@ async def main(
         observer.stop()  # type: ignore
 
 
+
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
-    """Event handler for os signals to cancel all tasks in the process"""
+    """Helper function to ensure clean process termination"""
     if not signo:
         logger = logging.getLogger()
         logger.warning("Received signal with no signo")
@@ -471,7 +469,7 @@ def register_signal_handlers() -> None:
         signal.signal(sig, handle_signal)
 
 
-def build_arg_parser() -> argparse.ArgumentParser:
+def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments"""
     parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     parser.add_argument(
@@ -490,7 +488,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 if __name__ == "__main__":
     os.environ["PYTHONUNBUFFERED"] = "1"
 
-    parser = build_arg_parser()
+    parser = get_parser()
     args = parser.parse_args()
     logger = logging.getLogger()
 
