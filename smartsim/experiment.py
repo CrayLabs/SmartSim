@@ -198,13 +198,22 @@ class Experiment:
                         "db_identifier"
                     ]
 
-                    for job in self._control.get_jobs().values():
-                        for run in range(job.history.runs + 1):
-                            if job.history.statuses[run] == "Completed":
-                                del self.db_dict[db_id]
-                                self.db_identifiers.remove(db_id)
+                    if self.get_status(item) == "status.STATUS_COMPLETED":
+                        self.db_identifiers.remove(db_id)
 
-                    self.append_to_db_identifier_list(db_id, Model)
+                    self.append_to_db_identifier_list(db_id)
+
+                if isinstance(item, Orchestrator):
+                    if self.get_status(item) == "status.STATUS_RUNNING":
+                        raise SmartSimError(f"Status of {item} is running")
+
+
+                    # for job in self._control.get_jobs().values():
+                    #     for run in range(job.history.runs + 1):
+                    #         if job.history.statuses[run] == "Completed":  # running throw an error  
+
+                    #             #del self.db_dict[db_id]
+                    #             self.db_identifiers.remove(db_id)
 
         start_manifest = Manifest(*args)
         try:
@@ -764,7 +773,7 @@ class Experiment:
         :rtype: Orchestrator or derived class
         """
 
-        self.append_to_db_identifier_list(db_identifier, Orchestrator)
+        self.append_to_db_identifier_list(db_identifier)
 
         return Orchestrator(
             port=port,
@@ -880,7 +889,7 @@ class Experiment:
     def dbs_in_use(self) -> t.Set[str]:
         return set(self.db_identifiers)
 
-    def append_to_db_identifier_list(self, db_identifier: str, *entity: t.Any) -> None:
+    def append_to_db_identifier_list(self, db_identifier: str) -> None:
         # Check if db_identifier already exists
         if db_identifier in self.db_identifiers:
             raise DBIDConflictError(
@@ -889,4 +898,4 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
-        self.db_dict[db_identifier] = entity
+

@@ -39,21 +39,20 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 
 def get_db_identifier_suffix(db_id: str) -> t.Tuple[str, str]:
     """Create database identifier suffix for regular database"""
-    if db_id:
-        # remove shard id (_0) from dbnode name
-        db_name = "_".join(db_id.split("_")[:-1])
-        db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
-        # pass an empty name if no db id
-        if db_name == "orchestrator":
-            db_name = ""
-        print("db_name_suffix and db_name",db_name_suffix, db_name)
-        return db_name_suffix, db_name
-    return "", ""
+
+    # remove shard id (_0) from dbnode name
+    db_name = "_".join(db_id.split("_")[:-1])
+    db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
+    # pass an empty name if no db id
+    if db_name == "orchestrator":
+        db_name = ""
+
+    return db_name_suffix, db_name
+
 
 
 def get_colo_db_identfifier_suffix(db_name: str) -> str:
     """Create database identifier suffix for colocated database"""
-
     return "_" + db_name if db_name else ""
 
 
