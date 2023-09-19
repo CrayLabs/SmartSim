@@ -92,6 +92,8 @@ def test_orc_active_functions(fileutils, wlmutils):
     with pytest.raises(SmartSimError):
         db.get_address()
 
+    raise Exception("Make this test fail to test artifact upload")
+
 
 def test_multiple_interfaces(fileutils, wlmutils):
     exp_name = "test_multiple_interfaces"
