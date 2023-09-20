@@ -69,12 +69,12 @@ def main(
     if not exp_path.exists():
         raise ValueError(f"The experiment directory does not exist: {exp_dir}")
 
+    cleaned_cmd = shlex.split(cmd)
+    if not cleaned_cmd:
+        raise ValueError(f"Invalid cmd supplied: {cmd}")
+
     try:
         logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
-
-        cleaned_cmd = shlex.split(cmd)
-        if not cleaned_cmd:
-            raise ValueError(f"Invalid cmd supplied: {cmd}")
         
         process = psutil.Popen(cleaned_cmd, stdout=PIPE, stderr=PIPE)
         STEP_PID = process.pid

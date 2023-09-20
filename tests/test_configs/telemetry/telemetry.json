@@ -1,0 +1,326 @@
+{
+    "schema info": {
+        "schema_name": "entity manifest",
+        "version": "0.0.1"
+    },
+    "experiment": {
+        "name": "my-experiment",
+        "path": "experiment/path",
+        "launcher": "local",
+        "out_file": "test_dashboard/log_files/model_0.out",
+        "err_file": "test_dashboard/log_files/model_0.err"
+    },
+    "runs": [
+        {
+            "run_id": 1,
+            "model": [
+                {
+                    "name": "app1",
+                    "path": "app/1/path",
+                    "exe_args": [
+                        "string"
+                    ],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "param": "param value"
+                    },
+                    "files": {
+                        "Symlink": [
+                            "file1",
+                            "file2"
+                        ],
+                        "Configure": [
+                            "file3"
+                        ],
+                        "Copy": [
+                            "file4",
+                            "file5"
+                        ]
+                    },
+                    "colocated_db": {
+                        "settings": {
+                            "protocol": "TCP/IP",
+                            "port": 1111,
+                            "interface": "lo",
+                            "db_cpus": 1,
+                            "limit_app_cpus": "True",
+                            "debug": "False"
+                        },
+                        "scripts": [
+                            {
+                                "script1": {
+                                    "backend": "script1_torch",
+                                    "device": "script1_cpu"
+                                }
+                            },
+                            {
+                                "script2": {
+                                    "backend": "script2_torch",
+                                    "device": "script2_gpu"
+                                }
+                            }
+                        ],
+                        "models": [
+                            {
+                                "model1": {
+                                    "backend": "model1_tf",
+                                    "device": "model1_cpu"
+                                }
+                            },
+                            {
+                                "model2": {
+                                    "backend": "model2_tf",
+                                    "device": "model2_cpu"
+                                }
+                            }
+                        ]
+                    },
+                    "telemetry_metadata": {
+                        "status_dir": "/path/to/status dir",
+                        "job_id": "111",
+                        "step_id": 111
+                    },
+                    "out_file": "test_dashboard/log_files/model_0.out",
+                    "err_path": "test_dashboard/log_files/model_0.err"
+                },
+                {
+                    "name": "app2",
+                    "path": "app/2/path",
+                    "exe_args": [
+                        "string"
+                    ],
+                    "batch_settings": {
+                        "batch_cmd": "command",
+                        "batch_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "run_settings": {
+                        "exe": "echo",
+                        "run_command": "srun",
+                        "run_args": {
+                            "arg1": "string1",
+                            "arg2": null
+                        }
+                    },
+                    "params": {
+                        "string": [
+                            "Any"
+                        ]
+                    },
+                    "files": {
+                        "Symlink": [
+                            "file1",
+                            "file2"
+                        ],
+                        "Configure": [
+                            "file3"
+                        ],
+                        "Copy": [
+                            "file4",
+                            "file5"
+                        ]
+                    },
+                    "colocated_db": {
+                        "settings": {
+                            "protocol": "TCP/IP",
+                            "port": 1111,
+                            "interface": "lo",
+                            "db_cpus": 1,
+                            "limit_app_cpus": "True",
+                            "debug": "False"
+                        },
+                        "scripts": [
+                            {
+                                "script1": {
+                                    "backend": "script1_torch",
+                                    "device": "script1_cpu"
+                                }
+                            },
+                            {
+                                "script2": {
+                                    "backend": "script2_torch",
+                                    "device": "script2_gpu"
+                                }
+                            }
+                        ],
+                        "models": [
+                            {
+                                "model1": {
+                                    "backend": "model1_tf",
+                                    "device": "model1_cpu"
+                                }
+                            },
+                            {
+                                "model2": {
+                                    "backend": "model2_tf",
+                                    "device": "model2_cpu"
+                                }
+                            }
+                        ]
+                    },
+                    "telemetry_metadata": {
+                        "status_dir": "/path/to/status dir",
+                        "job_id": "111",
+                        "step_id": 111
+                    },
+                    "out_file": "test_dashboard/log_files/model_1.out",
+                    "err_file": "test_dashboard/log_files/model_1.err"
+                }
+            ],
+            "orchestrator": [
+                {
+                    "name": "orchestrator_0",
+                    "type": "redis",
+                    "interface": [
+                        "lo",
+                        "lo2"
+                    ],
+                    "shards": [
+                        {
+                            "name": "shard 1",
+                            "host": "shard1_host",
+                            "port": "11111",
+                            "out_file": "/path/to/shard/output/logs",
+                            "err_file": "/path/to/shard/error/logs",
+                            "conf_file": "/path/to/conf_file",
+                            "telemetry_metadata": {
+                                "status_dir": "/path/to/status/dir",
+                                "job_id": "111",
+                                "step_id": 111
+                            }
+                        },
+                        {
+                            "name": "shard 2",
+                            "host": "shard2_host",
+                            "port": "11111",
+                            "out_file": "/path/to/shard/output/logs",
+                            "err_file": "/path/to/shard/error/logs",
+                            "conf_file": "/path/to/conf_file",
+                            "telemetry_metadata": {
+                                "status_dir": "/path/to/status/dir",
+                                "job_id": "111",
+                                "step_id": 111
+                            }
+                        }
+                    ]
+                }
+            ],
+            "ensemble": [
+                {
+                    "name": "ensemble_1",
+                    "perm_strat": "string0",
+                    "batch_settings": {
+                        "string": "Any0"
+                    },
+                    "params": {
+                        "string": [
+                            "Any1",
+                            "Any3"
+                        ]
+                    },
+                    "models": [
+                        {
+                            "name": "ensemble_1_member_1",
+                            "path": "string",
+                            "exe_args": [
+                                "string"
+                            ],
+                            "batch_settings": {
+                                "batch_cmd": "command",
+                                "batch_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "run_settings": {
+                                "exe": "echo",
+                                "run_command": "srun",
+                                "run_args": {
+                                    "arg1": "string1",
+                                    "arg2": null
+                                }
+                            },
+                            "params": {
+                                "string": "Any"
+                            },
+                            "files": {
+                                "Symlink": [
+                                    "file1",
+                                    "file2"
+                                ],
+                                "Configure": [
+                                    "file3"
+                                ],
+                                "Copy": [
+                                    "file4",
+                                    "file5"
+                                ]
+                            },
+                            "colocated_db": {
+                                "settings": {
+                                    "protocol": "TCP/IP",
+                                    "port": 1111,
+                                    "interface": "lo",
+                                    "db_cpus": 1,
+                                    "limit_app_cpus": "True",
+                                    "debug": "False"
+                                },
+                                "scripts": [
+                                    {
+                                        "script1": {
+                                            "backend": "script1_torch",
+                                            "device": "script1_cpu"
+                                        }
+                                    },
+                                    {
+                                        "script2": {
+                                            "backend": "script2_torch",
+                                            "device": "script2_gpu"
+                                        }
+                                    }
+                                ],
+                                "models": [
+                                    {
+                                        "model1": {
+                                            "backend": "model1_tf",
+                                            "device": "model1_cpu"
+                                        }
+                                    },
+                                    {
+                                        "model2": {
+                                            "backend": "model2_tf",
+                                            "device": "model2_cpu"
+                                        }
+                                    }
+                                ]
+                            },
+                            "telemetry_metadata": {
+                                "status_dir": "/path/to/status dir",
+                                "job_id": "111",
+                                "step_id": 111
+                            },
+                            "out_file": "test_dashboard/log_files/model_0.out",
+                            "err_file": "test_dashboard/log_files/model_0.err"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

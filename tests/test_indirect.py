@@ -125,7 +125,7 @@ def test_ts():
     assert isinstance(ts, int)
 
 
-def test_indirect_main_dir_check(fileutils):
+def test_indirect_main_dir_check():
     """Ensure that the proxy validates the test directory exists"""
     test_dir = f"/foo/{uuid.uuid4()}"
     exp_dir = pathlib.Path(test_dir)
@@ -142,21 +142,20 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
     exp_dir = pathlib.Path(test_dir)
 
     captured = capsys.readouterr()  # throw away existing output
-    with monkeypatch.context() as ctx:
+    with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim.indirect.logger.error', print)
-        main("", "application", "unit-test-step-1", exp_dir)
+        _ = main("", "application", "unit-test-step-1", exp_dir)
 
     captured = capsys.readouterr()
-    assert "Invalid cmd supplied" in captured.out
+    assert "Invalid cmd supplied" in ex.value.args[0]
 
     # test with non-emptystring cmd
-    with monkeypatch.context() as ctx:
+    with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
         ctx.setattr('smartsim.indirect.logger.error', print)
-        rc = main("  \n  \t   ", "application", "unit-test-step-1", exp_dir)
+        _ = main("  \n  \t   ", "application", "unit-test-step-1", exp_dir)
 
     captured = capsys.readouterr()
-    assert "Invalid cmd supplied" in captured.out
-    assert rc == 1
+    assert "Invalid cmd supplied" in ex.value.args[0]
 
 
 def test_complete_process(capsys, fileutils):

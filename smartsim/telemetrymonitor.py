@@ -25,12 +25,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import asyncio
 import json
 import logging
 import os
 import pathlib
 import signal
+import sys
+import time
 import typing as t
 
 from dataclasses import dataclass, field
@@ -65,7 +66,7 @@ Telemetry Monitor entrypoint
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
-_ManifestKey = t.Literal["timestamp", "application", "orchestrator", "ensemble"]
+_ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble"]
 _JobKey = t.Tuple[str, str]
 
 
@@ -88,13 +89,13 @@ class PersistableEntity:
 
     @property
     def is_managed(self) -> bool:
-        return True if self.step_id else False
+        return True if self.job_id else False
 
 
 @dataclass
 class Run:
     timestamp: int
-    applications: t.List[PersistableEntity]
+    models: t.List[PersistableEntity]
     orchestrators: t.List[PersistableEntity]
     ensembles: t.List[PersistableEntity]
 
@@ -102,14 +103,14 @@ class Run:
         self, filter_fn: t.Optional[t.Callable[[PersistableEntity], bool]] = None
     ) -> t.List[PersistableEntity]:
         """Flatten runs into a list of SmartSimEntity run events"""
-        entities = self.applications + self.orchestrators + self.ensembles
+        entities = self.models + self.orchestrators + self.ensembles
         if filter_fn:
             entities = [entity for entity in entities if filter_fn(entity)]
         return entities
 
 
 @dataclass
-class ExperimentManifest:
+class RuntimeManifest:
     name: str
     path: pathlib.Path
     launcher: str
@@ -144,7 +145,7 @@ def hydrate_persistables(
     exp_dir: pathlib.Path,
 ) -> t.List[PersistableEntity]:
     """Map a collection of entity data persisted in a manifest file to an object"""
-    ts = run["timestamp"]
+    ts = run["run_id"]
     return [
         hydrate_persistable(entity_type, item, ts, exp_dir) for item in run[entity_type]
     ]
@@ -156,8 +157,8 @@ def hydrate_runs(
     """Map run data persisted in a manifest file to an object"""
     runs = [
         Run(
-            timestamp=instance["timestamp"],
-            applications=hydrate_persistables("application", instance, exp_dir),
+            timestamp=instance["run_id"],
+            models=hydrate_persistables("model", instance, exp_dir),
             orchestrators=hydrate_persistables("orchestrator", instance, exp_dir),
             ensembles=hydrate_persistables("ensemble", instance, exp_dir),
         )
@@ -166,7 +167,7 @@ def hydrate_runs(
     return runs
 
 
-def load_manifest(file_path: str) -> ExperimentManifest:
+def load_manifest(file_path: str) -> RuntimeManifest:
     """Load a persisted manifest and return the content"""
     source = pathlib.Path(file_path)
     source = source.resolve()
@@ -175,7 +176,7 @@ def load_manifest(file_path: str) -> ExperimentManifest:
     manifest_dict = json.loads(text)
     exp_dir = pathlib.Path(manifest_dict["experiment"]["path"])
 
-    manifest = ExperimentManifest(
+    manifest = RuntimeManifest(
         name=manifest_dict["experiment"]["name"],
         path=exp_dir,
         launcher=manifest_dict["experiment"]["launcher"],
@@ -224,7 +225,6 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
 
     track_event(get_ts(), inactive_entity, "stop", exp_dir, logger, detail=detail)
 
-
 def track_started(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the start of job"""
     inactive_entity = job.entity
@@ -235,11 +235,10 @@ def track_started(job: Job, logger: logging.Logger) -> None:
 
 def track_timestep(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for a timestep"""
-    timestamp = get_ts()
     inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(get_ts(), inactive_entity, f"step_{timestamp}", exp_dir, logger)
+    track_event(get_ts(), inactive_entity, f"step", exp_dir, logger)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
@@ -323,7 +322,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         return self._launcher
 
-    def _process_manifest(self, manifest_path: str, logger: logging.Logger) -> None:
+    def _process_manifest(self, manifest_path: str) -> None:
         """Load the runtime manifest for the experiment and add the entities
         to the collections of items being tracked for updates"""
         manifest = load_manifest(manifest_path)
@@ -341,7 +340,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                 entity.path = str(exp_dir)
 
                 self._tracked_jobs[entity.key] = entity
-                track_event(run.timestamp, entity, "start", exp_dir, logger)
+                track_event(run.timestamp, entity, "start", exp_dir, self._logger)
 
                 self._jm.add_telemetry_job(
                     entity.name,
@@ -394,7 +393,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._jm.move_to_completed(job)
 
         detail = f"status: {step_info.status}, error: {step_info.error}"
-        track_event(timestamp, entity, "stop", exp_dir, logger, detail=detail)
+        track_event(timestamp, entity, "stop", exp_dir, self._logger, detail=detail)
 
     def on_timestep(self, timestamp: int, exp_dir: pathlib.Path) -> None:
         """Called at polling frequency to request status updates on monitored entities"""
@@ -412,9 +411,19 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, exp_dir, step_info)
 
 
-async def main(
-    frequency: t.Union[int, float], experiment_dir: pathlib.Path, logger: logging.Logger
-) -> None:
+def timestep(action_handler: ManifestEventHandler, experiment_dir: pathlib.Path, frequency: int):
+    timestamp = get_ts()
+    logger.debug(f"Telemetry timestep: {timestamp}")
+    action_handler.on_timestep(timestamp, experiment_dir)
+    time.sleep(frequency)
+
+def main(
+    frequency: t.Union[int, float], 
+    experiment_dir: pathlib.Path, 
+    logger: logging.Logger,
+    observer: t.Optional[Observer] = None,
+    num_iters: int = 0,
+) -> int:
     """Setup the monitoring entities and start the timer-based loop that
     will poll for telemetry data"""
     logger.info(
@@ -429,7 +438,12 @@ async def main(
     log_handler = LoggingEventHandler(logger)  # type: ignore
     action_handler = ManifestEventHandler("manifest.json", logger)
 
-    observer = Observer()
+    if observer is None:
+        # create a file-system observer if one isn't injected
+        observer = Observer()
+
+    num_iters = num_iters if num_iters > 0 else 0  # ensure non-negative limits
+    remaining = num_iters if num_iters else 0  # track completed iterations
 
     try:
         if manifest_path.exists():
@@ -443,13 +457,19 @@ async def main(
             timestamp = get_ts()
             logger.debug(f"Telemetry timestep: {timestamp}")
             action_handler.on_timestep(timestamp, experiment_dir)
-            await asyncio.sleep(frequency)
+            time.sleep(frequency)
+
+            remaining -= 1
+            if num_iters and not remaining:
+                break
+        return 0
     except Exception as ex:
         logger.error(ex)
     finally:
-        observer.join()
         observer.stop()  # type: ignore
+        observer.join()
 
+    return 1
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
@@ -457,10 +477,6 @@ def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
     if not signo:
         logger = logging.getLogger()
         logger.warning("Received signal with no signo")
-
-    loop = asyncio.get_event_loop()
-    for task in asyncio.all_tasks(loop):
-        task.cancel()
 
 
 def register_signal_handlers() -> None:
@@ -473,14 +489,24 @@ def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments"""
     parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
     parser.add_argument(
-        "-f", type=str, help="Frequency of telemetry updates", default=5
+        "-f", 
+        type=str, 
+        help="Frequency of telemetry updates",
+        required=True,
     )
     parser.add_argument(
         "-d",
         type=str,
         help="Experiment root directory",
-        # required=True,
-        default="/lus/cls01029/mcbridch/ss/smartsim",
+        required=True,
+        # default="/lus/cls01029/mcbridch/ss/smartsim",
+    )
+    parser.add_argument(
+        "-n",
+        type=int,
+        help="Automatically shutdown after a specific number of polling iterations",
+        default=0,
+        required=False,
     )
     return parser
 
@@ -490,13 +516,17 @@ if __name__ == "__main__":
 
     parser = get_parser()
     args = parser.parse_args()
-    logger = logging.getLogger()
 
+    logging.basicConfig()
+    logger = logging.getLogger()
+    
     # Must register cleanup before the main loop is running
     register_signal_handlers()
 
     try:        
-        loop_fn = main(int(args.f), pathlib.Path(args.d), logger)
-        asyncio.run(loop_fn)
-    except asyncio.CancelledError:
-        logger.exception("Shutting down telemetry monitor due to CancelledError")
+        rc = main(int(args.f), pathlib.Path(args.d), logger)
+        sys.exit(rc)
+    except Exception as ex:
+        logger.exception(f"Shutting down telemetry monitor due to unexpected error: {ex}")
+    
+    sys.exit(1)

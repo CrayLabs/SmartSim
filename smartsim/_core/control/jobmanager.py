@@ -131,7 +131,7 @@ class JobManager:
         with self._lock:
             self.completed[job.ename] = job
             for hook in self.on_complete_hook:
-                hook(job)
+                hook(job, logger)
             job.record_history()
 
             # remove from actively monitored jobs
@@ -290,7 +290,7 @@ class JobManager:
         :returns: tuple of status
         """
         for hook in self.on_timestep_hook:
-            hook(job)
+            hook(job, logger)
 
         with self._lock:
             try:
