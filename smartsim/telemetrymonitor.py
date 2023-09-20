@@ -72,6 +72,7 @@ _JobKey = t.Tuple[str, str]
 
 @dataclass
 class PersistableEntity:
+    """Minimal model required for monitoring an entity in the JobManager"""
     entity_type: str
     name: str
     job_id: str
@@ -94,6 +95,7 @@ class PersistableEntity:
 
 @dataclass
 class Run:
+    """Model containing entities of an individual start call for an experiment"""
     timestamp: int
     models: t.List[PersistableEntity]
     orchestrators: t.List[PersistableEntity]
@@ -111,6 +113,8 @@ class Run:
 
 @dataclass
 class RuntimeManifest:
+    """The runtime manifest holds meta information about the experiment entities created
+    at runtime to satisfy the experiment requirements."""
     name: str
     path: pathlib.Path
     launcher: str
