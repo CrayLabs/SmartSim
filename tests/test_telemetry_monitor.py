@@ -126,17 +126,9 @@ def test_track_event(
     fileutils,
 ):
     """Ensure that track event writes a file to the expected location"""
-    exp_dir = pathlib.Path(fileutils.make_test_dir())
-    stored = {
-        "name": name,
-        "job_id": job_id,
-        "step_id": step_id,
-        "run_id": timestamp,
-    }
-    persistable = hydrate_persistable(etype, stored, exp_dir)
-
+    exp_dir = fileutils.make_test_dir()
     exp_path = pathlib.Path(exp_dir)
-    track_event(timestamp, persistable, evt_type, exp_path, logger)
+    track_event(timestamp, name, job_id, step_id, etype, evt_type, exp_path, logger)
 
     expected_output = exp_path / "manifest" / etype / name / f"{evt_type}.json"
 
@@ -149,7 +141,7 @@ def test_track_event(
     [
         pytest.param("start", track_started, id="start event"),
         pytest.param("stop", track_completed, id="stop event"),
-        pytest.param("step", track_timestep, id="update event"),
+        pytest.param("timestep", track_timestep, id="update event"),
     ],
 )
 def test_track_specific(
@@ -175,6 +167,7 @@ def test_track_specific(
     exp_path = pathlib.Path(exp_dir)
 
     job = Job(name, job_id, persistable, "local", False)
+    
     track_fn(job, logger)
 
     fname = f"{evt_type}.json"
