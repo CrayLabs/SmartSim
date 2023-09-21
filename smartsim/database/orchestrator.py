@@ -36,7 +36,7 @@ from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import db_is_active
-from .._core.utils.helpers import is_valid_cmd, get_db_identifier_suffix
+from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
@@ -565,7 +565,7 @@ class Orchestrator(EntityList):
                     address = ":".join([get_ip_from_host(host), str(port)])
                     addresses.append(address)
 
-            db_name, name = get_db_identifier_suffix(self.db_identifier)
+            db_name, name = unpack_db_identifier(self.db_identifier, "_")
 
             environ[f"SSDB{db_name}"] = addresses[0]
 

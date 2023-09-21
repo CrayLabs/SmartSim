@@ -190,31 +190,6 @@ class Experiment:
         :type kill_on_interrupt: bool, optional
         """
 
-        # Check that entity started is a database and add the db_identifier
-        for index, item in enumerate(args):
-            if isinstance(item, Model):
-                if item.colocated:
-                    db_id = args[index].run_settings.colocated_db_settings[
-                        "db_identifier"
-                    ]
-
-                    if self.get_status(item) == "status.STATUS_COMPLETED":
-                        self.db_identifiers.remove(db_id)
-
-                    self.append_to_db_identifier_list(db_id)
-
-                if isinstance(item, Orchestrator):
-                    if self.get_status(item) == "status.STATUS_RUNNING":
-                        raise SmartSimError(f"Status of {item} is running")
-
-
-                    # for job in self._control.get_jobs().values():
-                    #     for run in range(job.history.runs + 1):
-                    #         if job.history.statuses[run] == "Completed":  # running throw an error  
-
-                    #             #del self.db_dict[db_id]
-                    #             self.db_identifiers.remove(db_id)
-
         start_manifest = Manifest(*args)
         try:
             if summary:
@@ -886,11 +861,9 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
-    def dbs_in_use(self) -> t.Set[str]:
-        return set(self.db_identifiers)
 
     def append_to_db_identifier_list(self, db_identifier: str) -> None:
-        # Check if db_identifier already exists
+        """Check if db_identifier already exists when calling create_database"""
         if db_identifier in self.db_identifiers:
             raise DBIDConflictError(
                 f"Database identifier {db_identifier}"

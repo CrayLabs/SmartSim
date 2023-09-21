@@ -31,13 +31,14 @@ from threading import Thread, RLock
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity, EntityList
-from ...error import SmartSimError
+from ...entity import DBNode, SmartSimEntity, EntityList, Model
+from ...error import SmartSimError, DBIDConflictError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
+from ..._core.utils.helpers import unpack_db_identifier
 from .job import Job
 
 logger = get_logger(__name__)
@@ -79,6 +80,8 @@ class JobManager:
         self._lock = lock  # thread lock
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
+
+        self.active_db_identifiers: t.Set[str] = set()
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -128,6 +131,15 @@ class JobManager:
         :param job: job instance we are transitioning
         :type job: Job
         """
+        # remove db id from active entity list
+        if (
+            isinstance(job.entity, Model)
+            and job.entity.run_settings.colocated_db_settings is not None
+        ):
+            colo_id = job.entity.run_settings.colocated_db_settings["db_identifier"]
+            if colo_id in self.active_db_identifiers:
+                self.remove_from_active_db_identifier_list(colo_id)
+
         with self._lock:
             self.completed[job.ename] = job
             job.record_history()
@@ -188,8 +200,21 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
+            _, db_id = unpack_db_identifier(entity.name, "_")
+            # populate the db_id list for active entities
+            self.append_to_active_db_identifier_list(db_id)
+
         else:
             self.jobs[entity.name] = job
+
+            if (
+                isinstance(entity, Model)
+                and entity.run_settings.colocated_db_settings is not None
+            ):  
+                # populate the db_id list for active entities
+                self.append_to_active_db_identifier_list(
+                    entity.run_settings.colocated_db_settings["db_identifier"]
+                )
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
@@ -377,3 +402,20 @@ class JobManager:
     def __len__(self) -> int:
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
+
+    def append_to_active_db_identifier_list(self, db_identifier: str) -> None:
+        """Add database identifier to list of active database identifiers """
+        # Check if db_identifier already exists
+        if db_identifier in self.active_db_identifiers:
+            raise DBIDConflictError(
+                f"Database identifier {db_identifier}"
+                " has already been used. Pass in a unique name for db_identifier"
+            )
+        # Otherwise, add
+        self.active_db_identifiers.add(db_identifier)
+
+
+    def remove_from_active_db_identifier_list(self, db_id: str) -> None:
+        """Remove database identifier from list of active database identifiers"""
+        if len(self.active_db_identifiers) != 0:
+            self.active_db_identifiers.remove(db_id)

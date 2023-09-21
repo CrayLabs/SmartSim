@@ -39,8 +39,8 @@ from smartredis import Client, ConfigOptions
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ..._core.utils.helpers import (
-    get_db_identifier_suffix,
-    get_colo_db_identfifier_suffix,
+    unpack_db_identifier,
+    unpack_colo_db_identfifier,
 )
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, Model, SmartSimEntity
@@ -207,6 +207,9 @@ class Controller:
                     job = self._jobs[entity.name]
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
+            # remove db_id from active db identifier list
+            _, db_id = unpack_db_identifier(entity.name, "_")
+            self._jobs.remove_from_active_db_identifier_list(db_id)
 
     def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
@@ -486,7 +489,7 @@ class Controller:
         address_dict = self._jobs.get_db_host_addresses()
 
         for db_id, addresses in address_dict.items():
-            db_name, _ = get_db_identifier_suffix(db_id)
+            db_name, _ = unpack_db_identifier(db_id, "_")
 
             if addresses:
                 if len(addresses) <= 128:
@@ -508,7 +511,7 @@ class Controller:
 
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
-            db_name_colo = get_colo_db_identfifier_suffix(
+            db_name_colo = unpack_colo_db_identfifier(
                 entity.run_settings.colocated_db_settings["db_identifier"]
             )
 
@@ -664,7 +667,7 @@ class Controller:
             db_id,
             db_addresses,
         ) in address_dict.items():
-            db_name, name = get_db_identifier_suffix(db_id)
+            db_name, name = unpack_db_identifier(db_id, "_")
 
             hosts = list({address.split(":")[0] for address in db_addresses})
             ports = list({int(address.split(":")[-1]) for address in db_addresses})

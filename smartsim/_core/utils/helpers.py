@@ -37,11 +37,15 @@ from shutil import which
 from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBackendStr
 
 
-def get_db_identifier_suffix(db_id: str) -> t.Tuple[str, str]:
-    """Create database identifier suffix for regular database"""
+def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
+    """Unpack the unformatted database identifier using the token, 
+    and format for env variable suffix
+    :db_id: the unformatted database identifier
+    :token: character '_' or '-' to use to unpack the database identifier 
+    :return: db suffix, and formatted db id
+    """
 
-    # remove shard id (_0) from dbnode name
-    db_name = "_".join(db_id.split("_")[:-1])
+    db_name = "_".join(db_id.split(token)[:-1])
     db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
     # pass an empty name if no db id
     if db_name == "orchestrator":
@@ -51,9 +55,12 @@ def get_db_identifier_suffix(db_id: str) -> t.Tuple[str, str]:
 
 
 
-def get_colo_db_identfifier_suffix(db_name: str) -> str:
-    """Create database identifier suffix for colocated database"""
-    return "_" + db_name if db_name else ""
+def unpack_colo_db_identfifier(db_id: str) -> str:
+    """Create database identifier suffix for colocated database
+     :db_id: the unformatted database identifier
+     :return: db suffix
+     """
+    return "_" + db_id if db_id else ""
 
 
 def create_lockfile_name() -> str:
