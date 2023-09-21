@@ -111,7 +111,7 @@ class LocalLauncher(Launcher):
         :rtype: t.List[str]
         """
 
-        proxy_module = "smartsim.indirect"
+        proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()
         cmd = ' '.join(cmd_list)
