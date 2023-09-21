@@ -44,14 +44,16 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
     :token: character '_' or '-' to use to unpack the database identifier
     :return: db suffix, and formatted db id
     """
+    if db_id:
+        db_name = "_".join(db_id.split(token)[:-1])
+        db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
+        # pass an empty name if no db id
+        if db_name == "orchestrator":
+            db_name = ""
 
-    db_name = "_".join(db_id.split(token)[:-1])
-    db_name_suffix = "" if db_name == "orchestrator" else "_" + db_name
-    # pass an empty name if no db id
-    if db_name == "orchestrator":
-        db_name = ""
-
-    return db_name_suffix, db_name
+        return db_name_suffix, db_name
+    else:
+        return "", ""
 
 
 def unpack_colo_db_identfifier(db_id: str) -> str:
