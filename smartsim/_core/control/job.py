@@ -56,7 +56,7 @@ class JobEntity:
 
     @property
     def is_managed(self) -> bool:
-        return False
+        return bool(self.job_id)
 
     @property
     def key(self) -> _JobKey:
