@@ -27,6 +27,7 @@
 import itertools
 import time
 import typing as t
+from logging import Logger
 from threading import Thread, RLock
 from types import FrameType
 
@@ -38,7 +39,7 @@ from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
-from .job import Job
+from .job import Job, JobEntity
 
 logger = get_logger(__name__)
 
@@ -76,9 +77,9 @@ class JobManager:
         self._lock = lock  # thread lock
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
-        self.on_complete_hook: t.List[t.Callable[[Job, str], None]] = []
-        self.on_start_hook: t.List[t.Callable[[Job, str], None]] = []
-        self.on_timestep_hook: t.List[t.Callable[[Job, str], None]] = []
+        self.on_complete_hook: t.List[t.Callable[[Job, Logger], None]] = []
+        self.on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
+        self.on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
 
     def start(self) -> None:
         """Start a thread for the job manager"""
@@ -171,7 +172,7 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -195,17 +196,17 @@ class JobManager:
             self.jobs[entity.name] = job
 
         for hook in self.on_start_hook:
-            hook(job)
-    
-    def add_job_onstart_callback(self, hook: t.Callable[[Job, str], None]) -> None:
+            hook(job, logger)
+
+    def add_job_onstart_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
         if not hook in self.on_start_hook:
             self.on_start_hook.append(hook)
-    
-    def add_job_onstop_callback(self, hook: t.Callable[[Job, str], None]) -> None:
+
+    def add_job_onstop_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
         if not hook in self.on_complete_hook:
             self.on_complete_hook.append(hook)
 
-    def add_job_onstep_callback(self, hook: t.Callable[[Job, str], None]) -> None:
+    def add_job_onstep_callback(self, hook: t.Callable[[Job, Logger], None]) -> None:
         if not hook in self.on_timestep_hook:
             self.on_timestep_hook.append(hook)
 
@@ -213,9 +214,9 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntityList],
+        entity: JobEntity,
         is_task: bool = True,
-        is_orch: bool = False
+        is_orch: bool = False,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
 

@@ -212,7 +212,7 @@ def test_persistable_computed_properties(
 
     persistable = PersistableEntity(etype, name, job_id, step_id, timestamp, exp_dir)
     assert persistable.is_managed == exp_ismanaged
-    assert persistable.is_orch == exp_isorch
+    assert persistable.is_db == exp_isorch
 
 
 @pytest.mark.parametrize(

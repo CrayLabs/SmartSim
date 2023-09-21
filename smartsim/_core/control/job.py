@@ -31,10 +31,11 @@ from ...entity import SmartSimEntity, EntitySequence
 from ...status import STATUS_NEW
 
 
-class EntityBase:
+class JobEntity:
     """
     Minimum entity API required for Job to do what it does...
     """
+
     @property
     def is_db(self) -> bool:
         return False
@@ -66,7 +67,6 @@ class EntityBase:
     #                 ip_addr = get_ip_from_host(combine[0])
     #                 addresses.append(":".join((ip_addr, str(combine[1]))))
     #     return addresses
-    
 
 
 class Job:
@@ -80,8 +80,7 @@ class Job:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        # entity: EntityBase,
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity], JobEntity],
         launcher: str,
         is_task: bool,
     ) -> None:

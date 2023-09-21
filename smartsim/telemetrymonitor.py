@@ -31,19 +31,19 @@ import os
 import pathlib
 import signal
 import sys
+import threading
 import time
 import typing as t
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from multiprocessing import RLock
 from types import FrameType
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
-from smartsim._core.control.job import Job
+from smartsim._core.control.job import Job, JobEntity
 from smartsim._core.control.jobmanager import JobManager
 from smartsim._core.launcher.stepInfo import StepInfo
 from smartsim._core.launcher.cobalt.cobaltLauncher import CobaltLauncher
@@ -53,7 +53,7 @@ from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
-from smartsim.experiment import Experiment
+from smartsim.error.errors import SmartSimError
 from smartsim.status import TERMINAL_STATUSES
 
 
@@ -66,36 +66,37 @@ Telemetry Monitor entrypoint
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
-_ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble"]
+_ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble", "run_id"]
 _JobKey = t.Tuple[str, str]
 
 
 @dataclass
-class PersistableEntity:
+class PersistableEntity(JobEntity):
     """Minimal model required for monitoring an entity in the JobManager"""
-    entity_type: str
-    name: str
-    job_id: str
-    step_id: str
-    timestamp: int
-    path: str
+    name: str = ""
+    job_id: str = ""
+    step_id: str = ""
+    type: str = ""
+    path: str = ""
+    timestamp: int = 0
 
     @property
     def key(self) -> _JobKey:
         return (self.job_id, self.step_id)
 
     @property
-    def is_orch(self) -> bool:
-        return self.entity_type == "orchestrator"
+    def is_db(self) -> bool:
+        return self.type == "orchestrator"
 
     @property
     def is_managed(self) -> bool:
-        return True if self.job_id else False
+        return bool(self.job_id)
 
 
 @dataclass
 class Run:
     """Model containing entities of an individual start call for an experiment"""
+
     timestamp: int
     models: t.List[PersistableEntity]
     orchestrators: t.List[PersistableEntity]
@@ -115,6 +116,7 @@ class Run:
 class RuntimeManifest:
     """The runtime manifest holds meta information about the experiment entities created
     at runtime to satisfy the experiment requirements."""
+
     name: str
     path: pathlib.Path
     launcher: str
@@ -134,7 +136,7 @@ def hydrate_persistable(
 ) -> PersistableEntity:
     """Map entity data persisted in a manifest file to an object"""
     return PersistableEntity(
-        entity_type=entity_type,
+        type=entity_type,
         name=persisted_entity["name"],
         job_id=persisted_entity.get("job_id", ""),
         step_id=persisted_entity.get("step_id", ""),
@@ -149,9 +151,10 @@ def hydrate_persistables(
     exp_dir: pathlib.Path,
 ) -> t.List[PersistableEntity]:
     """Map a collection of entity data persisted in a manifest file to an object"""
-    ts = run["run_id"]
+    run_id = int(run["run_id"])  # run_id is timestamp of job start
     return [
-        hydrate_persistable(entity_type, item, ts, exp_dir) for item in run[entity_type]
+        hydrate_persistable(entity_type, item, run_id, exp_dir)
+        for item in run[entity_type]
     ]
 
 
@@ -191,7 +194,7 @@ def load_manifest(file_path: str) -> RuntimeManifest:
 
 def track_event(
     timestamp: int,
-    entity: PersistableEntity,
+    entity: JobEntity,
     action: _EventClass,
     exp_dir: pathlib.Path,
     logger: logging.Logger,
@@ -202,7 +205,7 @@ def track_event(
     """
     job_id = entity.job_id or ""
     step_id = entity.step_id or ""
-    entity_type = entity.entity_type or "missing_entity_type"
+    entity_type = entity.type or "missing_entity_type"
     logger.info(
         f"mocked tracking `{entity_type}.{action}` event w/jid: {job_id}, "
         f"tid: {step_id}, ts: {timestamp}"
@@ -217,8 +220,8 @@ def track_event(
         entity_dict.pop("path", None)
         entity_dict["detail"] = detail
         tgt_path.write_text(json.dumps(entity_dict))
-    except Exception as ex:
-        logger.error(ex)
+    except Exception:
+        logger.error("Unable to write tracking file.", exc_info=True)
 
 
 def track_completed(job: Job, logger: logging.Logger) -> None:
@@ -228,6 +231,7 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
     exp_dir = pathlib.Path(job.entity.path)
 
     track_event(get_ts(), inactive_entity, "stop", exp_dir, logger, detail=detail)
+
 
 def track_started(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the start of job"""
@@ -242,19 +246,20 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
     inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
-    track_event(get_ts(), inactive_entity, f"step", exp_dir, logger)
+    track_event(get_ts(), inactive_entity, "timestep", exp_dir, logger)
 
 
 class ManifestEventHandler(PatternMatchingEventHandler):
-    """The ManifestEventHandler monitors an experiment for changes and updates 
-    a telemetry datastore as needed. 
-    
+    """The ManifestEventHandler monitors an experiment for changes and updates
+    a telemetry datastore as needed.
+
     It contains event handlers that are triggered by changes to a runtime experiment
     manifest. The runtime manifest differs from a standard manifest. A runtime manifest
     may contain multiple experiment executions in a `runs` collection.
-    
+
     It also contains a long-polling loop that checks experiment entities for updates
     at each timestep."""
+
     def __init__(
         self,
         pattern: str,
@@ -272,9 +277,16 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._completed_jobs: t.Dict[_JobKey, PersistableEntity] = {}
         self._launcher_type: str = ""
         self._launcher: t.Optional[Launcher] = None
-        self._jm: JobManager = JobManager(RLock())
+        self._jm: JobManager = JobManager(threading.RLock())
+        self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
+            "slurm": SlurmLauncher,
+            "pbs": PBSLauncher,
+            "cobalt": CobaltLauncher,
+            "lsf": LSFLauncher,
+            "local": LocalLauncher,
+        }
 
-    def init_launcher(self, launcher: str) -> None:
+    def init_launcher(self, launcher: str) -> Launcher:
         """Initialize the controller with a specific type of launcher.
         SmartSim currently supports slurm, pbs(pro), cobalt, lsf,
         and local launching
@@ -285,30 +297,20 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                                     a supported launcher
         :raises TypeError: if no launcher argument is provided.
         """
-        launcher_map: t.Dict[str, t.Type[Launcher]] = {
-            "slurm": SlurmLauncher,
-            "pbs": PBSLauncher,
-            "cobalt": CobaltLauncher,
-            "lsf": LSFLauncher,
-            "local": LocalLauncher,
-        }
 
         if launcher is not None:
             launcher = launcher.lower()
-            if launcher in launcher_map:
-                return launcher_map[launcher]()
-            else:
-                raise ValueError("Launcher type not supported: " + launcher)
-        else:
-            raise TypeError("Must provide a 'launcher' argument")
+            if launcher in self._launcher_map:
+                return self._launcher_map[launcher]()
+            raise ValueError("Launcher type not supported: " + launcher)
+
+        raise TypeError("Must provide a 'launcher' argument")
 
     def set_launcher(self, launcher_type: str) -> None:
         """Set the launcher for the experiment"""
         if launcher_type != self._launcher_type:
             self._launcher_type = launcher_type
-            self._launcher = self.init_launcher(
-                launcher_type
-            )
+            self._launcher = self.init_launcher(launcher_type)
             self._jm.set_launcher(self._launcher)
             self._jm.add_job_onstart_callback(track_started)
             self._jm.add_job_onstop_callback(track_completed)
@@ -326,11 +328,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         return self._launcher
 
-    def _process_manifest(self, manifest_path: str) -> None:
+    def process_manifest(self, manifest_path: str) -> None:
         """Load the runtime manifest for the experiment and add the entities
         to the collections of items being tracked for updates"""
         manifest = load_manifest(manifest_path)
         self.set_launcher(manifest.launcher)
+
+        if not self._jm._launcher:  # pylint: disable=protected-access
+            raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
 
@@ -351,9 +356,9 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     entity.job_id,
                     entity,
                     is_task=entity.is_managed,
-                    is_orch=entity.is_orch,
+                    is_orch=entity.is_db,
                 )
-                self._jm._launcher.step_mapping.add(
+                self._jm._launcher.step_mapping.add(  # pylint: disable=protected-access
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
                 )
             self._tracked_runs[run.timestamp] = run
@@ -367,7 +372,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
         """
         super().on_modified(event)  # type: ignore
-        self._process_manifest(event.src_path)
+        self.process_manifest(event.src_path)
 
     def on_created(self, event: FileCreatedEvent) -> None:
         """Event handler for when a file or directory is created.
@@ -378,29 +383,34 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
         """
         super().on_created(event)  # type: ignore
-        self._process_manifest(event.src_path)
+        self.process_manifest(event.src_path)
 
     def _to_completed(
         self,
         timestamp: int,
         entity: PersistableEntity,
         exp_dir: pathlib.Path,
-        step_info: StepInfo,
+        step_info: t.Optional[StepInfo],
     ) -> None:
         """Move a monitored entity from the active to completed collection to
         stop monitoring for updates during timesteps."""
         inactive_entity = self._tracked_jobs.pop(entity.key)
         if entity.key not in self._completed_jobs:
             self._completed_jobs[entity.key] = inactive_entity
-        
+
         job = self._jm[entity.name]
         self._jm.move_to_completed(job)
 
-        detail = f"status: {step_info.status}, error: {step_info.error}"
+        if step_info:
+            detail = f"status: {step_info.status}, error: {step_info.error}"
+        else:
+            detail = "unknown status. step_info not retrieved"
+
         track_event(timestamp, entity, "stop", exp_dir, self._logger, detail=detail)
 
     def on_timestep(self, timestamp: int, exp_dir: pathlib.Path) -> None:
-        """Called at polling frequency to request status updates on monitored entities"""
+        """Called at polling frequency to request status updates on
+        monitored entities"""
         launcher = self.launcher
         entity_map = self._tracked_jobs
 
@@ -410,20 +420,36 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             step_updates = launcher.get_step_update(list(names.keys()))
 
             for step_name, step_info in step_updates:
-                if step_info.status in TERMINAL_STATUSES:
+                if step_info and step_info.status in TERMINAL_STATUSES:
                     completed_entity = names[step_name]
                     self._to_completed(timestamp, completed_entity, exp_dir, step_info)
 
 
-def timestep(action_handler: ManifestEventHandler, experiment_dir: pathlib.Path, frequency: int):
-    timestamp = get_ts()
-    logger.debug(f"Telemetry timestep: {timestamp}")
-    action_handler.on_timestep(timestamp, experiment_dir)
-    time.sleep(frequency)
+def event_loop(
+    observer: Observer,
+    action_handler: ManifestEventHandler,
+    frequency: t.Union[int, float],
+    experiment_dir: pathlib.Path,
+    num_iters: int,
+    logger: logging.Logger,
+) -> None:
+    num_iters = num_iters if num_iters > 0 else 0  # ensure non-negative limits
+    remaining = num_iters if num_iters else 0  # track completed iterations
+
+    while observer.is_alive():
+        timestamp = get_ts()
+        logger.debug(f"Telemetry timestep: {timestamp}")
+        action_handler.on_timestep(timestamp, experiment_dir)
+        time.sleep(frequency)
+
+        remaining -= 1
+        if num_iters and not remaining:
+            break
+
 
 def main(
-    frequency: t.Union[int, float], 
-    experiment_dir: pathlib.Path, 
+    frequency: t.Union[int, float],
+    experiment_dir: pathlib.Path,
     logger: logging.Logger,
     observer: t.Optional[Observer] = None,
     num_iters: int = 0,
@@ -446,26 +472,17 @@ def main(
         # create a file-system observer if one isn't injected
         observer = Observer()
 
-    num_iters = num_iters if num_iters > 0 else 0  # ensure non-negative limits
-    remaining = num_iters if num_iters else 0  # track completed iterations
-
     try:
         if manifest_path.exists():
-            action_handler._process_manifest(str(manifest_path))
+            action_handler.process_manifest(str(manifest_path))
 
         observer.schedule(log_handler, manifest_dir)  # type: ignore
         observer.schedule(action_handler, manifest_dir)  # type: ignore
         observer.start()  # type: ignore
 
-        while observer.is_alive():
-            timestamp = get_ts()
-            logger.debug(f"Telemetry timestep: {timestamp}")
-            action_handler.on_timestep(timestamp, experiment_dir)
-            time.sleep(frequency)
-
-            remaining -= 1
-            if num_iters and not remaining:
-                break
+        event_loop(
+            observer, action_handler, frequency, experiment_dir, num_iters, logger
+        )
         return 0
     except Exception as ex:
         logger.error(ex)
@@ -491,28 +508,28 @@ def register_signal_handlers() -> None:
 
 def get_parser() -> argparse.ArgumentParser:
     """Instantiate a parser to process command line arguments"""
-    parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
-    parser.add_argument(
-        "-f", 
-        type=str, 
+    arg_parser = argparse.ArgumentParser(description="SmartSim Telemetry Monitor")
+    arg_parser.add_argument(
+        "-f",
+        type=str,
         help="Frequency of telemetry updates",
         required=True,
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         "-d",
         type=str,
         help="Experiment root directory",
         required=True,
         # default="/lus/cls01029/mcbridch/ss/smartsim",
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         "-n",
         type=int,
         help="Automatically shutdown after a specific number of polling iterations",
         default=0,
         required=False,
     )
-    return parser
+    return arg_parser
 
 
 if __name__ == "__main__":
@@ -522,15 +539,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig()
-    logger = logging.getLogger()
-    
+    log = logging.getLogger()
+
     # Must register cleanup before the main loop is running
     register_signal_handlers()
 
-    try:        
-        rc = main(int(args.f), pathlib.Path(args.d), logger)
-        sys.exit(rc)
-    except Exception as ex:
-        logger.exception(f"Shutting down telemetry monitor due to unexpected error: {ex}")
-    
+    try:
+        main(int(args.f), pathlib.Path(args.d), log)
+        sys.exit(0)
+    except Exception:
+        log.exception(
+            "Shutting down telemetry monitor due to unexpected error", exc_info=True
+        )
+
     sys.exit(1)

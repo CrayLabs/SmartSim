@@ -111,7 +111,7 @@ class LocalLauncher(Launcher):
         :rtype: t.List[str]
         """
 
-        proxy_module = "smartsim._core.entrypoints.indirect"
+        proxy_module = "smartsim.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()
         cmd = ' '.join(cmd_list)
@@ -122,13 +122,13 @@ class LocalLauncher(Launcher):
             sys.executable,
             "-m",
             proxy_module,
-            "-c",
+            "+c",
             f"'{shlex.quote(cmd)}'",
-            "-t",
+            "+t",
             etype,
-            "-n",
+            "+n",
             step.name,
-            "-d",
+            "+d",
             step.cwd,
         ]
 
@@ -146,6 +146,11 @@ class LocalLauncher(Launcher):
             self.task_manager.start()
 
         out, err = step.get_output_files()
+        
+        # pylint: disable-next=consider-using-with
+        output = open(out, "w+", encoding="utf-8")
+        # pylint: disable-next=consider-using-with
+        error = open(err, "w+", encoding="utf-8")
 
         # LocalStep.run_command omits env, include it here
         passed_env = step.env if isinstance(step, LocalStep) else None
@@ -153,7 +158,7 @@ class LocalLauncher(Launcher):
         cmd = self._get_proxy_cmd(step)
 
         task_id = self.task_manager.start_task(
-            cmd, step.cwd, env=passed_env, out=pathlib.Path(out), err=pathlib.Path(err)
+            cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
         )
 
         self.step_mapping.add(step.name, task_id=task_id, managed=False)

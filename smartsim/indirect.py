@@ -25,11 +25,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import dataclasses
-import logging
 import os
 import pathlib
-from tabnanny import check
 import psutil
 import shlex
 import signal
@@ -37,7 +34,7 @@ import sys
 import typing as t
 
 from datetime import datetime
-from subprocess import PIPE  #, STDOUT
+from subprocess import PIPE  # , STDOUT
 from types import FrameType
 
 from smartsim.log import get_logger
@@ -45,7 +42,7 @@ from smartsim.telemetrymonitor import track_event, PersistableEntity
 
 
 STEP_PID = None
-logger: t.Optional[logging.Logger] = get_logger(__name__)
+logger = get_logger(__name__)
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
@@ -73,32 +70,36 @@ def main(
     if not cleaned_cmd:
         raise ValueError(f"Invalid cmd supplied: {cmd}")
 
+    job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
+
     try:
-        logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
-        
         process = psutil.Popen(cleaned_cmd, stdout=PIPE, stderr=PIPE)
         STEP_PID = process.pid
-        job_id = "" # unmanaged jobs have no job ID, only step ID (the pid)
-
         persistable = PersistableEntity(
-            etype,
-            step_name,
-            job_id,
-            str(STEP_PID),
-            get_ts(),
-            exp_dir,
+            type=etype,
+            name=step_name,
+            job_id=job_id,
+            step_id=str(STEP_PID),
+            timestamp=get_ts(),
+            path=exp_dir,
         )
-        
+
+        logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
         track_event(persistable.timestamp, persistable, "start", exp_path, logger)
-        rc = process.wait()
 
-        logger.debug(f"persisting step end for name: {step_name} w/return code: {rc}")
+    except Exception:
+        logger.error("Failed to create process", exc_info=True)
+        return 1
+
+    try:
+        ret_code = process.wait()
+
+        logger.debug(f"persisting step {step_name} end w/ret_code: {ret_code}")
         track_event(get_ts(), persistable, "stop", exp_path, logger)
-        return rc
+        return ret_code
+    except Exception:
+        logger.error("Failed to execute process", exc_info=True)
 
-    except Exception as e:
-        logger.error(f"Failed to execute step: {e}")
-    
     return 1
 
 
@@ -113,8 +114,8 @@ def cleanup() -> None:
     except psutil.NoSuchProcess:
         logger.warning("Unable to find step executor process to kill.")
 
-    except OSError as e:
-        logger.warning(f"Failed to clean up step executor gracefully: {e}")
+    except OSError as ex:
+        logger.warning(f"Failed to clean up step executor gracefully: {ex}")
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
@@ -132,24 +133,24 @@ def register_signal_handlers() -> None:
 
 
 def get_parser() -> argparse.ArgumentParser:
-    # NOTE: plus prefix avoids passing param incorrectly to python interpreter, 
-    # e.g. python receives params - `python -m smartsim._core.entrypoints.indirect -c ... -t ...`
-    arg_parser = argparse.ArgumentParser(
+    # NOTE: plus prefix avoids passing param incorrectly to python interpreter,
+    # e.g. `python -m smartsim._core.entrypoints.indirect -c ... -t ...`
+    parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Step Executor"
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "+c", type=str, help="The command to execute", required=True
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "+t", type=str, help="The type of entity related to the step", required=True
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "+n", type=str, help="The step name being executed", required=True
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "+d", type=str, help="The experiment root directory", required=True
     )
-    return arg_parser
+    return parser
 
 
 if __name__ == "__main__":
