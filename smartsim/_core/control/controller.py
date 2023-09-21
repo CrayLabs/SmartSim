@@ -26,6 +26,7 @@
 
 from __future__ import annotations
 
+import itertools
 import os.path as osp
 import pickle
 import signal
@@ -62,6 +63,7 @@ from ..launcher import (
 )
 from ..launcher.launcher import Launcher
 from ..utils import check_cluster_status, create_cluster, serialize
+from ..utils.network import get_ip_from_host
 from .job import Job
 from .jobmanager import JobManager
 from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
@@ -250,6 +252,19 @@ class Controller:
         with JM_LOCK:
             return self._jobs.completed
 
+    def get_db_jobs(self) -> t.Dict[str, t.Tuple[Job, t.Union[DBNode, Orchestrator]]]:
+        """Return a dictionary of database job data
+
+        :returns: dict[str, Job]
+        """
+        with JM_LOCK:
+            db_jobs = {
+                job.name: (job, job.entity)
+                for job in self._jobs.db_jobs.values()
+                if isinstance(job.entity, (DBNode, Orchestrator))
+            }
+            return db_jobs
+
     def get_entity_status(
         self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> str:
@@ -436,7 +451,7 @@ class Controller:
 
         # set the jobs in the job manager to provide SSDB variable to entities
         # if _host isnt set within each
-        self._jobs.set_db_hosts(orchestrator)
+        self._set_db_hosts(orchestrator)
 
         # create the database cluster
         if orchestrator.num_shards > 2:
@@ -728,6 +743,40 @@ class Controller:
                 self._jobs.start()
 
             return orc
+
+    def _get_db_host_addresses(self) -> t.List[str]:
+        """Retrieve the list of hosts for the database
+
+        :return: list of host ip addresses
+        :rtype: list[str]
+        """
+        addresses: t.List[str] = []
+        db_jobs = self.get_db_jobs()
+
+        for db_job, db_entity in db_jobs.values():
+            addr_options = itertools.product(db_job.hosts, db_entity.ports)
+
+            for host_addr, port in addr_options:
+                ip_addr = get_ip_from_host(host_addr)
+                addresses.append(f"{ip_addr}:{port}")
+        return addresses
+
+    def _set_db_hosts(self, orchestrator: Orchestrator) -> None:
+        """Set the DB hosts in db_jobs so future entities can query this
+
+        :param orchestrator: orchestrator instance
+        :type orchestrator: Orchestrator
+        """
+        # should only be called during launch in the controller
+        with JM_LOCK:
+            if orchestrator.batch:
+                self._jobs.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+            else:
+                for dbnode in orchestrator.dbnodes:
+                    if not dbnode.is_mpmd:
+                        self._jobs.db_jobs[dbnode.name].hosts = [dbnode.host]
+                    else:
+                        self._jobs.db_jobs[dbnode.name].hosts = dbnode.hosts
 
     def _set_dbobjects(self, manifest: Manifest) -> None:
         if not manifest.has_db_objects:

@@ -38,7 +38,7 @@ from subprocess import PIPE  # , STDOUT
 from types import FrameType
 
 from smartsim.log import get_logger
-from smartsim.telemetrymonitor import track_event, PersistableEntity
+from smartsim._core.entrypoints.telemetrymonitor import track_event
 
 
 STEP_PID = None
@@ -75,17 +75,11 @@ def main(
     try:
         process = psutil.Popen(cleaned_cmd, stdout=PIPE, stderr=PIPE)
         STEP_PID = process.pid
-        persistable = PersistableEntity(
-            type=etype,
-            name=step_name,
-            job_id=job_id,
-            step_id=str(STEP_PID),
-            timestamp=get_ts(),
-            path=exp_dir,
-        )
 
         logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
-        track_event(persistable.timestamp, persistable, "start", exp_path, logger)
+        track_event(
+            get_ts(), step_name, job_id, str(STEP_PID), etype, "start", exp_path, logger
+        )
 
     except Exception:
         logger.error("Failed to create process", exc_info=True)
@@ -95,7 +89,10 @@ def main(
         ret_code = process.wait()
 
         logger.debug(f"persisting step {step_name} end w/ret_code: {ret_code}")
-        track_event(get_ts(), persistable, "stop", exp_path, logger)
+        # track_event(get_ts(), persistable, "stop", exp_path, logger)
+        track_event(
+            get_ts(), step_name, job_id, str(STEP_PID), etype, "stop", exp_path, logger
+        )
         return ret_code
     except Exception:
         logger.error("Failed to execute process", exc_info=True)
@@ -138,9 +135,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prefix_chars="+", description="SmartSim Step Executor"
     )
-    parser.add_argument(
-        "+c", type=str, help="The command to execute", required=True
-    )
+    parser.add_argument("+c", type=str, help="The command to execute", required=True)
     parser.add_argument(
         "+t", type=str, help="The type of entity related to the step", required=True
     )

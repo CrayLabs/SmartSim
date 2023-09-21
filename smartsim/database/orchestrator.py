@@ -833,7 +833,7 @@ class Orchestrator(EntityList[DBNode]):
     ) -> t.List[str]:
         cmd = [
             "-m",
-            "smartsim._core.entrypoints.redis",  # entrypoint
+            "smartsim._core.entrypoints.db",  # entrypoint
             f"+orc-exe={self._redis_exe}",  # redis-server
             f"+conf-file={self._redis_conf}",  # redis.conf file
             "+rai-module",  # load redisai.so

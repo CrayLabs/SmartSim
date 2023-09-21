@@ -24,9 +24,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
+# import itertools
 import time
 import typing as t
+from collections import ChainMap
 from logging import Logger
 from threading import Thread, RLock
 from types import FrameType
@@ -38,7 +39,6 @@ from ...log import get_logger
 from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
-from ..utils.network import get_ip_from_host
 from .job import Job, JobEntity
 
 logger = get_logger(__name__)
@@ -151,13 +151,8 @@ class JobManager:
         :rtype: Job
         """
         with self._lock:
-            if entity_name in self.db_jobs:
-                return self.db_jobs[entity_name]
-            if entity_name in self.jobs:
-                return self.jobs[entity_name]
-            if entity_name in self.completed:
-                return self.completed[entity_name]
-            raise KeyError
+            entities = ChainMap(self.db_jobs, self.jobs, self.completed)
+            return entities[entity_name]
 
     def __call__(self) -> t.Dict[str, Job]:
         """Returns dictionary all jobs for () operator
@@ -191,7 +186,8 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
-
+        elif isinstance(entity, JobEntity) and entity.is_db:
+            self.db_jobs[entity.name] = job
         else:
             self.jobs[entity.name] = job
 
@@ -210,32 +206,32 @@ class JobManager:
         if not hook in self.on_timestep_hook:
             self.on_timestep_hook.append(hook)
 
-    def add_telemetry_job(
-        self,
-        job_name: str,
-        job_id: t.Optional[str],
-        entity: JobEntity,
-        is_task: bool = True,
-        is_orch: bool = False,
-    ) -> None:
-        """Add a job to the job manager which holds specific jobs by type.
+    # def add_telemetry_job(
+    #     self,
+    #     job_name: str,
+    #     job_id: t.Optional[str],
+    #     entity: JobEntity,
+    #     is_task: bool = True,
+    #     is_orch: bool = False,
+    # ) -> None:
+    #     """Add a job to the job manager which holds specific jobs by type.
 
-        :param job_name: name of the job step
-        :type job_name: str
-        :param job_id: job step id created by launcher
-        :type job_id: str
-        :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity | EntityList
-        :param is_task: process monitored by TaskManager (True) or the WLM (True)
-        :type is_task: bool
-        """
-        launcher = str(self._launcher)
-        # all operations here should be atomic
-        job = Job(job_name, job_id, entity, launcher, is_task)
-        if isinstance(entity, (DBNode, Orchestrator)) or is_orch:
-            self.db_jobs[entity.name] = job
-        else:
-            self.jobs[entity.name] = job
+    #     :param job_name: name of the job step
+    #     :type job_name: str
+    #     :param job_id: job step id created by launcher
+    #     :type job_id: str
+    #     :param entity: entity that was launched on job step
+    #     :type entity: SmartSimEntity | EntityList
+    #     :param is_task: process monitored by TaskManager (True) or the WLM (True)
+    #     :type is_task: bool
+    #     """
+    #     launcher = str(self._launcher)
+    #     # all operations here should be atomic
+    #     job = Job(job_name, job_id, entity, launcher, is_task)
+    #     if isinstance(entity, (DBNode, Orchestrator)) or is_orch:
+    #         self.db_jobs[entity.name] = job
+    #     else:
+    #         self.jobs[entity.name] = job
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed

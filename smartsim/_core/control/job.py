@@ -29,6 +29,10 @@ import typing as t
 
 from ...entity import SmartSimEntity, EntitySequence
 from ...status import STATUS_NEW
+from ...entity import SmartSimEntity, EntityList
+
+
+_JobKey = t.Tuple[str, str]
 
 
 class JobEntity:
@@ -36,37 +40,27 @@ class JobEntity:
     Minimum entity API required for Job to do what it does...
     """
 
+    def __init__(
+        self, entity: t.Optional[t.Union[SmartSimEntity, EntityList]] = None
+    ) -> None:
+        self.name: str = entity.name if entity else ""
+        self.path: str = entity.path if entity else ""
+        self.job_id: str = ""
+        self.step_id: str = ""
+        self.type: str = type(entity).__name__.lower() if entity else ""
+        self.timestamp: int = 0
+
     @property
     def is_db(self) -> bool:
-        return False
+        return self.type in ["orchestrator", "dbnode"]
 
     @property
     def is_managed(self) -> bool:
         return False
 
-    def __init__(self) -> None:
-        self.name: str = ""
-        self.job_id: str = ""
-        self.step_id: str = ""
-        self.type: str = ""
-        self.path: str = ""
-
-    ### PROBLEM: see JobManager.get_db_host_addresses
-    # def get_db_host_addresses(self) -> t.List[str]:
-    #     """Retrieve the list of hosts for the database
-
-    #     :return: list of host ip addresses
-    #     :rtype: list[str]
-    #     """
-    #     addresses = []
-    #     for db_job in self.db_jobs.values():
-    #         if isinstance(db_job.entity, (DBNode, Orchestrator)):
-    #             db_entity = db_job.entity
-
-    #             for combine in itertools.product(db_job.hosts, db_entity.ports):
-    #                 ip_addr = get_ip_from_host(combine[0])
-    #                 addresses.append(":".join((ip_addr, str(combine[1]))))
-    #     return addresses
+    @property
+    def key(self) -> _JobKey:
+        return (self.job_id, self.step_id)
 
 
 class Job:

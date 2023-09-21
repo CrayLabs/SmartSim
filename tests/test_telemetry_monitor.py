@@ -36,7 +36,7 @@ import uuid
 from conftest import FileUtils
 from smartsim._core.control.job import Job
 
-from smartsim.telemetrymonitor import (
+from smartsim._core.entrypoints.telemetrymonitor import (
     get_parser,
     get_ts,
     main,
@@ -46,6 +46,7 @@ from smartsim.telemetrymonitor import (
     track_completed,
     track_timestep,
     load_manifest,
+    hydrate_persistable,
 )
 
 
@@ -125,8 +126,14 @@ def test_track_event(
     fileutils,
 ):
     """Ensure that track event writes a file to the expected location"""
-    exp_dir = fileutils.make_test_dir()
-    persistable = PersistableEntity(etype, name, job_id, step_id, timestamp, exp_dir)
+    exp_dir = pathlib.Path(fileutils.make_test_dir())
+    stored = {
+        "name": name,
+        "job_id": job_id,
+        "step_id": step_id,
+        "run_id": timestamp,
+    }
+    persistable = hydrate_persistable(etype, stored, exp_dir)
 
     exp_path = pathlib.Path(exp_dir)
     track_event(timestamp, persistable, evt_type, exp_path, logger)
@@ -156,8 +163,14 @@ def test_track_specific(
     step_id = "1234"
     timestamp = get_ts()
 
-    exp_dir = fileutils.make_test_dir()
-    persistable = PersistableEntity(etype, name, job_id, step_id, timestamp, exp_dir)
+    exp_dir = pathlib.Path(fileutils.make_test_dir())
+    stored = {
+        "name": name,
+        "job_id": job_id,
+        "step_id": step_id,
+        "run_id": timestamp,
+    }
+    persistable = hydrate_persistable(etype, stored, exp_dir)
 
     exp_path = pathlib.Path(exp_dir)
 
@@ -208,9 +221,15 @@ def test_persistable_computed_properties(
 ):
     name = f"test-{etype}-{uuid.uuid4()}"
     timestamp = get_ts()
-    exp_dir = "/foo/bar"
+    exp_dir = pathlib.Path("/foo/bar")
+    stored = {
+        "name": name,
+        "job_id": job_id,
+        "step_id": step_id,
+        "run_id": timestamp,
+    }
+    persistable = hydrate_persistable(etype, stored, exp_dir)
 
-    persistable = PersistableEntity(etype, name, job_id, step_id, timestamp, exp_dir)
     assert persistable.is_managed == exp_ismanaged
     assert persistable.is_db == exp_isorch
 

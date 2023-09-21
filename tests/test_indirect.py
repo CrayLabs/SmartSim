@@ -31,7 +31,7 @@ import pytest
 import sys
 import uuid
 
-from smartsim.indirect import get_parser, cleanup, get_ts, main
+from smartsim._core.entrypoints.indirect import get_parser, cleanup, get_ts, main
 
 
 ALL_ARGS = {"+c", "+t", "+n", "+d"}
