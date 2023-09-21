@@ -40,6 +40,7 @@ from datetime import datetime
 from types import FrameType
 
 from watchdog.observers import Observer
+from watchdog.observers.api import BaseObserver
 from watchdog.events import PatternMatchingEventHandler, LoggingEventHandler
 from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
@@ -426,7 +427,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
 
 def event_loop(
-    observer: Observer,
+    observer: BaseObserver,
     action_handler: ManifestEventHandler,
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
@@ -451,7 +452,7 @@ def main(
     frequency: t.Union[int, float],
     experiment_dir: pathlib.Path,
     logger: logging.Logger,
-    observer: t.Optional[Observer] = None,
+    observer: t.Optional[BaseObserver] = None,
     num_iters: int = 0,
 ) -> int:
     """Setup the monitoring entities and start the timer-based loop that
