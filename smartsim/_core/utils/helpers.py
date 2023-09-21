@@ -52,8 +52,8 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
             db_name = ""
 
         return db_name_suffix, db_name
-    else:
-        return "", ""
+
+    return "", ""
 
 
 def unpack_colo_db_identfifier(db_id: str) -> str:
