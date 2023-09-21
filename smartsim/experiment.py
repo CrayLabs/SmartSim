@@ -861,7 +861,6 @@ class Experiment:
     def __str__(self) -> str:
         return self.name
 
-
     def append_to_db_identifier_list(self, db_identifier: str) -> None:
         """Check if db_identifier already exists when calling create_database"""
         if db_identifier in self.db_identifiers:
@@ -871,4 +870,3 @@ class Experiment:
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
-

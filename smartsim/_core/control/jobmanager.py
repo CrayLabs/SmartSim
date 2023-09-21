@@ -210,7 +210,7 @@ class JobManager:
             if (
                 isinstance(entity, Model)
                 and entity.run_settings.colocated_db_settings is not None
-            ):  
+            ):
                 # populate the db_id list for active entities
                 self.append_to_active_db_identifier_list(
                     entity.run_settings.colocated_db_settings["db_identifier"]
@@ -404,7 +404,7 @@ class JobManager:
         return len(self.db_jobs) + len(self.jobs)
 
     def append_to_active_db_identifier_list(self, db_identifier: str) -> None:
-        """Add database identifier to list of active database identifiers """
+        """Add database identifier to list of active database identifiers"""
         # Check if db_identifier already exists
         if db_identifier in self.active_db_identifiers:
             raise DBIDConflictError(
@@ -413,7 +413,6 @@ class JobManager:
             )
         # Otherwise, add
         self.active_db_identifiers.add(db_identifier)
-
 
     def remove_from_active_db_identifier_list(self, db_id: str) -> None:
         """Remove database identifier from list of active database identifiers"""
