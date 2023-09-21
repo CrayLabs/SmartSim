@@ -41,7 +41,7 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     get_ts,
     main,
     track_event,
-    PersistableEntity,
+    # PersistableEntity,
     track_started,
     track_completed,
     track_timestep,
@@ -256,7 +256,7 @@ def test_limit(fileutils, monkeypatch, capsys, num_iters: int, freq: int):
 
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx:
-        ctx.setattr("smartsim.telemetrymonitor.ManifestEventHandler.on_timestep", lambda a,b,c: print("timestep!"))
+        ctx.setattr("smartsim._core.entrypoints.telemetrymonitor.ManifestEventHandler.on_timestep", lambda a,b,c: print("timestep!"))
         rc = main(freq, test_manifest.parent.parent, logger, num_iters=num_iters)
 
         captured = capsys.readouterr()

@@ -87,7 +87,7 @@ def test_cleanup(capsys, monkeypatch):
 
     with monkeypatch.context() as ctx:
         ctx.setattr('psutil.Process', MockProc)
-        ctx.setattr('smartsim.indirect.STEP_PID', mock_pid)
+        ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
         cleanup()        
 
     captured = capsys.readouterr()
@@ -112,7 +112,7 @@ def test_cleanup_late(capsys, monkeypatch):
 
     with monkeypatch.context() as ctx:
         ctx.setattr('psutil.Process', MockMissingProc)
-        ctx.setattr('smartsim.indirect.STEP_PID', mock_pid)
+        ctx.setattr('smartsim._core.entrypoints.indirect.STEP_PID', mock_pid)
         cleanup()
 
     captured = capsys.readouterr()
@@ -143,7 +143,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
 
     captured = capsys.readouterr()  # throw away existing output
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
-        ctx.setattr('smartsim.indirect.logger.error', print)
+        ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
         _ = main("", "application", "unit-test-step-1", exp_dir)
 
     captured = capsys.readouterr()
@@ -151,7 +151,7 @@ def test_indirect_main_cmd_check(capsys, fileutils, monkeypatch):
 
     # test with non-emptystring cmd
     with monkeypatch.context() as ctx, pytest.raises(ValueError) as ex:
-        ctx.setattr('smartsim.indirect.logger.error', print)
+        ctx.setattr('smartsim._core.entrypoints.indirect.logger.error', print)
         _ = main("  \n  \t   ", "application", "unit-test-step-1", exp_dir)
 
     captured = capsys.readouterr()
