@@ -208,7 +208,11 @@ class Controller:
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
             # remove db_id from active db identifier list
-            self._jobs.remove_from_active_db_identifier_list(db.name)
+            db_id = db.name
+            # if db.name is orchestrator, no db id
+            if db_id == "orchestrator":
+                 db_id = ""
+            self._jobs.remove_from_active_db_identifier_list(db_id)
 
     def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
