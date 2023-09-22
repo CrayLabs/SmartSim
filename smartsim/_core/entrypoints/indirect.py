@@ -57,6 +57,9 @@ def main(
     cmd: str,
     etype: str,
     step_name: str,
+    # cwd: str,
+    output_path: str,
+    error_path: str,
     exp_dir: str = "",
 ) -> int:
     """Execute the step command and emit tracking events"""
@@ -66,17 +69,26 @@ def main(
     if not exp_path.exists():
         raise ValueError(f"The experiment directory does not exist: {exp_dir}")
 
-    cleaned_cmd = shlex.split(cmd)
-    if not cleaned_cmd:
-        raise ValueError(f"Invalid cmd supplied: {cmd}")
+    # cleaned_cmd = shlex.split(cmd)
+    # cleaned_cmd = cmd.replace("'", "").split()
+    import base64
+    import time
+    decoded_cmd = base64.b64decode(cmd.encode('ascii'))
+    cleaned_cmd = decoded_cmd.decode('ascii').split("|")
+    # if not cleaned_cmd:
+    #     raise ValueError(f"Invalid cmd supplied: {cmd}")
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
 
     try:
-        process = psutil.Popen(cleaned_cmd, stdout=PIPE, stderr=PIPE)
+        ofp = open(output_path, 'w+')
+        efp = open(error_path, 'w+')
+
+        process = psutil.Popen(cleaned_cmd, cwd=exp_dir, stdout=ofp, stderr=efp, close_fds=True)
+        # process = psutil.Popen(cleaned_cmd, cwd=exp_dir, stdout=PIPE, stderr=PIPE, close_fds=True)
         STEP_PID = process.pid
 
-        logger.debug(f"persisting step start for name: {step_name}, etype: {etype}")
+        logger.info(f"persisting step start for name: {step_name}, etype: {etype}")
         track_event(
             get_ts(), step_name, job_id, str(STEP_PID), etype, "start", exp_path, logger
         )
@@ -86,9 +98,14 @@ def main(
         return 1
 
     try:
-        ret_code = process.wait()
+        while process.is_running():
+        # ret_code = process.wait()
+            process.poll()
+            time.sleep(1)
 
-        logger.debug(f"persisting step {step_name} end w/ret_code: {ret_code}")
+        ret_code = process.returncode
+
+        logger.info(f"persisting step {step_name} end w/ret_code: {ret_code}")
         # track_event(get_ts(), persistable, "stop", exp_path, logger)
         track_event(
             get_ts(), step_name, job_id, str(STEP_PID), etype, "stop", exp_path, logger
@@ -145,6 +162,12 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "+d", type=str, help="The experiment root directory", required=True
     )
+    parser.add_argument(
+        "+o", type=str, help="Output file", required=True
+    )
+    parser.add_argument(
+        "+e", type=str, help="Erorr output file", required=True
+    )
     return parser
 
 
@@ -164,6 +187,9 @@ if __name__ == "__main__":
             cmd=parsed_args.c,
             etype=parsed_args.t,
             step_name=parsed_args.n,
+            # cwd=parsed_args.w,
+            output_path=parsed_args.o,
+            error_path=parsed_args.e,
             exp_dir=parsed_args.d,
         )
         sys.exit(rc)

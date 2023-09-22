@@ -110,27 +110,37 @@ class LocalLauncher(Launcher):
         :return: CLI arguments to execute the step via the proxy step executor
         :rtype: t.List[str]
         """
-
+        import base64
+        
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()
-        cmd = ' '.join(cmd_list)
+        cmd = '|'.join(cmd_list).encode('ascii')
+        cmd = base64.b64encode(cmd).decode('ascii')
+
+        out, err = step.get_output_files()
 
         # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
         # the indirect entrypoint rebuild the cmd... for now, test away...
-        return [
+        proxied_cmd = [
             sys.executable,
             "-m",
             proxy_module,
             "+c",
-            f"'{shlex.quote(cmd)}'",
+            f"{cmd}",
             "+t",
             etype,
             "+n",
             step.name,
             "+d",
             step.cwd,
+            "+o",
+            out,
+            "+e",
+            err
         ]
+        return proxied_cmd
+        # return cmd_list
 
     def run(self, step: Step) -> str:
         """Run a local step created by this launcher. Utilize the shell
