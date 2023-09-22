@@ -115,8 +115,8 @@ class LocalLauncher(Launcher):
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()
-        cmd = '|'.join(cmd_list).encode('ascii')
-        cmd = base64.b64encode(cmd).decode('ascii')
+        ascii_cmd = '|'.join(cmd_list).encode('ascii')
+        cmd = base64.b64encode(ascii_cmd).decode('ascii')
 
         out, err = step.get_output_files()
 
@@ -127,7 +127,7 @@ class LocalLauncher(Launcher):
             "-m",
             proxy_module,
             "+c",
-            f"{cmd}",
+            cmd,
             "+t",
             etype,
             "+n",

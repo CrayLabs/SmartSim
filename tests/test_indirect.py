@@ -175,7 +175,12 @@ def test_complete_process(capsys, fileutils):
     err_out = str(exp_dir / "err.txt")
 
     captured = capsys.readouterr()  # throw away existing output
-    rc = main(f"{sys.executable} {script} --time=1", "application", "unit-test-step-1", std_out, err_out, exp_dir)
+
+    import base64
+    raw_cmd = f"{sys.executable}|{script}|--time=1"
+    cmd = base64.b64encode(raw_cmd.encode('ascii')).decode('ascii')
+
+    rc = main(cmd, "application", "unit-test-step-1", std_out, err_out, exp_dir)
     assert rc == 0
 
     app_dir = exp_dir / "manifest" / "application" / "unit-test-step-1"

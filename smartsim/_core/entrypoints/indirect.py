@@ -25,16 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import base64
 import os
 import pathlib
 import psutil
-import shlex
 import signal
 import sys
+import time
 import typing as t
 
 from datetime import datetime
-from subprocess import PIPE  # , STDOUT
 from types import FrameType
 
 from smartsim.log import get_logger
@@ -69,23 +69,27 @@ def main(
     if not exp_path.exists():
         raise ValueError(f"The experiment directory does not exist: {exp_dir}")
 
-    # cleaned_cmd = shlex.split(cmd)
-    # cleaned_cmd = cmd.replace("'", "").split()
-    import base64
-    import time
-    decoded_cmd = base64.b64decode(cmd.encode('ascii'))
-    cleaned_cmd = decoded_cmd.decode('ascii').split("|")
+    if not cmd.strip():
+        raise ValueError("Invalid cmd supplied")
+
+    decoded_cmd = base64.b64decode(cmd.encode("ascii"))
+    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
     # if not cleaned_cmd:
     #     raise ValueError(f"Invalid cmd supplied: {cmd}")
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
 
     try:
-        ofp = open(output_path, 'w+')
-        efp = open(error_path, 'w+')
+        ofp = open(  # pylint: disable=consider-using-with
+            output_path, "w+", encoding="utf-8"
+        )
+        efp = open(  # pylint: disable=consider-using-with
+            error_path, "w+", encoding="utf-8"
+        )
 
-        process = psutil.Popen(cleaned_cmd, cwd=exp_dir, stdout=ofp, stderr=efp, close_fds=True)
-        # process = psutil.Popen(cleaned_cmd, cwd=exp_dir, stdout=PIPE, stderr=PIPE, close_fds=True)
+        process = psutil.Popen(
+            cleaned_cmd, cwd=exp_dir, stdout=ofp, stderr=efp, close_fds=True
+        )
         STEP_PID = process.pid
 
         logger.info(f"persisting step start for name: {step_name}, etype: {etype}")
@@ -99,11 +103,10 @@ def main(
 
     try:
         while process.is_running():
-        # ret_code = process.wait()
             process.poll()
             time.sleep(1)
 
-        ret_code = process.returncode
+        ret_code: int = process.returncode
 
         logger.info(f"persisting step {step_name} end w/ret_code: {ret_code}")
         # track_event(get_ts(), persistable, "stop", exp_path, logger)
@@ -162,12 +165,8 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "+d", type=str, help="The experiment root directory", required=True
     )
-    parser.add_argument(
-        "+o", type=str, help="Output file", required=True
-    )
-    parser.add_argument(
-        "+e", type=str, help="Erorr output file", required=True
-    )
+    parser.add_argument("+o", type=str, help="Output file", required=True)
+    parser.add_argument("+e", type=str, help="Erorr output file", required=True)
     return parser
 
 
