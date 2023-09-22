@@ -27,7 +27,6 @@
 from __future__ import annotations
 
 import collections.abc
-import itertools
 import sys
 import typing as t
 import warnings
