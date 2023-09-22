@@ -93,7 +93,7 @@ class Manifest:
         :rtype: List[EntityList]
         """
         # Need to ignore the slight type mismatch for the returned list,
-        # ``EntityList`` currently does not have a covararient counterpart
+        # ``EntityList`` currently does not have a covariant counterpart
         _all_entity_lists: t.List[EntityList[SmartSimEntity]] = list(
             self.ensembles  # type: ignore[arg-type]
         )
