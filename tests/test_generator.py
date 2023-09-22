@@ -280,14 +280,12 @@ def test_generation_log(fileutils):
 
     def not_header(line):
         """you can add other general checks in here"""
-        if line.startswith("Generation start date and time:"):
-            return False  # ignore it
-        return True
+        return not line.startswith("Generation start date and time:")
 
     exp.generate(ensemble, verbose=True)
 
-    log_file = osp.join(test_dir, "param_settings.txt")
-    ground_truth = get_gen_file(fileutils, osp.join("log_params", "param_settings.txt"))
+    log_file = osp.join(test_dir, "smartsim_params.txt")
+    ground_truth = get_gen_file(fileutils, osp.join("log_params", "smartsim_params.txt"))
 
     with open(log_file) as f1, open(ground_truth) as f2:
         assert(not not_header(f1.readline()))
@@ -297,10 +295,10 @@ def test_generation_log(fileutils):
 
     for entity in ensemble:
         assert filecmp.cmp(
-            osp.join(entity.path, "param_settings.txt"),
+            osp.join(entity.path, "smartsim_params.txt"),
             get_gen_file(
                 fileutils,
-                osp.join("log_params", "dir_test", entity.name, "param_settings.txt"),
+                osp.join("log_params", "dir_test", entity.name, "smartsim_params.txt"),
             ),
         )
 
@@ -362,3 +360,14 @@ def test_no_gen_if_symlink_to_dir(fileutils):
     config = get_gen_file(fileutils, "circular_config")
     with pytest.raises(ValueError):
         ensemble.attach_generator_files(to_configure=config)
+
+
+def test_no_file_overwrite():
+    exp = Experiment("test_no_file_overwrite", launcher="local")
+    ensemble = exp.create_ensemble("test", params={"P": [0, 1]}, run_settings=rs)
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(to_configure=["/normal/file.txt", "/path/to/smartsim_params.txt"])
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(to_symlink=["/normal/file.txt", "/path/to/smartsim_params.txt"])
+    with pytest.raises(ValueError):
+        ensemble.attach_generator_files(to_copy=["/normal/file.txt", "/path/to/smartsim_params.txt"])

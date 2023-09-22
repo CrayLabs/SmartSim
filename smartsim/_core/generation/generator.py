@@ -74,9 +74,19 @@ class Generator:
         """
         self._writer = ModelWriter()
         self.gen_path = gen_path
-        self.log_file = join(gen_path, "param_settings.txt")
         self.overwrite = overwrite
         self.log_level = DEBUG if not verbose else INFO
+
+    @property
+    def log_file(self) -> str:
+        """Returns the location of the file
+        summarizing the parameters used for the last generation
+        of all generated entities.
+
+        :returns: path to file with parameter settings
+        :rtype: str
+        """
+        return join(self.gen_path, "smartsim_params.txt")
 
     def generate_experiment(self, *args: t.Any) -> None:
         """Run ensemble and experiment file structure generation
@@ -151,7 +161,7 @@ class Generator:
         # redundant, as it is also written in each entity's dir
         with open(self.log_file, mode= 'w', encoding='utf-8') as log_file:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            log_file.write("Generation start date and time: " + dt_string + "\n")
+            log_file.write(f"Generation start date and time: {dt_string}\n")
 
     def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
@@ -292,7 +302,7 @@ class Generator:
         file_to_tables: t.Dict[str, str] = {}
         for file, params in files_to_params.items():
             used_params.update(params)
-            table = tabulate([[param, value] for param, value in params.items()],
+            table = tabulate(params.items(),
                              headers=["Name", "Value"])
             file_to_tables[relpath(file, self.gen_path)] = table
 
@@ -305,13 +315,13 @@ class Generator:
                 msg=f"Configured model {entity.name} with params {used_params_str}",
             )
             file_table = tabulate(
-                    [[file, table] for file, table in file_to_tables.items()],
+                    file_to_tables.items(),
                     headers=["File name", "Parameters"],
                 )
-            log_entry = f"Model name: {entity.name}" + "\n" + file_table + "\n\n"
+            log_entry = f"Model name: {entity.name}\n{file_table}\n\n"
             with open(self.log_file, mode="a", encoding="utf-8") as logfile:
                 logfile.write(log_entry)
-            with open(join(entity.path, "param_settings.txt"),
+            with open(join(entity.path, "smartsim_params.txt"),
                       mode="w",
                       encoding="utf-8") as local_logfile:
                 local_logfile.write(log_entry)
