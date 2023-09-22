@@ -677,6 +677,8 @@ class ColoUtils:
         exp: Experiment,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
+        colo_model_name: t.Optional[str] = None,
+        port: t.Optional[int] = test_port
     ) -> Model:
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
@@ -688,12 +690,15 @@ class ColoUtils:
             colo_settings = exp.create_run_settings(
                 exe=sys.executable, exe_args=[sr_test_script]
             )
-        colo_model = exp.create_model("colocated_model", colo_settings)
+        colo_name = colo_model_name if colo_model_name else "colocated_model"
+        colo_model = exp.create_model(colo_name, colo_settings)
         colo_model.set_path(test_dir)
 
         if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = test_port
+            db_args["port"] = port
             db_args["ifname"] = "lo"
+        if db_type == "uds" and colo_model_name is not None:
+            db_args["unix_socket"] = f"/tmp/{colo_model_name}.socket"
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,
