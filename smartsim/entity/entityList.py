@@ -26,18 +26,21 @@
 
 import typing as t
 
+from .entity import SmartSimEntity
+
 if t.TYPE_CHECKING:
-    # pylint: disable=unused-import
     import smartsim
 
+_T = t.TypeVar("_T", bound=SmartSimEntity)
 
-class EntityList:
+
+class EntityList(t.Generic[_T]):
     """Abstract class for containers for SmartSimEntities"""
 
     def __init__(self, name: str, path: str, **kwargs: t.Any) -> None:
         self.name: str = name
         self.path: str = path
-        self.entities: t.List["smartsim.entity.SmartSimEntity"] = []
+        self.entities: t.List[_T] = []
         self._db_models: t.List["smartsim.entity.DBModel"] = []
         self._db_scripts: t.List["smartsim.entity.DBScript"] = []
         self._initialize_entities(**kwargs)
@@ -79,13 +82,13 @@ class EntityList:
         for entity in self.entities:
             entity.path = new_path
 
-    def __getitem__(self, name: str) -> t.Optional["smartsim.entity.SmartSimEntity"]:
+    def __getitem__(self, name: str) -> t.Optional[_T]:
         for entity in self.entities:
             if entity.name == name:
                 return entity
         return None
 
-    def __iter__(self) -> t.Iterator["smartsim.entity.SmartSimEntity"]:
+    def __iter__(self) -> t.Iterator[_T]:
         for entity in self.entities:
             yield entity
 

@@ -39,6 +39,7 @@ from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, Model, SmartSimEntity
+from ...entity.entity import SmartSimEntityT_co as _SmartSimEntityT_co
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...settings.base import BatchSettings
@@ -135,7 +136,9 @@ class Controller:
                     for job in to_monitor.values():
                         logger.info(job)
 
-    def finished(self, entity: t.Union[SmartSimEntity, EntityList]) -> bool:
+    def finished(
+        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+    ) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
@@ -160,7 +163,9 @@ class Controller:
                 f"Entity {entity.name} has not been launched in this experiment"
             ) from None
 
-    def stop_entity(self, entity: t.Union[SmartSimEntity, EntityList]) -> None:
+    def stop_entity(
+        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+    ) -> None:
         """Stop an instance of an entity
 
         This function will also update the status of the job in
@@ -203,7 +208,7 @@ class Controller:
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
 
-    def stop_entity_list(self, entity_list: EntityList) -> None:
+    def stop_entity_list(self, entity_list: EntityList[_SmartSimEntityT_co]) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
@@ -223,7 +228,9 @@ class Controller:
         with JM_LOCK:
             return self._jobs.completed
 
-    def get_entity_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
+    def get_entity_status(
+        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+    ) -> str:
         """Get the status of an entity
 
         :param entity: entity to get status of
@@ -239,7 +246,9 @@ class Controller:
             )
         return self._jobs.get_status(entity)
 
-    def get_entity_list_status(self, entity_list: EntityList) -> t.List[str]:
+    def get_entity_list_status(
+        self, entity_list: EntityList[_SmartSimEntityT_co]
+    ) -> t.List[str]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
@@ -316,12 +325,20 @@ class Controller:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
-        steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
+        steps: t.List[
+            t.Tuple[Step, t.Union[SmartSimEntity, EntityList[SmartSimEntity]]]
+        ] = []
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
-                steps.append((batch_step, elist))
+                steps.append(
+                    (
+                        batch_step,
+                        # ``EntityList`` is not covariant, but we treat it like it is
+                        elist,  # type: ignore[arg-type]
+                    )
+                )
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
@@ -364,7 +381,7 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db), db) for db in orchestrator.dbnodes]
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -400,7 +417,9 @@ class Controller:
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(
-        self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]
+        self,
+        job_step: Step,
+        entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]],
     ) -> None:
         """Use the launcher to launch a job step
 
@@ -674,7 +693,7 @@ class Controller:
                             set_script(db_script, client)
 
 
-class _AnonymousBatchJob(EntityList):
+class _AnonymousBatchJob(EntityList[Model]):
     def __init__(
         self, name: str, path: str, batch_settings: BatchSettings, **kwargs: t.Any
     ) -> None:

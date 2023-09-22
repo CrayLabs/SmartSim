@@ -32,6 +32,7 @@ from types import FrameType
 
 from ...database import Orchestrator
 from ...entity import DBNode, SmartSimEntity, EntityList
+from ...entity.entity import SmartSimEntityT_co as _SmartSimEntityT_co
 from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
@@ -166,7 +167,7 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntityList],
+        entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -231,7 +232,10 @@ class JobManager:
                             output=status.output,
                         )
 
-    def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
+    def get_status(
+            self,
+            entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]],
+        ) -> str:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntityList instance
@@ -328,7 +332,7 @@ class JobManager:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
-                for dbnode in orchestrator.dbnodes:
+                for dbnode in orchestrator.entities:
                     if not dbnode.is_mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:

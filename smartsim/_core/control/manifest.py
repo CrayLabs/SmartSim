@@ -28,6 +28,7 @@ import typing as t
 
 from ...database import Orchestrator
 from ...entity import EntityList, SmartSimEntity, Model, Ensemble
+from ...entity.entity import SmartSimEntityT_co as _SmartSimEntityT_co
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
@@ -84,19 +85,22 @@ class Manifest:
         return [e for e in self._deployables if isinstance(e, Ensemble)]
 
     @property
-    def all_entity_lists(self) -> t.List[EntityList]:
+    def all_entity_lists(self) -> t.List[EntityList[SmartSimEntity]]:
         """All entity lists, including ensembles and
         exceptional ones like Orchestrator
 
         :return: list of entity lists
         :rtype: List[EntityList]
         """
-        _all_entity_lists: t.List[EntityList] = []
-        _all_entity_lists.extend(self.ensembles)
+        # Need to ignore the slight type mismatch for the returned list,
+        # ``EntityList`` currently does not have a covararient counterpart
+        _all_entity_lists: t.List[EntityList[SmartSimEntity]] = list(
+            self.ensembles  # type: ignore[arg-type]
+        )
 
         db = self.db
         if db is not None:
-            _all_entity_lists.append(db)
+            _all_entity_lists.append(db)  # type: ignore[arg-type]
 
         return _all_entity_lists
 
@@ -171,10 +175,14 @@ class Manifest:
     def has_db_objects(self) -> bool:
         """Check if any entity has DBObjects to set"""
 
-        def has_db_models(entity: t.Union[EntityList, Model]) -> bool:
+        def has_db_models(
+            entity: t.Union[EntityList[_SmartSimEntityT_co], Model]
+        ) -> bool:
             return len(list(entity.db_models)) > 0
 
-        def has_db_scripts(entity: t.Union[EntityList, Model]) -> bool:
+        def has_db_scripts(
+            entity: t.Union[EntityList[_SmartSimEntityT_co], Model]
+        ) -> bool:
             return len(list(entity.db_scripts)) > 0
 
         has_db_objects = False

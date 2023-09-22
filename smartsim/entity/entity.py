@@ -23,6 +23,9 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import typing as t
+
 import smartsim.settings.base
 
 
@@ -60,3 +63,7 @@ class SmartSimEntity:
 
     def __repr__(self) -> str:
         return self.name
+
+SmartSimEntityT_co = t.TypeVar(
+    "SmartSimEntityT_co", bound=SmartSimEntity, covariant=True
+)
