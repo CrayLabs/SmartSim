@@ -706,7 +706,7 @@ class Orchestrator(EntityList[DBNode]):
             self._initialize_entities_mpmd(**kwargs)
         else:
             port = kwargs.get("port", 6379)
-            cluster = not bool(self.db_nodes < 3)
+            cluster = self.db_nodes >= 3
 
             for db_id in range(self.db_nodes):
                 db_node_name = "_".join((self.name, str(db_id)))
@@ -770,8 +770,6 @@ class Orchestrator(EntityList[DBNode]):
             raise ValueError(f"Could not build run settings for {self.launcher}")
 
         node = DBNode(self.name, self.path, run_settings, [port], output_files)
-        node.is_mpmd = True
-        node.num_shards = self.db_nodes
         self.entities.append(node)
 
         self.ports = [port]

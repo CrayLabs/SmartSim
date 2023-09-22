@@ -49,21 +49,17 @@ def test_hosts(fileutils, wlmutils):
     orc.set_path(test_dir)
     exp.start(orc)
 
-    thrown = False
     hosts = []
     try:
         hosts = orc.hosts
-    except SmartSimError:
-        thrown = True
+        assert len(hosts) == orc.db_nodes == 1
     finally:
         # stop the database even if there is an error raised
         exp.stop(orc)
         orc.remove_stale_files()
-        assert not thrown
-        assert hosts == orc.hosts
 
 
 def test_set_host():
     orc = Orchestrator()
-    orc.entities[0].set_host("host")
-    assert orc.entities[0]._host == "host"
+    orc.entities[0].set_hosts(["host"])
+    assert orc.entities[0].host == "host"

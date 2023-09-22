@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import os
 import os.path as osp
 import time
@@ -56,11 +57,8 @@ class DBNode(SmartSimEntity):
         output_files: t.List[str],
     ) -> None:
         """Initialize a database node within an orchestrator."""
-        self.ports = ports
-        self._host: t.Optional[str] = None
         super().__init__(name, path, run_settings)
-        self._mpmd = False
-        self._num_shards: int = 0
+        self.ports = ports
         self._hosts: t.Optional[t.List[str]] = None
 
         if not output_files:
@@ -73,17 +71,20 @@ class DBNode(SmartSimEntity):
 
     @property
     def num_shards(self) -> int:
-        return self._num_shards
-
-    @num_shards.setter
-    def num_shards(self, value: int) -> None:
-        self._num_shards = value
+        try:
+            return len(self.run_settings.mpmd) + 1  # type: ignore[attr-defined]
+        except AttributeError:
+            return 1
 
     @property
     def host(self) -> str:
-        if not self._host:
-            self._host = self._parse_db_host()
-        return self._host
+        try:
+            (host,) = self.hosts
+        except ValueError:
+            raise ValueError(
+                f"Multiple hosts detected for this DB Node: {', '.join(self.hosts)}"
+            ) from None
+        return host
 
     @property
     def hosts(self) -> t.List[str]:
@@ -93,14 +94,10 @@ class DBNode(SmartSimEntity):
 
     @property
     def is_mpmd(self) -> bool:
-        return self._mpmd
-
-    @is_mpmd.setter
-    def is_mpmd(self, value: bool) -> None:
-        self._mpmd = value
-
-    def set_host(self, host: str) -> None:
-        self._host = str(host)
+        try:
+            return bool(self.run_settings.mpmd)  # type: ignore[attr-defined]
+        except AttributeError:
+            return False
 
     def set_hosts(self, hosts: t.List[str]) -> None:
         self._hosts = [str(host) for host in hosts]
@@ -112,41 +109,26 @@ class DBNode(SmartSimEntity):
         """
 
         for port in self.ports:
-            if not self._mpmd:
-                conf_file = osp.join(self.path, self._get_cluster_conf_filename(port))
+            for conf_file in (
+                osp.join(self.path, filename)
+                for filename in self._get_cluster_conf_filenames(port)
+            ):
                 if osp.exists(conf_file):
                     os.remove(conf_file)
-            else:  # cov-lsf
-                conf_files = [
-                    osp.join(self.path, filename)
-                    for filename in self._get_cluster_conf_filenames(port)
-                ]
-                for conf_file in conf_files:
-                    if osp.exists(conf_file):
-                        os.remove(conf_file)
 
         for file_ending in [".err", ".out", ".mpmd"]:
             file_name = osp.join(self.path, self.name + file_ending)
             if osp.exists(file_name):
                 os.remove(file_name)
-        if self._mpmd:
+
+        if self.is_mpmd:
             for file_ending in [".err", ".out"]:
-                for shard_id in range(self._num_shards):
+                for shard_id in range(self.num_shards):
                     file_name = osp.join(
                         self.path, self.name + "_" + str(shard_id) + file_ending
                     )
                     if osp.exists(file_name):
                         os.remove(file_name)
-
-    def _get_cluster_conf_filename(self, port: int) -> str:
-        """Returns the .conf file name for the given port number
-
-        :param port: port number
-        :type port: int
-        :return: the dbnode configuration file name
-        :rtype: str
-        """
-        return "".join(("nodes-", self.name, "-", str(port), ".conf"))
 
     def _get_cluster_conf_filenames(self, port: int) -> t.List[str]:  # cov-lsf
         """Returns the .conf file name for the given port number
@@ -158,9 +140,11 @@ class DBNode(SmartSimEntity):
         :return: the dbnode configuration file name
         :rtype: str
         """
+        if self.num_shards == 1:
+            return [f"nodes-{self.name}-{port}.conf"]
         return [
-            "".join(("nodes-", self.name + f"_{shard_id}", "-", str(port), ".conf"))
-            for shard_id in range(self._num_shards)
+            f"nodes-{self.name}_{shard_id}-{port}.conf"
+            for shard_id in range(self.num_shards)
         ]
 
     @staticmethod
@@ -174,46 +158,7 @@ class DBNode(SmartSimEntity):
                     ips.append(content[-1])
                     if num_ips and len(ips) == num_ips:
                         break
-
         return ips
-
-    def _parse_db_host(self, filepath: t.Optional[str] = None) -> str:
-        """Parse the database host/IP from the output file
-
-        If no file is passed as argument, then the first
-        file in self._output_files is used.
-
-        :param filepath: Path to file to parse
-        :type filepath: str, optional
-        :raises SmartSimError: if host/ip could not be found
-        :return: ip address | hostname
-        :rtype: str
-        """
-        if not filepath:
-            filepath = osp.join(self.path, self._output_files[0])
-        trials = 5
-        ip_address = None
-
-        # try a few times to give the database files time to
-        # populate on busy systems.
-        while not ip_address and trials > 0:
-            try:
-                if ip_addresses := self._parse_ips(filepath, 1):
-                    ip_address = ip_addresses[0]
-            # suppress error
-            except FileNotFoundError:
-                pass
-
-            logger.debug("Waiting for Redis output files to populate...")
-            if not ip_address:
-                time.sleep(1)
-                trials -= 1
-
-        if not ip_address:
-            logger.error(f"IP address lookup strategy failed for file {filepath}.")
-            raise SmartSimError("Failed to obtain database hostname")
-
-        return ip_address
 
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
@@ -228,38 +173,32 @@ class DBNode(SmartSimEntity):
         :rtype: list[str]
         """
         ips: t.List[str] = []
+        trials = 10
+        output_files = [osp.join(self.path, file) for file in self._output_files]
 
-        # Find out if all shards' output streams are piped to separate files
-        if len(self._output_files) > 1:
-            for output_file in self._output_files:
-                filepath = osp.join(self.path, output_file)
-                _ = self._parse_db_host(filepath)
-        else:
-            filepath = osp.join(self.path, self._output_files[0])
-            trials = 10
-            ips = []
-            while len(ips) < self._num_shards and trials > 0:
-                ips = []
-                try:
-                    ip_address = self._parse_ips(filepath, self._num_shards)
-                    ips.extend(ip_address)
+        while len(ips) < self.num_shards and trials > 0:
+            try:
+                ips = list(
+                    itertools.chain.from_iterable(
+                        self._parse_ips(file) for file in output_files
+                    )
+                )
+            except FileNotFoundError:
+                ...
 
-                # suppress error
-                except FileNotFoundError:
-                    pass
+            if len(ips) < self.num_shards:
+                logger.debug("Waiting for RedisIP files to populate...")
+                # Larger sleep time, as this seems to be needed for
+                # multihost setups
+                time.sleep(2 if self.num_shards > 1 else 1)
+                trials -= 1
 
-                if len(ips) < self._num_shards:
-                    logger.debug("Waiting for RedisIP files to populate...")
-                    # Larger sleep time, as this seems to be needed for
-                    # multihost setups
-                    time.sleep(2)
-                    trials -= 1
+        if len(ips) < self.num_shards:
+            logger.error(
+                f"IP address lookup strategy failed for file(s) "
+                f"{', '.join(output_files)}. "
+                f"Found {len(ips)} out of {self.num_shards} IPs."
+            )
+            raise SmartSimError("Failed to obtain database hostname")
 
-            if len(ips) < self._num_shards:
-                msg = f"IP address lookup strategy failed for file {filepath}. "
-                msg += f"Found {len(ips)} out of {self._num_shards} IPs."
-                logger.error(msg)
-                raise SmartSimError("Failed to obtain database hostname")
-
-        ips = list(dict.fromkeys(ips))
-        return ips
+        return list(set(ips))
