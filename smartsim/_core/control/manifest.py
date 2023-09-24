@@ -27,8 +27,7 @@
 import typing as t
 
 from ...database import Orchestrator
-from ...entity import EntityList, SmartSimEntity, Model, Ensemble
-from ...entity.entity import SmartSimEntityT_co as _SmartSimEntityT_co
+from ...entity import EntityList, EntitySequence, SmartSimEntity, Model, Ensemble
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
@@ -42,7 +41,9 @@ class Manifest:
     can all be passed as arguments
     """
 
-    def __init__(self, *args: SmartSimEntity) -> None:
+    def __init__(
+        self, *args: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
         self._deployables = list(args)
         self._check_types(self._deployables)
         self._check_names(self._deployables)
@@ -85,22 +86,18 @@ class Manifest:
         return [e for e in self._deployables if isinstance(e, Ensemble)]
 
     @property
-    def all_entity_lists(self) -> t.List[EntityList[SmartSimEntity]]:
+    def all_entity_lists(self) -> t.List[EntitySequence[SmartSimEntity]]:
         """All entity lists, including ensembles and
         exceptional ones like Orchestrator
 
         :return: list of entity lists
-        :rtype: List[EntityList]
+        :rtype: List[EntitySequence[SmartSimEntity]]
         """
-        # Need to ignore the slight type mismatch for the returned list,
-        # ``EntityList`` currently does not have a covariant counterpart
-        _all_entity_lists: t.List[EntityList[SmartSimEntity]] = list(
-            self.ensembles  # type: ignore[arg-type]
-        )
+        _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 
         db = self.db
         if db is not None:
-            _all_entity_lists.append(db)  # type: ignore[arg-type]
+            _all_entity_lists.append(db)
 
         return _all_entity_lists
 
@@ -176,12 +173,12 @@ class Manifest:
         """Check if any entity has DBObjects to set"""
 
         def has_db_models(
-            entity: t.Union[EntityList[_SmartSimEntityT_co], Model]
+            entity: t.Union[EntitySequence[SmartSimEntity], Model]
         ) -> bool:
             return len(list(entity.db_models)) > 0
 
         def has_db_scripts(
-            entity: t.Union[EntityList[_SmartSimEntityT_co], Model]
+            entity: t.Union[EntitySequence[SmartSimEntity], Model]
         ) -> bool:
             return len(list(entity.db_scripts)) > 0
 

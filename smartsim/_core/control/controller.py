@@ -38,8 +38,7 @@ from smartredis import Client
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, Model, SmartSimEntity
-from ...entity.entity import SmartSimEntityT_co as _SmartSimEntityT_co
+from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
 from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
 from ...log import get_logger
 from ...settings.base import BatchSettings
@@ -137,7 +136,7 @@ class Controller:
                         logger.info(job)
 
     def finished(
-        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
@@ -164,7 +163,7 @@ class Controller:
             ) from None
 
     def stop_entity(
-        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> None:
         """Stop an instance of an entity
 
@@ -208,7 +207,7 @@ class Controller:
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
 
-    def stop_entity_list(self, entity_list: EntityList[_SmartSimEntityT_co]) -> None:
+    def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
@@ -229,7 +228,7 @@ class Controller:
             return self._jobs.completed
 
     def get_entity_status(
-        self, entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]]
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
     ) -> str:
         """Get the status of an entity
 
@@ -247,7 +246,7 @@ class Controller:
         return self._jobs.get_status(entity)
 
     def get_entity_list_status(
-        self, entity_list: EntityList[_SmartSimEntityT_co]
+        self, entity_list: EntitySequence[SmartSimEntity]
     ) -> t.List[str]:
         """Get the statuses of an entity list
 
@@ -326,19 +325,13 @@ class Controller:
 
         # create all steps prior to launch
         steps: t.List[
-            t.Tuple[Step, t.Union[SmartSimEntity, EntityList[SmartSimEntity]]]
+            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
         ] = []
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
                 batch_step = self._create_batch_job_step(elist)
-                steps.append(
-                    (
-                        batch_step,
-                        # ``EntityList`` is not covariant, but we treat it like it is
-                        elist,  # type: ignore[arg-type]
-                    )
-                )
+                steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
@@ -419,7 +412,7 @@ class Controller:
     def _launch_step(
         self,
         job_step: Step,
-        entity: t.Union[SmartSimEntity, EntityList[_SmartSimEntityT_co]],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
     ) -> None:
         """Use the launcher to launch a job step
 

@@ -26,12 +26,14 @@
 
 import typing as t
 
-import smartsim.settings.base
+if t.TYPE_CHECKING:
+    # pylint: disable-next=unused-import
+    import smartsim.settings.base
 
 
 class SmartSimEntity:
     def __init__(
-        self, name: str, path: str, run_settings: smartsim.settings.base.RunSettings
+        self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
     ) -> None:
         """Initialize a SmartSim entity.
 
@@ -63,7 +65,3 @@ class SmartSimEntity:
 
     def __repr__(self) -> str:
         return self.name
-
-SmartSimEntityT_co = t.TypeVar(
-    "SmartSimEntityT_co", bound=SmartSimEntity, covariant=True
-)
