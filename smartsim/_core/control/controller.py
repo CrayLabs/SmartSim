@@ -141,19 +141,19 @@ class Controller:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
-        :type entity: Entity | EntityList
+        :type entity: Entity | EntitySequence
         :returns: bool
         :raises ValueError: if entity has not been launched yet
         """
         try:
             if isinstance(entity, Orchestrator):
                 raise TypeError("Finished() does not support Orchestrator instances")
-            if isinstance(entity, EntityList):
+            if isinstance(entity, EntitySequence):
                 return all(self.finished(ent) for ent in entity.entities)
             if not isinstance(entity, SmartSimEntity):
                 raise TypeError(
                     f"Argument was of type {type(entity)} not derived "
-                    "from SmartSimEntity or EntityList"
+                    "from SmartSimEntity or EntitySequence"
                 )
 
             return self._jobs.is_finished(entity)
@@ -171,7 +171,7 @@ class Controller:
         the jobmanager so that the job appears as "cancelled".
 
         :param entity: entity to be stopped
-        :type entity: Entity | EntityList
+        :type entity: Entity | EntitySequence
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
@@ -211,7 +211,7 @@ class Controller:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
-        :type entity_list: EntityList
+        :type entity_list: EntitySequence
         """
         if entity_list.batch:
             self.stop_entity(entity_list)
@@ -233,14 +233,14 @@ class Controller:
         """Get the status of an entity
 
         :param entity: entity to get status of
-        :type entity: SmartSimEntity | EntityList
-        :raises TypeError: if not SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
+        :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
         :rtype: str
         """
-        if not isinstance(entity, (SmartSimEntity, EntityList)):
+        if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
-                "Argument must be of type SmartSimEntity or EntityList, "
+                "Argument must be of type SmartSimEntity or EntitySequence, "
                 f"not {type(entity)}"
             )
         return self._jobs.get_status(entity)
@@ -252,13 +252,15 @@ class Controller:
 
         :param entity_list: entity list containing entities to
                             get statuses of
-        :type entity_list: EntityList
-        :raises TypeError: if not EntityList
+        :type entity_list: EntitySequence
+        :raises TypeError: if not EntitySequence
         :return: list of str statuses
         :rtype: list
         """
-        if not isinstance(entity_list, EntityList):
-            raise TypeError(f"Argument was of type {type(entity_list)} not EntityList")
+        if not isinstance(entity_list, EntitySequence):
+            raise TypeError(
+                f"Argument was of type {type(entity_list)} not EntitySequence"
+            )
         if entity_list.batch:
             return [self.get_entity_status(entity_list)]
         statuses = []

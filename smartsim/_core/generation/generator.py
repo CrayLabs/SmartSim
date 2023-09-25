@@ -151,9 +151,9 @@ class Generator:
         pathlib.Path(orc_path).mkdir(exist_ok=True)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
-        """Generate directories for EntityList instances
+        """Generate directories for Ensemble instances
 
-        :param entity_lists: list of EntityList instances
+        :param entity_lists: list of Ensemble instances
         :type entity_lists: list
         """
 

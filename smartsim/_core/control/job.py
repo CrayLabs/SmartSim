@@ -53,7 +53,7 @@ class Job:
         :param job_id: The id associated with the job
         :type job_id: str
         :param entity: The SmartSim entity(list) associated with the job
-        :type entity: SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)

@@ -237,8 +237,8 @@ class JobManager:
         ) -> str:
         """Return the status of a job.
 
-        :param entity: SmartSimEntity or EntityList instance
-        :type entity: SmartSimEntity | EntityList
+        :param entity: SmartSimEntity or EntitySequence instance
+        :type entity: SmartSimEntity | EntitySequence
         :returns: tuple of status
         """
         with self._lock:
