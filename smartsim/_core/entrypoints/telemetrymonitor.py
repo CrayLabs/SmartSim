@@ -220,7 +220,7 @@ def track_event(
     step_id = step_id or ""
     entity_type = etype or "missing_entity_type"
     logger.info(
-        f"mocked tracking `{entity_type}.{action}` event w/jid: {job_id}, "
+        f"tracking `{entity_type}.{action}` event w/jid: {job_id}, "
         f"tid: {step_id}, ts: {timestamp}"
     )
 

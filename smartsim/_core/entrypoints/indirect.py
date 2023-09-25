@@ -102,14 +102,13 @@ def main(
         return 1
 
     try:
-        while process.is_running():
+        while process.is_running() and process.returncode is None:
             process.poll()
             time.sleep(1)
 
         ret_code: int = process.returncode
+        process.wait()
 
-        logger.info(f"persisting step {step_name} end w/ret_code: {ret_code}")
-        # track_event(get_ts(), persistable, "stop", exp_path, logger)
         track_event(
             get_ts(), step_name, job_id, str(STEP_PID), etype, "stop", exp_path, logger
         )
