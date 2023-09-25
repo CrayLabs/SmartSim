@@ -29,9 +29,12 @@ import typing as t
 from .entity import SmartSimEntity
 
 if t.TYPE_CHECKING:
+    # pylint: disable-next=unused-import
     import smartsim
 
 _T = t.TypeVar("_T", bound=SmartSimEntity)
+# Old style pyint from TF 2.6.x does not know about pep484 style ``TypeVar`` names
+# pylint: disable-next=invalid-name
 _T_co = t.TypeVar("_T_co", bound=SmartSimEntity, covariant=True)
 
 
