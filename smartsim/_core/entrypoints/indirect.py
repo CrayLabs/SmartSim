@@ -39,7 +39,6 @@ from types import FrameType
 
 from smartsim.log import get_logger
 from smartsim._core.entrypoints.telemetrymonitor import track_event
-from smartsim._core.launcher.util.shell import execute_async_cmd
 
 
 STEP_PID = None
@@ -111,8 +110,6 @@ def main(
 
         ret_code: int = process.returncode
         process.wait()
-
-        detail = f"process {STEP_PID} finished with return code: {ret_code}"
         track_event(
             get_ts(),
             step_name,
@@ -122,7 +119,7 @@ def main(
             "stop",
             exp_path,
             logger,
-            detail=detail,
+            detail=f"process {STEP_PID} finished with return code: {ret_code}",
             return_code=ret_code,
         )
         return ret_code

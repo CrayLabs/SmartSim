@@ -200,6 +200,7 @@ def track_event(
 
     try:
         entity_dict = {
+            "timestamp": timestamp,
             "job_id": job_id,
             "step_id": step_id,
             "type": etype,
@@ -208,9 +209,9 @@ def track_event(
 
         if detail is not None:
             entity_dict["detail"] = detail
-        
+
         if return_code is not None:
-            entity_dict["return_code"] = return_code
+            entity_dict["return_code"] = str(return_code)
 
         tgt_path.write_text(json.dumps(entity_dict))
     except Exception:
