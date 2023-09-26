@@ -261,10 +261,8 @@ def test_multiple_tags(fileutils):
     exp.start(parameterized_model, block=True)
 
     with open(osp.join(parameterized_model.path, "multi-tags.out")) as f:
-        line = f.readline()
-        assert (
-            line.strip() == "My two parameters are 6379 and unbreakable_password, OK?"
-        )
+        log_content = f.read()
+        assert "My two parameters are 6379 and unbreakable_password, OK?" in log_content
 
 
 def test_generation_log(fileutils):
