@@ -34,7 +34,7 @@ def main():
     # SmartSim.
 
     opts1 = ConfigOptions.create_from_environment("my_db")
-    opts2 = ConfigOptions.create_from_environment("my_db") #jpnote -- ? 
+    opts2 = ConfigOptions.create_from_environment("my_db")
     client = Client(opts1, logger_name="SmartSim")
     client = Client(opts2, logger_name="SmartSim")
 

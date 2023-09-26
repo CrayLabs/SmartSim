@@ -145,13 +145,13 @@ class Generator:
             return
         # Loop through orchestrators
         for orchestrator in orchestrator_list:
+            orc_path = path.join(self.gen_path, orchestrator.name)
 
-            orc_path = path.join(self.gen_path, "database")
             orchestrator.set_path(orc_path)
             # Always remove orchestrator files if present.
             if path.isdir(orc_path):
                 shutil.rmtree(orc_path, ignore_errors=True)
-            pathlib.Path(orc_path).mkdir(exist_ok=True)
+            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for EntityList instances

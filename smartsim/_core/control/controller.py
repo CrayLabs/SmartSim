@@ -44,7 +44,13 @@ from ..._core.utils.helpers import (
 )
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, Model, SmartSimEntity
-from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
+from ...error import (
+    LauncherError,
+    SmartSimError,
+    SSInternalError,
+    SSUnsupportedError,
+    DBIDConflictError,
+)
 from ...log import get_logger
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
@@ -207,12 +213,6 @@ class Controller:
                     job = self._jobs[entity.name]
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
-            # remove db_id from active db identifier list
-            db_id = db.name
-            # if db.name is orchestrator, no db id
-            if db_id == "orchestrator":
-                db_id = ""
-            self._jobs.remove_from_active_db_identifier_list(db_id)
 
     def stop_entity_list(self, entity_list: EntityList) -> None:
         """Stop an instance of an entity list
@@ -314,6 +314,15 @@ class Controller:
         orchestrators = manifest.dbs
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in orchestrators:
+            for key in self._jobs.get_db_host_addresses():
+                _, db_id = unpack_db_identifier(key, "_")
+                if orchestrator.name == db_id:
+                    raise DBIDConflictError(
+                        f"Database identifier {orchestrator.name}"
+                        " has already been used. Pass in a unique"
+                        " name for db_identifier"
+                    )
+
             if orchestrator.num_shards > 1 and isinstance(
                 self._launcher, LocalLauncher
             ):
@@ -514,10 +523,18 @@ class Controller:
 
         # Set address to local if it's a colocated model
         if entity.colocated and entity.run_settings.colocated_db_settings is not None:
-            db_name_colo = unpack_colo_db_identfifier(
-                entity.run_settings.colocated_db_settings["db_identifier"]
-            )
+            db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
 
+            for key in self._jobs.get_db_host_addresses():
+                _, db_id = unpack_db_identifier(key, "_")
+                if db_name_colo == db_id:
+                    raise DBIDConflictError(
+                        f"Database identifier {db_name_colo}"
+                        " has already been used. Pass in a unique"
+                        " name for db_identifier"
+                    )
+
+            db_name_colo = unpack_colo_db_identfifier(db_name_colo)
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)

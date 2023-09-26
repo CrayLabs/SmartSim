@@ -31,14 +31,13 @@ from threading import Thread, RLock
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity, EntityList, Model
-from ...error import SmartSimError, DBIDConflictError
+from ...entity import DBNode, SmartSimEntity, EntityList
+from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from ..utils.network import get_ip_from_host
-from ..._core.utils.helpers import unpack_db_identifier
 from .job import Job
 
 logger = get_logger(__name__)
@@ -71,9 +70,6 @@ class JobManager:
 
         # completed jobs
         self.completed: t.Dict[str, Job] = {}
-
-        # for storing db_identifiers and addresses
-        self.address_dict: t.Dict[str, t.List[str]] = {}
 
         self.actively_monitoring = False  # on/off flag
         self._launcher = launcher  # reference to launcher
@@ -132,13 +128,6 @@ class JobManager:
         :type job: Job
         """
         # remove db id from active entity list
-        if (
-            isinstance(job.entity, Model)
-            and job.entity.run_settings.colocated_db_settings is not None
-        ):
-            colo_id = job.entity.run_settings.colocated_db_settings["db_identifier"]
-            if colo_id in self.active_db_identifiers:
-                self.remove_from_active_db_identifier_list(colo_id)
 
         with self._lock:
             self.completed[job.ename] = job
@@ -200,21 +189,9 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
-            _, db_id = unpack_db_identifier(entity.name, "_")
-            # populate the db_id list for active entities
-            self.append_to_active_db_identifier_list(db_id)
 
         else:
             self.jobs[entity.name] = job
-
-            if (
-                isinstance(entity, Model)
-                and entity.run_settings.colocated_db_settings is not None
-            ):
-                # populate the db_id list for active entities
-                self.append_to_active_db_identifier_list(
-                    entity.run_settings.colocated_db_settings["db_identifier"]
-                )
 
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
@@ -332,10 +309,11 @@ class JobManager:
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
 
-        :return:  dictionary of db_identifiers for each database
+        :return: dictionary of db_identifiers for each database
         and their corresponding list of host ip addresses
         :rtype: Dict[str, list]"""
 
+        address_dict = {}
         addresses = []
         for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
@@ -344,9 +322,9 @@ class JobManager:
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
 
-            self.address_dict.update({db_entity.name: addresses})
+            address_dict.update({db_entity.name: addresses})
 
-        return self.address_dict
+        return address_dict
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
@@ -402,19 +380,3 @@ class JobManager:
     def __len__(self) -> int:
         # number of active jobs
         return len(self.db_jobs) + len(self.jobs)
-
-    def append_to_active_db_identifier_list(self, db_identifier: str) -> None:
-        """Add database identifier to list of active database identifiers"""
-        # Check if db_identifier already exists
-        if db_identifier in self.active_db_identifiers:
-            raise DBIDConflictError(
-                f"Database identifier {db_identifier}"
-                " has already been used. Pass in a unique name for db_identifier"
-            )
-        # Otherwise, add
-        self.active_db_identifiers.add(db_identifier)
-
-    def remove_from_active_db_identifier_list(self, db_id: str) -> None:
-        """Remove database identifier from list of active database identifiers"""
-        if len(self.active_db_identifiers) != 0:
-            self.active_db_identifiers.remove(db_id)

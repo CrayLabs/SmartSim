@@ -34,7 +34,7 @@ from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
-from .error import SmartSimError, DBIDConflictError
+from .error import SmartSimError
 from .log import get_logger
 from .settings import settings, base, Container
 from .wlm import detect_launcher
@@ -864,9 +864,10 @@ class Experiment:
     def append_to_db_identifier_list(self, db_identifier: str) -> None:
         """Check if db_identifier already exists when calling create_database"""
         if db_identifier in self.db_identifiers:
-            raise DBIDConflictError(
-                f"Database identifier {db_identifier}"
-                " has already been used. Pass in a unique name for db_identifier"
+            logger.warning(
+                f"A database with the identifier {db_identifier} has already been made"
+                "An error will be raised if multiple databases are started"
+                "with the same identifier"
             )
         # Otherwise, add
         self.db_identifiers.add(db_identifier)
