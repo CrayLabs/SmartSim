@@ -60,8 +60,6 @@ from smartsim.error.errors import SmartSimError
 from smartsim.status import TERMINAL_STATUSES
 
 
-logging.basicConfig(level=logging.INFO)
-
 """
 Telemetry Monitor entrypoint
 """
@@ -71,31 +69,6 @@ SIGNALS = [signal.SIGINT, signal.SIGQUIT, signal.SIGTERM, signal.SIGABRT]
 _EventClass = t.Literal["start", "stop", "timestep"]
 _ManifestKey = t.Literal["timestamp", "model", "orchestrator", "ensemble", "run_id"]
 _JobKey = t.Tuple[str, str]
-
-
-# class PersistableEntity(JobEntity):
-#     """Minimal model required for monitoring an entity in the JobManager"""
-
-#     def __init__(
-#         self,
-#         etype: str,
-#         name: str,
-#         job_id: str,
-#         step_id: str,
-#         timestamp: int,
-#         exp_dir: str,
-#     ) -> None:
-#         super().__init__()
-#         self.type = etype
-#         self.name = name
-#         self.job_id = job_id
-#         self.step_id = step_id
-#         self.path = exp_dir
-#         self.timestamp = timestamp
-
-#     @property
-#     def key(self) -> _JobKey:
-#         return (self.job_id, self.step_id)
 
 
 @dataclass
@@ -219,10 +192,6 @@ def track_event(
     job_id = job_id or ""
     step_id = step_id or ""
     entity_type = etype or "missing_entity_type"
-    logger.info(
-        f"tracking `{entity_type}.{action}` event w/jid: {job_id}, "
-        f"tid: {step_id}, ts: {timestamp}"
-    )
 
     name: str = ename or "entity-name-not-found"
     tgt_path = exp_dir / "manifest" / entity_type / name / f"{action}.json"
@@ -608,7 +577,6 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
 
-    logging.basicConfig()
     log = logging.getLogger()
 
     # Must register cleanup before the main loop is running

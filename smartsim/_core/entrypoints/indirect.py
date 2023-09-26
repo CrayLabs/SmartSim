@@ -39,6 +39,7 @@ from types import FrameType
 
 from smartsim.log import get_logger
 from smartsim._core.entrypoints.telemetrymonitor import track_event
+from smartsim._core.launcher.util.shell import execute_async_cmd
 
 
 STEP_PID = None
@@ -57,7 +58,6 @@ def main(
     cmd: str,
     etype: str,
     step_name: str,
-    # cwd: str,
     output_path: str,
     error_path: str,
     exp_dir: str = "",
@@ -88,11 +88,10 @@ def main(
         )
 
         process = psutil.Popen(
-            cleaned_cmd, cwd=exp_dir, stdout=ofp, stderr=efp, close_fds=True
+            cleaned_cmd, cwd=exp_dir, stdout=ofp.fileno(), stderr=efp.fileno(), close_fds=True
         )
         STEP_PID = process.pid
 
-        logger.info(f"persisting step start for name: {step_name}, etype: {etype}")
         track_event(
             get_ts(), step_name, job_id, str(STEP_PID), etype, "start", exp_path, logger
         )
