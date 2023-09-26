@@ -185,6 +185,7 @@ def track_event(
     exp_dir: pathlib.Path,
     logger: logging.Logger,
     detail: str = "",
+    return_code: t.Optional[int] = None,
 ) -> None:
     """
     Persist a tracking event for an entity
@@ -203,11 +204,14 @@ def track_event(
             "step_id": step_id,
             "type": etype,
             "action": action,
-            # "path": str(exp_dir),
-            "detail": detail,
         }
-        # entity_dict.pop("path", None)
-        # entity_dict["detail"] = detail
+
+        if detail is not None:
+            entity_dict["detail"] = detail
+        
+        if return_code is not None:
+            entity_dict["return_code"] = return_code
+
         tgt_path.write_text(json.dumps(entity_dict))
     except Exception:
         logger.error("Unable to write tracking file.", exc_info=True)
@@ -334,6 +338,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
             self._jm.add_job_onstart_callback(track_started)
             self._jm.add_job_onstop_callback(track_completed)
             self._jm.add_job_onstep_callback(track_timestep)
+
             self._jm.start()
 
     @property

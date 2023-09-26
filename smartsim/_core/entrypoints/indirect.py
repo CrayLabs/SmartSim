@@ -88,7 +88,11 @@ def main(
         )
 
         process = psutil.Popen(
-            cleaned_cmd, cwd=exp_dir, stdout=ofp.fileno(), stderr=efp.fileno(), close_fds=True
+            cleaned_cmd,
+            cwd=exp_dir,
+            stdout=ofp.fileno(),
+            stderr=efp.fileno(),
+            close_fds=True,
         )
         STEP_PID = process.pid
 
@@ -108,8 +112,18 @@ def main(
         ret_code: int = process.returncode
         process.wait()
 
+        detail = f"process {STEP_PID} finished with return code: {ret_code}"
         track_event(
-            get_ts(), step_name, job_id, str(STEP_PID), etype, "stop", exp_path, logger
+            get_ts(),
+            step_name,
+            job_id,
+            str(STEP_PID),
+            etype,
+            "stop",
+            exp_path,
+            logger,
+            detail=detail,
+            return_code=ret_code,
         )
         return ret_code
     except Exception:

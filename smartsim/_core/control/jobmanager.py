@@ -206,33 +206,6 @@ class JobManager:
         if not hook in self.on_timestep_hook:
             self.on_timestep_hook.append(hook)
 
-    # def add_telemetry_job(
-    #     self,
-    #     job_name: str,
-    #     job_id: t.Optional[str],
-    #     entity: JobEntity,
-    #     is_task: bool = True,
-    #     is_orch: bool = False,
-    # ) -> None:
-    #     """Add a job to the job manager which holds specific jobs by type.
-
-    #     :param job_name: name of the job step
-    #     :type job_name: str
-    #     :param job_id: job step id created by launcher
-    #     :type job_id: str
-    #     :param entity: entity that was launched on job step
-    #     :type entity: SmartSimEntity | EntityList
-    #     :param is_task: process monitored by TaskManager (True) or the WLM (True)
-    #     :type is_task: bool
-    #     """
-    #     launcher = str(self._launcher)
-    #     # all operations here should be atomic
-    #     job = Job(job_name, job_id, entity, launcher, is_task)
-    #     if isinstance(entity, (DBNode, Orchestrator)) or is_orch:
-    #         self.db_jobs[entity.name] = job
-    #     else:
-    #         self.jobs[entity.name] = job
-
     def is_finished(self, entity: SmartSimEntity) -> bool:
         """Detect if a job has completed
 
