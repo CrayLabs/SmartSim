@@ -93,14 +93,12 @@ def test_exchange(fileutils, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    try:
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        # stop the orchestrator
         exp.stop(orc)
-        assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())
+        print(exp.summary())
 
 
 def test_consumer(fileutils, wlmutils):
@@ -145,11 +143,9 @@ def test_consumer(fileutils, wlmutils):
 
     # get and confirm statuses
     statuses = exp.get_status(ensemble)
-    if not all([stat == status.STATUS_COMPLETED for stat in statuses]):
+    try:
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        # stop the orchestrator
         exp.stop(orc)
-        assert False  # client ensemble failed
-
-    # stop the orchestrator
-    exp.stop(orc)
-
-    print(exp.summary())
+        print(exp.summary())

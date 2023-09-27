@@ -24,11 +24,17 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
+import json
+import random
+import string
+import textwrap
 
 import pytest
 
 from smartsim import Experiment
 from smartsim.database import Orchestrator
+from smartsim.entity.dbnode import DBNode, LaunchedShardData
 from smartsim.error.errors import SmartSimError
 
 
@@ -57,6 +63,60 @@ def test_hosts(fileutils, wlmutils):
         # stop the database even if there is an error raised
         exp.stop(orc)
         orc.remove_stale_files()
+
+
+def _random_shard_info():
+    rand_string = lambda: ''.join(random.choices(string.ascii_letters, k=10))
+    rand_num = lambda: random.randint(1000, 9999)
+    flip_coin = lambda: random.choice((True, False))
+
+    return LaunchedShardData(
+        name=rand_string(),
+        hostname=rand_string(),
+        port=rand_num(),
+        cluster=flip_coin(),
+    )
+
+
+def test_launched_shard_info_can_be_serialized():
+    shard_data = _random_shard_info()
+    shard_data_from_str = LaunchedShardData(
+        **json.loads(json.dumps(shard_data.to_dict()))
+    )
+
+    assert shard_data is not shard_data_from_str
+    assert shard_data == shard_data_from_str
+
+
+@pytest.mark.parametrize("limit", [None, 1])
+def test_db_node_can_parse_launched_shard_info(limit):
+    rand_shards = [_random_shard_info() for _ in range(3)]
+    with io.StringIO(
+        textwrap.dedent(
+            """\
+            This is some file like str
+            --------------------------
+
+            SMARTSIM_ORC_SHARD_INFO: {}
+            ^^^^^^^^^^^^^^^^^^^^^^^
+            We should be able to parse the serialized
+            launched db info from this file if the line is
+            prefixed with this tag.
+
+            Here are two more for good measure:
+            SMARTSIM_ORC_SHARD_INFO: {}
+            SMARTSIM_ORC_SHARD_INFO: {}
+
+            All other lines should be ignored.
+            """
+        ).format(*(json.dumps(s.to_dict()) for s in rand_shards))
+    ) as stream:
+        parsed_shards = DBNode._parse_launched_shard_info_from_stream(
+            stream, limit
+        )
+    if limit is not None:
+        rand_shards = rand_shards[:limit]
+    assert rand_shards == parsed_shards
 
 
 def test_set_host():

@@ -24,13 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import itertools
-import psutil
 import sys
 import typing as t
-
 from os import getcwd, getenv
 from shlex import split as sh_split
 
+import psutil
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
@@ -41,7 +40,6 @@ from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
@@ -55,6 +53,7 @@ from ..settings import (
     SbatchSettings,
     SrunSettings,
 )
+from ..settings.base import BatchSettings, RunSettings
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
@@ -162,9 +161,9 @@ class Orchestrator(EntityList[DBNode]):
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
         *,
-        queue_threads: t.Optional[int] = None,
-        inter_threads: t.Optional[int] = None,
-        intra_threads: t.Optional[int] = None,
+        threads_per_queue: t.Optional[int] = None,
+        inter_op_threads: t.Optional[int] = None,
+        intra_op_threads: t.Optional[int] = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -202,12 +201,13 @@ class Orchestrator(EntityList[DBNode]):
             interface = [interface]
         self._interfaces = interface
         self._check_network_interface()
-        self.queue_threads = queue_threads
-        self.inter_threads = inter_threads
-        self.intra_threads = intra_threads
+        self.queue_threads = threads_per_queue
+        self.inter_threads = inter_op_threads
+        self.intra_threads = intra_op_threads
+
         if self.launcher == "lsf":
-            gpus_per_shard = kwargs.pop("gpus_per_shard", 0)
-            cpus_per_shard = kwargs.pop("cpus_per_shard", 4)
+            gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
+            cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
         else:
             gpus_per_shard = None
             cpus_per_shard = None
@@ -225,9 +225,9 @@ class Orchestrator(EntityList[DBNode]):
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
             cpus_per_shard=cpus_per_shard,
-            queue_threads=queue_threads,
-            inter_threads=inter_threads,
-            intra_threads=intra_threads,
+            threads_per_queue=threads_per_queue,
+            inter_op_threads=inter_op_threads,
+            intra_op_threads=intra_op_threads,
             **kwargs,
         )
 
@@ -318,10 +318,10 @@ class Orchestrator(EntityList[DBNode]):
         return self._get_address()
 
     def _get_address(self) -> t.List[str]:
-        addresses: t.List[str] = []
-        for ip_address, port in itertools.product(self._hosts, self.ports):
-            addresses.append(":".join((ip_address, str(port))))
-        return addresses
+        return [
+            f"{host}:{port}"
+            for host, port in itertools.product(self._hosts, self.ports)
+        ]
 
     def is_active(self) -> bool:
         """Check if the database is active
@@ -335,20 +335,21 @@ class Orchestrator(EntityList[DBNode]):
         return db_is_active(self._hosts, self.ports, self.num_shards)
 
     @property
-    def _rai_module(self) -> str:
+    def _rai_module(self) -> t.Tuple[str, ...]:
         """Get the RedisAI module from third-party installations
 
-        :return: path to module or "" if not found
-        :rtype: str
+        :return: Tuple of args to pass to the orchestrator exe
+                 to load and configure the RedisAI
+        :rtype: tuple[str]
         """
         module = ["--loadmodule", CONFIG.redisai]
         if self.queue_threads:
-            module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
+            module.extend(("THREADS_PER_QUEUE", str(self.queue_threads)))
         if self.inter_threads:
-            module.append(f"INTER_OP_PARALLELISM {self.inter_threads}")
+            module.extend(("INTER_OP_PARALLELISM", str(self.inter_threads)))
         if self.intra_threads:
-            module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
-        return " ".join(module)
+            module.extend(("INTRA_OP_PARALLELISM", str(self.intra_threads)))
+        return tuple(module)
 
     @property
     def _redis_exe(self) -> str:
@@ -817,31 +818,23 @@ class Orchestrator(EntityList[DBNode]):
 
         self.ports = [port]
 
-    @staticmethod
-    def _get_cluster_args(name: str, port: int) -> t.List[str]:
-        """Create the arguments necessary for cluster creation"""
-        cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
-        db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
-        return db_args
-
     def _get_start_script_args(
         self, name: str, port: int, cluster: bool
     ) -> t.List[str]:
-        start_script_args = [
+        cmd = [
             "-m",
             "smartsim._core.entrypoints.redis",  # entrypoint
-            "+ifname=" + ",".join(self._interfaces),  # pass interface to start script
-            "+command",  # command flag for argparser
-            self._redis_exe,  # redis-server
-            self._redis_conf,  # redis.conf file
-            self._rai_module,  # redisai.so
-            "--port",  # redis port
-            str(port),  # port number
+            f"+orc-exe={self._redis_exe}",  # redis-server
+            f"+conf-file={self._redis_conf}",  # redis.conf file
+            "+rai-module",  # load redisai.so
+            *self._rai_module,
+            f"+name={name}",  # name of node
+            f"+port={port}",  # redis port
+            f"+ifname={','.join(self._interfaces)}",  # pass interface to start script
         ]
         if cluster:
-            start_script_args += self._get_cluster_args(name, port)
-
-        return start_script_args
+            cmd.append("+cluster")  # is the shard pard of a cluster
+        return cmd
 
     def _get_db_hosts(self) -> t.List[str]:
         hosts = []

@@ -24,17 +24,19 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import io
 import itertools
+import json
 import os
 import os.path as osp
 import time
 import typing as t
+from dataclasses import dataclass
 
 from ..error import SmartSimError
 from ..log import get_logger
-from .entity import SmartSimEntity
 from ..settings.base import RunSettings
-
+from .entity import SmartSimEntity
 
 logger = get_logger(__name__)
 
@@ -148,17 +150,39 @@ class DBNode(SmartSimEntity):
         ]
 
     @staticmethod
-    def _parse_ips(filepath: str, num_ips: t.Optional[int] = None) -> t.List[str]:
-        ips = []
-        with open(filepath, "r", encoding="utf-8") as dbnode_file:
-            lines = dbnode_file.readlines()
-            for line in lines:
-                content = line.split()
-                if "IPADDRESS:" in content:
-                    ips.append(content[-1])
-                    if num_ips and len(ips) == num_ips:
-                        break
-        return ips
+    def _parse_launched_shard_info_from_stream(
+        stream: io.TextIOBase, num_shards: t.Optional[int] = None
+    ) -> "t.List[LaunchedShardData]":
+        lines = (line.strip() for line in stream)
+        lines = (line for line in lines if line)
+        tokenized = (line.split(maxsplit=1) for line in lines)
+        tokenized = (tokens for tokens in tokenized if len(tokens) > 1)
+        shard_data_jsons = (
+            kwjson for first, kwjson in tokenized if "SMARTSIM_ORC_SHARD_INFO" in first
+        )
+        shard_data_kwargs = (json.loads(kwjson) for kwjson in shard_data_jsons)
+        shard_data: "t.Iterable[LaunchedShardData]" = (
+            LaunchedShardData(**kwargs) for kwargs in shard_data_kwargs
+        )
+        if num_shards:
+            shard_data = itertools.islice(shard_data, num_shards)
+        return list(shard_data)
+
+    @classmethod
+    def _parse_launched_shard_info_from_file(
+        cls, filepath: str, num_shards: t.Optional[int] = None
+    ) -> "t.List[LaunchedShardData]":
+        with open(filepath, "r", encoding="utf-8") as file:
+            return cls._parse_launched_shard_info_from_stream(file, num_shards)
+
+    @classmethod
+    def _parse_ips(
+        cls, filepath: str, num_shards: t.Optional[int] = None
+    ) -> t.List[str]:
+        return [
+            shard.hostname
+            for shard in cls._parse_launched_shard_info_from_file(filepath, num_shards)
+        ]
 
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
@@ -202,3 +226,20 @@ class DBNode(SmartSimEntity):
             raise SmartSimError("Failed to obtain database hostname")
 
         return list(set(ips))
+
+
+@dataclass(frozen=True)
+class LaunchedShardData:
+    """Data class to write an parse data about a launched database shard"""
+
+    name: str
+    hostname: str
+    port: int
+    cluster: bool
+
+    @property
+    def cluster_conf_file(self) -> t.Optional[str]:
+        return f"nodes-{self.name}-{self.port}.conf" if self.cluster else None
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return dict(self.__dict__)
