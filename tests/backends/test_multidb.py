@@ -109,9 +109,10 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
             in ex.value.args[0]
         )
 
+    except:
+        exp.stop(smartsim_model)
     finally:
         exp.stop(orc)
-    # exp.stop(smartsim_model) # stopping model gives keyerror
 
 
 @pytest.mark.parametrize("db_type", supported_dbs)
@@ -144,7 +145,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     smartsim_model.set_path(test_dir)
 
     db_args = {
-        "port": test_port+2,
+        "port": test_port,
         "db_cpus": 1,
         "debug": True,
         "db_identifier": "my_db",
@@ -162,7 +163,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
 
     # Create Database
     orc = exp.create_database(
-        port=test_port + 3, interface=test_interface, db_identifier="my_db"
+        port=test_port + 1, interface=test_interface, db_identifier="my_db"
     )
 
     exp.generate(orc)
@@ -215,9 +216,11 @@ def test_db_identifier_standard_twice_not_unique(wlmutils):
             "has already been used. Pass in a unique name for db_identifier"
             in ex.value.args[0]
         )
-
+    except:
+        exp.stop(orc2)
     finally:
         exp.stop(orc)
+        # exp.stop(orc2)
 
 
 def test_db_identifier_create_standard_once(fileutils, wlmutils):
@@ -497,7 +500,6 @@ def test_launch_cluster_orc_single_dbid(fileutils, wlmutils):
 ## need to add more tests:
 
 # tests in the generator
-#_gen_orc_dir
+# _gen_orc_dir
 # directory overwrite
 # tests warning in the orch
-
