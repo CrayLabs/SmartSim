@@ -187,10 +187,8 @@ class DBNode(SmartSimEntity):
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
 
-        this uses the RedisIP module that is built as a dependency
         The IP address is preferred, but if hostname is only present
         then a lookup to /etc/hosts is done through the socket library.
-        This function must be called only if ``_mpmd==True``.
 
         :raises SmartSimError: if host/ip could not be found
         :return: ip addresses | hostnames
@@ -211,7 +209,7 @@ class DBNode(SmartSimEntity):
                 ...
 
             if len(ips) < self.num_shards:
-                logger.debug("Waiting for RedisIP files to populate...")
+                logger.debug("Waiting for output files to populate...")
                 # Larger sleep time, as this seems to be needed for
                 # multihost setups
                 time.sleep(2 if self.num_shards > 1 else 1)

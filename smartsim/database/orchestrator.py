@@ -612,7 +612,7 @@ class Orchestrator(EntityList[DBNode]):
         batch_settings = None
 
         if launcher is None:
-            raise ValueError('Expected param `launcher` of type `str`')
+            raise ValueError("Expected param `launcher` of type `str`")
 
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
@@ -725,7 +725,7 @@ class Orchestrator(EntityList[DBNode]):
         db_nodes: int = 1,
         single_cmd: bool = True,
         port: int = 6379,
-        **kwargs: t.Any
+        **kwargs: t.Any,
     ) -> None:
         # TODO: This attr is really a synonym for number of shards underneath
         #       the orchestrator. It is problematic for a number of reasons,
@@ -749,7 +749,8 @@ class Orchestrator(EntityList[DBNode]):
 
         if mpmd_nodes:
             self._initialize_entities_mpmd(
-                db_nodes=db_nodes, single_cmd=single_cmd, port=port, **kwargs)
+                db_nodes=db_nodes, single_cmd=single_cmd, port=port, **kwargs
+            )
         else:
             cluster = self.db_nodes >= 3
 
