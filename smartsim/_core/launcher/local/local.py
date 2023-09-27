@@ -110,12 +110,12 @@ class LocalLauncher(Launcher):
         :return: CLI arguments to execute the step via the proxy step executor
         :rtype: t.List[str]
         """
-        
+
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
         cmd_list = step.get_launch_cmd()
-        ascii_cmd = '|'.join(cmd_list).encode('ascii')
-        cmd = base64.b64encode(ascii_cmd).decode('ascii')
+        ascii_cmd = "|".join(cmd_list).encode("ascii")
+        cmd = base64.b64encode(ascii_cmd).decode("ascii")
 
         out, err = step.get_output_files()
 
@@ -136,7 +136,7 @@ class LocalLauncher(Launcher):
             "+o",
             out,
             "+e",
-            err
+            err,
         ]
         return proxied_cmd
         # return cmd_list
@@ -155,7 +155,7 @@ class LocalLauncher(Launcher):
             self.task_manager.start()
 
         out, err = step.get_output_files()
-        
+
         # pylint: disable-next=consider-using-with
         output = open(out, "w+", encoding="utf-8")
         # pylint: disable-next=consider-using-with
@@ -166,7 +166,7 @@ class LocalLauncher(Launcher):
 
         cmd = step.get_launch_cmd()
         if os.environ.get("SSFLAG_TELEMETRY", False):
-            cmd = self._get_proxy_cmd(step)            
+            cmd = self._get_proxy_cmd(step)
 
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
