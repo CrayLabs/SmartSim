@@ -50,6 +50,7 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
         # pass an empty name if no db id
         if db_id == "orchestrator":
             db_name_suffix = ""
+            db_id = ""
 
         return db_name_suffix, db_id
 
