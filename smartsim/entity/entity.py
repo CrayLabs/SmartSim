@@ -23,12 +23,17 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import smartsim.settings.base
+
+import typing as t
+
+if t.TYPE_CHECKING:
+    # pylint: disable-next=unused-import
+    import smartsim.settings.base
 
 
 class SmartSimEntity:
     def __init__(
-        self, name: str, path: str, run_settings: smartsim.settings.base.RunSettings
+        self, name: str, path: str, run_settings: "smartsim.settings.base.RunSettings"
     ) -> None:
         """Initialize a SmartSim entity.
 
