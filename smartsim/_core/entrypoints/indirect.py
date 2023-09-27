@@ -101,15 +101,17 @@ def main(
 
     except Exception:
         logger.error("Failed to create process", exc_info=True)
+        cleanup()
         return 1
 
     try:
-        while process.is_running() and process.returncode is None:
-            process.poll()
+        while all((process.is_running(), process.returncode is None, STEP_PID > 0)):
+            poll_result = process.poll()
+            if poll_result is not None:
+                break
             time.sleep(1)
 
         ret_code: int = process.returncode
-        process.wait()
         track_event(
             get_ts(),
             step_name,
@@ -125,23 +127,31 @@ def main(
         return ret_code
     except Exception:
         logger.error("Failed to execute process", exc_info=True)
+    finally:
+        cleanup()
 
     return 1
 
 
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
+    global STEP_PID
+    if STEP_PID < 1:
+        return
+
     try:
-        logger.debug("Cleaning up step executor")
         # attempt to stop the subprocess performing step-execution
         process = psutil.Process(STEP_PID)
         process.terminate()
 
     except psutil.NoSuchProcess:
-        logger.warning("Unable to find step executor process to kill.")
+        # swallow exception to avoid overwriting outputs from cmd
+        ...
 
     except OSError as ex:
         logger.warning(f"Failed to clean up step executor gracefully: {ex}")
+    finally:
+        STEP_PID = 0
 
 
 def handle_signal(signo: int, _frame: t.Optional[FrameType]) -> None:
