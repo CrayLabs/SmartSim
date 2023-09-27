@@ -132,7 +132,7 @@ def test_full_exp(fileutils, wlmutils):
         assert osp.isdir(osp.join(test_dir, "test_ens/test_ens_" + str(i)))
 
     # test for orc dir
-    assert osp.isdir(osp.join(test_dir, "database"))
+    assert osp.isdir(osp.join(test_dir, orc.name))
 
     # test for model file
     assert osp.isdir(osp.join(test_dir, "model"))
