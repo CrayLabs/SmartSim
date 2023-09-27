@@ -144,7 +144,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
     smartsim_model.set_path(test_dir)
 
     db_args = {
-        "port": test_port,
+        "port": test_port+2,
         "db_cpus": 1,
         "debug": True,
         "db_identifier": "my_db",
@@ -162,7 +162,7 @@ def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_typ
 
     # Create Database
     orc = exp.create_database(
-        port=test_port + 1, interface=test_interface, db_identifier="my_db"
+        port=test_port + 3, interface=test_interface, db_identifier="my_db"
     )
 
     exp.generate(orc)
