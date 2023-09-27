@@ -24,10 +24,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing as mp
-import pathlib
+import base64
+import os
 import sys
-import shlex
 import typing as t
 
 from ..launcher import Launcher
@@ -38,6 +37,7 @@ from ..step import Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
+
 
 logger = get_logger(__name__)
 
@@ -110,7 +110,6 @@ class LocalLauncher(Launcher):
         :return: CLI arguments to execute the step via the proxy step executor
         :rtype: t.List[str]
         """
-        import base64
         
         proxy_module = "smartsim._core.entrypoints.indirect"
         etype = step.meta["entity_type"]
@@ -165,7 +164,9 @@ class LocalLauncher(Launcher):
         # LocalStep.run_command omits env, include it here
         passed_env = step.env if isinstance(step, LocalStep) else None
 
-        cmd = self._get_proxy_cmd(step)
+        cmd = step.get_launch_cmd()
+        if os.environ.get("SSFLAG_TELEMETRY", False):
+            cmd = self._get_proxy_cmd(step)            
 
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
