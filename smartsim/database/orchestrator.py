@@ -423,7 +423,7 @@ class Orchestrator(EntityList[DBNode]):
         elif (
             self.launcher == "pals"
             and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
-            and self.dbnodes[0].is_mpmd
+            and self.entities[0].is_mpmd
         ):
             # In this case, --hosts is a global option, we only set it to the
             # first run command
