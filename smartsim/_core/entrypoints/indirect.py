@@ -107,7 +107,7 @@ def main(
     ret_code: int = 1
 
     try:
-        while all((process.is_running(), ret_code is None, STEP_PID > 0)):
+        while all((process.is_running(), STEP_PID > 0)):
             result = process.poll()
             if result is not None:
                 ret_code = result
