@@ -772,7 +772,7 @@ class Controller:
             if orchestrator.batch:
                 self._jobs.db_jobs[orchestrator.name].hosts = orchestrator.hosts
             else:
-                for dbnode in orchestrator.dbnodes:
+                for dbnode in orchestrator.entities:
                     if not dbnode.is_mpmd:
                         self._jobs.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:
