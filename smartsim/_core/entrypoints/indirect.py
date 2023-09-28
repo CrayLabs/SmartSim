@@ -75,11 +75,12 @@ def main(
     cleaned_cmd = decoded_cmd.decode("ascii").split("|")
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
+    ret_code: int = 1
 
-    try:
-        with open(output_path, "w+", encoding="utf-8") as ofp, open(
-            error_path, "w+", encoding="utf-8"
-        ) as efp:
+    with open(output_path, "w+", encoding="utf-8") as ofp, open(
+        error_path, "w+", encoding="utf-8"
+    ) as efp:
+        try:
             process = psutil.Popen(
                 cleaned_cmd,
                 cwd=exp_dir,
@@ -89,40 +90,45 @@ def main(
             )
             STEP_PID = process.pid
 
-        track_event(
-            get_ts(), step_name, job_id, str(STEP_PID), etype, "start", exp_path, logger
-        )
+            track_event(
+                get_ts(),
+                step_name,
+                job_id,
+                str(STEP_PID),
+                etype,
+                "start",
+                exp_path,
+                logger,
+            )
 
-    except Exception:
-        logger.error("Failed to create process", exc_info=True)
-        cleanup()
-        return 1
+        except Exception:
+            logger.error("Failed to create process", exc_info=True)
+            cleanup()
+            return 1
 
-    ret_code: int = 1
-
-    try:
-        while all((process.is_running(), STEP_PID > 0)):
-            result = process.poll()
-            if result is not None:
-                ret_code = result
-                break
-            time.sleep(1)
-    except Exception:
-        logger.error("Failed to execute process", exc_info=True)
-    finally:
-        track_event(
-            get_ts(),
-            step_name,
-            job_id,
-            str(STEP_PID),
-            etype,
-            "stop",
-            exp_path,
-            logger,
-            detail=f"process {STEP_PID} finished with return code: {ret_code}",
-            return_code=ret_code,
-        )
-        cleanup()
+        try:
+            while all((process.is_running(), STEP_PID > 0)):
+                result = process.poll()
+                if result is not None:
+                    ret_code = result
+                    break
+                time.sleep(1)
+        except Exception:
+            logger.error("Failed to execute process", exc_info=True)
+        finally:
+            track_event(
+                get_ts(),
+                step_name,
+                job_id,
+                str(STEP_PID),
+                etype,
+                "stop",
+                exp_path,
+                logger,
+                detail=f"process {STEP_PID} finished with return code: {ret_code}",
+                return_code=ret_code,
+            )
+            cleanup()
 
     return ret_code
 
