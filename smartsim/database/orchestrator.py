@@ -719,6 +719,9 @@ class Orchestrator(EntityList[DBNode]):
 
         return erf_rs
 
+    # Old pylint from TF 2.6.x does not understand that this argument list is
+    # equivilent to `(self, **kwargs)`
+    # # pylint: disable-next=arguments-differ
     def _initialize_entities(
         self,
         *,
