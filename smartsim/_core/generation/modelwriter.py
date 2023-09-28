@@ -63,7 +63,7 @@ class ModelWriter:
         tagged_files: t.List[str],
         params: t.Dict[str, str],
         make_missing_tags_fatal: bool = False,
-    ) -> None:
+    ) -> t.Dict[str, t.Dict[str, str]]:
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -71,13 +71,19 @@ class ModelWriter:
         :type model: list[str]
         :param params: model parameters
         :type params: dict[str, str]
-        :param make_missing_tags_fatal: blow up if a tag is missing
+        :param make_missing_tags_fatal: raise an error if a tag is missing
         :type make_missing_tags_fatal: bool
+        :returns: A dict connecting each file to its parameter settings
+        :rtype: dict[str,dict[str,str]]
         """
+        files_to_tags: t.Dict[str, t.Dict[str, str]] = {}
         for tagged_file in tagged_files:
             self._set_lines(tagged_file)
-            self._replace_tags(params, make_missing_tags_fatal)
+            used_tags = self._replace_tags(params, make_missing_tags_fatal)
             self._write_changes(tagged_file)
+            files_to_tags[tagged_file] = used_tags
+
+        return files_to_tags
 
     def _set_lines(self, file_path: str) -> None:
         """Set the lines for the modelwrtter to iterate over
@@ -104,8 +110,10 @@ class ModelWriter:
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
-    def _replace_tags(self, params: t.Dict[str, str], make_fatal: bool = False) -> None:
-        """Replace the tagged within the tagged file attached to this
+    def _replace_tags(
+        self, params: t.Dict[str, str], make_fatal: bool = False
+    ) -> t.Dict[str, str]:
+        """Replace the tagged parameters within the file attached to this
            model. The tag defaults to ";"
 
         :param model: The model instance
@@ -113,9 +121,12 @@ class ModelWriter:
         :param make_fatal: (Optional) Set to True to force a fatal error
             if a tag is not matched
         :type make_fatal: bool
+        :returns: A dict of parameter names and values set for the file
+        :rtype: dict[str,str]
         """
         edited = []
         unused_tags: t.Dict[str, t.List[int]] = {}
+        used_params: t.Dict[str, str] = {}
         for i, line in enumerate(self.lines):
             search = re.search(self.regex, line)
             if search:
@@ -126,6 +137,7 @@ class ModelWriter:
                         new_val = str(params[previous_value])
                         new_line = re.sub(self.regex, new_val, line, 1)
                         search = re.search(self.regex, new_line)
+                        used_params[previous_value] = new_val
                         if not search:
                             edited.append(new_line)
                         else:
@@ -143,13 +155,12 @@ class ModelWriter:
             else:
                 edited.append(line)
         for tag, value in unused_tags.items():
-            missing_tag_message = (
-                f"Unused tag {tag} on line(s): {str(value)}"
-            )
+            missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
             if make_fatal:
                 raise SmartSimError(missing_tag_message)
             logger.warning(missing_tag_message)
         self.lines = edited
+        return used_params
 
     def _is_ensemble_spec(
         self, tagged_line: str, model_params: t.Dict[str, str]

@@ -1,0 +1,8 @@
+Model name: dir_test_2
+File name                   Parameters
+--------------------------  ---------------
+dir_test/dir_test_2/in.atm  Name      Value
+                            ------  -------
+                            THERMO       20
+                            STEPS        10
+
