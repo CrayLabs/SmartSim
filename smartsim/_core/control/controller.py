@@ -41,7 +41,14 @@ from ..._core.launcher.step import Step
 from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
+from ...entity import (
+    DBNode,
+    Ensemble,
+    EntityList,
+    EntitySequence,
+    Model,
+    SmartSimEntity,
+)
 from ...error import (
     LauncherError,
     SmartSimError,

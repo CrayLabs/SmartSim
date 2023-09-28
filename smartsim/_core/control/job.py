@@ -27,9 +27,8 @@
 import time
 import typing as t
 
-from ...entity import SmartSimEntity, EntitySequence
+from ...entity import SmartSimEntity, EntityList, EntitySequence
 from ...status import STATUS_NEW
-from ...entity import SmartSimEntity, EntityList
 
 
 _JobKey = t.Tuple[str, str]

@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# import itertools
+
 import time
 import typing as t
 from collections import ChainMap
@@ -259,9 +259,6 @@ class JobManager:
         :type entity: SmartSimEntity | EntitySequence
         :returns: tuple of status
         """
-        for hook in self.on_timestep_hook:
-            hook(job, logger)
-
         with self._lock:
             try:
                 if entity.name in self.completed:
@@ -272,6 +269,9 @@ class JobManager:
                 raise SmartSimError(
                     f"Entity {entity.name} has not been launched in this Experiment"
                 ) from None
+
+            for hook in self.on_timestep_hook:
+                hook(job, logger)
 
             return job.status
 

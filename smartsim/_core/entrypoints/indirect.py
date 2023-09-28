@@ -104,14 +104,15 @@ def main(
         cleanup()
         return 1
 
+    ret_code: t.Optional[int] = None
+
     try:
-        while all((process.is_running(), process.returncode is None, STEP_PID > 0)):
-            poll_result = process.poll()
-            if poll_result is not None:
+        while all((process.is_running(), ret_code is None, STEP_PID > 0)):
+            ret_code = process.poll()
+            if ret_code is not None:
                 break
             time.sleep(1)
 
-        ret_code: int = process.returncode
         track_event(
             get_ts(),
             step_name,
@@ -135,7 +136,7 @@ def main(
 
 def cleanup() -> None:
     """Perform cleanup required for clean termination"""
-    global STEP_PID
+    global STEP_PID  # pylint: disable=global-statement
     if STEP_PID < 1:
         return
 
