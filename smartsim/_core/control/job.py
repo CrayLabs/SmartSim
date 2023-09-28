@@ -40,7 +40,8 @@ class JobEntity:
     """
 
     def __init__(
-        self, entity: t.Optional[t.Union[SmartSimEntity, EntityList]] = None
+        self,
+        entity: t.Optional[t.Union[SmartSimEntity, EntityList[SmartSimEntity]]] = None,
     ) -> None:
         self.name: str = entity.name if entity else ""
         self.path: str = entity.path if entity else ""
