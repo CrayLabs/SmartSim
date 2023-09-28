@@ -73,27 +73,21 @@ def main(
 
     decoded_cmd = base64.b64decode(cmd.encode("ascii"))
     cleaned_cmd = decoded_cmd.decode("ascii").split("|")
-    # if not cleaned_cmd:
-    #     raise ValueError(f"Invalid cmd supplied: {cmd}")
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
 
     try:
-        ofp = open(  # pylint: disable=consider-using-with
-            output_path, "w+", encoding="utf-8"
-        )
-        efp = open(  # pylint: disable=consider-using-with
+        with open(output_path, "w+", encoding="utf-8") as ofp, open(
             error_path, "w+", encoding="utf-8"
-        )
-
-        process = psutil.Popen(
-            cleaned_cmd,
-            cwd=exp_dir,
-            stdout=ofp.fileno(),
-            stderr=efp.fileno(),
-            close_fds=True,
-        )
-        STEP_PID = process.pid
+        ) as efp:
+            process = psutil.Popen(
+                cleaned_cmd,
+                cwd=exp_dir,
+                stdout=ofp.fileno(),
+                stderr=efp.fileno(),
+                close_fds=True,
+            )
+            STEP_PID = process.pid
 
         track_event(
             get_ts(), step_name, job_id, str(STEP_PID), etype, "start", exp_path, logger
