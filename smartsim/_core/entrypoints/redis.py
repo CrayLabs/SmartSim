@@ -181,7 +181,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Specify if this orchestrator shard is part of a cluster",
     )
-    args = parser.parse_args()
+    args_ = parser.parse_args()
 
     # make sure to register the cleanup before the start
     # the process so our signaller will be able to stop
@@ -189,4 +189,4 @@ if __name__ == "__main__":
     for sig in SIGNALS:
         signal.signal(sig, handle_signal)
 
-    raise SystemExit(main(args))
+    raise SystemExit(main(args_))
