@@ -393,18 +393,24 @@ class Controller:
         ] = []
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
-            job_steps = [(self._create_job_step(e), e) for e in elist.entities]
             if elist.batch:
-                batch_step = self._create_batch_job_step(elist)
+                batch_step, substeps = self._create_batch_job_step(elist)
                 launched_manifest.ensembles.append(
                     (
                         elist,
-                        [(model, (batch_step.name, step)) for step, model in job_steps],
+                        [
+                            (model, (batch_step.name, step))
+                            for step, model in zip(substeps, elist.entities)
+                            #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            # TODO: Do not like that we assume these are of the same
+                            # same length and that order is preserved
+                        ],
                     )
                 )
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
+                job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 launched_manifest.ensembles.append(
                     (elist, [(model, (step.name, step)) for step, model in job_steps])
                 )
@@ -417,7 +423,7 @@ class Controller:
                     model.name, model.path, model.batch_settings
                 )
                 anon_entity_list.entities.append(model)
-                batch_step = self._create_batch_job_step(anon_entity_list)
+                batch_step, _ = self._create_batch_job_step(anon_entity_list)
                 launched_manifest.models.append((model, (batch_step.name, batch_step)))
                 steps.append((batch_step, model))
             else:
@@ -444,22 +450,28 @@ class Controller:
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
-        db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
 
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
-            orc_batch_step = self._create_batch_job_step(orchestrator)
+            orc_batch_step, substeps = self._create_batch_job_step(orchestrator)
             # FIXME: gross use of in-place mutation of param. RM THIS!
             manifest.database.append(
                 (
                     orchestrator,
-                    [(node, (orc_batch_step.name, step)) for step, node in db_steps],
+                    [
+                        (node, (orc_batch_step.name, step))
+                        for step, node in zip(substeps, orchestrator.entities)
+                        #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        # TODO: Do not like that we assume these are of the same
+                        # same length and that order is preserved
+                    ],
                 )
             )
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
             # FIXME: gross mutation, resulting in out param here too! RM THIS!!
             manifest.database.append(
                 (orchestrator, [(node, (step.name, step)) for step, node in db_steps])
@@ -534,13 +546,14 @@ class Controller:
 
     def _create_batch_job_step(
         self, entity_list: t.Union[Orchestrator, Ensemble, _AnonymousBatchJob]
-    ) -> Step:
+    ) -> t.Tuple[Step, t.List[Step]]:
         """Use launcher to create batch job step
 
         :param entity_list: EntityList to launch as batch
         :type entity_list: EntityList
-        :return: job step instance
-        :rtype: Step
+        :return: batch job step instance and a list of run steps to be
+                 executed within the batch job
+        :rtype: tuple[Step, list[Step]]
         """
         if not entity_list.batch_settings:
             raise ValueError(
@@ -550,12 +563,22 @@ class Controller:
         batch_step = self._launcher.create_step(
             entity_list.name, entity_list.path, entity_list.batch_settings
         )
+        substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
+            # FIXME: Gross! Answer before mering or ticket!
+            #   1) Why is there no "BatchStep" type?
+            #   2) Why does the "BatchSteps" have list of cmds for subprocs
+            #      for to be launched, but not a refrence to the actual
+            #      substep instances?
+            #   3) Is there anyway we can get around setting this "magic" RS
+            #      instance attr? I makes construction of the steps VERY
+            #      confusing :-(
             entity.run_settings.in_batch = True
             step = self._create_job_step(entity)
+            substeps.append(step)
             batch_step.add_to_batch(step)
-        return batch_step
+        return batch_step, substeps
 
     def _create_job_step(self, entity: SmartSimEntity) -> Step:
         """Create job steps for all entities with the launcher
