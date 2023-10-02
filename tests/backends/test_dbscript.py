@@ -80,7 +80,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
     # Create the RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create the SmartSim Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
@@ -155,7 +155,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create Ensemble with two identical models
     ensemble = exp.create_ensemble(
@@ -250,7 +250,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create model with colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)
@@ -318,7 +318,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create SmartSim Ensemble with two identical models
     colo_ensemble = exp.create_ensemble(
@@ -417,7 +417,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create Ensemble with two identical SmartSim Model
     colo_ensemble = exp.create_ensemble(
@@ -514,7 +514,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create a SmartSim model with a colocated database
     colo_model = exp.create_model("colocated_model", colo_settings)

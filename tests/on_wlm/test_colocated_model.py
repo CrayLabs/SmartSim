@@ -36,6 +36,9 @@ if sys.platform == "darwin":
 else:
     supported_dbs = ["uds", "tcp", "deprecated"]
 
+# Set to true if DB logs should be generated for debugging
+DEBUG_DB = False
+
 # retrieved from pytest fixtures
 launcher = pytest.test_launcher
 if launcher not in pytest.wlm_options:
@@ -45,15 +48,16 @@ if launcher not in pytest.wlm_options:
 def test_launch_colocated_model_defaults(fileutils, coloutils, db_type):
     """Test the launch of a model with a colocated database and local launcher"""
 
-    db_args = { }
+    db_args = { "debug":DEBUG_DB }
 
-    exp = Experiment("colocated_model_defaults", launcher=launcher)
+    exp = Experiment(f"colocated_model_defaults_{db_type}", launcher=launcher)
     colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
 
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0"
@@ -69,10 +73,11 @@ def test_launch_colocated_model_defaults(fileutils, coloutils, db_type):
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
 
-    exp = Experiment("colocated_model_pinning_auto_1cpu", launcher=launcher)
+    exp = Experiment(f"colocated_model_pinning_auto_1cpu_{db_type}", launcher=launcher)
     db_args = {
         "db_cpus": 1,
         "custom_pinning": [],
+        "debug":DEBUG_DB,
     }
 
     # Check to make sure that the CPU mask was correctly generated
@@ -82,6 +87,7 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
     exp.start(colo_model, block=True)
@@ -91,10 +97,11 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type):
 
-    exp = Experiment("colocated_model_pinning_auto_2cpu", launcher=launcher)
+    exp = Experiment(f"colocated_model_pinning_auto_2cpu_{db_type}", launcher=launcher)
 
     db_args = {
         "db_cpus": 2,
+        "debug":DEBUG_DB
     }
 
     # Check to make sure that the CPU mask was correctly generated
@@ -104,6 +111,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type):
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
     exp.start(colo_model, block=True)
@@ -115,11 +123,12 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # Assume that there are at least 4 cpus on the node
 
-    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher)
 
     db_args = {
         "db_cpus": 4,
-        "custom_pinning": range(4)
+        "custom_pinning": range(4),
+        "debug":DEBUG_DB
     }
 
     colo_model = coloutils.setup_test_colo(
@@ -128,6 +137,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type):
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1,2,3"
     exp.start(colo_model, block=True)
@@ -139,7 +149,7 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this has more than 2 CPUs on the supercomputer node
 
-    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher)
 
     db_args = {
         "db_cpus": 2,
@@ -152,6 +162,7 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type):
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,2"
     exp.start(colo_model, block=True)
@@ -163,7 +174,7 @@ def test_colocated_model_pinning_mixed(fileutils, coloutils, db_type):
     # Check to make sure that the CPU mask was correctly generated
     # note we presume that this at least 4 CPUs on the supercomputer node
 
-    exp = Experiment("colocated_model_pinning_manual", launcher=launcher)
+    exp = Experiment(f"colocated_model_pinning_manual_{db_type}", launcher=launcher)
 
     db_args = {
         "db_cpus": 2,
@@ -176,6 +187,7 @@ def test_colocated_model_pinning_mixed(fileutils, coloutils, db_type):
         exp,
         "send_data_local_smartredis.py",
         db_args,
+        on_wlm=True
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1,3"
     exp.start(colo_model, block=True)

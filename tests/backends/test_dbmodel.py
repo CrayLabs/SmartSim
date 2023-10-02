@@ -165,7 +165,7 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
@@ -241,7 +241,7 @@ def test_pt_db_model(fileutils, wlmutils, mlutils):
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
@@ -305,7 +305,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     # Create RunSettings
     run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     run_settings.set_nodes(1)
-    run_settings.set_tasks_per_node(1)
+    run_settings.set_tasks(1)
 
     # Create ensemble
     smartsim_ensemble = exp.create_ensemble(
@@ -403,7 +403,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
@@ -474,7 +474,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
@@ -534,7 +534,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     # Create RunSettings for colocated model
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create ensemble of two identical models
     colo_ensemble: Ensemble = exp.create_ensemble(
@@ -638,7 +638,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create the ensemble of two identical SmartSim Model
     colo_ensemble = exp.create_ensemble(
@@ -740,7 +740,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
     colo_settings.set_nodes(1)
-    colo_settings.set_tasks_per_node(1)
+    colo_settings.set_tasks(1)
 
     # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
