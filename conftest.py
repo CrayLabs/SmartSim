@@ -49,6 +49,8 @@ from smartsim.error import SSConfigError
 from subprocess import run
 import sys
 import typing as t
+import warnings
+import contextlib
 
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
@@ -677,10 +679,12 @@ class ColoUtils:
         exp: Experiment,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
+        on_wlm: t.Optional[bool] = False
     ) -> Model:
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
-        test_dir = fileutils.make_test_dir(level=2)
+        level = 3 if on_wlm else 2
+        test_dir = fileutils.make_test_dir(level=level)
         sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
 
         # Create an app with a colo_db which uses 1 db_cpu
@@ -688,6 +692,9 @@ class ColoUtils:
             colo_settings = exp.create_run_settings(
                 exe=sys.executable, exe_args=[sr_test_script]
             )
+        if on_wlm:
+            colo_settings.set_tasks(1)
+            colo_settings.set_nodes(1)
         colo_model = exp.create_model("colocated_model", colo_settings)
         colo_model.set_path(test_dir)
 
@@ -700,7 +707,14 @@ class ColoUtils:
             "deprecated": colo_model.colocate_db,
             "uds": colo_model.colocate_db_uds,
         }
-        colocate_fun[db_type](**db_args)
+        with warnings.catch_warnings():
+            if db_type == "deprecated":
+                warnings.filterwarnings(
+                    "ignore",
+                    message="`colocate_db` has been deprecated"
+                )
+            colocate_fun[db_type](**db_args)
+        exp.generate(colo_model, overwrite=True)
         # assert model will launch with colocated db
         assert colo_model.colocated
         # Check to make sure that limit_db_cpus made it into the colo settings
