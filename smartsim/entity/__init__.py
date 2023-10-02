@@ -29,5 +29,5 @@ from .dbobject import *
 from .ensemble import Ensemble
 from .entity import SmartSimEntity
 from .files import TaggedFilesHierarchy
-from .entityList import EntityList
+from .entityList import EntityList, EntitySequence
 from .model import Model

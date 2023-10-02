@@ -31,7 +31,7 @@ from threading import Thread, RLock
 from types import FrameType
 
 from ...database import Orchestrator
-from ...entity import DBNode, SmartSimEntity, EntityList
+from ...entity import DBNode, SmartSimEntity, EntitySequence
 from ...error import SmartSimError
 from ...log import get_logger
 from ...status import TERMINAL_STATUSES
@@ -170,7 +170,7 @@ class JobManager:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntityList],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         is_task: bool = True,
     ) -> None:
         """Add a job to the job manager which holds specific jobs by type.
@@ -180,7 +180,7 @@ class JobManager:
         :param job_id: job step id created by launcher
         :type job_id: str
         :param entity: entity that was launched on job step
-        :type entity: SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
         :type is_task: bool
         """
@@ -236,11 +236,14 @@ class JobManager:
                             output=status.output,
                         )
 
-    def get_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
+    def get_status(
+            self,
+            entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+        ) -> str:
         """Return the status of a job.
 
-        :param entity: SmartSimEntity or EntityList instance
-        :type entity: SmartSimEntity | EntityList
+        :param entity: SmartSimEntity or EntitySequence instance
+        :type entity: SmartSimEntity | EntitySequence
         :returns: tuple of status
         """
         with self._lock:
@@ -339,7 +342,7 @@ class JobManager:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
 
             else:
-                for dbnode in orchestrator.dbnodes:
+                for dbnode in orchestrator.entities:
                     if not dbnode.is_mpmd:
                         self.db_jobs[dbnode.name].hosts = [dbnode.host]
                     else:

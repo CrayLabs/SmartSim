@@ -43,14 +43,8 @@ from ..._core.utils.helpers import (
     unpack_colo_db_identfifier,
 )
 from ...database import Orchestrator
-from ...entity import Ensemble, EntityList, Model, SmartSimEntity
-from ...error import (
-    LauncherError,
-    SmartSimError,
-    SSInternalError,
-    SSUnsupportedError,
-    SSDBIDConflictError,
-)
+from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
+from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError,SSDBIDConflictError
 from ...log import get_logger
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
@@ -147,23 +141,25 @@ class Controller:
                     for job in to_monitor.values():
                         logger.info(job)
 
-    def finished(self, entity: t.Union[SmartSimEntity, EntityList]) -> bool:
+    def finished(
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> bool:
         """Return a boolean indicating wether a job has finished or not
 
         :param entity: object launched by SmartSim.
-        :type entity: Entity | EntityList
+        :type entity: Entity | EntitySequence
         :returns: bool
         :raises ValueError: if entity has not been launched yet
         """
         try:
             if isinstance(entity, Orchestrator):
                 raise TypeError("Finished() does not support Orchestrator instances")
-            if isinstance(entity, EntityList):
+            if isinstance(entity, EntitySequence):
                 return all(self.finished(ent) for ent in entity.entities)
             if not isinstance(entity, SmartSimEntity):
                 raise TypeError(
                     f"Argument was of type {type(entity)} not derived "
-                    "from SmartSimEntity or EntityList"
+                    "from SmartSimEntity or EntitySequence"
                 )
 
             return self._jobs.is_finished(entity)
@@ -172,14 +168,16 @@ class Controller:
                 f"Entity {entity.name} has not been launched in this experiment"
             ) from None
 
-    def stop_entity(self, entity: t.Union[SmartSimEntity, EntityList]) -> None:
+    def stop_entity(
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> None:
         """Stop an instance of an entity
 
         This function will also update the status of the job in
         the jobmanager so that the job appears as "cancelled".
 
         :param entity: entity to be stopped
-        :type entity: Entity | EntityList
+        :type entity: Entity | EntitySequence
         """
         with JM_LOCK:
             job = self._jobs[entity.name]
@@ -215,11 +213,11 @@ class Controller:
                     job.set_status(STATUS_CANCELLED, "", 0, output=None, error=None)
                     self._jobs.move_to_completed(job)
 
-    def stop_entity_list(self, entity_list: EntityList) -> None:
+    def stop_entity_list(self, entity_list: EntitySequence[SmartSimEntity]) -> None:
         """Stop an instance of an entity list
 
         :param entity_list: entity list to be stopped
-        :type entity_list: EntityList
+        :type entity_list: EntitySequence
         """
 
         if entity_list.batch:
@@ -236,34 +234,40 @@ class Controller:
         with JM_LOCK:
             return self._jobs.completed
 
-    def get_entity_status(self, entity: t.Union[SmartSimEntity, EntityList]) -> str:
+    def get_entity_status(
+        self, entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]
+    ) -> str:
         """Get the status of an entity
 
         :param entity: entity to get status of
-        :type entity: SmartSimEntity | EntityList
-        :raises TypeError: if not SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
+        :raises TypeError: if not SmartSimEntity | EntitySequence
         :return: status of entity
         :rtype: str
         """
-        if not isinstance(entity, (SmartSimEntity, EntityList)):
+        if not isinstance(entity, (SmartSimEntity, EntitySequence)):
             raise TypeError(
-                "Argument must be of type SmartSimEntity or EntityList, "
+                "Argument must be of type SmartSimEntity or EntitySequence, "
                 f"not {type(entity)}"
             )
         return self._jobs.get_status(entity)
 
-    def get_entity_list_status(self, entity_list: EntityList) -> t.List[str]:
+    def get_entity_list_status(
+        self, entity_list: EntitySequence[SmartSimEntity]
+    ) -> t.List[str]:
         """Get the statuses of an entity list
 
         :param entity_list: entity list containing entities to
                             get statuses of
-        :type entity_list: EntityList
-        :raises TypeError: if not EntityList
+        :type entity_list: EntitySequence
+        :raises TypeError: if not EntitySequence
         :return: list of str statuses
         :rtype: list
         """
-        if not isinstance(entity_list, EntityList):
-            raise TypeError(f"Argument was of type {type(entity_list)} not EntityList")
+        if not isinstance(entity_list, EntitySequence):
+            raise TypeError(
+                f"Argument was of type {type(entity_list)} not EntitySequence"
+            )
         if entity_list.batch:
             return [self.get_entity_status(entity_list)]
         statuses = []
@@ -335,8 +339,9 @@ class Controller:
             self._set_dbobjects(manifest)
 
         # create all steps prior to launch
-        steps: t.List[t.Tuple[Step, t.Union[SmartSimEntity, EntityList]]] = []
-
+        steps: t.List[
+            t.Tuple[Step, t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]]]
+        ] = []
         all_entity_lists = manifest.ensembles
         for elist in all_entity_lists:
             if elist.batch:
@@ -381,7 +386,7 @@ class Controller:
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
-            db_steps = [(self._create_job_step(db), db) for db in orchestrator.dbnodes]
+            db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
             for db_step in db_steps:
                 self._launch_step(*db_step)
 
@@ -417,7 +422,9 @@ class Controller:
         logger.debug(f"Orchestrator launched on nodes: {orchestrator.hosts}")
 
     def _launch_step(
-        self, job_step: Step, entity: t.Union[SmartSimEntity, EntityList]
+        self,
+        job_step: Step,
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
     ) -> None:
         """Use the launcher to launch a job step
 
@@ -727,7 +734,7 @@ class Controller:
                                 set_script(db_script, client)
 
 
-class _AnonymousBatchJob(EntityList):
+class _AnonymousBatchJob(EntityList[Model]):
     def __init__(
         self, name: str, path: str, batch_settings: BatchSettings, **kwargs: t.Any
     ) -> None:

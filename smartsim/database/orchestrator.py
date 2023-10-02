@@ -142,7 +142,7 @@ def _check_local_constraints(launcher: str, batch: bool) -> None:
         raise SmartSimError(msg)
 
 
-class Orchestrator(EntityList):
+class Orchestrator(EntityList[DBNode]):
     """The Orchestrator is an in-memory database that can be launched
     alongside entities in SmartSim. Data can be transferred between
     entities by using one of the Python, C, C++ or Fortran clients
@@ -292,7 +292,7 @@ class Orchestrator(EntityList):
     def remove_stale_files(self) -> None:
         """Can be used to remove database files of a previous launch"""
 
-        for db in self.dbnodes:
+        for db in self.entities:
             db.remove_stale_dbnode_files()
 
     def get_address(self) -> t.List[str]:
@@ -369,7 +369,7 @@ class Orchestrator(EntityList):
                     if hasattr(self.batch_settings, "set_cpus_per_task"):
                         self.batch_settings.set_cpus_per_task(num_cpus)
 
-        for db in self.dbnodes:
+        for db in self.entities:
             db.run_settings.set_cpus_per_task(num_cpus)
             if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
                 for mpmd in db.run_settings.mpmd:
@@ -409,18 +409,16 @@ class Orchestrator(EntityList):
                 self.batch_settings.set_hostlist(host_list)
 
         if self.launcher == "lsf":
-            for db in self.dbnodes:
+            for db in self.entities:
                 db.set_hosts(host_list)
-        elif (
-            self.launcher == "pals"
-            and isinstance(self.dbnodes[0].run_settings, PalsMpiexecSettings)
-            and self.dbnodes[0].is_mpmd
-        ):
+        elif (self.launcher == "pals"
+              and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
+              and self.entities[0].is_mpmd):
             # In this case, --hosts is a global option, we only set it to the
             # first run command
-            self.dbnodes[0].run_settings.set_hostlist(host_list)
+            self.entities[0].run_settings.set_hostlist(host_list)
         else:
-            for host, db in zip(host_list, self.dbnodes):
+            for host, db in zip(host_list, self.entities):
                 if isinstance(db.run_settings, AprunSettings):
                     if not self.batch:
                         db.run_settings.set_hostlist([host])
@@ -428,8 +426,8 @@ class Orchestrator(EntityList):
                     db.run_settings.set_hostlist([host])
 
                 if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
-                    for i, mpmd_runsettings in enumerate(db.run_settings.mpmd):
-                        mpmd_runsettings.set_hostlist(host_list[i + 1])
+                    for i, mpmd_runsettings in enumerate(db.run_settings.mpmd, 1):
+                        mpmd_runsettings.set_hostlist(host_list[i])
 
     def set_batch_arg(self, arg: str, value: t.Optional[str] = None) -> None:
         """Set a batch argument the orchestrator should launch with
@@ -474,7 +472,7 @@ class Orchestrator(EntityList):
                 "it is a reserved keyword in Orchestrator"
             )
         else:
-            for db in self.dbnodes:
+            for db in self.entities:
                 db.run_settings.run_args[arg] = value
                 if db.is_mpmd and hasattr(db.run_settings, "mpmd"):
                     for mpmd in db.run_settings.mpmd:
@@ -820,17 +818,9 @@ class Orchestrator(EntityList):
 
         return start_script_args
 
-    @property
-    def dbnodes(self) -> t.List[DBNode]:
-        """
-        Helper property to cast self.entities to DBNode type for type correctness
-        """
-        dbnodes = [node for node in self.entities if isinstance(node, DBNode)]
-        return dbnodes
-
     def _get_db_hosts(self) -> t.List[str]:
         hosts = []
-        for db in self.dbnodes:
+        for db in self.entities:
             if not db.is_mpmd:
                 hosts.append(db.host)
             else:
