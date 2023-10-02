@@ -32,7 +32,7 @@ import pytest
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.error.errors import SSUnsupportedError, DBIDConflictError
+from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
 
 from smartsim.entity.dbobject import DBScript

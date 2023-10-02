@@ -29,7 +29,7 @@ import pytest
 
 from smartsim import Experiment, status
 from smartsim.database import Orchestrator
-from smartsim.error import SmartSimError, SSUnsupportedError, DBIDConflictError
+from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
 
 

@@ -78,7 +78,7 @@ class ParameterWriterError(SmartSimError):
 class SSReservedKeywordError(SmartSimError):
     """Raised when a Reserved Keyword is used incorrectly"""
 
-class DBIDConflictError(SmartSimError):
+class SSDBIDConflictError(SmartSimError):
     """Raised in the event that a database identifier
     is not unique when multiple databases are created"""
 

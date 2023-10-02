@@ -32,7 +32,7 @@ import pytest
 
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
-from smartsim.error.errors import SSUnsupportedError, DBIDConflictError
+from smartsim.error.errors import SSDBIDConflictError
 from smartsim.log import get_logger
 
 from smartsim.entity.dbobject import DBScript
@@ -101,7 +101,7 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
     try:
         exp.start(orc)
-        with pytest.raises(DBIDConflictError) as ex:
+        with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(smartsim_model, block=True)
 
         assert (
@@ -209,7 +209,7 @@ def test_db_identifier_standard_twice_not_unique(wlmutils):
     # CREATE DATABASE with db_identifier
     try:
         exp.start(orc)
-        with pytest.raises(DBIDConflictError) as ex:
+        with pytest.raises(SSDBIDConflictError) as ex:
             exp.start(orc2)
 
         assert (

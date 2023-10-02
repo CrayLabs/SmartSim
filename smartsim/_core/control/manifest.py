@@ -90,11 +90,9 @@ class Manifest:
         _all_entity_lists: t.List[EntityList] = []
         _all_entity_lists.extend(self.ensembles)
 
-        dbs = self.dbs
 
-        if dbs is not None:
-            for a_db in dbs:
-                _all_entity_lists.append(a_db)
+        for db in self.dbs:
+            _all_entity_lists.append(db)
 
         return _all_entity_lists
 
@@ -153,15 +151,14 @@ class Manifest:
                     output += f"Parameters: \n{fmt_dict(model.params)}\n"
             output += "\n"
 
-        if self.dbs:
-            for adb in self.dbs:
-                output += db_header
-                output += f"Shards: {adb.num_shards}\n"
-                output += f"Port: {str(adb.ports[0])}\n"
-                output += f"Network: {adb._interfaces}\n"
-                output += f"Batch Launch: {adb.batch}\n"
-                if adb.batch:
-                    output += f"{str(adb.batch_settings)}\n"
+        for adb in self.dbs:
+            output += db_header
+            output += f"Shards: {adb.num_shards}\n"
+            output += f"Port: {str(adb.ports[0])}\n"
+            output += f"Network: {adb._interfaces}\n"
+            output += f"Batch Launch: {adb.batch}\n"
+            if adb.batch:
+                output += f"{str(adb.batch_settings)}\n"
 
         output += "\n"
         return output

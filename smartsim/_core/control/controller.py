@@ -49,11 +49,12 @@ from ...error import (
     SmartSimError,
     SSInternalError,
     SSUnsupportedError,
-    DBIDConflictError,
+    SSDBIDConflictError,
 )
 from ...log import get_logger
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -311,13 +312,12 @@ class Controller:
         :type manifest: Manifest
         """
 
-        orchestrators = manifest.dbs
         # Loop over deployables to launch and launch multiple orchestrators
-        for orchestrator in orchestrators:
+        for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if orchestrator.name == db_id:
-                    raise DBIDConflictError(
+                    raise SSDBIDConflictError(
                         f"Database identifier {orchestrator.name}"
                         " has already been used. Pass in a unique"
                         " name for db_identifier"
@@ -343,8 +343,6 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as separate job steps,
-                # aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
         # models themselves cannot be batch steps. If batch settings are
@@ -518,7 +516,7 @@ class Controller:
 
             # Retrieve num_shards to append to client env
             client_env[f"SR_DB_TYPE{db_name}"] = (
-                "Clustered" if len(addresses) > 1 else "Standalone"
+                CLUSTERED if len(addresses) > 1 else STANDALONE
             )
 
         # Set address to local if it's a colocated model
@@ -528,7 +526,7 @@ class Controller:
             for key in self._jobs.get_db_host_addresses():
                 _, db_id = unpack_db_identifier(key, "_")
                 if db_name_colo == db_id:
-                    raise DBIDConflictError(
+                    raise SSDBIDConflictError(
                         f"Database identifier {db_name_colo}"
                         " has already been used. Pass in a unique"
                         " name for db_identifier"
@@ -698,7 +696,7 @@ class Controller:
             environ[f"SSDB{db_name}"] = db_addresses[0]
 
             environ[f"SR_DB_TYPE{db_name}"] = (
-                "Clustered" if len(db_addresses) > 1 else "Standalone"
+                CLUSTERED if len(db_addresses) > 1 else STANDALONE
             )
 
             options = ConfigOptions.create_from_environment(name)

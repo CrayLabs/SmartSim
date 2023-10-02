@@ -307,10 +307,10 @@ class JobManager:
                 self.jobs[entity_name] = job
 
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
-        """Retrieve the list of hosts for the database
+        """Retrieve the list of hosts for the database 
+        for corresponding database identifiers 
 
-        :return: dictionary of db_identifiers for each database
-        and their corresponding list of host ip addresses
+        :return: dictionary of host ip addresses
         :rtype: Dict[str, list]"""
 
         address_dict = {}

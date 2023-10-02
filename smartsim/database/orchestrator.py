@@ -57,6 +57,7 @@ from ..settings import (
 )
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
+from ..servertype import STANDALONE, CLUSTERED
 
 logger = get_logger(__name__)
 
@@ -572,7 +573,7 @@ class Orchestrator(EntityList):
             environ[f"SSDB{db_name}"] = addresses[0]
 
             environ[f"SR_DB_TYPE{db_name}"] = (
-                "Clustered" if self.num_shards > 2 else "Standalone"
+                CLUSTERED if self.num_shards > 2 else STANDALONE
             )
 
             options = ConfigOptions.create_from_environment(name)

@@ -865,8 +865,8 @@ class Experiment:
         """Check if db_identifier already exists when calling create_database"""
         if db_identifier in self.db_identifiers:
             logger.warning(
-                f"A database with the identifier {db_identifier} has already been made"
-                "An error will be raised if multiple databases are started"
+                f"A database with the identifier {db_identifier} has already been made "
+                "An error will be raised if multiple databases are started "
                 "with the same identifier"
             )
         # Otherwise, add
