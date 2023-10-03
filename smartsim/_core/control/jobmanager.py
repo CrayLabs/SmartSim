@@ -237,9 +237,9 @@ class JobManager:
                         )
 
     def get_status(
-            self,
-            entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        ) -> str:
+        self,
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+    ) -> str:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
@@ -310,8 +310,8 @@ class JobManager:
                 self.jobs[entity_name] = job
 
     def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
-        """Retrieve the list of hosts for the database 
-        for corresponding database identifiers 
+        """Retrieve the list of hosts for the database
+        for corresponding database identifiers
 
         :return: dictionary of host ip addresses
         :rtype: Dict[str, list]"""
