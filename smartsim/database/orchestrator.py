@@ -277,11 +277,19 @@ class Orchestrator(EntityList[DBNode]):
         :returns: num_shards
         :rtype: int
         """
-        # TODO: This introduces two sources of truth for number of shards
-        #       underneath the orchestrator. We should consider changing this
-        #       to `sum(node.num_shards for node in self.dbnodes)` to ensure
-        #       ensure it is synchronous with the collection of ``DBNodes``
-        return self.db_nodes
+        return sum(node.num_shards for node in self.entities)
+
+    @property
+    def db_nodes(self) -> int:
+        """Read only property for the number of nodes an ``Orchestrator`` is
+        launched across. Notice that SmartSim currently assumes that each shard
+        will be launched on its own node. Therefore this property is currently
+        an alias to the ``num_shards`` attribute.
+
+        :returns: Number of database nodes
+        :rtype: int
+        """
+        return self.num_shards
 
     @property
     def hosts(self) -> t.List[str]:
@@ -730,34 +738,25 @@ class Orchestrator(EntityList[DBNode]):
         port: int = 6379,
         **kwargs: t.Any,
     ) -> None:
-        # TODO: This attr is really a synonym for number of shards underneath
-        #       the orchestrator. It is problematic for a number of reasons,
-        #       but the most glaring being that it (a) introduces multiple
-        #       sources of truth and (b) it is public and writable! Users could
-        #       conceivably try to set this attribute and be understandably
-        #       confused when the ``Orchestrator`` launches on a different
-        #       number of nodes/shards than they requested. Unfortunately
-        #       making this change would be an API break.
-        self.db_nodes = int(db_nodes)
-
-        if self.db_nodes == 2:
+        db_nodes = int(db_nodes)
+        if db_nodes == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        if self.launcher == "local" and self.db_nodes > 1:
+        if self.launcher == "local" and db_nodes > 1:
             raise ValueError(
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
+        mpmd_nodes = (single_cmd and db_nodes > 1) or self.launcher == "lsf"
 
         if mpmd_nodes:
             self._initialize_entities_mpmd(
                 db_nodes=db_nodes, single_cmd=single_cmd, port=port, **kwargs
             )
         else:
-            cluster = self.db_nodes >= 3
+            cluster = db_nodes >= 3
 
-            for db_id in range(self.db_nodes):
+            for db_id in range(db_nodes):
                 db_node_name = "_".join((self.name, str(db_id)))
 
                 # create the exe_args list for launching multiple databases
@@ -783,12 +782,14 @@ class Orchestrator(EntityList[DBNode]):
 
             self.ports = [port]
 
-    def _initialize_entities_mpmd(self, *, port: int = 6379, **kwargs: t.Any) -> None:
-        cluster = not bool(self.db_nodes < 3)
+    def _initialize_entities_mpmd(
+        self, *, db_nodes: int = 1, port: int = 6379, **kwargs: t.Any
+    ) -> None:
+        cluster = db_nodes >= 3
 
         exe_args_mpmd: t.List[t.List[str]] = []
 
-        for db_id in range(self.db_nodes):
+        for db_id in range(db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
@@ -802,15 +803,14 @@ class Orchestrator(EntityList[DBNode]):
 
         if self.launcher == "lsf":
             run_settings = self._build_run_settings_lsf(
-                sys.executable, exe_args_mpmd, **kwargs
+                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
             output_files = [
-                "_".join((self.name, str(db_id))) + ".out"
-                for db_id in range(self.db_nodes)
+                f"{self.name}_{db_id}.out" for db_id in range(db_nodes)
             ]
         else:
             run_settings = self._build_run_settings(
-                sys.executable, exe_args_mpmd, **kwargs
+                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
             output_files = [self.name + ".out"]
 
