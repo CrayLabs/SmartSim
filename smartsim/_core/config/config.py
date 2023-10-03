@@ -144,6 +144,17 @@ class Config:
             ) from e
 
     @property
+    def database_file_parse_trials(self) -> int:
+        return int(os.getenv("SMARTSIM_DB_FILE_PARSE_TRIALS", "10"))
+
+    @property
+    def database_file_parse_interval(self) -> t.Optional[int]:
+        interval = os.getenv("SMARTSIM_DB_FILE_PARSE_INTERVAL")
+        # Leave `None` as sentinel value as we currently have branching logic
+        # depending on if launching as a standalone or cluster database
+        return int(interval) if interval is not None else None
+
+    @property
     def log_level(self) -> str:
         return os.environ.get("SMARTSIM_LOG_LEVEL", "info")
 

@@ -33,6 +33,7 @@ import time
 import typing as t
 from dataclasses import dataclass
 
+from .._core.config import CONFIG
 from ..error import SmartSimError
 from ..log import get_logger
 from ..settings.base import RunSettings
@@ -183,7 +184,11 @@ class DBNode(SmartSimEntity):
         :rtype: list[LaunchedShardData]
         """
         ips: "t.List[LaunchedShardData]" = []
-        trials = 10
+        trials = CONFIG.database_file_parse_trials
+        interval = CONFIG.database_file_parse_interval or (
+            # Larger sleep time, as this seems to be needed for multihost setups
+            2 if self.num_shards > 1 else 1
+        )
         output_files = [osp.join(self.path, file) for file in self._output_files]
 
         while len(ips) < self.num_shards and trials > 0:
@@ -195,9 +200,7 @@ class DBNode(SmartSimEntity):
                 ...
             if len(ips) < self.num_shards:
                 logger.debug("Waiting for output files to populate...")
-                # Larger sleep time, as this seems to be needed for
-                # multihost setups
-                time.sleep(2 if self.num_shards > 1 else 1)
+                time.sleep(interval)
                 trials -= 1
 
         if len(ips) < self.num_shards:
