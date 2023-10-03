@@ -44,7 +44,13 @@ from ..._core.utils.helpers import (
 )
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
-from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError,SSDBIDConflictError
+from ...error import (
+    LauncherError,
+    SmartSimError,
+    SSInternalError,
+    SSUnsupportedError,
+    SSDBIDConflictError,
+)
 from ...log import get_logger
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
