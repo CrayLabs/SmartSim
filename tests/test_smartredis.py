@@ -98,7 +98,6 @@ def test_exchange(fileutils, wlmutils):
     finally:
         # stop the orchestrator
         exp.stop(orc)
-        print(exp.summary())
 
 
 def test_consumer(fileutils, wlmutils):
@@ -148,4 +147,3 @@ def test_consumer(fileutils, wlmutils):
     finally:
         # stop the orchestrator
         exp.stop(orc)
-        print(exp.summary())
