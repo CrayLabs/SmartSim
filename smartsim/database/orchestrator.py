@@ -508,9 +508,9 @@ class Orchestrator(EntityList[DBNode]):
         :param frequency: the given number of seconds before the DB saves
         :type frequency: int
         """
-        self.set_db_conf("save", str(frequency) + " 1")
+        self.set_db_conf("save", f"{frequency} 1")
 
-    def set_max_memory(self, mem: int) -> None:
+    def set_max_memory(self, mem: str) -> None:
         """Sets the max memory configuration. By default there is no memory limit.
         Setting max memory to zero also results in no memory limit. Once a limit is
         surpassed, keys will be removed according to the eviction strategy. The
@@ -728,7 +728,7 @@ class Orchestrator(EntityList[DBNode]):
         return erf_rs
 
     # Old pylint from TF 2.6.x does not understand that this argument list is
-    # equivilent to `(self, **kwargs)`
+    # equivalent to `(self, **kwargs)`
     # # pylint: disable-next=arguments-differ
     def _initialize_entities(
         self,
@@ -837,7 +837,7 @@ class Orchestrator(EntityList[DBNode]):
             f"+ifname={','.join(self._interfaces)}",  # pass interface to start script
         ]
         if cluster:
-            cmd.append("+cluster")  # is the shard pard of a cluster
+            cmd.append("+cluster")  # is the shard part of a cluster
         return cmd
 
     def _get_db_hosts(self) -> t.List[str]:
