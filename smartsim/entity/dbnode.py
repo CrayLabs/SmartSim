@@ -24,7 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import io
+import fileinput
 import itertools
 import json
 import os
@@ -150,8 +150,8 @@ class DBNode(SmartSimEntity):
         ]
 
     @staticmethod
-    def _parse_launched_shard_info_from_stream(
-        stream: io.TextIOBase, num_shards: t.Optional[int] = None
+    def _parse_launched_shard_info_from_iterable(
+        stream: t.Iterable[str], num_shards: t.Optional[int] = None
     ) -> "t.List[LaunchedShardData]":
         lines = (line.strip() for line in stream)
         lines = (line for line in lines if line)
@@ -169,20 +169,46 @@ class DBNode(SmartSimEntity):
         return list(shard_data)
 
     @classmethod
-    def _parse_launched_shard_info_from_file(
-        cls, filepath: str, num_shards: t.Optional[int] = None
+    def _parse_launched_shard_info_from_files(
+        cls, file_paths: t.List[str], num_shards: t.Optional[int] = None
     ) -> "t.List[LaunchedShardData]":
-        with open(filepath, "r", encoding="utf-8") as file:
-            return cls._parse_launched_shard_info_from_stream(file, num_shards)
+        with fileinput.FileInput(file_paths) as ifstream:
+            return cls._parse_launched_shard_info_from_iterable(ifstream, num_shards)
 
-    @classmethod
-    def _parse_ips(
-        cls, filepath: str, num_shards: t.Optional[int] = None
-    ) -> t.List[str]:
-        return [
-            shard.hostname
-            for shard in cls._parse_launched_shard_info_from_file(filepath, num_shards)
-        ]
+    def get_launched_shard_info(self) -> "t.List[LaunchedShardData]":
+        """Parse the launched database shard info from the output files
+
+        :raises SmartSimError: if all shard info could not be found
+        :return: The found launched shard info
+        :rtype: list[LaunchedShardData]
+        """
+        ips: "t.List[LaunchedShardData]" = []
+        trials = 10
+        output_files = [osp.join(self.path, file) for file in self._output_files]
+
+        while len(ips) < self.num_shards and trials > 0:
+            try:
+                ips = self._parse_launched_shard_info_from_files(
+                    output_files, self.num_shards
+                )
+            except FileNotFoundError:
+                ...
+            if len(ips) < self.num_shards:
+                logger.debug("Waiting for output files to populate...")
+                # Larger sleep time, as this seems to be needed for
+                # multihost setups
+                time.sleep(2 if self.num_shards > 1 else 1)
+                trials -= 1
+
+        if len(ips) < self.num_shards:
+            msg = (
+                f"Failed to parse the launched DB shard information from file(s) "
+                f"{', '.join(output_files)}. Found the information for "
+                f"{len(ips)} out of {self.num_shards} DB shards."
+            )
+            logger.error(msg)
+            raise SmartSimError(msg)
+        return ips
 
     def _parse_db_hosts(self) -> t.List[str]:
         """Parse the database hosts/IPs from the output files
@@ -194,36 +220,7 @@ class DBNode(SmartSimEntity):
         :return: ip addresses | hostnames
         :rtype: list[str]
         """
-        ips: t.List[str] = []
-        trials = 10
-        output_files = [osp.join(self.path, file) for file in self._output_files]
-
-        while len(ips) < self.num_shards and trials > 0:
-            try:
-                ips = list(
-                    itertools.chain.from_iterable(
-                        self._parse_ips(file) for file in output_files
-                    )
-                )
-            except FileNotFoundError:
-                ...
-
-            if len(ips) < self.num_shards:
-                logger.debug("Waiting for output files to populate...")
-                # Larger sleep time, as this seems to be needed for
-                # multihost setups
-                time.sleep(2 if self.num_shards > 1 else 1)
-                trials -= 1
-
-        if len(ips) < self.num_shards:
-            logger.error(
-                f"IP address lookup strategy failed for file(s) "
-                f"{', '.join(output_files)}. "
-                f"Found {len(ips)} out of {self.num_shards} IPs."
-            )
-            raise SmartSimError("Failed to obtain database hostname")
-
-        return list(set(ips))
+        return list({shard.hostname for shard in self.get_launched_shard_info()})
 
 
 @dataclass(frozen=True)

@@ -111,7 +111,7 @@ def test_db_node_can_parse_launched_shard_info(limit):
             """
         ).format(*(json.dumps(s.to_dict()) for s in rand_shards))
     ) as stream:
-        parsed_shards = DBNode._parse_launched_shard_info_from_stream(
+        parsed_shards = DBNode._parse_launched_shard_info_from_iterable(
             stream, limit
         )
     if limit is not None:
