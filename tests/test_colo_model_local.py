@@ -64,7 +64,7 @@ def test_unsupported_limit_app(fileutils, coloutils):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(SSUnsupportedError):
-        _ = coloutils.setup_test_colo(
+        coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -80,7 +80,7 @@ def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(TypeError):
-        _ = coloutils.setup_test_colo(
+        coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,

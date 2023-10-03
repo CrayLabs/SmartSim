@@ -30,6 +30,7 @@ import os.path as osp
 import time
 import typing as t
 
+from os import makedirs
 from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
@@ -76,8 +77,9 @@ class Step:
     def get_colocated_launch_script(self) -> str:
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(
-            script_name=f".colocated_launcher_{self.entity_name}.sh"
+            script_name=osp.join(".smartsim", f"colocated_launcher_{self.entity_name}.sh")
         )
+        makedirs(osp.dirname(script_path), exist_ok=True)
 
         db_settings: t.Dict[str, str] = {}
         if isinstance(self.step_settings, RunSettings):
