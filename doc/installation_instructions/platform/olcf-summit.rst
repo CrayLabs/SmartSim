@@ -50,7 +50,7 @@ directory from which these instructions are executed.
   # install PyTorch and TensorFlow backend for the Orchestrator database.
   export Torch_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/include"
-  export SMARTSIM_REDISAI=1.2.5
+  export SMARTSIM_REDISAI=1.2.7
   export Tensorflow_BUILD_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/
   smart build --device=gpu --torch_dir $Torch_DIR --libtensorflow_dir $Tensorflow_BUILD_DIR -v
 

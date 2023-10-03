@@ -351,21 +351,6 @@ class RedisAIBuilder(Builder):
     def fetch_onnx(self) -> bool:
         return self.build_onnx
 
-    def copy_tf_cmake(self) -> None:
-        """Copy the FindTensorFlow.cmake file to the build directory
-        as the version included in RedisAI is out of date for us.
-        Note: opt/cmake/modules removed in RedisAI v1.2.5
-        """
-        # remove the previous version
-        tf_cmake = self.rai_build_path / "opt/cmake/modules/FindTensorFlow.cmake"
-        tf_cmake.resolve()
-        if tf_cmake.is_file():
-            tf_cmake.unlink()
-            # copy ours in
-            self.copy_file(
-                self.bin_path / "modules/FindTensorFlow.cmake", tf_cmake, set_exe=False
-            )
-
     def symlink_libtf(self, device: str) -> None:
         """Add symbolic link to available libtensorflow in RedisAI deps.
 
@@ -475,9 +460,6 @@ class RedisAIBuilder(Builder):
             self.run_command(
                 checkout_osx_fix, out=subprocess.DEVNULL, cwd=self.rai_build_path
             )
-
-        # copy FindTensorFlow.cmake to RAI cmake dir
-        self.copy_tf_cmake()
 
         # get RedisAI dependencies
         dep_cmd = self._rai_build_env_prefix(

@@ -51,16 +51,9 @@ jobs:
       matrix:
         os: [macos-12, ubuntu-20.04] # Operating systems
         compiler: [8] # GNU compiler version
-        rai: [1.2.5, 1.2.7] # Redis AI versions
+        rai: [1.2.7] # Redis AI versions
         py_v: [3.8, 3.9, '3.10'] # Python versions
-        exclude:
-          # Do not build with Redis AI 1.2.5 on MacOS
-          - os: macos-12
-            rai: 1.2.5
-          # Do not build Redis AI 1.2.5 with py3.10
-          # as wheels for dependecies are not availble
-          - py_v: '3.10'
-            rai: 1.2.5
+
 
     env:
       SMARTSIM_REDISAI: ${{ matrix.rai }}
@@ -86,7 +79,7 @@ jobs:
           echo "$(brew --prefix)/opt/make/libexec/gnubin" >> $GITHUB_PATH
 
       - name: Build Singularity from source
-        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
+        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
         run: |
           sudo apt-get install -y libseccomp-dev pkg-config squashfs-tools cryptsetup curl git # wget build-essential
           echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc
@@ -100,7 +93,7 @@ jobs:
           sudo make -C builddir install
 
       - name: singularity pull test container # This lets us time how long the pull takes
-        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9 && matrix.rai == '1.2.5'
+        if: contains( matrix.os, 'ubuntu' ) && matrix.py_v == 3.9
         run: singularity pull docker://alrigazzi/smartsim-testing
 
       # Note: The develop branch of smartredis is installed first to ensure that any tests that depend
@@ -119,8 +112,6 @@ jobs:
         run: smart build --device cpu -v
 
       - name: Run mypy
-        # TF 2.6.2 has a dep conflict with new mypy versions
-        if: (matrix.rai != '1.2.5')
         run: |
           python -m pip install .[mypy]
           make check-mypy

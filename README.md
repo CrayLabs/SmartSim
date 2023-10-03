@@ -649,18 +649,6 @@ from C, C++, Fortran and Python with the SmartRedis Clients:
       <td>ONNX</td>
       <td>1.11.x</td>
     </tr>
-      <td rowspan="3">1.2.5</td>
-      <td>PyTorch</td>
-      <td>1.9.x</td>
-    </tr>
-    <tr>
-      <td>TensorFlow\Keras</td>
-      <td>2.6.x</td>
-    </tr>
-    <tr>
-      <td>ONNX</td>
-      <td>1.9.x</td>
-    </tr>
   </tbody>
 </table>
 
