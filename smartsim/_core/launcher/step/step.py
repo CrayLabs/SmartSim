@@ -77,7 +77,9 @@ class Step:
     def get_colocated_launch_script(self) -> str:
         # prep step for colocated launch if specifed in run settings
         script_path = self.get_step_file(
-            script_name=osp.join(".smartsim", f"colocated_launcher_{self.entity_name}.sh")
+            script_name=osp.join(
+                ".smartsim", f"colocated_launcher_{self.entity_name}.sh"
+            )
         )
         makedirs(osp.dirname(script_path), exist_ok=True)
 
