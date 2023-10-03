@@ -176,7 +176,7 @@ extras_require = {
     "dev": [
         "black>=20.8b1",
         "isort>=5.6.4",
-        "pylint>=2.10.0",
+        "pylint>=2.10.0,<3",
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
