@@ -99,28 +99,28 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     # devices_per_node being greater than one only applies to GPU devices
     if args.devices_per_node > 1 and args.device.lower() == "gpu":
         client.set_model_from_file_multigpu(
-            name,
-            args.file,
-            args.backend,
-            0,
-            args.devices_per_node,
-            args.batch_size,
-            args.min_batch_size,
-            args.tag,
-            inputs,
-            outputs,
+            name=name,
+            model_file=args.file,
+            backend=args.backend,
+            fist_gpu=0,
+            num_gpus=args.devices_per_node,
+            batch_size=args.batch_size,
+            min_batch_size=args.min_batch_size,
+            tag=args.tag,
+            inputs=inputs,
+            outputs=outputs,
         )
     else:
         client.set_model_from_file(
-            name,
-            args.file,
-            args.backend,
-            args.device,
-            args.batch_size,
-            args.min_batch_size,
-            args.tag,
-            inputs,
-            outputs,
+            name=name,
+            model_file=args.file,
+            backend=args.backend,
+            device=args.device,
+            batch_size=args.batch_size,
+            min_batch_size=args.min_batch_size,
+            tag=args.tag,
+            inputs=inputs,
+            outputs=outputs,
         )
 
     return name
@@ -178,14 +178,14 @@ def main(
     global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
-    try:
-        ip_addresses = [
-            current_ip(interface) for interface in network_interface.split(",")
-        ]
-
-    except ValueError as e:
-        logger.warning(e)
-        ip_addresses = []
+    ip_addresses = []
+    if network_interface:
+        try:
+            ip_addresses = [
+                current_ip(interface) for interface in network_interface.split(",")
+            ]
+        except ValueError as e:
+            logger.warning(e)
 
     if all(lo_address == ip_address for ip_address in ip_addresses) or not ip_addresses:
         cmd = command + [f"--bind {lo_address}"]
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
 
-        # make sure to register the cleanup before the start
+        # make sure to register the cleanup before we start
         # the proecss so our signaller will be able to stop
         # the database process.
         register_signal_handlers()

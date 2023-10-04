@@ -50,7 +50,7 @@ def test_macosx_warning(fileutils, coloutils):
         RuntimeWarning,
         match="CPU pinning is not supported on MacOSX. Ignoring pinning specification.",
     ):
-        colo_model = coloutils.setup_test_colo(
+        _ = coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -65,7 +65,7 @@ def test_unsupported_limit_app(fileutils, coloutils):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(SSUnsupportedError):
-        colo_model = coloutils.setup_test_colo(
+        coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -82,7 +82,7 @@ def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
 
     exp = Experiment("colocated_model_defaults", launcher="local")
     with pytest.raises(TypeError):
-        colo_model = coloutils.setup_test_colo(
+        coloutils.setup_test_colo(
             fileutils,
             db_type,
             exp,
@@ -139,6 +139,45 @@ def test_launch_colocated_model_defaults(
     # test restarting the colocated model
     exp.start(colo_model, block=True)
     statuses = exp.get_status(colo_model)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+
+@pytest.mark.parametrize("db_type", supported_dbs)
+def test_launch_multiple_colocated_models(
+    fileutils, coloutils, wlmutils, db_type, launcher="local"
+):
+    """Test the concurrent launch of two models with a colocated database and local launcher
+    """
+
+    db_args = {}
+
+    exp = Experiment("multi_colo_models", launcher=launcher)
+    colo_models = [
+        coloutils.setup_test_colo(
+            fileutils,
+            db_type,
+            exp,
+            db_args,
+            colo_model_name="colo0",
+            port=wlmutils.get_test_port(),
+        ),
+        coloutils.setup_test_colo(
+            fileutils,
+            db_type,
+            exp,
+            db_args,
+            colo_model_name="colo1",
+            port=wlmutils.get_test_port() + 1,
+        ),
+    ]
+
+    exp.start(*colo_models, block=True)
+    statuses = exp.get_status(*colo_models)
+    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+
+    # test restarting the colocated model
+    exp.start(*colo_models, block=True)
+    statuses = exp.get_status(*colo_models)
     assert all([stat == status.STATUS_COMPLETED for stat in statuses])
 
 

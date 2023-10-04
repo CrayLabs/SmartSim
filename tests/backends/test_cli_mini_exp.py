@@ -27,11 +27,23 @@
 
 from contextlib import contextmanager
 
+import pytest
 import smartredis
 
 import smartsim._core._cli.validate
 from smartsim._core.utils.helpers import installed_redisai_backends
 
+sklearn_available = True
+try:
+    from skl2onnx import to_onnx
+    from sklearn.cluster import KMeans
+    from sklearn.datasets import load_iris
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import train_test_split
+
+except ImportError:
+    sklearn_available = False
 
 def test_cli_mini_exp_doesnt_error_out_with_dev_build(
     local_db,
@@ -66,5 +78,5 @@ def test_cli_mini_exp_doesnt_error_out_with_dev_build(
         # Test the backends the dev has installed
         with_tf="tensorflow" in backends,
         with_pt="torch" in backends,
-        with_onnx="onnxruntime" in backends,
+        with_onnx="onnxruntime" in backends and sklearn_available,
     )
