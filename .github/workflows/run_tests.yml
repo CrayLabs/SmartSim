@@ -133,6 +133,20 @@ jobs:
           echo "SMARTSIM_LOG_LEVEL=debug" >> $GITHUB_ENV
           py.test -s --import-mode=importlib -o log_cli=true --cov=$(smart site) --cov-report=xml --cov-config=./tests/test_configs/cov/local_cov.cfg --ignore=tests/full_wlm/ ./tests/
 
+      # Upload artifacts on failure, ignoring binary files
+      - name: Upload Artifact
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test_artifact
+          path: |
+            tests/test_output
+            !**/*.so
+            !**/*.pb
+            !**/*.pt
+            !**/core
+          retention-days: 5
+
       - name: Upload Pytest coverage to Codecov
         uses: codecov/codecov-action@v2
         with:

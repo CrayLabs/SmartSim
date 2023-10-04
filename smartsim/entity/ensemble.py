@@ -53,7 +53,7 @@ StrategyFunction = t.Callable[
 ]
 
 
-class Ensemble(EntityList):
+class Ensemble(EntityList[Model]):
     """``Ensemble`` is a group of ``Model`` instances that can
     be treated as a reference to a single instance.
     """

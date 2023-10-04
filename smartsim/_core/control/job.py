@@ -27,7 +27,7 @@
 import time
 import typing as t
 
-from ...entity import SmartSimEntity, EntityList
+from ...entity import SmartSimEntity, EntitySequence
 from ...status import STATUS_NEW
 
 
@@ -42,7 +42,7 @@ class Job:
         self,
         job_name: str,
         job_id: t.Optional[str],
-        entity: t.Union[SmartSimEntity, EntityList],
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
         launcher: str,
         is_task: bool,
     ) -> None:
@@ -53,7 +53,7 @@ class Job:
         :param job_id: The id associated with the job
         :type job_id: str
         :param entity: The SmartSim entity(list) associated with the job
-        :type entity: SmartSimEntity | EntityList
+        :type entity: SmartSimEntity | EntitySequence
         :param launcher: Launcher job was started with
         :type launcher: str
         :param is_task: process monitored by TaskManager (True) or the WLM (True)
