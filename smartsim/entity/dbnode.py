@@ -185,10 +185,7 @@ class DBNode(SmartSimEntity):
         """
         ips: "t.List[LaunchedShardData]" = []
         trials = CONFIG.database_file_parse_trials
-        interval = CONFIG.database_file_parse_interval or (
-            # Larger sleep time, as this seems to be needed for multihost setups
-            2 if self.num_shards > 1 else 1
-        )
+        interval = CONFIG.database_file_parse_interval
         output_files = [osp.join(self.path, file) for file in self._output_files]
 
         while len(ips) < self.num_shards and trials > 0:
