@@ -65,11 +65,8 @@ def check_py_onnx_version(versions: Versioner) -> None:
         msg = (
             "An onnx wheel is not available for "
             f"Python {py_version.major}.{py_version.minor}. "
-            "Instead consider using Python 3.8 or 3.9 with Onnx "
+            "Instead consider using Python 3.8 or 3.9 for ONNX 1.11 support"
         )
-        if sys.platform == "linux":
-            msg += "1.2.5 or "
-        msg += "1.2.7."
         raise SetupError(msg)
     _check_packages_in_python_env(
         {
