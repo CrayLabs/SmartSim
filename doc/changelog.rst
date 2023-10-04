@@ -30,7 +30,7 @@ Detailed Notes
   bug has been fixed. This applies to all operating systems. (PR383_)
 
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
-  .. _634916c: https://github.com/RedisAI/RedisAI/tree/634916c722e718cc6ea3fad46e63f7d798f9adc2
+  .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
 
 0.5.1
 -----
