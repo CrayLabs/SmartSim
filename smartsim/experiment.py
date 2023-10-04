@@ -193,7 +193,7 @@ class Experiment:
         try:
             if summary:
                 self._launch_summary(start_manifest)
-            self._control.start(
+            launched = self._control.start(
                 manifest=start_manifest,
                 block=block,
                 kill_on_interrupt=kill_on_interrupt,

@@ -26,10 +26,15 @@
 
 import typing as t
 
+from dataclasses import dataclass, field
+
 from ...database import Orchestrator
-from ...entity import EntitySequence, SmartSimEntity, Model, Ensemble
+from ...entity import EntitySequence, SmartSimEntity, Model, Ensemble, DBNode
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
+
+
+_T = t.TypeVar("_T")
 
 
 class Manifest:
@@ -216,3 +221,36 @@ class Manifest:
 
         # `has_db_objects` should be False here
         return has_db_objects
+
+
+@dataclass
+class LaunchedManifest(t.Generic[_T]):
+    # FIXME: This class was made incredibly slap-dashed and needs to be fixed
+    # before we even THINK about merging this anywhere. For instance:
+    #   1) I do not like that this class exists! It feels like there is a
+    #      better way to get steps from entities in entitiy sequences, but I
+    #      honestly could not find a way to do that with out going through the
+    #      JM which which I don't want to do bc (a) it furthure enforces the
+    #      assumption that ``job.name == step.name``, which so far is true but
+    #      IS NOT STRICTLY ENFORCED and (b) I could not find a way to query the
+    #      JM where it is not theoretically possible for the JM to restart an
+    #      launched entity before step/job ids are collected from a previous
+    #      run.
+    #   2) I do not like that this class is not immutable, and that I have
+    #      construction of it's list occurring in ``Controller._launch*``
+    #      methods but I also did not want to "re-parse" the list of entities to
+    #      the launched steps. Maybe make a mutable ``LaunchedManifestBuilder``
+    #      class that then has a method to "freeze" into a ``LaunchedManifest``
+    #      instance?
+    #   3) This class has no right to be a generic; I was just lazy! I didn't
+    #      want to write multiple classes for specific use cases, but it would
+    #      almost certainly help to give each use case a name.
+
+    models: t.List[t.Tuple[Model, _T]] = field(default_factory=list)
+    #   4) These types are gross, they need aliases
+    ensembles: t.List[t.Tuple[Ensemble, t.List[t.Tuple[Model, _T]]]] = field(
+        default_factory=list
+    )
+    database: t.List[t.Tuple[Orchestrator, t.List[t.Tuple[DBNode, _T]]]] = field(
+        default_factory=list
+    )
