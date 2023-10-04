@@ -29,7 +29,7 @@ Detailed Notes
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. (PR383_)
 
-  .. _PR352: https://github.com/CrayLabs/SmartSim/pull/383
+  .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/tree/634916c722e718cc6ea3fad46e63f7d798f9adc2
 
 0.5.1
