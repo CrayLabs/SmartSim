@@ -27,7 +27,7 @@ Detailed Notes
   is now 1.2.7. Since the officially released RedisAI 1.2.7 has a
   bug which breaks the build process on Mac OSX, it was decided to
   use commit 634916c_ from RedisAI's GitHub repository, where such
-  bug has been fixed. (PR383_)
+  bug has been fixed. This applies to all operating systems. (PR383_)
 
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/tree/634916c722e718cc6ea3fad46e63f7d798f9adc2
