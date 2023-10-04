@@ -438,7 +438,7 @@ class RedisAIBuilder(Builder):
 
         # Circumvent a bad `get_deps.sh` script from RAI on 1.2.7 with ONNX
         # TODO: Look for a better way to do this or wait for RAI patch
-        if sys.platform == "darwin" and branch == "v1.2.7" and self.build_onnx:
+        if branch == "v1.2.7":
             # Clone RAI patch commit for OSX
             clone_cmd += ["RedisAI"]
             checkout_osx_fix = [
@@ -447,7 +447,7 @@ class RedisAIBuilder(Builder):
                 "634916c722e718cc6ea3fad46e63f7d798f9adc2",
             ]
         else:
-            # Clone RAI release commit
+            # Clone RAI release commit for versions > 1.2.7
             clone_cmd += [
                 "--branch",
                 branch,
