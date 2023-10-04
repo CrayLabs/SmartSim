@@ -807,7 +807,7 @@ def test_inconsistent_params_db_model():
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     with pytest.raises(SSUnsupportedError) as ex:
-        db_model = DBModel(
+        DBModel(
             "cnn",
             "TF",
             model=model,
