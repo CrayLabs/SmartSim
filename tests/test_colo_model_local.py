@@ -142,11 +142,12 @@ def test_launch_colocated_model_defaults(
 def test_launch_multiple_colocated_models(
     fileutils, coloutils, wlmutils, db_type, launcher="local"
 ):
-    """Test the launch of a model with a colocated database and local launcher"""
+    """Test the concurrent launch of two models with a colocated database and local launcher
+    """
 
     db_args = {}
 
-    exp = Experiment("colocated_model_defaults", launcher=launcher)
+    exp = Experiment("multi_colo_models", launcher=launcher)
     colo_models = [
         coloutils.setup_test_colo(
             fileutils,
