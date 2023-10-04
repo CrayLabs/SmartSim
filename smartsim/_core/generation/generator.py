@@ -165,7 +165,6 @@ class Generator:
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
     def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
-        # orchestrator: t.Optional[Orchestrator]
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 

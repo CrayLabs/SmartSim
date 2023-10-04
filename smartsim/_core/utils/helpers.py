@@ -40,9 +40,9 @@ from smartsim._core._install.builder import TRedisAIBackendStr as _TRedisAIBacke
 def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
     """Unpack the unformatted database identifier using the token,
     and format for env variable suffix
-    :db_id: the unformatted database identifier eg. charizard_0
+    :db_id: the unformatted database identifier eg. identifier_1_0
     :token: character '_' or '-' to use to unpack the database identifier
-    :return: db suffix, and formatted db_id eg. charizard
+    :return: db suffix, and formatted db_id eg. identifier_1
     """
     if db_id:
         db_id = "_".join(db_id.split(token)[:-1])
@@ -57,7 +57,7 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
     return "", ""
 
 
-def unpack_colo_db_identfifier(db_id: str) -> str:
+def unpack_colo_db_identifier(db_id: str) -> str:
     """Create database identifier suffix for colocated database
     :db_id: the unformatted database identifier
     :return: db suffix

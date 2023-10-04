@@ -40,7 +40,7 @@ from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
 from ..._core.utils.helpers import (
     unpack_db_identifier,
-    unpack_colo_db_identfifier,
+    unpack_colo_db_identifier,
 )
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
@@ -545,7 +545,7 @@ class Controller:
                         " name for db_identifier"
                     )
 
-            db_name_colo = unpack_colo_db_identfifier(db_name_colo)
+            db_name_colo = unpack_colo_db_identifier(db_name_colo)
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)
@@ -561,7 +561,7 @@ class Controller:
                     raise SSInternalError(
                         "Colocated database was not configured for either TCP or UDS"
                     )
-                client_env[f"SR_DB_TYPE{db_name_colo}"] = "Standalone"
+                client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
 
         entity.run_settings.update_env(client_env)
 

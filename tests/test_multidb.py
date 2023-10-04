@@ -117,9 +117,8 @@ def test_db_identifier_standard_then_colo(fileutils, wlmutils, coloutils, db_typ
 
 @pytest.mark.parametrize("db_type", supported_dbs)
 def test_db_identifier_colo_then_standard(fileutils, wlmutils, coloutils, db_type):
-    """Test colocate_db_uds/colocate_db_tcp then create_database db_identifier
-    Running a colocated db and then a standard db with the same db identifier should be allowed
-    jpnote: check with Al that this behaviour is what we want to allow
+    """Test colocate_db_uds/colocate_db_tcp then create_database with database
+    identifiers. 
     """
 
     # Set experiment name
@@ -494,12 +493,3 @@ def test_launch_cluster_orc_single_dbid(fileutils, wlmutils):
     exp.stop(orc)
     statuses = exp.get_status(orc)
     assert all([stat == status.STATUS_CANCELLED for stat in statuses])
-
-
-# JPNOTE
-## need to add more tests:
-
-# tests in the generator
-# _gen_orc_dir
-# directory overwrite
-# tests warning in the orch

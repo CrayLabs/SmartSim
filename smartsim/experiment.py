@@ -130,7 +130,6 @@ class Experiment:
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
         self.db_identifiers: t.Set[str] = set()
-        self.db_dict: t.Dict[str, t.Any] = {}
 
     def start(
         self,

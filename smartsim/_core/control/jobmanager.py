@@ -77,8 +77,6 @@ class JobManager:
 
         self.kill_on_interrupt = True  # flag for killing jobs on SIGINT
 
-        self.active_db_identifiers: t.Set[str] = set()
-
     def start(self) -> None:
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
@@ -127,8 +125,6 @@ class JobManager:
         :param job: job instance we are transitioning
         :type job: Job
         """
-        # remove db id from active entity list
-
         with self._lock:
             self.completed[job.ename] = job
             job.record_history()
