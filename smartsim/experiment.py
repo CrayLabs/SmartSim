@@ -31,7 +31,7 @@ from os import getcwd
 from tabulate import tabulate
 
 from ._core import Controller, Generator, Manifest
-from ._core.utils import init_default
+from ._core.utils import init_default, serialize
 from .database import Orchestrator
 from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
@@ -195,12 +195,21 @@ class Experiment:
                 self._launch_summary(start_manifest)
             launched = self._control.start(
                 manifest=start_manifest,
-                block=block,
+                block=False,
                 kill_on_interrupt=kill_on_interrupt,
             )
         except SmartSimError as e:
             logger.error(e)
             raise
+
+        serialize.save_launch_manifest(self, launched)
+
+        # TODO: remove this temporary hack to move blocking ``poll`` call here
+        # to allow the the run to be serialized (bc we need a ref to the exp).
+        if block:
+            # poll handles its own keyboard interrupt as
+            # it may be called seperately
+            self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
 
     def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
