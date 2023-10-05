@@ -202,8 +202,9 @@ def _dictify_db(
                 "out_file": out_file,
                 "err_file": err_file,
                 "telemetry_metadata": {
-                    "status_dir": telemetry_data_path
-                    / f"database/{db.name}/{dbnode.name}",
+                    "status_dir": str(
+                        telemetry_data_path / f"database/{db.name}/{dbnode.name}"
+                    ),
                     "step_id": step_id,
                     "task_id": task_id,
                     "managed": managed,
