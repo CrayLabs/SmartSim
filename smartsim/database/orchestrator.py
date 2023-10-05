@@ -24,13 +24,12 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import itertools
-import psutil
 import sys
 import typing as t
-
 from os import getcwd, getenv
 from shlex import split as sh_split
 
+import psutil
 from smartredis import Client
 from smartredis.error import RedisReplyError
 
@@ -41,7 +40,6 @@ from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
 from ..log import get_logger
-from ..settings.base import BatchSettings, RunSettings
 from ..settings import (
     AprunSettings,
     BsubBatchSettings,
@@ -55,6 +53,7 @@ from ..settings import (
     SbatchSettings,
     SrunSettings,
 )
+from ..settings.base import BatchSettings, RunSettings
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
 
@@ -161,6 +160,10 @@ class Orchestrator(EntityList[DBNode]):
         time: t.Optional[str] = None,
         alloc: t.Optional[str] = None,
         single_cmd: bool = False,
+        *,
+        threads_per_queue: t.Optional[int] = None,
+        inter_op_threads: t.Optional[int] = None,
+        intra_op_threads: t.Optional[int] = None,
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -198,12 +201,13 @@ class Orchestrator(EntityList[DBNode]):
             interface = [interface]
         self._interfaces = interface
         self._check_network_interface()
-        self.queue_threads = kwargs.get("threads_per_queue", None)
-        self.inter_threads = kwargs.get("inter_op_threads", None)
-        self.intra_threads = kwargs.get("intra_op_threads", None)
+        self.queue_threads = threads_per_queue
+        self.inter_threads = inter_op_threads
+        self.intra_threads = intra_op_threads
+
         if self.launcher == "lsf":
-            gpus_per_shard = kwargs.pop("gpus_per_shard", 0)
-            cpus_per_shard = kwargs.pop("cpus_per_shard", 4)
+            gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
+            cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
         else:
             gpus_per_shard = None
             cpus_per_shard = None
@@ -221,6 +225,9 @@ class Orchestrator(EntityList[DBNode]):
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
             cpus_per_shard=cpus_per_shard,
+            threads_per_queue=threads_per_queue,
+            inter_op_threads=inter_op_threads,
+            intra_op_threads=intra_op_threads,
             **kwargs,
         )
 
@@ -234,11 +241,12 @@ class Orchestrator(EntityList[DBNode]):
             self._redis_conf  # pylint: disable=W0104
             CONFIG.database_cli  # pylint: disable=W0104
         except SSConfigError as e:
-            msg = "SmartSim not installed with pre-built extensions (Redis)\n"
-            msg += "Use the `smart` cli tool to install needed extensions\n"
-            msg += "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
-            msg += "See documentation for more information"
-            raise SSConfigError(msg) from e
+            raise SSConfigError(
+                "SmartSim not installed with pre-built extensions (Redis)\n"
+                "Use the `smart` cli tool to install needed extensions\n"
+                "or set REDIS_PATH and REDIS_CLI_PATH in your environment\n"
+                "See documentation for more information"
+            ) from e
 
         if launcher != "local":
             self.batch_settings = self._build_batch_settings(
@@ -269,7 +277,19 @@ class Orchestrator(EntityList[DBNode]):
         :returns: num_shards
         :rtype: int
         """
-        return self.db_nodes
+        return sum(node.num_shards for node in self.entities)
+
+    @property
+    def db_nodes(self) -> int:
+        """Read only property for the number of nodes an ``Orchestrator`` is
+        launched across. Notice that SmartSim currently assumes that each shard
+        will be launched on its own node. Therefore this property is currently
+        an alias to the ``num_shards`` attribute.
+
+        :returns: Number of database nodes
+        :rtype: int
+        """
+        return self.num_shards
 
     @property
     def hosts(self) -> t.List[str]:
@@ -306,10 +326,10 @@ class Orchestrator(EntityList[DBNode]):
         return self._get_address()
 
     def _get_address(self) -> t.List[str]:
-        addresses: t.List[str] = []
-        for ip_address, port in itertools.product(self._hosts, self.ports):
-            addresses.append(":".join((ip_address, str(port))))
-        return addresses
+        return [
+            f"{host}:{port}"
+            for host, port in itertools.product(self._hosts, self.ports)
+        ]
 
     def is_active(self) -> bool:
         """Check if the database is active
@@ -323,20 +343,21 @@ class Orchestrator(EntityList[DBNode]):
         return db_is_active(self._hosts, self.ports, self.num_shards)
 
     @property
-    def _rai_module(self) -> str:
+    def _rai_module(self) -> t.Tuple[str, ...]:
         """Get the RedisAI module from third-party installations
 
-        :return: path to module or "" if not found
-        :rtype: str
+        :return: Tuple of args to pass to the orchestrator exe
+                 to load and configure the RedisAI
+        :rtype: tuple[str]
         """
         module = ["--loadmodule", CONFIG.redisai]
         if self.queue_threads:
-            module.append(f"THREADS_PER_QUEUE {self.queue_threads}")
+            module.extend(("THREADS_PER_QUEUE", str(self.queue_threads)))
         if self.inter_threads:
-            module.append(f"INTER_OP_PARALLELISM {self.inter_threads}")
+            module.extend(("INTER_OP_PARALLELISM", str(self.inter_threads)))
         if self.intra_threads:
-            module.append(f"INTRA_OP_PARALLELISM {self.intra_threads}")
-        return " ".join(module)
+            module.extend(("INTRA_OP_PARALLELISM", str(self.intra_threads)))
+        return tuple(module)
 
     @property
     def _redis_exe(self) -> str:
@@ -407,9 +428,11 @@ class Orchestrator(EntityList[DBNode]):
         if self.launcher == "lsf":
             for db in self.entities:
                 db.set_hosts(host_list)
-        elif (self.launcher == "pals"
-              and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
-              and self.entities[0].is_mpmd):
+        elif (
+            self.launcher == "pals"
+            and isinstance(self.entities[0].run_settings, PalsMpiexecSettings)
+            and self.entities[0].is_mpmd
+        ):
             # In this case, --hosts is a global option, we only set it to the
             # first run command
             self.entities[0].run_settings.set_hostlist(host_list)
@@ -485,9 +508,9 @@ class Orchestrator(EntityList[DBNode]):
         :param frequency: the given number of seconds before the DB saves
         :type frequency: int
         """
-        self.set_db_conf("save", str(frequency) + " 1")
+        self.set_db_conf("save", f"{frequency} 1")
 
-    def set_max_memory(self, mem: int) -> None:
+    def set_max_memory(self, mem: str) -> None:
         """Sets the max memory configuration. By default there is no memory limit.
         Setting max memory to zero also results in no memory limit. Once a limit is
         surpassed, keys will be removed according to the eviction strategy. The
@@ -590,10 +613,14 @@ class Orchestrator(EntityList[DBNode]):
         batch: bool,
         account: str,
         time: str,
+        *,
+        launcher: t.Optional[str] = None,
         **kwargs: t.Any,
     ) -> t.Optional[BatchSettings]:
         batch_settings = None
-        launcher = kwargs.pop("launcher")
+
+        if launcher is None:
+            raise ValueError("Expected param `launcher` of type `str`")
 
         # enter this conditional if user has not specified an allocation to run
         # on or if user specified batch=False (alloc will be found through env)
@@ -605,11 +632,16 @@ class Orchestrator(EntityList[DBNode]):
         return batch_settings
 
     def _build_run_settings(
-        self, exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
+        self,
+        exe: str,
+        exe_args: t.List[t.List[str]],
+        *,
+        run_args: t.Optional[t.Dict[str, t.Any]] = None,
+        db_nodes: int = 1,
+        single_cmd: bool = True,
+        **kwargs: t.Any,
     ) -> RunSettings:
-        run_args = kwargs.pop("run_args", {})
-        db_nodes = kwargs.get("db_nodes", 1)
-        single_cmd = kwargs.get("single_cmd", True)
+        run_args = {} if run_args is None else run_args
         mpmd_nodes = single_cmd and db_nodes > 1
 
         if mpmd_nodes:
@@ -638,19 +670,28 @@ class Orchestrator(EntityList[DBNode]):
         if self.launcher != "local":
             run_settings.set_tasks_per_node(1)
 
-        # Put it back in case it is needed again
-        kwargs["run_args"] = run_args
-
         return run_settings
 
     @staticmethod
     def _build_run_settings_lsf(
-        exe: str, exe_args: t.List[t.List[str]], **kwargs: t.Any
+        exe: str,
+        exe_args: t.List[t.List[str]],
+        *,
+        run_args: t.Optional[t.Dict[str, t.Any]] = None,
+        cpus_per_shard: t.Optional[int] = None,
+        gpus_per_shard: t.Optional[int] = None,
+        **_kwargs: t.Any  # Needed to ensure no API break and do not want to
+                          # introduce that possibility, even if this method is
+                          # protected, without running the test suite.
+                          # TODO: Test against an LSF system before merge!
     ) -> t.Optional[JsrunSettings]:
-        run_args = kwargs.pop("run_args", {})
-        cpus_per_shard = kwargs.get("cpus_per_shard", None)
-        gpus_per_shard = kwargs.get("gpus_per_shard", None)
+        run_args = {} if run_args is None else run_args
         erf_rs: t.Optional[JsrunSettings] = None
+
+        if cpus_per_shard is None:
+            raise ValueError("Expected an integer number of cpus per shard")
+        if gpus_per_shard is None:
+            raise ValueError("Expected an integer number of gpus per shard")
 
         # We always run the DB on cpus 0:cpus_per_shard-1
         # and gpus 0:gpus_per_shard-1
@@ -672,9 +713,9 @@ class Orchestrator(EntityList[DBNode]):
             }
 
             if gpus_per_shard > 1:  # pragma: no-cover
-                erf_sets["gpu"] = "{" + f"0-{gpus_per_shard-1}" + "}"
+                erf_sets["gpu"] = f"{{0-{gpus_per_shard-1}}}"
             elif gpus_per_shard > 0:
-                erf_sets["gpu"] = "{" + str(0) + "}"
+                erf_sets["gpu"] = "{0}"
 
             run_settings.set_erf_sets(erf_sets)
 
@@ -684,31 +725,38 @@ class Orchestrator(EntityList[DBNode]):
 
             erf_rs.make_mpmd(run_settings)
 
-        kwargs["run_args"] = run_args
-
         return erf_rs
 
-    def _initialize_entities(self, **kwargs: t.Any) -> None:
-        self.db_nodes = int(kwargs.get("db_nodes", 1))
-        single_cmd = kwargs.get("single_cmd", True)
-
-        if int(self.db_nodes) == 2:
+    # Old pylint from TF 2.6.x does not understand that this argument list is
+    # equivalent to `(self, **kwargs)`
+    # # pylint: disable-next=arguments-differ
+    def _initialize_entities(
+        self,
+        *,
+        db_nodes: int = 1,
+        single_cmd: bool = True,
+        port: int = 6379,
+        **kwargs: t.Any,
+    ) -> None:
+        db_nodes = int(db_nodes)
+        if db_nodes == 2:
             raise SSUnsupportedError("Orchestrator does not support clusters of size 2")
 
-        if self.launcher == "local" and self.db_nodes > 1:
+        if self.launcher == "local" and db_nodes > 1:
             raise ValueError(
                 "Local Orchestrator does not support multiple database shards"
             )
 
-        mpmd_nodes = (single_cmd and self.db_nodes > 1) or self.launcher == "lsf"
+        mpmd_nodes = (single_cmd and db_nodes > 1) or self.launcher == "lsf"
 
         if mpmd_nodes:
-            self._initialize_entities_mpmd(**kwargs)
+            self._initialize_entities_mpmd(
+                db_nodes=db_nodes, single_cmd=single_cmd, port=port, **kwargs
+            )
         else:
-            port = kwargs.get("port", 6379)
-            cluster = not bool(self.db_nodes < 3)
+            cluster = db_nodes >= 3
 
-            for db_id in range(self.db_nodes):
+            for db_id in range(db_nodes):
                 db_node_name = "_".join((self.name, str(db_id)))
 
                 # create the exe_args list for launching multiple databases
@@ -720,7 +768,7 @@ class Orchestrator(EntityList[DBNode]):
                 # if only launching 1 db per command, we don't need a
                 # list of exe args lists
                 run_settings = self._build_run_settings(
-                    sys.executable, [start_script_args], **kwargs
+                    sys.executable, [start_script_args], port=port, **kwargs
                 )
 
                 node = DBNode(
@@ -734,13 +782,14 @@ class Orchestrator(EntityList[DBNode]):
 
             self.ports = [port]
 
-    def _initialize_entities_mpmd(self, **kwargs: t.Any) -> None:
-        port = kwargs.get("port", 6379)
-        cluster = not bool(self.db_nodes < 3)
+    def _initialize_entities_mpmd(
+        self, *, db_nodes: int = 1, port: int = 6379, **kwargs: t.Any
+    ) -> None:
+        cluster = db_nodes >= 3
 
         exe_args_mpmd: t.List[t.List[str]] = []
 
-        for db_id in range(self.db_nodes):
+        for db_id in range(db_nodes):
             db_shard_name = "_".join((self.name, str(db_id)))
             # create the exe_args list for launching multiple databases
             # per node. also collect port range for dbnode
@@ -754,15 +803,14 @@ class Orchestrator(EntityList[DBNode]):
 
         if self.launcher == "lsf":
             run_settings = self._build_run_settings_lsf(
-                sys.executable, exe_args_mpmd, **kwargs
+                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
             output_files = [
-                "_".join((self.name, str(db_id))) + ".out"
-                for db_id in range(self.db_nodes)
+                f"{self.name}_{db_id}.out" for db_id in range(db_nodes)
             ]
         else:
             run_settings = self._build_run_settings(
-                sys.executable, exe_args_mpmd, **kwargs
+                sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
             output_files = [self.name + ".out"]
 
@@ -770,37 +818,27 @@ class Orchestrator(EntityList[DBNode]):
             raise ValueError(f"Could not build run settings for {self.launcher}")
 
         node = DBNode(self.name, self.path, run_settings, [port], output_files)
-        node.is_mpmd = True
-        node.num_shards = self.db_nodes
         self.entities.append(node)
 
         self.ports = [port]
 
-    @staticmethod
-    def _get_cluster_args(name: str, port: int) -> t.List[str]:
-        """Create the arguments necessary for cluster creation"""
-        cluster_conf = "".join(("nodes-", name, "-", str(port), ".conf"))
-        db_args = ["--cluster-enabled yes", "--cluster-config-file", cluster_conf]
-        return db_args
-
     def _get_start_script_args(
         self, name: str, port: int, cluster: bool
     ) -> t.List[str]:
-        start_script_args = [
+        cmd = [
             "-m",
             "smartsim._core.entrypoints.redis",  # entrypoint
-            "+ifname=" + ",".join(self._interfaces),  # pass interface to start script
-            "+command",  # command flag for argparser
-            self._redis_exe,  # redis-server
-            self._redis_conf,  # redis.conf file
-            self._rai_module,  # redisai.so
-            "--port",  # redis port
-            str(port),  # port number
+            f"+orc-exe={self._redis_exe}",  # redis-server
+            f"+conf-file={self._redis_conf}",  # redis.conf file
+            "+rai-module",  # load redisai.so
+            *self._rai_module,
+            f"+name={name}",  # name of node
+            f"+port={port}",  # redis port
+            f"+ifname={','.join(self._interfaces)}",  # pass interface to start script
         ]
         if cluster:
-            start_script_args += self._get_cluster_args(name, port)
-
-        return start_script_args
+            cmd.append("+cluster")  # is the shard part of a cluster
+        return cmd
 
     def _get_db_hosts(self) -> t.List[str]:
         hosts = []
