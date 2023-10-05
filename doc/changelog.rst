@@ -33,7 +33,7 @@ Detailed Notes
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. This applies to all operating systems. (PR383_)
 
-  .. _PR384: https://github.com/CrayLabs/SmartSim/pull/387
+  .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
 
