@@ -163,7 +163,7 @@ def _dictify_ensemble(
 
 def _dictify_run_settings(run_settings: RunSettings) -> t.Dict[str, t.Any]:
     return {
-        "exe": run_settings.exe[0],
+        "exe": run_settings.exe,
         "exe_args": run_settings.exe_args,
         "run_command": run_settings.run_command,
         "run_args": run_settings.run_args,
