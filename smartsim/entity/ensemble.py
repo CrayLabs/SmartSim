@@ -364,6 +364,7 @@ class Ensemble(EntityList[Model]):
         devices_per_node: int = 1,
         batch_size: int = 0,
         min_batch_size: int = 0,
+        min_batch_timeout: int = 0,
         tag: str = "",
         inputs: t.Optional[t.List[str]] = None,
         outputs: t.Optional[t.List[str]] = None,
@@ -391,6 +392,8 @@ class Ensemble(EntityList[Model]):
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
         :type min_batch_size: int, optional
+        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
+        :type min_batch_timeout: int, optional
         :param tag: additional tag for model information, defaults to ""
         :type tag: str, optional
         :param inputs: model inputs (TF only), defaults to None
@@ -407,6 +410,7 @@ class Ensemble(EntityList[Model]):
             devices_per_node=devices_per_node,
             batch_size=batch_size,
             min_batch_size=min_batch_size,
+            min_batch_timeout=min_batch_timeout,
             tag=tag,
             inputs=inputs,
             outputs=outputs,

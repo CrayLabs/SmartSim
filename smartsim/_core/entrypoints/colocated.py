@@ -78,12 +78,10 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--devices_per_node", type=int)
     parser.add_argument("--batch_size", type=int, default=0)
     parser.add_argument("--min_batch_size", type=int, default=0)
+    parser.add_argument("--min_batch_timeout", type=int, default=0)
     parser.add_argument("--tag", type=str, default="")
     parser.add_argument("--inputs", nargs="+", default=None)
     parser.add_argument("--outputs", nargs="+", default=None)
-
-    # Unused if we use SmartRedis
-    parser.add_argument("--min_batch_timeout", type=int, default=None)
     args = parser.parse_args(db_model)
 
     inputs = None
@@ -106,6 +104,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             num_gpus=args.devices_per_node,
             batch_size=args.batch_size,
             min_batch_size=args.min_batch_size,
+            min_batch_timeout=args.min_batch_timeout,
             tag=args.tag,
             inputs=inputs,
             outputs=outputs,
@@ -118,6 +117,7 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             device=args.device,
             batch_size=args.batch_size,
             min_batch_size=args.min_batch_size,
+            min_batch_timeout=args.min_batch_timeout,
             tag=args.tag,
             inputs=inputs,
             outputs=outputs,
