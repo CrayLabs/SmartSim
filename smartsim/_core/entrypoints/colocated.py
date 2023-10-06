@@ -82,9 +82,6 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--tag", type=str, default="")
     parser.add_argument("--inputs", nargs="+", default=None)
     parser.add_argument("--outputs", nargs="+", default=None)
-
-    # Unused if we use SmartRedis
-    parser.add_argument("--min_batch_timeout", type=int, default=None)
     args = parser.parse_args(db_model)
 
     inputs = None
