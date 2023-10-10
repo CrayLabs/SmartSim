@@ -159,7 +159,8 @@ def test_track_specific(
         "step_id": step_id,
         "run_id": timestamp,
     }
-    persistable = hydrate_persistable(etype, stored, exp_dir)
+    persistables = hydrate_persistable(etype, stored, exp_dir)
+    persistable = persistables[0] if persistables else None
 
     exp_path = pathlib.Path(exp_dir)
 
@@ -218,7 +219,8 @@ def test_persistable_computed_properties(
         "step_id": step_id,
         "run_id": timestamp,
     }
-    persistable = hydrate_persistable(etype, stored, exp_dir)
+    persistables = hydrate_persistable(etype, stored, exp_dir)
+    persistable = persistables[0] if persistables else None
 
     assert persistable.is_managed == exp_ismanaged
     assert persistable.is_db == exp_isorch

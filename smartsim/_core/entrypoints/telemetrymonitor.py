@@ -98,31 +98,61 @@ class RuntimeManifest:
     name: str
     path: pathlib.Path
     launcher: str
+    out_file: pathlib.Path
+    err_file: pathlib.Path
     runs: t.List[Run] = field(default_factory=list)
-
-
-def get_ts() -> int:
-    """Helper function to ensure all timestamps are converted to integers"""
-    return int(datetime.timestamp(datetime.now()))
 
 
 def hydrate_persistable(
     entity_type: str,
-    persisted_entity: t.Dict[str, t.Any],
-    # timestamp: int,
+    persistable_entity: t.Dict[str, t.Any],
     exp_dir: pathlib.Path,
-) -> JobEntity:
+) -> t.List[JobEntity]:
     """Map entity data persisted in a manifest file to an object"""
-    entity = JobEntity()
+    entities: t.List[JobEntity] = []
 
-    entity.type = entity_type
-    entity.name = persisted_entity["name"]
-    entity.job_id = persisted_entity.get("job_id", "")
-    entity.step_id = persisted_entity.get("step_id", "")
-    entity.timestamp = int(persisted_entity.get("run_id", "0"))
-    entity.path = str(exp_dir)
+    if "out_file" in persistable_entity:
+        out_file = pathlib.Path(persistable_entity.get("out_file"))
+        err_file = pathlib.Path(persistable_entity.get("err_file"))
 
-    return entity
+        entity = JobEntity()
+        metadata = persistable_entity["telemetry_metadata"]
+        status_file = pathlib.Path(metadata.get("status_dir"))
+
+        entity.type = entity_type
+        entity.name = persistable_entity["name"]
+        entity.job_id = str(metadata.get("job_id", ""))
+        entity.step_id = str(metadata.get("step_id", ""))
+        entity.timestamp = int(persistable_entity.get("run_id", "0"))
+        entity.path = str(exp_dir)
+        entity.out_file = str(out_file)
+        entity.err_file = str(err_file)
+        entity.status_dir = str(status_file)
+
+        entities.append(entity)
+    elif "shards" in persistable_entity:
+        for shard in persistable_entity["shards"]:
+            
+            out_file = pathlib.Path(shard.get("out_file"))
+            err_file = pathlib.Path(shard.get("err_file"))
+
+            entity = JobEntity()
+            metadata = shard["telemetry_metadata"]
+            status_file = pathlib.Path(metadata.get("status_dir"))
+
+            entity.type = entity_type
+            entity.name = persistable_entity["name"]
+            entity.job_id = str(metadata.get("job_id", ""))
+            entity.step_id = str(metadata.get("step_id", ""))
+            entity.timestamp = int(persistable_entity.get("run_id", "0"))
+            entity.path = str(exp_dir)
+            entity.out_file = str(out_file)
+            entity.err_file = str(err_file)
+            entity.status_dir = str(status_file)
+        
+            entities.append(entity)    
+
+    return entities
 
 
 def hydrate_persistables(
@@ -134,8 +164,9 @@ def hydrate_persistables(
     persisted: t.List[JobEntity] = []
 
     for item in run[entity_type]:
-        entity = hydrate_persistable(entity_type, item, exp_dir)
-        persisted.append(entity)
+        entities = hydrate_persistable(entity_type, item, exp_dir)
+        for entity in entities:
+            persisted.append(entity)
 
     return persisted
 
@@ -156,20 +187,37 @@ def hydrate_runs(
     return runs
 
 
-def load_manifest(file_path: str) -> RuntimeManifest:
+def load_manifest(file_path: str) -> t.Optional[RuntimeManifest]:
     """Load a persisted manifest and return the content"""
     source = pathlib.Path(file_path)
     source = source.resolve()
 
     text = source.read_text(encoding="utf-8")
+    text = text.strip()
+    if not text:
+        return None
+
     manifest_dict = json.loads(text)
-    exp_dir = pathlib.Path(manifest_dict["experiment"]["path"])
+    exp = manifest_dict.get("experiment", None)
+    if not exp:
+        raise ValueError("Manifest missing required experiment")
+
+    runs = manifest_dict.get("runs", None)
+    if runs is None:
+        raise ValueError("Manifest missing required runs")
+
+    exp_dir = pathlib.Path(exp["path"])
+    out_file = pathlib.Path(exp["out_file"])
+    err_file = pathlib.Path(exp["err_file"])
+    runs = hydrate_runs(runs, exp_dir)
 
     manifest = RuntimeManifest(
-        name=manifest_dict["experiment"]["name"],
+        name=exp["name"],
         path=exp_dir,
-        launcher=manifest_dict["experiment"]["launcher"],
-        runs=hydrate_runs(manifest_dict["runs"], exp_dir),
+        out_file=out_file,
+        err_file=err_file,
+        launcher=exp["launcher"],
+        runs=runs,
     )
     return manifest
 
@@ -356,7 +404,17 @@ class ManifestEventHandler(PatternMatchingEventHandler):
     def process_manifest(self, manifest_path: str) -> None:
         """Load the runtime manifest for the experiment and add the entities
         to the collections of items being tracked for updates"""
-        manifest = load_manifest(manifest_path)
+        try:
+            manifest = load_manifest(manifest_path)
+            if not manifest:
+                return
+        except json.JSONDecodeError:
+            self._logger.error(f"Malformed manifest encountered: {manifest_path}")
+            return
+        except ValueError:
+            self._logger.error("Manifest content error", exc_info=True)
+            return
+
         self.set_launcher(manifest.launcher)
 
         if not self._jm._launcher:  # pylint: disable=protected-access
