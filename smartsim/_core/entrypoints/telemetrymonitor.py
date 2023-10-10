@@ -36,7 +36,6 @@ import time
 import typing as t
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from types import FrameType
 
 from watchdog.observers import Observer

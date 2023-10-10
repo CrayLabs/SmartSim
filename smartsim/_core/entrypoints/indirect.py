@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import base64
 import os
 import pathlib
 import psutil
@@ -34,7 +33,6 @@ import sys
 import time
 import typing as t
 
-from datetime import datetime
 from types import FrameType
 
 from smartsim.log import get_logger
@@ -42,7 +40,7 @@ from smartsim._core.entrypoints.telemetrymonitor import track_event
 from smartsim._core.utils.helpers import get_ts, decode_cmd
 
 
-STEP_PID = None
+STEP_PID: t.Optional[int] = None
 logger = get_logger(__name__)
 
 # kill is not catchable

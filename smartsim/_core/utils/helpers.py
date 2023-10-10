@@ -293,8 +293,8 @@ def encode_cmd(cmd: t.List[str]) -> str:
         raise ValueError("Invalid cmd supplied")
 
     ascii_cmd = "|".join(cmd).encode("ascii")
-    cmd = base64.b64encode(ascii_cmd).decode("ascii")
-    return cmd
+    encoded_cmd = base64.b64encode(ascii_cmd).decode("ascii")
+    return encoded_cmd
 
 
 def decode_cmd(encoded_cmd: str) -> t.List[str]:

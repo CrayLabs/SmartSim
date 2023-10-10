@@ -126,7 +126,7 @@ class LocalLauncher(Launcher):
 
         cmd = step.get_launch_cmd()
         if os.environ.get("SSFLAG_TELEMETRY", False):
-            cmd = LocalLauncher._get_proxy_cmd(cmd)
+            cmd = LocalLauncher.get_proxy_cmd(step)
 
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
@@ -155,7 +155,7 @@ class LocalLauncher(Launcher):
         return "Local"
 
     @classmethod
-    def _get_proxy_cmd(cls, step: Step) -> t.List[str]:
+    def get_proxy_cmd(cls, step: Step) -> t.List[str]:
         """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
         continue telemetry logging after a driver process exits or fails.
 
