@@ -563,19 +563,20 @@ def main(
         f", on target directory: {experiment_dir}"
     )
 
-    manifest_path = experiment_dir / "manifest" / "manifest.json"
-    manifest_dir = str(experiment_dir / "manifest")
+    mani_name, mani_dir = "manifest.json", "manifest"
+    manifest_dir = experiment_dir / mani_dir
+    manifest_path = manifest_dir / mani_name
     logger.debug(f"Monitoring manifest changes at: {manifest_dir}")
 
     log_handler = LoggingEventHandler(logger)  # type: ignore
-    action_handler = ManifestEventHandler("manifest.json", logger)
+    action_handler = ManifestEventHandler(mani_name, logger)
 
     if observer is None:
-        # create a file-system observer if one isn't injected
         observer = Observer()
 
     try:
         if manifest_path.exists():
+            # a manifest may not exist depending on startup timing
             action_handler.process_manifest(str(manifest_path))
 
         observer.schedule(log_handler, manifest_dir)  # type: ignore
@@ -589,8 +590,9 @@ def main(
     except Exception as ex:
         logger.error(ex)
     finally:
-        observer.stop()  # type: ignore
-        observer.join()
+        if observer.is_alive():
+            observer.stop()  # type: ignore
+            observer.join()
 
     return 1
 
