@@ -39,6 +39,7 @@ from types import FrameType
 
 from smartsim.log import get_logger
 from smartsim._core.entrypoints.telemetrymonitor import track_event
+from smartsim._core.utils.helpers import get_ts, decode_cmd
 
 
 STEP_PID = None
@@ -46,11 +47,6 @@ logger = get_logger(__name__)
 
 # kill is not catchable
 SIGNALS = [signal.SIGINT, signal.SIGTERM, signal.SIGQUIT, signal.SIGABRT]
-
-
-def get_ts() -> int:
-    """Helper function to ensure all timestamps are converted to integers"""
-    return int(datetime.timestamp(datetime.now()))
 
 
 def main(
@@ -71,8 +67,7 @@ def main(
     if not cmd.strip():
         raise ValueError("Invalid cmd supplied")
 
-    decoded_cmd = base64.b64decode(cmd.encode("ascii"))
-    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
+    cleaned_cmd = decode_cmd(cmd)
 
     job_id = ""  # unmanaged jobs have no job ID, only step ID (the pid)
     ret_code: int = 1

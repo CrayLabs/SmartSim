@@ -27,10 +27,8 @@
 
 import logging
 import pathlib
-import psutil
 import pytest
 import re
-import sys
 import typing as t
 import uuid
 from conftest import FileUtils
@@ -41,7 +39,6 @@ from smartsim._core.entrypoints.telemetrymonitor import (
     get_ts,
     main,
     track_event,
-    # PersistableEntity,
     track_started,
     track_completed,
     track_timestep,

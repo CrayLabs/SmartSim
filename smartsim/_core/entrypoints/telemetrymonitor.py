@@ -54,8 +54,8 @@ from smartsim._core.launcher.local.local import LocalLauncher
 from smartsim._core.launcher.lsf.lsfLauncher import LSFLauncher
 from smartsim._core.launcher.pbs.pbsLauncher import PBSLauncher
 from smartsim._core.launcher.slurm.slurmLauncher import SlurmLauncher
+from smartsim._core.utils.helpers import get_ts
 
-# from smartsim.entity import SmartSimEntity, EntityList
 from smartsim.error.errors import SmartSimError
 from smartsim.status import TERMINAL_STATUSES
 
@@ -440,7 +440,6 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         else:
             detail = "unknown status. step_info not retrieved"
 
-        # track_event(timestamp, entity, "stop", exp_dir, self._logger, detail=detail)
         track_event(
             timestamp,
             entity.name,

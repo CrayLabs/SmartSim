@@ -24,7 +24,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import base64
 import os
 import sys
 import typing as t
@@ -37,6 +36,7 @@ from ..step import Step
 from ..stepInfo import UnmanagedStepInfo, StepInfo
 from ..stepMapping import StepMapping
 from ..taskManager import TaskManager
+from ...._core.utils.helpers import encode_cmd
 
 
 logger = get_logger(__name__)
@@ -101,46 +101,6 @@ class LocalLauncher(Launcher):
         """
         return [["127.0.0.1"] * len(step_names)]
 
-    def _get_proxy_cmd(self, step: Step) -> t.List[str]:
-        """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
-        continue telemetry logging after a driver process exits or fails.
-
-        :param step: the step to execute
-        :type step: Step
-        :return: CLI arguments to execute the step via the proxy step executor
-        :rtype: t.List[str]
-        """
-
-        proxy_module = "smartsim._core.entrypoints.indirect"
-        etype = step.meta["entity_type"]
-        cmd_list = step.get_launch_cmd()
-        ascii_cmd = "|".join(cmd_list).encode("ascii")
-        cmd = base64.b64encode(ascii_cmd).decode("ascii")
-
-        out, err = step.get_output_files()
-
-        # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
-        # the indirect entrypoint rebuild the cmd... for now, test away...
-        proxied_cmd = [
-            sys.executable,
-            "-m",
-            proxy_module,
-            "+c",
-            cmd,
-            "+t",
-            etype,
-            "+n",
-            step.name,
-            "+d",
-            step.cwd,
-            "+o",
-            out,
-            "+e",
-            err,
-        ]
-        return proxied_cmd
-        # return cmd_list
-
     def run(self, step: Step) -> str:
         """Run a local step created by this launcher. Utilize the shell
            library to execute the command with a Popen. Output and error
@@ -166,7 +126,7 @@ class LocalLauncher(Launcher):
 
         cmd = step.get_launch_cmd()
         if os.environ.get("SSFLAG_TELEMETRY", False):
-            cmd = self._get_proxy_cmd(step)
+            cmd = LocalLauncher._get_proxy_cmd(cmd)
 
         task_id = self.task_manager.start_task(
             cmd, step.cwd, env=passed_env, out=output.fileno(), err=error.fileno()
@@ -193,3 +153,42 @@ class LocalLauncher(Launcher):
 
     def __str__(self) -> str:
         return "Local"
+
+    @classmethod
+    def _get_proxy_cmd(cls, step: Step) -> t.List[str]:
+        """Executes a step indirectly through a proxy process. This ensures unmanaged tasks
+        continue telemetry logging after a driver process exits or fails.
+
+        :param step: the step to produce a proxied command for
+        :type step: Step
+        :return: CLI arguments to execute the step via the proxy step executor
+        :rtype: t.List[str]
+        """
+        
+        proxy_module = "smartsim._core.entrypoints.indirect"
+        etype = step.meta["entity_type"]
+        cmd_list = step.get_launch_cmd()
+        encoded_cmd = encode_cmd(cmd_list)
+
+        out, err = step.get_output_files()
+
+        # note: this is NOT safe. should either 1) sign cmd and verify OR 2) serialize step and let
+        # the indirect entrypoint rebuild the cmd... for now, test away...
+        proxied_cmd = [
+            sys.executable,
+            "-m",
+            proxy_module,
+            "+c",
+            encoded_cmd,
+            "+t",
+            etype,
+            "+n",
+            step.name,
+            "+d",
+            step.cwd,
+            "+o",
+            out,
+            "+e",
+            err,
+        ]
+        return proxied_cmd

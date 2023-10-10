@@ -27,6 +27,8 @@
 """
 A file of helper functions for SmartSim
 """
+import base64
+import datetime
 import os
 import uuid
 import typing as t
@@ -277,3 +279,30 @@ def installed_redisai_backends(
     }
 
     return {backend for backend in backends if _installed(base_path, backend)}
+
+
+def get_ts() -> int:
+    """Helper function to ensure all timestamps are converted to integers"""
+    return int(datetime.timestamp(datetime.now()))
+
+
+def encode_cmd(cmd: t.List[str]) -> str:
+    """Transform a standard command list into an encoded string safe for providing as an
+    argument to a proxy entrypoint"""
+    if not cmd:
+        raise ValueError("Invalid cmd supplied")
+
+    ascii_cmd = "|".join(cmd).encode("ascii")
+    cmd = base64.b64encode(ascii_cmd).decode("ascii")
+    return cmd
+
+
+def decode_cmd(encoded_cmd: str) -> t.List[str]:
+    """Decode an encoded command string to the original command list format"""
+    if not encoded_cmd.strip():
+        raise ValueError("Invalid cmd supplied")
+
+    decoded_cmd = base64.b64decode(encoded_cmd.encode("ascii"))
+    cleaned_cmd = decoded_cmd.decode("ascii").split("|")
+
+    return cleaned_cmd
