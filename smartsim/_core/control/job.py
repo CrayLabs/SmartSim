@@ -49,6 +49,7 @@ class JobEntity:
         self.step_id: str = ""
         self.type: str = type(entity).__name__.lower() if entity else ""
         self.timestamp: int = 0
+        self.status_dir: str = ""
 
     @property
     def is_db(self) -> bool:

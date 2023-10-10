@@ -110,34 +110,12 @@ def hydrate_persistable(
     """Map entity data persisted in a manifest file to an object"""
     entities: t.List[JobEntity] = []
 
-    if "out_file" in persistable_entity:
-        out_file = pathlib.Path(persistable_entity.get("out_file"))
-        err_file = pathlib.Path(persistable_entity.get("err_file"))
-
-        entity = JobEntity()
-        metadata = persistable_entity["telemetry_metadata"]
-        status_file = pathlib.Path(metadata.get("status_dir"))
-
-        entity.type = entity_type
-        entity.name = persistable_entity["name"]
-        entity.job_id = str(metadata.get("job_id", ""))
-        entity.step_id = str(metadata.get("step_id", ""))
-        entity.timestamp = int(persistable_entity.get("run_id", "0"))
-        entity.path = str(exp_dir)
-        entity.out_file = str(out_file)
-        entity.err_file = str(err_file)
-        entity.status_dir = str(status_file)
-
-        entities.append(entity)
-    elif "shards" in persistable_entity:
-        for shard in persistable_entity["shards"]:
-            
-            out_file = pathlib.Path(shard.get("out_file"))
-            err_file = pathlib.Path(shard.get("err_file"))
-
+    if "shards" in persistable_entity or "models" in persistable_entity:
+        container = "shards" if "shards" in persistable_entity else "models"
+        for shard in persistable_entity[container]:
             entity = JobEntity()
             metadata = shard["telemetry_metadata"]
-            status_file = pathlib.Path(metadata.get("status_dir"))
+            status_dir = pathlib.Path(metadata.get("status_dir"))
 
             entity.type = entity_type
             entity.name = persistable_entity["name"]
@@ -145,11 +123,26 @@ def hydrate_persistable(
             entity.step_id = str(metadata.get("step_id", ""))
             entity.timestamp = int(persistable_entity.get("run_id", "0"))
             entity.path = str(exp_dir)
-            entity.out_file = str(out_file)
-            entity.err_file = str(err_file)
-            entity.status_dir = str(status_file)
+            entity.status_dir = str(status_dir)
+
+            entities.append(entity)
         
-            entities.append(entity)    
+        return entities
+
+    entity = JobEntity()
+
+    metadata = persistable_entity["telemetry_metadata"]
+    status_dir = pathlib.Path(metadata.get("status_dir"))
+
+    entity.type = entity_type
+    entity.name = persistable_entity["name"]
+    entity.job_id = str(metadata.get("job_id", ""))
+    entity.step_id = str(metadata.get("step_id", ""))
+    entity.timestamp = int(persistable_entity.get("run_id", "0"))
+    entity.path = str(exp_dir)
+    entity.status_dir = str(status_dir)
+
+    entities.append(entity)
 
     return entities
 
@@ -267,16 +260,14 @@ def track_event(
 
 def track_completed(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the end of job"""
-    # inactive_entity = job.entity
     detail = job.status
     exp_dir = pathlib.Path(job.entity.path)
 
-    # track_event(get_ts(), inactive_entity, "stop", exp_dir, logger, detail=detail)
     track_event(
         get_ts(),
         job.entity.name,
-        "",
-        job.jid or "",
+        job.jid or "" if not job.is_task else "",
+        job.jid or "" if job.is_task else "",
         job.entity.type,
         "stop",
         exp_dir,
@@ -287,15 +278,13 @@ def track_completed(job: Job, logger: logging.Logger) -> None:
 
 def track_started(job: Job, logger: logging.Logger) -> None:
     """Persists telemetry event for the start of job"""
-    # inactive_entity = job.entity
     exp_dir = pathlib.Path(job.entity.path)
 
-    # track_event(get_ts(), inactive_entity, "start", exp_dir, logger)
     track_event(
         get_ts(),
         job.entity.name,
-        job.jid if not job.is_task else "",
-        job.jid if job.is_task else "",
+        job.jid or "" if not job.is_task else "",
+        job.jid or "" if job.is_task else "",
         job.entity.type,
         "start",
         exp_dir,
@@ -311,8 +300,8 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
     track_event(
         get_ts(),
         job.entity.name,
-        job.jid if not job.is_task else "",
-        job.jid if job.is_task else "",
+        job.jid or "" if not job.is_task else "",
+        job.jid or "" if job.is_task else "",
         job.entity.type,
         "timestep",
         exp_dir,

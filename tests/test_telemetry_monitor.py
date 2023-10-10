@@ -155,9 +155,12 @@ def test_track_specific(
     exp_dir = pathlib.Path(fileutils.make_test_dir())
     stored = {
         "name": name,
-        "job_id": job_id,
-        "step_id": step_id,
         "run_id": timestamp,
+        "telemetry_metadata": {
+            "status_dir": "/foo/bar",
+            "job_id": job_id,
+            "step_id": step_id,        
+        },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
     persistable = persistables[0] if persistables else None
@@ -194,7 +197,7 @@ def test_load_manifest(fileutils: FileUtils):
     assert len(manifest.runs) == 1
 
     assert len(manifest.runs[0].models) == 2
-    assert len(manifest.runs[0].orchestrators) == 1
+    assert len(manifest.runs[0].orchestrators) == 2
     assert len(manifest.runs[0].ensembles) == 1
 
 
@@ -215,9 +218,12 @@ def test_persistable_computed_properties(
     exp_dir = pathlib.Path("/foo/bar")
     stored = {
         "name": name,
-        "job_id": job_id,
-        "step_id": step_id,
         "run_id": timestamp,
+        "telemetry_metadata": {
+            "status_dir": "/foo/bar",
+            "job_id": job_id,
+            "step_id": step_id,
+        },
     }
     persistables = hydrate_persistable(etype, stored, exp_dir)
     persistable = persistables[0] if persistables else None
