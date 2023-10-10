@@ -295,8 +295,8 @@ def track_started(job: Job, logger: logging.Logger) -> None:
     track_event(
         get_ts(),
         job.entity.name,
-        "",
-        job.jid or "",
+        job.jid if not job.is_task else "",
+        job.jid if job.is_task else "",
         job.entity.type,
         "start",
         exp_dir,
@@ -312,8 +312,8 @@ def track_timestep(job: Job, logger: logging.Logger) -> None:
     track_event(
         get_ts(),
         job.entity.name,
-        "",
-        job.jid or "",
+        job.jid if not job.is_task else "",
+        job.jid if job.is_task else "",
         job.entity.type,
         "timestep",
         exp_dir,
