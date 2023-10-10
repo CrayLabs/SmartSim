@@ -33,3 +33,5 @@ smartsim/_core/bin/*-cli
 smartsim/_core/lib
 
 **/manifest/
+**/*.err
+**/*.out
