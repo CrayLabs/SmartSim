@@ -243,9 +243,7 @@ class SlurmLauncher(WLMLauncher):
         step_id: t.Optional[str] = None
         trials = CONFIG.wlm_trials
         while trials > 0:
-            output, err = sacct(["--noheader", "-p", "--format=jobname,jobid"])
-            if err:
-                logger.warning(f"An error occurred while calling sacct: {err}")
+            output, _ = sacct(["--noheader", "-p", "--format=jobname,jobid"])
 
             step_id = parse_step_id_from_sacct(output, step.name)
             if step_id:
@@ -267,6 +265,7 @@ class SlurmLauncher(WLMLauncher):
         """
         step_str = _create_step_id_str(step_ids)
         sacct_out, _ = sacct(["--noheader", "-p", "-b", "--jobs", step_str])
+
         # (status, returncode)
         stat_tuples = [parse_sacct(sacct_out, step_id) for step_id in step_ids]
 

@@ -26,10 +26,21 @@
 
 import typing as t
 
+from ....log import get_logger
 from ....error import LauncherError
 from ...utils.helpers import expand_exe_path
 from ..util.shell import execute_cmd
 
+logger = get_logger(__name__)
+
+def _raise_if_only_err(out: str, error: str, calling_fn: str) -> t.Tuple[str, str]:
+    if error:
+        msg = f"An error occurred while calling {calling_fn}: {error}"
+        if not out:
+            raise LauncherError(msg)
+        logger.warning(msg)
+
+    return out, error
 
 def sstat(args: t.List[str]) -> t.Tuple[str, str]:
     """Calls sstat with args
@@ -41,7 +52,7 @@ def sstat(args: t.List[str]) -> t.Tuple[str, str]:
     _sstat = _find_slurm_command("sstat")
     cmd = [_sstat] + args
     _, out, error = execute_cmd(cmd)
-    return out, error
+    return _raise_if_only_err(out, error, "sstat")
 
 
 def sacct(args: t.List[str]) -> t.Tuple[str, str]:
@@ -54,7 +65,7 @@ def sacct(args: t.List[str]) -> t.Tuple[str, str]:
     _sacct = _find_slurm_command("sacct")
     cmd = [_sacct] + args
     _, out, error = execute_cmd(cmd)
-    return out, error
+    return _raise_if_only_err(out, error, "sacct")
 
 
 def salloc(args: t.List[str]) -> t.Tuple[str, str]:
@@ -67,7 +78,7 @@ def salloc(args: t.List[str]) -> t.Tuple[str, str]:
     _salloc = _find_slurm_command("salloc")
     cmd = [_salloc] + args
     _, out, error = execute_cmd(cmd)
-    return out, error
+    return _raise_if_only_err(out, error, "salloc")
 
 
 def sinfo(args: t.List[str]) -> t.Tuple[str, str]:
@@ -80,7 +91,7 @@ def sinfo(args: t.List[str]) -> t.Tuple[str, str]:
     _sinfo = _find_slurm_command("sinfo")
     cmd = [_sinfo] + args
     _, out, error = execute_cmd(cmd)
-    return out, error
+    return _raise_if_only_err(out, error, "sinfo")
 
 
 def scontrol(args: t.List[str]) -> t.Tuple[str, str]:
@@ -93,8 +104,7 @@ def scontrol(args: t.List[str]) -> t.Tuple[str, str]:
     _scontrol = _find_slurm_command("scontrol")
     cmd = [_scontrol] + args
     _, out, error = execute_cmd(cmd)
-    return out, error
-
+    return _raise_if_only_err(out, error, "scontrol")
 
 def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
     """Calls slurm scancel with args.
@@ -109,6 +119,7 @@ def scancel(args: t.List[str]) -> t.Tuple[int, str, str]:
     _scancel = _find_slurm_command("scancel")
     cmd = [_scancel] + args
     returncode, out, error = execute_cmd(cmd)
+    out, error = _raise_if_only_err(out, error, "scancel")
     return returncode, out, error
 
 
