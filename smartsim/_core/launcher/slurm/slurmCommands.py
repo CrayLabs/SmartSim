@@ -112,7 +112,9 @@ def _find_slurm_command(cmd: str) -> str:
         ) from e
 
 
-def _execute_slurm_cmd(command: str, args: t.List[str], raise_on_err: bool = False):
+def _execute_slurm_cmd(
+    command: str, args: t.List[str], raise_on_err: bool = False
+) -> t.Tuple[int, str, str]:
     cmd_exe = _find_slurm_command(command)
     cmd = [cmd_exe] + args
     returncode, out, error = execute_cmd(cmd)
