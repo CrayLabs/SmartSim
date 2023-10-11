@@ -109,9 +109,6 @@ class SlurmLauncher(WLMLauncher):
         step_str = _create_step_id_str([val for val in step_ids if val is not None])
         output, error = sstat([step_str, "-i", "-n", "-p", "-a"])
 
-        if "error:" in error.split(" "):
-            raise LauncherError("Failed to retrieve nodelist from stat")
-
         # parse node list for each step
         node_lists = []
         for step_id in step_ids:
