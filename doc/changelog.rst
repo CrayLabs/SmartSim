@@ -19,11 +19,15 @@ To be released at some future point in time
 
 Description
 
+- Expose first_device parameter for scripts, functions, models
 - Added support for MINBATCHTIMEOUT in model execution
 - Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
 
 Detailed Notes
 
+- Added support for first_device parameter for scripts, functions,
+  and models. This causes them to be loaded to the first num_devices
+  beginning with first_device (PR389_)
 - Added support for MINBATCHTIMEOUT in model execution, which caps the delay
   waiting for a minimium number of model execution operations to accumulate
   before executing them as a batch (PR387_)
@@ -33,6 +37,7 @@ Detailed Notes
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. This applies to all operating systems. (PR383_)
 
+  .. _PR389: https://github.com/CrayLabs/SmartSim/pull/389
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2

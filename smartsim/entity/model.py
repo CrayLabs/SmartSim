@@ -449,6 +449,7 @@ class Model(SmartSimEntity):
         model_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
         batch_size: int = 0,
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
@@ -479,6 +480,10 @@ class Model(SmartSimEntity):
                This parameter only applies to GPU devices and will be ignored if device
                is specified as GPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
+        :type first_device: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -499,6 +504,7 @@ class Model(SmartSimEntity):
             model_file=model_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
             batch_size=batch_size,
             min_batch_size=min_batch_size,
             min_batch_timeout=min_batch_timeout,
@@ -515,6 +521,7 @@ class Model(SmartSimEntity):
         script_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript to launch with this Model instance
 
@@ -526,7 +533,9 @@ class Model(SmartSimEntity):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the script being stored in the first N devices of type ``device``;
+        alternatively, setting ``first_device=M`` will result in the script
+        being stored on nodes M through M + N - 1.
 
         One of either script (in memory string representation) or script_path (file)
         must be provided
@@ -543,6 +552,10 @@ class Model(SmartSimEntity):
                This parameter only applies to GPU devices and will be ignored if device
                is specified as GPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
+        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -550,6 +563,7 @@ class Model(SmartSimEntity):
             script_path=script_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
         )
         self.add_script_object(db_script)
 
@@ -559,6 +573,7 @@ class Model(SmartSimEntity):
         function: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript function to launch with this Model instance
 
@@ -584,9 +599,14 @@ class Model(SmartSimEntity):
                This parameter only applies to GPU devices and will be ignored if device
                is specified as GPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as GPU.
+        :type first_device: int
         """
         db_script = DBScript(
-            name=name, script=function, device=device, devices_per_node=devices_per_node
+            name=name, script=function, device=device,
+            devices_per_node=devices_per_node, first_device=first_device
         )
         self.add_script_object(db_script)
 

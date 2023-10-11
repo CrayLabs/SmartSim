@@ -46,6 +46,7 @@ class DBObject:
         file_path: t.Optional[str],
         device: t.Literal["CPU", "GPU"],
         devices_per_node: int,
+        first_device: int,
     ) -> None:
         self.name = name
         self.func = func
@@ -56,7 +57,8 @@ class DBObject:
             self.file = self._check_filepath(file_path)
         self.device = self._check_device(device)
         self.devices_per_node = devices_per_node
-        self._check_devices(device, devices_per_node)
+        self.first_device = first_device
+        self._check_devices(device, devices_per_node, first_device)
 
     @property
     def devices(self) -> t.List[str]:
@@ -118,7 +120,7 @@ class DBObject:
 
         if self.device == "GPU" and self.devices_per_node > 1:
             return [
-                f"{self.device}:{str(device_num)}"
+                f"{self.device}:{str(device_num + self.first_device)}"
                 for device_num in range(self.devices_per_node)
             ]
 
@@ -126,9 +128,12 @@ class DBObject:
 
     @staticmethod
     def _check_devices(
-        device: t.Literal["CPU", "GPU"], devices_per_node: int
+        device: t.Literal["CPU", "GPU"], devices_per_node: int, first_device: int,
     ) -> None:
         if devices_per_node == 1:
+            if first_device != 0:
+                msg = "Cannot set first_node to non-zero if devices_per_node is 1"
+                raise ValueError(msg)
             return
 
         if ":" in device:
@@ -150,6 +155,7 @@ class DBScript(DBObject):
         script_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ):
         """TorchScript code represenation
 
@@ -157,7 +163,9 @@ class DBScript(DBObject):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored on the first N devices of type ``device``.
+        in the script being stored on the first N devices of type ``device``;
+        additionally setting ``first_device=M`` will instead result in the
+        script being stored on devices M through M + N -1.
 
         One of either script (in memory representation) or script_path (file)
         must be provided
@@ -172,8 +180,12 @@ class DBScript(DBObject):
         :type device: str, optional
         :param devices_per_node: number of devices to store the script on
         :type devices_per_node: int
+        :param first_device: first devices to store the script on
+        :type first_device: int
         """
-        super().__init__(name, script, script_path, device, devices_per_node)
+        super().__init__(
+            name, script, script_path, device, devices_per_node, first_device
+        )
         if not script and not script_path:
             raise ValueError("Either script or script_path must be provided")
 
@@ -191,6 +203,8 @@ class DBScript(DBObject):
             "s per node\n" if self.devices_per_node > 1 else " per node\n"
         )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
+        if self.first_device > 0:
+            desc_str += "First device: " + str(self.first_device) + "\n"
         return desc_str
 
 
@@ -203,6 +217,7 @@ class DBModel(DBObject):
         model_file: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
         batch_size: int = 0,
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
@@ -227,6 +242,8 @@ class DBModel(DBObject):
         :type device: str, optional
         :param devices_per_node: number of devices to store the model on
         :type devices_per_node: int
+        :param first_device: The first device to store the model on
+        :type first_device: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -240,7 +257,8 @@ class DBModel(DBObject):
         :param outputs: model outupts (TF only), defaults to None
         :type outputs: list[str], optional
         """
-        super().__init__(name, model, model_file, device, devices_per_node)
+        super().__init__(
+            name, model, model_file, device, devices_per_node, first_device)
         self.backend = self._check_backend(backend)
         if not model and not model_file:
             raise ValueError("Either model or model_file must be provided")
@@ -264,6 +282,8 @@ class DBModel(DBObject):
             "s per node\n" if self.devices_per_node > 1 else " per node\n"
         )
         desc_str += "Devices: " + str(self.devices_per_node) + " " + devices_str
+        if self.first_device > 0:
+            desc_str += "First_device: " + str(self.first_device) + "\n"
         desc_str += "Backend: " + str(self.backend) + "\n"
         if self.batch_size:
             desc_str += "Batch size: " + str(self.batch_size) + "\n"
