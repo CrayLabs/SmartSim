@@ -25,6 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import pathlib
+import subprocess
+import sys
 import time
 import typing as t
 from collections import ChainMap
@@ -40,6 +43,8 @@ from ...status import TERMINAL_STATUSES
 from ..config import CONFIG
 from ..launcher import LocalLauncher, Launcher
 from .job import Job, JobEntity
+
+# from ..entrypoints.telemetrymonitor import start_monitor, kill_monitor
 
 logger = get_logger(__name__)
 
@@ -81,10 +86,47 @@ class JobManager:
         self.on_start_hook: t.List[t.Callable[[Job, Logger], None]] = []
         self.on_timestep_hook: t.List[t.Callable[[Job, Logger], None]] = []
 
-    def start(self) -> None:
+        # self._telemetry: t.Optional[subprocess.Popen] = None
+
+    # def start_telemetry_monitor(self, exp_dir: str = ".", frequency: int = 10) -> None:
+    #     if self._telemetry is None:
+    #         logger.debug("Starting telemetry monitor process")
+    #         self._telemetry = subprocess.Popen(
+    #             [
+    #                 sys.executable,
+    #                 "-m",
+    #                 "smartsim._core.entrypoints.telemetrymonitor",
+    #                 "-d",
+    #                 exp_dir,
+    #                 "-f",
+    #                 str(frequency)
+    #             ], 
+    #             stdin=subprocess.PIPE,
+    #             stdout=subprocess.PIPE,
+    #             cwd=str(pathlib.Path(__file__).parent.parent.parent),
+    #             shell=False,
+    #         )
+    
+    # def stop_telemetry_monitor(self) -> None:
+    #     if self._telemetry is None:
+    #         return
+
+    #     try:        
+    #         self._telemetry.terminate()
+    #     except Exception:
+    #         logger.warn("An error occurred while terminating the telemetry monitor", 
+    #                     exc_info=True)
+    #     finally:
+    #         self._telemetry = None
+
+    def start_job_monitor(self):
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
+
+    def start(self) -> None:
+        self.start_job_monitor()
+        # self.start_telemetry_monitor()
 
     def run(self) -> None:
         """Start the JobManager thread to continually check
@@ -140,6 +182,9 @@ class JobManager:
                 del self.db_jobs[job.ename]
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
+            
+            if not self.jobs and not self.db_jobs:
+                self.stop_telemetry_monitor()
 
     def __getitem__(self, entity_name: str) -> Job:
         """Return the job associated with the name of the entity
@@ -191,6 +236,9 @@ class JobManager:
         else:
             self.jobs[entity.name] = job
 
+        # if self._telemetry is None or not self._telemetry.is_alive():
+        #     self._telemetry = start_monitor()
+
         for hook in self.on_start_hook:
             hook(job, logger)
 
@@ -230,6 +278,7 @@ class JobManager:
         """
         with self._lock:
             jobs = self().values()
+
             job_name_map = {job.name: job.ename for job in jobs}
 
             # returns (job step name, StepInfo) tuples
@@ -368,6 +417,9 @@ class JobManager:
         if not signo:
             logger.warning("Received SIGINT with no signal number")
         """Custom handler for whenever SIGINT is received"""
+        if self._telemetry:
+            self.stop_monitor()
+
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:
                 for _, job in self().items():

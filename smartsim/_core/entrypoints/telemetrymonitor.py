@@ -27,6 +27,7 @@
 import argparse
 import json
 import logging
+import multiprocessing as mp
 import os
 import pathlib
 import signal
@@ -622,6 +623,25 @@ def get_parser() -> argparse.ArgumentParser:
         required=False,
     )
     return arg_parser
+
+
+def start_monitor() -> mp.Process:
+    demo_path = '/lus/cls01029/mcbridch/ss/demo'
+    process = mp.Process(target=monitor,
+                         args=(10, demo_path, log),
+                         name="SmartMonitor",
+                         daemon=False)
+    process.start()
+    return process
+
+
+def kill_monitor(p: t.Optional[mp.Process]) -> None:
+    if not p:
+        return
+
+    if p.is_alive():
+        p.kill()
+        p.close()
 
 
 if __name__ == "__main__":
