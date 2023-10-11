@@ -185,6 +185,7 @@ class JobManager:
         job = Job(job_name, job_id, entity, launcher, is_task)
         if isinstance(entity, (DBNode, Orchestrator)):
             self.db_jobs[entity.name] = job
+
         else:
             self.jobs[entity.name] = job
 
@@ -232,9 +233,9 @@ class JobManager:
                         )
 
     def get_status(
-            self,
-            entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
-        ) -> str:
+        self,
+        entity: t.Union[SmartSimEntity, EntitySequence[SmartSimEntity]],
+    ) -> str:
         """Return the status of a job.
 
         :param entity: SmartSimEntity or EntitySequence instance
@@ -304,21 +305,25 @@ class JobManager:
             else:
                 self.jobs[entity_name] = job
 
-    def get_db_host_addresses(self) -> t.List[str]:
+    def get_db_host_addresses(self) -> t.Dict[str, t.List[str]]:
         """Retrieve the list of hosts for the database
+        for corresponding database identifiers
 
-        :return: list of host ip addresses
-        :rtype: list[str]
-        """
+        :return: dictionary of host ip addresses
+        :rtype: Dict[str, list]"""
+
+        address_dict = {}
         addresses = []
         for db_job in self.db_jobs.values():
             if isinstance(db_job.entity, (DBNode, Orchestrator)):
                 db_entity = db_job.entity
-
                 for combine in itertools.product(db_job.hosts, db_entity.ports):
                     ip_addr = get_ip_from_host(combine[0])
                     addresses.append(":".join((ip_addr, str(combine[1]))))
-        return addresses
+
+            address_dict.update({db_entity.name: addresses})
+
+        return address_dict
 
     def set_db_hosts(self, orchestrator: Orchestrator) -> None:
         """Set the DB hosts in db_jobs so future entities can query this
@@ -327,9 +332,11 @@ class JobManager:
         :type orchestrator: Orchestrator
         """
         # should only be called during launch in the controller
+
         with self._lock:
             if orchestrator.batch:
                 self.db_jobs[orchestrator.name].hosts = orchestrator.hosts
+
             else:
                 for dbnode in orchestrator.entities:
                     if not dbnode.is_mpmd:

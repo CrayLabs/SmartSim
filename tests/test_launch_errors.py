@@ -29,7 +29,7 @@ import pytest
 
 from smartsim import Experiment, status
 from smartsim.database import Orchestrator
-from smartsim.error import SmartSimError, SSUnsupportedError
+from smartsim.error import SSUnsupportedError
 from smartsim.settings import JsrunSettings, RunSettings
 
 
@@ -59,8 +59,8 @@ def test_model_failure(fileutils):
 
 
 def test_orchestrator_relaunch(fileutils, wlmutils):
-    """Test error when users try to launch second orchestrator"""
-    exp_name = "test-orc-error-on-relaunch"
+    """Test when users try to launch second orchestrator"""
+    exp_name = "test-orc-on-relaunch"
     exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
 
@@ -68,9 +68,9 @@ def test_orchestrator_relaunch(fileutils, wlmutils):
     orc.set_path(test_dir)
     orc_1 = Orchestrator(port=wlmutils.get_test_port() + 1)
     orc_1.set_path(test_dir)
-
-    exp.start(orc)
-    with pytest.raises(SmartSimError):
+    try:
+        exp.start(orc)
         exp.start(orc_1)
-
-    exp.stop(orc)
+    finally:
+        exp.stop(orc)
+        exp.stop(orc_1)

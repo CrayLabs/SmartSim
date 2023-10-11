@@ -675,6 +675,7 @@ class ColoUtils:
         fileutils: t.Type[FileUtils],
         db_type: str,
         exp: Experiment,
+        application_file: str,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
         colo_model_name: t.Optional[str] = None,
@@ -683,7 +684,8 @@ class ColoUtils:
         """Setup things needed for setting up the colo pinning tests"""
         # get test setup
         test_dir = fileutils.make_test_dir(level=2)
-        sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+
+        sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:
@@ -705,6 +707,7 @@ class ColoUtils:
             "deprecated": colo_model.colocate_db,
             "uds": colo_model.colocate_db_uds,
         }
+
         colocate_fun[db_type](**db_args)
         # assert model will launch with colocated db
         assert colo_model.colocated

@@ -24,18 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .errors import (
-    AllocationError,
-    EntityExistsError,
-    LauncherError,
-    ParameterWriterError,
-    ShellError,
-    SmartSimError,
-    SSConfigError,
-    SSInternalError,
-    SSUnsupportedError,
-    UserStrategyError,
-    SSReservedKeywordError,
-    SSDBIDConflictError,
 
-)
+# Server Types
+CLUSTERED = "Clustered"
+STANDALONE = "Standalone"

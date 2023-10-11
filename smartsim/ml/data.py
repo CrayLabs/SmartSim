@@ -180,7 +180,7 @@ class TrainingDataUploader:
         if not sample_name:
             raise ValueError("Sample name can not be empty")
 
-        self.client = Client(address=address, cluster=cluster)
+        self.client = Client(cluster, address=address)
         self.verbose = verbose
         self.batch_idx = 0
         self.rank = rank
@@ -323,7 +323,7 @@ class DataDownloader:
             self._info = data_info_or_list_name
         elif isinstance(data_info_or_list_name, str):
             self._info = DataInfo(list_name=data_info_or_list_name)
-            client = Client(self.address, self.cluster)
+            client = Client(self.cluster, self.address)
             self._info.download(client)
         else:
             raise TypeError("data_info_or_list_name must be either DataInfo or str")
@@ -410,7 +410,7 @@ class DataDownloader:
         :param init_trials: maximum number of attempts to fetch data
         :type init_trials: int
         """
-        self._client = Client(self.address, self.cluster)
+        self._client = Client(self.cluster, self.address)
 
         num_trials = 0
         max_trials = init_trials or -1

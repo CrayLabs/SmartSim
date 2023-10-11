@@ -26,16 +26,16 @@
 import itertools
 import sys
 import typing as t
-from os import getcwd, getenv
+from os import getcwd, getenv, environ
 from shlex import split as sh_split
 
 import psutil
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 from smartredis.error import RedisReplyError
 
 from .._core.config import CONFIG
 from .._core.utils import db_is_active
-from .._core.utils.helpers import is_valid_cmd
+from .._core.utils.helpers import is_valid_cmd, unpack_db_identifier
 from .._core.utils.network import get_ip_from_host
 from ..entity import DBNode, EntityList
 from ..error import SmartSimError, SSConfigError, SSUnsupportedError
@@ -56,6 +56,7 @@ from ..settings import (
 from ..settings.base import BatchSettings, RunSettings
 from ..settings.settings import create_batch_settings, create_run_settings
 from ..wlm import detect_launcher
+from ..servertype import STANDALONE, CLUSTERED
 
 logger = get_logger(__name__)
 
@@ -164,6 +165,7 @@ class Orchestrator(EntityList[DBNode]):
         threads_per_queue: t.Optional[int] = None,
         inter_op_threads: t.Optional[int] = None,
         intra_op_threads: t.Optional[int] = None,
+        db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> None:
         """Initialize an Orchestrator reference for local launch
@@ -184,15 +186,14 @@ class Orchestrator(EntityList[DBNode]):
         :param intra_op_threads: threads per CPU operation
         :type intra_op_threads: int, optional
         """
-        launcher, run_command = _autodetect(launcher, run_command)
+        self.launcher, self.run_command = _autodetect(launcher, run_command)
 
-        _check_run_command(launcher, run_command)
-        _check_local_constraints(launcher, batch)
+        _check_run_command(self.launcher, self.run_command)
+        _check_local_constraints(self.launcher, batch)
 
-        single_cmd = _get_single_command(run_command, batch, single_cmd)
+        single_cmd = _get_single_command(self.run_command, batch, single_cmd)
 
-        self.launcher = launcher
-        self.run_command = run_command
+        self.db_identifier = db_identifier
 
         self.ports: t.List[int] = []
         self.path = getcwd()
@@ -205,22 +206,21 @@ class Orchestrator(EntityList[DBNode]):
         self.inter_threads = inter_op_threads
         self.intra_threads = intra_op_threads
 
+        gpus_per_shard: t.Optional[int] = None
+        cpus_per_shard: t.Optional[int] = None
         if self.launcher == "lsf":
             gpus_per_shard = int(kwargs.pop("gpus_per_shard", 0))
             cpus_per_shard = int(kwargs.pop("cpus_per_shard", 4))
-        else:
-            gpus_per_shard = None
-            cpus_per_shard = None
 
         super().__init__(
-            "orchestrator",
+            db_identifier,
             self.path,
             port=port,
             interface=interface,
             db_nodes=db_nodes,
             batch=batch,
-            launcher=launcher,
-            run_command=run_command,
+            launcher=self.launcher,
+            run_command=self.run_command,
             alloc=alloc,
             single_cmd=single_cmd,
             gpus_per_shard=gpus_per_shard,
@@ -248,19 +248,19 @@ class Orchestrator(EntityList[DBNode]):
                 "See documentation for more information"
             ) from e
 
-        if launcher != "local":
+        if self.launcher != "local":
             self.batch_settings = self._build_batch_settings(
                 db_nodes,
                 alloc or "",
                 batch,
                 account or "",
                 time or "",
-                launcher=launcher,
+                launcher=self.launcher,
                 **kwargs,
             )
             if hosts:
                 self.set_hosts(hosts)
-            elif not hosts and run_command == "mpirun":
+            elif not hosts and self.run_command == "mpirun":
                 raise SmartSimError(
                     "hosts argument is required when launching Orchestrator with mpirun"
                 )
@@ -582,11 +582,18 @@ class Orchestrator(EntityList[DBNode]):
             addresses = []
             for host in self.hosts:
                 for port in self.ports:
-                    address = ":".join([get_ip_from_host(host), str(port)])
-                    addresses.append(address)
+                    addresses.append(":".join([get_ip_from_host(host), str(port)]))
 
-            is_cluster = self.num_shards > 2
-            client = Client(address=addresses[0], cluster=is_cluster)
+            db_name, name = unpack_db_identifier(self.db_identifier, "_")
+
+            environ[f"SSDB{db_name}"] = addresses[0]
+
+            db_type = CLUSTERED if self.num_shards > 2 else STANDALONE
+            environ[f"SR_DB_TYPE{db_name}"] = db_type
+
+            options = ConfigOptions.create_from_environment(name)
+            client = Client(options)
+
             try:
                 for address in addresses:
                     client.config_set(key, value, address)
@@ -681,9 +688,9 @@ class Orchestrator(EntityList[DBNode]):
         cpus_per_shard: t.Optional[int] = None,
         gpus_per_shard: t.Optional[int] = None,
         **_kwargs: t.Any  # Needed to ensure no API break and do not want to
-                          # introduce that possibility, even if this method is
-                          # protected, without running the test suite.
-                          # TODO: Test against an LSF system before merge!
+        # introduce that possibility, even if this method is
+        # protected, without running the test suite.
+        # TODO: Test against an LSF system before merge!
     ) -> t.Optional[JsrunSettings]:
         run_args = {} if run_args is None else run_args
         erf_rs: t.Optional[JsrunSettings] = None
@@ -777,6 +784,7 @@ class Orchestrator(EntityList[DBNode]):
                     run_settings,
                     [port],
                     [db_node_name + ".out"],
+                    self.name,
                 )
                 self.entities.append(node)
 
@@ -805,9 +813,7 @@ class Orchestrator(EntityList[DBNode]):
             run_settings = self._build_run_settings_lsf(
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
             )
-            output_files = [
-                f"{self.name}_{db_id}.out" for db_id in range(db_nodes)
-            ]
+            output_files = [f"{self.name}_{db_id}.out" for db_id in range(db_nodes)]
         else:
             run_settings = self._build_run_settings(
                 sys.executable, exe_args_mpmd, db_nodes=db_nodes, port=port, **kwargs
