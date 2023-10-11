@@ -703,7 +703,7 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
-        db_identifier: str = "",
+        db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database

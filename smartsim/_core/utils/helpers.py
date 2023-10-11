@@ -42,19 +42,18 @@ def unpack_db_identifier(db_id: str, token: str) -> t.Tuple[str, str]:
     and format for env variable suffix
     :db_id: the unformatted database identifier eg. identifier_1_0
     :token: character '_' or '-' to use to unpack the database identifier
-    :return: db suffix, and formatted db_id eg. identifier_1
+    :return: db suffix, and formatted db_id eg. _identifier_1, identifier_1
     """
-    if db_id:
-        db_id = "_".join(db_id.split(token)[:-1])
-        db_name_suffix = "" if db_id == "orchestrator" else "_" + db_id
-        # pass an empty name if no db id
-        if db_id == "orchestrator":
-            db_name_suffix = ""
-            db_id = ""
 
-        return db_name_suffix, db_id
-
-    return "", ""
+    if db_id == "orchestrator":
+        return "", ""
+    db_id = "_".join(db_id.split(token)[:-1])
+    # if unpacked db_id is default, return empty
+    if db_id == "orchestrator":
+        # if db_id is default after unpack, return empty
+        return "", ""
+    db_name_suffix = "_" + db_id
+    return db_name_suffix, db_id
 
 
 def unpack_colo_db_identifier(db_id: str) -> str:
