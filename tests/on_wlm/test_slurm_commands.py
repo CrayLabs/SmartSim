@@ -35,9 +35,9 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
-@pytest.mark.parametrize(["cmd", "raises"], [[sacct, sstat, sinfo, salloc, scancel, scontrol], [True, True, False, False, False, False, False]])
+@pytest.mark.parametrize("cmd,raises", [(sacct, True), (sstat, True), (sinfo, False), (salloc, False), (scancel, False), (scontrol, False)])
 def test_error_raises(cmd, raises):
-    args = ["non_existing_arg"]
+    args = ["--non_existing_arg"]
     if raises:
         with pytest.raises(LauncherError):
             cmd(args)
