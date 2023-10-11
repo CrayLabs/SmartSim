@@ -23,8 +23,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 import pytest
 
 from smartsim.error.errors import LauncherError
@@ -35,7 +33,17 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
-@pytest.mark.parametrize("cmd,raises", [(sacct, True), (sstat, True), (sinfo, False), (salloc, False), (scancel, False), (scontrol, False)])
+@pytest.mark.parametrize(
+    "cmd,raises",
+    [
+        (sacct, True),
+        (sstat, True),
+        (sinfo, False),
+        (salloc, False),
+        (scancel, False),
+        (scontrol, False),
+    ],
+)
 def test_error_raises(cmd, raises):
     args = ["--non_existing_arg"]
     if raises:
