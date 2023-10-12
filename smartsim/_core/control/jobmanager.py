@@ -25,9 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import pathlib
-import subprocess
-import sys
 import time
 import typing as t
 from collections import ChainMap
@@ -88,7 +85,9 @@ class JobManager:
 
         # self._telemetry: t.Optional[subprocess.Popen] = None
 
-    # def start_telemetry_monitor(self, exp_dir: str = ".", frequency: int = 10) -> None:
+    # def start_telemetry_monitor(self,
+    #                             exp_dir: str = ".",
+    #                             frequency: int = 10) -> None:
     #     if self._telemetry is None:
     #         logger.debug("Starting telemetry monitor process")
     #         self._telemetry = subprocess.Popen(
@@ -100,26 +99,26 @@ class JobManager:
     #                 exp_dir,
     #                 "-f",
     #                 str(frequency)
-    #             ], 
+    #             ],
     #             stdin=subprocess.PIPE,
     #             stdout=subprocess.PIPE,
     #             cwd=str(pathlib.Path(__file__).parent.parent.parent),
     #             shell=False,
     #         )
-    
+
     # def stop_telemetry_monitor(self) -> None:
     #     if self._telemetry is None:
     #         return
 
-    #     try:        
+    #     try:
     #         self._telemetry.terminate()
     #     except Exception:
-    #         logger.warn("An error occurred while terminating the telemetry monitor", 
+    #         logger.warn("An error occurred while terminating the telemetry monitor",
     #                     exc_info=True)
     #     finally:
     #         self._telemetry = None
 
-    def start_job_monitor(self):
+    def start_job_monitor(self) -> None:
         """Start a thread for the job manager"""
         self.monitor = Thread(name="JobManager", daemon=True, target=self.run)
         self.monitor.start()
@@ -182,7 +181,7 @@ class JobManager:
                 del self.db_jobs[job.ename]
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
-            
+
             # if not self.jobs and not self.db_jobs:
             #     self.stop_telemetry_monitor()
 
@@ -417,8 +416,8 @@ class JobManager:
         if not signo:
             logger.warning("Received SIGINT with no signal number")
         """Custom handler for whenever SIGINT is received"""
-        if self._telemetry:
-            self.stop_monitor()
+        # if self._telemetry:
+        #     self.stop_monitor()
 
         if self.actively_monitoring and len(self) > 0:
             if self.kill_on_interrupt:

@@ -27,7 +27,6 @@
 import argparse
 import json
 import logging
-import multiprocessing as mp
 import os
 import pathlib
 import signal
@@ -127,7 +126,7 @@ def hydrate_persistable(
             entity.status_dir = str(status_dir)
 
             entities.append(entity)
-        
+
         return entities
 
     entity = JobEntity()
