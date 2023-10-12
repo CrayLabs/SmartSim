@@ -337,7 +337,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         self._completed_jobs: t.Dict[_JobKey, JobEntity] = {}
         self._launcher_type: str = ""
         self._launcher: t.Optional[Launcher] = None
-        self._jm: JobManager = JobManager(threading.RLock())
+        self.job_manager: JobManager = JobManager(threading.RLock())
         self._launcher_map: t.Dict[str, t.Type[Launcher]] = {
             "slurm": SlurmLauncher,
             "pbs": PBSLauncher,
@@ -371,12 +371,12 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if launcher_type != self._launcher_type:
             self._launcher_type = launcher_type
             self._launcher = self.init_launcher(launcher_type)
-            self._jm.set_launcher(self._launcher)
-            self._jm.add_job_onstart_callback(track_started)
-            self._jm.add_job_onstop_callback(track_completed)
-            self._jm.add_job_onstep_callback(track_timestep)
+            self.job_manager.set_launcher(self._launcher)
+            self.job_manager.add_job_onstart_callback(track_started)
+            self.job_manager.add_job_onstop_callback(track_completed)
+            self.job_manager.add_job_onstep_callback(track_timestep)
 
-            self._jm.start()
+            self.job_manager.start()
 
     @property
     def launcher(self) -> Launcher:
@@ -405,7 +405,7 @@ class ManifestEventHandler(PatternMatchingEventHandler):
 
         self.set_launcher(manifest.launcher)
 
-        if not self._jm._launcher:  # pylint: disable=protected-access
+        if not self.job_manager._launcher:  # pylint: disable=protected-access
             raise SmartSimError(f"Unable to set launcher from {manifest_path}")
 
         runs = [run for run in manifest.runs if run.timestamp not in self._tracked_runs]
@@ -431,14 +431,14 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._logger,
                 )
 
-                self._jm.add_job(
+                self.job_manager.add_job(
                     entity.name,
                     entity.job_id,
                     entity,
                     entity.is_managed,
                     # is_orch=entity.is_db,
                 )
-                self._jm._launcher.step_mapping.add(  # pylint: disable=protected-access
+                self.job_manager._launcher.step_mapping.add(  # pylint: disable=protected-access
                     entity.name, entity.step_id, entity.step_id, entity.is_managed
                 )
             self._tracked_runs[run.timestamp] = run
@@ -478,8 +478,8 @@ class ManifestEventHandler(PatternMatchingEventHandler):
         if entity.key not in self._completed_jobs:
             self._completed_jobs[entity.key] = inactive_entity
 
-        job = self._jm[entity.name]
-        self._jm.move_to_completed(job)
+        job = self.job_manager[entity.name]
+        self.job_manager.move_to_completed(job)
 
         if step_info:
             detail = f"status: {step_info.status}, error: {step_info.error}"
@@ -515,6 +515,18 @@ class ManifestEventHandler(PatternMatchingEventHandler):
                     self._to_completed(timestamp, completed_entity, exp_dir, step_info)
 
 
+def shutdown_when_completed(
+    observer: BaseObserver, action_handler: ManifestEventHandler
+) -> None:
+    """Inspect active and completed job queues and shutdown if all jobs are complete"""
+    has_running_jobs = (
+        not action_handler.job_manager.jobs and not action_handler.job_manager.db_jobs
+    )
+    has_completed_jobs = action_handler.job_manager.completed
+    if not has_running_jobs and has_completed_jobs:
+        observer.stop()  # type: ignore[no-untyped-call]
+
+
 def event_loop(
     observer: BaseObserver,
     action_handler: ManifestEventHandler,
@@ -523,6 +535,7 @@ def event_loop(
     num_iters: int,
     logger: logging.Logger,
 ) -> None:
+    """Executes all attached timestep handlers every <frequency> seconds"""
     num_iters = num_iters if num_iters > 0 else 0  # ensure non-negative limits
     remaining = num_iters if num_iters else 0  # track completed iterations
 
@@ -535,6 +548,8 @@ def event_loop(
         remaining -= 1
         if num_iters and not remaining:
             break
+
+        shutdown_when_completed(observer, action_handler)
 
 
 def main(

@@ -235,9 +235,6 @@ class JobManager:
         else:
             self.jobs[entity.name] = job
 
-        # if self._telemetry is None or not self._telemetry.is_alive():
-        #     self._telemetry = start_monitor()
-
         for hook in self.on_start_hook:
             hook(job, logger)
 

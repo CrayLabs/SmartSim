@@ -88,7 +88,7 @@ logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
-tmonitor: t.Optional[t.Any] = None
+TELEMETRY_MONITOR: t.Optional[t.Any] = None
 
 
 def start_telemetry_monitor(
@@ -114,43 +114,12 @@ def start_telemetry_monitor(
     return process
 
 
-def stop_telemetry_monitor(process: t.Any) -> None:
-    # if self._telemetry is None:
-    #     return
+def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
+    global TELEMETRY_MONITOR  # pylint: disable=global-statement
 
-    logger.debug("Stopping telemetry monitor process")
-
-    try:
-        process.terminate()
-    except Exception:
-        logger.warning(
-            "An error occurred while terminating the telemetry monitor", exc_info=True
-        )
-
-
-def start_telemetry_callback_wrapper(
-    _manager: JobManager,
-) -> t.Callable[[Job, Logger], None]:
-    def start_telemetry_callback(_job: Job, _logger: Logger) -> None:
-        global tmonitor  # pylint: disable=global-statement
-        # if not os.environ.get("SMARTSIM_TELEMETRY_ENABLED", False):
-        #     return
-
-        if tmonitor is None:
-            tmonitor = start_telemetry_monitor()
-
-    return start_telemetry_callback
-
-
-def stop_telemetry_callback_wrapper(
-    _manager: JobManager,
-) -> t.Callable[[Job, Logger], None]:
-    def stop_telemetry_callback(_job: Job, _logger: Logger) -> None:
-        # global tmonitor  # pylint: disable=global-statement
-        if tmonitor is not None:
-            stop_telemetry_monitor(tmonitor)
-
-    return stop_telemetry_callback
+    # if never started or if a prior instance has shut down
+    if TELEMETRY_MONITOR is None or TELEMETRY_MONITOR.returncode is not None:
+        TELEMETRY_MONITOR = start_telemetry_monitor()
 
 
 class Controller:
@@ -166,10 +135,8 @@ class Controller:
         :type launcher: str
         """
         self._jobs = JobManager(JM_LOCK)
-        self._jobs.add_job_onstart_callback(
-            start_telemetry_callback_wrapper(self._jobs)
-        )
-        self._jobs.add_job_onstop_callback(stop_telemetry_callback_wrapper(self._jobs))
+        # have job manager launch a telemetry monitor if any jobs are run
+        self._jobs.add_job_onstart_callback(start_telemetry_callback)
 
         self.init_launcher(launcher)
 
@@ -768,41 +735,6 @@ class Controller:
                 # during launch and we handle all keyboard interrupts during
                 # launch explicitly
                 raise
-
-    # def start_telemetry_monitor(self,
-    #                             exp_dir: str = ".",
-    #                             frequency: int = 10) -> None:
-    #     if self._telemetry is None:
-    #         logger.debug("Starting telemetry monitor process")
-    #         self._telemetry = subprocess.Popen(
-    #             [
-    #                 sys.executable,
-    #                 "-m",
-    #                 "smartsim._core.entrypoints.telemetrymonitor",
-    #                 "-d",
-    #                 exp_dir,
-    #                 "-f",
-    #                 str(frequency)
-    #             ],
-    #             stdin=subprocess.PIPE,
-    #             stdout=subprocess.PIPE,
-    #             cwd=str(pathlib.Path(__file__).parent.parent.parent),
-    #             shell=False,
-    #         )
-
-    # def stop_telemetry_monitor(self) -> None:
-    #     if self._telemetry is None:
-    #         return
-
-    #     logger.debug("Stopping telemetry monitor process")
-
-    #     try:
-    #         self._telemetry.terminate()
-    #     except Exception:
-    #         logger.warn("An error occurred while terminating the telemetry monitor",
-    #                     exc_info=True)
-    #     finally:
-    #         self._telemetry = None
 
     def reload_saved_db(self, checkpoint_file: str) -> Orchestrator:
         with JM_LOCK:
