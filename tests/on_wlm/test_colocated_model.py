@@ -52,6 +52,7 @@ def test_launch_colocated_model_defaults(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
 
@@ -79,6 +80,7 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
@@ -100,6 +102,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
@@ -123,6 +126,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1,2,3"
@@ -146,6 +150,7 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,2"
@@ -169,6 +174,7 @@ def test_colocated_model_pinning_mixed(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1,3"

@@ -51,19 +51,15 @@ class Manifest:
         self._check_entity_lists_nonempty()
 
     @property
-    def db(self) -> t.Optional[Orchestrator]:
-        """Return Orchestrator instances in Manifest
+    def dbs(self) -> t.List[Orchestrator]:
+        """Return a list of Orchestrator instances in Manifest
 
         :raises SmartSimError: if user added to databases to manifest
-        :return: orchestrator instances
-        :rtype: Orchestrator | None
+        :return: List of orchestrator instances
+        :rtype: list[Orchestrator]
         """
         dbs = [item for item in self._deployables if isinstance(item, Orchestrator)]
-
-        if len(dbs) > 1:
-            raise SmartSimError("User attempted to create more than one Orchestrator")
-
-        return dbs[0] if dbs else None
+        return dbs
 
     @property
     def models(self) -> t.List[Model]:
@@ -96,8 +92,8 @@ class Manifest:
         """
         _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
 
-        db = self.db
-        if db is not None:
+
+        for db in self.dbs:
             _all_entity_lists.append(db)
 
         return _all_entity_lists
@@ -157,14 +153,14 @@ class Manifest:
                     output += f"Parameters: \n{fmt_dict(model.params)}\n"
             output += "\n"
 
-        if self.db:
+        for adb in self.dbs:
             output += db_header
-            output += f"Shards: {self.db.num_shards}\n"
-            output += f"Port: {str(self.db.ports[0])}\n"
-            output += f"Network: {self.db._interfaces}\n"
-            output += f"Batch Launch: {self.db.batch}\n"
-            if self.db.batch:
-                output += f"{str(self.db.batch_settings)}\n"
+            output += f"Shards: {adb.num_shards}\n"
+            output += f"Port: {str(adb.ports[0])}\n"
+            output += f"Network: {adb._interfaces}\n"
+            output += f"Batch Launch: {adb.batch}\n"
+            if adb.batch:
+                output += f"{str(adb.batch_settings)}\n"
 
         output += "\n"
         return output

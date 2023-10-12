@@ -49,6 +49,7 @@ Released on 14 September, 2023
 
 Description
 
+- Add support for multiple databases
 - Add typehints throughout the SmartSim codebase
 - Provide support for Slurm heterogeneous jobs
 - Provide better support for `PalsMpiexecSettings`
@@ -66,6 +67,7 @@ Description
 
 Detailed Notes
 
+- Add support for creation of multiple databases with unique identifiers. (PR342_)
 - Add methods to allow users to inspect files attached to models and ensembles. (PR352_)
 - Add a `smart info` target to provide rudimentary information about the SmartSim installation. (PR350_)
 - Remove unnecessary generation producing unexpected directories in the test suite. (PR349_)
@@ -89,6 +91,7 @@ Detailed Notes
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks. (PR311_)
 - Refactor the `smart` CLI to use subparsers for better documentation and extension. (PR308_)
 
+.. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
 .. _PR352: https://github.com/CrayLabs/SmartSim/pull/352
 .. _PR351: https://github.com/CrayLabs/SmartSim/pull/351
 .. _PR350: https://github.com/CrayLabs/SmartSim/pull/350

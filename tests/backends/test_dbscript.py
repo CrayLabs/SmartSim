@@ -26,6 +26,8 @@
 
 import sys
 
+import os
+
 import pytest
 
 from smartsim import Experiment, status
@@ -35,9 +37,13 @@ from smartsim.log import get_logger
 
 from smartsim.entity.dbobject import DBScript
 
+from smartredis import *
+
 logger = get_logger(__name__)
 
 should_run = True
+
+supported_dbs = ["uds", "tcp"]
 
 try:
     import torch
@@ -250,10 +256,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface,
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create string for script creation
@@ -460,7 +463,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         debug=True,
-        ifname=test_interface
+        ifname=test_interface,
     )
 
     # Add the non-ensemble SmartSim Model to the Ensemble
@@ -602,7 +605,7 @@ def test_inconsistent_params_db_script(fileutils):
     with pytest.raises(SSUnsupportedError) as ex:
         db_script = DBScript(
             name="test_script_db",
-            script_path = torch_script,
+            script_path=torch_script,
             device="CPU",
             devices_per_node=2,
             first_device=0,

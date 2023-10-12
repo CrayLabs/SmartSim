@@ -45,7 +45,7 @@ class _TorchDataGenerationCommon(DataDownloader, torch.utils.data.IterableDatase
 
     def _add_samples(self, indices: t.List[int]) -> None:
         if self.client is None:
-            client = Client(self.address, self.cluster)
+            client = Client(self.cluster, self.address)
         else:
             client = self.client
 

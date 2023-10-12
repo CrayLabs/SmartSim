@@ -54,6 +54,7 @@ def test_macosx_warning(fileutils, coloutils):
             fileutils,
             db_type,
             exp,
+            "send_data_local_smartredis.py",
             db_args,
         )
 
@@ -68,6 +69,7 @@ def test_unsupported_limit_app(fileutils, coloutils):
             fileutils,
             db_type,
             exp,
+            "send_data_local_smartredis.py",
             db_args,
         )
 
@@ -84,6 +86,7 @@ def test_unsupported_custom_pinning(fileutils, coloutils, custom_pinning):
             fileutils,
             db_type,
             exp,
+            "send_data_local_smartredis.py",
             db_args,
         )
 
@@ -118,6 +121,7 @@ def test_launch_colocated_model_defaults(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
 
@@ -153,6 +157,7 @@ def test_launch_multiple_colocated_models(
             fileutils,
             db_type,
             exp,
+            "send_data_local_smartredis.py",
             db_args,
             colo_model_name="colo0",
             port=wlmutils.get_test_port(),
@@ -161,6 +166,7 @@ def test_launch_multiple_colocated_models(
             fileutils,
             db_type,
             exp,
+            "send_data_local_smartredis.py",
             db_args,
             colo_model_name="colo1",
             port=wlmutils.get_test_port() + 1,
@@ -191,6 +197,7 @@ def test_colocated_model_disable_pinning(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] is None
@@ -214,6 +221,7 @@ def test_colocated_model_pinning_auto_2cpu(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     if is_mac:
@@ -241,6 +249,7 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type, launcher="
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "0,1"
@@ -262,6 +271,7 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type, launcher="l
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
     )
     assert colo_model.run_settings.colocated_db_settings["custom_pinning"] == "1"
