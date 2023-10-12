@@ -103,7 +103,6 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
             backend=args.backend,
             first_gpu=args.first_device,
             num_gpus=args.devices_per_node,
-            first_gpu=args.first_device,
             batch_size=args.batch_size,
             min_batch_size=args.min_batch_size,
             min_batch_timeout=args.min_batch_timeout,

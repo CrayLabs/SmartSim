@@ -495,7 +495,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
                             "TORCH",
                             model_path=model_file,
                             device=test_device,
-                            devices_per_node=test_num_gpus
+                            devices_per_node=test_num_gpus,
                             first_device=0)
 
     # Assert we have added both models
