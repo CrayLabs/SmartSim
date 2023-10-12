@@ -22,6 +22,7 @@ Description
 - Expose first_device parameter for scripts, functions, models
 - Added support for MINBATCHTIMEOUT in model execution
 - Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
+- Add support for multi Orchestrator databases
 
 Detailed Notes
 
@@ -36,11 +37,23 @@ Detailed Notes
   bug which breaks the build process on Mac OSX, it was decided to
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. This applies to all operating systems. (PR383_)
+- Enables experiments to have multiple databases running. This involves
+  users passing a database identifier to methods create_database,
+  colocate_db_tcp and colocate_db_uds. SmartSim will set environment
+  variables SSDB and SR_DB_TYPE with the identifier as a suffix. This
+  PR requires an up to date SmartRedis. (PR342_)
+
+
+
+
+
+
 
   .. _PR389: https://github.com/CrayLabs/SmartSim/pull/389
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
+  .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
 
 0.5.1
 -----
