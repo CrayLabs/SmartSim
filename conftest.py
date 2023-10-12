@@ -526,12 +526,22 @@ class DBUtils:
         return config_edit_methods.get(config_setting, None)
 
 
+def _sanitize_caller_function(caller_function: str) -> str:
+    # Parametrized test functions end with a list of all
+    # parameter values. The list is enclosed in square brackets.
+    # We split at the opening bracket, sanitize the string
+    # to its right and then merge the function name and
+    # the sanitized list with a dot.
+    caller_function_list = caller_function.split("[", maxsplit=1)
+    def is_accepted_char(char: str):
+        return char.isalnum or char in "-."
+    if len(caller_function_list) > 1:
+        caller_function_list[1] = ''.join(filter(is_accepted_char, caller_function_list[1]))
+    return ".".join(caller_function_list)
+
 @pytest.fixture
 def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
-    caller_function_list = request.node.name.split("[", maxsplit=1)
-    if len(caller_function_list) > 1:
-        caller_function_list[1] = ''.join(filter(str.isalnum, caller_function_list[1]))
-    caller_function = ".".join(caller_function_list)
+    caller_function = _sanitize_caller_function(caller_function)
     dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
 
     if not os.path.exists(os.path.dirname(dir_path)):
