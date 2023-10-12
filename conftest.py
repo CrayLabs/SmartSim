@@ -84,7 +84,9 @@ def print_test_configuration() -> None:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print("TEST_PORTS", ", ".join(str(port) for port in range(test_port, test_port+3)))
+    print(
+        "TEST_PORTS", ", ".join(str(port) for port in range(test_port, test_port + 3))
+    )
 
 
 def pytest_configure() -> None:
@@ -145,7 +147,7 @@ def get_hostlist() -> t.Optional[t.List[str]]:
                 return _parse_hostlist_file(os.environ["COBALT_NODEFILE"])
             except FileNotFoundError:
                 return None
-        elif "PBS_NODEFILE" in os.environ and test_launcher=="pals":
+        elif "PBS_NODEFILE" in os.environ and test_launcher == "pals":
             # with PALS, we need a hostfile even if `aprun` is available
             try:
                 return _parse_hostlist_file(os.environ["PBS_NODEFILE"])
@@ -533,11 +535,16 @@ def _sanitize_caller_function(caller_function: str) -> str:
     # to its right and then merge the function name and
     # the sanitized list with a dot.
     caller_function_list = caller_function.split("[", maxsplit=1)
+
     def is_accepted_char(char: str):
         return char.isalnum or char in "-."
+
     if len(caller_function_list) > 1:
-        caller_function_list[1] = ''.join(filter(is_accepted_char, caller_function_list[1]))
+        caller_function_list[1] = "".join(
+            filter(is_accepted_char, caller_function_list[1])
+        )
     return ".".join(caller_function_list)
+
 
 @pytest.fixture
 def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
@@ -552,7 +559,6 @@ def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
 
 @pytest.fixture
 def make_test_dir(request: t.Optional[pytest.FixtureRequest]):
-
     caller_function = request.node.name.replace("[", ".").replace("]", "")
     dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
 
@@ -567,8 +573,8 @@ def make_test_dir(request: t.Optional[pytest.FixtureRequest]):
 def fileutils() -> t.Type[FileUtils]:
     return FileUtils
 
-class FileUtils:
 
+class FileUtils:
     @staticmethod
     def _test_dir_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
@@ -617,7 +623,7 @@ class ColoUtils:
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
         colo_model_name: t.Optional[str] = None,
-        port: t.Optional[int] = test_port
+        port: t.Optional[int] = test_port,
     ) -> Model:
         """Setup things needed for setting up the colo pinning tests"""
 
