@@ -75,8 +75,8 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
-    parser.add_argument("--first_device", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=0)
     parser.add_argument("--min_batch_size", type=int, default=0)
     parser.add_argument("--min_batch_timeout", type=int, default=0)
@@ -143,8 +143,8 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
-    parser.add_argument("--first_device", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     args = parser.parse_args(db_script)
 
     if args.file and args.func:

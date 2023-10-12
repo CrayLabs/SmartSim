@@ -120,8 +120,10 @@ class DBObject:
 
         if self.device == "GPU" and self.devices_per_node > 1:
             return [
-                f"{self.device}:{str(device_num + self.first_device)}"
-                for device_num in range(self.devices_per_node)
+                f"{self.device}:{device_num}"
+                for device_num in range(
+                    self.first_device, self.first_device + self.devices_per_node
+                )
             ]
 
         return [self.device]
@@ -131,10 +133,10 @@ class DBObject:
         device: t.Literal["CPU", "GPU"], devices_per_node: int, first_device: int,
     ) -> None:
         if devices_per_node == 1:
-            if first_device != 0:
-                msg = "Cannot set first_node to non-zero if devices_per_node is 1"
-                raise ValueError(msg)
             return
+
+        if first_device < 0:
+            raise ValueError("Cannot set first_device to a negative number")
 
         if ":" in device:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "

@@ -482,11 +482,11 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type first_device: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
@@ -554,11 +554,11 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type first_device: int
         """
         db_script = DBScript(
@@ -601,11 +601,11 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
         :param first_device: The first GPU device to use on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type first_device: int
         """
         db_script = DBScript(

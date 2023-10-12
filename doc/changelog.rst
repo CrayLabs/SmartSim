@@ -28,7 +28,7 @@ Detailed Notes
 
 - Added support for first_device parameter for scripts, functions,
   and models. This causes them to be loaded to the first num_devices
-  beginning with first_device (PR389_)
+  beginning with first_device (PR394_)
 - Added support for MINBATCHTIMEOUT in model execution, which caps the delay
   waiting for a minimium number of model execution operations to accumulate
   before executing them as a batch (PR387_)
@@ -39,7 +39,7 @@ Detailed Notes
   bug has been fixed. This applies to all operating systems. (PR383_)
 - Add support for creation of multiple databases with unique identifiers. (PR342_)
 
-  .. _PR389: https://github.com/CrayLabs/SmartSim/pull/389
+  .. _PR394: https://github.com/CrayLabs/SmartSim/pull/394
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
