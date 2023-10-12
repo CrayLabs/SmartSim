@@ -19,11 +19,16 @@ To be released at some future point in time
 
 Description
 
+- Change signature of `Experiment.summary()`
+- Add support for multiple databases
 - Added support for MINBATCHTIMEOUT in model execution
 - Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
 
 Detailed Notes
 
+- Change `format` argument to `style` in `Experiment.summary()`, this is
+  an API break (PR391_)
+- Add support for creation of multiple databases with unique identifiers. (PR342_)
 - Added support for MINBATCHTIMEOUT in model execution, which caps the delay
   waiting for a minimium number of model execution operations to accumulate
   before executing them as a batch (PR387_)
@@ -33,9 +38,13 @@ Detailed Notes
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. This applies to all operating systems. (PR383_)
 
+
+  .. _PR391: https://github.com/CrayLabs/SmartSim/pull/391
+  .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
   .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
   .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
+
 
 0.5.1
 -----
@@ -44,7 +53,6 @@ Released on 14 September, 2023
 
 Description
 
-- Add support for multiple databases
 - Add typehints throughout the SmartSim codebase
 - Provide support for Slurm heterogeneous jobs
 - Provide better support for `PalsMpiexecSettings`
@@ -62,7 +70,6 @@ Description
 
 Detailed Notes
 
-- Add support for creation of multiple databases with unique identifiers. (PR342_)
 - Add methods to allow users to inspect files attached to models and ensembles. (PR352_)
 - Add a `smart info` target to provide rudimentary information about the SmartSim installation. (PR350_)
 - Remove unnecessary generation producing unexpected directories in the test suite. (PR349_)
@@ -86,7 +93,6 @@ Detailed Notes
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks. (PR311_)
 - Refactor the `smart` CLI to use subparsers for better documentation and extension. (PR308_)
 
-.. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
 .. _PR352: https://github.com/CrayLabs/SmartSim/pull/352
 .. _PR351: https://github.com/CrayLabs/SmartSim/pull/351
 .. _PR350: https://github.com/CrayLabs/SmartSim/pull/350
