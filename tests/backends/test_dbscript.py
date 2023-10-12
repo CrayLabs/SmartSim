@@ -99,6 +99,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script via string
@@ -107,6 +108,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script function
@@ -115,6 +117,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
         function=timestwo,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have all three scripts
@@ -177,6 +180,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script via string for each ensemble entity
@@ -187,6 +191,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
             script=torch_script_str,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Add script via function
@@ -195,6 +200,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         function=timestwo,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add an additional ensemble member and attach a script to the new member
@@ -204,6 +210,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added both models to the ensemble
@@ -261,6 +268,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
     # Add script via string
     colo_model.add_script(
@@ -268,6 +276,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added both models
@@ -337,6 +346,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
             script_path=torch_script,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Colocate a db with the non-ensemble Model
@@ -354,6 +364,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add the third SmartSim model to the ensemble
@@ -365,6 +376,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added one model to the ensemble
@@ -424,6 +436,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         script=torch_script_str,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add a colocated database to the ensemble members
@@ -442,6 +455,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
             script_path=torch_script,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Add a colocated database to the non-ensemble SmartSim Model
@@ -460,6 +474,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         script_path=torch_script,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added one model to the ensemble
@@ -519,6 +534,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             function=timestwo,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Create ensemble with two identical SmartSim Model entities
@@ -545,6 +561,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             function=timestwo,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Create an ensemble with two identical SmartSim Model entities
@@ -560,6 +577,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
         function=timestwo,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Check that an error is raised when trying to add
@@ -580,19 +598,31 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
 
-
 def test_inconsistent_params_db_script(fileutils):
     """Test error when devices_per_node>1 and when devices is set to CPU in DBScript constructor"""
 
     torch_script = fileutils.get_test_conf_path("torchscript.py")
     with pytest.raises(SSUnsupportedError) as ex:
-        db_script = DBScript(
+        _ = DBScript(
             name="test_script_db",
             script_path=torch_script,
             device="CPU",
             devices_per_node=2,
+            first_device=0,
         )
     assert (
-        ex.value.args[0]
-        == "Cannot set devices_per_node>1 if CPU is specified under devices"
-    )
+            ex.value.args[0]
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )
+    with pytest.raises(SSUnsupportedError) as ex:
+        _ = DBScript(
+            name="test_script_db",
+            script_path=torch_script,
+            device="CPU",
+            devices_per_node=1,
+            first_device=5,
+        )
+    assert (
+            ex.value.args[0]
+            == "Cannot set first_device>0 if CPU is specified under devices"
+        )
