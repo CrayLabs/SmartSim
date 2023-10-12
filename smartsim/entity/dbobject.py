@@ -132,21 +132,24 @@ class DBObject:
     def _check_devices(
         device: t.Literal["CPU", "GPU"], devices_per_node: int, first_device: int,
     ) -> None:
+        if device == "CPU" and devices_per_node > 1:
+            raise SSUnsupportedError(
+                "Cannot set devices_per_node>1 if CPU is specified under devices"
+            )
+
+        if device == "CPU" and first_device > 0:
+            raise SSUnsupportedError(
+                "Cannot set first_device>0 if CPU is specified under devices"
+            )
+
         if devices_per_node == 1:
             return
-
-        if first_device < 0:
-            raise ValueError("Cannot set first_device to a negative number")
 
         if ":" in device:
             msg = "Cannot set devices_per_node>1 if a device numeral is specified, "
             msg += f"the device was set to {device} and \
                 devices_per_node=={devices_per_node}"
             raise ValueError(msg)
-        if device == "CPU":
-            raise SSUnsupportedError(
-                "Cannot set devices_per_node>1 if CPU is specified under devices"
-            )
 
 
 class DBScript(DBObject):

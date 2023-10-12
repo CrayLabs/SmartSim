@@ -603,7 +603,7 @@ def test_inconsistent_params_db_script(fileutils):
 
     torch_script = fileutils.get_test_conf_path("torchscript.py")
     with pytest.raises(SSUnsupportedError) as ex:
-        db_script = DBScript(
+        _ = DBScript(
             name="test_script_db",
             script_path=torch_script,
             device="CPU",
@@ -613,4 +613,16 @@ def test_inconsistent_params_db_script(fileutils):
     assert (
             ex.value.args[0]
             == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )
+    with pytest.raises(SSUnsupportedError) as ex:
+        _ = DBScript(
+            name="test_script_db",
+            script_path=torch_script,
+            device="CPU",
+            devices_per_node=1,
+            first_device=5,
+        )
+    assert (
+            ex.value.args[0]
+            == "Cannot set first_device>0 if CPU is specified under devices"
         )
