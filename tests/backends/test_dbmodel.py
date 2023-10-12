@@ -144,7 +144,7 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(fileutils, wlmutils, mlutils):
+def test_tf_db_model(fileutils, make_test_dir, wlmutils, mlutils):
     """Test TensorFlow DB Models on remote DB"""
 
     # Set experiment name
@@ -156,7 +156,7 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -218,7 +218,7 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(fileutils, wlmutils, mlutils):
+def test_pt_db_model(fileutils, make_test_dir, wlmutils, mlutils):
     """Test PyTorch DB Models on remote DB"""
 
     # Set experiment name
@@ -230,7 +230,7 @@ def test_pt_db_model(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -281,7 +281,7 @@ def test_pt_db_model(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(fileutils, wlmutils, mlutils):
+def test_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DBModels on remote DB, with an ensemble"""
 
     # Set experiment name
@@ -293,7 +293,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -376,7 +376,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
+def test_colocated_db_model_tf(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Models on colocated DB (TensorFlow backend)"""
 
     # Set experiment name
@@ -388,7 +388,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experience
@@ -445,7 +445,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
         exp.stop(colo_model)
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
+def test_colocated_db_model_pytorch(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Models on colocated DB (PyTorch backend)"""
 
     # Set experiment name
@@ -457,7 +457,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -502,7 +502,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
+def test_colocated_db_model_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DBModel on colocated ensembles, first colocating DB,
     then adding DBModel.
     """
@@ -516,7 +516,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -603,7 +603,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
+def test_colocated_db_model_ensemble_reordered(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DBModel on colocated ensembles, first adding the DBModel to the
     ensemble, then colocating DB.
     """
@@ -617,7 +617,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
@@ -704,7 +704,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
+def test_colocated_db_model_errors(fileutils, make_test_dir, wlmutils, mlutils):
     """Test error when colocated db model has no file."""
 
     # Set experiment name
@@ -716,7 +716,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experiment

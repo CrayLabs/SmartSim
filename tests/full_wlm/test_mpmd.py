@@ -36,7 +36,7 @@ if pytest.test_launcher not in pytest.wlm_options:
     pytestmark = pytest.mark.skip(reason="Not testing WLM integrations")
 
 
-def test_mpmd(fileutils, wlmutils):
+def test_mpmd(fileutils, make_test_dir, wlmutils):
     """Run an MPMD model twice
 
     and check that it always gets executed the same way.
@@ -77,7 +77,7 @@ def test_mpmd(fileutils, wlmutils):
             f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}"
         )
 
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
         settings = exp.create_run_settings(

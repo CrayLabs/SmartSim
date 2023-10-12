@@ -375,15 +375,13 @@ class WLMUtils:
 
 @pytest.fixture
 def local_db(
-    fileutils: FileUtils, request: t.Any, wlmutils: t.Type[WLMUtils]
+    request: t.Any, wlmutils: t.Type[WLMUtils], make_test_dir: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """Yield fixture for startup and teardown of an local orchestrator"""
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher="local")
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
+    test_dir = make_test_dir
     db = Orchestrator(port=wlmutils.get_test_port(), interface="lo")
     db.set_path(test_dir)
     exp.start(db)
@@ -418,7 +416,7 @@ def db(
 
 @pytest.fixture
 def db_cluster(
-    fileutils: t.Type[FileUtils], wlmutils: t.Type[WLMUtils], request: t.Any
+    make_test_dir: t.Any, wlmutils: t.Type[WLMUtils], request: t.Any
 ) -> t.Generator[Orchestrator, None, None]:
     """
     Yield fixture for startup and teardown of a clustered orchestrator.
@@ -428,9 +426,7 @@ def db_cluster(
 
     exp_name = request.function.__name__
     exp = Experiment(exp_name, launcher=launcher)
-    test_dir = fileutils.make_test_dir(
-        caller_function=exp_name, caller_fspath=request.fspath
-    )
+    test_dir = make_test_dir
     db = wlmutils.get_orchestrator(nodes=3)
     db.set_path(test_dir)
     exp.start(db)
@@ -531,92 +527,43 @@ class DBUtils:
 
 
 @pytest.fixture
+def get_test_dir(request: t.Optional[pytest.FixtureRequest]):
+    caller_function_list = request.node.name.split("[", maxsplit=1)
+    if len(caller_function_list) > 1:
+        caller_function_list[1] = ''.join(filter(str.isalnum, caller_function_list[1]))
+    caller_function = ".".join(caller_function_list)
+    dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
+
+    if not os.path.exists(os.path.dirname(dir_path)):
+        os.makedirs(os.path.dirname(dir_path))
+
+    return dir_path
+
+
+@pytest.fixture
+def make_test_dir(request: t.Optional[pytest.FixtureRequest]):
+
+    caller_function = request.node.name.replace("[", ".").replace("]", "")
+    dir_path = FileUtils._test_dir_path(caller_function, request.node.fspath)
+
+    try:
+        os.makedirs(dir_path)
+    except Exception:
+        return dir_path
+    return dir_path
+
+
+@pytest.fixture
 def fileutils() -> t.Type[FileUtils]:
     return FileUtils
 
-
 class FileUtils:
+
     @staticmethod
     def _test_dir_path(caller_function: str, caller_fspath: str) -> str:
         caller_file_to_dir = os.path.splitext(str(caller_fspath))[0]
         rel_path = os.path.relpath(caller_file_to_dir, os.path.dirname(test_dir))
         dir_path = os.path.join(test_dir, rel_path, caller_function)
-        return dir_path
-
-    @staticmethod
-    def get_test_dir(
-        caller_function: t.Optional[str] = None,
-        caller_fspath: t.Optional[str] = None,
-        level: int = 1,
-    ) -> str:
-        """Get path to test output.
-
-        This function should be called without arguments from within
-        a test: the returned directory will be
-        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
-        When called from other functions (e.g. from functions in this file),
-        the caller function and the caller file path should be provided.
-        The directory will not be created, but the parent (and all the needed
-        tree) will. This is to allow tests to create the directory.
-
-        :param caller_function: caller function name defaults to None
-        :type caller_function: str, optional
-        :param caller_fspath: absolute path to file containing caller, defaults to None
-        :type caller_fspath: str or Path, optional
-        :return: String path to test output directory
-        :rtype: str
-        """
-        if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[level]
-            caller_fspath = caller_frame.filename
-            caller_function = caller_frame.function
-
-        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
-        if not os.path.exists(os.path.dirname(dir_path)):
-            os.makedirs(os.path.dirname(dir_path))
-        # dir_path = os.path.join(test_dir, dir_name)
-        return dir_path
-
-    @staticmethod
-    def make_test_dir(
-        caller_function: t.Optional[str] = None,
-        caller_fspath: t.Optional[str] = None,
-        level: int = 1,
-        sub_dir: t.Optional[str] = None,
-    ) -> str:
-        """Create test output directory and return path to it.
-
-        This function should be called without arguments from within
-        a test: the directory will be created as
-        `test_output/<relative_path_to_test_file>/<test_filename>/<test_name>`.
-        When called from other functions (e.g. from functions in this file),
-        the caller function and the caller file path should be provided.
-
-        :param caller_function: caller function name defaults to None
-        :type caller_function: str, optional
-        :param caller_fspath: absolute path to file containing caller, defaults to None
-        :type caller_fspath: str or Path, optional
-        :param level: indicate depth in the call stack relative to test method.
-        :type level: int, optional
-        :param sub_dir: a relative path to create in the test directory
-        :type sub_dir: str or Path, optional
-
-        :return: String path to test output directory
-        :rtype: str
-        """
-        if not caller_function or not caller_fspath:
-            caller_frame = inspect.stack()[level]
-            caller_fspath = caller_frame.filename
-            caller_function = caller_frame.function
-
-        dir_path = FileUtils._test_dir_path(caller_function, caller_fspath)
-        if sub_dir:
-            dir_path = os.path.join(dir_path, sub_dir)
-
-        try:
-            os.makedirs(dir_path)
-        except Exception:
-            return dir_path
         return dir_path
 
     @staticmethod
@@ -628,25 +575,6 @@ class FileUtils:
     def get_test_dir_path(dirname: str) -> str:
         dir_path = os.path.join(test_path, "tests", "test_configs", dirname)
         return dir_path
-
-    @staticmethod
-    def make_test_file(file_name: str, file_dir: t.Optional[str] = None) -> str:
-        """Create a dummy file in the test output directory.
-
-        :param file_name: name of file to create, e.g. "file.txt"
-        :type file_name: str
-        :param file_dir: path relative to test output directory, e.g. "deps/libs"
-        :type file_dir: str
-        :return: String path to test output file
-        :rtype: str
-        """
-        test_dir = FileUtils.make_test_dir(level=2, sub_dir=file_dir)
-        file_path = os.path.join(test_dir, file_name)
-
-        with open(file_path, "w+", encoding="utf-8") as dummy_file:
-            dummy_file.write("dummy\n")
-
-        return file_path
 
 
 @pytest.fixture
@@ -682,8 +610,6 @@ class ColoUtils:
         port: t.Optional[int] = test_port
     ) -> Model:
         """Setup things needed for setting up the colo pinning tests"""
-        # get test setup
-        test_dir = fileutils.make_test_dir(level=2)
 
         sr_test_script = fileutils.get_test_conf_path(application_file)
 
@@ -694,7 +620,6 @@ class ColoUtils:
             )
         colo_name = colo_model_name if colo_model_name else "colocated_model"
         colo_model = exp.create_model(colo_name, colo_settings)
-        colo_model.set_path(test_dir)
 
         if db_type in ["tcp", "deprecated"]:
             db_args["port"] = port

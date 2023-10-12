@@ -58,7 +58,7 @@ def timestwo(x):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script(fileutils, wlmutils, mlutils):
+def test_db_script(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -70,7 +70,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -130,7 +130,7 @@ def test_db_script(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_ensemble(fileutils, wlmutils, mlutils):
+def test_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB scripts on remote DB"""
 
     # Set experiment name
@@ -142,7 +142,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -221,7 +221,7 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script(fileutils, wlmutils, mlutils):
+def test_colocated_db_script(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB"""
 
     # Set the experiment name
@@ -233,7 +233,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -285,7 +285,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
+def test_colocated_db_script_ensemble(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB from ensemble, first colocating DB,
     then adding script.
     """
@@ -299,7 +299,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -382,7 +382,7 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
+def test_colocated_db_script_ensemble_reordered(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Scripts on colocated DB from ensemble, first adding the
     script to the ensemble, then colocating the DB"""
 
@@ -395,7 +395,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
@@ -477,7 +477,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
 
 
 @pytest.mark.skipif(not should_run, reason="Test needs Torch to run")
-def test_db_script_errors(fileutils, wlmutils, mlutils):
+def test_db_script_errors(fileutils, make_test_dir, wlmutils, mlutils):
     """Test DB Scripts error when setting a serialized function on colocated DB"""
 
     # Set Experiment name
@@ -489,7 +489,7 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
     test_port = wlmutils.get_test_port()
     test_device = mlutils.get_test_device()
     test_num_gpus = mlutils.get_test_num_gpus()
-    test_dir = fileutils.make_test_dir()
+    test_dir = make_test_dir
     test_script = fileutils.get_test_conf_path("run_dbscript_smartredis.py")
     torch_script = fileutils.get_test_conf_path("torchscript.py")
 
