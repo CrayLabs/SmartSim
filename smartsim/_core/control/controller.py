@@ -27,22 +27,34 @@
 from __future__ import annotations
 
 import os.path as osp
+from os import environ
 import pickle
 import signal
 import threading
 import time
 import typing as t
 
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
+from ..._core.utils.helpers import (
+    unpack_db_identifier,
+    unpack_colo_db_identifier,
+)
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
-from ...error import LauncherError, SmartSimError, SSInternalError, SSUnsupportedError
+from ...error import (
+    LauncherError,
+    SmartSimError,
+    SSInternalError,
+    SSUnsupportedError,
+    SSDBIDConflictError,
+)
 from ...log import get_logger
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
+from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -213,6 +225,7 @@ class Controller:
         :param entity_list: entity list to be stopped
         :type entity_list: EntitySequence
         """
+
         if entity_list.batch:
             self.stop_entity(entity_list)
         else:
@@ -308,18 +321,24 @@ class Controller:
         :param manifest: Manifest of deployables to launch
         :type manifest: Manifest
         """
-        orchestrator = manifest.db
-        if orchestrator:
+
+        # Loop over deployables to launch and launch multiple orchestrators
+        for orchestrator in manifest.dbs:
+            for key in self._jobs.get_db_host_addresses():
+                _, db_id = unpack_db_identifier(key, "_")
+                if orchestrator.name == db_id:
+                    raise SSDBIDConflictError(
+                        f"Database identifier {orchestrator.name}"
+                        " has already been used. Pass in a unique"
+                        " name for db_identifier"
+                    )
+
             if orchestrator.num_shards > 1 and isinstance(
                 self._launcher, LocalLauncher
             ):
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            if self.orchestrator_active:
-                msg = "Attempted to launch a second Orchestrator instance. "
-                msg += "Only 1 Orchestrator can be active at a time"
-                raise SmartSimError(msg)
             self._launch_orchestrator(orchestrator)
 
         if self.orchestrator_active:
@@ -335,10 +354,8 @@ class Controller:
                 batch_step = self._create_batch_job_step(elist)
                 steps.append((batch_step, elist))
             else:
-                # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
                 steps.extend(job_steps)
-
         # models themselves cannot be batch steps. If batch settings are
         # attached, wrap them in an anonymous batch job step
         for model in manifest.models:
@@ -368,7 +385,6 @@ class Controller:
         :type orchestrator: Orchestrator
         """
         orchestrator.remove_stale_files()
-
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
             orc_batch_step = self._create_batch_job_step(orchestrator)
@@ -491,23 +507,45 @@ class Controller:
         :param entity: The entity to retrieve connections from
         :type entity:  Model
         """
+
         client_env: t.Dict[str, t.Union[str, int, float, bool]] = {}
-        addresses = self._jobs.get_db_host_addresses()
-        if addresses:
-            if len(addresses) <= 128:
-                client_env["SSDB"] = ",".join(addresses)
-            else:
-                # Cap max length of SSDB
-                client_env["SSDB"] = ",".join(addresses[:128])
-            if entity.incoming_entities:
-                client_env["SSKEYIN"] = ",".join(
-                    [in_entity.name for in_entity in entity.incoming_entities]
-                )
-            if entity.query_key_prefixing():
-                client_env["SSKEYOUT"] = entity.name
+        address_dict = self._jobs.get_db_host_addresses()
+
+        for db_id, addresses in address_dict.items():
+            db_name, _ = unpack_db_identifier(db_id, "_")
+
+            if addresses:
+                if len(addresses) <= 128:
+                    client_env[f"SSDB{db_name}"] = ",".join(addresses)
+                else:
+                    # Cap max length of SSDB
+                    client_env[f"SSDB{db_name}"] = ",".join(addresses[:128])
+                if entity.incoming_entities:
+                    client_env[f"SSKEYIN{db_name}"] = ",".join(
+                        [in_entity.name for in_entity in entity.incoming_entities]
+                    )
+                if entity.query_key_prefixing():
+                    client_env[f"SSKEYOUT{db_name}"] = entity.name
+
+            # Retrieve num_shards to append to client env
+            client_env[f"SR_DB_TYPE{db_name}"] = (
+                CLUSTERED if len(addresses) > 1 else STANDALONE
+            )
 
         # Set address to local if it's a colocated model
-        if entity.colocated:
+        if entity.colocated and entity.run_settings.colocated_db_settings is not None:
+            db_name_colo = entity.run_settings.colocated_db_settings["db_identifier"]
+
+            for key in self._jobs.get_db_host_addresses():
+                _, db_id = unpack_db_identifier(key, "_")
+                if db_name_colo == db_id:
+                    raise SSDBIDConflictError(
+                        f"Database identifier {db_name_colo}"
+                        " has already been used. Pass in a unique"
+                        " name for db_identifier"
+                    )
+
+            db_name_colo = unpack_colo_db_identifier(db_name_colo)
             if colo_cfg := entity.run_settings.colocated_db_settings:
                 port = colo_cfg.get("port", None)
                 socket = colo_cfg.get("unix_socket", None)
@@ -516,13 +554,15 @@ class Controller:
                         "Co-located was configured for both TCP/IP and UDS"
                     )
                 if port:
-                    client_env["SSDB"] = f"127.0.0.1:{str(port)}"
+                    client_env[f"SSDB{db_name_colo}"] = f"127.0.0.1:{str(port)}"
                 elif socket:
-                    client_env["SSDB"] = f"unix://{socket}"
+                    client_env[f"SSDB{db_name_colo}"] = f"unix://{socket}"
                 else:
                     raise SSInternalError(
                         "Colocated database was not configured for either TCP or UDS"
                     )
+                client_env[f"SR_DB_TYPE{db_name_colo}"] = STANDALONE
+
         entity.run_settings.update_env(client_env)
 
     def _save_orchestrator(self, orchestrator: Orchestrator) -> None:
@@ -653,39 +693,51 @@ class Controller:
         if not manifest.has_db_objects:
             return
 
-        db_addresses = self._jobs.get_db_host_addresses()
+        address_dict = self._jobs.get_db_host_addresses()
+        for (
+            db_id,
+            db_addresses,
+        ) in address_dict.items():
+            db_name, name = unpack_db_identifier(db_id, "_")
 
-        hosts = list({address.split(":")[0] for address in db_addresses})
-        ports = list({int(address.split(":")[-1]) for address in db_addresses})
+            hosts = list({address.split(":")[0] for address in db_addresses})
+            ports = list({int(address.split(":")[-1]) for address in db_addresses})
 
-        if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
-            raise SSInternalError("Cannot set DB Objects, DB is not running")
+            if not db_is_active(hosts=hosts, ports=ports, num_shards=len(db_addresses)):
+                raise SSInternalError("Cannot set DB Objects, DB is not running")
 
-        client = Client(address=db_addresses[0], cluster=len(db_addresses) > 1)
+            environ[f"SSDB{db_name}"] = db_addresses[0]
 
-        for model in manifest.models:
-            if not model.colocated:
-                for db_model in model.db_models:
+            environ[f"SR_DB_TYPE{db_name}"] = (
+                CLUSTERED if len(db_addresses) > 1 else STANDALONE
+            )
+
+            options = ConfigOptions.create_from_environment(name)
+            client = Client(options, logger_name="SmartSim")
+
+            for model in manifest.models:
+                if not model.colocated:
+                    for db_model in model.db_models:
+                        set_ml_model(db_model, client)
+                    for db_script in model.db_scripts:
+                        set_script(db_script, client)
+
+            for ensemble in manifest.ensembles:
+                for db_model in ensemble.db_models:
                     set_ml_model(db_model, client)
-                for db_script in model.db_scripts:
+                for db_script in ensemble.db_scripts:
                     set_script(db_script, client)
-
-        for ensemble in manifest.ensembles:
-            for db_model in ensemble.db_models:
-                set_ml_model(db_model, client)
-            for db_script in ensemble.db_scripts:
-                set_script(db_script, client)
-            for entity in ensemble.models:
-                if not entity.colocated:
-                    # Set models which could belong only
-                    # to the entities and not to the ensemble
-                    # but avoid duplicates
-                    for db_model in entity.db_models:
-                        if db_model not in ensemble.db_models:
-                            set_ml_model(db_model, client)
-                    for db_script in entity.db_scripts:
-                        if db_script not in ensemble.db_scripts:
-                            set_script(db_script, client)
+                for entity in ensemble.models:
+                    if not entity.colocated:
+                        # Set models which could belong only
+                        # to the entities and not to the ensemble
+                        # but avoid duplicates
+                        for db_model in entity.db_models:
+                            if db_model not in ensemble.db_models:
+                                set_ml_model(db_model, client)
+                        for db_script in entity.db_scripts:
+                            if db_script not in ensemble.db_scripts:
+                                set_script(db_script, client)
 
 
 class _AnonymousBatchJob(EntityList[Model]):

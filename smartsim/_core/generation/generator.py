@@ -109,8 +109,9 @@ class Generator:
 
         """
         generator_manifest = Manifest(*args)
+
         self._gen_exp_dir()
-        self._gen_orc_dir(generator_manifest.db)
+        self._gen_orc_dir(generator_manifest.dbs)
         self._gen_entity_list_dir(generator_manifest.ensembles)
         self._gen_entity_dirs(generator_manifest.models)
 
@@ -163,24 +164,22 @@ class Generator:
             dt_string = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             log_file.write(f"Generation start date and time: {dt_string}\n")
 
-    def _gen_orc_dir(self, orchestrator: t.Optional[Orchestrator]) -> None:
+    def _gen_orc_dir(self, orchestrator_list: t.List[Orchestrator]) -> None:
         """Create the directory that will hold the error, output and
            configuration files for the orchestrator.
 
         :param orchestrator: Orchestrator instance
         :type orchestrator: Orchestrator | None
         """
+        # Loop through orchestrators
+        for orchestrator in orchestrator_list:
+            orc_path = path.join(self.gen_path, orchestrator.name)
 
-        if not orchestrator:
-            return
-
-        orc_path = path.join(self.gen_path, "database")
-        orchestrator.set_path(orc_path)
-
-        # Always remove orchestrator files if present.
-        if path.isdir(orc_path):
-            shutil.rmtree(orc_path, ignore_errors=True)
-        pathlib.Path(orc_path).mkdir(exist_ok=True)
+            orchestrator.set_path(orc_path)
+            # Always remove orchestrator files if present.
+            if path.isdir(orc_path):
+                shutil.rmtree(orc_path, ignore_errors=True)
+            pathlib.Path(orc_path).mkdir(exist_ok=self.overwrite)
 
     def _gen_entity_list_dir(self, entity_lists: t.List[Ensemble]) -> None:
         """Generate directories for Ensemble instances

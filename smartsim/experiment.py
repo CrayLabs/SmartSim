@@ -62,7 +62,10 @@ class Experiment:
     """
 
     def __init__(
-        self, name: str, exp_path: t.Optional[str] = None, launcher: str = "local"
+        self,
+        name: str,
+        exp_path: t.Optional[str] = None,
+        launcher: str = "local",
     ):
         """Initialize an Experiment instance
 
@@ -126,6 +129,7 @@ class Experiment:
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
+        self.db_identifiers: t.Set[str] = set()
 
     def start(
         self,
@@ -184,6 +188,7 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
+
         start_manifest = Manifest(*args)
         try:
             if summary:
@@ -226,8 +231,8 @@ class Experiment:
                 self._control.stop_entity(entity)
             for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
-            db = stop_manifest.db
-            if db:
+            dbs = stop_manifest.dbs
+            for db in dbs:
                 self._control.stop_db(db)
         except SmartSimError as e:
             logger.error(e)
@@ -698,6 +703,7 @@ class Experiment:
         time: t.Optional[str] = None,
         queue: t.Optional[str] = None,
         single_cmd: bool = True,
+        db_identifier: str = "orchestrator",
         **kwargs: t.Any,
     ) -> Orchestrator:
         """Initialize an Orchestrator database
@@ -746,6 +752,9 @@ class Experiment:
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
+
+        self.append_to_db_identifier_list(db_identifier)
+
         return Orchestrator(
             port=port,
             db_nodes=db_nodes,
@@ -758,6 +767,7 @@ class Experiment:
             queue=queue,
             single_cmd=single_cmd,
             launcher=self._launcher,
+            db_identifier=db_identifier,
             **kwargs,
         )
 
@@ -843,7 +853,7 @@ class Experiment:
 
         if self._control.orchestrator_active:
             summary += "Database Status: active\n"
-        elif manifest.db:
+        elif manifest.dbs:
             summary += "Database Status: launching\n"
         else:
             summary += "Database Status: inactive\n"
@@ -854,3 +864,14 @@ class Experiment:
 
     def __str__(self) -> str:
         return self.name
+
+    def append_to_db_identifier_list(self, db_identifier: str) -> None:
+        """Check if db_identifier already exists when calling create_database"""
+        if db_identifier in self.db_identifiers:
+            logger.warning(
+                f"A database with the identifier {db_identifier} has already been made "
+                "An error will be raised if multiple databases are started "
+                "with the same identifier"
+            )
+        # Otherwise, add
+        self.db_identifiers.add(db_identifier)

@@ -213,6 +213,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
@@ -262,6 +263,7 @@ class Model(SmartSimEntity):
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
 
@@ -272,6 +274,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
@@ -317,6 +320,7 @@ class Model(SmartSimEntity):
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 

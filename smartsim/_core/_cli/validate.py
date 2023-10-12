@@ -164,7 +164,7 @@ def _make_managed_local_orc(
     exp.start(orc)
     try:
         (client_addr,) = orc.get_address()
-        yield Client(address=client_addr, cluster=False)
+        yield Client(False, address=client_addr)
     finally:
         exp.stop(orc)
 
@@ -243,7 +243,7 @@ def _test_torch_install(client: Client, device: _TCapitalDeviceStr) -> None:
     forward_input = torch.rand(1, 1, 3, 3)
     traced = torch.jit.trace(net, forward_input)  # type: ignore[no-untyped-call]
     buffer = io.BytesIO()
-    torch.jit.save(traced, buffer)  # type: ignore[no-untyped-call]
+    torch.jit.save(traced, buffer) # type: ignore[no-untyped-call]
     model = buffer.getvalue()
 
     client.set_model("torch-nn", model, backend="TORCH", device=device)
