@@ -22,7 +22,7 @@ Description
 - Expose first_device parameter for scripts, functions, models
 - Added support for MINBATCHTIMEOUT in model execution
 - Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
-- Add support for multi Orchestrator databases
+- Add support for multiple databases
 
 Detailed Notes
 
@@ -37,17 +37,7 @@ Detailed Notes
   bug which breaks the build process on Mac OSX, it was decided to
   use commit 634916c_ from RedisAI's GitHub repository, where such
   bug has been fixed. This applies to all operating systems. (PR383_)
-- Enables experiments to have multiple databases running. This involves
-  users passing a database identifier to methods create_database,
-  colocate_db_tcp and colocate_db_uds. SmartSim will set environment
-  variables SSDB and SR_DB_TYPE with the identifier as a suffix. This
-  PR requires an up to date SmartRedis. (PR342_)
-
-
-
-
-
-
+- Add support for creation of multiple databases with unique identifiers. (PR342_)
 
   .. _PR389: https://github.com/CrayLabs/SmartSim/pull/389
   .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
@@ -62,7 +52,6 @@ Released on 14 September, 2023
 
 Description
 
-- Add support for multiple databases
 - Add typehints throughout the SmartSim codebase
 - Provide support for Slurm heterogeneous jobs
 - Provide better support for `PalsMpiexecSettings`
@@ -80,7 +69,6 @@ Description
 
 Detailed Notes
 
-- Add support for creation of multiple databases with unique identifiers. (PR342_)
 - Add methods to allow users to inspect files attached to models and ensembles. (PR352_)
 - Add a `smart info` target to provide rudimentary information about the SmartSim installation. (PR350_)
 - Remove unnecessary generation producing unexpected directories in the test suite. (PR349_)
@@ -104,7 +92,6 @@ Detailed Notes
 - Update pylint dependency, update .pylintrc, mitigate non-breaking issues, suppress api breaks. (PR311_)
 - Refactor the `smart` CLI to use subparsers for better documentation and extension. (PR308_)
 
-.. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
 .. _PR352: https://github.com/CrayLabs/SmartSim/pull/352
 .. _PR351: https://github.com/CrayLabs/SmartSim/pull/351
 .. _PR350: https://github.com/CrayLabs/SmartSim/pull/350
