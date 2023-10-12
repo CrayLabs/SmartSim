@@ -88,6 +88,7 @@ logger = get_logger(__name__)
 
 # job manager lock
 JM_LOCK = threading.RLock()
+tmonitor: t.Optional[subprocess.Popen] = None
 
 
 def start_telemetry_monitor(exp_dir: str = ".", frequency: int = 10) -> subprocess.Popen:
@@ -121,10 +122,9 @@ def stop_telemetry_monitor(process: subprocess.Popen) -> None:
         logger.warn("An error occurred while terminating the telemetry monitor", 
                     exc_info=True)
 
-tmonitor: t.Optional[subprocess.Popen] = None
-
 def start_telemetry_callback_wrapper(manager: JobManager) -> t.Callable[[Job, Logger], None]:
     def start_telemetry_callback(job: Job, logger: Logger) -> None:
+        global tmonitor
         # if not os.environ.get("SMARTSIM_TELEMETRY_ENABLED", False):
         #     return
         
@@ -134,6 +134,7 @@ def start_telemetry_callback_wrapper(manager: JobManager) -> t.Callable[[Job, Lo
 
 def stop_telemetry_callback_wrapper(manager: JobManager) -> t.Callable[[Job, Logger], None]:
     def stop_telemetry_callback(job: Job, logger: Logger) -> None:
+        global tmonitor
         if tmonitor is not None:
             stop_telemetry_monitor(tmonitor)
     return stop_telemetry_callback
