@@ -183,8 +183,8 @@ class JobManager:
             elif job.ename in self.jobs:
                 del self.jobs[job.ename]
             
-            if not self.jobs and not self.db_jobs:
-                self.stop_telemetry_monitor()
+            # if not self.jobs and not self.db_jobs:
+            #     self.stop_telemetry_monitor()
 
     def __getitem__(self, entity_name: str) -> Job:
         """Return the job associated with the name of the entity
