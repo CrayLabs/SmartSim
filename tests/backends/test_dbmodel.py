@@ -29,20 +29,45 @@ import sys
 
 import pytest
 
-import smartsim
 from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
+from smartsim.entity import Ensemble
 from smartsim.error.errors import SSUnsupportedError
+from smartsim.log import get_logger
+
+from smartsim.entity.dbobject import DBModel
+
+logger = get_logger(__name__)
 
 should_run_tf = True
 should_run_pt = True
 
 # Check TensorFlow is available for tests
 try:
-    import tensorflow.keras as keras
+    from tensorflow import keras
+    import tensorflow as tf
     from tensorflow.keras.layers import Conv2D, Input
+
 except ImportError:
     should_run_tf = False
+else:
+
+    class Net(keras.Model):
+        def __init__(self):
+            super(Net, self).__init__(name="cnn")
+            self.conv = Conv2D(1, 3, 1)
+
+        def call(self, x):
+            y = self.conv(x)
+            return y
+    if pytest.test_device == "GPU":
+        try:
+            physical_devices = tf.config.list_physical_devices('GPU')
+            tf.config.set_logical_device_configuration(
+                physical_devices[0],
+                [tf.config.LogicalDeviceConfiguration(memory_limit=5_000)])
+        except:
+            logger.warning("Could not set TF max memory limit for GPU")
 
 should_run_tf &= "tensorflow" in installed_redisai_backends()
 
@@ -53,18 +78,35 @@ try:
     import torch.nn.functional as F
 except ImportError:
     should_run_pt = False
+else:
+    # Simple MNIST in PyTorch
+    class PyTorchNet(nn.Module):
+        def __init__(self):
+            super(PyTorchNet, self).__init__()
+            self.conv1 = nn.Conv2d(1, 32, 3, 1)
+            self.conv2 = nn.Conv2d(32, 64, 3, 1)
+            self.dropout1 = nn.Dropout(0.25)
+            self.dropout2 = nn.Dropout(0.5)
+            self.fc1 = nn.Linear(9216, 128)
+            self.fc2 = nn.Linear(128, 10)
+
+        def forward(self, x):
+            x = self.conv1(x)
+            x = F.relu(x)
+            x = self.conv2(x)
+            x = F.relu(x)
+            x = F.max_pool2d(x, 2)
+            x = self.dropout1(x)
+            x = torch.flatten(x, 1)
+            x = self.fc1(x)
+            x = F.relu(x)
+            x = self.dropout2(x)
+            x = self.fc2(x)
+            output = F.log_softmax(x, dim=1)
+            return output
+
 
 should_run_pt &= "torch" in installed_redisai_backends()
-
-
-class Net(keras.Model):
-    def __init__(self):
-        super(Net, self).__init__(name="cnn")
-        self.conv = Conv2D(1, 3, 1)
-
-    def call(self, x):
-        y = self.conv(x)
-        return y
 
 
 def save_tf_cnn(path, file_name):
@@ -94,39 +136,6 @@ def create_tf_cnn():
     return serialize_model(model)
 
 
-# Simple MNIST in PyTorch
-try:
-
-    class PyTorchNet(nn.Module):
-        def __init__(self):
-            super(PyTorchNet, self).__init__()
-            self.conv1 = nn.Conv2d(1, 32, 3, 1)
-            self.conv2 = nn.Conv2d(32, 64, 3, 1)
-            self.dropout1 = nn.Dropout(0.25)
-            self.dropout2 = nn.Dropout(0.5)
-            self.fc1 = nn.Linear(9216, 128)
-            self.fc2 = nn.Linear(128, 10)
-
-        def forward(self, x):
-            x = self.conv1(x)
-            x = F.relu(x)
-            x = self.conv2(x)
-            x = F.relu(x)
-            x = F.max_pool2d(x, 2)
-            x = self.dropout1(x)
-            x = torch.flatten(x, 1)
-            x = self.fc1(x)
-            x = F.relu(x)
-            x = self.dropout2(x)
-            x = self.fc2(x)
-            output = F.log_softmax(x, dim=1)
-            return output
-
-
-except Exception:
-    should_run_pt = False
-
-
 def save_torch_cnn(path, file_name):
     n = PyTorchNet()
     example_forward_input = torch.rand(1, 1, 28, 28)
@@ -135,33 +144,49 @@ def save_torch_cnn(path, file_name):
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_tf_db_model(fileutils, wlmutils):
+def test_tf_db_model(fileutils, wlmutils, mlutils):
     """Test TensorFlow DB Models on remote DB"""
 
+    # Set experiment name
     exp_name = "test-tf-db-model"
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
-    # create colocated model
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
     smartsim_model.set_path(test_dir)
 
-    db = exp.create_database(port=wlmutils.get_test_port(), interface="lo")
+    # Create database
+    db = exp.create_database(port=test_port, interface=test_interface)
     exp.generate(db)
 
+    # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    # Add ML model to the SmartSim model
     smartsim_model.add_ml_model(
         "cnn",
         "TF",
         model=model,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs,
         tag="test",
@@ -170,117 +195,174 @@ def test_tf_db_model(fileutils, wlmutils):
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
         tag="test",
     )
 
+    logger.debug("The following ML models have been added:")
     for db_model in smartsim_model._db_models:
-        print(db_model)
+        logger.debug(db_model)
 
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 2
 
-    exp.start(db, smartsim_model, block=True)
-    statuses = exp.get_status(smartsim_model)
-    exp.stop(db)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    # Launch and check successful completion
+    try:
+        exp.start(db, smartsim_model, block=True)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(db)
 
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_pt_db_model(fileutils, wlmutils):
+def test_pt_db_model(fileutils, wlmutils, mlutils):
     """Test PyTorch DB Models on remote DB"""
 
+    # Set experiment name
     exp_name = "test-pt-db-model"
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
-    exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
-    # create colocated model
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
     smartsim_model.set_path(test_dir)
 
-    db = exp.create_database(port=wlmutils.get_test_port(), interface="lo")
+    # Create database
+    db = exp.create_database(port=test_port, interface=test_interface)
     exp.generate(db)
 
+    # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
     model_path = test_dir + "/model1.pt"
 
+    # Add ML model to the SmartSim model
     smartsim_model.add_ml_model(
         "cnn",
         "TORCH",
         model_path=model_path,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         tag="test",
     )
 
+    logger.debug("The following ML models have been added:")
     for db_model in smartsim_model._db_models:
-        print(db_model)
+        logger.debug(db_model)
+
 
     # Assert we have added both models
     assert len(smartsim_model._db_models) == 1
 
-    exp.start(db, smartsim_model, block=True)
-    statuses = exp.get_status(smartsim_model)
-    exp.stop(db)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    # Launch and check successful completion
+    try:
+        exp.start(db, smartsim_model, block=True)
+        statuses = exp.get_status(smartsim_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(db)
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_db_model_ensemble(fileutils, wlmutils):
+def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     """Test DBModels on remote DB, with an ensemble"""
 
+    # Set experiment name
     exp_name = "test-db-model-ensemble"
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    exp = Experiment(exp_name, exp_path=test_dir, launcher="local")
-    # create colocated model
-    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
+    # Create RunSettings
+    run_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    run_settings.set_nodes(1)
+    run_settings.set_tasks_per_node(1)
+
+    # Create ensemble
     smartsim_ensemble = exp.create_ensemble(
         "smartsim_model", run_settings=run_settings, replicas=2
     )
     smartsim_ensemble.set_path(test_dir)
 
+    # Create Model
     smartsim_model = exp.create_model("smartsim_model", run_settings)
     smartsim_model.set_path(test_dir)
 
-    db = exp.create_database(port=wlmutils.get_test_port(), interface="lo")
+    # Create database
+    db = exp.create_database(port=test_port, interface=test_interface)
     exp.generate(db)
 
+    # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    # Add the first ML model to all of the ensemble members
     smartsim_ensemble.add_ml_model(
-        "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+        "cnn",
+        "TF",
+        model=model,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs,
+        outputs=outputs
     )
 
+    # Add the second ML model individually to each SmartSim model
     for entity in smartsim_ensemble:
         entity.disable_key_prefixing()
         entity.add_ml_model(
             "cnn2",
             "TF",
             model_path=model_file2,
-            device="CPU",
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
             inputs=inputs2,
             outputs=outputs2,
         )
 
-    # Ensemble must add all available DBModels to new entity
+    # Add new ensemble member
     smartsim_ensemble.add_model(smartsim_model)
+
+    # Add the second ML model to the newly added entity.  This is
+    # because the test script runs both ML models for all entities.
     smartsim_model.add_ml_model(
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -290,46 +372,71 @@ def test_db_model_ensemble(fileutils, wlmutils):
     # Assert we have added two models to each entity
     assert all([len(entity._db_models) == 2 for entity in smartsim_ensemble])
 
-    exp.start(db, smartsim_ensemble, block=True)
-    statuses = exp.get_status(smartsim_ensemble)
-    exp.stop(db)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    # Launch and check successful completion
+    try:
+        exp.start(db, smartsim_ensemble, block=True)
+        statuses = exp.get_status(smartsim_ensemble)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(db)
 
 
-def test_colocated_db_model_tf(fileutils, wlmutils):
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     """Test DB Models on colocated DB (TensorFlow backend)"""
 
+    # Set experiment name
     exp_name = "test-colocated-db-model-tf"
-    exp = Experiment(exp_name, launcher="local")
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create SmartSim Experience
+    exp = Experiment(exp_name, launcher=test_launcher)
 
+    # Create RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create colocated Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port(),
+    colo_model.colocate_db_tcp(
+        port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
-        ifname="lo",
+        ifname=test_interface
     )
 
+    # Create and save ML model to filesystem
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
 
+    # Add ML models to the application
     colo_model.add_ml_model(
-        "cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs
+        "cnn",
+        "TF",
+        model_path=model_file,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs,
+        outputs=outputs
     )
     colo_model.add_ml_model(
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -337,259 +444,356 @@ def test_colocated_db_model_tf(fileutils, wlmutils):
     # Assert we have added both models
     assert len(colo_model._db_models) == 2
 
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
-
+    # Launch and check successful completion
+    try:
+        exp.start(colo_model, block=True)
+        statuses = exp.get_status(colo_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(colo_model)
 
 @pytest.mark.skipif(not should_run_pt, reason="Test needs PyTorch to run")
-def test_colocated_db_model_pytorch(fileutils, wlmutils):
+def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     """Test DB Models on colocated DB (PyTorch backend)"""
 
+    # Set experiment name
     exp_name = "test-colocated-db-model-pytorch"
-    exp = Experiment(exp_name, launcher="local")
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
 
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port(),
+    colo_model.colocate_db_tcp(
+        port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
-        ifname="lo",
+        ifname=test_interface
     )
 
+    # Create and save ML model to filesystem
     save_torch_cnn(test_dir, "model1.pt")
     model_file = test_dir + "/model1.pt"
-    colo_model.add_ml_model("cnn", "TORCH", model_path=model_file, device="CPU")
+
+    # Add the ML model to the SmartSim Model
+    colo_model.add_ml_model("cnn",
+                            "TORCH",
+                            model_path=model_file,
+                            device=test_device,
+                            devices_per_node=test_num_gpus,
+                            first_device=0)
 
     # Assert we have added both models
     assert len(colo_model._db_models) == 1
 
-    exp.start(colo_model, block=True)
-    statuses = exp.get_status(colo_model)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    # Launch and check successful completion
+    try:
+        exp.start(colo_model, block=True)
+        statuses = exp.get_status(colo_model)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(colo_model)
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble(fileutils, wlmutils):
+def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
     """Test DBModel on colocated ensembles, first colocating DB,
     then adding DBModel.
     """
 
+    # Set experiment name
     exp_name = "test-colocated-db-model-ensemble"
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, exp_path=test_dir, launcher=test_launcher)
 
+    # Create RunSettings for colocated model
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create ensemble of two identical models
+    colo_ensemble: Ensemble = exp.create_ensemble(
+        "colocated_ens", run_settings=colo_settings, replicas=2
+    )
+    colo_ensemble.set_path(test_dir)
+
+    # Create a third model with a colocated database
+    colo_model = exp.create_model("colocated_model", colo_settings)
+    colo_model.set_path(test_dir)
+    colo_model.colocate_db_tcp(
+        port=test_port,
+        db_cpus=1,
+        debug=True,
+        ifname=test_interface
+    )
+
+    # Create and save the ML models to the filesystem
+    model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
+    model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
+
+    # Colocate a database with the ensemble with two ensemble members
+    for i, entity in enumerate(colo_ensemble):
+        entity.colocate_db_tcp(
+            port=test_port + i + 1,
+            db_cpus=1,
+            debug=True,
+            ifname=test_interface
+        )
+        # Add ML model to each ensemble member individual to test that they
+        # do not conflict with models add to the Ensemble object
+        entity.add_ml_model(
+            "cnn2",
+            "TF",
+            model_path=model_file2,
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
+            inputs=inputs2,
+            outputs=outputs2,
+        )
+
+    # Test adding a model from Ensemble object
+    colo_ensemble.add_ml_model(
+        "cnn",
+        "TF",
+        model_path=model_file,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs,
+        outputs=outputs,
+        tag="test",
+    )
+
+    # Add a new model to the ensemble
+    colo_ensemble.add_model(colo_model)
+
+    # Add the ML model to SmartSim Model just added to the ensemble
+    colo_model.add_ml_model(
+        "cnn2",
+        "TF",
+        model_path=model_file2,
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
+        inputs=inputs2,
+        outputs=outputs2,
+    )
+
+    # Launch and check successful completion
+    try:
+        exp.start(colo_ensemble, block=True)
+        statuses = exp.get_status(colo_ensemble)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(colo_ensemble)
+
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
+def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
+    """Test DBModel on colocated ensembles, first adding the DBModel to the
+    ensemble, then colocating DB.
+    """
+
+    # Set experiment name
+    exp_name = "test-colocated-db-model-ensemble-reordered"
+
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
+    test_dir = fileutils.make_test_dir()
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+
+    # Create the SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
+
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create the ensemble of two identical SmartSim Model
     colo_ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
     colo_ensemble.set_path(test_dir)
 
+    # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port(),
-        db_cpus=1,
-        limit_app_cpus=False,
-        debug=True,
-        ifname="lo",
-    )
 
+    # Create and save ML model to filesystem
     model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
     model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
-
-    for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
-            port=wlmutils.get_test_port() + i,
-            db_cpus=1,
-            limit_app_cpus=False,
-            debug=True,
-            ifname="lo",
-        )
-        # Test that models added individually do not conflict with enemble ones
-        entity.add_ml_model(
-            "cnn2",
-            "TF",
-            model_path=model_file2,
-            device="CPU",
-            inputs=inputs2,
-            outputs=outputs2,
-        )
 
     # Test adding a model from ensemble
     colo_ensemble.add_ml_model(
         "cnn",
         "TF",
         model_path=model_file,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
-        outputs=outputs,
-        tag="test",
+        outputs=outputs
     )
 
-    # Ensemble should add all available DBModels to new model
-    colo_ensemble.add_model(colo_model)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port() + len(colo_ensemble),
-        db_cpus=1,
-        limit_app_cpus=False,
-        debug=True,
-        ifname="lo",
-    )
-    colo_model.add_ml_model(
-        "cnn2",
-        "TF",
-        model_path=model_file2,
-        device="CPU",
-        inputs=inputs2,
-        outputs=outputs2,
-    )
-
-    exp.start(colo_ensemble, block=True)
-    statuses = exp.get_status(colo_ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
-
-
-@pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils):
-    """Test DBModel on colocated ensembles, first adding the DBModel to the
-    ensemble, then colocating DB.
-    """
-
-    exp_name = "test-colocated-db-model-ensemble-reordered"
-
-    # get test setup
-    test_dir = fileutils.make_test_dir()
-    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
-
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
-
-    colo_ensemble = exp.create_ensemble(
-        "colocated_ens", run_settings=colo_settings, replicas=2
-    )
-    colo_ensemble.set_path(test_dir)
-
-    colo_model = exp.create_model("colocated_model", colo_settings)
-    colo_model.set_path(test_dir)
-
-    model_file, inputs, outputs = save_tf_cnn(test_dir, "model1.pb")
-    model_file2, inputs2, outputs2 = save_tf_cnn(test_dir, "model2.pb")
-
-    # Test adding a model from ensemble
-    colo_ensemble.add_ml_model(
-        "cnn", "TF", model_path=model_file, device="CPU", inputs=inputs, outputs=outputs
-    )
-
+    # Colocate a database with the first ensemble members
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
-            wlmutils.get_test_port() + i,
+        entity.colocate_db_tcp(
+            port = test_port + i,
             db_cpus=1,
-            limit_app_cpus=False,
             debug=True,
-            ifname="lo",
+            ifname=test_interface
         )
-        # Test that models added individually do not conflict with enemble ones
+        # Add ML models to each ensemble member to make sure they
+        # do not conflict with other ML models
         entity.add_ml_model(
             "cnn2",
             "TF",
             model_path=model_file2,
-            device="CPU",
+            device=test_device,
+            devices_per_node=test_num_gpus,
+            first_device=0,
             inputs=inputs2,
             outputs=outputs2,
         )
 
-    # Ensemble should add all available DBModels to new model
+    # Add another ensemble member
     colo_ensemble.add_model(colo_model)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port() + len(colo_ensemble),
+
+    # Colocate a database with the new ensemble member
+    colo_model.colocate_db_tcp(
+        port=test_port + len(colo_ensemble),
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
-        ifname="lo",
+        ifname=test_interface
     )
+    # Add a ML model to the new ensemble member
     colo_model.add_ml_model(
         "cnn2",
         "TF",
         model_path=model_file2,
-        device="CPU",
+        device=test_device,
+        devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
 
-    exp.start(colo_ensemble, block=True)
-    statuses = exp.get_status(colo_ensemble)
-    assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    # Launch and check successful completion
+    try:
+        exp.start(colo_ensemble, block=True)
+        statuses = exp.get_status(colo_ensemble)
+        assert all([stat == status.STATUS_COMPLETED for stat in statuses])
+    finally:
+        exp.stop(colo_ensemble)
 
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TF to run")
-def test_colocated_db_model_errors(fileutils, wlmutils):
+def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     """Test error when colocated db model has no file."""
 
+    # Set experiment name
     exp_name = "test-colocated-db-model-error"
-    exp = Experiment(exp_name, launcher="local")
 
-    # get test setup
+    # Retrieve parameters from testing environment
+    test_launcher = wlmutils.get_test_launcher()
+    test_interface = wlmutils.get_test_interface()
+    test_port = wlmutils.get_test_port()
+    test_device = mlutils.get_test_device()
+    test_num_gpus = mlutils.get_test_num_gpus()
     test_dir = fileutils.make_test_dir()
-    sr_test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
+    test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
-    # create colocated model
-    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=sr_test_script)
+    # Create SmartSim Experiment
+    exp = Experiment(exp_name, launcher=test_launcher)
 
+    # Create colocated RunSettings
+    colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
+    colo_settings.set_nodes(1)
+    colo_settings.set_tasks_per_node(1)
+
+    # Create colocated SmartSim Model
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
-    colo_model.colocate_db(
-        port=wlmutils.get_test_port(),
+    colo_model.colocate_db_tcp(
+        port=test_port,
         db_cpus=1,
-        limit_app_cpus=False,
         debug=True,
-        ifname="lo",
+        ifname=test_interface
     )
 
+    # Get and save TF model
     model, inputs, outputs = create_tf_cnn()
 
+    # Check that an error is raised because in-memory models
+    # are only supported for non-colocated deployments
     with pytest.raises(SSUnsupportedError):
         colo_model.add_ml_model(
-            "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+            "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
         )
 
+    # Create an ensemble with two identical replicas
     colo_ensemble = exp.create_ensemble(
         "colocated_ens", run_settings=colo_settings, replicas=2
     )
     colo_ensemble.set_path(test_dir)
+
+    # Colocate a db with each ensemble member
     for i, entity in enumerate(colo_ensemble):
-        entity.colocate_db(
-            port=wlmutils.get_test_port() + i,
+        entity.colocate_db_tcp(
+            port=test_port + i,
             db_cpus=1,
-            limit_app_cpus=False,
             debug=True,
-            ifname="lo",
+            ifname=test_interface
         )
 
+    # Check that an error is raised because in-memory models
+    # are only supported for non-colocated deployments
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_ml_model(
-            "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+            "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
         )
 
-    # Check errors for reverse order of DBModel addition and DB colocation
-    # create colocated model
+    # Check error is still thrown if an in-memory model is used
+    # with a colocated deployment.  This test varies by adding
+    # the SmartSIm model with a colocated database to the ensemble
+    # after the ML model was been added to the ensemble.
     colo_settings2 = exp.create_run_settings(
-        exe=sys.executable, exe_args=sr_test_script
+        exe=sys.executable, exe_args=test_script
     )
 
     # Reverse order of DBModel and model
@@ -598,17 +802,41 @@ def test_colocated_db_model_errors(fileutils, wlmutils):
     )
     colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
-        "cnn", "TF", model=model, device="CPU", inputs=inputs, outputs=outputs
+        "cnn", "TF", model=model, device=test_device,
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
     )
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
-            entity.colocate_db(
-                port=wlmutils.get_test_port() + i,
+            entity.colocate_db_tcp(
+                port=test_port + i,
                 db_cpus=1,
-                limit_app_cpus=False,
                 debug=True,
-                ifname="lo",
+                ifname=test_interface,
             )
 
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+
+@pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
+def test_inconsistent_params_db_model():
+    """Test error when devices_per_node parameter>1 when devices is set to CPU in DBModel"""
+
+    # Create and save ML model to filesystem
+    model, inputs, outputs = create_tf_cnn()
+    with pytest.raises(SSUnsupportedError) as ex:
+        DBModel(
+            "cnn",
+            "TF",
+            model=model,
+            device="CPU",
+            devices_per_node=2,
+            first_device=0,
+            tag="test",
+            inputs=inputs,
+            outputs=outputs,
+        )
+    assert (
+            ex.value.args[0]
+            == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )

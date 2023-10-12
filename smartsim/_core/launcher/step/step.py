@@ -24,37 +24,48 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os.path as osp
 import time
+import typing as t
+
+from os import makedirs
+from smartsim.error.errors import SmartSimError
 
 from ....log import get_logger
 from ...utils.helpers import get_base_36_repr
 from ..colocated import write_colocated_launch_script
+from ....settings.base import SettingsBase, RunSettings
 
 logger = get_logger(__name__)
 
 
 class Step:
-    def __init__(self, name, cwd):
+    def __init__(self, name: str, cwd: str, step_settings: SettingsBase) -> None:
         self.name = self._create_unique_name(name)
         self.entity_name = name
         self.cwd = cwd
         self.managed = False
+        self.step_settings = step_settings
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         raise NotImplementedError
 
-    def _create_unique_name(self, entity_name):
+    @staticmethod
+    def _create_unique_name(entity_name: str) -> str:
         step_name = entity_name + "-" + get_base_36_repr(time.time_ns())
         return step_name
 
-    def get_output_files(self):
+    def get_output_files(self) -> t.Tuple[str, str]:
         """Return two paths to error and output files based on cwd"""
         output = self.get_step_file(ending=".out")
         error = self.get_step_file(ending=".err")
         return output, error
 
-    def get_step_file(self, ending=".sh", script_name=None):
+    def get_step_file(
+        self, ending: str = ".sh", script_name: t.Optional[str] = None
+    ) -> str:
         """Get the name for a file/script created by the step class
 
         Used for Batch scripts, mpmd scripts, etc"""
@@ -63,11 +74,18 @@ class Step:
             return osp.join(self.cwd, script_name)
         return osp.join(self.cwd, self.entity_name + ending)
 
-    def get_colocated_launch_script(self):
+    def get_colocated_launch_script(self) -> str:
         # prep step for colocated launch if specifed in run settings
-        script_path = self.get_step_file(script_name=".colocated_launcher.sh")
+        script_path = self.get_step_file(
+            script_name=osp.join(
+                ".smartsim", f"colocated_launcher_{self.entity_name}.sh"
+            )
+        )
+        makedirs(osp.dirname(script_path), exist_ok=True)
 
-        db_settings = self.run_settings.colocated_db_settings
+        db_settings: t.Dict[str, str] = {}
+        if isinstance(self.step_settings, RunSettings):
+            db_settings = self.step_settings.colocated_db_settings or {}
 
         # db log file causes write contention and kills performance so by
         # default we turn off logging unless user specified debug=True
@@ -76,17 +94,16 @@ class Step:
         else:
             db_log_file = "/dev/null"
 
-        # if user specified to use taskset with local launcher
-        # (not allowed b/c MacOS doesn't support it)
-        # TODO: support this only on linux
-        if (
-            self.__class__.__name__ == "LocalStep"
-            and db_settings["limit_app_cpus"] is True
-        ):  # pragma: no cover
-            logger.warning("Setting limit_app_cpus=False for local launcher")
-            db_settings["limit_app_cpus"] = False
-
         # write the colocated wrapper shell script to the directory for this
         # entity currently being prepped to launch
         write_colocated_launch_script(script_path, db_log_file, db_settings)
         return script_path
+
+    # pylint: disable=no-self-use
+    def add_to_batch(self, step: Step) -> None:
+        """Add a job step to this batch
+
+        :param step: a job step instance e.g. SrunStep
+        :type step: Step
+        """
+        raise SmartSimError("add_to_batch not implemented for this step type")

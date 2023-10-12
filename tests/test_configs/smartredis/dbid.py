@@ -24,39 +24,33 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
+import argparse
 
-msg = "smartsim.tf has been deprecated in favor of smartsim.ml.tf and\n"
-msg += "will be removed in a future release. Please update your import statements."
-warnings.warn(
-    msg,
-    DeprecationWarning,
-    stacklevel=2,
-)
+import os
 
-from .._core._install.buildenv import Version_, Versioner
-from ..error import SmartSimError
-from ..log import get_logger
+from smartredis import ConfigOptions, Client
 
-logger = get_logger(__name__)
+if __name__ == "__main__":
+    """For inclusion in test with single database identifier in a single Client
+    constructor"""
 
-vers = Versioner()
-TF_VERSION = vers.TENSORFLOW
+    parser = argparse.ArgumentParser(description="SmartRedis")
+    parser.add_argument("--exchange", action="store_true")
+    args = parser.parse_args()
 
-try:
-    import tensorflow as tf
+    env_vars = [
+        "SSKEYIN_testdb_colo",
+        "SSKEYOUT_testdb_colo",
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
 
-    installed_tf = Version_(tf.__version__)
-    assert installed_tf >= "2.4.0"
+    assert all([var in os.environ for var in env_vars])
 
-except ImportError:  # pragma: no cover
-    raise ModuleNotFoundError(
-        f"TensorFlow {TF_VERSION} is not installed. Please install it to use smartsim.tf"
-    ) from None
-except AssertionError:  # pragma: no cover
-    raise SmartSimError(
-        f"TensorFlow >= {TF_VERSION} is required for smartsim.tf, you have {tf.__version__}"
-    ) from None
+    opts1 = ConfigOptions.create_from_environment("testdb_colo")
+
+    client = Client(opts1, logger_name="SmartSim")
 
 
-from .utils import freeze_model
+
+    

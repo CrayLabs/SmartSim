@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .alpsSettings import AprunSettings
-from .base import RunSettings
+from .base import RunSettings, SettingsBase
 from .cobaltSettings import CobaltBatchSettings
 from .containers import Container, Singularity
 from .lsfSettings import BsubBatchSettings, JsrunSettings
@@ -44,6 +44,7 @@ __all__ = [
     "OrterunSettings",
     "QsubBatchSettings",
     "RunSettings",
+    "SettingsBase",
     "SbatchSettings",
     "SrunSettings",
     "PalsMpiexecSettings",

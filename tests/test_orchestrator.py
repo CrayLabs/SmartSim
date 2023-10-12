@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+import psutil
 import pytest
 
 from smartsim import Experiment
@@ -92,8 +93,36 @@ def test_orc_active_functions(fileutils, wlmutils):
         db.get_address()
 
 
-def test_catch_local_db_errors():
+def test_multiple_interfaces(fileutils, wlmutils):
+    exp_name = "test_multiple_interfaces"
+    exp = Experiment(exp_name, launcher="local")
+    test_dir = fileutils.make_test_dir()
 
+    net_if_addrs = psutil.net_if_addrs()
+    net_if_addrs = [
+        net_if_addr for net_if_addr in net_if_addrs if not net_if_addr.startswith("lo")
+    ]
+
+    net_if_addrs = ["lo", net_if_addrs[0]]
+
+    db = Orchestrator(port=wlmutils.get_test_port(), interface=net_if_addrs)
+    db.set_path(test_dir)
+
+    exp.start(db)
+
+    # check if the orchestrator is active
+    assert db.is_active()
+
+    # check if the orchestrator can get the address
+    correct_address = db.get_address() == ["127.0.0.1:" + str(wlmutils.get_test_port())]
+    if not correct_address:
+        exp.stop(db)
+        assert False
+
+    exp.stop(db)
+
+
+def test_catch_local_db_errors():
     # local database with more than one node not allowed
     with pytest.raises(SSUnsupportedError):
         db = Orchestrator(db_nodes=2)
@@ -197,6 +226,31 @@ def test_slurm_set_batch_arg(wlmutils):
     assert orc2.batch_settings.batch_args["account"] == "ACCOUNT"
 
 
+@pytest.mark.parametrize("single_cmd", [
+    pytest.param(True, id="Single MPMD `srun`"),
+    pytest.param(False, id="Multiple `srun`s"),
+])
+def test_orc_results_in_correct_number_of_shards(single_cmd):
+    num_shards = 5
+    orc = Orchestrator(
+        port=12345,
+        launcher="slurm",
+        run_command="srun",
+        db_nodes=num_shards,
+        batch=False,
+        single_cmd=single_cmd,
+    )
+    if single_cmd:
+        assert len(orc.entities) == 1
+        node ,= orc.entities
+        assert len(node.run_settings.mpmd) == num_shards - 1
+    else:
+        assert len(orc.entities) == num_shards
+        assert all(node.run_settings.mpmd == [] for node in orc.entities)
+    assert orc.num_shards == orc.db_nodes == sum(
+            node.num_shards for node in orc.entities)
+
+
 ###### Cobalt ######
 
 
@@ -272,7 +326,6 @@ def test_catch_orc_errors_lsf(wlmutils):
 
 
 def test_lsf_set_run_args(wlmutils):
-
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,
@@ -286,7 +339,6 @@ def test_lsf_set_run_args(wlmutils):
 
 
 def test_lsf_set_batch_args(wlmutils):
-
     orc = Orchestrator(
         wlmutils.get_test_port(),
         db_nodes=3,

@@ -24,8 +24,11 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import shutil
 import subprocess
+import typing as t
 
 from ..error import LauncherError, SSUnsupportedError
 from ..log import get_logger
@@ -39,14 +42,14 @@ class _BaseMPISettings(RunSettings):
 
     def __init__(
         self,
-        exe,
-        exe_args=None,
-        run_command="mpiexec",
-        run_args=None,
-        env_vars=None,
-        fail_if_missing_exec=True,
-        **kwargs,
-    ):
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_command: str = "mpiexec",
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        fail_if_missing_exec: bool = True,
+        **kwargs: t.Any,
+    ) -> None:
         """Settings to format run job with an MPI-standard binary
 
         Note that environment variables can be passed with a None
@@ -77,7 +80,7 @@ class _BaseMPISettings(RunSettings):
             env_vars=env_vars,
             **kwargs,
         )
-        self.mpmd = []
+        self.mpmd: t.List[RunSettings] = []
         self.affinity_script = None
 
         if not shutil.which(self._run_command):
@@ -87,27 +90,26 @@ class _BaseMPISettings(RunSettings):
             )
             if fail_if_missing_exec:
                 raise LauncherError(msg)
-            else:
-                logger.warning(msg)
+            logger.warning(msg)
 
     reserved_run_args = {"wd", "wdir"}
 
-    def make_mpmd(self, mpirun_settings):
+    def make_mpmd(self, settings: RunSettings) -> None:
         """Make a mpmd workload by combining two ``mpirun`` commands
 
         This connects the two settings to be executed with a single
         Model instance
 
-        :param mpirun_settings: MpirunSettings instance
-        :type mpirun_settings: MpirunSettings
+        :param settings: MpirunSettings instance
+        :type settings: MpirunSettings
         """
         if self.colocated_db_settings:
             raise SSUnsupportedError(
                 "Colocated models cannot be run as a mpmd workload"
             )
-        self.mpmd.append(mpirun_settings)
+        self.mpmd.append(settings)
 
-    def set_task_map(self, task_mapping):
+    def set_task_map(self, task_mapping: str) -> None:
         """Set ``mpirun`` task mapping
 
         this sets ``--map-by <mapping>``
@@ -117,9 +119,9 @@ class _BaseMPISettings(RunSettings):
         :param task_mapping: task mapping
         :type task_mapping: str
         """
-        self.run_args["map-by"] = str(task_mapping)
+        self.run_args["map-by"] = task_mapping
 
-    def set_cpus_per_task(self, cpus_per_task):
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--cpus-per-proc`` for MPI compliant implementations
@@ -132,7 +134,7 @@ class _BaseMPISettings(RunSettings):
         """
         self.run_args["cpus-per-proc"] = int(cpus_per_task)
 
-    def set_cpu_binding_type(self, bind_type):
+    def set_cpu_binding_type(self, bind_type: str) -> None:
         """Specifies the cores to which MPI processes are bound
 
         This sets ``--bind-to`` for MPI compliant implementations
@@ -140,9 +142,9 @@ class _BaseMPISettings(RunSettings):
         :param bind_type: binding type
         :type bind_type: str
         """
-        self.run_args["bind-to"] = str(bind_type)
+        self.run_args["bind-to"] = bind_type
 
-    def set_tasks_per_node(self, tasks_per_node):
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
@@ -150,7 +152,7 @@ class _BaseMPISettings(RunSettings):
         """
         self.run_args["npernode"] = int(tasks_per_node)
 
-    def set_tasks(self, tasks):
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``-n`` for MPI compliant implementations
@@ -160,7 +162,7 @@ class _BaseMPISettings(RunSettings):
         """
         self.run_args["n"] = int(tasks)
 
-    def set_hostlist(self, host_list):
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Set the hostlist for the ``mpirun`` command
 
         This sets ``--host``
@@ -173,11 +175,11 @@ class _BaseMPISettings(RunSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         self.run_args["host"] = ",".join(host_list)
 
-    def set_hostlist_from_file(self, file_path):
+    def set_hostlist_from_file(self, file_path: str) -> None:
         """Use the contents of a file to set the hostlist
 
         This sets ``--hostfile``
@@ -185,9 +187,9 @@ class _BaseMPISettings(RunSettings):
         :param file_path: Path to the hostlist file
         :type file_path: str
         """
-        self.run_args["hostfile"] = str(file_path)
+        self.run_args["hostfile"] = file_path
 
-    def set_verbose_launch(self, verbose):
+    def set_verbose_launch(self, verbose: bool) -> None:
         """Set the job to run in verbose mode
 
         This sets ``--verbose``
@@ -200,7 +202,7 @@ class _BaseMPISettings(RunSettings):
         else:
             self.run_args.pop("verbose", None)
 
-    def set_quiet_launch(self, quiet):
+    def set_quiet_launch(self, quiet: bool) -> None:
         """Set the job to run in quiet mode
 
         This sets ``--quiet``
@@ -213,7 +215,7 @@ class _BaseMPISettings(RunSettings):
         else:
             self.run_args.pop("quiet", None)
 
-    def set_broadcast(self, dest_path=None):
+    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -230,7 +232,7 @@ class _BaseMPISettings(RunSettings):
             )
         self.run_args["preload-binary"] = None
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the maximum number of seconds that a job will run
 
         This sets ``--timeout``
@@ -238,9 +240,9 @@ class _BaseMPISettings(RunSettings):
         :param walltime: number like string of seconds that a job will run in secs
         :type walltime: str
         """
-        self.run_args["timeout"] = str(walltime)
+        self.run_args["timeout"] = walltime
 
-    def format_run_args(self):
+    def format_run_args(self) -> t.List[str]:
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
@@ -259,7 +261,7 @@ class _BaseMPISettings(RunSettings):
                     args += [prefix + opt, str(value)]
         return args
 
-    def format_env_vars(self):
+    def format_env_vars(self) -> t.List[str]:
         """Format the environment variables for mpirun
 
         :return: list of env vars
@@ -278,7 +280,14 @@ class _BaseMPISettings(RunSettings):
 
 
 class MpirunSettings(_BaseMPISettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Settings to run job with ``mpirun`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
@@ -294,7 +303,7 @@ class MpirunSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
@@ -302,7 +311,14 @@ class MpirunSettings(_BaseMPISettings):
 
 
 class MpiexecSettings(_BaseMPISettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Settings to run job with ``mpiexec`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
@@ -318,14 +334,14 @@ class MpiexecSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """
         super().__init__(exe, exe_args, "mpiexec", run_args, env_vars, **kwargs)
 
         completed_process = subprocess.run(
-            [self._run_command, "--help"], capture_output=True
+            [self._run_command, "--help"], capture_output=True, check=False
         )
         help_statement = completed_process.stdout.decode()
         if "mpiexec.slurm" in help_statement:
@@ -335,7 +351,14 @@ class MpiexecSettings(_BaseMPISettings):
 
 
 class OrterunSettings(_BaseMPISettings):
-    def __init__(self, exe, exe_args=None, run_args=None, env_vars=None, **kwargs):
+    def __init__(
+        self,
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Settings to run job with ``orterun`` command (MPI-standard)
 
         Note that environment variables can be passed with a None
@@ -351,7 +374,7 @@ class OrterunSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         """

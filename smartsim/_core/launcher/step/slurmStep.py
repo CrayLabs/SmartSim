@@ -27,16 +27,18 @@
 import os
 import shutil
 from shlex import split as sh_split
+import typing as t
 
 from ....error import AllocationError
 from ....log import get_logger
 from .step import Step
+from ....settings import SrunSettings, SbatchSettings, RunSettings, Singularity
 
 logger = get_logger(__name__)
 
 
 class SbatchStep(Step):
-    def __init__(self, name, cwd, batch_settings):
+    def __init__(self, name: str, cwd: str, batch_settings: SbatchSettings) -> None:
         """Initialize a Slurm Sbatch step
 
         :param name: name of the entity to launch
@@ -44,14 +46,14 @@ class SbatchStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param batch_settings: batch settings for entity
-        :type batch_settings: BatchSettings
+        :type batch_settings: SbatchSettings
         """
-        super().__init__(name, cwd)
-        self.batch_settings = batch_settings
-        self.step_cmds = []
+        super().__init__(name, cwd, batch_settings)
+        self.step_cmds: t.List[t.List[str]] = []
         self.managed = True
+        self.batch_settings = batch_settings
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the launch command for the batch
 
         :return: launch command for the batch
@@ -60,7 +62,7 @@ class SbatchStep(Step):
         script = self._write_script()
         return [self.batch_settings.batch_cmd, "--parsable", script]
 
-    def add_to_batch(self, step):
+    def add_to_batch(self, step: Step) -> None:
         """Add a job step to this batch
 
         :param step: a job step instance e.g. SrunStep
@@ -71,7 +73,7 @@ class SbatchStep(Step):
         self.step_cmds.append(launch_cmd)
         logger.debug(f"Added step command to batch for {step.name}")
 
-    def _write_script(self):
+    def _write_script(self) -> str:
         """Write the batch script
 
         :return: batch script path after writing
@@ -79,30 +81,30 @@ class SbatchStep(Step):
         """
         batch_script = self.get_step_file(ending=".sh")
         output, error = self.get_output_files()
-        with open(batch_script, "w") as f:
-            f.write("#!/bin/bash\n\n")
-            f.write(f"#SBATCH --output={output}\n")
-            f.write(f"#SBATCH --error={error}\n")
-            f.write(f"#SBATCH --job-name={self.name}\n")
+        with open(batch_script, "w", encoding="utf-8") as script_file:
+            script_file.write("#!/bin/bash\n\n")
+            script_file.write(f"#SBATCH --output={output}\n")
+            script_file.write(f"#SBATCH --error={error}\n")
+            script_file.write(f"#SBATCH --job-name={self.name}\n")
 
             # add additional sbatch options
             for opt in self.batch_settings.format_batch_args():
-                f.write(f"#SBATCH {opt}\n")
+                script_file.write(f"#SBATCH {opt}\n")
 
-            for cmd in self.batch_settings._preamble:
-                f.write(f"{cmd}\n")
+            for cmd in self.batch_settings.preamble:
+                script_file.write(f"{cmd}\n")
 
-            for i, cmd in enumerate(self.step_cmds):
-                f.write("\n")
-                f.write(f"{' '.join((cmd))} &\n")
+            for i, step_cmd in enumerate(self.step_cmds):
+                script_file.write("\n")
+                script_file.write(f"{' '.join((step_cmd))} &\n")
                 if i == len(self.step_cmds) - 1:
-                    f.write("\n")
-                    f.write("wait\n")
+                    script_file.write("\n")
+                    script_file.write("wait\n")
         return batch_script
 
 
 class SrunStep(Step):
-    def __init__(self, name, cwd, run_settings):
+    def __init__(self, name: str, cwd: str, run_settings: SrunSettings) -> None:
         """Initialize a srun job step
 
         :param name: name of the entity to be launched
@@ -110,55 +112,54 @@ class SrunStep(Step):
         :param cwd: path to launch dir
         :type cwd: str
         :param run_settings: run settings for entity
-        :type run_settings: RunSettings
+        :type run_settings: SrunSettings
         """
-        super().__init__(name, cwd)
-        self.run_settings = run_settings
-        self.alloc = None
+        super().__init__(name, cwd, run_settings)
+        self.alloc: t.Optional[str] = None
         self.managed = True
+        self.run_settings = run_settings
         if not self.run_settings.in_batch:
             self._set_alloc()
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         """Get the command to launch this step
 
         :return: launch command
         :rtype: list[str]
         """
         srun = self.run_settings.run_command
+        if not srun:
+            raise ValueError("No srun command found in PATH")
+
         output, error = self.get_output_files()
 
         srun_cmd = [srun, "--output", output, "--error", error, "--job-name", self.name]
-        compound_env = set()
+        compound_env: t.Set[str] = set()
 
         if self.alloc:
             srun_cmd += ["--jobid", str(self.alloc)]
 
         if self.run_settings.env_vars:
-            (
-                env_var_str,
-                comma_separated_env_vars,
-            ) = self.run_settings.format_comma_sep_env_vars()
+            env_vars, csv_env_vars = self.run_settings.format_comma_sep_env_vars()
 
-            if len(env_var_str) > 0:
-                srun_cmd += ["--export", f"ALL,{env_var_str}"]
+            if len(env_vars) > 0:
+                srun_cmd += ["--export", f"ALL,{env_vars}"]
 
-            if comma_separated_env_vars:
-                compound_env = compound_env.union(comma_separated_env_vars)
+            if csv_env_vars:
+                compound_env = compound_env.union(csv_env_vars)
 
         srun_cmd += self.run_settings.format_run_args()
 
         if self.run_settings.colocated_db_settings:
-            # disable cpu binding as the entrypoint will set that
-            # for the application and database process now
-            srun_cmd.append("--cpu-bind=none")
-
             # Replace the command with the entrypoint wrapper script
             bash = shutil.which("bash")
+            if not bash:
+                raise RuntimeError("Could not find bash in PATH")
             launch_script_path = self.get_colocated_launch_script()
             srun_cmd += [bash, launch_script_path]
 
-        if self.run_settings.container:
+        if isinstance(self.run_settings.container, Singularity):
+            # pylint: disable-next=protected-access
             srun_cmd += self.run_settings.container._container_cmds(self.cwd)
 
         if compound_env:
@@ -168,13 +169,13 @@ class SrunStep(Step):
 
         return srun_cmd
 
-    def _set_alloc(self):
+    def _set_alloc(self) -> None:
         """Set the id of the allocation
 
         :raises AllocationError: allocation not listed or found
         """
         if self.run_settings.alloc:
-            self.alloc = str(self.run_settings.alloc)
+            self.alloc = self.run_settings.alloc
         else:
             if "SLURM_JOB_ID" in os.environ:
                 self.alloc = os.environ["SLURM_JOB_ID"]
@@ -186,38 +187,52 @@ class SrunStep(Step):
                     "No allocation specified or found and not running in batch"
                 )
 
-    def _build_exe(self):
+    def _get_mpmd(self) -> t.List[RunSettings]:
+        """Temporary convenience function to return a typed list
+        of attached RunSettings"""
+        return self.run_settings.mpmd
+
+    @staticmethod
+    def _get_exe_args_list(run_setting: RunSettings) -> t.List[str]:
+        """Convenience function to encapsulate checking the
+        runsettings.exe_args type to always return a list"""
+        exe_args = run_setting.exe_args
+        args: t.List[str] = exe_args if isinstance(exe_args, list) else [exe_args]
+        return args
+
+    def _build_exe(self) -> t.List[str]:
         """Build the executable for this step
 
         :return: executable list
         :rtype: list[str]
         """
-        if self.run_settings.mpmd:
+        if self._get_mpmd():
             return self._make_mpmd()
-        else:
-            exe = self.run_settings.exe
-            args = self.run_settings.exe_args
-            return exe + args
 
-    def _make_mpmd(self):
+        exe = self.run_settings.exe
+        args = self._get_exe_args_list(self.run_settings)
+        return exe + args
+
+    def _make_mpmd(self) -> t.List[str]:
         """Build Slurm multi-prog (MPMD) executable"""
         exe = self.run_settings.exe
-        args = self.run_settings.exe_args
+        args = self._get_exe_args_list(self.run_settings)
         cmd = exe + args
 
         compound_env_vars = []
-        for mpmd in self.run_settings.mpmd:
+        for mpmd_rs in self._get_mpmd():
             cmd += [" : "]
-            cmd += mpmd.format_run_args()
+            cmd += mpmd_rs.format_run_args()
             cmd += ["--job-name", self.name]
 
-            (env_var_str, csv_env_vars) = mpmd.format_comma_sep_env_vars()
-            if len(env_var_str) > 0:
-                cmd += ["--export", f"ALL,{env_var_str}"]
-            if csv_env_vars:
-                compound_env_vars.extend(csv_env_vars)
-            cmd += mpmd.exe
-            cmd += mpmd.exe_args
+            if isinstance(mpmd_rs, SrunSettings):
+                (env_var_str, csv_env_vars) = mpmd_rs.format_comma_sep_env_vars()
+                if len(env_var_str) > 0:
+                    cmd += ["--export", f"ALL,{env_var_str}"]
+                if csv_env_vars:
+                    compound_env_vars.extend(csv_env_vars)
+            cmd += mpmd_rs.exe
+            cmd += self._get_exe_args_list(mpmd_rs)
 
         cmd = sh_split(" ".join(cmd))
         return cmd

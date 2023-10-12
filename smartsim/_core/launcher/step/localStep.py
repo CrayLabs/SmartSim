@@ -26,17 +26,20 @@
 
 import os
 import shutil
+import typing as t
 
 from .step import Step
+from ....settings.base import RunSettings
+from ....settings import Singularity
 
 
 class LocalStep(Step):
-    def __init__(self, name, cwd, run_settings):
-        super().__init__(name, cwd)
+    def __init__(self, name: str, cwd: str, run_settings: RunSettings):
+        super().__init__(name, cwd, run_settings)
         self.run_settings = run_settings
         self.env = self._set_env()
 
-    def get_launch_cmd(self):
+    def get_launch_cmd(self) -> t.List[str]:
         cmd = []
 
         # Add run command and args if user specified
@@ -48,13 +51,16 @@ class LocalStep(Step):
 
         if self.run_settings.colocated_db_settings:
             # Replace the command with the entrypoint wrapper script
-            bash = shutil.which("bash")
+            if not (bash := shutil.which("bash")):
+                raise RuntimeError("Unable to locate bash interpreter")
 
             launch_script_path = self.get_colocated_launch_script()
             cmd.extend([bash, launch_script_path])
 
-        if self.run_settings.container:
-            cmd += self.run_settings.container._container_cmds(self.cwd)
+        container = self.run_settings.container
+        if container and isinstance(container, Singularity):
+            # pylint: disable-next=protected-access
+            cmd += container._container_cmds(self.cwd)
 
         # build executable
         cmd.extend(self.run_settings.exe)
@@ -62,9 +68,9 @@ class LocalStep(Step):
             cmd.extend(self.run_settings.exe_args)
         return cmd
 
-    def _set_env(self):
+    def _set_env(self) -> t.Dict[str, str]:
         env = os.environ.copy()
         if self.run_settings.env_vars:
             for k, v in self.run_settings.env_vars.items():
-                env[k] = v
+                env[k] = v or ""
         return env

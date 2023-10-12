@@ -24,13 +24,20 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import typing as t
 from .base import BatchSettings
 
 
 class CobaltBatchSettings(BatchSettings):
     def __init__(
-        self, nodes=None, time="", queue=None, account=None, batch_args=None, **kwargs
-    ):
+        self,
+        nodes: t.Optional[int] = None,
+        time: str = "",
+        queue: t.Optional[str] = None,
+        account: t.Optional[str] = None,
+        batch_args: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        **kwargs: t.Any,
+    ) -> None:
         """Specify settings for a Cobalt ``qsub`` batch launch
 
         If the argument doesn't have a parameter, put None
@@ -41,7 +48,8 @@ class CobaltBatchSettings(BatchSettings):
 
         :param nodes: number of nodes, defaults to None
         :type nodes: int, optional
-        :param time: walltime for job, e.g. "10:00:00" for 10 hours, defaults to empty str
+        :param time: walltime for job, e.g. "10:00:00" for 10 hours,
+            defaults to empty str
         :type time: str, optional
         :param queue: queue to launch job in, defaults to None
         :type queue: str, optional
@@ -60,7 +68,7 @@ class CobaltBatchSettings(BatchSettings):
             **kwargs,
         )
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the walltime of the job
 
         format = "HH:MM:SS"
@@ -76,7 +84,7 @@ class CobaltBatchSettings(BatchSettings):
         if walltime:
             self.batch_args["time"] = walltime
 
-    def set_nodes(self, num_nodes):
+    def set_nodes(self, num_nodes: int) -> None:
         """Set the number of nodes for this batch job
 
         :param num_nodes: number of nodes
@@ -84,9 +92,9 @@ class CobaltBatchSettings(BatchSettings):
         """
         # TODO catch existing "n" in batch_args
         if num_nodes:
-            self.batch_args["nodecount"] = int(num_nodes)
+            self.batch_args["nodecount"] = str(int(num_nodes))
 
-    def set_hostlist(self, host_list):
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
         """Specify the hostlist for this job
 
         :param host_list: hosts to launch on
@@ -97,20 +105,20 @@ class CobaltBatchSettings(BatchSettings):
             host_list = [host_list.strip()]
         if not isinstance(host_list, list):
             raise TypeError("host_list argument must be a list of strings")
-        if not all([isinstance(host, str) for host in host_list]):
+        if not all(isinstance(host, str) for host in host_list):
             raise TypeError("host_list argument must be list of strings")
         hosts = ",".join(host_list)
         self.batch_args["attrs"] = f"location={hosts}"
 
-    def set_tasks(self, num_tasks):
+    def set_tasks(self, num_tasks: int) -> None:
         """Set total number of processes to start
 
         :param num_tasks: number of processes
         :type num_tasks: int
         """
-        self.batch_args["proccount"] = int(num_tasks)
+        self.batch_args["proccount"] = str(int(num_tasks))
 
-    def set_queue(self, queue):
+    def set_queue(self, queue: str) -> None:
         """Set the queue for the batch job
 
         :param queue: queue name
@@ -120,7 +128,7 @@ class CobaltBatchSettings(BatchSettings):
         if queue:
             self.batch_args["queue"] = str(queue)
 
-    def set_account(self, account):
+    def set_account(self, account: str) -> None:
         """Set the account for this batch job
 
         :param acct: account id
@@ -130,7 +138,7 @@ class CobaltBatchSettings(BatchSettings):
         if account:
             self.batch_args["project"] = account
 
-    def format_batch_args(self):
+    def format_batch_args(self) -> t.List[str]:
         """Get the formatted batch arguments for a preview
 
         :return: list of batch arguments for Sbatch

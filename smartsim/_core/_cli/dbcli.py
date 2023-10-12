@@ -24,31 +24,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Constants for SmartSim
+import argparse
 
-from warnings import simplefilter, warn
-
-dep_msg = "This is a deprecated module. Please use smartsim.status instead.\n"
-dep_msg += "This module will be removed in the next release."
-
-simplefilter("once", DeprecationWarning)
-warn(dep_msg, DeprecationWarning, stacklevel=2)
+from smartsim._core._cli.utils import get_db_path
 
 
-# Statuses that are applied to jobs
-STATUS_RUNNING = "Running"
-STATUS_COMPLETED = "Completed"
-STATUS_CANCELLED = "Cancelled"
-STATUS_FAILED = "Failed"
-STATUS_NEW = "New"
-STATUS_PAUSED = "Paused"
-
-# SmartSim status mapping
-SMARTSIM_STATUS = {
-    "Running": STATUS_RUNNING,
-    "Paused": STATUS_PAUSED,
-    "Completed": STATUS_COMPLETED,
-    "Cancelled": STATUS_CANCELLED,
-    "Failed": STATUS_FAILED,
-    "New": STATUS_NEW,
-}
+def execute(_args: argparse.Namespace) -> int:
+    if db_path := get_db_path():
+        print(db_path)
+        return 0
+    print("Database (Redis or KeyDB) dependencies not found")
+    return 1

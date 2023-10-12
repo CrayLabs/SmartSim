@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import contextlib
 
 import pytest
 
@@ -154,15 +155,12 @@ def test_summary(fileutils):
     assert 0 == int(row["RunID"])
     assert 0 == int(row["Returncode"])
 
+def test_launcher_detection(wlmutils, monkeypatch):
+    if wlmutils.get_test_launcher() == "pals":
+        pytest.skip(reason="Launcher detection cannot currently detect pbs vs pals")
+    if wlmutils.get_test_launcher() == "local":
+        monkeypatch.setenv("PATH", "")  # Remove all WLMs from PATH
 
-def test_launcher_detection(wlmutils):
     exp = Experiment("test-launcher-detection", launcher="auto")
 
-    # We check whether the right launcher is found. But if
-    # the test launcher was set to local, we tolerate finding
-    # another one (this cannot be avoided)
-    if (
-        exp._launcher != wlmutils.get_test_launcher()
-        and wlmutils.get_test_launcher() != "local"
-    ):
-        assert False
+    assert exp._launcher == wlmutils.get_test_launcher()

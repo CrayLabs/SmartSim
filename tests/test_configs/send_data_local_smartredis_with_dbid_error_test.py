@@ -24,43 +24,27 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-import pytest
-
-from smartsim.database import (
-    CobaltOrchestrator,
-    LSFOrchestrator,
-    PBSOrchestrator,
-    SlurmOrchestrator,
-)
-
-tf_available = True
-try:
-    import tensorflow
-except ImportError:
-    tf_available = False
+import numpy as np
+from smartredis import Client, ConfigOptions
+from os import environ
 
 
-def test_deprecated_orchestrators(wlmutils):
-    with pytest.deprecated_call():
-        _ = SlurmOrchestrator(interface=wlmutils.get_test_interface())
+def main():
+    # address should be set as we are launching through
+    # SmartSim.
 
-    with pytest.deprecated_call():
-        _ = LSFOrchestrator(interface=wlmutils.get_test_interface())
+    opts1 = ConfigOptions.create_from_environment("my_db")
+    opts2 = ConfigOptions.create_from_environment("my_db")
+    client = Client(opts1, logger_name="SmartSim")
+    client = Client(opts2, logger_name="SmartSim")
 
-    with pytest.deprecated_call():
-        _ = CobaltOrchestrator(interface=wlmutils.get_test_interface())
+    array = np.array([1, 2, 3, 4])
+    client.put_tensor("test_array", array)
+    returned = client.get_tensor("test_array")
 
-    with pytest.deprecated_call():
-        _ = PBSOrchestrator(interface=wlmutils.get_test_interface())
-
-
-@pytest.mark.skipif(not tf_available, reason="Requires TF to run")
-def test_deprecated_tf():
-    with pytest.deprecated_call():
-        from smartsim.tf import freeze_model
+    np.testing.assert_array_equal(array, returned)
+    print(f"Test worked! Sent and received array: {str(array)}")
 
 
-def test_deprecated_constants():
-    with pytest.deprecated_call():
-        from smartsim import constants
+if __name__ == "__main__":
+    main()

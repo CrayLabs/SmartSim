@@ -7,6 +7,7 @@ __pycache__
 htmlcov
 smartsim.egg-info
 tests/test_output
+.DS_Store
 
 # Dependencies
 smartsim/_core/.third-party
@@ -15,6 +16,12 @@ smartsim/_core/.third-party
 _build
 
 smartredis
+
+# Envs
+venv/
+.venv/
+env/
+.env/
 
 # written upon install
 smartsim/version.py

@@ -35,4 +35,7 @@ from .errors import (
     SSInternalError,
     SSUnsupportedError,
     UserStrategyError,
+    SSReservedKeywordError,
+    SSDBIDConflictError,
+
 )

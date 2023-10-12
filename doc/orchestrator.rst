@@ -47,10 +47,10 @@ The cluster deployment is optimal for high data throughput scenarios such as
 online analysis, training and processing.
 
 
-Co-located Orchestrator
+Colocated Orchestrator
 =======================
 
-A co-located Orchestrator is a special type of Orchestrator that is deployed on
+A colocated Orchestrator is a special type of Orchestrator that is deployed on
 the same compute hosts an a ``Model`` instance defined by the user. In this
 deployment, the database is *not* connected together in a cluster and each
 shard of the database is addressed individually by the processes running
@@ -72,7 +72,7 @@ process and the ``Orchestrator`` is deployed locally on each compute host where
 the distributed application is running.
 
 
-To create a co-located model, first, create a ``Model`` instance and then call
+To create a colocated model, first, create a ``Model`` instance and then call
 the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
 
 .. currentmodule:: smartsim.entity.model
@@ -83,8 +83,8 @@ the ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` function.
 .. automethod:: Model.colocate_db_uds
     :noindex:
 
-Here is an example of creating a simple model that is co-located with an
-``Orchestrator`` deployment
+Here is an example of creating a simple model that is colocated with an
+``Orchestrator`` deployment using Unix Domain Sockets
 
 .. code-block:: python
 
@@ -94,20 +94,30 @@ Here is an example of creating a simple model that is co-located with an
   colo_settings = exp.create_run_settings(exe="./some_mpi_app")
 
   colo_model = exp.create_model("colocated_model", colo_settings)
-  colo_model.colocate_db_tcp(
-          port=6780,              # database port
+  colo_model.colocate_db_uds(
           db_cpus=1,              # cpus given to the database on each node
           debug=False             # include debug information (will be slower)
-          limit_app_cpus=False,   # don't overscubscribe app with database cpus
-          ifname=network_interface # specify network interface to use (i.e. "ib0")
+          ifname=network_interface # specify network interface(s) to use (i.e. "ib0" or ["ib0", "lo"])
   )
   exp.start(colo_model)
 
 
-By default, SmartSim will attempt to make sure that the database and the application
-do not fight over resources by taking over the affinity mapping process locally on
-each node. This can be disabled by setting ``limit_app_cpus`` to ``False``.
+By default, SmartSim will pin the database to the first _N_ CPUs according to ``db_cpus``. By
+specifying the optional argument ``custom_pinning``, an alternative pinning can be specified
+by sending in a list of CPU ids (e.g [0,2,range(5,8)]). For optimal performance, most users
+will want to also modify the RunSettings for the model to pin their application to cores not
+occupied by the database.
 
+.. warning::
+
+  Pinning is not supported on MacOS X. Setting ``custom_pinning`` to anything
+  other than ``None`` will raise a warning and the input will be ignored.
+
+.. note::
+
+  Pinning _only_ affects the co-located deployment because both the application and the database
+  are sharing the same compute node. For the clustered deployment, a shard occupies the entirerty
+  of the node.
 
 Redis
 =====

@@ -23,9 +23,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import os
+import typing as t
+
 from os import path
+from tabulate import tabulate
 
 
 class EntityFiles:
@@ -47,7 +49,12 @@ class EntityFiles:
     without necessary having to copy the entire file.
     """
 
-    def __init__(self, tagged, copy, symlink):
+    def __init__(
+        self,
+        tagged: t.Optional[t.List[str]] = None,
+        copy: t.Optional[t.List[str]] = None,
+        symlink: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Initialize an EntityFiles instance
 
         :param tagged: tagged files for model configuration
@@ -59,13 +66,13 @@ class EntityFiles:
                         directories
         :type symlink: list of str
         """
-        self.tagged = tagged
-        self.copy = copy
-        self.link = symlink
+        self.tagged = tagged or []
+        self.copy = copy or []
+        self.link = symlink or []
         self.tagged_hierarchy = None
         self._check_files()
 
-    def _check_files(self):
+    def _check_files(self) -> None:
         """Ensure the files provided by the user are of the correct
            type and actually exist somewhere on the filesystem.
 
@@ -82,12 +89,16 @@ class EntityFiles:
             self.tagged, dir_contents_to_base=True
         )
 
-        for i in range(len(self.copy)):
-            self.copy[i] = self._check_path(self.copy[i])
-        for i in range(len(self.link)):
-            self.link[i] = self._check_path(self.link[i])
+        for i, value in enumerate(self.copy):
+            self.copy[i] = self._check_path(value)
 
-    def _type_check_files(self, file_list, file_type):
+        for i, value in enumerate(self.link):
+            self.link[i] = self._check_path(value)
+
+    @staticmethod
+    def _type_check_files(
+        file_list: t.Union[t.List[str], None], file_type: str
+    ) -> t.List[str]:
         """Check the type of the files provided by the user.
 
         :param file_list: either tagged, copy, or symlink files
@@ -109,10 +120,10 @@ class EntityFiles:
             else:
                 if not all(isinstance(f, str) for f in file_list):
                     raise TypeError(f"Not all {file_type} files were of type str")
-        return file_list
+        return file_list or []
 
     @staticmethod
-    def _check_path(file_path):
+    def _check_path(file_path: str) -> str:
         """Given a user provided path-like str, find the actual path to
            the directory or file and create a full path.
 
@@ -128,6 +139,22 @@ class EntityFiles:
         if path.isdir(full_path):
             return full_path
         raise FileNotFoundError(f"File or Directory {file_path} not found")
+
+    def __str__(self) -> str:
+        """Return table summarizing attached files."""
+        values = []
+
+        if self.copy:
+            values.append(["Copy", "\n".join(self.copy)])
+        if self.link:
+            values.append(["Symlink", "\n".join(self.link)])
+        if self.tagged:
+            values.append(["Configure", "\n".join(self.tagged)])
+
+        if not values:
+            return "No file attached to this entity."
+
+        return tabulate(values, headers=["Strategy", "Files"], tablefmt="grid")
 
 
 class TaggedFilesHierarchy:
@@ -150,7 +177,7 @@ class TaggedFilesHierarchy:
     tagged file directory structure can be replicated
     """
 
-    def __init__(self, parent=None, subdir_name=""):
+    def __init__(self, parent: t.Optional[t.Any] = None, subdir_name: str = "") -> None:
         """Initialize a TaggedFilesHierarchy
 
         :param parent: The parent hierarchy of the new hierarchy,
@@ -184,18 +211,20 @@ class TaggedFilesHierarchy:
         if parent:
             parent.dirs.add(self)
 
-        self._base = path.join(parent.base, subdir_name) if parent else ""
-        self.parent = parent
-        self.files = set()
-        self.dirs = set()
+        self._base: str = path.join(parent.base, subdir_name) if parent else ""
+        self.parent: t.Any = parent
+        self.files: t.Set[str] = set()
+        self.dirs: t.Set[TaggedFilesHierarchy] = set()
 
     @property
-    def base(self):
+    def base(self) -> str:
         """Property to ensure that self.base is read-only"""
         return self._base
 
     @classmethod
-    def from_list_paths(cls, path_list, dir_contents_to_base=False):
+    def from_list_paths(
+        cls, path_list: t.List[str], dir_contents_to_base: bool = False
+    ) -> t.Any:
         """Given a list of absolute paths to files and dirs, create and return
         a TaggedFilesHierarchy instance representing the file hierarchy of
         tagged files. All files in the path list will be placed in the base of
@@ -216,16 +245,19 @@ class TaggedFilesHierarchy:
         tagged_file_hierarchy = cls()
         if dir_contents_to_base:
             new_paths = []
-            for path in path_list:
-                if os.path.isdir(path):
-                    new_paths += [os.path.join(path, file) for file in os.listdir(path)]
+            for tagged_path in path_list:
+                if os.path.isdir(tagged_path):
+                    new_paths += [
+                        os.path.join(tagged_path, file)
+                        for file in os.listdir(tagged_path)
+                    ]
                 else:
-                    new_paths.append(path)
+                    new_paths.append(tagged_path)
             path_list = new_paths
         tagged_file_hierarchy._add_paths(path_list)
         return tagged_file_hierarchy
 
-    def _add_file(self, file):
+    def _add_file(self, file: str) -> None:
         """Add a file to the current level in the file hierarchy
 
         :param file: absoute path to a file to add to the hierarchy
@@ -233,7 +265,7 @@ class TaggedFilesHierarchy:
         """
         self.files.add(file)
 
-    def _add_dir(self, dir):
+    def _add_dir(self, dir_path: str) -> None:
         """Add a dir contianing tagged files by creating a new sub level in the
         tagged file hierarchy. All paths within the directroy are added to the
         the new level sub level tagged file hierarchy
@@ -241,12 +273,13 @@ class TaggedFilesHierarchy:
         :param dir: absoute path to a dir to add to the hierarchy
         :type dir: str
         """
-        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir))
+        tagged_file_hierarchy = TaggedFilesHierarchy(self, path.basename(dir_path))
+        # pylint: disable-next=protected-access
         tagged_file_hierarchy._add_paths(
-            [path.join(dir, file) for file in os.listdir(dir)]
+            [path.join(dir_path, file) for file in os.listdir(dir_path)]
         )
 
-    def _add_paths(self, paths):
+    def _add_paths(self, paths: t.List[str]) -> None:
         """Takes a list of paths and iterates over it, determining if each
         path is to a file or a dir and then appropriatly adding it to the
         TaggedFilesHierarchy.
@@ -256,16 +289,16 @@ class TaggedFilesHierarchy:
         :raises ValueError: if link to dir is found
         :raises FileNotFoundError: if path does not exist
         """
-        for path in paths:
-            path = os.path.abspath(path)
-            if os.path.isdir(path):
-                if os.path.islink(path):
+        for candidate in paths:
+            candidate = os.path.abspath(candidate)
+            if os.path.isdir(candidate):
+                if os.path.islink(candidate):
                     raise ValueError(
                         "Tagged directories and thier subdirectories cannot be links"
                         + " to prevent circular directory structures"
                     )
-                self._add_dir(path)
-            elif os.path.isfile(path):
-                self._add_file(path)
+                self._add_dir(candidate)
+            elif os.path.isfile(candidate):
+                self._add_file(candidate)
             else:
-                raise FileNotFoundError(f"File or Directory {path} not found")
+                raise FileNotFoundError(f"File or Directory {candidate} not found")

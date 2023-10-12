@@ -23,3 +23,12 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import argparse
+
+from smartsim._core._cli.utils import get_install_path
+
+
+def execute(_args: argparse.Namespace) -> int:
+    print(get_install_path())
+    return 0

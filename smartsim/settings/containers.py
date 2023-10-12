@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import shutil
+import typing as t
 
 from ..log import get_logger
 
@@ -47,15 +48,17 @@ class Container:
     :type working_directory: str
     """
 
-    def __init__(self, image, args="", mount="", working_directory=""):
+    def __init__(
+        self, image: str, args: str = "", mount: str = "", working_directory: str = ""
+    ) -> None:
         # Validate types
         if not isinstance(image, str):
             raise TypeError("image must be a str")
-        elif not isinstance(args, (str, list)):
+        if not isinstance(args, (str, list)):
             raise TypeError("args must be a str | list")
-        elif not isinstance(mount, (str, list, dict)):
+        if not isinstance(mount, (str, list, dict)):
             raise TypeError("mount must be a str | list | dict")
-        elif not isinstance(working_directory, str):
+        if not isinstance(working_directory, str):
             raise TypeError("working_directory must be a str")
 
         self.image = image
@@ -63,18 +66,22 @@ class Container:
         self.mount = mount
         self.working_directory = working_directory
 
-    def _containerized_run_command(self, run_command: str):
+    def _containerized_run_command(self, run_command: str) -> str:
         """Return modified run_command with container commands prepended.
 
         :param run_command: run command from a RunSettings class
         :type run_command: str
         """
         raise NotImplementedError(
-            f"Containerized run command specification not implemented for this Container type: {type(self)}"
+            "Containerized run command specification not implemented for this "
+            f"Container type: {type(self)}"
         )
 
 
 class Singularity(Container):
+    # pylint: disable=abstract-method
+    # todo: determine if _containerized_run_command should be abstract
+
     """Singularity (apptainer) container type. To be passed into a
     ``RunSettings`` class initializer or ``Experiment.create_run_settings``.
 
@@ -86,10 +93,12 @@ class Singularity(Container):
 
         Also, note that user-defined bind paths (``mount`` argument) may be
         disabled by a
-        `system administrator <https://apptainer.org/docs/admin/1.0/configfiles.html#bind-mount-management>`_
+        `system administrator
+        <https://apptainer.org/docs/admin/1.0/configfiles.html#bind-mount-management>`_
 
 
-    :param image: local or remote path to container image, e.g. ``docker://sylabsio/lolcow``
+    :param image: local or remote path to container image,
+        e.g. ``docker://sylabsio/lolcow``
     :type image: str
     :param args: arguments to 'singularity exec' command
     :type args: str | list[str], optional
@@ -97,10 +106,10 @@ class Singularity(Container):
     :type mount: str | list[str] | dict[str, str], optional
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
 
-    def _container_cmds(self, default_working_directory=""):
+    def _container_cmds(self, default_working_directory: str = "") -> t.List[str]:
         """Return list of container commands to be inserted before exe.
             Container members are validated during this call.
 
@@ -137,14 +146,14 @@ class Singularity(Container):
         if self.working_directory:
             working_directory = self.working_directory
 
-        if not (working_directory in serialized_mount):
+        if working_directory not in serialized_mount:
             if serialized_mount:
                 serialized_mount = ",".join([working_directory, serialized_mount])
             else:
                 serialized_mount = working_directory
             logger.warning(
-                f"Working directory not specified in mount: \n {working_directory}"
-                + "\nAutomatically adding it to the list of bind points"
+                f"Working directory not specified in mount: \n {working_directory}\n"
+                "Automatically adding it to the list of bind points"
             )
 
         # Find full path to singularity
@@ -154,11 +163,12 @@ class Singularity(Container):
         #   so warn instead of error
         if not singularity:
             logger.warning(
-                "Unable to find singularity. Continuing in case singularity is available on compute node"
+                "Unable to find singularity. Continuing in case singularity is "
+                "available on compute node"
             )
 
         # Construct containerized launch command
-        cmd_list = [singularity, "exec"]
+        cmd_list = [singularity or "singularity", "exec"]
         if working_directory:
             cmd_list.extend(["--pwd", working_directory])
 

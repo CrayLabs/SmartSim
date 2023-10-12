@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import typing as t
 
 from smartsim.error.errors import SmartSimError
 
@@ -35,12 +36,12 @@ logger = get_logger(__name__)
 
 
 class ModelWriter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tag = ";"
         self.regex = "(;[^;]+;)"
-        self.lines = []
+        self.lines: t.List[str] = []
 
-    def set_tag(self, tag, regex=None):
+    def set_tag(self, tag: str, regex: t.Optional[str] = None) -> None:
         """Set the tag for the modelwriter to search for within
            tagged files attached to an entity.
 
@@ -58,8 +59,11 @@ class ModelWriter:
             self.regex = "".join(("(", tag, ".+", tag, ")"))
 
     def configure_tagged_model_files(
-        self, tagged_files, params, make_missing_tags_fatal=False
-    ):
+        self,
+        tagged_files: t.List[str],
+        params: t.Dict[str, str],
+        make_missing_tags_fatal: bool = False,
+    ) -> t.Dict[str, t.Dict[str, str]]:
         """Read, write and configure tagged files attached to a Model
            instance.
 
@@ -67,15 +71,21 @@ class ModelWriter:
         :type model: list[str]
         :param params: model parameters
         :type params: dict[str, str]
-        :param make_missing_tags_fatal: blow up if a tag is missing
+        :param make_missing_tags_fatal: raise an error if a tag is missing
         :type make_missing_tags_fatal: bool
+        :returns: A dict connecting each file to its parameter settings
+        :rtype: dict[str,dict[str,str]]
         """
+        files_to_tags: t.Dict[str, t.Dict[str, str]] = {}
         for tagged_file in tagged_files:
             self._set_lines(tagged_file)
-            self._replace_tags(params, make_missing_tags_fatal)
+            used_tags = self._replace_tags(params, make_missing_tags_fatal)
             self._write_changes(tagged_file)
+            files_to_tags[tagged_file] = used_tags
 
-    def _set_lines(self, file_path):
+        return files_to_tags
+
+    def _set_lines(self, file_path: str) -> None:
         """Set the lines for the modelwrtter to iterate over
 
         :param file_path: path to the newly created and tagged file
@@ -83,36 +93,40 @@ class ModelWriter:
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
-            fp = open(file_path, "r+")
-            self.lines = fp.readlines()
-            fp.close()
+            with open(file_path, "r+", encoding="utf-8") as file_stream:
+                self.lines = file_stream.readlines()
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path) from e
 
-    def _write_changes(self, file_path):
+    def _write_changes(self, file_path: str) -> None:
         """Write the ensemble-specific changes
 
         :raises ParameterWriterError: if the newly created file cannot be read
         """
         try:
-            fp = open(file_path, "w+")
-            for line in self.lines:
-                fp.write(line)
-            fp.close()
+            with open(file_path, "w+", encoding="utf-8") as file_stream:
+                for line in self.lines:
+                    file_stream.write(line)
         except (IOError, OSError) as e:
             raise ParameterWriterError(file_path, read=False) from e
 
-    def _replace_tags(self, params, make_fatal=False):
-        """Replace the tagged within the tagged file attached to this
+    def _replace_tags(
+        self, params: t.Dict[str, str], make_fatal: bool = False
+    ) -> t.Dict[str, str]:
+        """Replace the tagged parameters within the file attached to this
            model. The tag defaults to ";"
 
         :param model: The model instance
         :type model: Model
-        :param make_fatal: (Optional) Set to True to force a fatal error if a tag is not matched
+        :param make_fatal: (Optional) Set to True to force a fatal error
+            if a tag is not matched
         :type make_fatal: bool
+        :returns: A dict of parameter names and values set for the file
+        :rtype: dict[str,str]
         """
         edited = []
-        unused_tags = {}
+        unused_tags: t.Dict[str, t.List[int]] = {}
+        used_params: t.Dict[str, str] = {}
         for i, line in enumerate(self.lines):
             search = re.search(self.regex, line)
             if search:
@@ -123,6 +137,7 @@ class ModelWriter:
                         new_val = str(params[previous_value])
                         new_line = re.sub(self.regex, new_val, line, 1)
                         search = re.search(self.regex, new_line)
+                        used_params[previous_value] = new_val
                         if not search:
                             edited.append(new_line)
                         else:
@@ -136,26 +151,26 @@ class ModelWriter:
                             unused_tags[tag] = []
                         unused_tags[tag].append(i + 1)
                         edited.append(re.sub(self.regex, previous_value, line))
-                        search = False  # Move on to the next tag
+                        search = None  # Move on to the next tag
             else:
                 edited.append(line)
-        for tag in unused_tags:
-            missing_tag_message = (
-                f"Unused tag {tag} on line(s): {str(unused_tags[tag])}"
-            )
+        for tag, value in unused_tags.items():
+            missing_tag_message = f"Unused tag {tag} on line(s): {str(value)}"
             if make_fatal:
                 raise SmartSimError(missing_tag_message)
-            else:
-                logger.warning(missing_tag_message)
+            logger.warning(missing_tag_message)
         self.lines = edited
+        return used_params
 
-    def _is_ensemble_spec(self, tagged_line, model_params):
+    def _is_ensemble_spec(
+        self, tagged_line: str, model_params: t.Dict[str, str]
+    ) -> bool:
         split_tag = tagged_line.split(self.tag)
         prev_val = split_tag[1]
         if prev_val in model_params.keys():
             return True
         return False
 
-    def _get_prev_value(self, tagged_line):
+    def _get_prev_value(self, tagged_line: str) -> str:
         split_tag = tagged_line.split(self.tag)
         return split_tag[1]

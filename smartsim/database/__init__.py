@@ -24,11 +24,4 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# deprecated classes
-from .orchestrator import (
-    CobaltOrchestrator,
-    LSFOrchestrator,
-    Orchestrator,
-    PBSOrchestrator,
-    SlurmOrchestrator,
-)
+from .orchestrator import Orchestrator

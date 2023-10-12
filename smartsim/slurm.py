@@ -27,6 +27,7 @@
 
 from warnings import simplefilter, warn
 
+# pylint: disable-next=unused-import
 from .wlm.slurm import (
     _get_alloc_cmd,
     _get_system_partition_info,
@@ -37,8 +38,8 @@ from .wlm.slurm import (
 )
 
 simplefilter("once", category=DeprecationWarning)
-msg = (
+DEPRECATION_MSG = (
     "`smartsim.slurm` has been deprecated and will be removed in a future release.\n"
     "Please update your code to use `smartsim.wlm.slurm`"
 )
-warn(msg, category=DeprecationWarning, stacklevel=2)
+warn(DEPRECATION_MSG, category=DeprecationWarning, stacklevel=2)

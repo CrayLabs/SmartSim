@@ -27,71 +27,102 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
-import sys
+import typing as t
 
-from smartsim._core._cli.build import Build
-from smartsim._core._cli.clean import Clean
-from smartsim._core._cli.utils import get_install_path
-
-
-def _usage():
-    usage = [
-        "smart <command> [<args>]\n",
-        "Commands:",
-        "\tbuild       Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
-        "\tclean       Remove previous ML runtime installation",
-        "\tclobber     Remove all previous dependency installations",
-        "\nDeveloper:",
-        "\tsite        Print the installation site of SmartSim",
-        "\tdbcli       Print the path to the redis-cli binary" "\n\n",
-    ]
-    return "\n".join(usage)
+from smartsim._core._cli.build import configure_parser as build_parser
+from smartsim._core._cli.build import execute as build_execute
+from smartsim._core._cli.clean import configure_parser as clean_parser
+from smartsim._core._cli.clean import execute as clean_execute
+from smartsim._core._cli.clean import execute_all as clobber_execute
+from smartsim._core._cli.dbcli import execute as dbcli_execute
+from smartsim._core._cli.info import execute as info_execute
+from smartsim._core._cli.site import execute as site_execute
+from smartsim._core._cli.validate import (
+    execute as validate_execute,
+    configure_parser as validate_parser,
+)
+from smartsim._core._cli.utils import MenuItemConfig
 
 
 class SmartCli:
-    def __init__(self):
+    def __init__(self, menu: t.List[MenuItemConfig]) -> None:
+        self.menu: t.Dict[str, MenuItemConfig] = {item.command: item for item in menu}
         parser = argparse.ArgumentParser(
-            description="SmartSim command line interface", usage=_usage()
+            prog="smart",
+            description="SmartSim command line interface",
+        )
+        self.parser = parser
+        self.args: t.Optional[argparse.Namespace] = None
+
+        subparsers = parser.add_subparsers(
+            dest="command",
+            required=True,
+            metavar="<command>",
+            help="Available commands",
         )
 
-        parser.add_argument("command", help="Subcommand to run")
+        for cmd, item in self.menu.items():
+            parser = subparsers.add_parser(
+                cmd, description=item.description, help=item.description
+            )
+            if item.configurator:
+                item.configurator(parser)
 
-        # smart
-        if len(sys.argv) < 2:
-            parser.print_help()
-            sys.exit(0)
+    def execute(self, cli_args: t.List[str]) -> int:
+        if len(cli_args) < 2:
+            self.parser.print_help()
+            return 0
 
-        args = parser.parse_args(sys.argv[1:2])
-        if not hasattr(self, args.command):
-            parser.print_help()
-            sys.exit(0)
-        getattr(self, args.command)()
+        app_args = cli_args[1:]
+        self.args = self.parser.parse_args(app_args)
 
-    def build(self):
-        Build()
-        sys.exit(0)
+        if not (menu_item := self.menu.get(app_args[0], None)):
+            self.parser.print_help()
+            return 0
 
-    def clean(self):
-        Clean()
-        sys.exit(0)
-
-    def clobber(self):
-        Clean(clean_all=True)
-        sys.exit(0)
-
-    def site(self):
-        print(get_install_path())
-        sys.exit(0)
-
-    def dbcli(self):
-        bin_path = get_install_path() / "_core" / "bin"
-        for option in bin_path.iterdir():
-            if option.name in ("redis-cli", "keydb-cli"):
-                print(option)
-                sys.exit(0)
-        print("Database (Redis or KeyDB) dependencies not found")
-        sys.exit(1)
+        return menu_item.handler(self.args)
 
 
-def main():
-    SmartCli()
+def default_cli() -> SmartCli:
+    menu = [
+        MenuItemConfig(
+            "build",
+            "Build SmartSim dependencies (Redis, RedisAI, ML runtimes)",
+            build_execute,
+            build_parser,
+        ),
+        MenuItemConfig(
+            "clean",
+            "Remove previous ML runtime installation",
+            clean_execute,
+            clean_parser,
+        ),
+        MenuItemConfig(
+            "dbcli",
+            "Print the path to the redis-cli binary",
+            dbcli_execute,
+        ),
+        MenuItemConfig(
+            "site",
+            "Print the installation site of SmartSim",
+            site_execute,
+        ),
+        MenuItemConfig(
+            "clobber",
+            "Remove all previous dependency installations",
+            clobber_execute,
+        ),
+        MenuItemConfig(
+            "validate",
+            "Run a simple SmartSim experiment to confirm that it is built correctly",
+            validate_execute,
+            validate_parser,
+        ),
+        MenuItemConfig(
+            "info",
+            "Display information about the current SmartSim installation",
+            info_execute,
+        ),
+    ]
+
+    return SmartCli(menu)

@@ -24,10 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import shutil
-import subprocess
+import typing as t
 
-from ..error import LauncherError, SSUnsupportedError
 from ..log import get_logger
 from .mpiSettings import _BaseMPISettings
 
@@ -58,14 +56,13 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
     def __init__(
         self,
-        exe,
-        exe_args=None,
-        run_command="mpiexec",
-        run_args=None,
-        env_vars=None,
-        fail_if_missing_exec=True,
-        **kwargs,
-    ):
+        exe: str,
+        exe_args: t.Optional[t.Union[str, t.List[str]]] = None,
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        fail_if_missing_exec: bool = True,
+        **kwargs: t.Any,
+    ) -> None:
         """Settings to format run job with an MPI-standard binary
 
         Note that environment variables can be passed with a None
@@ -81,7 +78,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param exe_args: executable arguments, defaults to None
         :type exe_args: str | list[str], optional
         :param run_args: arguments for run command, defaults to None
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment vars to launch job with, defaults to None
         :type env_vars: dict[str, str], optional
         :param fail_if_missing_exec: Throw an exception of the MPI command
@@ -91,14 +88,14 @@ class PalsMpiexecSettings(_BaseMPISettings):
         super().__init__(
             exe,
             exe_args,
-            run_command=run_command,
+            run_command="mpiexec",
             run_args=run_args,
             env_vars=env_vars,
             fail_if_missing_exec=fail_if_missing_exec,
             **kwargs,
         )
 
-    def set_task_map(self, task_mapping):
+    def set_task_map(self, task_mapping: str) -> None:
         """Set ``mpirun`` task mapping
 
         this sets ``--map-by <mapping>``
@@ -110,7 +107,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         logger.warning("set_task_map not supported under PALS")
 
-    def set_cpus_per_task(self, cpus_per_task):
+    def set_cpus_per_task(self, cpus_per_task: int) -> None:
         """Set the number of tasks for this job
 
         This sets ``--cpus-per-proc`` for MPI compliant implementations
@@ -123,7 +120,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         logger.warning("set_cpus_per_task not supported under PALS")
 
-    def set_cpu_binding_type(self, bind_type):
+    def set_cpu_binding_type(self, bind_type: str) -> None:
         """Specifies the cores to which MPI processes are bound
 
         This sets ``--bind-to`` for MPI compliant implementations
@@ -131,9 +128,9 @@ class PalsMpiexecSettings(_BaseMPISettings):
         :param bind_type: binding type
         :type bind_type: str
         """
-        self.run_args["cpu-bind"] = str(bind_type)
+        self.run_args["cpu-bind"] = bind_type
 
-    def set_tasks(self, tasks):
+    def set_tasks(self, tasks: int) -> None:
         """Set the number of tasks
 
         :param tasks: number of total tasks to launch
@@ -141,7 +138,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         self.run_args["np"] = int(tasks)
 
-    def set_tasks_per_node(self, tasks_per_node):
+    def set_tasks_per_node(self, tasks_per_node: int) -> None:
         """Set the number of tasks per node
 
         :param tasks_per_node: number of tasks to launch per node
@@ -149,7 +146,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         """
         self.run_args["ppn"] = int(tasks_per_node)
 
-    def set_quiet_launch(self, quiet):
+    def set_quiet_launch(self, quiet: bool) -> None:
         """Set the job to run in quiet mode
 
         This sets ``--quiet``
@@ -160,7 +157,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
         logger.warning("set_quiet_launch not supported under PALS")
 
-    def set_broadcast(self, dest_path=None):
+    def set_broadcast(self, dest_path: t.Optional[str] = None) -> None:
         """Copy the specified executable(s) to remote machines
 
         This sets ``--preload-binary``
@@ -177,7 +174,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
             )
         self.run_args["transfer"] = None
 
-    def set_walltime(self, walltime):
+    def set_walltime(self, walltime: str) -> None:
         """Set the maximum number of seconds that a job will run
 
         :param walltime: number like string of seconds that a job will run in secs
@@ -195,7 +192,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
         for arg in args:
             self.affinity_script.append(str(arg)) 
 
-    def format_run_args(self):
+    def format_run_args(self) -> t.List[str]:
         """Return a list of MPI-standard formatted run arguments
 
         :return: list of MPI-standard arguments for these settings
@@ -219,7 +216,7 @@ class PalsMpiexecSettings(_BaseMPISettings):
 
         return args
 
-    def format_env_vars(self):
+    def format_env_vars(self) -> t.List[str]:
         """Format the environment variables for mpirun
 
         :return: list of env vars
@@ -239,3 +236,20 @@ class PalsMpiexecSettings(_BaseMPISettings):
             formatted += ["--envlist", ",".join(export_vars)]
 
         return formatted
+
+    def set_hostlist(self, host_list: t.Union[str, t.List[str]]) -> None:
+        """Set the hostlist for the PALS ``mpiexec`` command
+
+        This sets ``--hosts``
+
+        :param host_list: list of host names
+        :type host_list: str | list[str]
+        :raises TypeError: if not str or list of str
+        """
+        if isinstance(host_list, str):
+            host_list = [host_list.strip()]
+        if not isinstance(host_list, list):
+            raise TypeError("host_list argument must be a list of strings")
+        if not all(isinstance(host, str) for host in host_list):
+            raise TypeError("host_list argument must be list of strings")
+        self.run_args["hosts"] = ",".join(host_list)

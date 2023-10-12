@@ -107,6 +107,12 @@ check-lint:
 	@pylint --rcfile=.pylintrc ./smartsim
 
 
+# help: check-mypy                     - run static type check
+.PHONY: check-mypy
+check-mypy:
+	@mypy --config-file=./pyproject.toml
+
+
 # help:
 # help: Documentation
 # help: -------
@@ -177,3 +183,8 @@ test-cov:
 .PHONY: test-full
 test-full:
 	@python -m pytest --cov=./smartsim -vv --cov-config=${COV_FILE}
+
+# help: test-wlm                   - Run the wlm-specific tests
+.PHONY: test-wlm
+test-wlm:
+	@python -m pytest -vv tests/full_wlm/ tests/on_wlm

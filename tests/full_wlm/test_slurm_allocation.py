@@ -28,7 +28,7 @@ import time
 
 import pytest
 
-from smartsim.error import AllocationError
+from smartsim.error import AllocationError, SSReservedKeywordError
 from smartsim.wlm import slurm
 
 # retrieved from pytest fixtures
@@ -36,19 +36,41 @@ if pytest.test_launcher != "slurm":
     pytestmark = pytest.mark.skip(reason="Test is only for Slurm WLM systems")
 
 
-def test_get_release_allocation():
+def test_get_release_allocation(wlmutils):
     """test slurm interface for obtaining allocations"""
-    alloc = slurm.get_allocation(nodes=1, time="00:05:00")
+    account = wlmutils.get_test_account()
+    alloc = slurm.get_allocation(nodes=1, time="00:05:00", account=account)
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
 
 
-def test_get_release_allocation_w_options():
+def test_get_release_allocation_w_options(wlmutils):
     """test slurm interface for obtaining allocations"""
     options = {"ntasks-per-node": 1}
-    alloc = slurm.get_allocation(nodes=1, time="00:05:00", options=options)
+    account = wlmutils.get_test_account()
+    alloc = slurm.get_allocation(
+        nodes=1, time="00:05:00", options=options, account=account
+    )
     time.sleep(5)  # give slurm a rest
     slurm.release_allocation(alloc)
+
+
+@pytest.mark.parametrize(
+    "func_parameters,test_parameters",
+    [
+        ("t", "T"),
+        ("time", "TIME"),
+        ("nodes", "NODES"),
+        ("N", "N"),
+        ("account", "ACCOUNT"),
+        ("A", "A"),
+    ],
+)
+def test_get_allocation_bad_params(func_parameters, test_parameters):
+    """test get_allocation with reserved keywords as option"""
+    with pytest.raises(SSReservedKeywordError) as e:
+        alloc = slurm.get_allocation(options={func_parameters: test_parameters})
+    assert "Expecting time, nodes, account as an argument" in e.value.args[0]
 
 
 # --------- Error handling ----------------------------

@@ -11,23 +11,28 @@ instructions to get a working SmartSim build with PyTorch and TensorFlow for GPU
 on Summit.  Note that SmartSim and SmartRedis will be downloaded to the working
 directory from which these instructions are executed.
 
+Note that the available PyTorch version (1.10.2) does not match
+the one expected by RedisAI 1.2.7 (1.11): it is still compatible and should
+work, but please open an issue on SmartSim's GitHub repo if you run
+into problems.
+
 .. code-block:: bash
 
   # setup Python and build environment
-  export ENV_NAME=smartsim-0.4.2
+  export ENV_NAME=smartsim-0.5.1
   git clone https://github.com/CrayLabs/SmartRedis.git smartredis
   git clone https://github.com/CrayLabs/SmartSim.git smartsim
-  conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.4.1/
+  conda config --prepend channels https://ftp.osuosl.org/pub/open-ce/1.6.1/
   conda create --name $ENV_NAME -y  python=3.9 \
                                     git-lfs \
                                     cmake \
                                     make \
                                     cudnn=8.1.1_11.2 \
                                     cudatoolkit=11.2.2 \
-                                    tensorflow=2.6.2 \
-                                    libtensorflow=2.6.2 \
-                                    pytorch=1.9.0 \
-                                    torchvision=0.10.0
+                                    tensorflow=2.8.1 \
+                                    libtensorflow \
+                                    pytorch=1.10.2 \
+                                    torchvision=0.11.3
   conda activate $ENV_NAME
   export CC=$(which gcc)
   export CXX=$(which g++)
@@ -50,7 +55,7 @@ directory from which these instructions are executed.
   # install PyTorch and TensorFlow backend for the Orchestrator database.
   export Torch_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/torch/share/cmake/Torch/
   export CFLAGS="$CFLAGS -I/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/include"
-  export SMARTSIM_REDISAI=1.2.5
+  export SMARTSIM_REDISAI=1.2.7
   export Tensorflow_BUILD_DIR=/ccs/home/$USER/.conda/envs/$ENV_NAME/lib/python3.9/site-packages/tensorflow/
   smart build --device=gpu --torch_dir $Torch_DIR --libtensorflow_dir $Tensorflow_BUILD_DIR -v
 

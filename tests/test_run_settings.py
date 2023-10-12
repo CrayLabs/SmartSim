@@ -25,10 +25,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import contextlib
+import itertools
 import logging
-import subprocess
-from shutil import which
+import os.path as osp
 
 import pytest
 
@@ -37,7 +36,9 @@ from smartsim.settings import (
     MpiexecSettings,
     MpirunSettings,
     OrterunSettings,
+    PalsMpiexecSettings,
     RunSettings,
+    Singularity,
 )
 from smartsim.settings.settings import create_run_settings
 
@@ -65,50 +66,171 @@ def test_create_run_settings_local():
 
 
 @pytest.mark.parametrize(
-    "run_cmd,Settings",
+    "launcher, run_cmd, stub_path, type_mpi_settings",
     [
-        pytest.param("mpiun", MpirunSettings, id="mpirun"),
-        pytest.param("orterun", OrterunSettings, id="orterun"),
+        # Use OpenMPI style settigs for all launchers
+        *itertools.chain.from_iterable(
+            (
+                (
+                    pytest.param(
+                        l,
+                        "mpirun",
+                        osp.join("mpi_impl_stubs", "openmpi4"),
+                        MpirunSettings,
+                        id=f"{l}/mpirun",
+                    ),
+                    pytest.param(
+                        l,
+                        "mpiexec",
+                        osp.join("mpi_impl_stubs", "openmpi4"),
+                        MpiexecSettings,
+                        id=f"{l}/mpiexec",
+                    ),
+                    pytest.param(
+                        l,
+                        "orterun",
+                        osp.join("mpi_impl_stubs", "openmpi4"),
+                        OrterunSettings,
+                        id=f"{l}/orterun",
+                    ),
+                )
+                for l in ("local", "pbs", "slurm", "lsf", "cobalt")
+            )
+        ),
+        # Except for launchers that implement their own MPI settings
+        pytest.param(
+            "pals",
+            "mpiexec",
+            osp.join("mpi_impl_stubs", "pals"),
+            PalsMpiexecSettings,
+            id="pals/mpiexec",
+        ),
     ],
 )
-def test_create_run_settings_returns_settings_subclasses(run_cmd, Settings):
-    _run_cmd = which(run_cmd)
-    if _run_cmd:
-        settings = create_run_settings("local", "echo", "hello", run_command=run_cmd)
-        assert settings.run_command == _run_cmd
-        assert isinstance(settings, Settings)
+def test_create_run_settings_returns_expected_settings_subclass_for_mpi_variants(
+    monkeypatch, fileutils, launcher, run_cmd, stub_path, type_mpi_settings
+):
+    stub_path = fileutils.get_test_dir_path(stub_path)
+    monkeypatch.setenv("PATH", stub_path, prepend=":")
+    settings = create_run_settings(launcher, "echo", "hello", run_command=run_cmd)
+    assert settings.run_command == osp.join(stub_path, run_cmd)
+    assert isinstance(settings, type_mpi_settings)
 
 
-def test_create_run_settings_handles_mpiexec_settings_correctly():
-    with contextlib.ExitStack() as ctx:
-        _run_command = which("mpiexec")
-        if _run_command:
-            # Check if `mpiexec.slurm` wrapper is being used
-            if (
-                "mpiexec.slurm"
-                in subprocess.run(
-                    ["mpiexec", "--help"], capture_output=True
-                ).stdout.decode()
-            ):
-                ctx.enter_context(pytest.raises(SSUnsupportedError))
-            settings = create_run_settings(
-                "local", "echo", "hello", run_command="mpiexec"
-            )
-            assert settings.run_command == _run_command
-            assert isinstance(settings, MpiexecSettings)
+def test_create_run_settings_raise_if_slurm_mpiexec_wrapper_detected(
+    monkeypatch, fileutils
+):
+    monkeypatch.setenv(
+        "PATH",
+        fileutils.get_test_dir_path(osp.join("mpi_impl_stubs", "slurm")),
+        prepend=":",
+    )
+    with pytest.raises(SSUnsupportedError):
+        create_run_settings("slurm", "echo", ["hello", "world"], run_command="mpiexec")
+
+
+def test_create_run_settings_input_mutation():
+    # Tests that the run args passed in are not modified after initialization
+    key0, key1, key2 = "arg0", "arg1", "arg2"
+    val0, val1, val2 = "val0", "val1", "val2"
+
+    default_run_args = {
+        key0: val0,
+        key1: val1,
+        key2: val2,
+    }
+    rs0 = create_run_settings(
+        "local", "echo", "hello", run_command="auto", run_args=default_run_args
+    )
+
+    # Confirm initial values are set
+    assert rs0.run_args[key0] == val0
+    assert rs0.run_args[key1] == val1
+    assert rs0.run_args[key2] == val2
+
+    # Update our common run arguments
+    val2_upd = f"not-{val2}"
+    default_run_args[key2] = val2_upd
+
+    # Confirm previously created run settings are not changed
+    assert rs0.run_args[key2] == val2
 
 
 ####### Base Run Settings tests #######
 
 
 def test_add_exe_args():
+    """Ensure that valid exe args are added correctly"""
     settings = RunSettings("python")
     settings.add_exe_args("--time 5")
     settings.add_exe_args(["--add", "--list"])
     result = ["--time", "5", "--add", "--list"]
     assert settings.exe_args == result
+
+
+def test_add_exe_args_list_of_ints():
+    """Ensure that non-string exe args fail validation"""
+    settings = RunSettings("python")
     with pytest.raises(TypeError):
         settings.add_exe_args([1, 2, 3])
+
+
+def test_add_exe_args_list_of_mixed():
+    """Ensure that any non-string exe arg fails validation for all"""
+    settings = RunSettings("python")
+    with pytest.raises(TypeError):
+        settings.add_exe_args(["1", "2", 3])
+
+
+def test_add_exe_args_space_delimited_string():
+    """Ensure that any non-string exe arg fails validation for all"""
+    settings = RunSettings("python")
+    expected = ["1", "2", "3"]
+    settings.add_exe_args("1 2 3")
+
+    assert settings.exe_args == expected
+
+
+def test_add_exe_args_list_of_mixed_lists():
+    """Ensure that any non-string exe arg fails validation for all"""
+    settings = RunSettings("python")
+    with pytest.raises(TypeError) as type_error:
+        settings.add_exe_args([["1", "2", 3], ["4", "5", 6]])
+
+    assert "Executable arguments should be a list of str" in type_error.value.args
+
+
+def test_add_exe_args_list_of_mixed_lists_init():
+    """Ensure that any non-string exe arg fails validation for all"""
+    exe_args = [["1", "2", 3], ["4", "5", 6]]
+
+    with pytest.raises(TypeError) as type_error:
+        settings = RunSettings("python", exe_args=exe_args)
+
+    assert "Executable arguments were not list of str or str" in type_error.value.args
+
+
+def test_add_exe_args_list_of_str_lists_init():
+    """Ensure that list[list[str]] pass validation"""
+    exe_args = [["1", "2", "3"], ["4", "5", "6"]]
+
+    settings = RunSettings("python", exe_args=exe_args)
+
+    assert settings.exe_args == exe_args
+
+
+def test_add_exe_args_list_of_str_lists():
+    """Ensure that list[list[str]] fail validation when added via method"""
+    exe_args = [["1", "2", "3"], ["4", "5", "6"]]
+
+    settings = RunSettings("python")
+
+    with pytest.raises(TypeError) as type_error:
+        settings.add_exe_args(exe_args)
+
+    # NOTE that this behavior differs from sending constructor args like
+    # tested in test_add_exe_args_list_of_str_lists_init where it's allowed
+    assert "Executable arguments should be a list of str" in type_error.value.args
 
 
 def test_format_run_args():
@@ -136,6 +258,52 @@ def test_addto_existing_exe_args():
     args = ["sleep.py", "--time=5", "--stop=10"]
     assert list_exe_args_settings.exe_args == args
     assert str_exe_args_settings.exe_args == args
+
+
+def test_existing_exe_args_mutation():
+    """
+    Ensure that if the argument list is changed, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    args = ["sleep.py", "--time=5"]
+    orig = ["sleep.py", "--time=5"]
+    rs0 = RunSettings("python", args)
+
+    # both should be the same
+    assert rs0.exe_args == args
+
+    # modify the args list
+    args.append("--foo")
+    assert rs0.exe_args == orig
+
+    # create another run settings instance
+    rs1 = RunSettings("python", args)
+    assert rs1.exe_args == args
+    assert rs0.exe_args != rs1.exe_args
+
+
+def test_direct_set_exe_args_mutation():
+    """
+    Ensure that if the argument list is set directly, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    args = ["sleep.py", "--time=5"]
+    orig = ["sleep.py", "--time=5"]
+    rs0 = RunSettings("python")
+    rs0.exe_args = args
+
+    # both should be the same
+    assert rs0.exe_args == args
+
+    # modify the args list
+    args.append("--foo")
+    assert rs0.exe_args == orig
+
+    # create another run settings instance
+    rs1 = RunSettings("python")
+    rs1.exe_args = args
+    assert rs1.exe_args == args
+    assert rs0.exe_args != rs1.exe_args
 
 
 def test_bad_exe_args():
@@ -276,11 +444,13 @@ def test_set_conditional():
 def test_container_check():
     """Ensure path is expanded when run outside of a container"""
     sample_exe = "python"
+    containerURI = "docker://alrigazzi/smartsim-testing:latest"
+    container = Singularity(containerURI)
 
-    rs = RunSettings(sample_exe, container=True)
+    rs = RunSettings(sample_exe, container=container)
     assert sample_exe in rs.exe
 
-    rs = RunSettings(sample_exe, container=False)
+    rs = RunSettings(sample_exe, container=None)
     assert len(rs.exe[0]) > len(sample_exe)
 
 
@@ -295,13 +465,13 @@ def test_run_command():
 
 
 @pytest.mark.parametrize(
-    "env_vars", 
+    "env_vars",
     [
         pytest.param({}, id="no env vars"),
         pytest.param({"env1": "abc"}, id="normal var"),
         pytest.param({"env1": "abc,def"}, id="compound var"),
         pytest.param({"env1": "xyz", "env2": "pqr"}, id="multiple env vars"),
-    ]
+    ],
 )
 def test_update_env_initialized(env_vars):
     """Ensure update of initialized env vars does not overwrite"""
@@ -319,14 +489,61 @@ def test_update_env_initialized(env_vars):
     assert {k for k in rs.env_vars.keys()} == combined_keys
 
 
+def test_env_vars_mutation():
+    """
+    Ensure that if the env_vars dict is changed, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    sample_exe = "python"
+    cmd = "echo"
+
+    env_vars = {"k1": "v1", "k2": "v2"}
+    orig_env = {"k1": "v1", "k2": "v2"}
+    rs = RunSettings(sample_exe, run_command=cmd, env_vars=env_vars)
+
+    # verify initial expectations
+    assert len(rs.env_vars) == len(env_vars)
+    assert rs.env_vars == orig_env
+
+    # update a value in the env_vars dict & verify
+    # that the run settings do not reflect the change
+    env_vars["k1"] = f"not-{env_vars['k1']}"
+    assert rs.env_vars["k1"] != env_vars["k1"]
+    assert rs.env_vars["k1"] == orig_env["k1"]
+
+
+def test_direct_set_env_vars_mutation():
+    """
+    Ensure that if the env_vars dict is explicitly set, any previously
+    created run settings don't reflect the change due to pass-by-ref
+    """
+    sample_exe = "python"
+    cmd = "echo"
+
+    env_vars = {"k1": "v1", "k2": "v2"}
+    orig_env = {"k1": "v1", "k2": "v2"}
+    rs = RunSettings(sample_exe, run_command=cmd)
+    rs.env_vars = env_vars
+
+    # verify initial expectations
+    assert len(rs.env_vars) == len(env_vars)
+    assert rs.env_vars == orig_env
+
+    # update a value in the env_vars dict & verify
+    # that the run settings do not reflect the change
+    env_vars["k1"] = f"not-{env_vars['k1']}"
+    assert rs.env_vars["k1"] != env_vars["k1"]
+    assert rs.env_vars["k1"] == orig_env["k1"]
+
+
 @pytest.mark.parametrize(
-    "env_vars", 
+    "env_vars",
     [
         pytest.param({}, id="no env vars"),
         pytest.param({"env1": "abc"}, id="normal var"),
         pytest.param({"env1": "abc,def"}, id="compound var"),
         pytest.param({"env1": "xyz", "env2": "pqr"}, id="multiple env vars"),
-    ]
+    ],
 )
 def test_update_env_empty(env_vars):
     """Ensure non-initialized env vars update correctly"""
@@ -337,7 +554,7 @@ def test_update_env_empty(env_vars):
     rs.update_env(env_vars)
 
     assert len(rs.env_vars) == len(env_vars.keys())
-    
+
 
 def test_update_env():
     """Ensure empty env vars is handled gracefully"""
@@ -345,21 +562,21 @@ def test_update_env():
     cmd = "echo"
 
     rs = RunSettings(sample_exe, run_command=cmd)
-    
+
     env_vars = {}
     assert not rs.env_vars
 
 
 @pytest.mark.parametrize(
-    "env_vars", 
+    "env_vars",
     [
         pytest.param({"env1": None}, id="null value not allowed"),
         pytest.param({"env1": {"abc"}}, id="set value not allowed"),
-        pytest.param({"env1": {"abc":"def"}}, id="dict value not allowed"),
-    ]
+        pytest.param({"env1": {"abc": "def"}}, id="dict value not allowed"),
+    ],
 )
 def test_update_env_null_valued(env_vars):
-    """Ensure validation of env var in update """
+    """Ensure validation of env var in update"""
     sample_exe = "python"
     cmd = "echo"
     orig_env = {}

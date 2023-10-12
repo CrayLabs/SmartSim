@@ -24,8 +24,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from os import path as osp
 import os
+from os import path as osp
 
 import numpy as np
 import pytest
@@ -33,8 +33,8 @@ import pytest
 from smartsim.database import Orchestrator
 from smartsim.error.errors import SSInternalError
 from smartsim.experiment import Experiment
-from smartsim.status import STATUS_COMPLETED
 from smartsim.ml.data import DataInfo, TrainingDataUploader
+from smartsim.status import STATUS_COMPLETED
 
 shouldrun_tf = True
 if shouldrun_tf:
@@ -52,8 +52,10 @@ if shouldrun_torch:
         import torch
 
         from smartsim.ml.torch import DataLoader
-        from smartsim.ml.torch import DynamicDataGenerator as TorchDataGenerator
-        from smartsim.ml.torch import StaticDataGenerator as TorchStaticDataGenerator
+        from smartsim.ml.torch import \
+            DynamicDataGenerator as TorchDataGenerator
+        from smartsim.ml.torch import \
+            StaticDataGenerator as TorchStaticDataGenerator
     except:
         shouldrun_torch = False
 
@@ -203,11 +205,10 @@ def test_tf_dataloaders(fileutils, wlmutils):
         os.environ.pop("SSKEYOUT", "")
 
 
-def create_trainer_torch(experiment: Experiment, filedir):
-    run_settings = experiment.create_run_settings(
+def create_trainer_torch(experiment: Experiment, filedir, wlmutils):
+    run_settings = wlmutils.get_run_settings(
         exe="python",
-        exe_args=["training_service_torch.py"],
-        env_vars={"PYTHONUNBUFFERED": "1"},
+        args=["training_service_torch.py"],
     )
 
     trainer = experiment.create_model("trainer", run_settings=run_settings)
@@ -271,7 +272,7 @@ def test_torch_dataloaders(fileutils, wlmutils):
                 for _ in torch_static:
                     continue
         
-        trainer = create_trainer_torch(exp, config_dir)
+        trainer = create_trainer_torch(exp, config_dir, wlmutils)
         exp.start(trainer, block=True)
         
         assert exp.get_status(trainer)[0] == STATUS_COMPLETED

@@ -25,19 +25,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os.path as osp
-import time
+import typing as t
 from os import getcwd
 
 from tabulate import tabulate
-from tqdm import trange
 
 from ._core import Controller, Generator, Manifest
 from ._core.utils import init_default
 from .database import Orchestrator
-from .entity import Ensemble, Model
+from .entity import Ensemble, Model, SmartSimEntity
 from .error import SmartSimError
 from .log import get_logger
-from .settings import settings
+from .settings import settings, base, Container
 from .wlm import detect_launcher
 
 logger = get_logger(__name__)
@@ -62,7 +61,12 @@ class Experiment:
     and utilized throughout runtime.
     """
 
-    def __init__(self, name, exp_path=None, launcher="local"):
+    def __init__(
+        self,
+        name: str,
+        exp_path: t.Optional[str] = None,
+        launcher: str = "local",
+    ):
         """Initialize an Experiment instance
 
         With the default settings, the Experiment will use the
@@ -106,7 +110,8 @@ class Experiment:
         :type exp_path: str, optional
         :param launcher: type of launcher being used, options are "slurm", "pbs",
                          "cobalt", "lsf", or "local". If set to "auto",
-                         an attempt will be made to find an available launcher on the system.
+                         an attempt will be made to find an available launcher
+                         on the system.
                          Defaults to "local"
         :type launcher: str, optional
         """
@@ -124,8 +129,15 @@ class Experiment:
 
         self._control = Controller(launcher=launcher)
         self._launcher = launcher.lower()
+        self.db_identifiers: t.Set[str] = set()
 
-    def start(self, *args, block=True, summary=False, kill_on_interrupt=True):
+    def start(
+        self,
+        *args: t.Any,
+        block: bool = True,
+        summary: bool = False,
+        kill_on_interrupt: bool = True,
+    ) -> None:
         """Start passed instances using Experiment launcher
 
         Any instance ``Model``, ``Ensemble`` or ``Orchestrator``
@@ -176,6 +188,7 @@ class Experiment:
 
         :type kill_on_interrupt: bool, optional
         """
+
         start_manifest = Manifest(*args)
         try:
             if summary:
@@ -189,7 +202,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def stop(self, *args):
+    def stop(self, *args: t.Any) -> None:
         """Stop specific instances launched by this ``Experiment``
 
         Instances of ``Model``, ``Ensemble`` and ``Orchestrator``
@@ -212,17 +225,26 @@ class Experiment:
         :raises TypeError: if wrong type
         :raises SmartSimError: if stop request fails
         """
+        stop_manifest = Manifest(*args)
         try:
-            stop_manifest = Manifest(*args)
             for entity in stop_manifest.models:
                 self._control.stop_entity(entity)
-            for entity_list in stop_manifest.all_entity_lists:
+            for entity_list in stop_manifest.ensembles:
                 self._control.stop_entity_list(entity_list)
+            dbs = stop_manifest.dbs
+            for db in dbs:
+                self._control.stop_db(db)
         except SmartSimError as e:
             logger.error(e)
             raise
 
-    def generate(self, *args, tag=None, overwrite=False):
+    def generate(
+        self,
+        *args: t.Any,
+        tag: t.Optional[str] = None,
+        overwrite: bool = False,
+        verbose: bool = False,
+    ) -> None:
         """Generate the file structure for an ``Experiment``
 
         ``Experiment.generate`` creates directories for each instance
@@ -241,9 +263,11 @@ class Experiment:
         :param overwrite: overwrite existing folders and contents,
                defaults to False
         :type overwrite: bool, optional
+        :param verbose: log parameter settings to std out
+        :type verbose: bool
         """
         try:
-            generator = Generator(self.exp_path, overwrite=overwrite)
+            generator = Generator(self.exp_path, overwrite=overwrite, verbose=verbose)
             if tag:
                 generator.set_tag(tag)
             generator.generate_experiment(*args)
@@ -251,7 +275,9 @@ class Experiment:
             logger.error(e)
             raise
 
-    def poll(self, interval=10, verbose=True, kill_on_interrupt=True):
+    def poll(
+        self, interval: int = 10, verbose: bool = True, kill_on_interrupt: bool = True
+    ) -> None:
         """Monitor jobs through logging to stdout.
 
         This method should only be used if jobs were launched
@@ -292,7 +318,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def finished(self, entity):
+    def finished(self, entity: SmartSimEntity) -> bool:
         """Query if a job has completed.
 
         An instance of ``Model`` or ``Ensemble`` can be passed
@@ -315,7 +341,7 @@ class Experiment:
             logger.error(e)
             raise
 
-    def get_status(self, *args):
+    def get_status(self, *args: t.Any) -> t.List[str]:
         """Query the status of launched instances
 
         Return a smartsim.status string representing
@@ -334,7 +360,8 @@ class Experiment:
         .. code-block:: python
 
             statuses = exp.get_status(model, ensemble, orchestrator)
-            assert all([status == smartsim.status.STATUS_COMPLETED for status in statuses])
+            complete = [s == smartsim.status.STATUS_COMPLETED for s in statuses]
+            assert all(complete)
 
         :returns: status of the instances passed as arguments
         :rtype: list[str]
@@ -342,7 +369,7 @@ class Experiment:
         """
         try:
             manifest = Manifest(*args)
-            statuses = []
+            statuses: t.List[str] = []
             for entity in manifest.models:
                 statuses.append(self._control.get_entity_status(entity))
             for entity_list in manifest.all_entity_lists:
@@ -352,16 +379,16 @@ class Experiment:
             logger.error(e)
             raise
 
+    @staticmethod
     def create_ensemble(
-        self,
-        name,
-        params=None,
-        batch_settings=None,
-        run_settings=None,
-        replicas=None,
-        perm_strategy="all_perm",
-        **kwargs,
-    ):
+        name: str,
+        params: t.Optional[t.Dict[str, t.Any]] = None,
+        batch_settings: t.Optional[base.BatchSettings] = None,
+        run_settings: t.Optional[base.RunSettings] = None,
+        replicas: t.Optional[int] = None,
+        perm_strategy: str = "all_perm",
+        **kwargs: t.Any,
+    ) -> Ensemble:
         """Create an ``Ensemble`` of ``Model`` instances
 
         Ensembles can be launched sequentially or as a batch
@@ -404,7 +431,7 @@ class Experiment:
         :type replicas: int
         :param perm_strategy: strategy for expanding ``params`` into
                               ``Model`` instances from params argument
-                              options are "all_perm", "stepped", "random"
+                              options are "all_perm", "step", "random"
                               or a callable function. Default is "all_perm".
         :type perm_strategy: str, optional
         :raises SmartSimError: if initialization fails
@@ -414,7 +441,7 @@ class Experiment:
         try:
             new_ensemble = Ensemble(
                 name,
-                params,
+                params or {},
                 batch_settings=batch_settings,
                 run_settings=run_settings,
                 perm_strat=perm_strategy,
@@ -426,15 +453,15 @@ class Experiment:
             logger.error(e)
             raise
 
+    @staticmethod
     def create_model(
-        self,
-        name,
-        run_settings,
-        params=None,
-        path=None,
-        enable_key_prefixing=False,
-        batch_settings=None,
-    ):
+        name: str,
+        run_settings: base.RunSettings,
+        params: t.Optional[t.Dict[str, t.Any]] = None,
+        path: t.Optional[str] = None,
+        enable_key_prefixing: bool = False,
+        batch_settings: t.Optional[base.BatchSettings] = None,
+    ) -> Model:
         """Create a general purpose ``Model``
 
         The ``Model`` class is the most general encapsulation of
@@ -487,14 +514,14 @@ class Experiment:
             model.attach_generator_files(to_configure="./train.cfg")
             exp.generate(model)
 
-        New in 0.4.0, ``Model`` instances can be co-located with an
+        New in 0.4.0, ``Model`` instances can be colocated with an
         Orchestrator database shard through ``Model.colocate_db``. This
         will launch a single ``Orchestrator`` instance on each compute
         host used by the (possibly distributed) application. This is
         useful for performant online inference or processing
         at runtime.
 
-        New in 0.4.2, ``Model`` instances can now be co-located with
+        New in 0.4.2, ``Model`` instances can now be colocated with
         an Orchestrator database over either TCP or UDS using the
         ``Model.colocate_db_tcp`` or ``Model.colocate_db_uds`` method
         respectively. The original ``Model.colocate_db`` method is now
@@ -522,7 +549,13 @@ class Experiment:
         :rtype: Model
         """
         path = init_default(getcwd(), path, str)
-        params = init_default({}, params, dict)
+
+        # mcb
+        if path is None:
+            path = getcwd()
+        if params is None:
+            params = {}
+
         try:
             new_model = Model(
                 name, params, path, run_settings, batch_settings=batch_settings
@@ -536,14 +569,14 @@ class Experiment:
 
     def create_run_settings(
         self,
-        exe,
-        exe_args=None,
-        run_command="auto",
-        run_args=None,
-        env_vars=None,
-        container=None,
-        **kwargs,
-    ):
+        exe: str,
+        exe_args: t.Optional[t.List[str]] = None,
+        run_command: str = "auto",
+        run_args: t.Optional[t.Dict[str, t.Union[int, str, float, None]]] = None,
+        env_vars: t.Optional[t.Dict[str, t.Optional[str]]] = None,
+        container: t.Optional[Container] = None,
+        **kwargs: t.Any,
+    ) -> settings.RunSettings:
         """Create a ``RunSettings`` instance.
 
         run_command="auto" will attempt to automatically
@@ -574,12 +607,15 @@ class Experiment:
         :param exe_args: arguments to pass to the executable
         :type exe_args: list[str], optional
         :param run_args: arguments to pass to the ``run_command``
-        :type run_args: dict[str, str], optional
+        :type run_args: dict[str, t.Union[int, str, float, None]], optional
         :param env_vars: environment variables to pass to the executable
         :type env_vars: dict[str, str], optional
+        :param container: if execution environment is containerized
+        :type container: Container, optional
         :return: the created ``RunSettings``
         :rtype: RunSettings
         """
+
         try:
             return settings.create_run_settings(
                 self._launcher,
@@ -596,8 +632,14 @@ class Experiment:
             raise
 
     def create_batch_settings(
-        self, nodes=1, time="", queue="", account="", batch_args=None, **kwargs
-    ):
+        self,
+        nodes: int = 1,
+        time: str = "",
+        queue: str = "",
+        account: str = "",
+        batch_args: t.Optional[t.Dict[str, str]] = None,
+        **kwargs: t.Any,
+    ) -> base.BatchSettings:
         """Create a ``BatchSettings`` instance
 
         Batch settings parameterize batch workloads. The result of this
@@ -651,18 +693,19 @@ class Experiment:
 
     def create_database(
         self,
-        port=6379,
-        db_nodes=1,
-        batch=False,
-        hosts=None,
-        run_command="auto",
-        interface="ipogif0",
-        account=None,
-        time=None,
-        queue=None,
-        single_cmd=True,
-        **kwargs,
-    ):
+        port: int = 6379,
+        db_nodes: int = 1,
+        batch: bool = False,
+        hosts: t.Optional[t.List[str]] = None,
+        run_command: str = "auto",
+        interface: str = "ipogif0",
+        account: t.Optional[str] = None,
+        time: t.Optional[str] = None,
+        queue: t.Optional[str] = None,
+        single_cmd: bool = True,
+        db_identifier: str = "orchestrator",
+        **kwargs: t.Any,
+    ) -> Orchestrator:
         """Initialize an Orchestrator database
 
         The ``Orchestrator`` database is a key-value store based
@@ -690,7 +733,8 @@ class Experiment:
         :type batch: bool, optional
         :param hosts: specify hosts to launch on, defaults to None
         :type hosts: list[str], optional
-        :param run_command: specify launch binary or detect automatically, defaults to "auto"
+        :param run_command: specify launch binary or detect automatically,
+            defaults to "auto"
         :type run_command: str, optional
         :param interface: Network interface, defaults to "ipogif0"
         :type interface: str, optional
@@ -703,10 +747,14 @@ class Experiment:
         :param single_cmd: run all shards with one (MPMD) command, defaults to True
         :type single_cmd: bool, optional
         :raises SmartSimError: if detection of launcher or of run command fails
-        :raises SmartSimError: if user indicated an incompatible run command for the launcher
+        :raises SmartSimError: if user indicated an incompatible run command
+            for the launcher
         :return: Orchestrator
         :rtype: Orchestrator or derived class
         """
+
+        self.append_to_db_identifier_list(db_identifier)
+
         return Orchestrator(
             port=port,
             db_nodes=db_nodes,
@@ -719,10 +767,11 @@ class Experiment:
             queue=queue,
             single_cmd=single_cmd,
             launcher=self._launcher,
+            db_identifier=db_identifier,
             **kwargs,
         )
 
-    def reconnect_orchestrator(self, checkpoint):
+    def reconnect_orchestrator(self, checkpoint: str) -> Orchestrator:
         """Reconnect to a running ``Orchestrator``
 
         This method can be used to connect to a ``Orchestrator`` deployment
@@ -742,7 +791,8 @@ class Experiment:
             logger.error(e)
             raise
 
-    def summary(self, format="github"):
+    # pylint: disable-next=redefined-builtin
+    def summary(self, format: str = "github") -> str:
         """Return a summary of the ``Experiment``
 
         The summary will show each instance that has been
@@ -779,17 +829,16 @@ class Experiment:
                         job.history.returns[run],
                     ]
                 )
-        else:
-            return tabulate(
-                values,
-                headers,
-                showindex=True,
-                tablefmt=format,
-                missingval="None",
-                disable_numparse=True,
-            )
+        return tabulate(
+            values,
+            headers,
+            showindex=True,
+            tablefmt=format,
+            missingval="None",
+            disable_numparse=True,
+        )
 
-    def _launch_summary(self, manifest):
+    def _launch_summary(self, manifest: Manifest) -> None:
         """Experiment pre-launch summary of entities that will be launched
 
         :param manifest: Manifest of deployables.
@@ -804,27 +853,26 @@ class Experiment:
             summary += f"Models: {len(manifest.models)}\n"
 
         if self._control.orchestrator_active:
-            summary += f"Database Status: active\n"
-        elif manifest.db:
-            summary += f"Database Status: launching\n"
+            summary += "Database Status: active\n"
+        elif manifest.dbs:
+            summary += "Database Status: launching\n"
         else:
-            summary += f"Database Status: inactive\n"
+            summary += "Database Status: inactive\n"
 
         summary += f"\n{str(manifest)}"
 
         logger.info(summary)
 
-        wait, steps = 10, 100
-        prog_bar = trange(
-            steps,
-            desc="Launching in...",
-            leave=False,
-            ncols=80,
-            mininterval=0.25,
-            bar_format="{desc}: {bar}| {remaining} {elapsed}",
-        )
-        for _ in prog_bar:
-            time.sleep(wait / steps)
-
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
+
+    def append_to_db_identifier_list(self, db_identifier: str) -> None:
+        """Check if db_identifier already exists when calling create_database"""
+        if db_identifier in self.db_identifiers:
+            logger.warning(
+                f"A database with the identifier {db_identifier} has already been made "
+                "An error will be raised if multiple databases are started "
+                "with the same identifier"
+            )
+        # Otherwise, add
+        self.db_identifiers.add(db_identifier)

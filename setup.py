@@ -161,10 +161,9 @@ class BinaryDistribution(Distribution):
 # Define needed dependencies for the installation
 deps = [
     "psutil>=5.7.2",
-    "coloredlogs==10.0",
+    "coloredlogs>=10.0",
     "tabulate>=0.8.9",
-    "redis-py-cluster==2.1.3",
-    "redis==3.5.3",
+    "redis>=4.5",
     "tqdm>=4.50.2",
     "filelock>=3.4.2",
     "protobuf~=3.20",
@@ -177,13 +176,22 @@ extras_require = {
     "dev": [
         "black>=20.8b1",
         "isort>=5.6.4",
-        "pylint>=2.6.0",
+        "pylint>=2.10.0,<3",
         "pytest>=6.0.0",
         "pytest-cov>=2.10.1",
         "click==8.0.2",
     ],
+    "mypy": [
+        "mypy>=1.3.0",
+        "types-psutil",
+        "types-redis",
+        "types-tabulate",
+        "types-tqdm",
+        "types-tensorflow",
+        "types-setuptools",
+    ],
     # see smartsim/_core/_install/buildenv.py for more details
-    "ml": versions.ml_extras_required(),
+    **versions.ml_extras_required()
 }
 
 
