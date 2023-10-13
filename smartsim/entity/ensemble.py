@@ -362,6 +362,7 @@ class Ensemble(EntityList[Model]):
         model_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
         batch_size: int = 0,
         min_batch_size: int = 0,
         min_batch_timeout: int = 0,
@@ -388,6 +389,12 @@ class Ensemble(EntityList[Model]):
         :type backend: str
         :param device: name of device for execution, defaults to "CPU"
         :type device: str, optional
+        :param devices_per_node: number of GPUs per node in multiGPU nodes,
+                                 defaults to 1
+        :type devices_per_node: int, optional
+        :param first_device: first device in multi-GPU nodes to use for execution,
+                             defaults to 0; ignored if devices_per_node is 1
+        :type first_device: int, optional
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
@@ -408,6 +415,7 @@ class Ensemble(EntityList[Model]):
             model_file=model_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
             batch_size=batch_size,
             min_batch_size=min_batch_size,
             min_batch_timeout=min_batch_timeout,
@@ -426,6 +434,7 @@ class Ensemble(EntityList[Model]):
         script_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript to launch with every entity belonging to this ensemble
 
@@ -452,6 +461,8 @@ class Ensemble(EntityList[Model]):
         :type device: str, optional
         :param devices_per_node: number of devices on each host
         :type devices_per_node: int
+        :param first_device: first device to use on each host
+        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -459,6 +470,7 @@ class Ensemble(EntityList[Model]):
             script_path=script_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
         )
         self._db_scripts.append(db_script)
         for entity in self.models:
@@ -470,6 +482,7 @@ class Ensemble(EntityList[Model]):
         function: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript function to launch with every entity belonging to this ensemble
 
@@ -483,7 +496,9 @@ class Ensemble(EntityList[Model]):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the script being stored in the first N devices of type ``device``;
+        alternatively, setting ``first_device=M`` will result in the script
+        being stored on nodes M through M + N - 1.
 
         :param name: key to store function under
         :type name: str
@@ -493,9 +508,12 @@ class Ensemble(EntityList[Model]):
         :type device: str, optional
         :param devices_per_node: number of devices on each host
         :type devices_per_node: int
+        :param first_device: first device to use on each host
+        :type first_device: int
         """
         db_script = DBScript(
-            name=name, script=function, device=device, devices_per_node=devices_per_node
+            name=name, script=function, device=device,
+            devices_per_node=devices_per_node, first_device=first_device
         )
         self._db_scripts.append(db_script)
         for entity in self.models:

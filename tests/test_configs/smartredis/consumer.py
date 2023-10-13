@@ -41,6 +41,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # get model and set into database
+    #NOTEjp:  c = Client(False,db_identifier) retrieving the db_identfier somehow 
     c = Client(False)
 
     keyin = os.getenv("SSKEYIN")

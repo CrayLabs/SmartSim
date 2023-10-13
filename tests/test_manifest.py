@@ -63,18 +63,12 @@ def test_separate():
     assert len(manifest.models) == 1
     assert manifest.ensembles[0] == ensemble
     assert len(manifest.ensembles) == 1
-    assert manifest.db == orc
+    assert manifest.dbs[0] == orc
 
 
 def test_no_name():
     with pytest.raises(AttributeError):
         _ = Manifest(model_no_name)
-
-
-def test_two_orc():
-    with pytest.raises(SmartSimError):
-        manifest = Manifest(orc, orc_1)
-        manifest.db
 
 
 def test_separate_type():
