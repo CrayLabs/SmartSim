@@ -14,6 +14,15 @@ if t.TYPE_CHECKING:
     from smartsim.entity import DBNode, Ensemble, Model
     from smartsim.settings.base import BatchSettings, RunSettings
 
+
+# Many of the required fields for serialization require attrs that protected.
+# I do not want to accidentally expose something to users that should not see
+# for a prototype feature. This suppression should probably be removed before
+# this is officially released!
+#
+# pylint: disable=protected-access
+
+
 _TStepLaunchMetaData = t.Tuple[
     t.Optional[str], t.Optional[str], t.Optional[bool], str, str
 ]
@@ -56,8 +65,8 @@ def save_launch_manifest(
         ],
     }
     try:
-        with open(manifest_file, "r") as fd:
-            manifest_dict = json.load(fd)
+        with open(manifest_file, "r", encoding="utf-8") as file:
+            manifest_dict = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         manifest_dict = {
             "experiment": _dictify_experiment(experiment),
@@ -66,8 +75,8 @@ def save_launch_manifest(
     else:
         manifest_dict["runs"].append(new_run)
     finally:
-        with open(manifest_file, "w") as fd:
-            json.dump(manifest_dict, fd, indent=2)
+        with open(manifest_file, "w", encoding="utf-8") as file:
+            json.dump(manifest_dict, file, indent=2)
 
 
 def _dictify_experiment(exp: Experiment) -> t.Dict[str, str]:
@@ -189,7 +198,7 @@ def _dictify_db(
     if db_path:
         db_type, _ = db_path.name.split("-", 1)
     else:
-        db_type = "Unkown"
+        db_type = "Unknown"
     return {
         "name": db.name,
         "type": db_type,
