@@ -25,16 +25,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import typing as t
-
 from dataclasses import dataclass, field
 
 from ...database import Orchestrator
-from ...entity import EntitySequence, SmartSimEntity, Model, Ensemble, DBNode
+from ...entity import DBNode, Ensemble, EntitySequence, Model, SmartSimEntity
 from ...error import SmartSimError
 from ..utils.helpers import fmt_dict
 
-
 _T = t.TypeVar("_T")
+_U = t.TypeVar("_U")
+_AtomicLaunchableT = t.TypeVar("_AtomicLaunchableT", Model, DBNode)
 
 
 class Manifest:
@@ -96,7 +96,6 @@ class Manifest:
         :rtype: List[EntitySequence[SmartSimEntity]]
         """
         _all_entity_lists: t.List[EntitySequence[SmartSimEntity]] = list(self.ensembles)
-
 
         for db in self.dbs:
             _all_entity_lists.append(db)
@@ -223,34 +222,89 @@ class Manifest:
         return has_db_objects
 
 
-@dataclass
-class LaunchedManifest(t.Generic[_T]):
-    # FIXME: This class was made incredibly slap-dashed and needs to be fixed
-    # before we even THINK about merging this anywhere. For instance:
-    #   1) I do not like that this class exists! It feels like there is a
-    #      better way to get steps from entities in entitiy sequences, but I
-    #      honestly could not find a way to do that with out going through the
-    #      JM which which I don't want to do bc (a) it furthure enforces the
-    #      assumption that ``job.name == step.name``, which so far is true but
-    #      IS NOT STRICTLY ENFORCED and (b) I could not find a way to query the
-    #      JM where it is not theoretically possible for the JM to restart an
-    #      launched entity before step/job ids are collected from a previous
-    #      run.
-    #   2) I do not like that this class is not immutable, and that I have
-    #      construction of it's list occurring in ``Controller._launch*``
-    #      methods but I also did not want to "re-parse" the list of entities to
-    #      the launched steps. Maybe make a mutable ``LaunchedManifestBuilder``
-    #      class that then has a method to "freeze" into a ``LaunchedManifest``
-    #      instance?
-    #   3) This class has no right to be a generic; I was just lazy! I didn't
-    #      want to write multiple classes for specific use cases, but it would
-    #      almost certainly help to give each use case a name.
+class _LaunchedManifestMetadata(t.NamedTuple):
+    exp_name: str
+    exp_path: str
+    launcher_name: str
 
-    models: t.List[t.Tuple[Model, _T]] = field(default_factory=list)
-    #   4) These types are gross, they need aliases
-    ensembles: t.List[t.Tuple[Ensemble, t.List[t.Tuple[Model, _T]]]] = field(
+
+@dataclass(frozen=True)
+class LaunchedManifest(t.Generic[_T]):
+    """Immutable manifest mapping launched entities or collections of launched
+    entities to other pieces of external data. This is commonly used to map a
+    launch-able entity to its constructed ``Step`` instance without assuming
+    that ``step.name == job.name`` or querying the ``JobManager`` which itself
+    can be ephemeral.
+    """
+
+    metadata: _LaunchedManifestMetadata
+    models: t.Tuple[t.Tuple[Model, _T], ...]
+    ensembles: t.Tuple[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]], ...]
+    databases: t.Tuple[t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]], ...]
+
+    def map(self, func: t.Callable[[_T], _U]) -> "LaunchedManifest[_U]":
+        def _map_entity_data(
+            fn: t.Callable[[_T], _U],
+            entity_list: t.Sequence[t.Tuple[_AtomicLaunchableT, _T]],
+        ) -> t.Tuple[t.Tuple[_AtomicLaunchableT, _U], ...]:
+            return tuple((entity, fn(data)) for entity, data in entity_list)
+
+        return LaunchedManifest(
+            metadata=self.metadata,
+            models=_map_entity_data(func, self.models),
+            ensembles=tuple(
+                (ens, _map_entity_data(func, model_data))
+                for ens, model_data in self.ensembles
+            ),
+            databases=tuple(
+                (db_, _map_entity_data(func, node_data))
+                for db_, node_data in self.databases
+            ),
+        )
+
+
+@dataclass(frozen=True)
+class LaunchedManifestBuilder(t.Generic[_T]):
+    """A mutable class used to build a ``LaunchedManifest`` while going through
+    the launching process.
+    """
+
+    _models: t.List[t.Tuple[Model, _T]] = field(default_factory=list)
+    _ensembles: t.List[t.Tuple[Ensemble, t.Tuple[t.Tuple[Model, _T], ...]]] = field(
         default_factory=list
     )
-    database: t.List[t.Tuple[Orchestrator, t.List[t.Tuple[DBNode, _T]]]] = field(
-        default_factory=list
-    )
+    _databases: t.List[
+        t.Tuple[Orchestrator, t.Tuple[t.Tuple[DBNode, _T], ...]]
+    ] = field(default_factory=list)
+
+    def add_model(self, model: Model, data: _T) -> None:
+        self._models.append((model, data))
+
+    def add_ensemble(self, ens: Ensemble, data: t.Sequence[_T]) -> None:
+        self._ensembles.append((ens, self._entities_to_data(ens.entities, data)))
+
+    def add_database(self, db_: Orchestrator, data: t.Sequence[_T]) -> None:
+        self._databases.append((db_, self._entities_to_data(db_.entities, data)))
+
+    @staticmethod
+    def _entities_to_data(
+        entities: t.Sequence[_AtomicLaunchableT], data: t.Sequence[_T]
+    ) -> t.Tuple[t.Tuple[_AtomicLaunchableT, _T], ...]:
+        if not entities:
+            raise ValueError("Cannot map data to an empty entity sequence")
+        if len(entities) != len(data):
+            raise ValueError(
+                f"Cannot map data sequence of length {len(data)} to entity "
+                f"sequence of length {len(entities)}"
+            )
+        return tuple(zip(entities, data))
+
+    def finalize(
+        self, exp_name: str, exp_path: str, launcher_name: str
+    ) -> LaunchedManifest[_T]:
+        return LaunchedManifest(
+            metadata=_LaunchedManifestMetadata(exp_name, exp_path, launcher_name),
+            models=tuple(self._models),
+            ensembles=tuple(self._ensembles),
+            databases=tuple(self._databases),
+        )

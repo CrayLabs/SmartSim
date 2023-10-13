@@ -27,34 +27,31 @@
 from __future__ import annotations
 
 import os.path as osp
-from os import environ
 import pickle
 import signal
 import threading
 import time
 import typing as t
+from os import environ
 
 from smartredis import Client, ConfigOptions
 
 from ..._core.launcher.step import Step
+from ..._core.utils.helpers import unpack_colo_db_identifier, unpack_db_identifier
 from ..._core.utils.redis import db_is_active, set_ml_model, set_script, shutdown_db
-from ..._core.utils.helpers import (
-    unpack_db_identifier,
-    unpack_colo_db_identifier,
-)
 from ...database import Orchestrator
 from ...entity import Ensemble, EntityList, EntitySequence, Model, SmartSimEntity
 from ...error import (
     LauncherError,
     SmartSimError,
+    SSDBIDConflictError,
     SSInternalError,
     SSUnsupportedError,
-    SSDBIDConflictError,
 )
 from ...log import get_logger
+from ...servertype import CLUSTERED, STANDALONE
 from ...settings.base import BatchSettings
 from ...status import STATUS_CANCELLED, STATUS_RUNNING, TERMINAL_STATUSES
-from ...servertype import STANDALONE, CLUSTERED
 from ..config import CONFIG
 from ..launcher import (
     CobaltLauncher,
@@ -64,13 +61,14 @@ from ..launcher import (
     SlurmLauncher,
 )
 from ..launcher.launcher import Launcher
-from ..utils import check_cluster_status, create_cluster
+from ..utils import check_cluster_status, create_cluster, serialize
 from .job import Job
 from .jobmanager import JobManager
-from .manifest import Manifest, LaunchedManifest
+from .manifest import LaunchedManifest, LaunchedManifestBuilder, Manifest
 
 if t.TYPE_CHECKING:
     from ..launcher.stepMapping import StepMap
+    from ..utils.serialize import TStepLaunchMetaData
 
 logger = get_logger(__name__)
 
@@ -94,10 +92,13 @@ class Controller:
         self.init_launcher(launcher)
 
     def start(
-        self, manifest: Manifest, block: bool = True, kill_on_interrupt: bool = True
-    ) -> LaunchedManifest[
-        t.Tuple[t.Optional[str], t.Optional[str], t.Optional[bool], str, str]
-    ]:
+        self,
+        exp_name: str,
+        exp_path: str,
+        manifest: Manifest,
+        block: bool = True,
+        kill_on_interrupt: bool = True,
+    ) -> None:
         """Start the passed SmartSim entities
 
         This function should not be called directly, but rather
@@ -109,54 +110,21 @@ class Controller:
         self._jobs.kill_on_interrupt = kill_on_interrupt
         # register custom signal handler for ^C (SIGINT)
         signal.signal(signal.SIGINT, self._jobs.signal_interrupt)
-        launched = self._launch(manifest)
+        launched = self._launch(exp_name, exp_path, manifest)
 
         # start the job manager thread if not already started
         if not self._jobs.actively_monitoring:
             self._jobs.start()
+
+        serialize.save_launch_manifest(
+            launched.map(_look_up_launched_data(self._launcher))
+        )
 
         # block until all non-database jobs are complete
         if block:
             # poll handles its own keyboard interrupt as
             # it may be called seperately
             self.poll(5, True, kill_on_interrupt=kill_on_interrupt)
-
-        def _prep_launched_metadata(
-            launcher: Launcher, launched_step_name: str, step: Step
-        ) -> t.Tuple[t.Optional[str], t.Optional[str], t.Optional[bool], str, str]:
-            # NOTE: we cannot assume that the name of the launched step
-            # ``launched_step_name`` is equal to the name of the step referring
-            # to the entity ``step.name`` as is the case when an entity list is
-            # launched as a batch job
-            launched_step_map = launcher.step_mapping[launched_step_name]
-            out_file, err_file = step.get_output_files()
-            return (
-                launched_step_map.step_id,
-                launched_step_map.task_id,
-                launched_step_map.managed,
-                out_file,
-                err_file,
-            )
-
-        # FIXME: These list comprehensions are unreadable
-        return LaunchedManifest(
-            models=[
-                (model, _prep_launched_metadata(self._launcher, step_name, step))
-                for model, (step_name, step) in launched.models
-            ],
-            ensembles=[
-                (ens, [(model,
-                        _prep_launched_metadata(self._launcher, step_name, step))
-                       for model, (step_name, step) in model_list])
-                for ens, model_list in launched.ensembles
-            ],
-            database=[
-                (db_, [(node,
-                        _prep_launched_metadata(self._launcher, step_name, step))
-                       for node, (step_name, step) in node_list])
-                for db_, node_list in launched.database
-            ],
-        )
 
     @property
     def orchestrator_active(self) -> bool:
@@ -354,7 +322,9 @@ class Controller:
         else:
             raise TypeError("Must provide a 'launcher' argument")
 
-    def _launch(self, manifest: Manifest) -> LaunchedManifest[t.Tuple[str, Step]]:
+    def _launch(
+        self, exp_name: str, exp_path: str, manifest: Manifest
+    ) -> LaunchedManifest[t.Tuple[str, Step]]:
         """Main launching function of the controller
 
         Orchestrators are always launched first so that the
@@ -364,7 +334,7 @@ class Controller:
         :type manifest: Manifest
         """
 
-        launched_manifest = LaunchedManifest[t.Tuple[str, Step]]()
+        manifest_builder = LaunchedManifestBuilder[t.Tuple[str, Step]]()
         # Loop over deployables to launch and launch multiple orchestrators
         for orchestrator in manifest.dbs:
             for key in self._jobs.get_db_host_addresses():
@@ -382,7 +352,7 @@ class Controller:
                 raise SmartSimError(
                     "Local launcher does not support multi-host orchestrators"
                 )
-            self._launch_orchestrator(orchestrator, launched_manifest)
+            self._launch_orchestrator(orchestrator, manifest_builder)
 
         if self.orchestrator_active:
             self._set_dbobjects(manifest)
@@ -395,24 +365,15 @@ class Controller:
         for elist in all_entity_lists:
             if elist.batch:
                 batch_step, substeps = self._create_batch_job_step(elist)
-                launched_manifest.ensembles.append(
-                    (
-                        elist,
-                        [
-                            (model, (batch_step.name, step))
-                            for step, model in zip(substeps, elist.entities)
-                            #                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                            # TODO: Do not like that we assume these are of the same
-                            # same length and that order is preserved
-                        ],
-                    )
+                manifest_builder.add_ensemble(
+                    elist, [(batch_step.name, step) for step in substeps]
                 )
                 steps.append((batch_step, elist))
             else:
                 # if ensemble is to be run as separate job steps, aka not in a batch
                 job_steps = [(self._create_job_step(e), e) for e in elist.entities]
-                launched_manifest.ensembles.append(
-                    (elist, [(model, (step.name, step)) for step, model in job_steps])
+                manifest_builder.add_ensemble(
+                    elist, [(step.name, step) for step, _ in job_steps]
                 )
                 steps.extend(job_steps)
         # models themselves cannot be batch steps. If batch settings are
@@ -424,21 +385,23 @@ class Controller:
                 )
                 anon_entity_list.entities.append(model)
                 batch_step, _ = self._create_batch_job_step(anon_entity_list)
-                launched_manifest.models.append((model, (batch_step.name, batch_step)))
+                manifest_builder.add_model(model, (batch_step.name, batch_step))
                 steps.append((batch_step, model))
             else:
                 job_step = self._create_job_step(model)
-                launched_manifest.models.append((model, (job_step.name, job_step)))
+                manifest_builder.add_model(model, (job_step.name, job_step))
                 steps.append((job_step, model))
 
         # launch steps
         for step, entity in steps:
             self._launch_step(step, entity)
 
-        return launched_manifest
+        return manifest_builder.finalize(exp_name, exp_path, str(self._launcher))
 
     def _launch_orchestrator(
-        self, orchestrator: Orchestrator, manifest: LaunchedManifest[t.Tuple[str, Step]]
+        self,
+        orchestrator: Orchestrator,
+        manifest_builder: LaunchedManifestBuilder[t.Tuple[str, Step]],
     ) -> None:
         """Launch an Orchestrator instance
 
@@ -454,27 +417,16 @@ class Controller:
         # if the orchestrator was launched as a batch workload
         if orchestrator.batch:
             orc_batch_step, substeps = self._create_batch_job_step(orchestrator)
-            # FIXME: gross use of in-place mutation of param. RM THIS!
-            manifest.database.append(
-                (
-                    orchestrator,
-                    [
-                        (node, (orc_batch_step.name, step))
-                        for step, node in zip(substeps, orchestrator.entities)
-                        #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                        # TODO: Do not like that we assume these are of the same
-                        # same length and that order is preserved
-                    ],
-                )
+            manifest_builder.add_database(
+                orchestrator, [(orc_batch_step.name, step) for step in substeps]
             )
             self._launch_step(orc_batch_step, orchestrator)
 
         # if orchestrator was run on existing allocation, locally, or in allocation
         else:
             db_steps = [(self._create_job_step(db), db) for db in orchestrator.entities]
-            # FIXME: gross mutation, resulting in out param here too! RM THIS!!
-            manifest.database.append(
-                (orchestrator, [(node, (step.name, step)) for step, node in db_steps])
+            manifest_builder.add_database(
+                orchestrator, [(step.name, step) for step, _ in db_steps]
             )
             for db_step in db_steps:
                 self._launch_step(*db_step)
@@ -566,14 +518,6 @@ class Controller:
         substeps = []
         for entity in entity_list.entities:
             # tells step creation not to look for an allocation
-            # FIXME: Gross! Answer before mering or ticket!
-            #   1) Why is there no "BatchStep" type?
-            #   2) Why does the "BatchSteps" have list of cmds for subprocs
-            #      for to be launched, but not a refrence to the actual
-            #      substep instances?
-            #   3) Is there anyway we can get around setting this "magic" RS
-            #      instance attr? I makes construction of the steps VERY
-            #      confusing :-(
             entity.run_settings.in_batch = True
             step = self._create_job_step(entity)
             substeps.append(step)
@@ -843,3 +787,25 @@ class _AnonymousBatchJob(EntityList[Model]):
 
     def _initialize_entities(self, **kwargs: t.Any) -> None:
         ...
+
+
+def _look_up_launched_data(
+    launcher: Launcher,
+) -> t.Callable[[t.Tuple[str, Step]], "TStepLaunchMetaData"]:
+    def _unpack_launched_data(data: t.Tuple[str, Step]) -> "TStepLaunchMetaData":
+        # NOTE: we cannot assume that the name of the launched step
+        # ``launched_step_name`` is equal to the name of the step referring to
+        # the entity ``step.name`` as is the case when an entity list is
+        # launched as a batch job
+        launched_step_name, step = data
+        launched_step_map = launcher.step_mapping[launched_step_name]
+        out_file, err_file = step.get_output_files()
+        return (
+            launched_step_map.step_id,
+            launched_step_map.task_id,
+            launched_step_map.managed,
+            out_file,
+            err_file,
+        )
+
+    return _unpack_launched_data

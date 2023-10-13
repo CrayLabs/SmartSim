@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 import typing as t
+import uuid
 from pathlib import Path
 
 import smartsim._core._cli.utils as _utils
@@ -12,6 +13,7 @@ if t.TYPE_CHECKING:
     from smartsim._core.control.manifest import LaunchedManifest as _Manifest
     from smartsim.database.orchestrator import Orchestrator
     from smartsim.entity import DBNode, Ensemble, Model
+    from smartsim.entity.dbobject import DBModel, DBScript
     from smartsim.settings.base import BatchSettings, RunSettings
 
 
@@ -23,43 +25,39 @@ if t.TYPE_CHECKING:
 # pylint: disable=protected-access
 
 
-_TStepLaunchMetaData = t.Tuple[
+TStepLaunchMetaData = t.Tuple[
     t.Optional[str], t.Optional[str], t.Optional[bool], str, str
 ]
 
 
-def save_launch_manifest(
-    experiment: Experiment, manifest: _Manifest[_TStepLaunchMetaData]
-) -> None:
-    manifest_dir = Path(experiment.exp_path) / ".smartsim/manifest"
+def save_launch_manifest(manifest: _Manifest[TStepLaunchMetaData]) -> None:
+    manifest_dir = Path(manifest.metadata.exp_path) / ".smartsim/manifest"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     manifest_file = manifest_dir / "manifest.json"
 
-    # FIXME: Did we decide on if this should be uuid/literal count of the
-    #        runs/time since epoch/etc.? Whatever it is, it probably should not
-    #        be secs since epoch as this could lead to conflicts if many
-    #        non-blocking runs are made in quick succession.
-    run_id = int(time.time())
+    run_id = str(uuid.uuid4())
+    telemetry_data_root = manifest_dir / f"{manifest.metadata.exp_name}/{run_id}"
 
     new_run = {
         "run_id": run_id,
+        "timestamp": int(time.time_ns()),
         "model": [
             _dictify_model(
                 model,
                 *telemetry_metadata,
-                manifest_dir / f"{experiment.name}/{run_id}/model",
+                telemetry_data_root / "model",
             )
             for model, telemetry_metadata in manifest.models
         ],
         "orchestrator": [
             _dictify_db(
-                db, nodes_info, manifest_dir / f"{experiment.name}/{run_id}/database"
+                db, nodes_info, telemetry_data_root / "database"
             )
-            for db, nodes_info in manifest.database
+            for db, nodes_info in manifest.databases
         ],
         "ensemble": [
             _dictify_ensemble(
-                ens, member_info, manifest_dir / f"{experiment.name}/{run_id}/ensemble"
+                ens, member_info, telemetry_data_root / "ensemble"
             )
             for ens, member_info in manifest.ensembles
         ],
@@ -69,7 +67,11 @@ def save_launch_manifest(
             manifest_dict = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         manifest_dict = {
-            "experiment": _dictify_experiment(experiment),
+            "experiment": {
+                "name": manifest.metadata.exp_name,
+                "path": manifest.metadata.exp_path,
+                "launcher": manifest.metadata.launcher_name,
+            },
             "runs": [new_run],
         }
     else:
@@ -77,14 +79,6 @@ def save_launch_manifest(
     finally:
         with open(manifest_file, "w", encoding="utf-8") as file:
             json.dump(manifest_dict, file, indent=2)
-
-
-def _dictify_experiment(exp: Experiment) -> t.Dict[str, str]:
-    return {
-        "name": exp.name,
-        "path": exp.exp_path,
-        "launcher": exp._launcher,
-    }
 
 
 def _dictify_model(
@@ -96,6 +90,9 @@ def _dictify_model(
     err_file: str,
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
+    colo_settings = (model.run_settings.colocated_db_settings or {}).copy()
+    db_scripts = t.cast("t.List[DBScript]", colo_settings.pop("db_scripts", []))
+    db_models = t.cast("t.List[DBModel]", colo_settings.pop("db_models", []))
     return {
         "name": model.name,
         "path": model.path,
@@ -116,7 +113,7 @@ def _dictify_model(
             "Copy": [],
         },
         "colocated_db": {
-            "settings": model.run_settings.colocated_db_settings,
+            "settings": colo_settings,
             "scripts": [
                 {
                     script.name: {
@@ -124,7 +121,7 @@ def _dictify_model(
                         "device": script.device,
                     }
                 }
-                for script in model._db_scripts
+                for script in db_scripts
             ],
             "models": [
                 {
@@ -133,10 +130,10 @@ def _dictify_model(
                         "device": model.device,
                     }
                 }
-                for model in model._db_models
+                for model in db_models
             ],
         }
-        if model.run_settings.colocated_db_settings
+        if colo_settings
         else None,
         "telemetry_metadata": {
             "status_dir": str(telemetry_data_path / model.name),
@@ -151,7 +148,7 @@ def _dictify_model(
 
 def _dictify_ensemble(
     ens: Ensemble,
-    members: t.List[t.Tuple[Model, _TStepLaunchMetaData]],
+    members: t.Sequence[t.Tuple[Model, TStepLaunchMetaData]],
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
     return {
@@ -163,7 +160,7 @@ def _dictify_ensemble(
         if ens.batch_settings else None,
         "models": [
             _dictify_model(
-                model, *launching_metadata, telemetry_data_path / f"ensemble/{ens.name}"
+                model, *launching_metadata, telemetry_data_path / ens.name
             )
             for model, launching_metadata in members
         ],
@@ -191,7 +188,7 @@ def _dictify_batch_settings(batch_settings: BatchSettings) -> t.Dict[str, t.Any]
 
 def _dictify_db(
     db: Orchestrator,
-    nodes: t.List[t.Tuple[DBNode, _TStepLaunchMetaData]],
+    nodes: t.Sequence[t.Tuple[DBNode, TStepLaunchMetaData]],
     telemetry_data_path: Path,
 ) -> t.Dict[str, t.Any]:
     db_path = _utils.get_db_path()
@@ -205,14 +202,13 @@ def _dictify_db(
         "interface": db._interfaces,
         "shards": [
             {
-                # FIXME: very sloppy, make this comprehension a fn
                 **shard.to_dict(),
                 "conf_file": shard.cluster_conf_file,
                 "out_file": out_file,
                 "err_file": err_file,
                 "telemetry_metadata": {
                     "status_dir": str(
-                        telemetry_data_path / f"database/{db.name}/{dbnode.name}"
+                        telemetry_data_path / f"{db.name}/{dbnode.name}"
                     ),
                     "step_id": step_id,
                     "task_id": task_id,
