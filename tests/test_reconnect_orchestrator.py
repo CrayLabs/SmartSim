@@ -41,8 +41,8 @@ def test_local_orchestrator(fileutils, wlmutils):
     """Test launching orchestrator locally"""
     global first_dir
     exp_name = "test-orc-launch-local"
-    exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
     first_dir = test_dir
 
     orc = Orchestrator(port=wlmutils.get_test_port())
@@ -57,12 +57,13 @@ def test_local_orchestrator(fileutils, wlmutils):
     exp._control._launcher.task_manager.actively_monitoring = False
 
 
-def test_reconnect_local_orc():
+def test_reconnect_local_orc(fileutils):
     """Test reconnecting to orchestrator from first experiment"""
     global first_dir
     # start new experiment
     exp_name = "test-orc-local-reconnect-2nd"
-    exp_2 = Experiment(exp_name, launcher="local")
+    test_dir = fileutils.make_test_dir()
+    exp_2 = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     checkpoint = osp.join(first_dir, "smartsim_db.dat")
     reloaded_orc = exp_2.reconnect_orchestrator(checkpoint)
