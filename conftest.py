@@ -50,7 +50,6 @@ from subprocess import run
 import sys
 import typing as t
 import warnings
-import contextlib
 
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
@@ -683,13 +682,12 @@ class ColoUtils:
         colo_model_name: t.Optional[str] = "colocated_model",
         port: t.Optional[int] = test_port,
         on_wlm: t.Optional[bool] = False,
-        sr_test_script = fileutils.get_test_conf_path(application_file)
     ) -> Model:
         """Setup database needed for the colo pinning tests"""
 
         # get test setup
-        test_dir = fileutils.make_test_dir(level=level)
-        sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+        test_dir = fileutils.make_test_dir(level=2)
+        sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:
