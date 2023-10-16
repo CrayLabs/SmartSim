@@ -81,7 +81,7 @@ class _BaseMPISettings(RunSettings):
             **kwargs,
         )
         self.mpmd: t.List[RunSettings] = []
-        self.affinity_script = None
+        self.affinity_script: t.List[str] = []
 
         if not shutil.which(self._run_command):
             msg = (
