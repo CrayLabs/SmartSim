@@ -29,7 +29,9 @@ import typing as t
 from .._core.utils import init_default
 from ..error import SmartSimError
 from .base import BatchSettings
+from ..log import get_logger
 
+logger = get_logger(__name__)
 
 class QsubBatchSettings(BatchSettings):
     def __init__(
@@ -189,8 +191,22 @@ class QsubBatchSettings(BatchSettings):
         res = []
 
         # get select statement from resources or kwargs
-        if "select" in self.resources:
+        if ("select" in self.resources) and not ("nodes" in self.resources):
             res += [f"-l select={str(self.resources['select'])}"]
+        elif ("select" in self.resources) and ("nodes" in self.resources):
+            nselect = self.resources["select"]
+            if nselect == self._nodes:
+                logger.warning("select and nodes were both specified, specifying nodes")
+                res += [f"-l nodes={self._nodes}"]
+            else:
+                raise SmartSimError(
+                    (
+                        "select and nodes were both specified, but do not have "
+                        f"the same value. select={nselect} nodes={self.nodes}"
+                    )
+                )
+        elif "nodes" in self.resources:
+            res += [f"-l nodes={self._nodes}"]
         else:
             select = "-l select="
             if self._nodes:
@@ -208,8 +224,6 @@ class QsubBatchSettings(BatchSettings):
 
         if "place" in self.resources:
             res += [f"-l place={str(self.resources['place'])}"]
-        else:
-            res += ["-l place=scatter"]
 
         # get time from resources or kwargs
         if "walltime" in self.resources:
@@ -221,4 +235,5 @@ class QsubBatchSettings(BatchSettings):
         for resource, value in self.resources.items():
             if resource not in ["select", "walltime", "place"]:
                 res += [f"-l {resource}={str(value)}"]
+        print(res)
         return res

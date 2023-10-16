@@ -65,10 +65,11 @@ test_nic = CONFIG.test_interface
 test_alloc_specs_path = os.getenv("SMARTSIM_TEST_ALLOC_SPEC_SHEET_PATH", None)
 test_port = CONFIG.test_port
 test_account = CONFIG.test_account or ""
+test_batch_resources = CONFIG.test_batch_resources
 
 # Fill this at runtime if needed
 test_hostlist = None
-
+has_aprun = shutil.which("aprun") is not None
 
 def get_account() -> str:
     return test_account
@@ -86,7 +87,10 @@ def print_test_configuration() -> None:
         print("TEST_ALLOC_SPEC_SHEET_PATH:", test_alloc_specs_path)
     print("TEST_DIR:", test_dir)
     print("Test output will be located in TEST_DIR if there is a failure")
-    print("TEST_PORTS", ", ".join(str(port) for port in range(test_port, test_port+3)))
+    print("TEST_PORTS:", ", ".join(str(port) for port in range(test_port, test_port+3)))
+    if test_batch_resources:
+        print("TEST_BATCH_RESOURCES: ")
+        print(json.dumps(test_batch_resources, indent=2))
 
 
 def pytest_configure() -> None:
@@ -95,6 +99,7 @@ def pytest_configure() -> None:
     account = get_account()
     pytest.test_account = account
     pytest.test_device = test_device
+    pytest.has_aprun = has_aprun
 
 
 def pytest_sessionstart(
@@ -224,6 +229,10 @@ class WLMUtils:
     @staticmethod
     def get_test_hostlist() -> t.Optional[t.List[str]]:
         return get_hostlist()
+
+    @staticmethod
+    def get_batch_resources() -> t.Dict:
+        return test_batch_resources
 
     @staticmethod
     def get_base_run_settings(

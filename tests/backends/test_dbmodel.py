@@ -34,6 +34,7 @@ from smartsim._core.utils import installed_redisai_backends
 from smartsim.entity import Ensemble
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
+from smartsim.settings import MpirunSettings, MpiexecSettings
 
 from smartsim.entity.dbobject import DBModel
 
@@ -108,6 +109,11 @@ else:
 
 should_run_pt &= "torch" in installed_redisai_backends()
 
+def choose_host(run_settings, wlmutils):
+    host = None
+    if isinstance(run_settings, (MpirunSettings, MpiexecSettings)):
+        host = wlmutils.get_test_hostlist()[0]
+    return host
 
 def save_tf_cnn(path, file_name):
     """Create a Keras CNN for testing purposes"""
@@ -172,7 +178,8 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = choose_host(run_settings, wlmutils)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Create and save ML model to filesystem
@@ -246,7 +253,8 @@ def test_pt_db_model(fileutils, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = choose_host(run_settings, wlmutils)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Create and save ML model to filesystem
@@ -315,7 +323,8 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = choose_host(run_settings, wlmutils)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Create and save ML model to filesystem

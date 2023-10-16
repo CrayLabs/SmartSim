@@ -32,6 +32,7 @@ from smartsim import Experiment, status
 from smartsim._core.utils import installed_redisai_backends
 from smartsim.error.errors import SSUnsupportedError
 from smartsim.log import get_logger
+from smartsim.settings import MpirunSettings, MpiexecSettings
 
 from smartsim.entity.dbobject import DBScript
 
@@ -46,6 +47,11 @@ except ImportError:
 
 should_run &= "torch" in installed_redisai_backends()
 
+def choose_host(run_settings, wlmutils):
+    host = None
+    if isinstance(run_settings, (MpirunSettings, MpiexecSettings)):
+        host = wlmutils.get_test_hostlist()[0]
+    return host
 
 def timestwo(x):
     return 2 * x
@@ -81,7 +87,8 @@ def test_db_script(fileutils, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create the SmartSim database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = choose_host(run_settings, wlmutils)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Define the torch script string
@@ -159,7 +166,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
     smartsim_model.set_path(test_dir)
 
     # Create SmartSim database
-    db = exp.create_database(port=test_port, interface=test_interface)
+    host = choose_host(run_settings, wlmutils)
+    db = exp.create_database(port=test_port, interface=test_interface, hosts=host)
     exp.generate(db)
 
     # Create the script string

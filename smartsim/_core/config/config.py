@@ -24,6 +24,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import os
 import psutil
 import typing as t
@@ -170,6 +171,10 @@ class Config:
     @property
     def test_port(self) -> int:  # pragma: no cover
         return int(os.environ.get("SMARTSIM_TEST_PORT", 6780))
+
+    @property
+    def test_batch_resources(self) -> t.Dict: # pragma: no cov
+        return json.loads(os.environ.get("SMARTSIM_TEST_BATCH_RESOURCES", "{}"))
 
     @property
     def test_interface(self) -> t.List[str]:  # pragma: no cover
