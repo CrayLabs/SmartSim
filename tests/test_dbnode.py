@@ -48,8 +48,8 @@ def test_parse_db_host_error():
 
 def test_hosts(fileutils, wlmutils):
     exp_name = "test_hosts"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
 
     orc = Orchestrator(port=wlmutils.get_test_port(), interface="lo", launcher="local")
     orc.set_path(test_dir)

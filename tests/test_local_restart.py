@@ -35,8 +35,8 @@ Test restarting ensembles and models.
 def test_restart(fileutils):
 
     exp_name = "test-models-local-restart"
-    exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")
@@ -55,8 +55,8 @@ def test_restart(fileutils):
 
 def test_ensemble(fileutils):
     exp_name = "test-ensemble-restart"
-    exp = Experiment(exp_name, launcher="local")
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher="local", exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", f"{script} --time=3")

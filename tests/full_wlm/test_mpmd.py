@@ -61,7 +61,8 @@ def test_mpmd(fileutils, wlmutils):
         "cobalt": ["mpirun"],
     }
 
-    exp = Experiment(exp_name, launcher=launcher)
+    test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     def prune_commands(launcher):
         available_commands = []
@@ -77,7 +78,6 @@ def test_mpmd(fileutils, wlmutils):
             f"MPMD on {launcher} only supported for run commands {by_launcher[launcher]}"
         )
 
-    test_dir = fileutils.make_test_dir()
     for run_command in run_commands:
         script = fileutils.get_test_conf_path("sleep.py")
         settings = exp.create_run_settings(

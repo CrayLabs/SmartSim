@@ -110,8 +110,8 @@ def test_bad_ensemble_init_no_rs_bs():
 
 def test_stop_entity(fileutils):
     exp_name = "test_stop_entity"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model("model", path=test_dir, run_settings=RunSettings("sleep", "5"))
     exp.start(m, block=False)
     assert exp.finished(m) == False
@@ -122,8 +122,8 @@ def test_stop_entity(fileutils):
 def test_poll(fileutils):
     # Ensure that a SmartSimError is not raised
     exp_name = "test_exp_poll"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     model = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("sleep", "5")
     )
@@ -134,8 +134,8 @@ def test_poll(fileutils):
 
 def test_summary(fileutils):
     exp_name = "test_exp_summary"
-    exp = Experiment(exp_name)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, exp_path=test_dir)
     m = exp.create_model(
         "model", path=test_dir, run_settings=RunSettings("echo", "Hello")
     )

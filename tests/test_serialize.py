@@ -5,12 +5,14 @@ from smartsim import Experiment
 from smartsim._core.utils import serialize
 from smartsim._core.control.manifest import LaunchedManifestBuilder
 
+_REL_MANIFEST_PATH = ".smartsim/telemetry/manifest.json"
+
 
 def test_serialize_creates_a_maifest_json_file_if_dne(fileutils):
     test_dir = fileutils.get_test_dir()
     lmb = LaunchedManifestBuilder()
     serialize.save_launch_manifest(lmb.finalize("exp", test_dir, "launcher"))
-    manifest_json = Path(test_dir) / ".smartsim/manifest/manifest.json"
+    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
 
     assert manifest_json.is_file()
     with open(manifest_json, 'r') as f:
@@ -25,7 +27,7 @@ def test_serialize_appends_a_manifest_json_exists(fileutils):
     test_dir = fileutils.get_test_dir()
     lmb = LaunchedManifestBuilder()
     serialize.save_launch_manifest(lmb.finalize("exp", test_dir, "launcher"))
-    manifest_json = Path(test_dir) / ".smartsim/manifest/manifest.json"
+    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     serialize.save_launch_manifest(lmb.finalize("exp", test_dir, "launcher"))
     serialize.save_launch_manifest(lmb.finalize("exp", test_dir, "launcher"))
 
@@ -38,7 +40,7 @@ def test_serialize_appends_a_manifest_json_exists(fileutils):
 
 def test_serialize_overwites_file_if_not_json(fileutils):
     test_dir = fileutils.get_test_dir()
-    manifest_json = Path(test_dir) / ".smartsim/manifest/manifest.json"
+    manifest_json = Path(test_dir) / _REL_MANIFEST_PATH
     manifest_json.parent.mkdir(parents=True, exist_ok=True)
     with open(manifest_json, 'w') as f:
         f.write("This is not a json\n")
@@ -66,7 +68,7 @@ def test_started_entities_are_serialized(fileutils):
     exp.start(hello_world_model, spam_eggs_model, block=False)
     exp.start(hello_ensemble, block=False)
 
-    manifest_json = Path(exp.exp_path) / ".smartsim/manifest/manifest.json"
+    manifest_json = Path(exp.exp_path) / _REL_MANIFEST_PATH
     try:
         with open(manifest_json, 'r') as f:
             manifest = json.load(f)

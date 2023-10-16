@@ -398,7 +398,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experience
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -469,7 +469,7 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_pt_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -633,7 +633,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create the SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -735,7 +735,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     test_script = fileutils.get_test_conf_path("run_tf_dbmodel_smartredis.py")
 
     # Create SmartSim Experiment
-    exp = Experiment(exp_name, launcher=test_launcher)
+    exp = Experiment(exp_name, launcher=test_launcher, exp_path=test_dir)
 
     # Create colocated RunSettings
     colo_settings = exp.create_run_settings(exe=sys.executable, exe_args=test_script)
@@ -817,6 +817,7 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
 
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_model(colo_model)
+
 
 @pytest.mark.skipif(not should_run_tf, reason="Test needs TensorFlow to run")
 def test_inconsistent_params_db_model():

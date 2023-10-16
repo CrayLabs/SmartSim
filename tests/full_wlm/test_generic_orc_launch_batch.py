@@ -41,8 +41,8 @@ def test_launch_orc_auto_batch(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-orc-batch"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -77,8 +77,8 @@ def test_launch_cluster_orc_batch_single(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-batch-single"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -116,8 +116,8 @@ def test_launch_cluster_orc_batch_multi(fileutils, wlmutils):
     launcher = wlmutils.get_test_launcher()
 
     exp_name = "test-launch-auto-cluster-orc-batch-multi"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()
@@ -153,8 +153,8 @@ def test_launch_cluster_orc_reconnect(fileutils, wlmutils):
     """test reconnecting to clustered 3-node orchestrator"""
     launcher = wlmutils.get_test_launcher()
     exp_name = "test-launch-cluster-orc-batch-reconect"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     # batch = False to launch on existing allocation
     network_interface = wlmutils.get_test_interface()

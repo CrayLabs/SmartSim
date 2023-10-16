@@ -39,8 +39,8 @@ def test_launch_openmpi_lsf(wlmutils, fileutils):
     if launcher != "lsf":
         pytest.skip("Test only runs on systems with LSF as WLM")
     exp_name = "test-launch-openmpi-lsf"
-    exp = Experiment(exp_name, launcher=launcher)
     test_dir = fileutils.make_test_dir()
+    exp = Experiment(exp_name, launcher=launcher, exp_path=test_dir)
 
     script = fileutils.get_test_conf_path("sleep.py")
     settings = exp.create_run_settings("python", script, "mpirun")
