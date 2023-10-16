@@ -12,6 +12,39 @@ SmartSim
 ========
 
 
+Development branch
+------------------
+
+To be released at some future point in time
+
+Description
+
+- Expose first_device parameter for scripts, functions, models
+- Added support for MINBATCHTIMEOUT in model execution
+- Remove support for RedisAI 1.2.5, use RedisAI 1.2.7 commit
+- Add support for multiple databases
+
+Detailed Notes
+
+- Added support for first_device parameter for scripts, functions,
+  and models. This causes them to be loaded to the first num_devices
+  beginning with first_device (PR394_)
+- Added support for MINBATCHTIMEOUT in model execution, which caps the delay
+  waiting for a minimium number of model execution operations to accumulate
+  before executing them as a batch (PR387_)
+- RedisAI 1.2.5 is not supported anymore. The only RedisAI version
+  is now 1.2.7. Since the officially released RedisAI 1.2.7 has a
+  bug which breaks the build process on Mac OSX, it was decided to
+  use commit 634916c_ from RedisAI's GitHub repository, where such
+  bug has been fixed. This applies to all operating systems. (PR383_)
+- Add support for creation of multiple databases with unique identifiers. (PR342_)
+
+  .. _PR394: https://github.com/CrayLabs/SmartSim/pull/394
+  .. _PR387: https://github.com/CrayLabs/SmartSim/pull/387
+  .. _PR383: https://github.com/CrayLabs/SmartSim/pull/383
+  .. _634916c: https://github.com/RedisAI/RedisAI/commit/634916c722e718cc6ea3fad46e63f7d798f9adc2
+  .. _PR342: https://github.com/CrayLabs/SmartSim/pull/342
+
 0.5.1
 -----
 

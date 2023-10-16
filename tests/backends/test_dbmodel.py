@@ -193,6 +193,7 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
         model=model,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs,
         tag="test",
@@ -203,6 +204,7 @@ def test_tf_db_model(fileutils, wlmutils, mlutils):
         model_path=model_file2,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
         tag="test",
@@ -268,6 +270,7 @@ def test_pt_db_model(fileutils, wlmutils, mlutils):
         model_path=model_path,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         tag="test",
     )
 
@@ -338,6 +341,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
         model=model,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs
     )
@@ -351,6 +355,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
             model_path=model_file2,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -366,6 +371,7 @@ def test_db_model_ensemble(fileutils, wlmutils, mlutils):
         model_path=model_file2,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -429,6 +435,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
         model_path=model_file,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs
     )
@@ -438,6 +445,7 @@ def test_colocated_db_model_tf(fileutils, wlmutils, mlutils):
         model_path=model_file2,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -496,7 +504,8 @@ def test_colocated_db_model_pytorch(fileutils, wlmutils, mlutils):
                             "TORCH",
                             model_path=model_file,
                             device=test_device,
-                            devices_per_node=test_num_gpus)
+                            devices_per_node=test_num_gpus,
+                            first_device=0)
 
     # Assert we have added both models
     assert len(colo_model._db_models) == 1
@@ -572,6 +581,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
             model_path=model_file2,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -583,6 +593,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
         model_path=model_file,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs,
         tag="test",
@@ -598,6 +609,7 @@ def test_colocated_db_model_ensemble(fileutils, wlmutils, mlutils):
         model_path=model_file2,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -658,6 +670,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         model_path=model_file,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs,
         outputs=outputs
     )
@@ -678,6 +691,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
             model_path=model_file2,
             device=test_device,
             devices_per_node=test_num_gpus,
+            first_device=0,
             inputs=inputs2,
             outputs=outputs2,
         )
@@ -699,6 +713,7 @@ def test_colocated_db_model_ensemble_reordered(fileutils, wlmutils, mlutils):
         model_path=model_file2,
         device=test_device,
         devices_per_node=test_num_gpus,
+        first_device=0,
         inputs=inputs2,
         outputs=outputs2,
     )
@@ -754,7 +769,8 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_model.add_ml_model(
             "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
         )
 
     # Create an ensemble with two identical replicas
@@ -777,7 +793,8 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     with pytest.raises(SSUnsupportedError):
         colo_ensemble.add_ml_model(
             "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
         )
 
     # Check error is still thrown if an in-memory model is used
@@ -795,7 +812,8 @@ def test_colocated_db_model_errors(fileutils, wlmutils, mlutils):
     colo_ensemble2.set_path(test_dir)
     colo_ensemble2.add_ml_model(
         "cnn", "TF", model=model, device=test_device,
-            devices_per_node=test_num_gpus, inputs=inputs, outputs=outputs
+            devices_per_node=test_num_gpus, first_device=0,
+            inputs=inputs, outputs=outputs
     )
     for i, entity in enumerate(colo_ensemble2):
         with pytest.raises(SSUnsupportedError):
@@ -816,12 +834,13 @@ def test_inconsistent_params_db_model():
     # Create and save ML model to filesystem
     model, inputs, outputs = create_tf_cnn()
     with pytest.raises(SSUnsupportedError) as ex:
-        db_model = DBModel(
+        DBModel(
             "cnn",
             "TF",
             model=model,
             device="CPU",
             devices_per_node=2,
+            first_device=0,
             tag="test",
             inputs=inputs,
             outputs=outputs,

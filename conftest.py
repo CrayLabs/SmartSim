@@ -50,7 +50,6 @@ from subprocess import run
 import sys
 import typing as t
 import warnings
-import contextlib
 
 
 # pylint: disable=redefined-outer-name,invalid-name,global-statement
@@ -686,15 +685,18 @@ class ColoUtils:
         fileutils: t.Type[FileUtils],
         db_type: str,
         exp: Experiment,
+        application_file: str,
         db_args: t.Dict[str, t.Any],
         colo_settings: t.Optional[t.Dict[str, t.Any]] = None,
-        on_wlm: t.Optional[bool] = False
+        colo_model_name: t.Optional[str] = "colocated_model",
+        port: t.Optional[int] = test_port,
+        on_wlm: t.Optional[bool] = False,
     ) -> Model:
-        """Setup things needed for setting up the colo pinning tests"""
+        """Setup database needed for the colo pinning tests"""
+
         # get test setup
-        level = 3 if on_wlm else 2
-        test_dir = fileutils.make_test_dir(level=level)
-        sr_test_script = fileutils.get_test_conf_path("send_data_local_smartredis.py")
+        test_dir = fileutils.make_test_dir(level=2)
+        sr_test_script = fileutils.get_test_conf_path(application_file)
 
         # Create an app with a colo_db which uses 1 db_cpu
         if colo_settings is None:
@@ -704,12 +706,14 @@ class ColoUtils:
         if on_wlm:
             colo_settings.set_tasks(1)
             colo_settings.set_nodes(1)
-        colo_model = exp.create_model("colocated_model", colo_settings)
+        colo_model = exp.create_model(colo_model_name, colo_settings)
         colo_model.set_path(test_dir)
 
         if db_type in ["tcp", "deprecated"]:
-            db_args["port"] = 6780
+            db_args["port"] = port
             db_args["ifname"] = "lo"
+        if db_type == "uds" and colo_model_name is not None:
+            db_args["unix_socket"] = f"/tmp/{colo_model_name}.socket"
 
         colocate_fun: t.Dict[str, t.Callable[..., None]] = {
             "tcp": colo_model.colocate_db_tcp,

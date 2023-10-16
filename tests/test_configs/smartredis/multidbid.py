@@ -24,18 +24,38 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .errors import (
-    AllocationError,
-    EntityExistsError,
-    LauncherError,
-    ParameterWriterError,
-    ShellError,
-    SmartSimError,
-    SSConfigError,
-    SSInternalError,
-    SSUnsupportedError,
-    UserStrategyError,
-    SSReservedKeywordError,
-    SSDBIDConflictError,
+import argparse
 
-)
+
+import os
+
+from smartredis import ConfigOptions, Client
+
+
+if __name__ == "__main__":
+    """For inclusion in test with two unique database identifiers with multiple databases"""
+
+    parser = argparse.ArgumentParser(description="SmartRedis")
+    parser.add_argument("--exchange", action="store_true")
+    args = parser.parse_args()
+
+    env_vars = [
+        "SSKEYIN_testdb_reg",
+        "SSKEYOUT_testdb_reg",
+        "SSDB_testdb_reg",
+        "SR_DB_TYPE_testdb_reg",
+        "SSKEYIN_testdb_colo",
+        "SSKEYOUT_testdb_colo",
+        "SSDB_testdb_colo",
+        "SR_DB_TYPE_testdb_colo",
+    ]
+
+    assert all([var in os.environ for var in env_vars])
+
+    opts1 = ConfigOptions.create_from_environment("testdb_reg")
+    opts2 = ConfigOptions.create_from_environment("testdb_colo")
+
+    c1 = Client(opts1, logger_name="SmartSim")
+    c2 = Client(opts2, logger_name="SmartSim")
+
+  

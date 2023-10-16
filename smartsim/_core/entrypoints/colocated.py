@@ -39,7 +39,7 @@ from types import FrameType
 
 import filelock
 import psutil
-from smartredis import Client
+from smartredis import Client, ConfigOptions
 from smartredis.error import RedisConnectionError, RedisReplyError
 
 from smartsim._core.utils.network import current_ip
@@ -75,15 +75,14 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=0)
     parser.add_argument("--min_batch_size", type=int, default=0)
+    parser.add_argument("--min_batch_timeout", type=int, default=0)
     parser.add_argument("--tag", type=str, default="")
     parser.add_argument("--inputs", nargs="+", default=None)
     parser.add_argument("--outputs", nargs="+", default=None)
-
-    # Unused if we use SmartRedis
-    parser.add_argument("--min_batch_timeout", type=int, default=None)
     args = parser.parse_args(db_model)
 
     inputs = None
@@ -99,28 +98,30 @@ def launch_db_model(client: Client, db_model: t.List[str]) -> str:
     # devices_per_node being greater than one only applies to GPU devices
     if args.devices_per_node > 1 and args.device.lower() == "gpu":
         client.set_model_from_file_multigpu(
-            name,
-            args.file,
-            args.backend,
-            0,
-            args.devices_per_node,
-            args.batch_size,
-            args.min_batch_size,
-            args.tag,
-            inputs,
-            outputs,
+            name=name,
+            model_file=args.file,
+            backend=args.backend,
+            first_gpu=args.first_device,
+            num_gpus=args.devices_per_node,
+            batch_size=args.batch_size,
+            min_batch_size=args.min_batch_size,
+            min_batch_timeout=args.min_batch_timeout,
+            tag=args.tag,
+            inputs=inputs,
+            outputs=outputs,
         )
     else:
         client.set_model_from_file(
-            name,
-            args.file,
-            args.backend,
-            args.device,
-            args.batch_size,
-            args.min_batch_size,
-            args.tag,
-            inputs,
-            outputs,
+            name=name,
+            model_file=args.file,
+            backend=args.backend,
+            device=args.device,
+            batch_size=args.batch_size,
+            min_batch_size=args.min_batch_size,
+            min_batch_timeout=args.min_batch_timeout,
+            tag=args.tag,
+            inputs=inputs,
+            outputs=outputs,
         )
 
     return name
@@ -142,7 +143,8 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     parser.add_argument("--file", type=str)
     parser.add_argument("--backend", type=str)
     parser.add_argument("--device", type=str)
-    parser.add_argument("--devices_per_node", type=int)
+    parser.add_argument("--devices_per_node", type=int, default=1)
+    parser.add_argument("--first_device", type=int, default=0)
     args = parser.parse_args(db_script)
 
     if args.file and args.func:
@@ -151,13 +153,15 @@ def launch_db_script(client: Client, db_script: t.List[str]) -> str:
     if args.func:
         func = args.func.replace("\\n", "\n")
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
-            client.set_script_multigpu(args.name, func, 0, args.devices_per_node)
+            client.set_script_multigpu(
+                args.name, func, args.first_device, args.devices_per_node
+            )
         else:
             client.set_script(args.name, func, args.device)
     elif args.file:
         if args.devices_per_node > 1 and args.device.lower() == "gpu":
             client.set_script_from_file_multigpu(
-                args.name, args.file, 0, args.devices_per_node
+                args.name, args.file, args.first_device, args.devices_per_node
             )
         else:
             client.set_script_from_file(args.name, args.file, args.device)
@@ -173,18 +177,19 @@ def main(
     command: t.List[str],
     db_models: t.List[t.List[str]],
     db_scripts: t.List[t.List[str]],
+    db_identifier: str,
 ) -> None:
     global DBPID  # pylint: disable=global-statement
 
     lo_address = current_ip("lo")
-    try:
-        ip_addresses = [
-            current_ip(interface) for interface in network_interface.split(",")
-        ]
-
-    except ValueError as e:
-        logger.warning(e)
-        ip_addresses = []
+    ip_addresses = []
+    if network_interface:
+        try:
+            ip_addresses = [
+                current_ip(interface) for interface in network_interface.split(",")
+            ]
+        except ValueError as e:
+            logger.warning(e)
 
     if all(lo_address == ip_address for ip_address in ip_addresses) or not ip_addresses:
         cmd = command + [f"--bind {lo_address}"]
@@ -212,6 +217,7 @@ def main(
             f"\n\tIP Address(es): {' '.join(ip_addresses + [lo_address])}"
             f"\n\tCommand: {' '.join(cmd)}\n\n"
             f"\n\t# of Database CPUs: {db_cpus}"
+            f"\n\tDatabase Identifier: {db_identifier}"
         )
     except Exception as e:
         cleanup()
@@ -233,7 +239,8 @@ def main(
     try:
         if db_models or db_scripts:
             try:
-                client = Client(cluster=False)
+                options = ConfigOptions.create_from_environment(db_identifier)
+                client = Client(options, logger_name="SmartSim")
                 launch_models(client, db_models)
                 launch_db_scripts(client, db_scripts)
             except (RedisConnectionError, RedisReplyError) as ex:
@@ -291,6 +298,11 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "+db_cpus", type=int, default=2, help="Number of CPUs to use for DB"
     )
+
+    arg_parser.add_argument(
+        "+db_identifier", type=str, default="", help="Database Identifier"
+    )
+
     arg_parser.add_argument("+command", nargs="+", help="Command to run")
     arg_parser.add_argument(
         "+db_model",
@@ -317,7 +329,7 @@ if __name__ == "__main__":
         LOCK.acquire(timeout=0.1)
         logger.debug(f"Starting colocated database on host: {socket.gethostname()}")
 
-        # make sure to register the cleanup before the start
+        # make sure to register the cleanup before we start
         # the proecss so our signaller will be able to stop
         # the database process.
         register_signal_handlers()
@@ -328,6 +340,7 @@ if __name__ == "__main__":
             parsed_args.command,
             parsed_args.db_model,
             parsed_args.db_script,
+            parsed_args.db_identifier,
         )
 
     # gracefully exit the processes in the distributed application that

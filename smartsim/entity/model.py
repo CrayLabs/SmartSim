@@ -213,6 +213,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over UDS.
@@ -262,6 +263,7 @@ class Model(SmartSimEntity):
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(uds_options, common_options, **kwargs)
 
@@ -272,6 +274,7 @@ class Model(SmartSimEntity):
         db_cpus: int = 1,
         custom_pinning: t.Optional[t.Iterable[t.Union[int, t.Iterable[int]]]] = None,
         debug: bool = False,
+        db_identifier: str = "",
         **kwargs: t.Any,
     ) -> None:
         """Colocate an Orchestrator instance with this Model over TCP/IP.
@@ -317,6 +320,7 @@ class Model(SmartSimEntity):
             "cpus": db_cpus,
             "custom_pinning": custom_pinning,
             "debug": debug,
+            "db_identifier": db_identifier,
         }
         self._set_colocated_db_settings(tcp_options, common_options, **kwargs)
 
@@ -449,8 +453,10 @@ class Model(SmartSimEntity):
         model_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
         batch_size: int = 0,
         min_batch_size: int = 0,
+        min_batch_timeout: int = 0,
         tag: str = "",
         inputs: t.Optional[t.List[str]] = None,
         outputs: t.Optional[t.List[str]] = None,
@@ -476,12 +482,18 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as CPU.
+        :type first_device: int
         :param batch_size: batch size for execution, defaults to 0
         :type batch_size: int, optional
         :param min_batch_size: minimum batch size for model execution, defaults to 0
         :type min_batch_size: int, optional
+        :param min_batch_timeout: time to wait for minimum batch size, defaults to 0
+        :type min_batch_timeout: int, optional
         :param tag: additional tag for model information, defaults to ""
         :type tag: str, optional
         :param inputs: model inputs (TF only), defaults to None
@@ -496,8 +508,10 @@ class Model(SmartSimEntity):
             model_file=model_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
             batch_size=batch_size,
             min_batch_size=min_batch_size,
+            min_batch_timeout=min_batch_timeout,
             tag=tag,
             inputs=inputs,
             outputs=outputs,
@@ -511,6 +525,7 @@ class Model(SmartSimEntity):
         script_path: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript to launch with this Model instance
 
@@ -522,7 +537,9 @@ class Model(SmartSimEntity):
         present, a number can be passed for specification e.g. "GPU:1".
 
         Setting ``devices_per_node=N``, with N greater than one will result
-        in the model being stored in the first N devices of type ``device``.
+        in the script being stored in the first N devices of type ``device``;
+        alternatively, setting ``first_device=M`` will result in the script
+        being stored on nodes M through M + N - 1.
 
         One of either script (in memory string representation) or script_path (file)
         must be provided
@@ -537,8 +554,12 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as CPU.
+        :type first_device: int
         """
         db_script = DBScript(
             name=name,
@@ -546,6 +567,7 @@ class Model(SmartSimEntity):
             script_path=script_path,
             device=device,
             devices_per_node=devices_per_node,
+            first_device=first_device,
         )
         self.add_script_object(db_script)
 
@@ -555,6 +577,7 @@ class Model(SmartSimEntity):
         function: t.Optional[str] = None,
         device: t.Literal["CPU", "GPU"] = "CPU",
         devices_per_node: int = 1,
+        first_device: int = 0,
     ) -> None:
         """TorchScript function to launch with this Model instance
 
@@ -578,11 +601,16 @@ class Model(SmartSimEntity):
         :type device: str, optional
         :param devices_per_node: The number of GPU devices available on the host.
                This parameter only applies to GPU devices and will be ignored if device
-               is specified as GPU.
+               is specified as CPU.
         :type devices_per_node: int
+        :param first_device: The first GPU device to use on the host.
+               This parameter only applies to GPU devices and will be ignored if device
+               is specified as CPU.
+        :type first_device: int
         """
         db_script = DBScript(
-            name=name, script=function, device=device, devices_per_node=devices_per_node
+            name=name, script=function, device=device,
+            devices_per_node=devices_per_node, first_device=first_device
         )
         self.add_script_object(db_script)
 

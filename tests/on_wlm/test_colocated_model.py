@@ -48,13 +48,14 @@ if launcher not in pytest.wlm_options:
 def test_launch_colocated_model_defaults(fileutils, coloutils, db_type):
     """Test the launch of a model with a colocated database and local launcher"""
 
-    db_args = { "debug":DEBUG_DB }
+    db_args = { "debug": DEBUG_DB }
 
     exp = Experiment(f"colocated_model_defaults_{db_type}", launcher=launcher)
     colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )
@@ -76,7 +77,7 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
     db_args = {
         "db_cpus": 1,
         "custom_pinning": [],
-        "debug":DEBUG_DB,
+        "debug": DEBUG_DB,
     }
 
     # Check to make sure that the CPU mask was correctly generated
@@ -84,6 +85,7 @@ def test_colocated_model_disable_pinning(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )
@@ -99,7 +101,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type):
 
     db_args = {
         "db_cpus": 2,
-        "debug":DEBUG_DB
+        "debug": DEBUG_DB
     }
 
     # Check to make sure that the CPU mask was correctly generated
@@ -107,6 +109,7 @@ def test_colocated_model_pinning_auto_2cpu(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )
@@ -125,13 +128,14 @@ def test_colocated_model_pinning_range(fileutils, coloutils, db_type):
     db_args = {
         "db_cpus": 4,
         "custom_pinning": range(4),
-        "debug":DEBUG_DB
+        "debug": DEBUG_DB
     }
 
     colo_model = coloutils.setup_test_colo(
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )
@@ -156,6 +160,7 @@ def test_colocated_model_pinning_list(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )
@@ -180,6 +185,7 @@ def test_colocated_model_pinning_mixed(fileutils, coloutils, db_type):
         fileutils,
         db_type,
         exp,
+        "send_data_local_smartredis.py",
         db_args,
         on_wlm=True
     )

@@ -26,6 +26,8 @@
 
 import sys
 
+import os
+
 import pytest
 
 from smartsim import Experiment, status
@@ -36,9 +38,13 @@ from smartsim.settings import MpirunSettings, MpiexecSettings
 
 from smartsim.entity.dbobject import DBScript
 
+from smartredis import *
+
 logger = get_logger(__name__)
 
 should_run = True
+
+supported_dbs = ["uds", "tcp"]
 
 try:
     import torch
@@ -99,7 +105,8 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script via string
@@ -107,7 +114,8 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script function
@@ -115,7 +123,8 @@ def test_db_script(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have all three scripts
@@ -178,7 +187,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add script via string for each ensemble entity
@@ -188,7 +198,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
             "test_script2",
             script=torch_script_str,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Add script via function
@@ -196,7 +207,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add an additional ensemble member and attach a script to the new member
@@ -205,7 +217,8 @@ def test_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added both models to the ensemble
@@ -251,10 +264,7 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
     colo_model = exp.create_model("colocated_model", colo_settings)
     colo_model.set_path(test_dir)
     colo_model.colocate_db_tcp(
-        port=test_port,
-        db_cpus=1,
-        debug=True,
-        ifname=test_interface,
+        port=test_port, db_cpus=1, debug=True, ifname=test_interface
     )
 
     # Create string for script creation
@@ -265,14 +275,16 @@ def test_colocated_db_script(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
     # Add script via string
     colo_model.add_script(
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added both models
@@ -341,7 +353,8 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
             "test_script1",
             script_path=torch_script,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Colocate a db with the non-ensemble Model
@@ -358,7 +371,8 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add the third SmartSim model to the ensemble
@@ -369,7 +383,8 @@ def test_colocated_db_script_ensemble(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added one model to the ensemble
@@ -428,7 +443,8 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         "test_script2",
         script=torch_script_str,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Add a colocated database to the ensemble members
@@ -446,7 +462,8 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
             "test_script1",
             script_path=torch_script,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Add a colocated database to the non-ensemble SmartSim Model
@@ -454,7 +471,7 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         port=test_port + len(colo_ensemble),
         db_cpus=1,
         debug=True,
-        ifname=test_interface
+        ifname=test_interface,
     )
 
     # Add the non-ensemble SmartSim Model to the Ensemble
@@ -464,7 +481,8 @@ def test_colocated_db_script_ensemble_reordered(fileutils, wlmutils, mlutils):
         "test_script1",
         script_path=torch_script,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Assert we have added one model to the ensemble
@@ -523,7 +541,8 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             "test_func",
             function=timestwo,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Create ensemble with two identical SmartSim Model entities
@@ -549,7 +568,8 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
             "test_func",
             function=timestwo,
             device=test_device,
-            devices_per_node=test_num_gpus
+            devices_per_node=test_num_gpus,
+            first_device=0,
         )
 
     # Create an ensemble with two identical SmartSim Model entities
@@ -564,7 +584,8 @@ def test_db_script_errors(fileutils, wlmutils, mlutils):
         "test_func",
         function=timestwo,
         device=test_device,
-        devices_per_node=test_num_gpus
+        devices_per_node=test_num_gpus,
+        first_device=0,
     )
 
     # Check that an error is raised when trying to add
@@ -590,13 +611,26 @@ def test_inconsistent_params_db_script(fileutils):
 
     torch_script = fileutils.get_test_conf_path("torchscript.py")
     with pytest.raises(SSUnsupportedError) as ex:
-        db_script = DBScript(
+        _ = DBScript(
             name="test_script_db",
-            script_path = torch_script,
+            script_path=torch_script,
             device="CPU",
             devices_per_node=2,
+            first_device=0,
         )
     assert (
             ex.value.args[0]
             == "Cannot set devices_per_node>1 if CPU is specified under devices"
+        )
+    with pytest.raises(SSUnsupportedError) as ex:
+        _ = DBScript(
+            name="test_script_db",
+            script_path=torch_script,
+            device="CPU",
+            devices_per_node=1,
+            first_device=5,
+        )
+    assert (
+            ex.value.args[0]
+            == "Cannot set first_device>0 if CPU is specified under devices"
         )
